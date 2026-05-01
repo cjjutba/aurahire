@@ -12,11 +12,7 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"],
-      "@aurahire/shared": ["../../packages/shared/src"],
-      "@aurahire/shared/*": ["../../packages/shared/src/*"],
-      "@aurahire/db": ["../../packages/db/src"],
-      "@aurahire/db/*": ["../../packages/db/src/*"]
+      "@/*": ["src/*"]
     }
   },
   "include": ["src/**/*.ts"],

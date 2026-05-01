@@ -9,11 +9,7 @@
     "noEmit": true,
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./*"],
-      "@aurahire/shared": ["../../packages/shared/src"],
-      "@aurahire/shared/*": ["../../packages/shared/src/*"],
-      "@aurahire/db": ["../../packages/db/src"],
-      "@aurahire/db/*": ["../../packages/db/src/*"]
+      "@/*": ["./*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

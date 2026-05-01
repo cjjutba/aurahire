@@ -25,9 +25,9 @@ The date is the planned execution date (not the writing date — writing happens
 | Slice | Title | Plan File | Status |
 |---|---|---|---|
 | 1.1 | Monorepo Init | [2026-05-02-slice-1.1-monorepo-init.md](./2026-05-02-slice-1.1-monorepo-init.md) | ✅ Complete |
-| 1.2 | Database Schema + Drizzle Foundation | [2026-05-02-slice-1.2-database-schema.md](./2026-05-02-slice-1.2-database-schema.md) | 📝 Plan ready |
+| 1.2 | Database Schema + Drizzle Foundation | [2026-05-02-slice-1.2-database-schema.md](./2026-05-02-slice-1.2-database-schema.md) | ✅ Complete |
 | 1.3 | Shared Schemas + Auth Guards | [2026-05-02-slice-1.3-shared-schemas-auth-guards.md](./2026-05-02-slice-1.3-shared-schemas-auth-guards.md) | 📝 Plan ready |
-| 1.4 | Profiles Module + Auth Wiring | _to be written after 1.3_ | ⏳ Not started |
+| 1.4 | Profiles Module + Auth Wiring | [2026-05-02-slice-1.4-profiles-module-auth-wiring.md](./2026-05-02-slice-1.4-profiles-module-auth-wiring.md) | 📝 Plan ready |
 | 1.5 | Auth UI: Login, Register, Forgot, Reset, Verify | _to be written after 1.4_ | ⏳ Not started |
 | 1.6 | Portal Shells | _to be written after 1.5_ | ⏳ Not started |
 | 1.7 | Recruiter Onboarding Wizard | _to be written after 1.6_ | ⏳ Not started |

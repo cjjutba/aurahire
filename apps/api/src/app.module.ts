@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { LoggerModule } from "nestjs-pino";
+import { DbModule } from "./db";
 import { HealthModule } from "./health/health.module";
 
 @Module({
@@ -16,6 +17,7 @@ import { HealthModule } from "./health/health.module";
         redact: ["req.headers.authorization", "req.headers.cookie"],
       },
     }),
+    DbModule,
     HealthModule,
   ],
 })
