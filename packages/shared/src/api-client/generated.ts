@@ -807,6 +807,72 @@ export interface SignedUrlResponseDto {
   data: SignedUrlPayloadDto;
 }
 
+export type ScoreEvidenceDtoRelevance =
+  (typeof ScoreEvidenceDtoRelevance)[keyof typeof ScoreEvidenceDtoRelevance];
+
+export const ScoreEvidenceDtoRelevance = {
+  positive: "positive",
+  negative: "negative",
+  neutral: "neutral",
+} as const;
+
+export interface ScoreEvidenceDto {
+  excerpt: string;
+  source: string;
+  relevance: ScoreEvidenceDtoRelevance;
+}
+
+export type ProfileComponentDtoName =
+  (typeof ProfileComponentDtoName)[keyof typeof ProfileComponentDtoName];
+
+export const ProfileComponentDtoName = {
+  completeness: "completeness",
+  skill_depth: "skill_depth",
+  experience_clarity: "experience_clarity",
+  education_quality: "education_quality",
+} as const;
+
+export interface ProfileComponentDto {
+  name: ProfileComponentDtoName;
+  score: number;
+  max: number;
+  weight: number;
+  explanation: string;
+  evidence: ScoreEvidenceDto[];
+}
+
+export interface ImprovementSuggestionDto {
+  title: string;
+  description: string;
+  estimatedImpact: number;
+}
+
+export type ProfileScoreDtoBand =
+  (typeof ProfileScoreDtoBand)[keyof typeof ProfileScoreDtoBand];
+
+export const ProfileScoreDtoBand = {
+  strong: "strong",
+  partial: "partial",
+  limited: "limited",
+} as const;
+
+export interface ProfileScoreDto {
+  id: string;
+  overallScore: number;
+  band: ProfileScoreDtoBand;
+  components: ProfileComponentDto[];
+  improvementSuggestions: ImprovementSuggestionDto[];
+  redactedFields: string[];
+  promptVersion: string;
+  modelUsed: string;
+  latencyMs: number;
+  createdAt: string;
+}
+
+export interface ProfileScoreEnvelopeDto {
+  data: ProfileScoreDto | null;
+}
+
 export interface SignupCandidateDto {
   /**
    * @minLength 2
@@ -4864,6 +4930,311 @@ export function useResumesControllerDownloadV1<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getResumesControllerDownloadV1QueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Triggers a fresh AI scoring run. Rate-limited to 1 per 60 seconds via manual check on profile_scores.created_at (no Throttler module registered yet). Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.
+ * @summary Compute the candidate's Profile Score from default resume + preferences
+ */
+export type scoringControllerComputeProfileScoreV1Response201 = {
+  data: ProfileScoreEnvelopeDto;
+  status: 201;
+};
+
+export type scoringControllerComputeProfileScoreV1Response400 = {
+  data: void;
+  status: 400;
+};
+
+export type scoringControllerComputeProfileScoreV1Response429 = {
+  data: void;
+  status: 429;
+};
+
+export type scoringControllerComputeProfileScoreV1Response503 = {
+  data: void;
+  status: 503;
+};
+
+export type scoringControllerComputeProfileScoreV1ResponseSuccess =
+  scoringControllerComputeProfileScoreV1Response201 & {
+    headers: Headers;
+  };
+export type scoringControllerComputeProfileScoreV1ResponseError = (
+  | scoringControllerComputeProfileScoreV1Response400
+  | scoringControllerComputeProfileScoreV1Response429
+  | scoringControllerComputeProfileScoreV1Response503
+) & {
+  headers: Headers;
+};
+
+export type scoringControllerComputeProfileScoreV1Response =
+  | scoringControllerComputeProfileScoreV1ResponseSuccess
+  | scoringControllerComputeProfileScoreV1ResponseError;
+
+export const getScoringControllerComputeProfileScoreV1Url = () => {
+  return `/api/v1/scoring/profile/compute`;
+};
+
+export const scoringControllerComputeProfileScoreV1 = async (
+  options?: RequestInit,
+): Promise<scoringControllerComputeProfileScoreV1Response> => {
+  return fetcher<scoringControllerComputeProfileScoreV1Response>(
+    getScoringControllerComputeProfileScoreV1Url(),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getScoringControllerComputeProfileScoreV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["scoringControllerComputeProfileScoreV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
+    void
+  > = () => {
+    return scoringControllerComputeProfileScoreV1(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ScoringControllerComputeProfileScoreV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>
+>;
+
+export type ScoringControllerComputeProfileScoreV1MutationError = void;
+
+/**
+ * @summary Compute the candidate's Profile Score from default resume + preferences
+ */
+export const useScoringControllerComputeProfileScoreV1 = <
+  TError = void,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(
+    getScoringControllerComputeProfileScoreV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Get the candidate's most recent Profile Score (or null if none)
+ */
+export type scoringControllerGetProfileScoreMeV1Response200 = {
+  data: ProfileScoreEnvelopeDto;
+  status: 200;
+};
+
+export type scoringControllerGetProfileScoreMeV1ResponseSuccess =
+  scoringControllerGetProfileScoreMeV1Response200 & {
+    headers: Headers;
+  };
+export type scoringControllerGetProfileScoreMeV1Response =
+  scoringControllerGetProfileScoreMeV1ResponseSuccess;
+
+export const getScoringControllerGetProfileScoreMeV1Url = () => {
+  return `/api/v1/scoring/profile/me`;
+};
+
+export const scoringControllerGetProfileScoreMeV1 = async (
+  options?: RequestInit,
+): Promise<scoringControllerGetProfileScoreMeV1Response> => {
+  return fetcher<scoringControllerGetProfileScoreMeV1Response>(
+    getScoringControllerGetProfileScoreMeV1Url(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getScoringControllerGetProfileScoreMeV1QueryKey = () => {
+  return [`/api/v1/scoring/profile/me`] as const;
+};
+
+export const getScoringControllerGetProfileScoreMeV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getScoringControllerGetProfileScoreMeV1QueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
+  > = ({ signal }) =>
+    scoringControllerGetProfileScoreMeV1({ signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ScoringControllerGetProfileScoreMeV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
+>;
+export type ScoringControllerGetProfileScoreMeV1QueryError = unknown;
+
+export function useScoringControllerGetProfileScoreMeV1<
+  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+          TError,
+          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useScoringControllerGetProfileScoreMeV1<
+  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+          TError,
+          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useScoringControllerGetProfileScoreMeV1<
+  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get the candidate's most recent Profile Score (or null if none)
+ */
+
+export function useScoringControllerGetProfileScoreMeV1<
+  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getScoringControllerGetProfileScoreMeV1QueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

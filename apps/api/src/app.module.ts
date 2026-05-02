@@ -17,6 +17,7 @@ import { RecruiterProfilesModule } from "./modules/recruiter-profiles/recruiter-
 import { CandidateProfilesModule } from "./modules/candidate-profiles/candidate-profiles.module";
 import { JobsModule } from "./modules/jobs/jobs.module";
 import { ResumesModule } from "./modules/resumes/resumes.module";
+import { ScoringModule } from "./modules/scoring/scoring.module";
 import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
@@ -48,6 +49,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     CandidateProfilesModule,
     JobsModule,
     ResumesModule,
+    ScoringModule,
     HealthModule,
     AuthModule,
   ],

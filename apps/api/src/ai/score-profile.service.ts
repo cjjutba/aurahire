@@ -1,12 +1,28 @@
-import { Injectable, NotImplementedException } from "@nestjs/common";
-import type { ProfileScore } from "@aurahire/shared";
+import { Injectable, Logger } from "@nestjs/common";
+import {
+  type ParsedResume,
+  type ProfileScore,
+  profileScoreSchema,
+} from "@aurahire/shared";
 
 import { OpenAIService } from "./openai.service";
 import { RedactPiiService } from "./redact-pii.service";
+import {
+  SCORE_PROFILE_VERSION,
+  SCORE_PROFILE_SYSTEM_PROMPT,
+  buildScoreProfileUserPrompt,
+} from "./prompts/score-profile";
 
 export interface ScoreProfileInput {
-  candidateId: string;
-  resumeId: string;
+  parsedResume: ParsedResume;
+  desiredRole: string;
+  desiredSeniority: string;
+  weights: {
+    completeness: number;
+    skill_depth: number;
+    experience_clarity: number;
+    education_quality: number;
+  };
   requestId?: string;
 }
 
@@ -16,30 +32,50 @@ export interface ScoreProfileOutput {
   latencyMs: number;
   model: string;
   promptVersion: string;
-  weightsUsed: Record<string, number>;
 }
 
-/**
- * Profile scoring service.
- *
- * Slice 2.3: SHELL ONLY.
- * Slice 2.5: Implements:
- *            1. Load resume + candidate prefs from DB
- *            2. RedactPiiService.redactResume()
- *            3. OpenAIService.generateStructured() with profileScoreSchema + SCORE_PROFILE prompts
- *            4. Return score + audit metadata
- */
 @Injectable()
 export class ScoreProfileService {
+  private readonly logger = new Logger(ScoreProfileService.name);
+
   constructor(
     private readonly openai: OpenAIService,
     private readonly redact: RedactPiiService,
   ) {}
 
-  async score(_input: ScoreProfileInput): Promise<ScoreProfileOutput> {
-    throw new NotImplementedException({
-      code: "NOT_IMPLEMENTED",
-      message: "Profile scoring is implemented in Slice 2.5",
+  async score(input: ScoreProfileInput): Promise<ScoreProfileOutput> {
+    const reqId = input.requestId ?? "score-profile";
+
+    const { redacted, redactedFields } = await this.redact.redactResume(
+      input.parsedResume,
+      reqId,
+    );
+
+    this.logger.log(
+      `[${reqId}] redacted ${redactedFields.length} fields before scoring`,
+    );
+
+    const userPrompt = buildScoreProfileUserPrompt({
+      redactedResumeJson: JSON.stringify(redacted, null, 2),
+      desiredRole: input.desiredRole,
+      desiredSeniority: input.desiredSeniority,
+      weights: input.weights,
     });
+
+    const result = await this.openai.generateStructured({
+      schema: profileScoreSchema,
+      schemaName: "ProfileScore",
+      systemPrompt: SCORE_PROFILE_SYSTEM_PROMPT,
+      userPrompt,
+      requestId: `${reqId}:profile-v${SCORE_PROFILE_VERSION}`,
+    });
+
+    return {
+      score: result.data,
+      redactedFields,
+      latencyMs: result.latencyMs,
+      model: result.model,
+      promptVersion: SCORE_PROFILE_VERSION,
+    };
   }
 }

@@ -1171,6 +1171,70 @@
         ]
       }
     },
+    "/api/v1/scoring/profile/compute": {
+      "post": {
+        "description": "Triggers a fresh AI scoring run. Rate-limited to 1 per 60 seconds via manual check on profile_scores.created_at (no Throttler module registered yet). Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
+        "operationId": "ScoringController_computeProfileScore_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Score computed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileScoreEnvelopeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing prerequisite (resume, parse, or preferences)"
+          },
+          "429": {
+            "description": "Rate-limited; try again in a minute"
+          },
+          "503": {
+            "description": "AI service temporarily unavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Compute the candidate's Profile Score from default resume + preferences",
+        "tags": [
+          "scoring"
+        ]
+      }
+    },
+    "/api/v1/scoring/profile/me": {
+      "get": {
+        "operationId": "ScoringController_getProfileScoreMe_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileScoreEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the candidate's most recent Profile Score (or null if none)",
+        "tags": [
+          "scoring"
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -2481,6 +2545,166 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/SignedUrlPayloadDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ScoreEvidenceDto": {
+        "type": "object",
+        "properties": {
+          "excerpt": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "relevance": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "neutral"
+            ]
+          }
+        },
+        "required": [
+          "excerpt",
+          "source",
+          "relevance"
+        ]
+      },
+      "ProfileComponentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "completeness",
+              "skill_depth",
+              "experience_clarity",
+              "education_quality"
+            ]
+          },
+          "score": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "weight": {
+            "type": "number"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScoreEvidenceDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "score",
+          "max",
+          "weight",
+          "explanation",
+          "evidence"
+        ]
+      },
+      "ImprovementSuggestionDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "estimatedImpact": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "estimatedImpact"
+        ]
+      },
+      "ProfileScoreDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "overallScore": {
+            "type": "number"
+          },
+          "band": {
+            "type": "string",
+            "enum": [
+              "strong",
+              "partial",
+              "limited"
+            ]
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileComponentDto"
+            }
+          },
+          "improvementSuggestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImprovementSuggestionDto"
+            }
+          },
+          "redactedFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "promptVersion": {
+            "type": "string"
+          },
+          "modelUsed": {
+            "type": "string"
+          },
+          "latencyMs": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "overallScore",
+          "band",
+          "components",
+          "improvementSuggestions",
+          "redactedFields",
+          "promptVersion",
+          "modelUsed",
+          "latencyMs",
+          "createdAt"
+        ]
+      },
+      "ProfileScoreEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileScoreDto"
+              }
+            ]
           }
         },
         "required": [
