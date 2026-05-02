@@ -9,6 +9,7 @@ import { EmailModule } from "./email";
 import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ProfilesModule } from "./modules/profiles/profiles.module";
+import { RecruiterProfilesModule } from "./modules/recruiter-profiles/recruiter-profiles.module";
 import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
@@ -32,6 +33,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     AuditModule,
     EmailModule,
     ProfilesModule,
+    RecruiterProfilesModule,
     HealthModule,
     AuthModule,
   ],

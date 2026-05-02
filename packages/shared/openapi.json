@@ -34,6 +34,147 @@
         ]
       }
     },
+    "/api/v1/recruiter-profiles/me": {
+      "get": {
+        "operationId": "RecruiterProfilesController_getMe_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecruiterProfileEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a recruiter"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the authenticated recruiter's full profile + company",
+        "tags": [
+          "recruiter-profiles"
+        ]
+      }
+    },
+    "/api/v1/recruiter-profiles/about": {
+      "patch": {
+        "operationId": "RecruiterProfilesController_updateAbout_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRecruiterAboutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecruiterProfileEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Onboarding step 1: about you",
+        "tags": [
+          "recruiter-profiles"
+        ]
+      }
+    },
+    "/api/v1/recruiter-profiles/company": {
+      "patch": {
+        "operationId": "RecruiterProfilesController_updateCompany_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRecruiterCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecruiterProfileEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Onboarding step 2: company details",
+        "tags": [
+          "recruiter-profiles"
+        ]
+      }
+    },
+    "/api/v1/recruiter-profiles/focus": {
+      "patch": {
+        "operationId": "RecruiterProfilesController_updateFocus_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRecruiterFocusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecruiterProfileEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Onboarding step 3 (final): hiring focus — flips profile_completed=true",
+        "tags": [
+          "recruiter-profiles"
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -334,6 +475,207 @@
         "required": [
           "data"
         ]
+      },
+      "RecruiterCompanyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "industry": {
+            "type": "object",
+            "nullable": true
+          },
+          "size": {
+            "type": "object",
+            "nullable": true
+          },
+          "website": {
+            "type": "object",
+            "nullable": true
+          },
+          "headquartersLocation": {
+            "type": "object",
+            "nullable": true
+          },
+          "description": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "industry",
+          "size",
+          "website",
+          "headquartersLocation",
+          "description"
+        ]
+      },
+      "RecruiterProfileMeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "object",
+            "nullable": true
+          },
+          "jobTitle": {
+            "type": "object",
+            "nullable": true
+          },
+          "department": {
+            "type": "object",
+            "nullable": true
+          },
+          "rolesHiringFor": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hiringVolumePerQuarter": {
+            "type": "object",
+            "nullable": true
+          },
+          "profileCompleted": {
+            "type": "boolean"
+          },
+          "company": {
+            "$ref": "#/components/schemas/RecruiterCompanyDto"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "phone",
+          "jobTitle",
+          "department",
+          "rolesHiringFor",
+          "hiringVolumePerQuarter",
+          "profileCompleted",
+          "company"
+        ]
+      },
+      "RecruiterProfileEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RecruiterProfileMeDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "UpdateRecruiterAboutDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 7,
+            "maxLength": 20,
+            "pattern": "^[\\d\\s+()-]+$"
+          },
+          "jobTitle": {
+            "type": "string",
+            "maxLength": 150,
+            "nullable": true
+          },
+          "department": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          }
+        },
+        "required": [
+          "fullName",
+          "phone"
+        ]
+      },
+      "UpdateRecruiterCompanyDto": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "industry": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "size": {
+            "type": "string",
+            "enum": [
+              "1-10",
+              "11-50",
+              "51-200",
+              "201-500",
+              "501-1000",
+              "1000+"
+            ],
+            "nullable": true
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "headquartersLocation": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "nullable": true
+          }
+        },
+        "required": [
+          "companyName"
+        ]
+      },
+      "UpdateRecruiterFocusDto": {
+        "type": "object",
+        "properties": {
+          "rolesHiringFor": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "hiringVolumePerQuarter": {
+            "type": "string",
+            "enum": [
+              "1-5",
+              "6-10",
+              "11-25",
+              "25+"
+            ],
+            "nullable": true
+          }
+        }
       },
       "InitCandidateProfileDto": {
         "type": "object",

@@ -7,16 +7,21 @@
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import { fetcher } from "./fetcher.ts";
+import { fetcher } from "./fetcher";
 /**
  * @nullable
  */
@@ -148,6 +153,175 @@ export interface ProfileResponseEnvelopeDto {
   data: ProfileResponseDto;
 }
 
+/**
+ * @nullable
+ */
+export type RecruiterCompanyDtoIndustry = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type RecruiterCompanyDtoSize = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type RecruiterCompanyDtoWebsite = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type RecruiterCompanyDtoHeadquartersLocation = {
+  [key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type RecruiterCompanyDtoDescription = { [key: string]: unknown } | null;
+
+export interface RecruiterCompanyDto {
+  id: string;
+  name: string;
+  /** @nullable */
+  industry: RecruiterCompanyDtoIndustry;
+  /** @nullable */
+  size: RecruiterCompanyDtoSize;
+  /** @nullable */
+  website: RecruiterCompanyDtoWebsite;
+  /** @nullable */
+  headquartersLocation: RecruiterCompanyDtoHeadquartersLocation;
+  /** @nullable */
+  description: RecruiterCompanyDtoDescription;
+}
+
+/**
+ * @nullable
+ */
+export type RecruiterProfileMeDtoPhone = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type RecruiterProfileMeDtoJobTitle = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type RecruiterProfileMeDtoDepartment = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type RecruiterProfileMeDtoHiringVolumePerQuarter = {
+  [key: string]: unknown;
+} | null;
+
+export interface RecruiterProfileMeDto {
+  id: string;
+  email: string;
+  fullName: string;
+  /** @nullable */
+  phone: RecruiterProfileMeDtoPhone;
+  /** @nullable */
+  jobTitle: RecruiterProfileMeDtoJobTitle;
+  /** @nullable */
+  department: RecruiterProfileMeDtoDepartment;
+  rolesHiringFor: string[];
+  /** @nullable */
+  hiringVolumePerQuarter: RecruiterProfileMeDtoHiringVolumePerQuarter;
+  profileCompleted: boolean;
+  company: RecruiterCompanyDto;
+}
+
+export interface RecruiterProfileEnvelopeDto {
+  data: RecruiterProfileMeDto;
+}
+
+export interface UpdateRecruiterAboutDto {
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  fullName: string;
+  /**
+   * @minLength 7
+   * @maxLength 20
+   * @pattern ^[\d\s+()-]+$
+   */
+  phone: string;
+  /**
+   * @maxLength 150
+   * @nullable
+   */
+  jobTitle?: string | null;
+  /**
+   * @maxLength 100
+   * @nullable
+   */
+  department?: string | null;
+}
+
+/**
+ * @nullable
+ */
+export type UpdateRecruiterCompanyDtoSize =
+  | (typeof UpdateRecruiterCompanyDtoSize)[keyof typeof UpdateRecruiterCompanyDtoSize]
+  | null;
+
+export const UpdateRecruiterCompanyDtoSize = {
+  "1-10": "1-10",
+  "11-50": "11-50",
+  "51-200": "51-200",
+  "201-500": "201-500",
+  "501-1000": "501-1000",
+  "1000+": "1000+",
+} as const;
+
+export interface UpdateRecruiterCompanyDto {
+  /**
+   * @minLength 1
+   * @maxLength 200
+   */
+  companyName: string;
+  /**
+   * @maxLength 100
+   * @nullable
+   */
+  industry?: string | null;
+  /** @nullable */
+  size?: UpdateRecruiterCompanyDtoSize;
+  /** @nullable */
+  website?: string | null;
+  /** @nullable */
+  headquartersLocation?: string | null;
+  /**
+   * @maxLength 2000
+   * @nullable
+   */
+  description?: string | null;
+}
+
+/**
+ * @nullable
+ */
+export type UpdateRecruiterFocusDtoHiringVolumePerQuarter =
+  | (typeof UpdateRecruiterFocusDtoHiringVolumePerQuarter)[keyof typeof UpdateRecruiterFocusDtoHiringVolumePerQuarter]
+  | null;
+
+export const UpdateRecruiterFocusDtoHiringVolumePerQuarter = {
+  "1-5": "1-5",
+  "6-10": "6-10",
+  "11-25": "11-25",
+  "25+": "25+",
+} as const;
+
+export interface UpdateRecruiterFocusDto {
+  rolesHiringFor?: string[];
+  /** @nullable */
+  hiringVolumePerQuarter?: UpdateRecruiterFocusDtoHiringVolumePerQuarter;
+}
+
 export interface InitCandidateProfileDto {
   /**
    * @minLength 2
@@ -180,6 +354,8 @@ export interface InitRecruiterProfileDto {
    */
   companyName: string;
 }
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary Get the current user's profile + role-specific subprofile
@@ -238,20 +414,23 @@ export const getProfilesControllerGetMeV1QueryOptions = <
   TData = Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
   TError = void,
 >(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
-    TError,
-    TData
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
+      TError,
+      TData
+    >
   >;
+  request?: SecondParameter<typeof fetcher>;
 }) => {
-  const { query: queryOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
     queryOptions?.queryKey ?? getProfilesControllerGetMeV1QueryKey();
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof profilesControllerGetMeV1>>
-  > = ({ signal }) => profilesControllerGetMeV1({ signal });
+  > = ({ signal }) => profilesControllerGetMeV1({ signal, ...requestOptions });
 
   return {
     queryKey,
@@ -262,7 +441,7 @@ export const getProfilesControllerGetMeV1QueryOptions = <
     Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type ProfilesControllerGetMeV1QueryResult = NonNullable<
@@ -270,6 +449,76 @@ export type ProfilesControllerGetMeV1QueryResult = NonNullable<
 >;
 export type ProfilesControllerGetMeV1QueryError = void;
 
+export function useProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
+  TError = void,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
+          TError,
+          Awaited<ReturnType<typeof profilesControllerGetMeV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
+          TError,
+          Awaited<ReturnType<typeof profilesControllerGetMeV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary Get the current user's profile + role-specific subprofile
  */
@@ -277,21 +526,546 @@ export type ProfilesControllerGetMeV1QueryError = void;
 export function useProfilesControllerGetMeV1<
   TData = Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
   TError = void,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
-    TError,
-    TData
-  >;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof profilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getProfilesControllerGetMeV1QueryOptions(options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get the authenticated recruiter's full profile + company
+ */
+export type recruiterProfilesControllerGetMeV1Response200 = {
+  data: RecruiterProfileEnvelopeDto;
+  status: 200;
+};
+
+export type recruiterProfilesControllerGetMeV1Response403 = {
+  data: void;
+  status: 403;
+};
+
+export type recruiterProfilesControllerGetMeV1ResponseSuccess =
+  recruiterProfilesControllerGetMeV1Response200 & {
+    headers: Headers;
+  };
+export type recruiterProfilesControllerGetMeV1ResponseError =
+  recruiterProfilesControllerGetMeV1Response403 & {
+    headers: Headers;
+  };
+
+export type recruiterProfilesControllerGetMeV1Response =
+  | recruiterProfilesControllerGetMeV1ResponseSuccess
+  | recruiterProfilesControllerGetMeV1ResponseError;
+
+export const getRecruiterProfilesControllerGetMeV1Url = () => {
+  return `/api/v1/recruiter-profiles/me`;
+};
+
+export const recruiterProfilesControllerGetMeV1 = async (
+  options?: RequestInit,
+): Promise<recruiterProfilesControllerGetMeV1Response> => {
+  return fetcher<recruiterProfilesControllerGetMeV1Response>(
+    getRecruiterProfilesControllerGetMeV1Url(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getRecruiterProfilesControllerGetMeV1QueryKey = () => {
+  return [`/api/v1/recruiter-profiles/me`] as const;
+};
+
+export const getRecruiterProfilesControllerGetMeV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+  TError = void,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getRecruiterProfilesControllerGetMeV1QueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>
+  > = ({ signal }) =>
+    recruiterProfilesControllerGetMeV1({ signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type RecruiterProfilesControllerGetMeV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>
+>;
+export type RecruiterProfilesControllerGetMeV1QueryError = void;
+
+export function useRecruiterProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+  TError = void,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+          TError,
+          Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useRecruiterProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+          TError,
+          Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useRecruiterProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get the authenticated recruiter's full profile + company
+ */
+
+export function useRecruiterProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof recruiterProfilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getRecruiterProfilesControllerGetMeV1QueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Onboarding step 1: about you
+ */
+export type recruiterProfilesControllerUpdateAboutV1Response200 = {
+  data: RecruiterProfileEnvelopeDto;
+  status: 200;
+};
+
+export type recruiterProfilesControllerUpdateAboutV1ResponseSuccess =
+  recruiterProfilesControllerUpdateAboutV1Response200 & {
+    headers: Headers;
+  };
+export type recruiterProfilesControllerUpdateAboutV1Response =
+  recruiterProfilesControllerUpdateAboutV1ResponseSuccess;
+
+export const getRecruiterProfilesControllerUpdateAboutV1Url = () => {
+  return `/api/v1/recruiter-profiles/about`;
+};
+
+export const recruiterProfilesControllerUpdateAboutV1 = async (
+  updateRecruiterAboutDto: UpdateRecruiterAboutDto,
+  options?: RequestInit,
+): Promise<recruiterProfilesControllerUpdateAboutV1Response> => {
+  return fetcher<recruiterProfilesControllerUpdateAboutV1Response>(
+    getRecruiterProfilesControllerUpdateAboutV1Url(),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateRecruiterAboutDto),
+    },
+  );
+};
+
+export const getRecruiterProfilesControllerUpdateAboutV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recruiterProfilesControllerUpdateAboutV1>>,
+    TError,
+    { data: UpdateRecruiterAboutDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof recruiterProfilesControllerUpdateAboutV1>>,
+  TError,
+  { data: UpdateRecruiterAboutDto },
+  TContext
+> => {
+  const mutationKey = ["recruiterProfilesControllerUpdateAboutV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof recruiterProfilesControllerUpdateAboutV1>>,
+    { data: UpdateRecruiterAboutDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return recruiterProfilesControllerUpdateAboutV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RecruiterProfilesControllerUpdateAboutV1MutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof recruiterProfilesControllerUpdateAboutV1>>
+  >;
+export type RecruiterProfilesControllerUpdateAboutV1MutationBody =
+  UpdateRecruiterAboutDto;
+export type RecruiterProfilesControllerUpdateAboutV1MutationError = unknown;
+
+/**
+ * @summary Onboarding step 1: about you
+ */
+export const useRecruiterProfilesControllerUpdateAboutV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof recruiterProfilesControllerUpdateAboutV1>>,
+      TError,
+      { data: UpdateRecruiterAboutDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof recruiterProfilesControllerUpdateAboutV1>>,
+  TError,
+  { data: UpdateRecruiterAboutDto },
+  TContext
+> => {
+  return useMutation(
+    getRecruiterProfilesControllerUpdateAboutV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Onboarding step 2: company details
+ */
+export type recruiterProfilesControllerUpdateCompanyV1Response200 = {
+  data: RecruiterProfileEnvelopeDto;
+  status: 200;
+};
+
+export type recruiterProfilesControllerUpdateCompanyV1ResponseSuccess =
+  recruiterProfilesControllerUpdateCompanyV1Response200 & {
+    headers: Headers;
+  };
+export type recruiterProfilesControllerUpdateCompanyV1Response =
+  recruiterProfilesControllerUpdateCompanyV1ResponseSuccess;
+
+export const getRecruiterProfilesControllerUpdateCompanyV1Url = () => {
+  return `/api/v1/recruiter-profiles/company`;
+};
+
+export const recruiterProfilesControllerUpdateCompanyV1 = async (
+  updateRecruiterCompanyDto: UpdateRecruiterCompanyDto,
+  options?: RequestInit,
+): Promise<recruiterProfilesControllerUpdateCompanyV1Response> => {
+  return fetcher<recruiterProfilesControllerUpdateCompanyV1Response>(
+    getRecruiterProfilesControllerUpdateCompanyV1Url(),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateRecruiterCompanyDto),
+    },
+  );
+};
+
+export const getRecruiterProfilesControllerUpdateCompanyV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recruiterProfilesControllerUpdateCompanyV1>>,
+    TError,
+    { data: UpdateRecruiterCompanyDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof recruiterProfilesControllerUpdateCompanyV1>>,
+  TError,
+  { data: UpdateRecruiterCompanyDto },
+  TContext
+> => {
+  const mutationKey = ["recruiterProfilesControllerUpdateCompanyV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof recruiterProfilesControllerUpdateCompanyV1>>,
+    { data: UpdateRecruiterCompanyDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return recruiterProfilesControllerUpdateCompanyV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RecruiterProfilesControllerUpdateCompanyV1MutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof recruiterProfilesControllerUpdateCompanyV1>>
+  >;
+export type RecruiterProfilesControllerUpdateCompanyV1MutationBody =
+  UpdateRecruiterCompanyDto;
+export type RecruiterProfilesControllerUpdateCompanyV1MutationError = unknown;
+
+/**
+ * @summary Onboarding step 2: company details
+ */
+export const useRecruiterProfilesControllerUpdateCompanyV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof recruiterProfilesControllerUpdateCompanyV1>>,
+      TError,
+      { data: UpdateRecruiterCompanyDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof recruiterProfilesControllerUpdateCompanyV1>>,
+  TError,
+  { data: UpdateRecruiterCompanyDto },
+  TContext
+> => {
+  return useMutation(
+    getRecruiterProfilesControllerUpdateCompanyV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Onboarding step 3 (final): hiring focus — flips profile_completed=true
+ */
+export type recruiterProfilesControllerUpdateFocusV1Response200 = {
+  data: RecruiterProfileEnvelopeDto;
+  status: 200;
+};
+
+export type recruiterProfilesControllerUpdateFocusV1ResponseSuccess =
+  recruiterProfilesControllerUpdateFocusV1Response200 & {
+    headers: Headers;
+  };
+export type recruiterProfilesControllerUpdateFocusV1Response =
+  recruiterProfilesControllerUpdateFocusV1ResponseSuccess;
+
+export const getRecruiterProfilesControllerUpdateFocusV1Url = () => {
+  return `/api/v1/recruiter-profiles/focus`;
+};
+
+export const recruiterProfilesControllerUpdateFocusV1 = async (
+  updateRecruiterFocusDto: UpdateRecruiterFocusDto,
+  options?: RequestInit,
+): Promise<recruiterProfilesControllerUpdateFocusV1Response> => {
+  return fetcher<recruiterProfilesControllerUpdateFocusV1Response>(
+    getRecruiterProfilesControllerUpdateFocusV1Url(),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateRecruiterFocusDto),
+    },
+  );
+};
+
+export const getRecruiterProfilesControllerUpdateFocusV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recruiterProfilesControllerUpdateFocusV1>>,
+    TError,
+    { data: UpdateRecruiterFocusDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof recruiterProfilesControllerUpdateFocusV1>>,
+  TError,
+  { data: UpdateRecruiterFocusDto },
+  TContext
+> => {
+  const mutationKey = ["recruiterProfilesControllerUpdateFocusV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof recruiterProfilesControllerUpdateFocusV1>>,
+    { data: UpdateRecruiterFocusDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return recruiterProfilesControllerUpdateFocusV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RecruiterProfilesControllerUpdateFocusV1MutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof recruiterProfilesControllerUpdateFocusV1>>
+  >;
+export type RecruiterProfilesControllerUpdateFocusV1MutationBody =
+  UpdateRecruiterFocusDto;
+export type RecruiterProfilesControllerUpdateFocusV1MutationError = unknown;
+
+/**
+ * @summary Onboarding step 3 (final): hiring focus — flips profile_completed=true
+ */
+export const useRecruiterProfilesControllerUpdateFocusV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof recruiterProfilesControllerUpdateFocusV1>>,
+      TError,
+      { data: UpdateRecruiterFocusDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof recruiterProfilesControllerUpdateFocusV1>>,
+  TError,
+  { data: UpdateRecruiterFocusDto },
+  TContext
+> => {
+  return useMutation(
+    getRecruiterProfilesControllerUpdateFocusV1MutationOptions(options),
+    queryClient,
+  );
+};
 
 /**
  * @summary Service health check
@@ -329,19 +1103,22 @@ export const getHealthControllerCheckQueryOptions = <
   TData = Awaited<ReturnType<typeof healthControllerCheck>>,
   TError = unknown,
 >(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof healthControllerCheck>>,
-    TError,
-    TData
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof healthControllerCheck>>,
+      TError,
+      TData
+    >
   >;
+  request?: SecondParameter<typeof fetcher>;
 }) => {
-  const { query: queryOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getHealthControllerCheckQueryKey();
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof healthControllerCheck>>
-  > = ({ signal }) => healthControllerCheck({ signal });
+  > = ({ signal }) => healthControllerCheck({ signal, ...requestOptions });
 
   return {
     queryKey,
@@ -352,7 +1129,7 @@ export const getHealthControllerCheckQueryOptions = <
     Awaited<ReturnType<typeof healthControllerCheck>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type HealthControllerCheckQueryResult = NonNullable<
@@ -360,6 +1137,76 @@ export type HealthControllerCheckQueryResult = NonNullable<
 >;
 export type HealthControllerCheckQueryError = unknown;
 
+export function useHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof healthControllerCheck>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof healthControllerCheck>>,
+          TError,
+          Awaited<ReturnType<typeof healthControllerCheck>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof healthControllerCheck>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof healthControllerCheck>>,
+          TError,
+          Awaited<ReturnType<typeof healthControllerCheck>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof healthControllerCheck>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary Service health check
  */
@@ -367,18 +1214,27 @@ export type HealthControllerCheckQueryError = unknown;
 export function useHealthControllerCheck<
   TData = Awaited<ReturnType<typeof healthControllerCheck>>,
   TError = unknown,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof healthControllerCheck>>,
-    TError,
-    TData
-  >;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof healthControllerCheck>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getHealthControllerCheckQueryOptions(options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -446,6 +1302,7 @@ export const getAuthControllerRegisterCandidateV1MutationOptions = <
     { data: InitCandidateProfileDto },
     TContext
   >;
+  request?: SecondParameter<typeof fetcher>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>,
   TError,
@@ -453,13 +1310,13 @@ export const getAuthControllerRegisterCandidateV1MutationOptions = <
   TContext
 > => {
   const mutationKey = ["authControllerRegisterCandidateV1"];
-  const { mutation: mutationOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey } };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>,
@@ -467,7 +1324,7 @@ export const getAuthControllerRegisterCandidateV1MutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return authControllerRegisterCandidateV1(data);
+    return authControllerRegisterCandidateV1(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -486,14 +1343,18 @@ export type AuthControllerRegisterCandidateV1MutationError = void;
 export const useAuthControllerRegisterCandidateV1 = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>,
-    TError,
-    { data: InitCandidateProfileDto },
-    TContext
-  >;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>,
+      TError,
+      { data: InitCandidateProfileDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>,
   TError,
   { data: InitCandidateProfileDto },
@@ -501,6 +1362,7 @@ export const useAuthControllerRegisterCandidateV1 = <
 > => {
   return useMutation(
     getAuthControllerRegisterCandidateV1MutationOptions(options),
+    queryClient,
   );
 };
 
@@ -567,6 +1429,7 @@ export const getAuthControllerRegisterRecruiterV1MutationOptions = <
     { data: InitRecruiterProfileDto },
     TContext
   >;
+  request?: SecondParameter<typeof fetcher>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>,
   TError,
@@ -574,13 +1437,13 @@ export const getAuthControllerRegisterRecruiterV1MutationOptions = <
   TContext
 > => {
   const mutationKey = ["authControllerRegisterRecruiterV1"];
-  const { mutation: mutationOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey } };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>,
@@ -588,7 +1451,7 @@ export const getAuthControllerRegisterRecruiterV1MutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return authControllerRegisterRecruiterV1(data);
+    return authControllerRegisterRecruiterV1(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -607,14 +1470,18 @@ export type AuthControllerRegisterRecruiterV1MutationError = void;
 export const useAuthControllerRegisterRecruiterV1 = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>,
-    TError,
-    { data: InitRecruiterProfileDto },
-    TContext
-  >;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>,
+      TError,
+      { data: InitRecruiterProfileDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>,
   TError,
   { data: InitRecruiterProfileDto },
@@ -622,5 +1489,6 @@ export const useAuthControllerRegisterRecruiterV1 = <
 > => {
   return useMutation(
     getAuthControllerRegisterRecruiterV1MutationOptions(options),
+    queryClient,
   );
 };

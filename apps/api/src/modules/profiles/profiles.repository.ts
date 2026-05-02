@@ -97,4 +97,67 @@ export class ProfilesRepository {
       return { profile, company, recruiterProfile };
     });
   }
+
+  async updateProfile(
+    id: string,
+    patch: Partial<Pick<NewProfile, "fullName" | "phone">>,
+  ): Promise<Profile> {
+    const [row] = await this.db
+      .update(profilesTable)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(profilesTable.id, id))
+      .returning();
+    if (!row) throw new Error("Profile update failed");
+    return row;
+  }
+
+  async updateRecruiterProfile(
+    id: string,
+    patch: Partial<NewRecruiterProfile>,
+  ): Promise<RecruiterProfile> {
+    const [row] = await this.db
+      .update(recruiterProfilesTable)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(recruiterProfilesTable.id, id))
+      .returning();
+    if (!row) throw new Error("Recruiter profile update failed");
+    return row;
+  }
+
+  async updateCompany(
+    id: string,
+    patch: Partial<NewCompany>,
+  ): Promise<Company> {
+    const [row] = await this.db
+      .update(companiesTable)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(companiesTable.id, id))
+      .returning();
+    if (!row) throw new Error("Company update failed");
+    return row;
+  }
+
+  async updateProfileAndRecruiterProfileTx(
+    id: string,
+    profilePatch: Partial<Pick<NewProfile, "fullName" | "phone">>,
+    recruiterPatch: Partial<NewRecruiterProfile>,
+  ): Promise<{ profile: Profile; recruiterProfile: RecruiterProfile }> {
+    return await this.db.transaction(async (tx) => {
+      const [profile] = await tx
+        .update(profilesTable)
+        .set({ ...profilePatch, updatedAt: new Date() })
+        .where(eq(profilesTable.id, id))
+        .returning();
+      if (!profile) throw new Error("Profile update failed");
+
+      const [recruiterProfile] = await tx
+        .update(recruiterProfilesTable)
+        .set({ ...recruiterPatch, updatedAt: new Date() })
+        .where(eq(recruiterProfilesTable.id, id))
+        .returning();
+      if (!recruiterProfile) throw new Error("Recruiter profile update failed");
+
+      return { profile, recruiterProfile };
+    });
+  }
 }
