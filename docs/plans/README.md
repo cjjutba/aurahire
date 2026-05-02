@@ -40,8 +40,8 @@ The date is the planned execution date (not the writing date — writing happens
 | 2.1 | Jobs Module Backend | [2026-05-03-slice-2.1-jobs-module-backend.md](./2026-05-03-slice-2.1-jobs-module-backend.md) | ✅ Complete |
 | 2.2 | Jobs Frontend (Recruiter + Public Browse) | [2026-05-03-slice-2.2-jobs-frontend.md](./2026-05-03-slice-2.2-jobs-frontend.md) | ✅ Complete |
 | 2.3 | AI Foundation | [2026-05-03-slice-2.3-ai-foundation.md](./2026-05-03-slice-2.3-ai-foundation.md) | ✅ Complete |
-| 2.4 | Resume Upload + Parse | [2026-05-03-slice-2.4-resume-upload-parse.md](./2026-05-03-slice-2.4-resume-upload-parse.md) | 📝 Plan ready |
-| 2.5 | Profile Scoring + Score UI Components | _to be written_ | ⏳ Not started |
+| 2.4 | Resume Upload + Parse | [2026-05-03-slice-2.4-resume-upload-parse.md](./2026-05-03-slice-2.4-resume-upload-parse.md) | ✅ Complete |
+| 2.5 | Profile Scoring + Score UI Components | [2026-05-03-slice-2.5-profile-scoring-ui.md](./2026-05-03-slice-2.5-profile-scoring-ui.md) | 📝 Plan ready |
 | 2.6 | Match Scoring on Apply | _to be written_ | ⏳ Not started |
 | 2.7 | Bias Check + Job Publishing | _to be written_ | ⏳ Not started |
 | 2.8 | Day 2 Polish | _to be written_ | ⏳ Not started |

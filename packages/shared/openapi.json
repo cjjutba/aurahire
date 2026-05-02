@@ -963,6 +963,214 @@
         ]
       }
     },
+    "/api/v1/resumes/upload": {
+      "post": {
+        "operationId": "ResumesController_upload_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeResponseEnvelopeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported file type or too large"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload a resume PDF/DOCX and parse it via AI",
+        "tags": [
+          "resumes"
+        ]
+      }
+    },
+    "/api/v1/resumes/mine": {
+      "get": {
+        "operationId": "ResumesController_listMine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my resumes",
+        "tags": [
+          "resumes"
+        ]
+      }
+    },
+    "/api/v1/resumes/{id}": {
+      "get": {
+        "operationId": "ResumesController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeResponseEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a resume by id (own or admin)",
+        "tags": [
+          "resumes"
+        ]
+      },
+      "delete": {
+        "operationId": "ResumesController_delete_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a resume",
+        "tags": [
+          "resumes"
+        ]
+      }
+    },
+    "/api/v1/resumes/{id}/set-default": {
+      "post": {
+        "operationId": "ResumesController_setDefault_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeResponseEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set this resume as default for applications",
+        "tags": [
+          "resumes"
+        ]
+      }
+    },
+    "/api/v1/resumes/{id}/download": {
+      "get": {
+        "operationId": "ResumesController_download_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignedUrlResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a 1-hour signed URL to download the resume PDF",
+        "tags": [
+          "resumes"
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -2160,6 +2368,123 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "ResumeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "candidateId": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "storagePath": {
+            "type": "string"
+          },
+          "rawText": {
+            "type": "object",
+            "nullable": true
+          },
+          "parsedData": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "parseStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "parsing",
+              "parsed",
+              "failed"
+            ]
+          },
+          "parseError": {
+            "type": "object",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "candidateId",
+          "filename",
+          "mimeType",
+          "sizeBytes",
+          "storagePath",
+          "parsedData",
+          "parseStatus",
+          "isDefault",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ResumeResponseEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ResumeResponseDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ResumeListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResumeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "SignedUrlPayloadDto": {
+        "type": "object",
+        "properties": {
+          "signedUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "signedUrl",
+          "expiresAt"
+        ]
+      },
+      "SignedUrlResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SignedUrlPayloadDto"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "SignupCandidateDto": {

@@ -7,6 +7,7 @@ import { VersioningType } from "@nestjs/common";
 import { Logger } from "nestjs-pino";
 import { ZodValidationPipe } from "nestjs-zod";
 import helmet from "@fastify/helmet";
+import multipart from "@fastify/multipart";
 
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
@@ -29,6 +30,16 @@ async function bootstrap() {
         imgSrc: [`'self'`, "data:", "validator.swagger.io"],
         scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
       },
+    },
+  });
+
+  // Multipart (for resume upload)
+  await app.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB
+      files: 1,
+      fieldNameSize: 100,
+      fieldSize: 1024,
     },
   });
 

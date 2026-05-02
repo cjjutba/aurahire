@@ -750,6 +750,63 @@ export interface JobListResponseDto {
   meta: PaginationMetaDto;
 }
 
+/**
+ * @nullable
+ */
+export type ResumeResponseDtoRawText = { [key: string]: unknown } | null;
+
+export type ResumeResponseDtoParsedData = { [key: string]: unknown };
+
+export type ResumeResponseDtoParseStatus =
+  (typeof ResumeResponseDtoParseStatus)[keyof typeof ResumeResponseDtoParseStatus];
+
+export const ResumeResponseDtoParseStatus = {
+  pending: "pending",
+  parsing: "parsing",
+  parsed: "parsed",
+  failed: "failed",
+} as const;
+
+/**
+ * @nullable
+ */
+export type ResumeResponseDtoParseError = { [key: string]: unknown } | null;
+
+export interface ResumeResponseDto {
+  id: string;
+  candidateId: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  storagePath: string;
+  /** @nullable */
+  rawText?: ResumeResponseDtoRawText;
+  parsedData: ResumeResponseDtoParsedData;
+  parseStatus: ResumeResponseDtoParseStatus;
+  /** @nullable */
+  parseError?: ResumeResponseDtoParseError;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ResumeResponseEnvelopeDto {
+  data: ResumeResponseDto;
+}
+
+export interface ResumeListResponseDto {
+  data: ResumeResponseDto[];
+}
+
+export interface SignedUrlPayloadDto {
+  signedUrl: string;
+  expiresAt: string;
+}
+
+export interface SignedUrlResponseDto {
+  data: SignedUrlPayloadDto;
+}
+
 export interface SignupCandidateDto {
   /**
    * @minLength 2
@@ -1053,6 +1110,10 @@ export const JobsControllerListForCandidateV1Status = {
   archived: "archived",
   closed: "closed",
 } as const;
+
+export type ResumesControllerUploadV1Body = {
+  file?: Blob;
+};
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -3924,6 +3985,885 @@ export function useJobsControllerGetForCandidateV1<
     id,
     options,
   );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Upload a resume PDF/DOCX and parse it via AI
+ */
+export type resumesControllerUploadV1Response201 = {
+  data: ResumeResponseEnvelopeDto;
+  status: 201;
+};
+
+export type resumesControllerUploadV1Response400 = {
+  data: void;
+  status: 400;
+};
+
+export type resumesControllerUploadV1ResponseSuccess =
+  resumesControllerUploadV1Response201 & {
+    headers: Headers;
+  };
+export type resumesControllerUploadV1ResponseError =
+  resumesControllerUploadV1Response400 & {
+    headers: Headers;
+  };
+
+export type resumesControllerUploadV1Response =
+  | resumesControllerUploadV1ResponseSuccess
+  | resumesControllerUploadV1ResponseError;
+
+export const getResumesControllerUploadV1Url = () => {
+  return `/api/v1/resumes/upload`;
+};
+
+export const resumesControllerUploadV1 = async (
+  resumesControllerUploadV1Body: ResumesControllerUploadV1Body,
+  options?: RequestInit,
+): Promise<resumesControllerUploadV1Response> => {
+  const formData = new FormData();
+  if (resumesControllerUploadV1Body.file !== undefined) {
+    formData.append(`file`, resumesControllerUploadV1Body.file);
+  }
+
+  return fetcher<resumesControllerUploadV1Response>(
+    getResumesControllerUploadV1Url(),
+    {
+      ...options,
+      method: "POST",
+      body: formData,
+    },
+  );
+};
+
+export const getResumesControllerUploadV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resumesControllerUploadV1>>,
+    TError,
+    { data: ResumesControllerUploadV1Body },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resumesControllerUploadV1>>,
+  TError,
+  { data: ResumesControllerUploadV1Body },
+  TContext
+> => {
+  const mutationKey = ["resumesControllerUploadV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resumesControllerUploadV1>>,
+    { data: ResumesControllerUploadV1Body }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return resumesControllerUploadV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResumesControllerUploadV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof resumesControllerUploadV1>>
+>;
+export type ResumesControllerUploadV1MutationBody =
+  ResumesControllerUploadV1Body;
+export type ResumesControllerUploadV1MutationError = void;
+
+/**
+ * @summary Upload a resume PDF/DOCX and parse it via AI
+ */
+export const useResumesControllerUploadV1 = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof resumesControllerUploadV1>>,
+      TError,
+      { data: ResumesControllerUploadV1Body },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof resumesControllerUploadV1>>,
+  TError,
+  { data: ResumesControllerUploadV1Body },
+  TContext
+> => {
+  return useMutation(
+    getResumesControllerUploadV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary List my resumes
+ */
+export type resumesControllerListMineV1Response200 = {
+  data: ResumeListResponseDto;
+  status: 200;
+};
+
+export type resumesControllerListMineV1ResponseSuccess =
+  resumesControllerListMineV1Response200 & {
+    headers: Headers;
+  };
+export type resumesControllerListMineV1Response =
+  resumesControllerListMineV1ResponseSuccess;
+
+export const getResumesControllerListMineV1Url = () => {
+  return `/api/v1/resumes/mine`;
+};
+
+export const resumesControllerListMineV1 = async (
+  options?: RequestInit,
+): Promise<resumesControllerListMineV1Response> => {
+  return fetcher<resumesControllerListMineV1Response>(
+    getResumesControllerListMineV1Url(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getResumesControllerListMineV1QueryKey = () => {
+  return [`/api/v1/resumes/mine`] as const;
+};
+
+export const getResumesControllerListMineV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getResumesControllerListMineV1QueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof resumesControllerListMineV1>>
+  > = ({ signal }) =>
+    resumesControllerListMineV1({ signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ResumesControllerListMineV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof resumesControllerListMineV1>>
+>;
+export type ResumesControllerListMineV1QueryError = unknown;
+
+export function useResumesControllerListMineV1<
+  TData = Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+          TError,
+          Awaited<ReturnType<typeof resumesControllerListMineV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useResumesControllerListMineV1<
+  TData = Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+          TError,
+          Awaited<ReturnType<typeof resumesControllerListMineV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useResumesControllerListMineV1<
+  TData = Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List my resumes
+ */
+
+export function useResumesControllerListMineV1<
+  TData = Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerListMineV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getResumesControllerListMineV1QueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a resume by id (own or admin)
+ */
+export type resumesControllerGetByIdV1Response200 = {
+  data: ResumeResponseEnvelopeDto;
+  status: 200;
+};
+
+export type resumesControllerGetByIdV1ResponseSuccess =
+  resumesControllerGetByIdV1Response200 & {
+    headers: Headers;
+  };
+export type resumesControllerGetByIdV1Response =
+  resumesControllerGetByIdV1ResponseSuccess;
+
+export const getResumesControllerGetByIdV1Url = (id: string) => {
+  return `/api/v1/resumes/${id}`;
+};
+
+export const resumesControllerGetByIdV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<resumesControllerGetByIdV1Response> => {
+  return fetcher<resumesControllerGetByIdV1Response>(
+    getResumesControllerGetByIdV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getResumesControllerGetByIdV1QueryKey = (id: string) => {
+  return [`/api/v1/resumes/${id}`] as const;
+};
+
+export const getResumesControllerGetByIdV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getResumesControllerGetByIdV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof resumesControllerGetByIdV1>>
+  > = ({ signal }) =>
+    resumesControllerGetByIdV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ResumesControllerGetByIdV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof resumesControllerGetByIdV1>>
+>;
+export type ResumesControllerGetByIdV1QueryError = unknown;
+
+export function useResumesControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof resumesControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useResumesControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof resumesControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useResumesControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get a resume by id (own or admin)
+ */
+
+export function useResumesControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getResumesControllerGetByIdV1QueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Delete a resume
+ */
+export type resumesControllerDeleteV1Response204 = {
+  data: void;
+  status: 204;
+};
+
+export type resumesControllerDeleteV1ResponseSuccess =
+  resumesControllerDeleteV1Response204 & {
+    headers: Headers;
+  };
+export type resumesControllerDeleteV1Response =
+  resumesControllerDeleteV1ResponseSuccess;
+
+export const getResumesControllerDeleteV1Url = (id: string) => {
+  return `/api/v1/resumes/${id}`;
+};
+
+export const resumesControllerDeleteV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<resumesControllerDeleteV1Response> => {
+  return fetcher<resumesControllerDeleteV1Response>(
+    getResumesControllerDeleteV1Url(id),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getResumesControllerDeleteV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resumesControllerDeleteV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resumesControllerDeleteV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["resumesControllerDeleteV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resumesControllerDeleteV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return resumesControllerDeleteV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResumesControllerDeleteV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof resumesControllerDeleteV1>>
+>;
+
+export type ResumesControllerDeleteV1MutationError = unknown;
+
+/**
+ * @summary Delete a resume
+ */
+export const useResumesControllerDeleteV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof resumesControllerDeleteV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof resumesControllerDeleteV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getResumesControllerDeleteV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Set this resume as default for applications
+ */
+export type resumesControllerSetDefaultV1Response200 = {
+  data: ResumeResponseEnvelopeDto;
+  status: 200;
+};
+
+export type resumesControllerSetDefaultV1ResponseSuccess =
+  resumesControllerSetDefaultV1Response200 & {
+    headers: Headers;
+  };
+export type resumesControllerSetDefaultV1Response =
+  resumesControllerSetDefaultV1ResponseSuccess;
+
+export const getResumesControllerSetDefaultV1Url = (id: string) => {
+  return `/api/v1/resumes/${id}/set-default`;
+};
+
+export const resumesControllerSetDefaultV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<resumesControllerSetDefaultV1Response> => {
+  return fetcher<resumesControllerSetDefaultV1Response>(
+    getResumesControllerSetDefaultV1Url(id),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getResumesControllerSetDefaultV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resumesControllerSetDefaultV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resumesControllerSetDefaultV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["resumesControllerSetDefaultV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resumesControllerSetDefaultV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return resumesControllerSetDefaultV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResumesControllerSetDefaultV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof resumesControllerSetDefaultV1>>
+>;
+
+export type ResumesControllerSetDefaultV1MutationError = unknown;
+
+/**
+ * @summary Set this resume as default for applications
+ */
+export const useResumesControllerSetDefaultV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof resumesControllerSetDefaultV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof resumesControllerSetDefaultV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getResumesControllerSetDefaultV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Get a 1-hour signed URL to download the resume PDF
+ */
+export type resumesControllerDownloadV1Response200 = {
+  data: SignedUrlResponseDto;
+  status: 200;
+};
+
+export type resumesControllerDownloadV1ResponseSuccess =
+  resumesControllerDownloadV1Response200 & {
+    headers: Headers;
+  };
+export type resumesControllerDownloadV1Response =
+  resumesControllerDownloadV1ResponseSuccess;
+
+export const getResumesControllerDownloadV1Url = (id: string) => {
+  return `/api/v1/resumes/${id}/download`;
+};
+
+export const resumesControllerDownloadV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<resumesControllerDownloadV1Response> => {
+  return fetcher<resumesControllerDownloadV1Response>(
+    getResumesControllerDownloadV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getResumesControllerDownloadV1QueryKey = (id: string) => {
+  return [`/api/v1/resumes/${id}/download`] as const;
+};
+
+export const getResumesControllerDownloadV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getResumesControllerDownloadV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof resumesControllerDownloadV1>>
+  > = ({ signal }) =>
+    resumesControllerDownloadV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ResumesControllerDownloadV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof resumesControllerDownloadV1>>
+>;
+export type ResumesControllerDownloadV1QueryError = unknown;
+
+export function useResumesControllerDownloadV1<
+  TData = Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+          TError,
+          Awaited<ReturnType<typeof resumesControllerDownloadV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useResumesControllerDownloadV1<
+  TData = Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+          TError,
+          Awaited<ReturnType<typeof resumesControllerDownloadV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useResumesControllerDownloadV1<
+  TData = Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get a 1-hour signed URL to download the resume PDF
+ */
+
+export function useResumesControllerDownloadV1<
+  TData = Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumesControllerDownloadV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getResumesControllerDownloadV1QueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

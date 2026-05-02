@@ -10,6 +10,7 @@ import {
   type CandidatePersonalInfo,
 } from "@aurahire/shared";
 import { useCandidateProfilesControllerUpdatePersonalV1 } from "@aurahire/shared";
+import { AiSuggestedBadge } from "@/components/ai/ai-suggested-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,9 +25,10 @@ import {
 
 interface Props {
   defaults: CandidatePersonalInfo;
+  aiSuggestedFields?: Record<string, boolean>;
 }
 
-export function CandidatePersonalInfoForm({ defaults }: Props) {
+export function CandidatePersonalInfoForm({ defaults, aiSuggestedFields = {} }: Props) {
   const router = useRouter();
 
   const form = useForm<CandidatePersonalInfo>({
@@ -67,7 +69,10 @@ export function CandidatePersonalInfoForm({ defaults }: Props) {
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel className="flex items-center gap-2">
+                Phone
+                {aiSuggestedFields.phone && <AiSuggestedBadge />}
+              </FormLabel>
               <FormControl>
                 <Input type="tel" autoComplete="tel" {...field} />
               </FormControl>
@@ -97,7 +102,10 @@ export function CandidatePersonalInfoForm({ defaults }: Props) {
           name="summary"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Professional Summary</FormLabel>
+              <FormLabel className="flex items-center gap-2">
+                Professional Summary
+                {aiSuggestedFields.summary && <AiSuggestedBadge />}
+              </FormLabel>
               <FormControl>
                 <Textarea rows={3} {...field} value={field.value ?? ""} />
               </FormControl>
@@ -111,7 +119,10 @@ export function CandidatePersonalInfoForm({ defaults }: Props) {
             name="locationCity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>City</FormLabel>
+                <FormLabel className="flex items-center gap-2">
+                  City
+                  {aiSuggestedFields.locationCity && <AiSuggestedBadge />}
+                </FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value ?? ""} />
                 </FormControl>
@@ -137,7 +148,10 @@ export function CandidatePersonalInfoForm({ defaults }: Props) {
             name="locationCountry"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Country</FormLabel>
+                <FormLabel className="flex items-center gap-2">
+                  Country
+                  {aiSuggestedFields.locationCountry && <AiSuggestedBadge />}
+                </FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value ?? ""} />
                 </FormControl>

@@ -8,6 +8,7 @@ import { DbModule } from "./db";
 import { AuditModule } from "./audit";
 import { EmailModule } from "./email";
 import { AiModule } from "./ai";
+import { StorageModule } from "./storage";
 import { SupabaseAdminModule } from "./lib/supabase-admin";
 import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -15,6 +16,7 @@ import { ProfilesModule } from "./modules/profiles/profiles.module";
 import { RecruiterProfilesModule } from "./modules/recruiter-profiles/recruiter-profiles.module";
 import { CandidateProfilesModule } from "./modules/candidate-profiles/candidate-profiles.module";
 import { JobsModule } from "./modules/jobs/jobs.module";
+import { ResumesModule } from "./modules/resumes/resumes.module";
 import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
@@ -39,11 +41,13 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     AuditModule,
     EmailModule,
     AiModule,
+    StorageModule,
     SupabaseAdminModule,
     ProfilesModule,
     RecruiterProfilesModule,
     CandidateProfilesModule,
     JobsModule,
+    ResumesModule,
     HealthModule,
     AuthModule,
   ],
