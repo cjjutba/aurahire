@@ -963,6 +963,245 @@
         ]
       }
     },
+    "/api/v1/bias/check": {
+      "post": {
+        "operationId": "BiasController_check_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckBiasDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckBiasResponseDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate-limited (max 10 calls/min/user)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stateless bias scan — does NOT persist; used by debounced editor preview",
+        "tags": [
+          "bias"
+        ]
+      }
+    },
+    "/api/v1/bias/jobs/{jobId}/scan": {
+      "post": {
+        "operationId": "BiasController_scanJob_v1",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanJobBiasEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found OR not owned"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Run bias scan on a job's persisted description; replaces existing 'flagged' rows",
+        "tags": [
+          "bias"
+        ]
+      }
+    },
+    "/api/v1/bias/jobs/{jobId}/flags": {
+      "get": {
+        "operationId": "BiasController_listForJob_v1",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BiasFlagsListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List persisted bias flags for a job (any status)",
+        "tags": [
+          "bias"
+        ]
+      }
+    },
+    "/api/v1/bias/jobs/{jobId}/flags/{flagId}/override": {
+      "post": {
+        "operationId": "BiasController_override_v1",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flagId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverrideBiasFlagDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BiasFlagEnvelopeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Flag not in 'flagged' status"
+          },
+          "404": {
+            "description": "Job/flag not found OR not owned"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Override a bias flag with a written reason (≥10 chars); status → overridden",
+        "tags": [
+          "bias"
+        ]
+      }
+    },
+    "/api/v1/scoring/profile/compute": {
+      "post": {
+        "description": "Triggers a fresh AI scoring run. Rate-limited to 1 per 60 seconds via manual check on profile_scores.created_at (no Throttler module registered yet). Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
+        "operationId": "ScoringController_computeProfileScore_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Score computed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileScoreEnvelopeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing prerequisite (resume, parse, or preferences)"
+          },
+          "429": {
+            "description": "Rate-limited; try again in a minute"
+          },
+          "503": {
+            "description": "AI service temporarily unavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Compute the candidate's Profile Score from default resume + preferences",
+        "tags": [
+          "scoring"
+        ]
+      }
+    },
+    "/api/v1/scoring/profile/me": {
+      "get": {
+        "operationId": "ScoringController_getProfileScoreMe_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileScoreEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the candidate's most recent Profile Score (or null if none)",
+        "tags": [
+          "scoring"
+        ]
+      }
+    },
     "/api/v1/resumes/upload": {
       "post": {
         "operationId": "ResumesController_upload_v1",
@@ -1168,70 +1407,6 @@
         "summary": "Get a 1-hour signed URL to download the resume PDF",
         "tags": [
           "resumes"
-        ]
-      }
-    },
-    "/api/v1/scoring/profile/compute": {
-      "post": {
-        "description": "Triggers a fresh AI scoring run. Rate-limited to 1 per 60 seconds via manual check on profile_scores.created_at (no Throttler module registered yet). Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
-        "operationId": "ScoringController_computeProfileScore_v1",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "Score computed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProfileScoreEnvelopeDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Missing prerequisite (resume, parse, or preferences)"
-          },
-          "429": {
-            "description": "Rate-limited; try again in a minute"
-          },
-          "503": {
-            "description": "AI service temporarily unavailable"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Compute the candidate's Profile Score from default resume + preferences",
-        "tags": [
-          "scoring"
-        ]
-      }
-    },
-    "/api/v1/scoring/profile/me": {
-      "get": {
-        "operationId": "ScoringController_getProfileScoreMe_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProfileScoreEnvelopeDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get the candidate's most recent Profile Score (or null if none)",
-        "tags": [
-          "scoring"
         ]
       }
     },
@@ -2742,90 +2917,198 @@
           "meta"
         ]
       },
-      "ResumeResponseDto": {
+      "CheckBiasDto": {
         "type": "object",
         "properties": {
-          "id": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "customFlaggedTermsOverride": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "CheckBiasFlagPreviewDto": {
+        "type": "object",
+        "properties": {
+          "term": {
             "type": "string"
           },
-          "candidateId": {
+          "category": {
             "type": "string"
           },
-          "filename": {
-            "type": "string"
-          },
-          "mimeType": {
-            "type": "string"
-          },
-          "sizeBytes": {
-            "type": "number"
-          },
-          "storagePath": {
-            "type": "string"
-          },
-          "rawText": {
-            "type": "object",
-            "nullable": true
-          },
-          "parsedData": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "parseStatus": {
+          "severity": {
             "type": "string",
             "enum": [
-              "pending",
-              "parsing",
-              "parsed",
-              "failed"
+              "high",
+              "medium",
+              "low"
             ]
           },
-          "parseError": {
-            "type": "object",
-            "nullable": true
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "createdAt": {
+          "explanation": {
             "type": "string"
           },
-          "updatedAt": {
+          "suggestion": {
+            "type": "string"
+          },
+          "positionStart": {
+            "type": "number",
+            "nullable": true
+          },
+          "positionEnd": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "term",
+          "category",
+          "severity",
+          "explanation",
+          "suggestion"
+        ]
+      },
+      "CheckBiasResponseBodyDto": {
+        "type": "object",
+        "properties": {
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckBiasFlagPreviewDto"
+            }
+          },
+          "latencyMs": {
+            "type": "number"
+          },
+          "promptVersion": {
+            "type": "string"
+          },
+          "modelUsed": {
             "type": "string"
           }
         },
         "required": [
-          "id",
-          "candidateId",
-          "filename",
-          "mimeType",
-          "sizeBytes",
-          "storagePath",
-          "parsedData",
-          "parseStatus",
-          "isDefault",
-          "createdAt",
-          "updatedAt"
+          "flags",
+          "latencyMs",
+          "promptVersion",
+          "modelUsed"
         ]
       },
-      "ResumeResponseEnvelopeDto": {
+      "CheckBiasResponseDto": {
         "type": "object",
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/ResumeResponseDto"
+            "$ref": "#/components/schemas/CheckBiasResponseBodyDto"
           }
         },
         "required": [
           "data"
         ]
       },
-      "ResumeListResponseDto": {
+      "BiasFlagDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "term": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "gendered",
+              "age-coded",
+              "ableist",
+              "exclusionary",
+              "other"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "suggestion": {
+            "type": "object",
+            "nullable": true
+          },
+          "positionStart": {
+            "type": "number",
+            "nullable": true
+          },
+          "positionEnd": {
+            "type": "number",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "flagged",
+              "overridden",
+              "resolved"
+            ]
+          },
+          "overrideReason": {
+            "type": "object",
+            "nullable": true
+          },
+          "overriddenBy": {
+            "type": "object",
+            "nullable": true
+          },
+          "overriddenAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "promptVersion": {
+            "type": "string"
+          },
+          "modelUsed": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "explanation": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "term",
+          "category",
+          "status",
+          "promptVersion",
+          "modelUsed",
+          "createdAt"
+        ]
+      },
+      "ScanJobBiasEnvelopeDto": {
         "type": "object",
         "properties": {
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ResumeResponseDto"
+              "$ref": "#/components/schemas/BiasFlagDto"
             }
           }
         },
@@ -2833,26 +3116,38 @@
           "data"
         ]
       },
-      "SignedUrlPayloadDto": {
-        "type": "object",
-        "properties": {
-          "signedUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "signedUrl",
-          "expiresAt"
-        ]
-      },
-      "SignedUrlResponseDto": {
+      "BiasFlagsListEnvelopeDto": {
         "type": "object",
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/SignedUrlPayloadDto"
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BiasFlagDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "OverrideBiasFlagDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "BiasFlagEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BiasFlagDto"
           }
         },
         "required": [
@@ -3013,6 +3308,123 @@
                 "$ref": "#/components/schemas/ProfileScoreDto"
               }
             ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ResumeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "candidateId": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "storagePath": {
+            "type": "string"
+          },
+          "rawText": {
+            "type": "object",
+            "nullable": true
+          },
+          "parsedData": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "parseStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "parsing",
+              "parsed",
+              "failed"
+            ]
+          },
+          "parseError": {
+            "type": "object",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "candidateId",
+          "filename",
+          "mimeType",
+          "sizeBytes",
+          "storagePath",
+          "parsedData",
+          "parseStatus",
+          "isDefault",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ResumeResponseEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ResumeResponseDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ResumeListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResumeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "SignedUrlPayloadDto": {
+        "type": "object",
+        "properties": {
+          "signedUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "signedUrl",
+          "expiresAt"
+        ]
+      },
+      "SignedUrlResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SignedUrlPayloadDto"
           }
         },
         "required": [

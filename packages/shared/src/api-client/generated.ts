@@ -750,61 +750,151 @@ export interface JobListResponseDto {
   meta: PaginationMetaDto;
 }
 
-/**
- * @nullable
- */
-export type ResumeResponseDtoRawText = { [key: string]: unknown } | null;
+export interface CheckBiasDto {
+  /**
+   * @minLength 1
+   * @maxLength 20000
+   */
+  text: string;
+  /** @maxItems 50 */
+  customFlaggedTermsOverride?: string[];
+}
 
-export type ResumeResponseDtoParsedData = { [key: string]: unknown };
+export type CheckBiasFlagPreviewDtoSeverity =
+  (typeof CheckBiasFlagPreviewDtoSeverity)[keyof typeof CheckBiasFlagPreviewDtoSeverity];
 
-export type ResumeResponseDtoParseStatus =
-  (typeof ResumeResponseDtoParseStatus)[keyof typeof ResumeResponseDtoParseStatus];
+export const CheckBiasFlagPreviewDtoSeverity = {
+  high: "high",
+  medium: "medium",
+  low: "low",
+} as const;
 
-export const ResumeResponseDtoParseStatus = {
-  pending: "pending",
-  parsing: "parsing",
-  parsed: "parsed",
-  failed: "failed",
+export interface CheckBiasFlagPreviewDto {
+  term: string;
+  category: string;
+  severity: CheckBiasFlagPreviewDtoSeverity;
+  explanation: string;
+  suggestion: string;
+  /** @nullable */
+  positionStart?: number | null;
+  /** @nullable */
+  positionEnd?: number | null;
+}
+
+export interface CheckBiasResponseBodyDto {
+  flags: CheckBiasFlagPreviewDto[];
+  latencyMs: number;
+  promptVersion: string;
+  modelUsed: string;
+}
+
+export interface CheckBiasResponseDto {
+  data: CheckBiasResponseBodyDto;
+}
+
+export type BiasFlagDtoCategory =
+  (typeof BiasFlagDtoCategory)[keyof typeof BiasFlagDtoCategory];
+
+export const BiasFlagDtoCategory = {
+  gendered: "gendered",
+  "age-coded": "age-coded",
+  ableist: "ableist",
+  exclusionary: "exclusionary",
+  other: "other",
 } as const;
 
 /**
  * @nullable
  */
-export type ResumeResponseDtoParseError = { [key: string]: unknown } | null;
+export type BiasFlagDtoSeverity =
+  | (typeof BiasFlagDtoSeverity)[keyof typeof BiasFlagDtoSeverity]
+  | null;
 
-export interface ResumeResponseDto {
+export const BiasFlagDtoSeverity = {
+  high: "high",
+  medium: "medium",
+  low: "low",
+} as const;
+
+/**
+ * @nullable
+ */
+export type BiasFlagDtoSuggestion = { [key: string]: unknown } | null;
+
+export type BiasFlagDtoStatus =
+  (typeof BiasFlagDtoStatus)[keyof typeof BiasFlagDtoStatus];
+
+export const BiasFlagDtoStatus = {
+  flagged: "flagged",
+  overridden: "overridden",
+  resolved: "resolved",
+} as const;
+
+/**
+ * @nullable
+ */
+export type BiasFlagDtoOverrideReason = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type BiasFlagDtoOverriddenBy = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type BiasFlagDtoOverriddenAt = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type BiasFlagDtoExplanation = { [key: string]: unknown } | null;
+
+export interface BiasFlagDto {
   id: string;
-  candidateId: string;
-  filename: string;
-  mimeType: string;
-  sizeBytes: number;
-  storagePath: string;
+  jobId: string;
+  term: string;
+  category: BiasFlagDtoCategory;
   /** @nullable */
-  rawText?: ResumeResponseDtoRawText;
-  parsedData: ResumeResponseDtoParsedData;
-  parseStatus: ResumeResponseDtoParseStatus;
+  severity?: BiasFlagDtoSeverity;
   /** @nullable */
-  parseError?: ResumeResponseDtoParseError;
-  isDefault: boolean;
+  suggestion?: BiasFlagDtoSuggestion;
+  /** @nullable */
+  positionStart?: number | null;
+  /** @nullable */
+  positionEnd?: number | null;
+  status: BiasFlagDtoStatus;
+  /** @nullable */
+  overrideReason?: BiasFlagDtoOverrideReason;
+  /** @nullable */
+  overriddenBy?: BiasFlagDtoOverriddenBy;
+  /** @nullable */
+  overriddenAt?: BiasFlagDtoOverriddenAt;
+  promptVersion: string;
+  modelUsed: string;
   createdAt: string;
-  updatedAt: string;
+  /** @nullable */
+  explanation?: BiasFlagDtoExplanation;
 }
 
-export interface ResumeResponseEnvelopeDto {
-  data: ResumeResponseDto;
+export interface ScanJobBiasEnvelopeDto {
+  data: BiasFlagDto[];
 }
 
-export interface ResumeListResponseDto {
-  data: ResumeResponseDto[];
+export interface BiasFlagsListEnvelopeDto {
+  data: BiasFlagDto[];
 }
 
-export interface SignedUrlPayloadDto {
-  signedUrl: string;
-  expiresAt: string;
+export interface OverrideBiasFlagDto {
+  /**
+   * @minLength 10
+   * @maxLength 500
+   */
+  reason: string;
 }
 
-export interface SignedUrlResponseDto {
-  data: SignedUrlPayloadDto;
+export interface BiasFlagEnvelopeDto {
+  data: BiasFlagDto;
 }
 
 export type ScoreEvidenceDtoRelevance =
@@ -871,6 +961,63 @@ export interface ProfileScoreDto {
 
 export interface ProfileScoreEnvelopeDto {
   data: ProfileScoreDto | null;
+}
+
+/**
+ * @nullable
+ */
+export type ResumeResponseDtoRawText = { [key: string]: unknown } | null;
+
+export type ResumeResponseDtoParsedData = { [key: string]: unknown };
+
+export type ResumeResponseDtoParseStatus =
+  (typeof ResumeResponseDtoParseStatus)[keyof typeof ResumeResponseDtoParseStatus];
+
+export const ResumeResponseDtoParseStatus = {
+  pending: "pending",
+  parsing: "parsing",
+  parsed: "parsed",
+  failed: "failed",
+} as const;
+
+/**
+ * @nullable
+ */
+export type ResumeResponseDtoParseError = { [key: string]: unknown } | null;
+
+export interface ResumeResponseDto {
+  id: string;
+  candidateId: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  storagePath: string;
+  /** @nullable */
+  rawText?: ResumeResponseDtoRawText;
+  parsedData: ResumeResponseDtoParsedData;
+  parseStatus: ResumeResponseDtoParseStatus;
+  /** @nullable */
+  parseError?: ResumeResponseDtoParseError;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ResumeResponseEnvelopeDto {
+  data: ResumeResponseDto;
+}
+
+export interface ResumeListResponseDto {
+  data: ResumeResponseDto[];
+}
+
+export interface SignedUrlPayloadDto {
+  signedUrl: string;
+  expiresAt: string;
+}
+
+export interface SignedUrlResponseDto {
+  data: SignedUrlPayloadDto;
 }
 
 export interface ApplyToJobDto {
@@ -4260,6 +4407,852 @@ export function useJobsControllerGetForCandidateV1<
 }
 
 /**
+ * @summary Stateless bias scan — does NOT persist; used by debounced editor preview
+ */
+export type biasControllerCheckV1Response200 = {
+  data: CheckBiasResponseDto;
+  status: 200;
+};
+
+export type biasControllerCheckV1Response429 = {
+  data: void;
+  status: 429;
+};
+
+export type biasControllerCheckV1ResponseSuccess =
+  biasControllerCheckV1Response200 & {
+    headers: Headers;
+  };
+export type biasControllerCheckV1ResponseError =
+  biasControllerCheckV1Response429 & {
+    headers: Headers;
+  };
+
+export type biasControllerCheckV1Response =
+  | biasControllerCheckV1ResponseSuccess
+  | biasControllerCheckV1ResponseError;
+
+export const getBiasControllerCheckV1Url = () => {
+  return `/api/v1/bias/check`;
+};
+
+export const biasControllerCheckV1 = async (
+  checkBiasDto: CheckBiasDto,
+  options?: RequestInit,
+): Promise<biasControllerCheckV1Response> => {
+  return fetcher<biasControllerCheckV1Response>(getBiasControllerCheckV1Url(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(checkBiasDto),
+  });
+};
+
+export const getBiasControllerCheckV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof biasControllerCheckV1>>,
+    TError,
+    { data: CheckBiasDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof biasControllerCheckV1>>,
+  TError,
+  { data: CheckBiasDto },
+  TContext
+> => {
+  const mutationKey = ["biasControllerCheckV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof biasControllerCheckV1>>,
+    { data: CheckBiasDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return biasControllerCheckV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BiasControllerCheckV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof biasControllerCheckV1>>
+>;
+export type BiasControllerCheckV1MutationBody = CheckBiasDto;
+export type BiasControllerCheckV1MutationError = void;
+
+/**
+ * @summary Stateless bias scan — does NOT persist; used by debounced editor preview
+ */
+export const useBiasControllerCheckV1 = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof biasControllerCheckV1>>,
+      TError,
+      { data: CheckBiasDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof biasControllerCheckV1>>,
+  TError,
+  { data: CheckBiasDto },
+  TContext
+> => {
+  return useMutation(
+    getBiasControllerCheckV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Run bias scan on a job's persisted description; replaces existing 'flagged' rows
+ */
+export type biasControllerScanJobV1Response200 = {
+  data: ScanJobBiasEnvelopeDto;
+  status: 200;
+};
+
+export type biasControllerScanJobV1Response404 = {
+  data: void;
+  status: 404;
+};
+
+export type biasControllerScanJobV1ResponseSuccess =
+  biasControllerScanJobV1Response200 & {
+    headers: Headers;
+  };
+export type biasControllerScanJobV1ResponseError =
+  biasControllerScanJobV1Response404 & {
+    headers: Headers;
+  };
+
+export type biasControllerScanJobV1Response =
+  | biasControllerScanJobV1ResponseSuccess
+  | biasControllerScanJobV1ResponseError;
+
+export const getBiasControllerScanJobV1Url = (jobId: string) => {
+  return `/api/v1/bias/jobs/${jobId}/scan`;
+};
+
+export const biasControllerScanJobV1 = async (
+  jobId: string,
+  options?: RequestInit,
+): Promise<biasControllerScanJobV1Response> => {
+  return fetcher<biasControllerScanJobV1Response>(
+    getBiasControllerScanJobV1Url(jobId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getBiasControllerScanJobV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof biasControllerScanJobV1>>,
+    TError,
+    { jobId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof biasControllerScanJobV1>>,
+  TError,
+  { jobId: string },
+  TContext
+> => {
+  const mutationKey = ["biasControllerScanJobV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof biasControllerScanJobV1>>,
+    { jobId: string }
+  > = (props) => {
+    const { jobId } = props ?? {};
+
+    return biasControllerScanJobV1(jobId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BiasControllerScanJobV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof biasControllerScanJobV1>>
+>;
+
+export type BiasControllerScanJobV1MutationError = void;
+
+/**
+ * @summary Run bias scan on a job's persisted description; replaces existing 'flagged' rows
+ */
+export const useBiasControllerScanJobV1 = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof biasControllerScanJobV1>>,
+      TError,
+      { jobId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof biasControllerScanJobV1>>,
+  TError,
+  { jobId: string },
+  TContext
+> => {
+  return useMutation(
+    getBiasControllerScanJobV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary List persisted bias flags for a job (any status)
+ */
+export type biasControllerListForJobV1Response200 = {
+  data: BiasFlagsListEnvelopeDto;
+  status: 200;
+};
+
+export type biasControllerListForJobV1ResponseSuccess =
+  biasControllerListForJobV1Response200 & {
+    headers: Headers;
+  };
+export type biasControllerListForJobV1Response =
+  biasControllerListForJobV1ResponseSuccess;
+
+export const getBiasControllerListForJobV1Url = (jobId: string) => {
+  return `/api/v1/bias/jobs/${jobId}/flags`;
+};
+
+export const biasControllerListForJobV1 = async (
+  jobId: string,
+  options?: RequestInit,
+): Promise<biasControllerListForJobV1Response> => {
+  return fetcher<biasControllerListForJobV1Response>(
+    getBiasControllerListForJobV1Url(jobId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getBiasControllerListForJobV1QueryKey = (jobId: string) => {
+  return [`/api/v1/bias/jobs/${jobId}/flags`] as const;
+};
+
+export const getBiasControllerListForJobV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+  TError = unknown,
+>(
+  jobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getBiasControllerListForJobV1QueryKey(jobId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof biasControllerListForJobV1>>
+  > = ({ signal }) =>
+    biasControllerListForJobV1(jobId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!jobId,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type BiasControllerListForJobV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof biasControllerListForJobV1>>
+>;
+export type BiasControllerListForJobV1QueryError = unknown;
+
+export function useBiasControllerListForJobV1<
+  TData = Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+  TError = unknown,
+>(
+  jobId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+          TError,
+          Awaited<ReturnType<typeof biasControllerListForJobV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useBiasControllerListForJobV1<
+  TData = Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+  TError = unknown,
+>(
+  jobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+          TError,
+          Awaited<ReturnType<typeof biasControllerListForJobV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useBiasControllerListForJobV1<
+  TData = Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+  TError = unknown,
+>(
+  jobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List persisted bias flags for a job (any status)
+ */
+
+export function useBiasControllerListForJobV1<
+  TData = Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+  TError = unknown,
+>(
+  jobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof biasControllerListForJobV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getBiasControllerListForJobV1QueryOptions(
+    jobId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Override a bias flag with a written reason (≥10 chars); status → overridden
+ */
+export type biasControllerOverrideV1Response200 = {
+  data: BiasFlagEnvelopeDto;
+  status: 200;
+};
+
+export type biasControllerOverrideV1Response400 = {
+  data: void;
+  status: 400;
+};
+
+export type biasControllerOverrideV1Response404 = {
+  data: void;
+  status: 404;
+};
+
+export type biasControllerOverrideV1ResponseSuccess =
+  biasControllerOverrideV1Response200 & {
+    headers: Headers;
+  };
+export type biasControllerOverrideV1ResponseError = (
+  | biasControllerOverrideV1Response400
+  | biasControllerOverrideV1Response404
+) & {
+  headers: Headers;
+};
+
+export type biasControllerOverrideV1Response =
+  | biasControllerOverrideV1ResponseSuccess
+  | biasControllerOverrideV1ResponseError;
+
+export const getBiasControllerOverrideV1Url = (
+  jobId: string,
+  flagId: string,
+) => {
+  return `/api/v1/bias/jobs/${jobId}/flags/${flagId}/override`;
+};
+
+export const biasControllerOverrideV1 = async (
+  jobId: string,
+  flagId: string,
+  overrideBiasFlagDto: OverrideBiasFlagDto,
+  options?: RequestInit,
+): Promise<biasControllerOverrideV1Response> => {
+  return fetcher<biasControllerOverrideV1Response>(
+    getBiasControllerOverrideV1Url(jobId, flagId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(overrideBiasFlagDto),
+    },
+  );
+};
+
+export const getBiasControllerOverrideV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof biasControllerOverrideV1>>,
+    TError,
+    { jobId: string; flagId: string; data: OverrideBiasFlagDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof biasControllerOverrideV1>>,
+  TError,
+  { jobId: string; flagId: string; data: OverrideBiasFlagDto },
+  TContext
+> => {
+  const mutationKey = ["biasControllerOverrideV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof biasControllerOverrideV1>>,
+    { jobId: string; flagId: string; data: OverrideBiasFlagDto }
+  > = (props) => {
+    const { jobId, flagId, data } = props ?? {};
+
+    return biasControllerOverrideV1(jobId, flagId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BiasControllerOverrideV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof biasControllerOverrideV1>>
+>;
+export type BiasControllerOverrideV1MutationBody = OverrideBiasFlagDto;
+export type BiasControllerOverrideV1MutationError = void;
+
+/**
+ * @summary Override a bias flag with a written reason (≥10 chars); status → overridden
+ */
+export const useBiasControllerOverrideV1 = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof biasControllerOverrideV1>>,
+      TError,
+      { jobId: string; flagId: string; data: OverrideBiasFlagDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof biasControllerOverrideV1>>,
+  TError,
+  { jobId: string; flagId: string; data: OverrideBiasFlagDto },
+  TContext
+> => {
+  return useMutation(
+    getBiasControllerOverrideV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * Triggers a fresh AI scoring run. Rate-limited to 1 per 60 seconds via manual check on profile_scores.created_at (no Throttler module registered yet). Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.
+ * @summary Compute the candidate's Profile Score from default resume + preferences
+ */
+export type scoringControllerComputeProfileScoreV1Response201 = {
+  data: ProfileScoreEnvelopeDto;
+  status: 201;
+};
+
+export type scoringControllerComputeProfileScoreV1Response400 = {
+  data: void;
+  status: 400;
+};
+
+export type scoringControllerComputeProfileScoreV1Response429 = {
+  data: void;
+  status: 429;
+};
+
+export type scoringControllerComputeProfileScoreV1Response503 = {
+  data: void;
+  status: 503;
+};
+
+export type scoringControllerComputeProfileScoreV1ResponseSuccess =
+  scoringControllerComputeProfileScoreV1Response201 & {
+    headers: Headers;
+  };
+export type scoringControllerComputeProfileScoreV1ResponseError = (
+  | scoringControllerComputeProfileScoreV1Response400
+  | scoringControllerComputeProfileScoreV1Response429
+  | scoringControllerComputeProfileScoreV1Response503
+) & {
+  headers: Headers;
+};
+
+export type scoringControllerComputeProfileScoreV1Response =
+  | scoringControllerComputeProfileScoreV1ResponseSuccess
+  | scoringControllerComputeProfileScoreV1ResponseError;
+
+export const getScoringControllerComputeProfileScoreV1Url = () => {
+  return `/api/v1/scoring/profile/compute`;
+};
+
+export const scoringControllerComputeProfileScoreV1 = async (
+  options?: RequestInit,
+): Promise<scoringControllerComputeProfileScoreV1Response> => {
+  return fetcher<scoringControllerComputeProfileScoreV1Response>(
+    getScoringControllerComputeProfileScoreV1Url(),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getScoringControllerComputeProfileScoreV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["scoringControllerComputeProfileScoreV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
+    void
+  > = () => {
+    return scoringControllerComputeProfileScoreV1(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ScoringControllerComputeProfileScoreV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>
+>;
+
+export type ScoringControllerComputeProfileScoreV1MutationError = void;
+
+/**
+ * @summary Compute the candidate's Profile Score from default resume + preferences
+ */
+export const useScoringControllerComputeProfileScoreV1 = <
+  TError = void,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(
+    getScoringControllerComputeProfileScoreV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Get the candidate's most recent Profile Score (or null if none)
+ */
+export type scoringControllerGetProfileScoreMeV1Response200 = {
+  data: ProfileScoreEnvelopeDto;
+  status: 200;
+};
+
+export type scoringControllerGetProfileScoreMeV1ResponseSuccess =
+  scoringControllerGetProfileScoreMeV1Response200 & {
+    headers: Headers;
+  };
+export type scoringControllerGetProfileScoreMeV1Response =
+  scoringControllerGetProfileScoreMeV1ResponseSuccess;
+
+export const getScoringControllerGetProfileScoreMeV1Url = () => {
+  return `/api/v1/scoring/profile/me`;
+};
+
+export const scoringControllerGetProfileScoreMeV1 = async (
+  options?: RequestInit,
+): Promise<scoringControllerGetProfileScoreMeV1Response> => {
+  return fetcher<scoringControllerGetProfileScoreMeV1Response>(
+    getScoringControllerGetProfileScoreMeV1Url(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getScoringControllerGetProfileScoreMeV1QueryKey = () => {
+  return [`/api/v1/scoring/profile/me`] as const;
+};
+
+export const getScoringControllerGetProfileScoreMeV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getScoringControllerGetProfileScoreMeV1QueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
+  > = ({ signal }) =>
+    scoringControllerGetProfileScoreMeV1({ signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ScoringControllerGetProfileScoreMeV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
+>;
+export type ScoringControllerGetProfileScoreMeV1QueryError = unknown;
+
+export function useScoringControllerGetProfileScoreMeV1<
+  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+          TError,
+          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useScoringControllerGetProfileScoreMeV1<
+  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+          TError,
+          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useScoringControllerGetProfileScoreMeV1<
+  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get the candidate's most recent Profile Score (or null if none)
+ */
+
+export function useScoringControllerGetProfileScoreMeV1<
+  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getScoringControllerGetProfileScoreMeV1QueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Upload a resume PDF/DOCX and parse it via AI
  */
 export type resumesControllerUploadV1Response201 = {
@@ -5129,311 +6122,6 @@ export function useResumesControllerDownloadV1<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getResumesControllerDownloadV1QueryOptions(id, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * Triggers a fresh AI scoring run. Rate-limited to 1 per 60 seconds via manual check on profile_scores.created_at (no Throttler module registered yet). Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.
- * @summary Compute the candidate's Profile Score from default resume + preferences
- */
-export type scoringControllerComputeProfileScoreV1Response201 = {
-  data: ProfileScoreEnvelopeDto;
-  status: 201;
-};
-
-export type scoringControllerComputeProfileScoreV1Response400 = {
-  data: void;
-  status: 400;
-};
-
-export type scoringControllerComputeProfileScoreV1Response429 = {
-  data: void;
-  status: 429;
-};
-
-export type scoringControllerComputeProfileScoreV1Response503 = {
-  data: void;
-  status: 503;
-};
-
-export type scoringControllerComputeProfileScoreV1ResponseSuccess =
-  scoringControllerComputeProfileScoreV1Response201 & {
-    headers: Headers;
-  };
-export type scoringControllerComputeProfileScoreV1ResponseError = (
-  | scoringControllerComputeProfileScoreV1Response400
-  | scoringControllerComputeProfileScoreV1Response429
-  | scoringControllerComputeProfileScoreV1Response503
-) & {
-  headers: Headers;
-};
-
-export type scoringControllerComputeProfileScoreV1Response =
-  | scoringControllerComputeProfileScoreV1ResponseSuccess
-  | scoringControllerComputeProfileScoreV1ResponseError;
-
-export const getScoringControllerComputeProfileScoreV1Url = () => {
-  return `/api/v1/scoring/profile/compute`;
-};
-
-export const scoringControllerComputeProfileScoreV1 = async (
-  options?: RequestInit,
-): Promise<scoringControllerComputeProfileScoreV1Response> => {
-  return fetcher<scoringControllerComputeProfileScoreV1Response>(
-    getScoringControllerComputeProfileScoreV1Url(),
-    {
-      ...options,
-      method: "POST",
-    },
-  );
-};
-
-export const getScoringControllerComputeProfileScoreV1MutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
-    TError,
-    void,
-    TContext
-  >;
-  request?: SecondParameter<typeof fetcher>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
-  TError,
-  void,
-  TContext
-> => {
-  const mutationKey = ["scoringControllerComputeProfileScoreV1"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
-    void
-  > = () => {
-    return scoringControllerComputeProfileScoreV1(requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type ScoringControllerComputeProfileScoreV1MutationResult = NonNullable<
-  Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>
->;
-
-export type ScoringControllerComputeProfileScoreV1MutationError = void;
-
-/**
- * @summary Compute the candidate's Profile Score from default resume + preferences
- */
-export const useScoringControllerComputeProfileScoreV1 = <
-  TError = void,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
-      TError,
-      void,
-      TContext
-    >;
-    request?: SecondParameter<typeof fetcher>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof scoringControllerComputeProfileScoreV1>>,
-  TError,
-  void,
-  TContext
-> => {
-  return useMutation(
-    getScoringControllerComputeProfileScoreV1MutationOptions(options),
-    queryClient,
-  );
-};
-
-/**
- * @summary Get the candidate's most recent Profile Score (or null if none)
- */
-export type scoringControllerGetProfileScoreMeV1Response200 = {
-  data: ProfileScoreEnvelopeDto;
-  status: 200;
-};
-
-export type scoringControllerGetProfileScoreMeV1ResponseSuccess =
-  scoringControllerGetProfileScoreMeV1Response200 & {
-    headers: Headers;
-  };
-export type scoringControllerGetProfileScoreMeV1Response =
-  scoringControllerGetProfileScoreMeV1ResponseSuccess;
-
-export const getScoringControllerGetProfileScoreMeV1Url = () => {
-  return `/api/v1/scoring/profile/me`;
-};
-
-export const scoringControllerGetProfileScoreMeV1 = async (
-  options?: RequestInit,
-): Promise<scoringControllerGetProfileScoreMeV1Response> => {
-  return fetcher<scoringControllerGetProfileScoreMeV1Response>(
-    getScoringControllerGetProfileScoreMeV1Url(),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-export const getScoringControllerGetProfileScoreMeV1QueryKey = () => {
-  return [`/api/v1/scoring/profile/me`] as const;
-};
-
-export const getScoringControllerGetProfileScoreMeV1QueryOptions = <
-  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-  TError = unknown,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<
-      Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-      TError,
-      TData
-    >
-  >;
-  request?: SecondParameter<typeof fetcher>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getScoringControllerGetProfileScoreMeV1QueryKey();
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
-  > = ({ signal }) =>
-    scoringControllerGetProfileScoreMeV1({ signal, ...requestOptions });
-
-  return {
-    queryKey,
-    queryFn,
-    staleTime: 300000,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type ScoringControllerGetProfileScoreMeV1QueryResult = NonNullable<
-  Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
->;
-export type ScoringControllerGetProfileScoreMeV1QueryError = unknown;
-
-export function useScoringControllerGetProfileScoreMeV1<
-  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-  TError = unknown,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-          TError,
-          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof fetcher>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useScoringControllerGetProfileScoreMeV1<
-  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-          TError,
-          Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof fetcher>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useScoringControllerGetProfileScoreMeV1<
-  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof fetcher>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary Get the candidate's most recent Profile Score (or null if none)
- */
-
-export function useScoringControllerGetProfileScoreMeV1<
-  TData = Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof scoringControllerGetProfileScoreMeV1>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof fetcher>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions =
-    getScoringControllerGetProfileScoreMeV1QueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

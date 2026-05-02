@@ -1,12 +1,18 @@
-import { Injectable, NotImplementedException } from "@nestjs/common";
-import type { BiasFlag } from "@aurahire/shared";
+import { Injectable, Logger } from "@nestjs/common";
+import {
+  type BiasFlag,
+  biasFlagListSchema,
+} from "@aurahire/shared";
 
 import { OpenAIService } from "./openai.service";
+import {
+  DETECT_BIAS_VERSION,
+  DETECT_BIAS_SYSTEM_PROMPT,
+  buildDetectBiasUserPrompt,
+} from "./prompts/detect-bias";
 
 export interface DetectBiasInput {
-  /** Plain text to scan (typically descriptionPlain from a job). */
   text: string;
-  /** Custom flagged terms from scoring_config.custom_flagged_terms. */
   customFlaggedTerms?: string[];
   requestId?: string;
 }
@@ -18,23 +24,37 @@ export interface DetectBiasOutput {
   promptVersion: string;
 }
 
-/**
- * Bias detection service for job descriptions.
- *
- * Slice 2.3: SHELL ONLY.
- * Slice 2.7: Implements:
- *            1. Build prompt with system + custom_flagged_terms interpolated
- *            2. OpenAIService.generateStructured() with biasFlagListSchema
- *            3. Return flags + audit metadata
- */
 @Injectable()
 export class DetectBiasService {
+  private readonly logger = new Logger(DetectBiasService.name);
+
   constructor(private readonly openai: OpenAIService) {}
 
-  async check(_input: DetectBiasInput): Promise<DetectBiasOutput> {
-    throw new NotImplementedException({
-      code: "NOT_IMPLEMENTED",
-      message: "Bias detection is implemented in Slice 2.7",
+  async check(input: DetectBiasInput): Promise<DetectBiasOutput> {
+    const reqId = input.requestId ?? "detect-bias";
+
+    const userPrompt = buildDetectBiasUserPrompt({
+      descriptionPlain: input.text,
+      customFlaggedTerms: input.customFlaggedTerms ?? [],
     });
+
+    const result = await this.openai.generateStructured({
+      schema: biasFlagListSchema,
+      schemaName: "BiasFlagList",
+      systemPrompt: DETECT_BIAS_SYSTEM_PROMPT,
+      userPrompt,
+      requestId: `${reqId}:bias-v${DETECT_BIAS_VERSION}`,
+    });
+
+    this.logger.log(
+      `[${reqId}] bias check completed: ${result.data.flags.length} flag(s) in ${result.latencyMs}ms`,
+    );
+
+    return {
+      flags: result.data.flags,
+      latencyMs: result.latencyMs,
+      model: result.model,
+      promptVersion: DETECT_BIAS_VERSION,
+    };
   }
 }

@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/form";
 
 import { TiptapEditor } from "./tiptap-editor";
+import { useDebouncedBiasCheck } from "./_use-debounced-bias-check";
+import { BiasFlagsList } from "@/components/bias/bias-flags-list";
 
 const EMPLOYMENT_TYPES = ["full-time", "part-time", "contract"] as const;
 const WORK_MODES = ["remote", "hybrid", "on-site"] as const;
@@ -92,6 +94,10 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
 
   const createMutation = useJobsControllerCreateV1();
   const updateMutation = useJobsControllerUpdateV1();
+
+  const descriptionPlainValue = form.watch("descriptionPlain") ?? "";
+  const { flags: biasFlags, scanning: biasScanning } =
+    useDebouncedBiasCheck(descriptionPlainValue);
 
   async function onSubmit(values: JobFormUI) {
     setIsSubmitting(true);
@@ -362,6 +368,18 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
               </FormItem>
             )}
           />
+          {(biasFlags.length > 0 || biasScanning) && (
+            <BiasFlagsList
+              flags={biasFlags.map((f) => ({
+                term: f.term,
+                category: f.category,
+                severity: f.severity,
+                explanation: f.explanation,
+                suggestion: f.suggestion,
+              }))}
+              scanning={biasScanning}
+            />
+          )}
         </section>
 
         <section className="space-y-4">

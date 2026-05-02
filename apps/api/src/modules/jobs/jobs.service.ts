@@ -4,6 +4,8 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
+  forwardRef,
 } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import type { Cache } from "cache-manager";
@@ -11,6 +13,7 @@ import type { AuthUser } from "@aurahire/shared";
 
 import { AuditService } from "../../audit";
 import { ProfilesRepository } from "../profiles/profiles.repository";
+import { BiasService } from "../bias/bias.service";
 import { JobsRepository, type JobWithCompany, type ListJobsFilters } from "./jobs.repository";
 import type { CreateJobDto } from "./dto/create-job.dto";
 import type { UpdateJobDto } from "./dto/update-job.dto";
@@ -24,6 +27,8 @@ export class JobsService {
   constructor(
     private readonly repo: JobsRepository,
     private readonly profilesRepo: ProfilesRepository,
+    @Inject(forwardRef(() => BiasService))
+    private readonly biasService: BiasService,
     private readonly audit: AuditService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
@@ -154,7 +159,19 @@ export class JobsService {
       });
     }
 
-    // NAIVE publish — Slice 2.7 will wrap this with bias detection.
+    // Run a fresh bias scan; persists into bias_flags
+    await this.biasService.scanJob(user, id, requestMeta);
+
+    // Block publish if any flagged rows remain (recruiter must override or edit)
+    const unresolved = await this.biasService.findFlagged(id);
+    if (unresolved.length > 0) {
+      throw new UnprocessableEntityException({
+        code: "BIAS_CHECK_REQUIRED",
+        message: `${unresolved.length} bias flag${unresolved.length === 1 ? "" : "s"} require${unresolved.length === 1 ? "s" : ""} override or edit before publish`,
+        flags: unresolved,
+      });
+    }
+
     await this.repo.update(id, { status: "published", publishedAt: new Date() });
 
     await this.audit.log({

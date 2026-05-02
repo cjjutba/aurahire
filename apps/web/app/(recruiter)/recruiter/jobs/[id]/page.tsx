@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { JobDetail } from "@/components/jobs/job-detail";
 import { getCurrentSession } from "@/lib/auth/session";
+import { BiasFlagsList } from "@/components/bias/bias-flags-list";
 import { JobActions } from "./job-actions";
 
 interface PageProps {
@@ -12,6 +13,16 @@ interface PageProps {
 export const metadata = { title: "Job Detail" };
 
 type JobDetailJob = Parameters<typeof JobDetail>[0]["job"];
+
+interface BiasFlagRow {
+  id: string;
+  term: string;
+  category: string;
+  severity: "high" | "medium" | "low" | null;
+  explanation: string | null;
+  suggestion: string | null;
+  status: "flagged" | "overridden" | "resolved";
+}
 
 export default async function RecruiterJobDetailPage({ params }: PageProps) {
   const { id } = await params;
@@ -46,6 +57,17 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
     applicationsCount = appsBody.data.length;
   }
 
+  // Fetch persisted bias flags for this job (ignore failures silently)
+  let biasFlags: BiasFlagRow[] = [];
+  const flagsRes = await fetch(`${apiUrl}/api/v1/bias/jobs/${id}/flags`, {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+    cache: "no-store",
+  });
+  if (flagsRes.ok) {
+    const flagsBody = (await flagsRes.json()) as { data: BiasFlagRow[] };
+    biasFlags = flagsBody.data;
+  }
+
   return (
     <div className="mx-auto max-w-[1024px] space-y-6">
       <Link
@@ -78,6 +100,26 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
           </div>
         }
       />
+
+      {biasFlags.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Bias Check Results
+          </h2>
+          <BiasFlagsList
+            flags={biasFlags.map((f) => ({
+              id: f.id,
+              term: f.term,
+              category: f.category,
+              severity: f.severity,
+              explanation: f.explanation,
+              suggestion: f.suggestion,
+              status: f.status,
+            }))}
+            title={`${biasFlags.length} historical flag${biasFlags.length === 1 ? "" : "s"}`}
+          />
+        </section>
+      )}
     </div>
   );
 }

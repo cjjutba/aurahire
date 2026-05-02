@@ -26,6 +26,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let code = "INTERNAL_ERROR";
     let message = "Something went wrong";
     let errors: ApiErrorResponse["errors"] = undefined;
+    let extras: Record<string, unknown> = {};
 
     if (exception instanceof ZodError) {
       statusCode = HttpStatus.BAD_REQUEST;
@@ -45,6 +46,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
         if (Array.isArray(body.errors)) {
           errors = body.errors as ApiErrorResponse["errors"];
         }
+        // Preserve any additional fields from the exception body so callers
+        // (e.g., bias-check 422 with `flags`) can read structured context.
+        const reserved = new Set(["statusCode", "code", "message", "errors"]);
+        for (const [k, v] of Object.entries(body)) {
+          if (!reserved.has(k)) extras[k] = v;
+        }
       } else {
         code = this.codeFromStatus(statusCode);
         message = exception.message;
@@ -56,11 +63,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       this.logger.error(`Unknown exception: ${JSON.stringify(exception)}`);
     }
 
-    const body: ApiErrorResponse = {
+    const body: ApiErrorResponse & Record<string, unknown> = {
       statusCode,
       code,
       message,
       ...(errors ? { errors } : {}),
+      ...extras,
       timestamp: new Date().toISOString(),
       path: req.url,
       requestId: req.id ?? "unknown",
