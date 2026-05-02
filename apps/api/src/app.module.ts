@@ -7,6 +7,7 @@ import { CacheModule } from "@nestjs/cache-manager";
 import { DbModule } from "./db";
 import { AuditModule } from "./audit";
 import { EmailModule } from "./email";
+import { AiModule } from "./ai";
 import { SupabaseAdminModule } from "./lib/supabase-admin";
 import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -37,6 +38,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     DbModule,
     AuditModule,
     EmailModule,
+    AiModule,
     SupabaseAdminModule,
     ProfilesModule,
     RecruiterProfilesModule,

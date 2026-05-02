@@ -6,6 +6,9 @@ export * from "./schemas/shared.ts";
 export * from "./schemas/auth.ts";
 export * from "./schemas/onboarding.ts";
 export * from "./schemas/jobs.ts";
+export * from "./schemas/parsed-resume.ts";
+export * from "./schemas/score.ts";
+export * from "./schemas/bias.ts";
 
 // Enums
 export * from "./enums/index.ts";
