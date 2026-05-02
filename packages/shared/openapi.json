@@ -175,6 +175,794 @@
         ]
       }
     },
+    "/api/v1/candidate-profiles/me": {
+      "get": {
+        "operationId": "CandidateProfilesController_getMe_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateProfileEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the authenticated candidate's full profile",
+        "tags": [
+          "candidate-profiles"
+        ]
+      }
+    },
+    "/api/v1/candidate-profiles/personal": {
+      "patch": {
+        "operationId": "CandidateProfilesController_updatePersonal_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCandidatePersonalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateProfileEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Onboarding step 2: personal info (name, phone, location, headline)",
+        "tags": [
+          "candidate-profiles"
+        ]
+      }
+    },
+    "/api/v1/candidate-profiles/preferences": {
+      "patch": {
+        "operationId": "CandidateProfilesController_updatePreferences_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCandidatePreferencesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateProfileEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Onboarding step 6: job preferences",
+        "tags": [
+          "candidate-profiles"
+        ]
+      }
+    },
+    "/api/v1/candidate-profiles/complete": {
+      "post": {
+        "description": "Called by the wizard's final-step submit. Idempotent.",
+        "operationId": "CandidateProfilesController_complete_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateProfileEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark candidate onboarding complete (sets profile_completed=true)",
+        "tags": [
+          "candidate-profiles"
+        ]
+      }
+    },
+    "/api/v1/jobs": {
+      "post": {
+        "operationId": "JobsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponseEnvelopeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Onboarding incomplete OR validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new job (status='draft')",
+        "tags": [
+          "jobs"
+        ]
+      },
+      "get": {
+        "operationId": "JobsController_listPublic_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "exclusiveMinimum": false,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "default": 25,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "mode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "remote",
+                "hybrid",
+                "on-site"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "experienceLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "entry",
+                "junior",
+                "mid",
+                "senior",
+                "lead",
+                "principal",
+                "manager",
+                "director",
+                "vp+"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "locationCountry",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "recent",
+                "best-match",
+                "salary-high"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "draft",
+                "published",
+                "archived",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Public list of published jobs (paginated, filterable)",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}": {
+      "patch": {
+        "operationId": "JobsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponseEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found OR not owned"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a job (recruiter must own it)",
+        "tags": [
+          "jobs"
+        ]
+      },
+      "get": {
+        "operationId": "JobsController_getPublic_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponseEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not published or doesn't exist"
+          }
+        },
+        "summary": "Public detail (only published jobs)",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}/publish": {
+      "post": {
+        "operationId": "JobsController_publish_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponseEnvelopeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Job is not in 'draft' status"
+          },
+          "404": {
+            "description": "Job not found OR not owned"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish a draft job (NAIVE — bias check wraps this in Slice 2.7)",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}/archive": {
+      "post": {
+        "operationId": "JobsController_archive_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponseEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found OR not owned"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive a job",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/mine": {
+      "get": {
+        "operationId": "JobsController_listMine_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "exclusiveMinimum": false,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "default": 25,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "mode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "remote",
+                "hybrid",
+                "on-site"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "experienceLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "entry",
+                "junior",
+                "mid",
+                "senior",
+                "lead",
+                "principal",
+                "manager",
+                "director",
+                "vp+"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "locationCountry",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "best-match",
+                "salary-high"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "draft",
+                "published",
+                "archived",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List own jobs (any status); paginated",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/for-candidate": {
+      "get": {
+        "operationId": "JobsController_listForCandidate_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "exclusiveMinimum": false,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "default": 25,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "mode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "remote",
+                "hybrid",
+                "on-site"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "experienceLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "entry",
+                "junior",
+                "mid",
+                "senior",
+                "lead",
+                "principal",
+                "manager",
+                "director",
+                "vp+"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "locationCountry",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "best-match",
+                "salary-high"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "draft",
+                "published",
+                "archived",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Candidate list of published jobs (sprint: same as public; Slice 2.6 enriches with match score)",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}/for-recruiter": {
+      "get": {
+        "operationId": "JobsController_getForRecruiter_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponseEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found OR not owned"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Recruiter view of own job (any status)",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}/for-candidate": {
+      "get": {
+        "operationId": "JobsController_getForCandidate_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponseEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Candidate detail (sprint: same as public; Slice 2.6 enriches with match score)",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -190,89 +978,209 @@
         ]
       }
     },
-    "/api/v1/auth/register-candidate": {
+    "/api/v1/auth/signup-candidate": {
       "post": {
-        "description": "Frontend calls this AFTER supabase.auth.signUp() succeeds. The JWT identifies the new user; this endpoint creates profiles + candidate_profiles rows.",
-        "operationId": "AuthController_registerCandidate_v1",
+        "description": "Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.",
+        "operationId": "AuthController_signupCandidate_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InitCandidateProfileDto"
+                "$ref": "#/components/schemas/SignupCandidateDto"
               }
             }
           }
         },
         "responses": {
-          "201": {
+          "202": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProfileResponseEnvelopeDto"
+                  "$ref": "#/components/schemas/AuthMessageDto"
                 }
               }
             }
           },
-          "401": {
-            "description": "Missing or invalid token"
-          },
           "409": {
-            "description": "Profile already exists for this user"
+            "description": "Email already registered (and confirmed)"
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Initialize a candidate profile after Supabase signUp",
+        "summary": "Sign up a candidate (creates Supabase user, sends verification email)",
         "tags": [
           "auth"
         ]
       }
     },
-    "/api/v1/auth/register-recruiter": {
+    "/api/v1/auth/signup-recruiter": {
       "post": {
-        "description": "Frontend calls this AFTER supabase.auth.signUp() succeeds. Creates profiles + recruiter_profiles + companies rows in a single transaction.",
-        "operationId": "AuthController_registerRecruiter_v1",
+        "operationId": "AuthController_signupRecruiter_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InitRecruiterProfileDto"
+                "$ref": "#/components/schemas/SignupRecruiterDto"
               }
             }
           }
         },
         "responses": {
-          "201": {
+          "202": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProfileResponseEnvelopeDto"
+                  "$ref": "#/components/schemas/AuthMessageDto"
                 }
               }
             }
           },
-          "401": {
-            "description": "Missing or invalid token"
-          },
           "409": {
-            "description": "Profile already exists for this user"
+            "description": "Email already registered (and confirmed)"
           }
         },
-        "security": [
-          {
-            "bearer": []
+        "summary": "Sign up a recruiter (creates Supabase user, sends verification email)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/verify-email": {
+      "post": {
+        "description": "Consumes the token, marks the Supabase user as email-confirmed, creates the profile + role-specific subprofile, and writes audit logs.",
+        "operationId": "AuthController_verifyEmail_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailDto"
+              }
+            }
           }
-        ],
-        "summary": "Initialize a recruiter profile + company after Supabase signUp",
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Token invalid, expired, or already used"
+          }
+        },
+        "summary": "Verify an email-verification token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/resend-verification": {
+      "post": {
+        "description": "Always returns 200; never discloses whether an account exists.",
+        "operationId": "AuthController_resendVerification_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMessageDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Resend the verification email",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "description": "Always returns 200; never discloses whether an account exists.",
+        "operationId": "AuthController_forgotPassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMessageDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Request a password reset email",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "operationId": "AuthController_resetPassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMessageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Token invalid, expired, or already used"
+          }
+        },
+        "summary": "Consume a password-reset token and set a new password",
         "tags": [
           "auth"
         ]
@@ -677,7 +1585,109 @@
           }
         }
       },
-      "InitCandidateProfileDto": {
+      "CandidateProfileMeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "object",
+            "nullable": true
+          },
+          "headline": {
+            "type": "object",
+            "nullable": true
+          },
+          "summary": {
+            "type": "object",
+            "nullable": true
+          },
+          "locationCity": {
+            "type": "object",
+            "nullable": true
+          },
+          "locationRegion": {
+            "type": "object",
+            "nullable": true
+          },
+          "locationCountry": {
+            "type": "object",
+            "nullable": true
+          },
+          "desiredRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "desiredSeniority": {
+            "type": "object",
+            "nullable": true
+          },
+          "openTo": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "desiredSalaryMin": {
+            "type": "number",
+            "nullable": true
+          },
+          "desiredSalaryMax": {
+            "type": "number",
+            "nullable": true
+          },
+          "desiredCurrency": {
+            "type": "string"
+          },
+          "availableStartDate": {
+            "type": "object",
+            "nullable": true
+          },
+          "profileCompleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "phone",
+          "headline",
+          "summary",
+          "locationCity",
+          "locationRegion",
+          "locationCountry",
+          "desiredRoles",
+          "desiredSeniority",
+          "openTo",
+          "desiredSalaryMin",
+          "desiredSalaryMax",
+          "desiredCurrency",
+          "availableStartDate",
+          "profileCompleted"
+        ]
+      },
+      "CandidateProfileEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CandidateProfileMeDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "UpdateCandidatePersonalDto": {
         "type": "object",
         "properties": {
           "fullName": {
@@ -690,6 +1700,28 @@
             "minLength": 7,
             "maxLength": 20,
             "pattern": "^[\\d\\s+()-]+$"
+          },
+          "locationCity": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationRegion": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationCountry": {
+            "type": "string",
+            "nullable": true
+          },
+          "headline": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 2000,
+            "nullable": true
           }
         },
         "required": [
@@ -697,13 +1729,496 @@
           "phone"
         ]
       },
-      "InitRecruiterProfileDto": {
+      "UpdateCandidatePreferencesDto": {
+        "type": "object",
+        "properties": {
+          "desiredRoles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "default": []
+          },
+          "desiredSeniority": {
+            "type": "string",
+            "nullable": true
+          },
+          "openTo": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "desiredSalaryMin": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "nullable": true
+          },
+          "desiredSalaryMax": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "nullable": true
+          },
+          "desiredCurrency": {
+            "type": "string",
+            "default": "USD"
+          },
+          "availableStartDate": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CreateJobDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 200
+          },
+          "department": {
+            "type": "string",
+            "maxLength": 150,
+            "nullable": true
+          },
+          "employmentType": {
+            "type": "string",
+            "enum": [
+              "full-time",
+              "part-time",
+              "contract"
+            ]
+          },
+          "workMode": {
+            "type": "string",
+            "enum": [
+              "remote",
+              "hybrid",
+              "on-site"
+            ]
+          },
+          "locationCity": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "locationRegion": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "locationCountry": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "salaryMin": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "nullable": true
+          },
+          "salaryMax": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "nullable": true
+          },
+          "salaryCurrency": {
+            "type": "string",
+            "default": "USD"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 20
+          },
+          "descriptionPlain": {
+            "type": "string",
+            "minLength": 20
+          },
+          "requiredSkills": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "default": []
+          },
+          "experienceLevel": {
+            "type": "string",
+            "enum": [
+              "entry",
+              "junior",
+              "mid",
+              "senior",
+              "lead",
+              "principal",
+              "manager",
+              "director",
+              "vp+"
+            ]
+          },
+          "educationRequirement": {
+            "type": "string",
+            "enum": [
+              "none",
+              "high-school",
+              "associate",
+              "bachelor",
+              "master",
+              "phd",
+              "other"
+            ],
+            "nullable": true
+          },
+          "applicationDeadline": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "title",
+          "employmentType",
+          "workMode",
+          "description",
+          "descriptionPlain",
+          "experienceLevel"
+        ]
+      },
+      "JobResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "department": {
+            "type": "object",
+            "nullable": true
+          },
+          "employmentType": {
+            "type": "string"
+          },
+          "workMode": {
+            "type": "string"
+          },
+          "locationCity": {
+            "type": "object",
+            "nullable": true
+          },
+          "locationRegion": {
+            "type": "object",
+            "nullable": true
+          },
+          "locationCountry": {
+            "type": "object",
+            "nullable": true
+          },
+          "salaryMin": {
+            "type": "number",
+            "nullable": true
+          },
+          "salaryMax": {
+            "type": "number",
+            "nullable": true
+          },
+          "salaryCurrency": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "descriptionPlain": {
+            "type": "string"
+          },
+          "requiredSkills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "experienceLevel": {
+            "type": "string"
+          },
+          "educationRequirement": {
+            "type": "object",
+            "nullable": true
+          },
+          "applicationDeadline": {
+            "type": "object",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "viewCount": {
+            "type": "number"
+          },
+          "publishedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "company": {
+            "$ref": "#/components/schemas/CompanySummaryDto"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "department",
+          "employmentType",
+          "workMode",
+          "locationCity",
+          "locationRegion",
+          "locationCountry",
+          "salaryMin",
+          "salaryMax",
+          "salaryCurrency",
+          "description",
+          "descriptionPlain",
+          "requiredSkills",
+          "experienceLevel",
+          "educationRequirement",
+          "applicationDeadline",
+          "status",
+          "viewCount",
+          "publishedAt",
+          "createdAt",
+          "updatedAt",
+          "company"
+        ]
+      },
+      "JobResponseEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/JobResponseDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "UpdateJobDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 200
+          },
+          "department": {
+            "type": "string",
+            "maxLength": 150,
+            "nullable": true
+          },
+          "employmentType": {
+            "type": "string",
+            "enum": [
+              "full-time",
+              "part-time",
+              "contract"
+            ]
+          },
+          "workMode": {
+            "type": "string",
+            "enum": [
+              "remote",
+              "hybrid",
+              "on-site"
+            ]
+          },
+          "locationCity": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "locationRegion": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "locationCountry": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "salaryMin": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "nullable": true
+          },
+          "salaryMax": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "nullable": true
+          },
+          "salaryCurrency": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 20
+          },
+          "descriptionPlain": {
+            "type": "string",
+            "minLength": 20
+          },
+          "requiredSkills": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "experienceLevel": {
+            "type": "string",
+            "enum": [
+              "entry",
+              "junior",
+              "mid",
+              "senior",
+              "lead",
+              "principal",
+              "manager",
+              "director",
+              "vp+"
+            ]
+          },
+          "educationRequirement": {
+            "type": "string",
+            "enum": [
+              "none",
+              "high-school",
+              "associate",
+              "bachelor",
+              "master",
+              "phd",
+              "other"
+            ],
+            "nullable": true
+          },
+          "applicationDeadline": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "JobListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobResponseDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "SignupCandidateDto": {
         "type": "object",
         "properties": {
           "fullName": {
             "type": "string",
             "minLength": 2,
             "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "minLength": 1,
+            "format": "email",
+            "maxLength": 255
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 7,
+            "maxLength": 20,
+            "pattern": "^[\\d\\s+()-]+$"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "fullName",
+          "email",
+          "phone",
+          "password"
+        ]
+      },
+      "AuthMessageDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "SignupRecruiterDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "minLength": 1,
+            "format": "email",
+            "maxLength": 255
           },
           "phone": {
             "type": "string",
@@ -715,12 +2230,101 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200
+          },
+          "password": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 128
           }
         },
         "required": [
           "fullName",
+          "email",
           "phone",
-          "companyName"
+          "companyName",
+          "password"
+        ]
+      },
+      "VerifyEmailDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "VerifyEmailResponseDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "candidate",
+              "recruiter"
+            ]
+          },
+          "email": {
+            "type": "string"
+          },
+          "sessionTokenHash": {
+            "type": "string",
+            "description": "One-time Supabase magic-link token_hash. Frontend calls supabase.auth.verifyOtp({ token_hash, type: 'magiclink' }) to establish a session."
+          }
+        },
+        "required": [
+          "role",
+          "email",
+          "sessionTokenHash"
+        ]
+      },
+      "ResendVerificationDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1,
+            "format": "email",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1,
+            "format": "email",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "token",
+          "password"
         ]
       }
     }

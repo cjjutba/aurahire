@@ -5,6 +5,7 @@
 export * from "./schemas/shared.ts";
 export * from "./schemas/auth.ts";
 export * from "./schemas/onboarding.ts";
+export * from "./schemas/jobs.ts";
 
 // Enums
 export * from "./enums/index.ts";

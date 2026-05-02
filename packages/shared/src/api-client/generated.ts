@@ -322,7 +322,91 @@ export interface UpdateRecruiterFocusDto {
   hiringVolumePerQuarter?: UpdateRecruiterFocusDtoHiringVolumePerQuarter;
 }
 
-export interface InitCandidateProfileDto {
+/**
+ * @nullable
+ */
+export type CandidateProfileMeDtoPhone = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type CandidateProfileMeDtoHeadline = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type CandidateProfileMeDtoSummary = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type CandidateProfileMeDtoLocationCity = {
+  [key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type CandidateProfileMeDtoLocationRegion = {
+  [key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type CandidateProfileMeDtoLocationCountry = {
+  [key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type CandidateProfileMeDtoDesiredSeniority = {
+  [key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type CandidateProfileMeDtoAvailableStartDate = {
+  [key: string]: unknown;
+} | null;
+
+export interface CandidateProfileMeDto {
+  id: string;
+  email: string;
+  fullName: string;
+  /** @nullable */
+  phone: CandidateProfileMeDtoPhone;
+  /** @nullable */
+  headline: CandidateProfileMeDtoHeadline;
+  /** @nullable */
+  summary: CandidateProfileMeDtoSummary;
+  /** @nullable */
+  locationCity: CandidateProfileMeDtoLocationCity;
+  /** @nullable */
+  locationRegion: CandidateProfileMeDtoLocationRegion;
+  /** @nullable */
+  locationCountry: CandidateProfileMeDtoLocationCountry;
+  desiredRoles: string[];
+  /** @nullable */
+  desiredSeniority: CandidateProfileMeDtoDesiredSeniority;
+  openTo: string[];
+  /** @nullable */
+  desiredSalaryMin: number | null;
+  /** @nullable */
+  desiredSalaryMax: number | null;
+  desiredCurrency: string;
+  /** @nullable */
+  availableStartDate: CandidateProfileMeDtoAvailableStartDate;
+  profileCompleted: boolean;
+}
+
+export interface CandidateProfileEnvelopeDto {
+  data: CandidateProfileMeDto;
+}
+
+export interface UpdateCandidatePersonalDto {
   /**
    * @minLength 2
    * @maxLength 100
@@ -334,14 +418,377 @@ export interface InitCandidateProfileDto {
    * @pattern ^[\d\s+()-]+$
    */
   phone: string;
+  /** @nullable */
+  locationCity?: string | null;
+  /** @nullable */
+  locationRegion?: string | null;
+  /** @nullable */
+  locationCountry?: string | null;
+  /**
+   * @maxLength 200
+   * @nullable
+   */
+  headline?: string | null;
+  /**
+   * @maxLength 2000
+   * @nullable
+   */
+  summary?: string | null;
 }
 
-export interface InitRecruiterProfileDto {
+export interface UpdateCandidatePreferencesDto {
+  desiredRoles?: string[];
+  /** @nullable */
+  desiredSeniority?: string | null;
+  openTo?: string[];
+  /**
+   * @minimum 0
+   * @nullable
+   */
+  desiredSalaryMin?: number | null;
+  /**
+   * @minimum 0
+   * @nullable
+   */
+  desiredSalaryMax?: number | null;
+  desiredCurrency?: string;
+  /** @nullable */
+  availableStartDate?: string | null;
+}
+
+export type CreateJobDtoEmploymentType =
+  (typeof CreateJobDtoEmploymentType)[keyof typeof CreateJobDtoEmploymentType];
+
+export const CreateJobDtoEmploymentType = {
+  "full-time": "full-time",
+  "part-time": "part-time",
+  contract: "contract",
+} as const;
+
+export type CreateJobDtoWorkMode =
+  (typeof CreateJobDtoWorkMode)[keyof typeof CreateJobDtoWorkMode];
+
+export const CreateJobDtoWorkMode = {
+  remote: "remote",
+  hybrid: "hybrid",
+  "on-site": "on-site",
+} as const;
+
+export type CreateJobDtoExperienceLevel =
+  (typeof CreateJobDtoExperienceLevel)[keyof typeof CreateJobDtoExperienceLevel];
+
+export const CreateJobDtoExperienceLevel = {
+  entry: "entry",
+  junior: "junior",
+  mid: "mid",
+  senior: "senior",
+  lead: "lead",
+  principal: "principal",
+  manager: "manager",
+  director: "director",
+  "vp+": "vp+",
+} as const;
+
+/**
+ * @nullable
+ */
+export type CreateJobDtoEducationRequirement =
+  | (typeof CreateJobDtoEducationRequirement)[keyof typeof CreateJobDtoEducationRequirement]
+  | null;
+
+export const CreateJobDtoEducationRequirement = {
+  none: "none",
+  "high-school": "high-school",
+  associate: "associate",
+  bachelor: "bachelor",
+  master: "master",
+  phd: "phd",
+  other: "other",
+} as const;
+
+export interface CreateJobDto {
+  /**
+   * @minLength 5
+   * @maxLength 200
+   */
+  title: string;
+  /**
+   * @maxLength 150
+   * @nullable
+   */
+  department?: string | null;
+  employmentType: CreateJobDtoEmploymentType;
+  workMode: CreateJobDtoWorkMode;
+  /**
+   * @maxLength 100
+   * @nullable
+   */
+  locationCity?: string | null;
+  /**
+   * @maxLength 100
+   * @nullable
+   */
+  locationRegion?: string | null;
+  /**
+   * @maxLength 100
+   * @nullable
+   */
+  locationCountry?: string | null;
+  /**
+   * @minimum 0
+   * @nullable
+   */
+  salaryMin?: number | null;
+  /**
+   * @minimum 0
+   * @nullable
+   */
+  salaryMax?: number | null;
+  salaryCurrency?: string;
+  /** @minLength 20 */
+  description: string;
+  /** @minLength 20 */
+  descriptionPlain: string;
+  /** @maxItems 50 */
+  requiredSkills?: string[];
+  experienceLevel: CreateJobDtoExperienceLevel;
+  /** @nullable */
+  educationRequirement?: CreateJobDtoEducationRequirement;
+  /** @nullable */
+  applicationDeadline?: string | null;
+}
+
+/**
+ * @nullable
+ */
+export type JobResponseDtoDepartment = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type JobResponseDtoLocationCity = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type JobResponseDtoLocationRegion = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type JobResponseDtoLocationCountry = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type JobResponseDtoEducationRequirement = {
+  [key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type JobResponseDtoApplicationDeadline = {
+  [key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type JobResponseDtoPublishedAt = { [key: string]: unknown } | null;
+
+export interface JobResponseDto {
+  id: string;
+  title: string;
+  /** @nullable */
+  department: JobResponseDtoDepartment;
+  employmentType: string;
+  workMode: string;
+  /** @nullable */
+  locationCity: JobResponseDtoLocationCity;
+  /** @nullable */
+  locationRegion: JobResponseDtoLocationRegion;
+  /** @nullable */
+  locationCountry: JobResponseDtoLocationCountry;
+  /** @nullable */
+  salaryMin: number | null;
+  /** @nullable */
+  salaryMax: number | null;
+  salaryCurrency: string;
+  description: string;
+  descriptionPlain: string;
+  requiredSkills: string[];
+  experienceLevel: string;
+  /** @nullable */
+  educationRequirement: JobResponseDtoEducationRequirement;
+  /** @nullable */
+  applicationDeadline: JobResponseDtoApplicationDeadline;
+  status: string;
+  viewCount: number;
+  /** @nullable */
+  publishedAt: JobResponseDtoPublishedAt;
+  createdAt: string;
+  updatedAt: string;
+  company: CompanySummaryDto;
+}
+
+export interface JobResponseEnvelopeDto {
+  data: JobResponseDto;
+}
+
+export type UpdateJobDtoEmploymentType =
+  (typeof UpdateJobDtoEmploymentType)[keyof typeof UpdateJobDtoEmploymentType];
+
+export const UpdateJobDtoEmploymentType = {
+  "full-time": "full-time",
+  "part-time": "part-time",
+  contract: "contract",
+} as const;
+
+export type UpdateJobDtoWorkMode =
+  (typeof UpdateJobDtoWorkMode)[keyof typeof UpdateJobDtoWorkMode];
+
+export const UpdateJobDtoWorkMode = {
+  remote: "remote",
+  hybrid: "hybrid",
+  "on-site": "on-site",
+} as const;
+
+export type UpdateJobDtoExperienceLevel =
+  (typeof UpdateJobDtoExperienceLevel)[keyof typeof UpdateJobDtoExperienceLevel];
+
+export const UpdateJobDtoExperienceLevel = {
+  entry: "entry",
+  junior: "junior",
+  mid: "mid",
+  senior: "senior",
+  lead: "lead",
+  principal: "principal",
+  manager: "manager",
+  director: "director",
+  "vp+": "vp+",
+} as const;
+
+/**
+ * @nullable
+ */
+export type UpdateJobDtoEducationRequirement =
+  | (typeof UpdateJobDtoEducationRequirement)[keyof typeof UpdateJobDtoEducationRequirement]
+  | null;
+
+export const UpdateJobDtoEducationRequirement = {
+  none: "none",
+  "high-school": "high-school",
+  associate: "associate",
+  bachelor: "bachelor",
+  master: "master",
+  phd: "phd",
+  other: "other",
+} as const;
+
+export interface UpdateJobDto {
+  /**
+   * @minLength 5
+   * @maxLength 200
+   */
+  title?: string;
+  /**
+   * @maxLength 150
+   * @nullable
+   */
+  department?: string | null;
+  employmentType?: UpdateJobDtoEmploymentType;
+  workMode?: UpdateJobDtoWorkMode;
+  /**
+   * @maxLength 100
+   * @nullable
+   */
+  locationCity?: string | null;
+  /**
+   * @maxLength 100
+   * @nullable
+   */
+  locationRegion?: string | null;
+  /**
+   * @maxLength 100
+   * @nullable
+   */
+  locationCountry?: string | null;
+  /**
+   * @minimum 0
+   * @nullable
+   */
+  salaryMin?: number | null;
+  /**
+   * @minimum 0
+   * @nullable
+   */
+  salaryMax?: number | null;
+  salaryCurrency?: string;
+  /** @minLength 20 */
+  description?: string;
+  /** @minLength 20 */
+  descriptionPlain?: string;
+  /** @maxItems 50 */
+  requiredSkills?: string[];
+  experienceLevel?: UpdateJobDtoExperienceLevel;
+  /** @nullable */
+  educationRequirement?: UpdateJobDtoEducationRequirement;
+  /** @nullable */
+  applicationDeadline?: string | null;
+}
+
+export interface PaginationMetaDto {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface JobListResponseDto {
+  data: JobResponseDto[];
+  meta: PaginationMetaDto;
+}
+
+export interface SignupCandidateDto {
   /**
    * @minLength 2
    * @maxLength 100
    */
   fullName: string;
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  email: string;
+  /**
+   * @minLength 7
+   * @maxLength 20
+   * @pattern ^[\d\s+()-]+$
+   */
+  phone: string;
+  /**
+   * @minLength 10
+   * @maxLength 128
+   */
+  password: string;
+}
+
+export interface AuthMessageDto {
+  message: string;
+}
+
+export interface SignupRecruiterDto {
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  fullName: string;
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  email: string;
   /**
    * @minLength 7
    * @maxLength 20
@@ -353,7 +800,259 @@ export interface InitRecruiterProfileDto {
    * @maxLength 200
    */
   companyName: string;
+  /**
+   * @minLength 10
+   * @maxLength 128
+   */
+  password: string;
 }
+
+export interface VerifyEmailDto {
+  /** @minLength 1 */
+  token: string;
+}
+
+export type VerifyEmailResponseDtoRole =
+  (typeof VerifyEmailResponseDtoRole)[keyof typeof VerifyEmailResponseDtoRole];
+
+export const VerifyEmailResponseDtoRole = {
+  candidate: "candidate",
+  recruiter: "recruiter",
+} as const;
+
+export interface VerifyEmailResponseDto {
+  role: VerifyEmailResponseDtoRole;
+  email: string;
+  /** One-time Supabase magic-link token_hash. Frontend calls supabase.auth.verifyOtp({ token_hash, type: 'magiclink' }) to establish a session. */
+  sessionTokenHash: string;
+}
+
+export interface ResendVerificationDto {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  email: string;
+}
+
+export interface ForgotPasswordDto {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  email: string;
+}
+
+export interface ResetPasswordDto {
+  /** @minLength 1 */
+  token: string;
+  /**
+   * @minLength 10
+   * @maxLength 128
+   */
+  password: string;
+}
+
+export type JobsControllerListPublicV1Params = {
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+  /**
+   * @maxLength 200
+   */
+  q?: string;
+  mode?: JobsControllerListPublicV1Mode;
+  experienceLevel?: JobsControllerListPublicV1ExperienceLevel;
+  /**
+   * @maxLength 100
+   */
+  locationCountry?: string;
+  sort?: JobsControllerListPublicV1Sort;
+  status?: JobsControllerListPublicV1Status;
+};
+
+export type JobsControllerListPublicV1Mode =
+  (typeof JobsControllerListPublicV1Mode)[keyof typeof JobsControllerListPublicV1Mode];
+
+export const JobsControllerListPublicV1Mode = {
+  remote: "remote",
+  hybrid: "hybrid",
+  "on-site": "on-site",
+} as const;
+
+export type JobsControllerListPublicV1ExperienceLevel =
+  (typeof JobsControllerListPublicV1ExperienceLevel)[keyof typeof JobsControllerListPublicV1ExperienceLevel];
+
+export const JobsControllerListPublicV1ExperienceLevel = {
+  entry: "entry",
+  junior: "junior",
+  mid: "mid",
+  senior: "senior",
+  lead: "lead",
+  principal: "principal",
+  manager: "manager",
+  director: "director",
+  "vp+": "vp+",
+} as const;
+
+export type JobsControllerListPublicV1Sort =
+  (typeof JobsControllerListPublicV1Sort)[keyof typeof JobsControllerListPublicV1Sort];
+
+export const JobsControllerListPublicV1Sort = {
+  recent: "recent",
+  "best-match": "best-match",
+  "salary-high": "salary-high",
+} as const;
+
+export type JobsControllerListPublicV1Status =
+  (typeof JobsControllerListPublicV1Status)[keyof typeof JobsControllerListPublicV1Status];
+
+export const JobsControllerListPublicV1Status = {
+  draft: "draft",
+  published: "published",
+  archived: "archived",
+  closed: "closed",
+} as const;
+
+export type JobsControllerListMineV1Params = {
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+  /**
+   * @maxLength 200
+   */
+  q?: string;
+  mode?: JobsControllerListMineV1Mode;
+  experienceLevel?: JobsControllerListMineV1ExperienceLevel;
+  /**
+   * @maxLength 100
+   */
+  locationCountry?: string;
+  sort?: JobsControllerListMineV1Sort;
+  status?: JobsControllerListMineV1Status;
+};
+
+export type JobsControllerListMineV1Mode =
+  (typeof JobsControllerListMineV1Mode)[keyof typeof JobsControllerListMineV1Mode];
+
+export const JobsControllerListMineV1Mode = {
+  remote: "remote",
+  hybrid: "hybrid",
+  "on-site": "on-site",
+} as const;
+
+export type JobsControllerListMineV1ExperienceLevel =
+  (typeof JobsControllerListMineV1ExperienceLevel)[keyof typeof JobsControllerListMineV1ExperienceLevel];
+
+export const JobsControllerListMineV1ExperienceLevel = {
+  entry: "entry",
+  junior: "junior",
+  mid: "mid",
+  senior: "senior",
+  lead: "lead",
+  principal: "principal",
+  manager: "manager",
+  director: "director",
+  "vp+": "vp+",
+} as const;
+
+export type JobsControllerListMineV1Sort =
+  (typeof JobsControllerListMineV1Sort)[keyof typeof JobsControllerListMineV1Sort];
+
+export const JobsControllerListMineV1Sort = {
+  recent: "recent",
+  "best-match": "best-match",
+  "salary-high": "salary-high",
+} as const;
+
+export type JobsControllerListMineV1Status =
+  (typeof JobsControllerListMineV1Status)[keyof typeof JobsControllerListMineV1Status];
+
+export const JobsControllerListMineV1Status = {
+  draft: "draft",
+  published: "published",
+  archived: "archived",
+  closed: "closed",
+} as const;
+
+export type JobsControllerListForCandidateV1Params = {
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+  /**
+   * @maxLength 200
+   */
+  q?: string;
+  mode?: JobsControllerListForCandidateV1Mode;
+  experienceLevel?: JobsControllerListForCandidateV1ExperienceLevel;
+  /**
+   * @maxLength 100
+   */
+  locationCountry?: string;
+  sort?: JobsControllerListForCandidateV1Sort;
+  status?: JobsControllerListForCandidateV1Status;
+};
+
+export type JobsControllerListForCandidateV1Mode =
+  (typeof JobsControllerListForCandidateV1Mode)[keyof typeof JobsControllerListForCandidateV1Mode];
+
+export const JobsControllerListForCandidateV1Mode = {
+  remote: "remote",
+  hybrid: "hybrid",
+  "on-site": "on-site",
+} as const;
+
+export type JobsControllerListForCandidateV1ExperienceLevel =
+  (typeof JobsControllerListForCandidateV1ExperienceLevel)[keyof typeof JobsControllerListForCandidateV1ExperienceLevel];
+
+export const JobsControllerListForCandidateV1ExperienceLevel = {
+  entry: "entry",
+  junior: "junior",
+  mid: "mid",
+  senior: "senior",
+  lead: "lead",
+  principal: "principal",
+  manager: "manager",
+  director: "director",
+  "vp+": "vp+",
+} as const;
+
+export type JobsControllerListForCandidateV1Sort =
+  (typeof JobsControllerListForCandidateV1Sort)[keyof typeof JobsControllerListForCandidateV1Sort];
+
+export const JobsControllerListForCandidateV1Sort = {
+  recent: "recent",
+  "best-match": "best-match",
+  "salary-high": "salary-high",
+} as const;
+
+export type JobsControllerListForCandidateV1Status =
+  (typeof JobsControllerListForCandidateV1Status)[keyof typeof JobsControllerListForCandidateV1Status];
+
+export const JobsControllerListForCandidateV1Status = {
+  draft: "draft",
+  published: "published",
+  archived: "archived",
+  closed: "closed",
+} as const;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -1068,6 +1767,2173 @@ export const useRecruiterProfilesControllerUpdateFocusV1 = <
 };
 
 /**
+ * @summary Get the authenticated candidate's full profile
+ */
+export type candidateProfilesControllerGetMeV1Response200 = {
+  data: CandidateProfileEnvelopeDto;
+  status: 200;
+};
+
+export type candidateProfilesControllerGetMeV1ResponseSuccess =
+  candidateProfilesControllerGetMeV1Response200 & {
+    headers: Headers;
+  };
+export type candidateProfilesControllerGetMeV1Response =
+  candidateProfilesControllerGetMeV1ResponseSuccess;
+
+export const getCandidateProfilesControllerGetMeV1Url = () => {
+  return `/api/v1/candidate-profiles/me`;
+};
+
+export const candidateProfilesControllerGetMeV1 = async (
+  options?: RequestInit,
+): Promise<candidateProfilesControllerGetMeV1Response> => {
+  return fetcher<candidateProfilesControllerGetMeV1Response>(
+    getCandidateProfilesControllerGetMeV1Url(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getCandidateProfilesControllerGetMeV1QueryKey = () => {
+  return [`/api/v1/candidate-profiles/me`] as const;
+};
+
+export const getCandidateProfilesControllerGetMeV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getCandidateProfilesControllerGetMeV1QueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>
+  > = ({ signal }) =>
+    candidateProfilesControllerGetMeV1({ signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CandidateProfilesControllerGetMeV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>
+>;
+export type CandidateProfilesControllerGetMeV1QueryError = unknown;
+
+export function useCandidateProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+          TError,
+          Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCandidateProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+          TError,
+          Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCandidateProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get the authenticated candidate's full profile
+ */
+
+export function useCandidateProfilesControllerGetMeV1<
+  TData = Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof candidateProfilesControllerGetMeV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getCandidateProfilesControllerGetMeV1QueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Onboarding step 2: personal info (name, phone, location, headline)
+ */
+export type candidateProfilesControllerUpdatePersonalV1Response200 = {
+  data: CandidateProfileEnvelopeDto;
+  status: 200;
+};
+
+export type candidateProfilesControllerUpdatePersonalV1ResponseSuccess =
+  candidateProfilesControllerUpdatePersonalV1Response200 & {
+    headers: Headers;
+  };
+export type candidateProfilesControllerUpdatePersonalV1Response =
+  candidateProfilesControllerUpdatePersonalV1ResponseSuccess;
+
+export const getCandidateProfilesControllerUpdatePersonalV1Url = () => {
+  return `/api/v1/candidate-profiles/personal`;
+};
+
+export const candidateProfilesControllerUpdatePersonalV1 = async (
+  updateCandidatePersonalDto: UpdateCandidatePersonalDto,
+  options?: RequestInit,
+): Promise<candidateProfilesControllerUpdatePersonalV1Response> => {
+  return fetcher<candidateProfilesControllerUpdatePersonalV1Response>(
+    getCandidateProfilesControllerUpdatePersonalV1Url(),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateCandidatePersonalDto),
+    },
+  );
+};
+
+export const getCandidateProfilesControllerUpdatePersonalV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof candidateProfilesControllerUpdatePersonalV1>>,
+    TError,
+    { data: UpdateCandidatePersonalDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof candidateProfilesControllerUpdatePersonalV1>>,
+  TError,
+  { data: UpdateCandidatePersonalDto },
+  TContext
+> => {
+  const mutationKey = ["candidateProfilesControllerUpdatePersonalV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof candidateProfilesControllerUpdatePersonalV1>>,
+    { data: UpdateCandidatePersonalDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return candidateProfilesControllerUpdatePersonalV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CandidateProfilesControllerUpdatePersonalV1MutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof candidateProfilesControllerUpdatePersonalV1>>
+  >;
+export type CandidateProfilesControllerUpdatePersonalV1MutationBody =
+  UpdateCandidatePersonalDto;
+export type CandidateProfilesControllerUpdatePersonalV1MutationError = unknown;
+
+/**
+ * @summary Onboarding step 2: personal info (name, phone, location, headline)
+ */
+export const useCandidateProfilesControllerUpdatePersonalV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof candidateProfilesControllerUpdatePersonalV1>>,
+      TError,
+      { data: UpdateCandidatePersonalDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof candidateProfilesControllerUpdatePersonalV1>>,
+  TError,
+  { data: UpdateCandidatePersonalDto },
+  TContext
+> => {
+  return useMutation(
+    getCandidateProfilesControllerUpdatePersonalV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Onboarding step 6: job preferences
+ */
+export type candidateProfilesControllerUpdatePreferencesV1Response200 = {
+  data: CandidateProfileEnvelopeDto;
+  status: 200;
+};
+
+export type candidateProfilesControllerUpdatePreferencesV1ResponseSuccess =
+  candidateProfilesControllerUpdatePreferencesV1Response200 & {
+    headers: Headers;
+  };
+export type candidateProfilesControllerUpdatePreferencesV1Response =
+  candidateProfilesControllerUpdatePreferencesV1ResponseSuccess;
+
+export const getCandidateProfilesControllerUpdatePreferencesV1Url = () => {
+  return `/api/v1/candidate-profiles/preferences`;
+};
+
+export const candidateProfilesControllerUpdatePreferencesV1 = async (
+  updateCandidatePreferencesDto: UpdateCandidatePreferencesDto,
+  options?: RequestInit,
+): Promise<candidateProfilesControllerUpdatePreferencesV1Response> => {
+  return fetcher<candidateProfilesControllerUpdatePreferencesV1Response>(
+    getCandidateProfilesControllerUpdatePreferencesV1Url(),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateCandidatePreferencesDto),
+    },
+  );
+};
+
+export const getCandidateProfilesControllerUpdatePreferencesV1MutationOptions =
+  <TError = unknown, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof candidateProfilesControllerUpdatePreferencesV1>
+      >,
+      TError,
+      { data: UpdateCandidatePreferencesDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  }): UseMutationOptions<
+    Awaited<ReturnType<typeof candidateProfilesControllerUpdatePreferencesV1>>,
+    TError,
+    { data: UpdateCandidatePreferencesDto },
+    TContext
+  > => {
+    const mutationKey = ["candidateProfilesControllerUpdatePreferencesV1"];
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<typeof candidateProfilesControllerUpdatePreferencesV1>
+      >,
+      { data: UpdateCandidatePreferencesDto }
+    > = (props) => {
+      const { data } = props ?? {};
+
+      return candidateProfilesControllerUpdatePreferencesV1(
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CandidateProfilesControllerUpdatePreferencesV1MutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof candidateProfilesControllerUpdatePreferencesV1>>
+  >;
+export type CandidateProfilesControllerUpdatePreferencesV1MutationBody =
+  UpdateCandidatePreferencesDto;
+export type CandidateProfilesControllerUpdatePreferencesV1MutationError =
+  unknown;
+
+/**
+ * @summary Onboarding step 6: job preferences
+ */
+export const useCandidateProfilesControllerUpdatePreferencesV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof candidateProfilesControllerUpdatePreferencesV1>
+      >,
+      TError,
+      { data: UpdateCandidatePreferencesDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof candidateProfilesControllerUpdatePreferencesV1>>,
+  TError,
+  { data: UpdateCandidatePreferencesDto },
+  TContext
+> => {
+  return useMutation(
+    getCandidateProfilesControllerUpdatePreferencesV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * Called by the wizard's final-step submit. Idempotent.
+ * @summary Mark candidate onboarding complete (sets profile_completed=true)
+ */
+export type candidateProfilesControllerCompleteV1Response200 = {
+  data: CandidateProfileEnvelopeDto;
+  status: 200;
+};
+
+export type candidateProfilesControllerCompleteV1ResponseSuccess =
+  candidateProfilesControllerCompleteV1Response200 & {
+    headers: Headers;
+  };
+export type candidateProfilesControllerCompleteV1Response =
+  candidateProfilesControllerCompleteV1ResponseSuccess;
+
+export const getCandidateProfilesControllerCompleteV1Url = () => {
+  return `/api/v1/candidate-profiles/complete`;
+};
+
+export const candidateProfilesControllerCompleteV1 = async (
+  options?: RequestInit,
+): Promise<candidateProfilesControllerCompleteV1Response> => {
+  return fetcher<candidateProfilesControllerCompleteV1Response>(
+    getCandidateProfilesControllerCompleteV1Url(),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCandidateProfilesControllerCompleteV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof candidateProfilesControllerCompleteV1>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof candidateProfilesControllerCompleteV1>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["candidateProfilesControllerCompleteV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof candidateProfilesControllerCompleteV1>>,
+    void
+  > = () => {
+    return candidateProfilesControllerCompleteV1(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CandidateProfilesControllerCompleteV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof candidateProfilesControllerCompleteV1>>
+>;
+
+export type CandidateProfilesControllerCompleteV1MutationError = unknown;
+
+/**
+ * @summary Mark candidate onboarding complete (sets profile_completed=true)
+ */
+export const useCandidateProfilesControllerCompleteV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof candidateProfilesControllerCompleteV1>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof candidateProfilesControllerCompleteV1>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(
+    getCandidateProfilesControllerCompleteV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Create a new job (status='draft')
+ */
+export type jobsControllerCreateV1Response201 = {
+  data: JobResponseEnvelopeDto;
+  status: 201;
+};
+
+export type jobsControllerCreateV1Response400 = {
+  data: void;
+  status: 400;
+};
+
+export type jobsControllerCreateV1ResponseSuccess =
+  jobsControllerCreateV1Response201 & {
+    headers: Headers;
+  };
+export type jobsControllerCreateV1ResponseError =
+  jobsControllerCreateV1Response400 & {
+    headers: Headers;
+  };
+
+export type jobsControllerCreateV1Response =
+  | jobsControllerCreateV1ResponseSuccess
+  | jobsControllerCreateV1ResponseError;
+
+export const getJobsControllerCreateV1Url = () => {
+  return `/api/v1/jobs`;
+};
+
+export const jobsControllerCreateV1 = async (
+  createJobDto: CreateJobDto,
+  options?: RequestInit,
+): Promise<jobsControllerCreateV1Response> => {
+  return fetcher<jobsControllerCreateV1Response>(
+    getJobsControllerCreateV1Url(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createJobDto),
+    },
+  );
+};
+
+export const getJobsControllerCreateV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof jobsControllerCreateV1>>,
+    TError,
+    { data: CreateJobDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof jobsControllerCreateV1>>,
+  TError,
+  { data: CreateJobDto },
+  TContext
+> => {
+  const mutationKey = ["jobsControllerCreateV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof jobsControllerCreateV1>>,
+    { data: CreateJobDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return jobsControllerCreateV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type JobsControllerCreateV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof jobsControllerCreateV1>>
+>;
+export type JobsControllerCreateV1MutationBody = CreateJobDto;
+export type JobsControllerCreateV1MutationError = void;
+
+/**
+ * @summary Create a new job (status='draft')
+ */
+export const useJobsControllerCreateV1 = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof jobsControllerCreateV1>>,
+      TError,
+      { data: CreateJobDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof jobsControllerCreateV1>>,
+  TError,
+  { data: CreateJobDto },
+  TContext
+> => {
+  return useMutation(
+    getJobsControllerCreateV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Public list of published jobs (paginated, filterable)
+ */
+export type jobsControllerListPublicV1Response200 = {
+  data: JobListResponseDto;
+  status: 200;
+};
+
+export type jobsControllerListPublicV1ResponseSuccess =
+  jobsControllerListPublicV1Response200 & {
+    headers: Headers;
+  };
+export type jobsControllerListPublicV1Response =
+  jobsControllerListPublicV1ResponseSuccess;
+
+export const getJobsControllerListPublicV1Url = (
+  params?: JobsControllerListPublicV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/jobs?${stringifiedParams}`
+    : `/api/v1/jobs`;
+};
+
+export const jobsControllerListPublicV1 = async (
+  params?: JobsControllerListPublicV1Params,
+  options?: RequestInit,
+): Promise<jobsControllerListPublicV1Response> => {
+  return fetcher<jobsControllerListPublicV1Response>(
+    getJobsControllerListPublicV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getJobsControllerListPublicV1QueryKey = (
+  params?: JobsControllerListPublicV1Params,
+) => {
+  return [`/api/v1/jobs`, ...(params ? [params] : [])] as const;
+};
+
+export const getJobsControllerListPublicV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListPublicV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getJobsControllerListPublicV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof jobsControllerListPublicV1>>
+  > = ({ signal }) =>
+    jobsControllerListPublicV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type JobsControllerListPublicV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof jobsControllerListPublicV1>>
+>;
+export type JobsControllerListPublicV1QueryError = unknown;
+
+export function useJobsControllerListPublicV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+  TError = unknown,
+>(
+  params: undefined | JobsControllerListPublicV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerListPublicV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerListPublicV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListPublicV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerListPublicV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerListPublicV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListPublicV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Public list of published jobs (paginated, filterable)
+ */
+
+export function useJobsControllerListPublicV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListPublicV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListPublicV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getJobsControllerListPublicV1QueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update a job (recruiter must own it)
+ */
+export type jobsControllerUpdateV1Response200 = {
+  data: JobResponseEnvelopeDto;
+  status: 200;
+};
+
+export type jobsControllerUpdateV1Response404 = {
+  data: void;
+  status: 404;
+};
+
+export type jobsControllerUpdateV1ResponseSuccess =
+  jobsControllerUpdateV1Response200 & {
+    headers: Headers;
+  };
+export type jobsControllerUpdateV1ResponseError =
+  jobsControllerUpdateV1Response404 & {
+    headers: Headers;
+  };
+
+export type jobsControllerUpdateV1Response =
+  | jobsControllerUpdateV1ResponseSuccess
+  | jobsControllerUpdateV1ResponseError;
+
+export const getJobsControllerUpdateV1Url = (id: string) => {
+  return `/api/v1/jobs/${id}`;
+};
+
+export const jobsControllerUpdateV1 = async (
+  id: string,
+  updateJobDto: UpdateJobDto,
+  options?: RequestInit,
+): Promise<jobsControllerUpdateV1Response> => {
+  return fetcher<jobsControllerUpdateV1Response>(
+    getJobsControllerUpdateV1Url(id),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateJobDto),
+    },
+  );
+};
+
+export const getJobsControllerUpdateV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof jobsControllerUpdateV1>>,
+    TError,
+    { id: string; data: UpdateJobDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof jobsControllerUpdateV1>>,
+  TError,
+  { id: string; data: UpdateJobDto },
+  TContext
+> => {
+  const mutationKey = ["jobsControllerUpdateV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof jobsControllerUpdateV1>>,
+    { id: string; data: UpdateJobDto }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return jobsControllerUpdateV1(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type JobsControllerUpdateV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof jobsControllerUpdateV1>>
+>;
+export type JobsControllerUpdateV1MutationBody = UpdateJobDto;
+export type JobsControllerUpdateV1MutationError = void;
+
+/**
+ * @summary Update a job (recruiter must own it)
+ */
+export const useJobsControllerUpdateV1 = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof jobsControllerUpdateV1>>,
+      TError,
+      { id: string; data: UpdateJobDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof jobsControllerUpdateV1>>,
+  TError,
+  { id: string; data: UpdateJobDto },
+  TContext
+> => {
+  return useMutation(
+    getJobsControllerUpdateV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Public detail (only published jobs)
+ */
+export type jobsControllerGetPublicV1Response200 = {
+  data: JobResponseEnvelopeDto;
+  status: 200;
+};
+
+export type jobsControllerGetPublicV1Response404 = {
+  data: void;
+  status: 404;
+};
+
+export type jobsControllerGetPublicV1ResponseSuccess =
+  jobsControllerGetPublicV1Response200 & {
+    headers: Headers;
+  };
+export type jobsControllerGetPublicV1ResponseError =
+  jobsControllerGetPublicV1Response404 & {
+    headers: Headers;
+  };
+
+export type jobsControllerGetPublicV1Response =
+  | jobsControllerGetPublicV1ResponseSuccess
+  | jobsControllerGetPublicV1ResponseError;
+
+export const getJobsControllerGetPublicV1Url = (id: string) => {
+  return `/api/v1/jobs/${id}`;
+};
+
+export const jobsControllerGetPublicV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<jobsControllerGetPublicV1Response> => {
+  return fetcher<jobsControllerGetPublicV1Response>(
+    getJobsControllerGetPublicV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getJobsControllerGetPublicV1QueryKey = (id: string) => {
+  return [`/api/v1/jobs/${id}`] as const;
+};
+
+export const getJobsControllerGetPublicV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getJobsControllerGetPublicV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof jobsControllerGetPublicV1>>
+  > = ({ signal }) =>
+    jobsControllerGetPublicV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type JobsControllerGetPublicV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof jobsControllerGetPublicV1>>
+>;
+export type JobsControllerGetPublicV1QueryError = void;
+
+export function useJobsControllerGetPublicV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+  TError = void,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerGetPublicV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerGetPublicV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerGetPublicV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerGetPublicV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Public detail (only published jobs)
+ */
+
+export function useJobsControllerGetPublicV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetPublicV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getJobsControllerGetPublicV1QueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Publish a draft job (NAIVE — bias check wraps this in Slice 2.7)
+ */
+export type jobsControllerPublishV1Response200 = {
+  data: JobResponseEnvelopeDto;
+  status: 200;
+};
+
+export type jobsControllerPublishV1Response400 = {
+  data: void;
+  status: 400;
+};
+
+export type jobsControllerPublishV1Response404 = {
+  data: void;
+  status: 404;
+};
+
+export type jobsControllerPublishV1ResponseSuccess =
+  jobsControllerPublishV1Response200 & {
+    headers: Headers;
+  };
+export type jobsControllerPublishV1ResponseError = (
+  | jobsControllerPublishV1Response400
+  | jobsControllerPublishV1Response404
+) & {
+  headers: Headers;
+};
+
+export type jobsControllerPublishV1Response =
+  | jobsControllerPublishV1ResponseSuccess
+  | jobsControllerPublishV1ResponseError;
+
+export const getJobsControllerPublishV1Url = (id: string) => {
+  return `/api/v1/jobs/${id}/publish`;
+};
+
+export const jobsControllerPublishV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<jobsControllerPublishV1Response> => {
+  return fetcher<jobsControllerPublishV1Response>(
+    getJobsControllerPublishV1Url(id),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getJobsControllerPublishV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof jobsControllerPublishV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof jobsControllerPublishV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["jobsControllerPublishV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof jobsControllerPublishV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return jobsControllerPublishV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type JobsControllerPublishV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof jobsControllerPublishV1>>
+>;
+
+export type JobsControllerPublishV1MutationError = void;
+
+/**
+ * @summary Publish a draft job (NAIVE — bias check wraps this in Slice 2.7)
+ */
+export const useJobsControllerPublishV1 = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof jobsControllerPublishV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof jobsControllerPublishV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getJobsControllerPublishV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Archive a job
+ */
+export type jobsControllerArchiveV1Response200 = {
+  data: JobResponseEnvelopeDto;
+  status: 200;
+};
+
+export type jobsControllerArchiveV1Response404 = {
+  data: void;
+  status: 404;
+};
+
+export type jobsControllerArchiveV1ResponseSuccess =
+  jobsControllerArchiveV1Response200 & {
+    headers: Headers;
+  };
+export type jobsControllerArchiveV1ResponseError =
+  jobsControllerArchiveV1Response404 & {
+    headers: Headers;
+  };
+
+export type jobsControllerArchiveV1Response =
+  | jobsControllerArchiveV1ResponseSuccess
+  | jobsControllerArchiveV1ResponseError;
+
+export const getJobsControllerArchiveV1Url = (id: string) => {
+  return `/api/v1/jobs/${id}/archive`;
+};
+
+export const jobsControllerArchiveV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<jobsControllerArchiveV1Response> => {
+  return fetcher<jobsControllerArchiveV1Response>(
+    getJobsControllerArchiveV1Url(id),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getJobsControllerArchiveV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof jobsControllerArchiveV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof jobsControllerArchiveV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["jobsControllerArchiveV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof jobsControllerArchiveV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return jobsControllerArchiveV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type JobsControllerArchiveV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof jobsControllerArchiveV1>>
+>;
+
+export type JobsControllerArchiveV1MutationError = void;
+
+/**
+ * @summary Archive a job
+ */
+export const useJobsControllerArchiveV1 = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof jobsControllerArchiveV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof jobsControllerArchiveV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getJobsControllerArchiveV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary List own jobs (any status); paginated
+ */
+export type jobsControllerListMineV1Response200 = {
+  data: JobListResponseDto;
+  status: 200;
+};
+
+export type jobsControllerListMineV1ResponseSuccess =
+  jobsControllerListMineV1Response200 & {
+    headers: Headers;
+  };
+export type jobsControllerListMineV1Response =
+  jobsControllerListMineV1ResponseSuccess;
+
+export const getJobsControllerListMineV1Url = (
+  params?: JobsControllerListMineV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/jobs/mine?${stringifiedParams}`
+    : `/api/v1/jobs/mine`;
+};
+
+export const jobsControllerListMineV1 = async (
+  params?: JobsControllerListMineV1Params,
+  options?: RequestInit,
+): Promise<jobsControllerListMineV1Response> => {
+  return fetcher<jobsControllerListMineV1Response>(
+    getJobsControllerListMineV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getJobsControllerListMineV1QueryKey = (
+  params?: JobsControllerListMineV1Params,
+) => {
+  return [`/api/v1/jobs/mine`, ...(params ? [params] : [])] as const;
+};
+
+export const getJobsControllerListMineV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListMineV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getJobsControllerListMineV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof jobsControllerListMineV1>>
+  > = ({ signal }) =>
+    jobsControllerListMineV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type JobsControllerListMineV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof jobsControllerListMineV1>>
+>;
+export type JobsControllerListMineV1QueryError = unknown;
+
+export function useJobsControllerListMineV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+  TError = unknown,
+>(
+  params: undefined | JobsControllerListMineV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerListMineV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerListMineV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListMineV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerListMineV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerListMineV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListMineV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List own jobs (any status); paginated
+ */
+
+export function useJobsControllerListMineV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListMineV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListMineV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getJobsControllerListMineV1QueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Candidate list of published jobs (sprint: same as public; Slice 2.6 enriches with match score)
+ */
+export type jobsControllerListForCandidateV1Response200 = {
+  data: JobListResponseDto;
+  status: 200;
+};
+
+export type jobsControllerListForCandidateV1ResponseSuccess =
+  jobsControllerListForCandidateV1Response200 & {
+    headers: Headers;
+  };
+export type jobsControllerListForCandidateV1Response =
+  jobsControllerListForCandidateV1ResponseSuccess;
+
+export const getJobsControllerListForCandidateV1Url = (
+  params?: JobsControllerListForCandidateV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/jobs/for-candidate?${stringifiedParams}`
+    : `/api/v1/jobs/for-candidate`;
+};
+
+export const jobsControllerListForCandidateV1 = async (
+  params?: JobsControllerListForCandidateV1Params,
+  options?: RequestInit,
+): Promise<jobsControllerListForCandidateV1Response> => {
+  return fetcher<jobsControllerListForCandidateV1Response>(
+    getJobsControllerListForCandidateV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getJobsControllerListForCandidateV1QueryKey = (
+  params?: JobsControllerListForCandidateV1Params,
+) => {
+  return [`/api/v1/jobs/for-candidate`, ...(params ? [params] : [])] as const;
+};
+
+export const getJobsControllerListForCandidateV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListForCandidateV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getJobsControllerListForCandidateV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>
+  > = ({ signal }) =>
+    jobsControllerListForCandidateV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type JobsControllerListForCandidateV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>
+>;
+export type JobsControllerListForCandidateV1QueryError = unknown;
+
+export function useJobsControllerListForCandidateV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+  TError = unknown,
+>(
+  params: undefined | JobsControllerListForCandidateV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerListForCandidateV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListForCandidateV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerListForCandidateV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListForCandidateV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Candidate list of published jobs (sprint: same as public; Slice 2.6 enriches with match score)
+ */
+
+export function useJobsControllerListForCandidateV1<
+  TData = Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+  TError = unknown,
+>(
+  params?: JobsControllerListForCandidateV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerListForCandidateV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getJobsControllerListForCandidateV1QueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Recruiter view of own job (any status)
+ */
+export type jobsControllerGetForRecruiterV1Response200 = {
+  data: JobResponseEnvelopeDto;
+  status: 200;
+};
+
+export type jobsControllerGetForRecruiterV1Response404 = {
+  data: void;
+  status: 404;
+};
+
+export type jobsControllerGetForRecruiterV1ResponseSuccess =
+  jobsControllerGetForRecruiterV1Response200 & {
+    headers: Headers;
+  };
+export type jobsControllerGetForRecruiterV1ResponseError =
+  jobsControllerGetForRecruiterV1Response404 & {
+    headers: Headers;
+  };
+
+export type jobsControllerGetForRecruiterV1Response =
+  | jobsControllerGetForRecruiterV1ResponseSuccess
+  | jobsControllerGetForRecruiterV1ResponseError;
+
+export const getJobsControllerGetForRecruiterV1Url = (id: string) => {
+  return `/api/v1/jobs/${id}/for-recruiter`;
+};
+
+export const jobsControllerGetForRecruiterV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<jobsControllerGetForRecruiterV1Response> => {
+  return fetcher<jobsControllerGetForRecruiterV1Response>(
+    getJobsControllerGetForRecruiterV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getJobsControllerGetForRecruiterV1QueryKey = (id: string) => {
+  return [`/api/v1/jobs/${id}/for-recruiter`] as const;
+};
+
+export const getJobsControllerGetForRecruiterV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getJobsControllerGetForRecruiterV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>
+  > = ({ signal }) =>
+    jobsControllerGetForRecruiterV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type JobsControllerGetForRecruiterV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>
+>;
+export type JobsControllerGetForRecruiterV1QueryError = void;
+
+export function useJobsControllerGetForRecruiterV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+  TError = void,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerGetForRecruiterV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerGetForRecruiterV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Recruiter view of own job (any status)
+ */
+
+export function useJobsControllerGetForRecruiterV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetForRecruiterV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getJobsControllerGetForRecruiterV1QueryOptions(
+    id,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Candidate detail (sprint: same as public; Slice 2.6 enriches with match score)
+ */
+export type jobsControllerGetForCandidateV1Response200 = {
+  data: JobResponseEnvelopeDto;
+  status: 200;
+};
+
+export type jobsControllerGetForCandidateV1ResponseSuccess =
+  jobsControllerGetForCandidateV1Response200 & {
+    headers: Headers;
+  };
+export type jobsControllerGetForCandidateV1Response =
+  jobsControllerGetForCandidateV1ResponseSuccess;
+
+export const getJobsControllerGetForCandidateV1Url = (id: string) => {
+  return `/api/v1/jobs/${id}/for-candidate`;
+};
+
+export const jobsControllerGetForCandidateV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<jobsControllerGetForCandidateV1Response> => {
+  return fetcher<jobsControllerGetForCandidateV1Response>(
+    getJobsControllerGetForCandidateV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getJobsControllerGetForCandidateV1QueryKey = (id: string) => {
+  return [`/api/v1/jobs/${id}/for-candidate`] as const;
+};
+
+export const getJobsControllerGetForCandidateV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getJobsControllerGetForCandidateV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>
+  > = ({ signal }) =>
+    jobsControllerGetForCandidateV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type JobsControllerGetForCandidateV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>
+>;
+export type JobsControllerGetForCandidateV1QueryError = unknown;
+
+export function useJobsControllerGetForCandidateV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerGetForCandidateV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+          TError,
+          Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useJobsControllerGetForCandidateV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Candidate detail (sprint: same as public; Slice 2.6 enriches with match score)
+ */
+
+export function useJobsControllerGetForCandidateV1<
+  TData = Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof jobsControllerGetForCandidateV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getJobsControllerGetForCandidateV1QueryOptions(
+    id,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Service health check
  */
 export type healthControllerCheckResponse200 = {
@@ -1240,76 +4106,69 @@ export function useHealthControllerCheck<
 }
 
 /**
- * Frontend calls this AFTER supabase.auth.signUp() succeeds. The JWT identifies the new user; this endpoint creates profiles + candidate_profiles rows.
- * @summary Initialize a candidate profile after Supabase signUp
+ * Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.
+ * @summary Sign up a candidate (creates Supabase user, sends verification email)
  */
-export type authControllerRegisterCandidateV1Response201 = {
-  data: ProfileResponseEnvelopeDto;
-  status: 201;
+export type authControllerSignupCandidateV1Response202 = {
+  data: AuthMessageDto;
+  status: 202;
 };
 
-export type authControllerRegisterCandidateV1Response401 = {
-  data: void;
-  status: 401;
-};
-
-export type authControllerRegisterCandidateV1Response409 = {
+export type authControllerSignupCandidateV1Response409 = {
   data: void;
   status: 409;
 };
 
-export type authControllerRegisterCandidateV1ResponseSuccess =
-  authControllerRegisterCandidateV1Response201 & {
+export type authControllerSignupCandidateV1ResponseSuccess =
+  authControllerSignupCandidateV1Response202 & {
     headers: Headers;
   };
-export type authControllerRegisterCandidateV1ResponseError = (
-  | authControllerRegisterCandidateV1Response401
-  | authControllerRegisterCandidateV1Response409
-) & {
-  headers: Headers;
+export type authControllerSignupCandidateV1ResponseError =
+  authControllerSignupCandidateV1Response409 & {
+    headers: Headers;
+  };
+
+export type authControllerSignupCandidateV1Response =
+  | authControllerSignupCandidateV1ResponseSuccess
+  | authControllerSignupCandidateV1ResponseError;
+
+export const getAuthControllerSignupCandidateV1Url = () => {
+  return `/api/v1/auth/signup-candidate`;
 };
 
-export type authControllerRegisterCandidateV1Response =
-  | authControllerRegisterCandidateV1ResponseSuccess
-  | authControllerRegisterCandidateV1ResponseError;
-
-export const getAuthControllerRegisterCandidateV1Url = () => {
-  return `/api/v1/auth/register-candidate`;
-};
-
-export const authControllerRegisterCandidateV1 = async (
-  initCandidateProfileDto: InitCandidateProfileDto,
+export const authControllerSignupCandidateV1 = async (
+  signupCandidateDto: SignupCandidateDto,
   options?: RequestInit,
-): Promise<authControllerRegisterCandidateV1Response> => {
-  return fetcher<authControllerRegisterCandidateV1Response>(
-    getAuthControllerRegisterCandidateV1Url(),
+): Promise<authControllerSignupCandidateV1Response> => {
+  return fetcher<authControllerSignupCandidateV1Response>(
+    getAuthControllerSignupCandidateV1Url(),
     {
       ...options,
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(initCandidateProfileDto),
+      body: JSON.stringify(signupCandidateDto),
     },
   );
 };
 
-export const getAuthControllerRegisterCandidateV1MutationOptions = <
+export const getAuthControllerSignupCandidateV1MutationOptions = <
   TError = void,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>,
+    Awaited<ReturnType<typeof authControllerSignupCandidateV1>>,
     TError,
-    { data: InitCandidateProfileDto },
+    { data: SignupCandidateDto },
     TContext
   >;
   request?: SecondParameter<typeof fetcher>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>,
+  Awaited<ReturnType<typeof authControllerSignupCandidateV1>>,
   TError,
-  { data: InitCandidateProfileDto },
+  { data: SignupCandidateDto },
   TContext
 > => {
-  const mutationKey = ["authControllerRegisterCandidateV1"];
+  const mutationKey = ["authControllerSignupCandidateV1"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -1319,124 +4178,115 @@ export const getAuthControllerRegisterCandidateV1MutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>,
-    { data: InitCandidateProfileDto }
+    Awaited<ReturnType<typeof authControllerSignupCandidateV1>>,
+    { data: SignupCandidateDto }
   > = (props) => {
     const { data } = props ?? {};
 
-    return authControllerRegisterCandidateV1(data, requestOptions);
+    return authControllerSignupCandidateV1(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type AuthControllerRegisterCandidateV1MutationResult = NonNullable<
-  Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>
+export type AuthControllerSignupCandidateV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerSignupCandidateV1>>
 >;
-export type AuthControllerRegisterCandidateV1MutationBody =
-  InitCandidateProfileDto;
-export type AuthControllerRegisterCandidateV1MutationError = void;
+export type AuthControllerSignupCandidateV1MutationBody = SignupCandidateDto;
+export type AuthControllerSignupCandidateV1MutationError = void;
 
 /**
- * @summary Initialize a candidate profile after Supabase signUp
+ * @summary Sign up a candidate (creates Supabase user, sends verification email)
  */
-export const useAuthControllerRegisterCandidateV1 = <
+export const useAuthControllerSignupCandidateV1 = <
   TError = void,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>,
+      Awaited<ReturnType<typeof authControllerSignupCandidateV1>>,
       TError,
-      { data: InitCandidateProfileDto },
+      { data: SignupCandidateDto },
       TContext
     >;
     request?: SecondParameter<typeof fetcher>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof authControllerRegisterCandidateV1>>,
+  Awaited<ReturnType<typeof authControllerSignupCandidateV1>>,
   TError,
-  { data: InitCandidateProfileDto },
+  { data: SignupCandidateDto },
   TContext
 > => {
   return useMutation(
-    getAuthControllerRegisterCandidateV1MutationOptions(options),
+    getAuthControllerSignupCandidateV1MutationOptions(options),
     queryClient,
   );
 };
 
 /**
- * Frontend calls this AFTER supabase.auth.signUp() succeeds. Creates profiles + recruiter_profiles + companies rows in a single transaction.
- * @summary Initialize a recruiter profile + company after Supabase signUp
+ * @summary Sign up a recruiter (creates Supabase user, sends verification email)
  */
-export type authControllerRegisterRecruiterV1Response201 = {
-  data: ProfileResponseEnvelopeDto;
-  status: 201;
+export type authControllerSignupRecruiterV1Response202 = {
+  data: AuthMessageDto;
+  status: 202;
 };
 
-export type authControllerRegisterRecruiterV1Response401 = {
-  data: void;
-  status: 401;
-};
-
-export type authControllerRegisterRecruiterV1Response409 = {
+export type authControllerSignupRecruiterV1Response409 = {
   data: void;
   status: 409;
 };
 
-export type authControllerRegisterRecruiterV1ResponseSuccess =
-  authControllerRegisterRecruiterV1Response201 & {
+export type authControllerSignupRecruiterV1ResponseSuccess =
+  authControllerSignupRecruiterV1Response202 & {
     headers: Headers;
   };
-export type authControllerRegisterRecruiterV1ResponseError = (
-  | authControllerRegisterRecruiterV1Response401
-  | authControllerRegisterRecruiterV1Response409
-) & {
-  headers: Headers;
+export type authControllerSignupRecruiterV1ResponseError =
+  authControllerSignupRecruiterV1Response409 & {
+    headers: Headers;
+  };
+
+export type authControllerSignupRecruiterV1Response =
+  | authControllerSignupRecruiterV1ResponseSuccess
+  | authControllerSignupRecruiterV1ResponseError;
+
+export const getAuthControllerSignupRecruiterV1Url = () => {
+  return `/api/v1/auth/signup-recruiter`;
 };
 
-export type authControllerRegisterRecruiterV1Response =
-  | authControllerRegisterRecruiterV1ResponseSuccess
-  | authControllerRegisterRecruiterV1ResponseError;
-
-export const getAuthControllerRegisterRecruiterV1Url = () => {
-  return `/api/v1/auth/register-recruiter`;
-};
-
-export const authControllerRegisterRecruiterV1 = async (
-  initRecruiterProfileDto: InitRecruiterProfileDto,
+export const authControllerSignupRecruiterV1 = async (
+  signupRecruiterDto: SignupRecruiterDto,
   options?: RequestInit,
-): Promise<authControllerRegisterRecruiterV1Response> => {
-  return fetcher<authControllerRegisterRecruiterV1Response>(
-    getAuthControllerRegisterRecruiterV1Url(),
+): Promise<authControllerSignupRecruiterV1Response> => {
+  return fetcher<authControllerSignupRecruiterV1Response>(
+    getAuthControllerSignupRecruiterV1Url(),
     {
       ...options,
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(initRecruiterProfileDto),
+      body: JSON.stringify(signupRecruiterDto),
     },
   );
 };
 
-export const getAuthControllerRegisterRecruiterV1MutationOptions = <
+export const getAuthControllerSignupRecruiterV1MutationOptions = <
   TError = void,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>,
+    Awaited<ReturnType<typeof authControllerSignupRecruiterV1>>,
     TError,
-    { data: InitRecruiterProfileDto },
+    { data: SignupRecruiterDto },
     TContext
   >;
   request?: SecondParameter<typeof fetcher>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>,
+  Awaited<ReturnType<typeof authControllerSignupRecruiterV1>>,
   TError,
-  { data: InitRecruiterProfileDto },
+  { data: SignupRecruiterDto },
   TContext
 > => {
-  const mutationKey = ["authControllerRegisterRecruiterV1"];
+  const mutationKey = ["authControllerSignupRecruiterV1"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -1446,49 +4296,502 @@ export const getAuthControllerRegisterRecruiterV1MutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>,
-    { data: InitRecruiterProfileDto }
+    Awaited<ReturnType<typeof authControllerSignupRecruiterV1>>,
+    { data: SignupRecruiterDto }
   > = (props) => {
     const { data } = props ?? {};
 
-    return authControllerRegisterRecruiterV1(data, requestOptions);
+    return authControllerSignupRecruiterV1(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type AuthControllerRegisterRecruiterV1MutationResult = NonNullable<
-  Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>
+export type AuthControllerSignupRecruiterV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerSignupRecruiterV1>>
 >;
-export type AuthControllerRegisterRecruiterV1MutationBody =
-  InitRecruiterProfileDto;
-export type AuthControllerRegisterRecruiterV1MutationError = void;
+export type AuthControllerSignupRecruiterV1MutationBody = SignupRecruiterDto;
+export type AuthControllerSignupRecruiterV1MutationError = void;
 
 /**
- * @summary Initialize a recruiter profile + company after Supabase signUp
+ * @summary Sign up a recruiter (creates Supabase user, sends verification email)
  */
-export const useAuthControllerRegisterRecruiterV1 = <
+export const useAuthControllerSignupRecruiterV1 = <
   TError = void,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>,
+      Awaited<ReturnType<typeof authControllerSignupRecruiterV1>>,
       TError,
-      { data: InitRecruiterProfileDto },
+      { data: SignupRecruiterDto },
       TContext
     >;
     request?: SecondParameter<typeof fetcher>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof authControllerRegisterRecruiterV1>>,
+  Awaited<ReturnType<typeof authControllerSignupRecruiterV1>>,
   TError,
-  { data: InitRecruiterProfileDto },
+  { data: SignupRecruiterDto },
   TContext
 > => {
   return useMutation(
-    getAuthControllerRegisterRecruiterV1MutationOptions(options),
+    getAuthControllerSignupRecruiterV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * Consumes the token, marks the Supabase user as email-confirmed, creates the profile + role-specific subprofile, and writes audit logs.
+ * @summary Verify an email-verification token
+ */
+export type authControllerVerifyEmailV1Response200 = {
+  data: VerifyEmailResponseDto;
+  status: 200;
+};
+
+export type authControllerVerifyEmailV1Response400 = {
+  data: void;
+  status: 400;
+};
+
+export type authControllerVerifyEmailV1ResponseSuccess =
+  authControllerVerifyEmailV1Response200 & {
+    headers: Headers;
+  };
+export type authControllerVerifyEmailV1ResponseError =
+  authControllerVerifyEmailV1Response400 & {
+    headers: Headers;
+  };
+
+export type authControllerVerifyEmailV1Response =
+  | authControllerVerifyEmailV1ResponseSuccess
+  | authControllerVerifyEmailV1ResponseError;
+
+export const getAuthControllerVerifyEmailV1Url = () => {
+  return `/api/v1/auth/verify-email`;
+};
+
+export const authControllerVerifyEmailV1 = async (
+  verifyEmailDto: VerifyEmailDto,
+  options?: RequestInit,
+): Promise<authControllerVerifyEmailV1Response> => {
+  return fetcher<authControllerVerifyEmailV1Response>(
+    getAuthControllerVerifyEmailV1Url(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(verifyEmailDto),
+    },
+  );
+};
+
+export const getAuthControllerVerifyEmailV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerVerifyEmailV1>>,
+    TError,
+    { data: VerifyEmailDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerVerifyEmailV1>>,
+  TError,
+  { data: VerifyEmailDto },
+  TContext
+> => {
+  const mutationKey = ["authControllerVerifyEmailV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerVerifyEmailV1>>,
+    { data: VerifyEmailDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerVerifyEmailV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerVerifyEmailV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerVerifyEmailV1>>
+>;
+export type AuthControllerVerifyEmailV1MutationBody = VerifyEmailDto;
+export type AuthControllerVerifyEmailV1MutationError = void;
+
+/**
+ * @summary Verify an email-verification token
+ */
+export const useAuthControllerVerifyEmailV1 = <
+  TError = void,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerVerifyEmailV1>>,
+      TError,
+      { data: VerifyEmailDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerVerifyEmailV1>>,
+  TError,
+  { data: VerifyEmailDto },
+  TContext
+> => {
+  return useMutation(
+    getAuthControllerVerifyEmailV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * Always returns 200; never discloses whether an account exists.
+ * @summary Resend the verification email
+ */
+export type authControllerResendVerificationV1Response200 = {
+  data: AuthMessageDto;
+  status: 200;
+};
+
+export type authControllerResendVerificationV1ResponseSuccess =
+  authControllerResendVerificationV1Response200 & {
+    headers: Headers;
+  };
+export type authControllerResendVerificationV1Response =
+  authControllerResendVerificationV1ResponseSuccess;
+
+export const getAuthControllerResendVerificationV1Url = () => {
+  return `/api/v1/auth/resend-verification`;
+};
+
+export const authControllerResendVerificationV1 = async (
+  resendVerificationDto: ResendVerificationDto,
+  options?: RequestInit,
+): Promise<authControllerResendVerificationV1Response> => {
+  return fetcher<authControllerResendVerificationV1Response>(
+    getAuthControllerResendVerificationV1Url(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(resendVerificationDto),
+    },
+  );
+};
+
+export const getAuthControllerResendVerificationV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerResendVerificationV1>>,
+    TError,
+    { data: ResendVerificationDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerResendVerificationV1>>,
+  TError,
+  { data: ResendVerificationDto },
+  TContext
+> => {
+  const mutationKey = ["authControllerResendVerificationV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerResendVerificationV1>>,
+    { data: ResendVerificationDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerResendVerificationV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerResendVerificationV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerResendVerificationV1>>
+>;
+export type AuthControllerResendVerificationV1MutationBody =
+  ResendVerificationDto;
+export type AuthControllerResendVerificationV1MutationError = unknown;
+
+/**
+ * @summary Resend the verification email
+ */
+export const useAuthControllerResendVerificationV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerResendVerificationV1>>,
+      TError,
+      { data: ResendVerificationDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerResendVerificationV1>>,
+  TError,
+  { data: ResendVerificationDto },
+  TContext
+> => {
+  return useMutation(
+    getAuthControllerResendVerificationV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * Always returns 200; never discloses whether an account exists.
+ * @summary Request a password reset email
+ */
+export type authControllerForgotPasswordV1Response200 = {
+  data: AuthMessageDto;
+  status: 200;
+};
+
+export type authControllerForgotPasswordV1ResponseSuccess =
+  authControllerForgotPasswordV1Response200 & {
+    headers: Headers;
+  };
+export type authControllerForgotPasswordV1Response =
+  authControllerForgotPasswordV1ResponseSuccess;
+
+export const getAuthControllerForgotPasswordV1Url = () => {
+  return `/api/v1/auth/forgot-password`;
+};
+
+export const authControllerForgotPasswordV1 = async (
+  forgotPasswordDto: ForgotPasswordDto,
+  options?: RequestInit,
+): Promise<authControllerForgotPasswordV1Response> => {
+  return fetcher<authControllerForgotPasswordV1Response>(
+    getAuthControllerForgotPasswordV1Url(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(forgotPasswordDto),
+    },
+  );
+};
+
+export const getAuthControllerForgotPasswordV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerForgotPasswordV1>>,
+    TError,
+    { data: ForgotPasswordDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerForgotPasswordV1>>,
+  TError,
+  { data: ForgotPasswordDto },
+  TContext
+> => {
+  const mutationKey = ["authControllerForgotPasswordV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerForgotPasswordV1>>,
+    { data: ForgotPasswordDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerForgotPasswordV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerForgotPasswordV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerForgotPasswordV1>>
+>;
+export type AuthControllerForgotPasswordV1MutationBody = ForgotPasswordDto;
+export type AuthControllerForgotPasswordV1MutationError = unknown;
+
+/**
+ * @summary Request a password reset email
+ */
+export const useAuthControllerForgotPasswordV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerForgotPasswordV1>>,
+      TError,
+      { data: ForgotPasswordDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerForgotPasswordV1>>,
+  TError,
+  { data: ForgotPasswordDto },
+  TContext
+> => {
+  return useMutation(
+    getAuthControllerForgotPasswordV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Consume a password-reset token and set a new password
+ */
+export type authControllerResetPasswordV1Response200 = {
+  data: AuthMessageDto;
+  status: 200;
+};
+
+export type authControllerResetPasswordV1Response400 = {
+  data: void;
+  status: 400;
+};
+
+export type authControllerResetPasswordV1ResponseSuccess =
+  authControllerResetPasswordV1Response200 & {
+    headers: Headers;
+  };
+export type authControllerResetPasswordV1ResponseError =
+  authControllerResetPasswordV1Response400 & {
+    headers: Headers;
+  };
+
+export type authControllerResetPasswordV1Response =
+  | authControllerResetPasswordV1ResponseSuccess
+  | authControllerResetPasswordV1ResponseError;
+
+export const getAuthControllerResetPasswordV1Url = () => {
+  return `/api/v1/auth/reset-password`;
+};
+
+export const authControllerResetPasswordV1 = async (
+  resetPasswordDto: ResetPasswordDto,
+  options?: RequestInit,
+): Promise<authControllerResetPasswordV1Response> => {
+  return fetcher<authControllerResetPasswordV1Response>(
+    getAuthControllerResetPasswordV1Url(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(resetPasswordDto),
+    },
+  );
+};
+
+export const getAuthControllerResetPasswordV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerResetPasswordV1>>,
+    TError,
+    { data: ResetPasswordDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerResetPasswordV1>>,
+  TError,
+  { data: ResetPasswordDto },
+  TContext
+> => {
+  const mutationKey = ["authControllerResetPasswordV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerResetPasswordV1>>,
+    { data: ResetPasswordDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerResetPasswordV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerResetPasswordV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerResetPasswordV1>>
+>;
+export type AuthControllerResetPasswordV1MutationBody = ResetPasswordDto;
+export type AuthControllerResetPasswordV1MutationError = void;
+
+/**
+ * @summary Consume a password-reset token and set a new password
+ */
+export const useAuthControllerResetPasswordV1 = <
+  TError = void,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerResetPasswordV1>>,
+      TError,
+      { data: ResetPasswordDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerResetPasswordV1>>,
+  TError,
+  { data: ResetPasswordDto },
+  TContext
+> => {
+  return useMutation(
+    getAuthControllerResetPasswordV1MutationOptions(options),
     queryClient,
   );
 };

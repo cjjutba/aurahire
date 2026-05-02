@@ -31,14 +31,14 @@ The date is the planned execution date (not the writing date — writing happens
 | 1.5 | Auth UI: Login, Register, Forgot, Reset, Verify | [2026-05-02-slice-1.5-auth-ui.md](./2026-05-02-slice-1.5-auth-ui.md) | ✅ Complete |
 | 1.6 | Portal Shells | [2026-05-02-slice-1.6-portal-shells.md](./2026-05-02-slice-1.6-portal-shells.md) | ✅ Complete |
 | 1.7 | Recruiter Onboarding Wizard | [2026-05-02-slice-1.7-recruiter-onboarding.md](./2026-05-02-slice-1.7-recruiter-onboarding.md) | ✅ Complete |
-| 1.8 | Candidate Onboarding (Manual, no AI) | [2026-05-02-slice-1.8-candidate-onboarding.md](./2026-05-02-slice-1.8-candidate-onboarding.md) | 📝 Plan ready |
+| 1.8 | Candidate Onboarding (Manual, no AI) | [2026-05-02-slice-1.8-candidate-onboarding.md](./2026-05-02-slice-1.8-candidate-onboarding.md) | 🔄 Executing |
 
 ### Day 2 — May 3, 2026 (Jobs, Applications, AI Layer)
 
 | Slice | Title | Plan File | Status |
 |---|---|---|---|
-| 2.1 | Jobs Module Backend | _to be written_ | ⏳ Not started |
-| 2.2 | Jobs Frontend (Recruiter + Public Browse) | _to be written_ | ⏳ Not started |
+| 2.1 | Jobs Module Backend | [2026-05-03-slice-2.1-jobs-module-backend.md](./2026-05-03-slice-2.1-jobs-module-backend.md) | ✅ Complete |
+| 2.2 | Jobs Frontend (Recruiter + Public Browse) | [2026-05-03-slice-2.2-jobs-frontend.md](./2026-05-03-slice-2.2-jobs-frontend.md) | 📝 Plan ready |
 | 2.3 | AI Foundation | _to be written_ | ⏳ Not started |
 | 2.4 | Resume Upload + Parse | _to be written_ | ⏳ Not started |
 | 2.5 | Profile Scoring + Score UI Components | _to be written_ | ⏳ Not started |

@@ -2,20 +2,25 @@ import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { LoggerModule } from "nestjs-pino";
+import { CacheModule } from "@nestjs/cache-manager";
 
 import { DbModule } from "./db";
 import { AuditModule } from "./audit";
 import { EmailModule } from "./email";
+import { SupabaseAdminModule } from "./lib/supabase-admin";
 import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ProfilesModule } from "./modules/profiles/profiles.module";
 import { RecruiterProfilesModule } from "./modules/recruiter-profiles/recruiter-profiles.module";
+import { CandidateProfilesModule } from "./modules/candidate-profiles/candidate-profiles.module";
+import { JobsModule } from "./modules/jobs/jobs.module";
 import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 
 @Module({
   imports: [
+    CacheModule.register({ isGlobal: true, ttl: 60_000 }),
     ConfigModule.forRoot({ isGlobal: true, cache: true }),
     LoggerModule.forRoot({
       pinoHttp: {
@@ -32,8 +37,11 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     DbModule,
     AuditModule,
     EmailModule,
+    SupabaseAdminModule,
     ProfilesModule,
     RecruiterProfilesModule,
+    CandidateProfilesModule,
+    JobsModule,
     HealthModule,
     AuthModule,
   ],
