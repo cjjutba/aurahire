@@ -7,7 +7,10 @@ const PORTAL_PREFIXES = {
   admin: "/admin",
 } as const;
 
-const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
+// Auth ROUTES that redirect authenticated users away.
+// Note: /verify-email and /reset-password are NOT in this list because they are
+// Supabase auth-callback routes that must work even with an active session.
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

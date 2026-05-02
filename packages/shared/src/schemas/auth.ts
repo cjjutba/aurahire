@@ -5,7 +5,7 @@ import {
   passwordSchema,
   fullNameSchema,
   companyNameSchema,
-} from "./shared";
+} from "./shared.ts";
 
 // ============================================================================
 // LOGIN

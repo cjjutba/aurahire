@@ -1,0 +1,2 @@
+export { EmailModule } from "./email.module";
+export { EmailService, type SendEmailOptions } from "./email.service";

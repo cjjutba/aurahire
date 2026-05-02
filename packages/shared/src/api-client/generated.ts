@@ -16,7 +16,7 @@ import type {
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import { fetcher } from "./fetcher";
+import { fetcher } from "./fetcher.ts";
 /**
  * @nullable
  */

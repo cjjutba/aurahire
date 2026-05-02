@@ -28,9 +28,9 @@ The date is the planned execution date (not the writing date — writing happens
 | 1.2 | Database Schema + Drizzle Foundation | [2026-05-02-slice-1.2-database-schema.md](./2026-05-02-slice-1.2-database-schema.md) | ✅ Complete |
 | 1.3 | Shared Schemas + Auth Guards | [2026-05-02-slice-1.3-shared-schemas-auth-guards.md](./2026-05-02-slice-1.3-shared-schemas-auth-guards.md) | ✅ Complete |
 | 1.4 | Profiles Module + Auth Wiring | [2026-05-02-slice-1.4-profiles-module-auth-wiring.md](./2026-05-02-slice-1.4-profiles-module-auth-wiring.md) | ✅ Complete |
-| 1.5 | Auth UI: Login, Register, Forgot, Reset, Verify | [2026-05-02-slice-1.5-auth-ui.md](./2026-05-02-slice-1.5-auth-ui.md) | 📝 Plan ready |
-| 1.6 | Portal Shells | _to be written after 1.5_ | ⏳ Not started |
-| 1.7 | Recruiter Onboarding Wizard | _to be written after 1.6_ | ⏳ Not started |
+| 1.5 | Auth UI: Login, Register, Forgot, Reset, Verify | [2026-05-02-slice-1.5-auth-ui.md](./2026-05-02-slice-1.5-auth-ui.md) | ✅ Complete |
+| 1.6 | Portal Shells | [2026-05-02-slice-1.6-portal-shells.md](./2026-05-02-slice-1.6-portal-shells.md) | ✅ Complete |
+| 1.7 | Recruiter Onboarding Wizard | [2026-05-02-slice-1.7-recruiter-onboarding.md](./2026-05-02-slice-1.7-recruiter-onboarding.md) | 📝 Plan ready |
 | 1.8 | Candidate Onboarding (Manual, no AI) | _to be written after 1.7_ | ⏳ Not started |
 
 ### Day 2 — May 3, 2026 (Jobs, Applications, AI Layer)

@@ -1,2 +1,8 @@
-export * from "./generated";
-export { fetcher, type FetcherOptions } from "./fetcher";
+export * from "./generated.ts";
+export {
+  fetcher,
+  setAccessToken,
+  getAccessToken,
+  type Fetcher,
+  type FetcherOptions,
+} from "./fetcher.ts";

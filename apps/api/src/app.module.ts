@@ -5,6 +5,7 @@ import { LoggerModule } from "nestjs-pino";
 
 import { DbModule } from "./db";
 import { AuditModule } from "./audit";
+import { EmailModule } from "./email";
 import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ProfilesModule } from "./modules/profiles/profiles.module";
@@ -29,6 +30,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     }),
     DbModule,
     AuditModule,
+    EmailModule,
     ProfilesModule,
     HealthModule,
     AuthModule,

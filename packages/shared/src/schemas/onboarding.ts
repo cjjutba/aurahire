@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fullNameSchema, phoneSchema, companyNameSchema } from "./shared";
+import { fullNameSchema, phoneSchema, companyNameSchema } from "./shared.ts";
 
 // ============================================================================
 // CANDIDATE ONBOARDING (skeleton; populated in Slice 1.8 + Slice 2.4)
