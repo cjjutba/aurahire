@@ -27,8 +27,8 @@ The date is the planned execution date (not the writing date — writing happens
 | 1.1 | Monorepo Init | [2026-05-02-slice-1.1-monorepo-init.md](./2026-05-02-slice-1.1-monorepo-init.md) | ✅ Complete |
 | 1.2 | Database Schema + Drizzle Foundation | [2026-05-02-slice-1.2-database-schema.md](./2026-05-02-slice-1.2-database-schema.md) | ✅ Complete |
 | 1.3 | Shared Schemas + Auth Guards | [2026-05-02-slice-1.3-shared-schemas-auth-guards.md](./2026-05-02-slice-1.3-shared-schemas-auth-guards.md) | ✅ Complete |
-| 1.4 | Profiles Module + Auth Wiring | [2026-05-02-slice-1.4-profiles-module-auth-wiring.md](./2026-05-02-slice-1.4-profiles-module-auth-wiring.md) | 📝 Plan ready |
-| 1.5 | Auth UI: Login, Register, Forgot, Reset, Verify | _to be written after 1.4_ | ⏳ Not started |
+| 1.4 | Profiles Module + Auth Wiring | [2026-05-02-slice-1.4-profiles-module-auth-wiring.md](./2026-05-02-slice-1.4-profiles-module-auth-wiring.md) | ✅ Complete |
+| 1.5 | Auth UI: Login, Register, Forgot, Reset, Verify | [2026-05-02-slice-1.5-auth-ui.md](./2026-05-02-slice-1.5-auth-ui.md) | 📝 Plan ready |
 | 1.6 | Portal Shells | _to be written after 1.5_ | ⏳ Not started |
 | 1.7 | Recruiter Onboarding Wizard | _to be written after 1.6_ | ⏳ Not started |
 | 1.8 | Candidate Onboarding (Manual, no AI) | _to be written after 1.7_ | ⏳ Not started |

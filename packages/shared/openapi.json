@@ -1,0 +1,386 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/profiles/me": {
+      "get": {
+        "operationId": "ProfilesController_getMe_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponseEnvelopeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token"
+          },
+          "404": {
+            "description": "Profile not yet initialized"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the current user's profile + role-specific subprofile",
+        "tags": [
+          "profiles"
+        ]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        },
+        "summary": "Service health check",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/auth/register-candidate": {
+      "post": {
+        "description": "Frontend calls this AFTER supabase.auth.signUp() succeeds. The JWT identifies the new user; this endpoint creates profiles + candidate_profiles rows.",
+        "operationId": "AuthController_registerCandidate_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitCandidateProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponseEnvelopeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token"
+          },
+          "409": {
+            "description": "Profile already exists for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Initialize a candidate profile after Supabase signUp",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/register-recruiter": {
+      "post": {
+        "description": "Frontend calls this AFTER supabase.auth.signUp() succeeds. Creates profiles + recruiter_profiles + companies rows in a single transaction.",
+        "operationId": "AuthController_registerRecruiter_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitRecruiterProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponseEnvelopeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token"
+          },
+          "409": {
+            "description": "Profile already exists for this user"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Initialize a recruiter profile + company after Supabase signUp",
+        "tags": [
+          "auth"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "AuraHire API",
+    "description": "Backend API for AuraHire — Explainable + Fair AI-Powered Recruitment",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "http://localhost:3333",
+      "description": "Local"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "CandidateSubprofileDto": {
+        "type": "object",
+        "properties": {
+          "headline": {
+            "type": "object",
+            "nullable": true
+          },
+          "summary": {
+            "type": "object",
+            "nullable": true
+          },
+          "locationCity": {
+            "type": "object",
+            "nullable": true
+          },
+          "locationCountry": {
+            "type": "object",
+            "nullable": true
+          },
+          "profileCompleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "headline",
+          "summary",
+          "locationCity",
+          "locationCountry",
+          "profileCompleted"
+        ]
+      },
+      "RecruiterSubprofileDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string"
+          },
+          "jobTitle": {
+            "type": "object",
+            "nullable": true
+          },
+          "department": {
+            "type": "object",
+            "nullable": true
+          },
+          "profileCompleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "companyId",
+          "jobTitle",
+          "department",
+          "profileCompleted"
+        ]
+      },
+      "CompanySummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "industry": {
+            "type": "object",
+            "nullable": true
+          },
+          "size": {
+            "type": "object",
+            "nullable": true
+          },
+          "website": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "industry",
+          "size",
+          "website"
+        ]
+      },
+      "ProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "candidate",
+              "recruiter",
+              "admin"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "deleted"
+            ]
+          },
+          "phone": {
+            "type": "object",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "object",
+            "nullable": true
+          },
+          "profileCompleted": {
+            "type": "boolean"
+          },
+          "candidateProfile": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CandidateSubprofileDto"
+              }
+            ]
+          },
+          "recruiterProfile": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecruiterSubprofileDto"
+              }
+            ]
+          },
+          "company": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanySummaryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "role",
+          "status",
+          "phone",
+          "avatarUrl",
+          "profileCompleted",
+          "candidateProfile",
+          "recruiterProfile",
+          "company"
+        ]
+      },
+      "ProfileResponseEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ProfileResponseDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "InitCandidateProfileDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 7,
+            "maxLength": 20,
+            "pattern": "^[\\d\\s+()-]+$"
+          }
+        },
+        "required": [
+          "fullName",
+          "phone"
+        ]
+      },
+      "InitRecruiterProfileDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 7,
+            "maxLength": 20,
+            "pattern": "^[\\d\\s+()-]+$"
+          },
+          "companyName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "fullName",
+          "phone",
+          "companyName"
+        ]
+      }
+    }
+  }
+}

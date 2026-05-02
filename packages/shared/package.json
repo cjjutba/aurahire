@@ -14,13 +14,18 @@
   },
   "scripts": {
     "lint": "eslint \"src/**/*.ts\"",
-    "type-check": "tsc --noEmit -p tsconfig.json"
+    "type-check": "tsc --noEmit -p tsconfig.json",
+    "codegen": "orval --config orval.config.ts"
   },
   "dependencies": {
     "@aurahire/db": "workspace:^",
+    "@tanstack/react-query": "^5.100.7",
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/node": "^20.17.10",
+    "orval": "^8.9.0",
+    "prettier": "^3.4.2",
     "typescript": "^5.7.2"
   }
 }

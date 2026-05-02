@@ -16,6 +16,15 @@ import type { AuthUser } from "@aurahire/shared";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 
+/**
+ * Endpoints that run BEFORE a profile row exists. The guard verifies the JWT
+ * but skips the profile lookup so the controller can create the profile.
+ */
+const BOOTSTRAP_PATHS = [
+  "/api/v1/auth/register-candidate",
+  "/api/v1/auth/register-recruiter",
+];
+
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
   private readonly logger = new Logger(SupabaseAuthGuard.name);
@@ -76,6 +85,24 @@ export class SupabaseAuthGuard implements CanActivate {
         code: "INVALID_TOKEN",
         message: "Token missing user identifier",
       });
+    }
+
+    // Bootstrap path: profile doesn't exist yet, the controller will create it.
+    // Attach a placeholder AuthUser using JWT claims; role is fixed by the route.
+    const reqUrl = (req as { url?: string }).url ?? "";
+    const isBootstrap = BOOTSTRAP_PATHS.some((p) => reqUrl.endsWith(p));
+    if (isBootstrap) {
+      const email = typeof payload.email === "string" ? payload.email : "";
+      const placeholderRole = reqUrl.endsWith("register-recruiter") ? "recruiter" : "candidate";
+      req.user = {
+        id: userId,
+        email,
+        role: placeholderRole,
+        status: "active",
+        fullName: "",
+        profileCompleted: false,
+      } satisfies AuthUser;
+      return true;
     }
 
     // Fetch role + status from profiles table

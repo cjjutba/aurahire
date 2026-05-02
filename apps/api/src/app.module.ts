@@ -4,8 +4,10 @@ import { APP_GUARD } from "@nestjs/core";
 import { LoggerModule } from "nestjs-pino";
 
 import { DbModule } from "./db";
+import { AuditModule } from "./audit";
 import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { ProfilesModule } from "./modules/profiles/profiles.module";
 import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
@@ -26,6 +28,8 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
       },
     }),
     DbModule,
+    AuditModule,
+    ProfilesModule,
     HealthModule,
     AuthModule,
   ],

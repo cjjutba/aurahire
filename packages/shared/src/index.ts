@@ -18,4 +18,7 @@ export * from "./constants/pagination";
 export * from "./types/auth-user";
 export * from "./types/api-error";
 
-export const AURAHIRE_SHARED_VERSION = "0.3.0";
+// API client (orval-generated TanStack Query hooks + fetcher)
+export * from "./api-client";
+
+export const AURAHIRE_SHARED_VERSION = "0.4.0";
