@@ -38,8 +38,8 @@ The date is the planned execution date (not the writing date — writing happens
 | Slice | Title | Plan File | Status |
 |---|---|---|---|
 | 2.1 | Jobs Module Backend | [2026-05-03-slice-2.1-jobs-module-backend.md](./2026-05-03-slice-2.1-jobs-module-backend.md) | ✅ Complete |
-| 2.2 | Jobs Frontend (Recruiter + Public Browse) | [2026-05-03-slice-2.2-jobs-frontend.md](./2026-05-03-slice-2.2-jobs-frontend.md) | 📝 Plan ready |
-| 2.3 | AI Foundation | _to be written_ | ⏳ Not started |
+| 2.2 | Jobs Frontend (Recruiter + Public Browse) | [2026-05-03-slice-2.2-jobs-frontend.md](./2026-05-03-slice-2.2-jobs-frontend.md) | ✅ Complete |
+| 2.3 | AI Foundation | [2026-05-03-slice-2.3-ai-foundation.md](./2026-05-03-slice-2.3-ai-foundation.md) | 📝 Plan ready |
 | 2.4 | Resume Upload + Parse | _to be written_ | ⏳ Not started |
 | 2.5 | Profile Scoring + Score UI Components | _to be written_ | ⏳ Not started |
 | 2.6 | Match Scoring on Apply | _to be written_ | ⏳ Not started |
