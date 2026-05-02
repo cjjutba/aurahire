@@ -9,6 +9,7 @@ export * from "./schemas/jobs.ts";
 export * from "./schemas/parsed-resume.ts";
 export * from "./schemas/score.ts";
 export * from "./schemas/bias.ts";
+export * from "./schemas/applications.ts";
 
 // Enums
 export * from "./enums/index.ts";

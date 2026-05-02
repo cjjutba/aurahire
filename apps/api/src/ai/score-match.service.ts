@@ -1,14 +1,34 @@
-import { Injectable, NotImplementedException } from "@nestjs/common";
-import type { MatchScore } from "@aurahire/shared";
+import { Injectable, Logger } from "@nestjs/common";
+import {
+  type ParsedResume,
+  type MatchScore,
+  matchScoreSchema,
+} from "@aurahire/shared";
 
 import { OpenAIService } from "./openai.service";
 import { RedactPiiService } from "./redact-pii.service";
+import {
+  SCORE_MATCH_VERSION,
+  SCORE_MATCH_SYSTEM_PROMPT,
+  buildScoreMatchUserPrompt,
+} from "./prompts/score-match";
 
 export interface ScoreMatchInput {
-  applicationId: string;
-  candidateId: string;
-  jobId: string;
-  resumeId: string;
+  parsedResume: ParsedResume;
+  job: {
+    title: string;
+    department: string | null;
+    experienceLevel: string;
+    educationRequirement: string | null;
+    requiredSkills: string[];
+    descriptionPlain: string;
+  };
+  weights: {
+    skills: number;
+    experience: number;
+    education: number;
+    cultural_fit: number;
+  };
   requestId?: string;
 }
 
@@ -18,30 +38,54 @@ export interface ScoreMatchOutput {
   latencyMs: number;
   model: string;
   promptVersion: string;
-  weightsUsed: Record<string, number>;
 }
 
-/**
- * Match scoring service.
- *
- * Slice 2.3: SHELL ONLY.
- * Slice 2.6: Implements:
- *            1. Load resume parsed_data + job from DB
- *            2. RedactPiiService.redactResume()
- *            3. OpenAIService.generateStructured() with matchScoreSchema + SCORE_MATCH prompts
- *            4. Return score + audit metadata
- */
 @Injectable()
 export class ScoreMatchService {
+  private readonly logger = new Logger(ScoreMatchService.name);
+
   constructor(
     private readonly openai: OpenAIService,
     private readonly redact: RedactPiiService,
   ) {}
 
-  async score(_input: ScoreMatchInput): Promise<ScoreMatchOutput> {
-    throw new NotImplementedException({
-      code: "NOT_IMPLEMENTED",
-      message: "Match scoring is implemented in Slice 2.6",
+  async score(input: ScoreMatchInput): Promise<ScoreMatchOutput> {
+    const reqId = input.requestId ?? "score-match";
+
+    const { redacted, redactedFields } = await this.redact.redactResume(
+      input.parsedResume,
+      reqId,
+    );
+
+    this.logger.log(
+      `[${reqId}] redacted ${redactedFields.length} fields before match scoring`,
+    );
+
+    const userPrompt = buildScoreMatchUserPrompt({
+      jobTitle: input.job.title,
+      jobDepartment: input.job.department,
+      jobExperienceLevel: input.job.experienceLevel,
+      jobEducationRequirement: input.job.educationRequirement,
+      jobRequiredSkills: input.job.requiredSkills,
+      jobDescriptionPlain: input.job.descriptionPlain,
+      redactedResumeJson: JSON.stringify(redacted, null, 2),
+      weights: input.weights,
     });
+
+    const result = await this.openai.generateStructured({
+      schema: matchScoreSchema,
+      schemaName: "MatchScore",
+      systemPrompt: SCORE_MATCH_SYSTEM_PROMPT,
+      userPrompt,
+      requestId: `${reqId}:match-v${SCORE_MATCH_VERSION}`,
+    });
+
+    return {
+      score: result.data,
+      redactedFields,
+      latencyMs: result.latencyMs,
+      model: result.model,
+      promptVersion: SCORE_MATCH_VERSION,
+    };
   }
 }

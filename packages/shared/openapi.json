@@ -1235,6 +1235,314 @@
         ]
       }
     },
+    "/api/v1/applications": {
+      "post": {
+        "description": "Synchronous. Takes ~10-15s due to AI scoring. Frontend should display AI Shimmer.",
+        "operationId": "ApplicationsController_apply_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyToJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationEnvelopeDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already applied to this job"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Apply to a job (creates application + computes match score)",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/mine": {
+      "get": {
+        "operationId": "ApplicationsController_listMine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List own applications",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/by-job/{jobId}": {
+      "get": {
+        "operationId": "ApplicationsController_listForJob_v1",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List applications for a job (recruiter must own it)",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}": {
+      "get": {
+        "operationId": "ApplicationsController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get application detail",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/status": {
+      "patch": {
+        "operationId": "ApplicationsController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationEnvelopeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status transition"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move application through status state machine",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/notes": {
+      "patch": {
+        "operationId": "ApplicationsController_updateNotes_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationNotesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update recruiter notes on an application",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/withdraw": {
+      "post": {
+        "operationId": "ApplicationsController_withdraw_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw own application",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/resume-download": {
+      "get": {
+        "description": "Recruiters who own the job can download; candidates can download own.",
+        "operationId": "ApplicationsController_resumeDownload_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignedDownloadEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "1-hour signed URL for the candidate's resume in the context of this application",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -2705,6 +3013,407 @@
                 "$ref": "#/components/schemas/ProfileScoreDto"
               }
             ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ApplyToJobDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "resumeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "coverLetter": {
+            "type": "string",
+            "maxLength": 5000,
+            "nullable": true
+          }
+        },
+        "required": [
+          "jobId"
+        ]
+      },
+      "MatchEvidenceDto": {
+        "type": "object",
+        "properties": {
+          "excerpt": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "relevance": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "neutral"
+            ]
+          },
+          "contributionPoints": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "excerpt",
+          "source",
+          "relevance"
+        ]
+      },
+      "MatchComponentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "skills",
+              "experience",
+              "education",
+              "cultural_fit"
+            ]
+          },
+          "score": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "weight": {
+            "type": "number"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatchEvidenceDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "score",
+          "max",
+          "weight",
+          "explanation",
+          "evidence"
+        ]
+      },
+      "MatchScoreDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "overallScore": {
+            "type": "number"
+          },
+          "band": {
+            "type": "string",
+            "enum": [
+              "strong",
+              "partial",
+              "limited"
+            ]
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatchComponentDto"
+            }
+          },
+          "summary": {
+            "type": "string"
+          },
+          "redFlags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "greenFlags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "redactedFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "promptVersion": {
+            "type": "string"
+          },
+          "modelUsed": {
+            "type": "string"
+          },
+          "latencyMs": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "overallScore",
+          "band",
+          "components",
+          "summary",
+          "redFlags",
+          "greenFlags",
+          "redactedFields",
+          "promptVersion",
+          "modelUsed",
+          "latencyMs",
+          "createdAt"
+        ]
+      },
+      "ApplicationCandidateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "object",
+            "nullable": true
+          },
+          "headline": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email"
+        ]
+      },
+      "ApplicationCompanyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ApplicationJobDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "department": {
+            "type": "object",
+            "nullable": true
+          },
+          "employmentType": {
+            "type": "string"
+          },
+          "workMode": {
+            "type": "string"
+          },
+          "company": {
+            "$ref": "#/components/schemas/ApplicationCompanyDto"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "employmentType",
+          "workMode",
+          "company"
+        ]
+      },
+      "ApplicationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "candidateId": {
+            "type": "string"
+          },
+          "resumeId": {
+            "type": "string"
+          },
+          "coverLetter": {
+            "type": "object",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "screening",
+              "interview",
+              "offer",
+              "hired",
+              "rejected",
+              "withdrawn"
+            ]
+          },
+          "recruiterNotes": {
+            "type": "object",
+            "nullable": true
+          },
+          "appliedAt": {
+            "type": "string"
+          },
+          "statusUpdatedAt": {
+            "type": "string"
+          },
+          "matchScore": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MatchScoreDto"
+              }
+            ]
+          },
+          "candidate": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationCandidateDto"
+              }
+            ]
+          },
+          "job": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationJobDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "candidateId",
+          "resumeId",
+          "status",
+          "appliedAt",
+          "statusUpdatedAt"
+        ]
+      },
+      "ApplicationEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ApplicationDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ApplicationListEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "UpdateApplicationStatusDto": {
+        "type": "object",
+        "properties": {
+          "newStatus": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "screening",
+              "interview",
+              "offer",
+              "hired",
+              "rejected",
+              "withdrawn"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 2000,
+            "nullable": true
+          }
+        },
+        "required": [
+          "newStatus"
+        ]
+      },
+      "UpdateApplicationNotesDto": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "maxLength": 5000,
+            "nullable": true
+          }
+        },
+        "required": [
+          "notes"
+        ]
+      },
+      "SignedDownloadPayloadDto": {
+        "type": "object",
+        "properties": {
+          "signedUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "signedUrl",
+          "expiresAt"
+        ]
+      },
+      "SignedDownloadEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SignedDownloadPayloadDto"
           }
         },
         "required": [

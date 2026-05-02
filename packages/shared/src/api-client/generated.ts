@@ -873,6 +873,205 @@ export interface ProfileScoreEnvelopeDto {
   data: ProfileScoreDto | null;
 }
 
+export interface ApplyToJobDto {
+  jobId: string;
+  resumeId?: string;
+  /**
+   * @maxLength 5000
+   * @nullable
+   */
+  coverLetter?: string | null;
+}
+
+export type MatchEvidenceDtoRelevance =
+  (typeof MatchEvidenceDtoRelevance)[keyof typeof MatchEvidenceDtoRelevance];
+
+export const MatchEvidenceDtoRelevance = {
+  positive: "positive",
+  negative: "negative",
+  neutral: "neutral",
+} as const;
+
+export interface MatchEvidenceDto {
+  excerpt: string;
+  source: string;
+  relevance: MatchEvidenceDtoRelevance;
+  /** @nullable */
+  contributionPoints?: number | null;
+}
+
+export type MatchComponentDtoName =
+  (typeof MatchComponentDtoName)[keyof typeof MatchComponentDtoName];
+
+export const MatchComponentDtoName = {
+  skills: "skills",
+  experience: "experience",
+  education: "education",
+  cultural_fit: "cultural_fit",
+} as const;
+
+export interface MatchComponentDto {
+  name: MatchComponentDtoName;
+  score: number;
+  max: number;
+  weight: number;
+  explanation: string;
+  evidence: MatchEvidenceDto[];
+}
+
+export type MatchScoreDtoBand =
+  (typeof MatchScoreDtoBand)[keyof typeof MatchScoreDtoBand];
+
+export const MatchScoreDtoBand = {
+  strong: "strong",
+  partial: "partial",
+  limited: "limited",
+} as const;
+
+export interface MatchScoreDto {
+  id: string;
+  overallScore: number;
+  band: MatchScoreDtoBand;
+  components: MatchComponentDto[];
+  summary: string;
+  /** @nullable */
+  redFlags: string[] | null;
+  /** @nullable */
+  greenFlags: string[] | null;
+  redactedFields: string[];
+  promptVersion: string;
+  modelUsed: string;
+  latencyMs: number;
+  createdAt: string;
+}
+
+/**
+ * @nullable
+ */
+export type ApplicationCandidateDtoPhone = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type ApplicationCandidateDtoHeadline = { [key: string]: unknown } | null;
+
+export interface ApplicationCandidateDto {
+  id: string;
+  fullName: string;
+  email: string;
+  /** @nullable */
+  phone?: ApplicationCandidateDtoPhone;
+  /** @nullable */
+  headline?: ApplicationCandidateDtoHeadline;
+}
+
+export interface ApplicationCompanyDto {
+  id: string;
+  name: string;
+}
+
+/**
+ * @nullable
+ */
+export type ApplicationJobDtoDepartment = { [key: string]: unknown } | null;
+
+export interface ApplicationJobDto {
+  id: string;
+  title: string;
+  /** @nullable */
+  department?: ApplicationJobDtoDepartment;
+  employmentType: string;
+  workMode: string;
+  company: ApplicationCompanyDto;
+}
+
+/**
+ * @nullable
+ */
+export type ApplicationDtoCoverLetter = { [key: string]: unknown } | null;
+
+export type ApplicationDtoStatus =
+  (typeof ApplicationDtoStatus)[keyof typeof ApplicationDtoStatus];
+
+export const ApplicationDtoStatus = {
+  applied: "applied",
+  screening: "screening",
+  interview: "interview",
+  offer: "offer",
+  hired: "hired",
+  rejected: "rejected",
+  withdrawn: "withdrawn",
+} as const;
+
+/**
+ * @nullable
+ */
+export type ApplicationDtoRecruiterNotes = { [key: string]: unknown } | null;
+
+export interface ApplicationDto {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  resumeId: string;
+  /** @nullable */
+  coverLetter?: ApplicationDtoCoverLetter;
+  status: ApplicationDtoStatus;
+  /** @nullable */
+  recruiterNotes?: ApplicationDtoRecruiterNotes;
+  appliedAt: string;
+  statusUpdatedAt: string;
+  matchScore?: MatchScoreDto | null;
+  candidate?: ApplicationCandidateDto | null;
+  job?: ApplicationJobDto | null;
+}
+
+export interface ApplicationEnvelopeDto {
+  data: ApplicationDto;
+}
+
+export interface ApplicationListEnvelopeDto {
+  data: ApplicationDto[];
+}
+
+export type UpdateApplicationStatusDtoNewStatus =
+  (typeof UpdateApplicationStatusDtoNewStatus)[keyof typeof UpdateApplicationStatusDtoNewStatus];
+
+export const UpdateApplicationStatusDtoNewStatus = {
+  applied: "applied",
+  screening: "screening",
+  interview: "interview",
+  offer: "offer",
+  hired: "hired",
+  rejected: "rejected",
+  withdrawn: "withdrawn",
+} as const;
+
+export interface UpdateApplicationStatusDto {
+  newStatus: UpdateApplicationStatusDtoNewStatus;
+  /**
+   * @maxLength 2000
+   * @nullable
+   */
+  note?: string | null;
+}
+
+export interface UpdateApplicationNotesDto {
+  /**
+   * @maxLength 5000
+   * @nullable
+   */
+  notes: string | null;
+}
+
+export interface SignedDownloadPayloadDto {
+  signedUrl: string;
+  expiresAt: string;
+}
+
+export interface SignedDownloadEnvelopeDto {
+  data: SignedDownloadPayloadDto;
+}
+
 export interface SignupCandidateDto {
   /**
    * @minLength 2
@@ -5235,6 +5434,1210 @@ export function useScoringControllerGetProfileScoreMeV1<
 } {
   const queryOptions =
     getScoringControllerGetProfileScoreMeV1QueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Synchronous. Takes ~10-15s due to AI scoring. Frontend should display AI Shimmer.
+ * @summary Apply to a job (creates application + computes match score)
+ */
+export type applicationsControllerApplyV1Response201 = {
+  data: ApplicationEnvelopeDto;
+  status: 201;
+};
+
+export type applicationsControllerApplyV1Response409 = {
+  data: void;
+  status: 409;
+};
+
+export type applicationsControllerApplyV1ResponseSuccess =
+  applicationsControllerApplyV1Response201 & {
+    headers: Headers;
+  };
+export type applicationsControllerApplyV1ResponseError =
+  applicationsControllerApplyV1Response409 & {
+    headers: Headers;
+  };
+
+export type applicationsControllerApplyV1Response =
+  | applicationsControllerApplyV1ResponseSuccess
+  | applicationsControllerApplyV1ResponseError;
+
+export const getApplicationsControllerApplyV1Url = () => {
+  return `/api/v1/applications`;
+};
+
+export const applicationsControllerApplyV1 = async (
+  applyToJobDto: ApplyToJobDto,
+  options?: RequestInit,
+): Promise<applicationsControllerApplyV1Response> => {
+  return fetcher<applicationsControllerApplyV1Response>(
+    getApplicationsControllerApplyV1Url(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(applyToJobDto),
+    },
+  );
+};
+
+export const getApplicationsControllerApplyV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof applicationsControllerApplyV1>>,
+    TError,
+    { data: ApplyToJobDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof applicationsControllerApplyV1>>,
+  TError,
+  { data: ApplyToJobDto },
+  TContext
+> => {
+  const mutationKey = ["applicationsControllerApplyV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof applicationsControllerApplyV1>>,
+    { data: ApplyToJobDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return applicationsControllerApplyV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ApplicationsControllerApplyV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerApplyV1>>
+>;
+export type ApplicationsControllerApplyV1MutationBody = ApplyToJobDto;
+export type ApplicationsControllerApplyV1MutationError = void;
+
+/**
+ * @summary Apply to a job (creates application + computes match score)
+ */
+export const useApplicationsControllerApplyV1 = <
+  TError = void,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof applicationsControllerApplyV1>>,
+      TError,
+      { data: ApplyToJobDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof applicationsControllerApplyV1>>,
+  TError,
+  { data: ApplyToJobDto },
+  TContext
+> => {
+  return useMutation(
+    getApplicationsControllerApplyV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary List own applications
+ */
+export type applicationsControllerListMineV1Response200 = {
+  data: ApplicationListEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerListMineV1ResponseSuccess =
+  applicationsControllerListMineV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerListMineV1Response =
+  applicationsControllerListMineV1ResponseSuccess;
+
+export const getApplicationsControllerListMineV1Url = () => {
+  return `/api/v1/applications/mine`;
+};
+
+export const applicationsControllerListMineV1 = async (
+  options?: RequestInit,
+): Promise<applicationsControllerListMineV1Response> => {
+  return fetcher<applicationsControllerListMineV1Response>(
+    getApplicationsControllerListMineV1Url(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getApplicationsControllerListMineV1QueryKey = () => {
+  return [`/api/v1/applications/mine`] as const;
+};
+
+export const getApplicationsControllerListMineV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getApplicationsControllerListMineV1QueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof applicationsControllerListMineV1>>
+  > = ({ signal }) =>
+    applicationsControllerListMineV1({ signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ApplicationsControllerListMineV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerListMineV1>>
+>;
+export type ApplicationsControllerListMineV1QueryError = unknown;
+
+export function useApplicationsControllerListMineV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerListMineV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerListMineV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerListMineV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerListMineV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List own applications
+ */
+
+export function useApplicationsControllerListMineV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListMineV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getApplicationsControllerListMineV1QueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List applications for a job (recruiter must own it)
+ */
+export type applicationsControllerListForJobV1Response200 = {
+  data: ApplicationListEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerListForJobV1ResponseSuccess =
+  applicationsControllerListForJobV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerListForJobV1Response =
+  applicationsControllerListForJobV1ResponseSuccess;
+
+export const getApplicationsControllerListForJobV1Url = (jobId: string) => {
+  return `/api/v1/applications/by-job/${jobId}`;
+};
+
+export const applicationsControllerListForJobV1 = async (
+  jobId: string,
+  options?: RequestInit,
+): Promise<applicationsControllerListForJobV1Response> => {
+  return fetcher<applicationsControllerListForJobV1Response>(
+    getApplicationsControllerListForJobV1Url(jobId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getApplicationsControllerListForJobV1QueryKey = (
+  jobId: string,
+) => {
+  return [`/api/v1/applications/by-job/${jobId}`] as const;
+};
+
+export const getApplicationsControllerListForJobV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+  TError = unknown,
+>(
+  jobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getApplicationsControllerListForJobV1QueryKey(jobId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof applicationsControllerListForJobV1>>
+  > = ({ signal }) =>
+    applicationsControllerListForJobV1(jobId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!jobId,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ApplicationsControllerListForJobV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerListForJobV1>>
+>;
+export type ApplicationsControllerListForJobV1QueryError = unknown;
+
+export function useApplicationsControllerListForJobV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+  TError = unknown,
+>(
+  jobId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerListForJobV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerListForJobV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+  TError = unknown,
+>(
+  jobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerListForJobV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerListForJobV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+  TError = unknown,
+>(
+  jobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List applications for a job (recruiter must own it)
+ */
+
+export function useApplicationsControllerListForJobV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+  TError = unknown,
+>(
+  jobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListForJobV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getApplicationsControllerListForJobV1QueryOptions(
+    jobId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get application detail
+ */
+export type applicationsControllerGetByIdV1Response200 = {
+  data: ApplicationEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerGetByIdV1ResponseSuccess =
+  applicationsControllerGetByIdV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerGetByIdV1Response =
+  applicationsControllerGetByIdV1ResponseSuccess;
+
+export const getApplicationsControllerGetByIdV1Url = (id: string) => {
+  return `/api/v1/applications/${id}`;
+};
+
+export const applicationsControllerGetByIdV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<applicationsControllerGetByIdV1Response> => {
+  return fetcher<applicationsControllerGetByIdV1Response>(
+    getApplicationsControllerGetByIdV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getApplicationsControllerGetByIdV1QueryKey = (id: string) => {
+  return [`/api/v1/applications/${id}`] as const;
+};
+
+export const getApplicationsControllerGetByIdV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getApplicationsControllerGetByIdV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>
+  > = ({ signal }) =>
+    applicationsControllerGetByIdV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ApplicationsControllerGetByIdV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>
+>;
+export type ApplicationsControllerGetByIdV1QueryError = unknown;
+
+export function useApplicationsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get application detail
+ */
+
+export function useApplicationsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getApplicationsControllerGetByIdV1QueryOptions(
+    id,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Move application through status state machine
+ */
+export type applicationsControllerUpdateStatusV1Response200 = {
+  data: ApplicationEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerUpdateStatusV1Response400 = {
+  data: void;
+  status: 400;
+};
+
+export type applicationsControllerUpdateStatusV1ResponseSuccess =
+  applicationsControllerUpdateStatusV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerUpdateStatusV1ResponseError =
+  applicationsControllerUpdateStatusV1Response400 & {
+    headers: Headers;
+  };
+
+export type applicationsControllerUpdateStatusV1Response =
+  | applicationsControllerUpdateStatusV1ResponseSuccess
+  | applicationsControllerUpdateStatusV1ResponseError;
+
+export const getApplicationsControllerUpdateStatusV1Url = (id: string) => {
+  return `/api/v1/applications/${id}/status`;
+};
+
+export const applicationsControllerUpdateStatusV1 = async (
+  id: string,
+  updateApplicationStatusDto: UpdateApplicationStatusDto,
+  options?: RequestInit,
+): Promise<applicationsControllerUpdateStatusV1Response> => {
+  return fetcher<applicationsControllerUpdateStatusV1Response>(
+    getApplicationsControllerUpdateStatusV1Url(id),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateApplicationStatusDto),
+    },
+  );
+};
+
+export const getApplicationsControllerUpdateStatusV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof applicationsControllerUpdateStatusV1>>,
+    TError,
+    { id: string; data: UpdateApplicationStatusDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof applicationsControllerUpdateStatusV1>>,
+  TError,
+  { id: string; data: UpdateApplicationStatusDto },
+  TContext
+> => {
+  const mutationKey = ["applicationsControllerUpdateStatusV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof applicationsControllerUpdateStatusV1>>,
+    { id: string; data: UpdateApplicationStatusDto }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return applicationsControllerUpdateStatusV1(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ApplicationsControllerUpdateStatusV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerUpdateStatusV1>>
+>;
+export type ApplicationsControllerUpdateStatusV1MutationBody =
+  UpdateApplicationStatusDto;
+export type ApplicationsControllerUpdateStatusV1MutationError = void;
+
+/**
+ * @summary Move application through status state machine
+ */
+export const useApplicationsControllerUpdateStatusV1 = <
+  TError = void,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof applicationsControllerUpdateStatusV1>>,
+      TError,
+      { id: string; data: UpdateApplicationStatusDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof applicationsControllerUpdateStatusV1>>,
+  TError,
+  { id: string; data: UpdateApplicationStatusDto },
+  TContext
+> => {
+  return useMutation(
+    getApplicationsControllerUpdateStatusV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Update recruiter notes on an application
+ */
+export type applicationsControllerUpdateNotesV1Response200 = {
+  data: ApplicationEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerUpdateNotesV1ResponseSuccess =
+  applicationsControllerUpdateNotesV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerUpdateNotesV1Response =
+  applicationsControllerUpdateNotesV1ResponseSuccess;
+
+export const getApplicationsControllerUpdateNotesV1Url = (id: string) => {
+  return `/api/v1/applications/${id}/notes`;
+};
+
+export const applicationsControllerUpdateNotesV1 = async (
+  id: string,
+  updateApplicationNotesDto: UpdateApplicationNotesDto,
+  options?: RequestInit,
+): Promise<applicationsControllerUpdateNotesV1Response> => {
+  return fetcher<applicationsControllerUpdateNotesV1Response>(
+    getApplicationsControllerUpdateNotesV1Url(id),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateApplicationNotesDto),
+    },
+  );
+};
+
+export const getApplicationsControllerUpdateNotesV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof applicationsControllerUpdateNotesV1>>,
+    TError,
+    { id: string; data: UpdateApplicationNotesDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof applicationsControllerUpdateNotesV1>>,
+  TError,
+  { id: string; data: UpdateApplicationNotesDto },
+  TContext
+> => {
+  const mutationKey = ["applicationsControllerUpdateNotesV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof applicationsControllerUpdateNotesV1>>,
+    { id: string; data: UpdateApplicationNotesDto }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return applicationsControllerUpdateNotesV1(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ApplicationsControllerUpdateNotesV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerUpdateNotesV1>>
+>;
+export type ApplicationsControllerUpdateNotesV1MutationBody =
+  UpdateApplicationNotesDto;
+export type ApplicationsControllerUpdateNotesV1MutationError = unknown;
+
+/**
+ * @summary Update recruiter notes on an application
+ */
+export const useApplicationsControllerUpdateNotesV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof applicationsControllerUpdateNotesV1>>,
+      TError,
+      { id: string; data: UpdateApplicationNotesDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof applicationsControllerUpdateNotesV1>>,
+  TError,
+  { id: string; data: UpdateApplicationNotesDto },
+  TContext
+> => {
+  return useMutation(
+    getApplicationsControllerUpdateNotesV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Withdraw own application
+ */
+export type applicationsControllerWithdrawV1Response200 = {
+  data: ApplicationEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerWithdrawV1ResponseSuccess =
+  applicationsControllerWithdrawV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerWithdrawV1Response =
+  applicationsControllerWithdrawV1ResponseSuccess;
+
+export const getApplicationsControllerWithdrawV1Url = (id: string) => {
+  return `/api/v1/applications/${id}/withdraw`;
+};
+
+export const applicationsControllerWithdrawV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<applicationsControllerWithdrawV1Response> => {
+  return fetcher<applicationsControllerWithdrawV1Response>(
+    getApplicationsControllerWithdrawV1Url(id),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getApplicationsControllerWithdrawV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof applicationsControllerWithdrawV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof applicationsControllerWithdrawV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["applicationsControllerWithdrawV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof applicationsControllerWithdrawV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return applicationsControllerWithdrawV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ApplicationsControllerWithdrawV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerWithdrawV1>>
+>;
+
+export type ApplicationsControllerWithdrawV1MutationError = unknown;
+
+/**
+ * @summary Withdraw own application
+ */
+export const useApplicationsControllerWithdrawV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof applicationsControllerWithdrawV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof applicationsControllerWithdrawV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getApplicationsControllerWithdrawV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * Recruiters who own the job can download; candidates can download own.
+ * @summary 1-hour signed URL for the candidate's resume in the context of this application
+ */
+export type applicationsControllerResumeDownloadV1Response200 = {
+  data: SignedDownloadEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerResumeDownloadV1ResponseSuccess =
+  applicationsControllerResumeDownloadV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerResumeDownloadV1Response =
+  applicationsControllerResumeDownloadV1ResponseSuccess;
+
+export const getApplicationsControllerResumeDownloadV1Url = (id: string) => {
+  return `/api/v1/applications/${id}/resume-download`;
+};
+
+export const applicationsControllerResumeDownloadV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<applicationsControllerResumeDownloadV1Response> => {
+  return fetcher<applicationsControllerResumeDownloadV1Response>(
+    getApplicationsControllerResumeDownloadV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getApplicationsControllerResumeDownloadV1QueryKey = (
+  id: string,
+) => {
+  return [`/api/v1/applications/${id}/resume-download`] as const;
+};
+
+export const getApplicationsControllerResumeDownloadV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getApplicationsControllerResumeDownloadV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>
+  > = ({ signal }) =>
+    applicationsControllerResumeDownloadV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ApplicationsControllerResumeDownloadV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>
+>;
+export type ApplicationsControllerResumeDownloadV1QueryError = unknown;
+
+export function useApplicationsControllerResumeDownloadV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerResumeDownloadV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerResumeDownloadV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 1-hour signed URL for the candidate's resume in the context of this application
+ */
+
+export function useApplicationsControllerResumeDownloadV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerResumeDownloadV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getApplicationsControllerResumeDownloadV1QueryOptions(
+    id,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
