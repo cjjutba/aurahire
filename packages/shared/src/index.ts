@@ -1,4 +1,21 @@
 // AuraHire shared schemas, enums, constants, and types.
-// Slice 1.3 will populate this with auth and onboarding schemas.
+// Single import point for both apps/web and apps/api.
 
-export const AURAHIRE_SHARED_VERSION = "0.1.0";
+// Schemas
+export * from "./schemas/shared";
+export * from "./schemas/auth";
+export * from "./schemas/onboarding";
+
+// Enums
+export * from "./enums";
+
+// Constants
+export * from "./constants/score-thresholds";
+export * from "./constants/ai-limits";
+export * from "./constants/pagination";
+
+// Types
+export * from "./types/auth-user";
+export * from "./types/api-error";
+
+export const AURAHIRE_SHARED_VERSION = "0.3.0";

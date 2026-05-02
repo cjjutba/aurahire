@@ -1,20 +1,26 @@
+import "reflect-metadata";
+
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { ValidationPipe, VersioningType } from "@nestjs/common";
+import { VersioningType } from "@nestjs/common";
 import { Logger } from "nestjs-pino";
+import { ZodValidationPipe } from "nestjs-zod";
 import helmet from "@fastify/helmet";
+
 import { AppModule } from "./app.module";
+import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ logger: false }),
-    { bufferLogs: true }
+    new FastifyAdapter({ logger: false, genReqId: () => undefined as unknown as string }),
+    { bufferLogs: true },
   );
 
   app.useLogger(app.get(Logger));
 
+  // Security headers
   await app.register(helmet, {
     contentSecurityPolicy: {
       directives: {
@@ -26,22 +32,32 @@ async function bootstrap() {
     },
   });
 
+  // CORS
   const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "http://localhost:3000")
     .split(",")
     .map((o) => o.trim());
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
+    allowedHeaders: ["Authorization", "Content-Type", "X-Request-Id"],
   });
 
+  // Global prefix + versioning
   app.setGlobalPrefix("api");
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: "1" });
 
-  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+  // Global Zod validation pipe (replaces basic ValidationPipe from Slice 1.1)
+  app.useGlobalPipes(new ZodValidationPipe());
 
+  // Global exception filter — normalizes errors to standard envelope
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Swagger
   const config = new DocumentBuilder()
     .setTitle("AuraHire API")
-    .setDescription("Backend API for AuraHire — Explainable + Fair AI-Powered Recruitment")
+    .setDescription(
+      "Backend API for AuraHire — Explainable + Fair AI-Powered Recruitment",
+    )
     .setVersion("0.1.0")
     .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" })
     .build();
