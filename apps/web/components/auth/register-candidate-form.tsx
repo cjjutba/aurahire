@@ -6,8 +6,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { registerCandidateSchema, type RegisterCandidateInput } from "@aurahire/shared";
-import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import {
+  registerCandidateSchema,
+  type RegisterCandidateInput,
+  type SignupCandidateInput,
+  fetcher,
+} from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -38,39 +42,31 @@ export function RegisterCandidateForm() {
   async function onSubmit(values: RegisterCandidateInput) {
     setIsSubmitting(true);
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { data, error } = await supabase.auth.signUp({
+      const payload: SignupCandidateInput = {
+        fullName: values.fullName,
         email: values.email,
+        phone: values.phone,
         password: values.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/verify-email`,
-          data: {
-            role: "candidate",
-            full_name: values.fullName,
-            phone: values.phone,
-          },
-        },
+      };
+
+      await fetcher("/api/v1/auth/signup-candidate", {
+        method: "POST",
+        body: JSON.stringify(payload),
       });
-
-      if (error) {
-        if (error.message.toLowerCase().includes("already registered")) {
-          form.setError("email", {
-            message: "This email is already registered. Sign in instead?",
-          });
-        } else {
-          toast.error("Registration failed", { description: error.message });
-        }
-        return;
-      }
-
-      if (!data.user) {
-        toast.error("Registration failed", { description: "No user returned." });
-        return;
-      }
 
       router.push(`/verify-email/sent?email=${encodeURIComponent(values.email)}`);
     } catch (err) {
-      toast.error("Unexpected error", { description: (err as Error).message });
+      const status = (err as { status?: number }).status;
+      const body = (err as { body?: { code?: string; message?: string } }).body;
+      if (status === 409 && body?.code === "EMAIL_ALREADY_REGISTERED") {
+        form.setError("email", {
+          message: body.message ?? "This email is already registered. Sign in instead?",
+        });
+      } else {
+        toast.error("Registration failed", {
+          description: body?.message ?? (err as Error).message,
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

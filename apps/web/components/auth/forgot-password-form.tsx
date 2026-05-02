@@ -4,8 +4,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { forgotPasswordSchema, type ForgotPasswordInput } from "@aurahire/shared";
-import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordInput,
+  fetcher,
+} from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,11 +32,11 @@ export function ForgotPasswordForm() {
   async function onSubmit(values: ForgotPasswordInput) {
     setIsSubmitting(true);
     try {
-      const supabase = createSupabaseBrowserClient();
-      // Always return success; never disclose whether email is registered (timing-safe)
-      await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      // Always treat as success; the API never discloses whether the email exists.
+      await fetcher("/api/v1/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify(values),
+      }).catch(() => {});
       setSent(true);
     } finally {
       setIsSubmitting(false);

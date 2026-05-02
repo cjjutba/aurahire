@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import type { AuthUser } from "@aurahire/shared";
+import type { Profile, RecruiterProfile, Company } from "@aurahire/db";
 
 import { AuditService } from "../../audit";
 import { ProfilesRepository } from "../profiles/profiles.repository";
@@ -17,28 +18,156 @@ export class RecruiterProfilesService {
   ) {}
 
   async getMe(user: AuthUser): Promise<RecruiterProfileMeDto> {
-    if (user.role !== "recruiter") {
-      throw new ForbiddenException({
-        code: "FORBIDDEN",
-        message: "Recruiter role required",
-      });
-    }
+    this.assertRecruiter(user);
 
-    const profile = await this.repo.findById(user.id);
-    if (!profile)
+    // Profile + recruiter_profile have no dependency between them — parallel.
+    // Company depends on recruiter_profile.companyId, so it follows.
+    const [profile, recruiterProfile] = await Promise.all([
+      this.repo.findById(user.id),
+      this.repo.findRecruiterProfile(user.id),
+    ]);
+    if (!profile) {
       throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
-
-    const recruiterProfile = await this.repo.findRecruiterProfile(user.id);
-    if (!recruiterProfile)
+    }
+    if (!recruiterProfile) {
       throw new NotFoundException({
         code: "RECRUITER_PROFILE_NOT_FOUND",
         message: "Recruiter profile missing — re-register",
       });
+    }
 
     const company = await this.repo.findCompanyById(recruiterProfile.companyId);
-    if (!company)
+    if (!company) {
       throw new NotFoundException({ code: "COMPANY_NOT_FOUND", message: "Company missing" });
+    }
 
+    return this.toResponse(profile, recruiterProfile, company);
+  }
+
+  async updateAbout(
+    user: AuthUser,
+    dto: UpdateRecruiterAboutDto,
+    requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
+  ): Promise<RecruiterProfileMeDto> {
+    this.assertRecruiter(user);
+
+    const { profile, recruiterProfile } = await this.repo.updateProfileAndRecruiterProfileTx(
+      user.id,
+      { fullName: dto.fullName, phone: dto.phone },
+      { jobTitle: dto.jobTitle ?? null, department: dto.department ?? null },
+    );
+
+    const company = await this.repo.findCompanyById(recruiterProfile.companyId);
+    if (!company) {
+      throw new NotFoundException({ code: "COMPANY_NOT_FOUND", message: "Company missing" });
+    }
+
+    void this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: "user.onboarding.about_updated",
+      entityType: "recruiter_profile",
+      entityId: user.id,
+      ...requestMeta,
+    });
+
+    return this.toResponse(profile, recruiterProfile, company);
+  }
+
+  async updateCompany(
+    user: AuthUser,
+    dto: UpdateRecruiterCompanyDto,
+    requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
+  ): Promise<RecruiterProfileMeDto> {
+    this.assertRecruiter(user);
+
+    // We need recruiterProfile.companyId before we can UPDATE companies.
+    // Profile fetch and recruiter_profile fetch can run in parallel.
+    const [profile, recruiterProfile] = await Promise.all([
+      this.repo.findById(user.id),
+      this.repo.findRecruiterProfile(user.id),
+    ]);
+    if (!profile) {
+      throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
+    }
+    if (!recruiterProfile) {
+      throw new NotFoundException({
+        code: "RECRUITER_PROFILE_NOT_FOUND",
+        message: "Recruiter profile missing",
+      });
+    }
+
+    const company = await this.repo.updateCompany(recruiterProfile.companyId, {
+      name: dto.companyName,
+      industry: dto.industry ?? null,
+      size: dto.size ?? null,
+      website: dto.website ?? null,
+      headquartersLocation: dto.headquartersLocation ?? null,
+      description: dto.description ?? null,
+    });
+
+    void this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: "user.onboarding.company_updated",
+      entityType: "company",
+      entityId: recruiterProfile.companyId,
+      ...requestMeta,
+    });
+
+    return this.toResponse(profile, recruiterProfile, company);
+  }
+
+  async updateFocus(
+    user: AuthUser,
+    dto: UpdateRecruiterFocusDto,
+    requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
+  ): Promise<RecruiterProfileMeDto> {
+    this.assertRecruiter(user);
+
+    // Profile fetch + recruiter_profile UPDATE in parallel; company SELECT
+    // depends on the recruiter_profile.companyId returned by the update.
+    const [profile, recruiterProfile] = await Promise.all([
+      this.repo.findById(user.id),
+      this.repo.updateRecruiterProfile(user.id, {
+        rolesHiringFor: dto.rolesHiringFor,
+        hiringVolumePerQuarter: dto.hiringVolumePerQuarter ?? null,
+        profileCompleted: true,
+      }),
+    ]);
+    if (!profile) {
+      throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
+    }
+
+    const company = await this.repo.findCompanyById(recruiterProfile.companyId);
+    if (!company) {
+      throw new NotFoundException({ code: "COMPANY_NOT_FOUND", message: "Company missing" });
+    }
+
+    void this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: "user.onboarding.completed",
+      entityType: "recruiter_profile",
+      entityId: user.id,
+      details: { role: "recruiter" },
+      ...requestMeta,
+    });
+
+    return this.toResponse(profile, recruiterProfile, company);
+  }
+
+  private assertRecruiter(user: AuthUser): void {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+    }
+  }
+
+  private toResponse(
+    profile: Profile,
+    recruiterProfile: RecruiterProfile,
+    company: Company,
+  ): RecruiterProfileMeDto {
     return {
       id: profile.id,
       email: profile.email,
@@ -59,97 +188,5 @@ export class RecruiterProfilesService {
         description: company.description,
       },
     };
-  }
-
-  async updateAbout(
-    user: AuthUser,
-    dto: UpdateRecruiterAboutDto,
-    requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
-  ): Promise<RecruiterProfileMeDto> {
-    if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
-    }
-
-    await this.repo.updateProfileAndRecruiterProfileTx(
-      user.id,
-      { fullName: dto.fullName, phone: dto.phone },
-      { jobTitle: dto.jobTitle ?? null, department: dto.department ?? null },
-    );
-
-    await this.audit.log({
-      actorId: user.id,
-      actorType: "user",
-      action: "user.onboarding.about_updated",
-      entityType: "recruiter_profile",
-      entityId: user.id,
-      ...requestMeta,
-    });
-
-    return this.getMe(user);
-  }
-
-  async updateCompany(
-    user: AuthUser,
-    dto: UpdateRecruiterCompanyDto,
-    requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
-  ): Promise<RecruiterProfileMeDto> {
-    if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
-    }
-
-    const recruiterProfile = await this.repo.findRecruiterProfile(user.id);
-    if (!recruiterProfile)
-      throw new NotFoundException({
-        code: "RECRUITER_PROFILE_NOT_FOUND",
-        message: "Recruiter profile missing",
-      });
-
-    await this.repo.updateCompany(recruiterProfile.companyId, {
-      name: dto.companyName,
-      industry: dto.industry ?? null,
-      size: dto.size ?? null,
-      website: dto.website ?? null,
-      headquartersLocation: dto.headquartersLocation ?? null,
-      description: dto.description ?? null,
-    });
-
-    await this.audit.log({
-      actorId: user.id,
-      actorType: "user",
-      action: "user.onboarding.company_updated",
-      entityType: "company",
-      entityId: recruiterProfile.companyId,
-      ...requestMeta,
-    });
-
-    return this.getMe(user);
-  }
-
-  async updateFocus(
-    user: AuthUser,
-    dto: UpdateRecruiterFocusDto,
-    requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
-  ): Promise<RecruiterProfileMeDto> {
-    if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
-    }
-
-    await this.repo.updateRecruiterProfile(user.id, {
-      rolesHiringFor: dto.rolesHiringFor,
-      hiringVolumePerQuarter: dto.hiringVolumePerQuarter ?? null,
-      profileCompleted: true,
-    });
-
-    await this.audit.log({
-      actorId: user.id,
-      actorType: "user",
-      action: "user.onboarding.completed",
-      entityType: "recruiter_profile",
-      entityId: user.id,
-      details: { role: "recruiter" },
-      ...requestMeta,
-    });
-
-    return this.getMe(user);
   }
 }

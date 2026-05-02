@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import { z } from "zod";
-import { passwordSchema } from "@aurahire/shared";
-import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { passwordSchema, fetcher } from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,7 +19,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// Local schema (no token field — recovery session is in the URL fragment)
 const resetFormSchema = z
   .object({
     password: passwordSchema,
@@ -35,54 +33,44 @@ type ResetFormInput = z.infer<typeof resetFormSchema>;
 
 export function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasRecoverySession, setHasRecoverySession] = useState<boolean | null>(null);
 
   const form = useForm<ResetFormInput>({
     resolver: zodResolver(resetFormSchema),
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  useEffect(() => {
-    // Supabase automatically processes the recovery URL fragment on client mount.
-    // We check for a session to confirm we're in a valid recovery flow.
-    const supabase = createSupabaseBrowserClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setHasRecoverySession(!!session);
-    });
-  }, []);
-
   async function onSubmit(values: ResetFormInput) {
+    if (!token) return;
     setIsSubmitting(true);
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { error } = await supabase.auth.updateUser({ password: values.password });
-      if (error) {
-        toast.error("Reset failed", { description: error.message });
-        return;
-      }
+      await fetcher("/api/v1/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ token, password: values.password }),
+      });
       toast.success("Password updated. Please sign in.");
-      // Sign out the recovery session so the user logs in fresh
-      await supabase.auth.signOut();
       router.push("/login");
+    } catch (err) {
+      const body = (err as { body?: { message?: string } }).body;
+      toast.error("Reset failed", {
+        description: body?.message ?? "The link may be invalid or expired.",
+      });
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  if (hasRecoverySession === false) {
+  if (!token) {
     return (
       <div className="text-sm text-[var(--color-body)]">
         <p className="mb-2 font-semibold text-[var(--color-status-danger)]">
-          Reset link is invalid or expired
+          Reset link is missing its token
         </p>
         <p>Request a new reset link from the forgot-password page.</p>
       </div>
     );
-  }
-
-  if (hasRecoverySession === null) {
-    return <div className="text-sm text-[var(--color-muted)]">Checking link...</div>;
   }
 
   return (

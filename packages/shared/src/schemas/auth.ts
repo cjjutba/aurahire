@@ -40,8 +40,19 @@ export const registerCandidateSchema = z
 
 export type RegisterCandidateInput = z.infer<typeof registerCandidateSchema>;
 
-// Subset used at the backend init endpoint (frontend calls Supabase signUp directly,
-// then sends the new user's profile data here)
+// Backend signup payload — frontend forwards the full registration to NestJS,
+// which creates the Supabase auth user, issues a verification token, and emails it.
+export const signupCandidateSchema = z.object({
+  fullName: fullNameSchema,
+  email: emailSchema,
+  phone: phoneSchema,
+  password: passwordSchema,
+});
+
+export type SignupCandidateInput = z.infer<typeof signupCandidateSchema>;
+
+// Internal payload used by ProfilesService.initCandidateProfile — the candidate
+// row is created server-side after email verification, not over the wire.
 export const initCandidateProfileSchema = z.object({
   fullName: fullNameSchema,
   phone: phoneSchema,
@@ -71,6 +82,16 @@ export const registerRecruiterSchema = z
   });
 
 export type RegisterRecruiterInput = z.infer<typeof registerRecruiterSchema>;
+
+export const signupRecruiterSchema = z.object({
+  fullName: fullNameSchema,
+  email: emailSchema,
+  phone: phoneSchema,
+  companyName: companyNameSchema,
+  password: passwordSchema,
+});
+
+export type SignupRecruiterInput = z.infer<typeof signupRecruiterSchema>;
 
 export const initRecruiterProfileSchema = z.object({
   fullName: fullNameSchema,
@@ -102,3 +123,27 @@ export const resetPasswordSchema = z
   });
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+// ============================================================================
+// EMAIL VERIFICATION
+// ============================================================================
+
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+});
+
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+
+export const resendVerificationSchema = z.object({
+  email: emailSchema,
+});
+
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
+
+// Backend strips the password field; only token + new password go on the wire.
+export const resetPasswordRequestSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  password: passwordSchema,
+});
+
+export type ResetPasswordRequestInput = z.infer<typeof resetPasswordRequestSchema>;

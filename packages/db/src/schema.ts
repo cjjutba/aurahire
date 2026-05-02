@@ -442,6 +442,35 @@ export const scoringConfigTable = pgTable(
 );
 
 // ============================================================================
+// AUTH TOKENS
+// ============================================================================
+
+// Single-purpose, single-use tokens for backend-owned email verification and
+// password reset flows. Raw tokens are never stored — only their SHA-256 hash.
+export const authTokensTable = pgTable(
+  "auth_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(), // mirrors auth.users.id (no FK; auth schema is owned by Supabase)
+    email: text("email").notNull(),
+    kind: text("kind", { enum: ["email_verification", "password_reset"] }).notNull(),
+    tokenHash: text("token_hash").notNull(),
+    metadata: jsonb("metadata").notNull().default(sql`'{}'::jsonb`),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    ipAddress: inet("ip_address"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    tokenHashIdx: unique("auth_tokens_token_hash_unique").on(t.tokenHash),
+    userKindIdx: index("auth_tokens_user_kind_idx").on(t.userId, t.kind),
+    emailKindIdx: index("auth_tokens_email_kind_idx").on(t.email, t.kind),
+    expiresIdx: index("auth_tokens_expires_idx").on(t.expiresAt),
+  }),
+);
+
+// ============================================================================
 // AUDIT
 // ============================================================================
 
@@ -501,3 +530,5 @@ export type ScoringConfig = typeof scoringConfigTable.$inferSelect;
 export type NewScoringConfig = typeof scoringConfigTable.$inferInsert;
 export type AuditLog = typeof auditLogsTable.$inferSelect;
 export type NewAuditLog = typeof auditLogsTable.$inferInsert;
+export type AuthToken = typeof authTokensTable.$inferSelect;
+export type NewAuthToken = typeof authTokensTable.$inferInsert;

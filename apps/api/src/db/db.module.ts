@@ -21,7 +21,10 @@ export type DrizzleClient = PostgresJsDatabase<typeof schema>;
           connect_timeout: 10,
           prepare: false, // Supabase pgbouncer transaction mode requires prepare: false
         });
-        return drizzle(client, { schema, logger: process.env.NODE_ENV !== "production" });
+        // Opt-in SQL tracing — set DRIZZLE_DEBUG=1 only when investigating query
+        // shape. Always-on dev logging drowns request traces with raw SQL.
+        const enableLogger = process.env.DRIZZLE_DEBUG === "1";
+        return drizzle(client, { schema, logger: enableLogger });
       },
     },
   ],

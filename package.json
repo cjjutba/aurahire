@@ -8,7 +8,9 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
+    "predev": "docker compose -f docker-compose.dev.yml up -d --wait",
     "dev": "turbo dev",
+    "dev:down": "docker compose -f docker-compose.dev.yml down",
     "build": "turbo build",
     "lint": "turbo lint",
     "type-check": "turbo type-check",

@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { ZodError } from "zod";
 import type { FastifyReply, FastifyRequest } from "fastify";
+import type { ServerResponse } from "node:http";
 import type { ApiErrorResponse } from "@aurahire/shared";
 
 @Catch()
@@ -16,7 +17,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
-    const res = ctx.getResponse<FastifyReply>();
+    // When a route handler throws, this is FastifyReply. When NestJS middleware
+    // (running through @fastify/middie) throws, this is the raw Node ServerResponse.
+    const res = ctx.getResponse<FastifyReply | ServerResponse>();
     const req = ctx.getRequest<FastifyRequest & { id?: string }>();
 
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -63,7 +66,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
       requestId: req.id ?? "unknown",
     };
 
-    void res.status(statusCode).send(body);
+    if (typeof (res as FastifyReply).status === "function") {
+      void (res as FastifyReply).status(statusCode).send(body);
+    } else {
+      const raw = res as ServerResponse;
+      raw.statusCode = statusCode;
+      raw.setHeader("content-type", "application/json; charset=utf-8");
+      raw.end(JSON.stringify(body));
+    }
   }
 
   private codeFromStatus(status: number): string {

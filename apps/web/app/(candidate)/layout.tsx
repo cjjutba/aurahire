@@ -22,6 +22,10 @@ export default async function CandidateLayout({
     redirect("/login");
   }
 
+  if (profile.role === "candidate" && !profile.profileCompleted) {
+    redirect("/onboarding/candidate");
+  }
+
   return (
     <PortalShell
       role="candidate"

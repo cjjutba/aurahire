@@ -1,16 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
+import { fetcher } from "@aurahire/shared";
 import { AuthCard } from "@/components/auth/auth-card";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
-type Status = "verifying" | "initializing" | "success" | "error";
+type Status = "verifying" | "signing-in" | "success" | "error";
+
+interface VerifyResponse {
+  role: "candidate" | "recruiter";
+  email: string;
+  sessionTokenHash: string;
+}
 
 export default function VerifyEmailPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<Status>("verifying");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const ranRef = useRef(false);
@@ -19,91 +27,67 @@ export default function VerifyEmailPage() {
     if (ranRef.current) return;
     ranRef.current = true;
 
+    const token = searchParams.get("token");
+    if (!token) {
+      setStatus("error");
+      setErrorMessage("Verification link is missing its token.");
+      return;
+    }
+
     void (async () => {
       try {
-        const supabase = createSupabaseBrowserClient();
-        // Supabase processes the URL hash automatically on client mount.
-        // After a moment, getSession returns the new session.
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session) {
-          setStatus("error");
-          setErrorMessage("Verification link is invalid or expired.");
-          return;
-        }
-
-        const meta = (session.user.user_metadata ?? {}) as {
-          role?: "candidate" | "recruiter";
-          full_name?: string;
-          phone?: string;
-          company_name?: string;
-        };
-
-        if (!meta.role || !meta.full_name || !meta.phone) {
-          setStatus("error");
-          setErrorMessage("Missing registration data. Please sign up again.");
-          return;
-        }
-
-        setStatus("initializing");
-
-        // Call backend init endpoint
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-        const path =
-          meta.role === "recruiter"
-            ? "/api/v1/auth/register-recruiter"
-            : "/api/v1/auth/register-candidate";
-
-        const body: Record<string, unknown> = {
-          fullName: meta.full_name,
-          phone: meta.phone,
-        };
-        if (meta.role === "recruiter") {
-          body.companyName = meta.company_name ?? "";
-        }
-
-        const res = await fetch(`${apiUrl}${path}`, {
+        const result = await fetcher<VerifyResponse>("/api/v1/auth/verify-email", {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ token }),
         });
 
-        if (res.status === 409) {
-          // Profile already exists — fine, just continue
-        } else if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
+        setStatus("signing-in");
+
+        const supabase = createSupabaseBrowserClient();
+        const { error: otpError } = await supabase.auth.verifyOtp({
+          token_hash: result.sessionTokenHash,
+          type: "magiclink",
+        });
+
+        if (otpError) {
+          // Email is verified at this point — fall back to manual sign-in.
           setStatus("error");
           setErrorMessage(
-            (errBody as { message?: string }).message ?? "Failed to initialize profile.",
+            "Your email is verified. Please sign in to continue.",
           );
+          setTimeout(() => router.push(`/login?verified=1`), 1500);
           return;
         }
 
         setStatus("success");
-        const dest = meta.role === "recruiter" ? "/onboarding/recruiter" : "/onboarding/candidate";
-        // Brief pause so user sees success state
-        setTimeout(() => router.push(dest), 800);
+        // Redirect to onboarding for the role. The middleware/profile flow
+        // will route them to the dashboard if they're already onboarded.
+        const dest = `/onboarding/${result.role}`;
+        setTimeout(() => {
+          router.push(dest);
+          router.refresh();
+        }, 600);
       } catch (err) {
+        const body = (err as { body?: { message?: string } }).body;
         setStatus("error");
-        setErrorMessage((err as Error).message);
+        setErrorMessage(
+          body?.message ?? "Verification failed. The link may be invalid or expired.",
+        );
       }
     })();
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <AuthCard title="Verifying your email">
       {status === "verifying" && (
         <p className="text-sm text-[var(--color-body)]">Confirming your email...</p>
       )}
-      {status === "initializing" && (
-        <p className="text-sm text-[var(--color-body)]">Setting up your profile...</p>
+      {status === "signing-in" && (
+        <p className="text-sm text-[var(--color-body)]">Signing you in...</p>
       )}
       {status === "success" && (
         <p className="text-sm text-[var(--color-status-success)]">
-          ✓ Verified! Redirecting to onboarding...
+          ✓ Verified! Taking you to onboarding...
         </p>
       )}
       {status === "error" && (
@@ -111,8 +95,8 @@ export default function VerifyEmailPage() {
           <p className="mb-2 font-semibold text-[var(--color-status-danger)]">
             {errorMessage ?? "Verification failed"}
           </p>
-          <Link href="/register" className="text-[var(--color-primary)] hover:underline">
-            Try registering again →
+          <Link href="/login" className="text-[var(--color-primary)] hover:underline">
+            Go to sign in →
           </Link>
         </div>
       )}

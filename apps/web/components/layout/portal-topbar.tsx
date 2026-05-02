@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -55,14 +56,16 @@ export function PortalTopbar({ fullName, email }: PortalTopbarProps) {
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="font-semibold text-[var(--color-ink)]">
-                {fullName}
-              </div>
-              <div className="text-xs font-normal text-[var(--color-muted)]">
-                {email}
-              </div>
-            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>
+                <div className="font-semibold text-[var(--color-ink)]">
+                  {fullName}
+                </div>
+                <div className="text-xs font-normal text-[var(--color-muted)]">
+                  {email}
+                </div>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"

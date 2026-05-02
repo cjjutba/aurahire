@@ -1,0 +1,91 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  Req,
+} from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import type { FastifyRequest } from "fastify";
+import type { AuthUser } from "@aurahire/shared";
+
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { Roles } from "../../common/decorators/roles.decorator";
+
+import { UpdateCandidatePersonalDto } from "./dto/personal.dto";
+import { UpdateCandidatePreferencesDto } from "./dto/preferences.dto";
+import { CandidateProfileEnvelopeDto } from "./dto/candidate-profile-response.dto";
+import { CandidateProfilesService } from "./candidate-profiles.service";
+
+@ApiTags("candidate-profiles")
+@ApiBearerAuth()
+@Controller("candidate-profiles")
+export class CandidateProfilesController {
+  constructor(private readonly service: CandidateProfilesService) {}
+
+  @Get("me")
+  @Roles("candidate")
+  @ApiOperation({ summary: "Get the authenticated candidate's full profile" })
+  @ApiResponse({ status: 200, type: CandidateProfileEnvelopeDto })
+  async getMe(@CurrentUser() user: AuthUser): Promise<CandidateProfileEnvelopeDto> {
+    const data = await this.service.getMe(user);
+    return { data };
+  }
+
+  @Patch("personal")
+  @HttpCode(HttpStatus.OK)
+  @Roles("candidate")
+  @ApiOperation({ summary: "Onboarding step 2: personal info (name, phone, location, headline)" })
+  @ApiResponse({ status: 200, type: CandidateProfileEnvelopeDto })
+  async updatePersonal(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdateCandidatePersonalDto,
+    @Req() req: FastifyRequest,
+  ): Promise<CandidateProfileEnvelopeDto> {
+    const data = await this.service.updatePersonal(user, dto, this.requestMeta(req));
+    return { data };
+  }
+
+  @Patch("preferences")
+  @HttpCode(HttpStatus.OK)
+  @Roles("candidate")
+  @ApiOperation({ summary: "Onboarding step 6: job preferences" })
+  @ApiResponse({ status: 200, type: CandidateProfileEnvelopeDto })
+  async updatePreferences(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdateCandidatePreferencesDto,
+    @Req() req: FastifyRequest,
+  ): Promise<CandidateProfileEnvelopeDto> {
+    const data = await this.service.updatePreferences(user, dto, this.requestMeta(req));
+    return { data };
+  }
+
+  @Post("complete")
+  @HttpCode(HttpStatus.OK)
+  @Roles("candidate")
+  @ApiOperation({
+    summary: "Mark candidate onboarding complete (sets profile_completed=true)",
+    description: "Called by the wizard's final-step submit. Idempotent.",
+  })
+  @ApiResponse({ status: 200, type: CandidateProfileEnvelopeDto })
+  async complete(
+    @CurrentUser() user: AuthUser,
+    @Req() req: FastifyRequest,
+  ): Promise<CandidateProfileEnvelopeDto> {
+    const data = await this.service.complete(user, this.requestMeta(req));
+    return { data };
+  }
+
+  private requestMeta(req: FastifyRequest): {
+    ipAddress: string | null;
+    userAgent: string | null;
+  } {
+    return {
+      ipAddress: req.ip ?? null,
+      userAgent: (req.headers["user-agent"] as string | undefined) ?? null,
+    };
+  }
+}

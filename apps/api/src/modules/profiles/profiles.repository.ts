@@ -160,4 +160,41 @@ export class ProfilesRepository {
       return { profile, recruiterProfile };
     });
   }
+
+  async updateCandidateProfile(
+    id: string,
+    patch: Partial<NewCandidateProfile>,
+  ): Promise<CandidateProfile> {
+    const [row] = await this.db
+      .update(candidateProfilesTable)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(candidateProfilesTable.id, id))
+      .returning();
+    if (!row) throw new Error("Candidate profile update failed");
+    return row;
+  }
+
+  async updateProfileAndCandidateProfileTx(
+    id: string,
+    profilePatch: Partial<Pick<NewProfile, "fullName" | "phone">>,
+    candidatePatch: Partial<NewCandidateProfile>,
+  ): Promise<{ profile: Profile; candidateProfile: CandidateProfile }> {
+    return await this.db.transaction(async (tx) => {
+      const [profile] = await tx
+        .update(profilesTable)
+        .set({ ...profilePatch, updatedAt: new Date() })
+        .where(eq(profilesTable.id, id))
+        .returning();
+      if (!profile) throw new Error("Profile update failed");
+
+      const [candidateProfile] = await tx
+        .update(candidateProfilesTable)
+        .set({ ...candidatePatch, updatedAt: new Date() })
+        .where(eq(candidateProfilesTable.id, id))
+        .returning();
+      if (!candidateProfile) throw new Error("Candidate profile update failed");
+
+      return { profile, candidateProfile };
+    });
+  }
 }
