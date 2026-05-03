@@ -1996,6 +1996,169 @@ export interface PreviewImpactEnvelopeDto {
   data: PreviewImpactDataDto;
 }
 
+/**
+ * @nullable
+ */
+export type AuditActorDtoRole = { [key: string]: unknown } | null;
+
+export interface AuditActorDto {
+  id: string;
+  fullName: string;
+  email: string;
+  /** @nullable */
+  role?: AuditActorDtoRole;
+}
+
+export type AuditEntryRowDtoActorType =
+  (typeof AuditEntryRowDtoActorType)[keyof typeof AuditEntryRowDtoActorType];
+
+export const AuditEntryRowDtoActorType = {
+  user: "user",
+  ai: "ai",
+  system: "system",
+} as const;
+
+export interface AuditEntryRowDto {
+  id: string;
+  action: string;
+  actorType: AuditEntryRowDtoActorType;
+  actor?: AuditActorDto | null;
+  entityType: string;
+  entityId: string;
+  detailsSnippet: string;
+  createdAt: string;
+}
+
+export interface AuditListMetaDto {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface AuditListEnvelopeDto {
+  data: AuditEntryRowDto[];
+  meta: AuditListMetaDto;
+}
+
+export type AuditEntryDetailDtoActorType =
+  (typeof AuditEntryDetailDtoActorType)[keyof typeof AuditEntryDetailDtoActorType];
+
+export const AuditEntryDetailDtoActorType = {
+  user: "user",
+  ai: "ai",
+  system: "system",
+} as const;
+
+export type AuditEntryDetailDtoDetails = { [key: string]: unknown };
+
+/**
+ * @nullable
+ */
+export type AuditEntryDetailDtoIpAddress = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type AuditEntryDetailDtoUserAgent = { [key: string]: unknown } | null;
+
+export interface AuditEntryDetailDto {
+  id: string;
+  action: string;
+  actorType: AuditEntryDetailDtoActorType;
+  actor?: AuditActorDto | null;
+  entityType: string;
+  entityId: string;
+  detailsSnippet: string;
+  createdAt: string;
+  details: AuditEntryDetailDtoDetails;
+  /** @nullable */
+  ipAddress?: AuditEntryDetailDtoIpAddress;
+  /** @nullable */
+  userAgent?: AuditEntryDetailDtoUserAgent;
+}
+
+export interface AuditEntryEnvelopeDto {
+  data: AuditEntryDetailDto;
+}
+
+export interface AnalyticsRangeDto {
+  from: string;
+  to: string;
+}
+
+export interface AnalyticsKpisDto {
+  totalUsers: number;
+  newUsersThisPeriod: number;
+  growthPct: number;
+  activeJobs: number;
+  avgApplicationsPerDay: number;
+  /** @nullable */
+  avgTimeToHireDays?: number | null;
+}
+
+export interface UserGrowthPointDto {
+  date: string;
+  candidate: number;
+  recruiter: number;
+  admin: number;
+}
+
+export interface JobsOverTimePointDto {
+  date: string;
+  draft: number;
+  published: number;
+  archived: number;
+}
+
+export interface ApplicationsByStatusPointDto {
+  date: string;
+  applied: number;
+  screening: number;
+  interview: number;
+  offer: number;
+  hired: number;
+  rejected: number;
+  withdrawn: number;
+}
+
+export interface ScoreBucketDto {
+  bucket: string;
+  count: number;
+}
+
+export interface AiProcessingPointDto {
+  date: string;
+  avgParseMs: number;
+  avgScoreMs: number;
+}
+
+export interface TopRecruiterDto {
+  recruiterId: string;
+  fullName: string;
+  jobCount: number;
+  applicationCount: number;
+}
+
+export interface AnalyticsChartsDto {
+  userGrowth: UserGrowthPointDto[];
+  jobsOverTime: JobsOverTimePointDto[];
+  applicationsByStatus: ApplicationsByStatusPointDto[];
+  scoreDistribution: ScoreBucketDto[];
+  aiProcessingTime: AiProcessingPointDto[];
+  topRecruiters: TopRecruiterDto[];
+}
+
+export interface AnalyticsBundleDto {
+  range: AnalyticsRangeDto;
+  kpis: AnalyticsKpisDto;
+  charts: AnalyticsChartsDto;
+}
+
+export interface AnalyticsBundleEnvelopeDto {
+  data: AnalyticsBundleDto;
+}
+
 export interface SignupCandidateDto {
   /**
    * @minLength 2
@@ -2414,6 +2577,107 @@ export const AdminApplicationsControllerListV1Status = {
   rejected: "rejected",
   withdrawn: "withdrawn",
 } as const;
+
+export type AdminAuditControllerListV1Params = {
+  actorId?: string;
+  /**
+   * @maxLength 200
+   */
+  q?: string;
+  entityType?: AdminAuditControllerListV1EntityType;
+  /**
+   * @maxLength 100
+   */
+  action?: string;
+  actorType?: AdminAuditControllerListV1ActorType;
+  dateFrom?: string;
+  dateTo?: string;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+};
+
+export type AdminAuditControllerListV1EntityType =
+  (typeof AdminAuditControllerListV1EntityType)[keyof typeof AdminAuditControllerListV1EntityType];
+
+export const AdminAuditControllerListV1EntityType = {
+  profile: "profile",
+  job: "job",
+  application: "application",
+  match_score: "match_score",
+  profile_score: "profile_score",
+  bias_flag: "bias_flag",
+  scoring_config: "scoring_config",
+  resume: "resume",
+} as const;
+
+export type AdminAuditControllerListV1ActorType =
+  (typeof AdminAuditControllerListV1ActorType)[keyof typeof AdminAuditControllerListV1ActorType];
+
+export const AdminAuditControllerListV1ActorType = {
+  user: "user",
+  system: "system",
+  ai: "ai",
+} as const;
+
+export type AdminAuditControllerExportCsvV1Params = {
+  actorId?: string;
+  /**
+   * @maxLength 200
+   */
+  q?: string;
+  entityType?: AdminAuditControllerExportCsvV1EntityType;
+  /**
+   * @maxLength 100
+   */
+  action?: string;
+  actorType?: AdminAuditControllerExportCsvV1ActorType;
+  dateFrom?: string;
+  dateTo?: string;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+};
+
+export type AdminAuditControllerExportCsvV1EntityType =
+  (typeof AdminAuditControllerExportCsvV1EntityType)[keyof typeof AdminAuditControllerExportCsvV1EntityType];
+
+export const AdminAuditControllerExportCsvV1EntityType = {
+  profile: "profile",
+  job: "job",
+  application: "application",
+  match_score: "match_score",
+  profile_score: "profile_score",
+  bias_flag: "bias_flag",
+  scoring_config: "scoring_config",
+  resume: "resume",
+} as const;
+
+export type AdminAuditControllerExportCsvV1ActorType =
+  (typeof AdminAuditControllerExportCsvV1ActorType)[keyof typeof AdminAuditControllerExportCsvV1ActorType];
+
+export const AdminAuditControllerExportCsvV1ActorType = {
+  user: "user",
+  system: "system",
+  ai: "ai",
+} as const;
+
+export type AdminAnalyticsControllerOverviewV1Params = {
+  dateFrom?: string;
+  dateTo?: string;
+};
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -10660,6 +10924,834 @@ export const useAdminConfigControllerPreviewImpactV1 = <
     queryClient,
   );
 };
+
+/**
+ * @summary Filter + list audit log entries
+ */
+export type adminAuditControllerListV1Response200 = {
+  data: AuditListEnvelopeDto;
+  status: 200;
+};
+
+export type adminAuditControllerListV1ResponseSuccess =
+  adminAuditControllerListV1Response200 & {
+    headers: Headers;
+  };
+export type adminAuditControllerListV1Response =
+  adminAuditControllerListV1ResponseSuccess;
+
+export const getAdminAuditControllerListV1Url = (
+  params?: AdminAuditControllerListV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/audit?${stringifiedParams}`
+    : `/api/v1/admin/audit`;
+};
+
+export const adminAuditControllerListV1 = async (
+  params?: AdminAuditControllerListV1Params,
+  options?: RequestInit,
+): Promise<adminAuditControllerListV1Response> => {
+  return fetcher<adminAuditControllerListV1Response>(
+    getAdminAuditControllerListV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminAuditControllerListV1QueryKey = (
+  params?: AdminAuditControllerListV1Params,
+) => {
+  return [`/api/v1/admin/audit`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminAuditControllerListV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminAuditControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminAuditControllerListV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminAuditControllerListV1>>
+  > = ({ signal }) =>
+    adminAuditControllerListV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminAuditControllerListV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminAuditControllerListV1>>
+>;
+export type AdminAuditControllerListV1QueryError = unknown;
+
+export function useAdminAuditControllerListV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+  TError = unknown,
+>(
+  params: undefined | AdminAuditControllerListV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminAuditControllerListV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminAuditControllerListV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminAuditControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminAuditControllerListV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminAuditControllerListV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminAuditControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Filter + list audit log entries
+ */
+
+export function useAdminAuditControllerListV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminAuditControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminAuditControllerListV1QueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Export filtered audit log as CSV (max 10,000 rows)
+ */
+export type adminAuditControllerExportCsvV1Response200 = {
+  data: void;
+  status: 200;
+};
+
+export type adminAuditControllerExportCsvV1Response413 = {
+  data: void;
+  status: 413;
+};
+
+export type adminAuditControllerExportCsvV1ResponseSuccess =
+  adminAuditControllerExportCsvV1Response200 & {
+    headers: Headers;
+  };
+export type adminAuditControllerExportCsvV1ResponseError =
+  adminAuditControllerExportCsvV1Response413 & {
+    headers: Headers;
+  };
+
+export type adminAuditControllerExportCsvV1Response =
+  | adminAuditControllerExportCsvV1ResponseSuccess
+  | adminAuditControllerExportCsvV1ResponseError;
+
+export const getAdminAuditControllerExportCsvV1Url = (
+  params?: AdminAuditControllerExportCsvV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/audit/export.csv?${stringifiedParams}`
+    : `/api/v1/admin/audit/export.csv`;
+};
+
+export const adminAuditControllerExportCsvV1 = async (
+  params?: AdminAuditControllerExportCsvV1Params,
+  options?: RequestInit,
+): Promise<adminAuditControllerExportCsvV1Response> => {
+  return fetcher<adminAuditControllerExportCsvV1Response>(
+    getAdminAuditControllerExportCsvV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminAuditControllerExportCsvV1QueryKey = (
+  params?: AdminAuditControllerExportCsvV1Params,
+) => {
+  return [
+    `/api/v1/admin/audit/export.csv`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getAdminAuditControllerExportCsvV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+  TError = void,
+>(
+  params?: AdminAuditControllerExportCsvV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getAdminAuditControllerExportCsvV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>
+  > = ({ signal }) =>
+    adminAuditControllerExportCsvV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminAuditControllerExportCsvV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>
+>;
+export type AdminAuditControllerExportCsvV1QueryError = void;
+
+export function useAdminAuditControllerExportCsvV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+  TError = void,
+>(
+  params: undefined | AdminAuditControllerExportCsvV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminAuditControllerExportCsvV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+  TError = void,
+>(
+  params?: AdminAuditControllerExportCsvV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminAuditControllerExportCsvV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+  TError = void,
+>(
+  params?: AdminAuditControllerExportCsvV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Export filtered audit log as CSV (max 10,000 rows)
+ */
+
+export function useAdminAuditControllerExportCsvV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+  TError = void,
+>(
+  params?: AdminAuditControllerExportCsvV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerExportCsvV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminAuditControllerExportCsvV1QueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a single audit entry (full details JSONB)
+ */
+export type adminAuditControllerGetByIdV1Response200 = {
+  data: AuditEntryEnvelopeDto;
+  status: 200;
+};
+
+export type adminAuditControllerGetByIdV1Response404 = {
+  data: void;
+  status: 404;
+};
+
+export type adminAuditControllerGetByIdV1ResponseSuccess =
+  adminAuditControllerGetByIdV1Response200 & {
+    headers: Headers;
+  };
+export type adminAuditControllerGetByIdV1ResponseError =
+  adminAuditControllerGetByIdV1Response404 & {
+    headers: Headers;
+  };
+
+export type adminAuditControllerGetByIdV1Response =
+  | adminAuditControllerGetByIdV1ResponseSuccess
+  | adminAuditControllerGetByIdV1ResponseError;
+
+export const getAdminAuditControllerGetByIdV1Url = (id: string) => {
+  return `/api/v1/admin/audit/${id}`;
+};
+
+export const adminAuditControllerGetByIdV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<adminAuditControllerGetByIdV1Response> => {
+  return fetcher<adminAuditControllerGetByIdV1Response>(
+    getAdminAuditControllerGetByIdV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminAuditControllerGetByIdV1QueryKey = (id: string) => {
+  return [`/api/v1/admin/audit/${id}`] as const;
+};
+
+export const getAdminAuditControllerGetByIdV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminAuditControllerGetByIdV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>
+  > = ({ signal }) =>
+    adminAuditControllerGetByIdV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminAuditControllerGetByIdV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>
+>;
+export type AdminAuditControllerGetByIdV1QueryError = void;
+
+export function useAdminAuditControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+  TError = void,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminAuditControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminAuditControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get a single audit entry (full details JSONB)
+ */
+
+export function useAdminAuditControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAuditControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminAuditControllerGetByIdV1QueryOptions(
+    id,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Cached 5-min analytics bundle (KPIs + 6 chart series)
+ */
+export type adminAnalyticsControllerOverviewV1Response200 = {
+  data: AnalyticsBundleEnvelopeDto;
+  status: 200;
+};
+
+export type adminAnalyticsControllerOverviewV1ResponseSuccess =
+  adminAnalyticsControllerOverviewV1Response200 & {
+    headers: Headers;
+  };
+export type adminAnalyticsControllerOverviewV1Response =
+  adminAnalyticsControllerOverviewV1ResponseSuccess;
+
+export const getAdminAnalyticsControllerOverviewV1Url = (
+  params?: AdminAnalyticsControllerOverviewV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/analytics?${stringifiedParams}`
+    : `/api/v1/admin/analytics`;
+};
+
+export const adminAnalyticsControllerOverviewV1 = async (
+  params?: AdminAnalyticsControllerOverviewV1Params,
+  options?: RequestInit,
+): Promise<adminAnalyticsControllerOverviewV1Response> => {
+  return fetcher<adminAnalyticsControllerOverviewV1Response>(
+    getAdminAnalyticsControllerOverviewV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminAnalyticsControllerOverviewV1QueryKey = (
+  params?: AdminAnalyticsControllerOverviewV1Params,
+) => {
+  return [`/api/v1/admin/analytics`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminAnalyticsControllerOverviewV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+  TError = unknown,
+>(
+  params?: AdminAnalyticsControllerOverviewV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getAdminAnalyticsControllerOverviewV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>
+  > = ({ signal }) =>
+    adminAnalyticsControllerOverviewV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminAnalyticsControllerOverviewV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>
+>;
+export type AdminAnalyticsControllerOverviewV1QueryError = unknown;
+
+export function useAdminAnalyticsControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+  TError = unknown,
+>(
+  params: undefined | AdminAnalyticsControllerOverviewV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminAnalyticsControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+  TError = unknown,
+>(
+  params?: AdminAnalyticsControllerOverviewV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminAnalyticsControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+  TError = unknown,
+>(
+  params?: AdminAnalyticsControllerOverviewV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Cached 5-min analytics bundle (KPIs + 6 chart series)
+ */
+
+export function useAdminAnalyticsControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+  TError = unknown,
+>(
+  params?: AdminAnalyticsControllerOverviewV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminAnalyticsControllerOverviewV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminAnalyticsControllerOverviewV1QueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.

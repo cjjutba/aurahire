@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   APPLICATION_STATUS,
+  AUDIT_ACTOR_TYPE,
   JOB_STATUS,
   USER_ROLES,
   USER_STATUS,
@@ -170,3 +171,45 @@ export const previewImpactRequestSchema = z.object({
   sampleSize: z.coerce.number().int().min(1).max(500).default(100),
 });
 export type PreviewImpactInput = z.infer<typeof previewImpactRequestSchema>;
+
+// ---------- LIST ADMIN AUDIT QUERY ----------
+
+export const listAdminAuditQuerySchema = z.object({
+  actorId: uuidSchema.optional(),
+  q: z.string().max(200).optional(),
+  entityType: z
+    .enum([
+      "profile",
+      "job",
+      "application",
+      "match_score",
+      "profile_score",
+      "bias_flag",
+      "scoring_config",
+      "resume",
+    ])
+    .optional(),
+  action: z.string().max(100).optional(),
+  actorType: z.enum(AUDIT_ACTOR_TYPE).optional(),
+  dateFrom: z.string().datetime().optional(),
+  dateTo: z.string().datetime().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+export type ListAdminAuditQuery = z.infer<typeof listAdminAuditQuerySchema>;
+
+// ---------- ANALYTICS QUERY ----------
+
+export const analyticsQuerySchema = z
+  .object({
+    dateFrom: z.string().datetime().optional(),
+    dateTo: z.string().datetime().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.dateFrom || !data.dateTo) return true;
+      return new Date(data.dateFrom) <= new Date(data.dateTo);
+    },
+    { message: "dateFrom must be ≤ dateTo", path: ["dateFrom"] },
+  );
+export type AnalyticsQuery = z.infer<typeof analyticsQuerySchema>;

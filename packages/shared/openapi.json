@@ -2536,6 +2536,343 @@
         ]
       }
     },
+    "/api/v1/admin/audit": {
+      "get": {
+        "operationId": "AdminAuditController_list_v1",
+        "parameters": [
+          {
+            "name": "actorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "profile",
+                "job",
+                "application",
+                "match_score",
+                "profile_score",
+                "bias_flag",
+                "scoring_config",
+                "resume"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "user",
+                "system",
+                "ai"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "exclusiveMinimum": false,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "default": 50,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Filter + list audit log entries",
+        "tags": [
+          "admin-audit"
+        ]
+      }
+    },
+    "/api/v1/admin/audit/export.csv": {
+      "get": {
+        "operationId": "AdminAuditController_exportCsv_v1",
+        "parameters": [
+          {
+            "name": "actorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "profile",
+                "job",
+                "application",
+                "match_score",
+                "profile_score",
+                "bias_flag",
+                "scoring_config",
+                "resume"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "user",
+                "system",
+                "ai"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "exclusiveMinimum": false,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "default": 50,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV stream"
+          },
+          "413": {
+            "description": "Export exceeds 10,000 rows"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export filtered audit log as CSV (max 10,000 rows)",
+        "tags": [
+          "admin-audit"
+        ]
+      }
+    },
+    "/api/v1/admin/audit/{id}": {
+      "get": {
+        "operationId": "AdminAuditController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEntryEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a single audit entry (full details JSONB)",
+        "tags": [
+          "admin-audit"
+        ]
+      }
+    },
+    "/api/v1/admin/analytics": {
+      "get": {
+        "operationId": "AdminAnalyticsController_overview_v1",
+        "parameters": [
+          {
+            "name": "dateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsBundleEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cached 5-min analytics bundle (KPIs + 6 chart series)",
+        "tags": [
+          "admin-analytics"
+        ]
+      }
+    },
     "/api/v1/auth/signup-candidate": {
       "post": {
         "description": "Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.",
@@ -6318,6 +6655,456 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/PreviewImpactDataDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "AuditActorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email"
+        ]
+      },
+      "AuditEntryRowDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actorType": {
+            "type": "string",
+            "enum": [
+              "user",
+              "ai",
+              "system"
+            ]
+          },
+          "actor": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditActorDto"
+              }
+            ]
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "detailsSnippet": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "actorType",
+          "entityType",
+          "entityId",
+          "detailsSnippet",
+          "createdAt"
+        ]
+      },
+      "AuditListMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "AuditListEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryRowDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/AuditListMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "AuditEntryDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actorType": {
+            "type": "string",
+            "enum": [
+              "user",
+              "ai",
+              "system"
+            ]
+          },
+          "actor": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditActorDto"
+              }
+            ]
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "detailsSnippet": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object"
+          },
+          "ipAddress": {
+            "type": "object",
+            "nullable": true
+          },
+          "userAgent": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "actorType",
+          "entityType",
+          "entityId",
+          "detailsSnippet",
+          "createdAt",
+          "details"
+        ]
+      },
+      "AuditEntryEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AuditEntryDetailDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "AnalyticsRangeDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      },
+      "AnalyticsKpisDto": {
+        "type": "object",
+        "properties": {
+          "totalUsers": {
+            "type": "number"
+          },
+          "newUsersThisPeriod": {
+            "type": "number"
+          },
+          "growthPct": {
+            "type": "number"
+          },
+          "activeJobs": {
+            "type": "number"
+          },
+          "avgApplicationsPerDay": {
+            "type": "number"
+          },
+          "avgTimeToHireDays": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "totalUsers",
+          "newUsersThisPeriod",
+          "growthPct",
+          "activeJobs",
+          "avgApplicationsPerDay"
+        ]
+      },
+      "UserGrowthPointDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "candidate": {
+            "type": "number"
+          },
+          "recruiter": {
+            "type": "number"
+          },
+          "admin": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "candidate",
+          "recruiter",
+          "admin"
+        ]
+      },
+      "JobsOverTimePointDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "draft": {
+            "type": "number"
+          },
+          "published": {
+            "type": "number"
+          },
+          "archived": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "draft",
+          "published",
+          "archived"
+        ]
+      },
+      "ApplicationsByStatusPointDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "applied": {
+            "type": "number"
+          },
+          "screening": {
+            "type": "number"
+          },
+          "interview": {
+            "type": "number"
+          },
+          "offer": {
+            "type": "number"
+          },
+          "hired": {
+            "type": "number"
+          },
+          "rejected": {
+            "type": "number"
+          },
+          "withdrawn": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "applied",
+          "screening",
+          "interview",
+          "offer",
+          "hired",
+          "rejected",
+          "withdrawn"
+        ]
+      },
+      "ScoreBucketDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "bucket",
+          "count"
+        ]
+      },
+      "AiProcessingPointDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "avgParseMs": {
+            "type": "number"
+          },
+          "avgScoreMs": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "avgParseMs",
+          "avgScoreMs"
+        ]
+      },
+      "TopRecruiterDto": {
+        "type": "object",
+        "properties": {
+          "recruiterId": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "jobCount": {
+            "type": "number"
+          },
+          "applicationCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "recruiterId",
+          "fullName",
+          "jobCount",
+          "applicationCount"
+        ]
+      },
+      "AnalyticsChartsDto": {
+        "type": "object",
+        "properties": {
+          "userGrowth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserGrowthPointDto"
+            }
+          },
+          "jobsOverTime": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobsOverTimePointDto"
+            }
+          },
+          "applicationsByStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationsByStatusPointDto"
+            }
+          },
+          "scoreDistribution": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScoreBucketDto"
+            }
+          },
+          "aiProcessingTime": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiProcessingPointDto"
+            }
+          },
+          "topRecruiters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopRecruiterDto"
+            }
+          }
+        },
+        "required": [
+          "userGrowth",
+          "jobsOverTime",
+          "applicationsByStatus",
+          "scoreDistribution",
+          "aiProcessingTime",
+          "topRecruiters"
+        ]
+      },
+      "AnalyticsBundleDto": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "$ref": "#/components/schemas/AnalyticsRangeDto"
+          },
+          "kpis": {
+            "$ref": "#/components/schemas/AnalyticsKpisDto"
+          },
+          "charts": {
+            "$ref": "#/components/schemas/AnalyticsChartsDto"
+          }
+        },
+        "required": [
+          "range",
+          "kpis",
+          "charts"
+        ]
+      },
+      "AnalyticsBundleEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AnalyticsBundleDto"
           }
         },
         "required": [
