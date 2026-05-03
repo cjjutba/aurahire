@@ -2434,6 +2434,108 @@
         ]
       }
     },
+    "/api/v1/admin/scoring-config": {
+      "get": {
+        "operationId": "AdminConfigController_getActive_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoringConfigEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the active scoring configuration",
+        "tags": [
+          "admin-config"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminConfigController_update_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScoringConfigDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoringConfigEnvelopeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed (sums, band order, locked fields)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update the active scoring configuration (in-place); audits the diff",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/v1/admin/scoring-config/preview-impact": {
+      "post": {
+        "operationId": "AdminConfigController_previewImpact_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewImpactDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewImpactEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Re-weight the last N match scores using proposed weights/thresholds; pure arithmetic, no AI calls",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
     "/api/v1/auth/signup-candidate": {
       "post": {
         "description": "Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.",
@@ -5738,6 +5840,484 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/AdminApplicationDetailDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "MatchWeightsDto": {
+        "type": "object",
+        "properties": {
+          "skills": {
+            "type": "number"
+          },
+          "experience": {
+            "type": "number"
+          },
+          "education": {
+            "type": "number"
+          },
+          "cultural_fit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "skills",
+          "experience",
+          "education",
+          "cultural_fit"
+        ]
+      },
+      "ProfileWeightsDto": {
+        "type": "object",
+        "properties": {
+          "resume_quality": {
+            "type": "number"
+          },
+          "skills_breadth": {
+            "type": "number"
+          },
+          "experience_depth": {
+            "type": "number"
+          },
+          "preferences_clarity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "resume_quality",
+          "skills_breadth",
+          "experience_depth",
+          "preferences_clarity"
+        ]
+      },
+      "BandThresholdsDto": {
+        "type": "object",
+        "properties": {
+          "strong": {
+            "type": "number"
+          },
+          "partial": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "strong",
+          "partial"
+        ]
+      },
+      "ScoringConfigUpdatedByDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email"
+        ]
+      },
+      "ScoringConfigDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "matchWeights": {
+            "$ref": "#/components/schemas/MatchWeightsDto"
+          },
+          "profileWeights": {
+            "$ref": "#/components/schemas/ProfileWeightsDto"
+          },
+          "bandThresholds": {
+            "$ref": "#/components/schemas/BandThresholdsDto"
+          },
+          "biasCategoriesEnabled": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "customFlaggedTerms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "piiRedactionEnabled": {
+            "type": "boolean"
+          },
+          "piiFieldsRedacted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updatedBy": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScoringConfigUpdatedByDto"
+              }
+            ]
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "matchWeights",
+          "profileWeights",
+          "bandThresholds",
+          "biasCategoriesEnabled",
+          "customFlaggedTerms",
+          "piiRedactionEnabled",
+          "piiFieldsRedacted",
+          "updatedAt"
+        ]
+      },
+      "ScoringConfigEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ScoringConfigDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "UpdateScoringConfigDto": {
+        "type": "object",
+        "properties": {
+          "matchWeights": {
+            "type": "object",
+            "properties": {
+              "skills": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false,
+                "maximum": 100,
+                "exclusiveMaximum": false
+              },
+              "experience": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false,
+                "maximum": 100,
+                "exclusiveMaximum": false
+              },
+              "education": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false,
+                "maximum": 100,
+                "exclusiveMaximum": false
+              },
+              "cultural_fit": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false,
+                "maximum": 100,
+                "exclusiveMaximum": false
+              }
+            },
+            "required": [
+              "skills",
+              "experience",
+              "education",
+              "cultural_fit"
+            ],
+            "x-nestjs_zod-self-required": false
+          },
+          "profileWeights": {
+            "type": "object",
+            "properties": {
+              "resume_quality": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false,
+                "maximum": 100,
+                "exclusiveMaximum": false
+              },
+              "skills_breadth": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false,
+                "maximum": 100,
+                "exclusiveMaximum": false
+              },
+              "experience_depth": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false,
+                "maximum": 100,
+                "exclusiveMaximum": false
+              },
+              "preferences_clarity": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false,
+                "maximum": 100,
+                "exclusiveMaximum": false
+              }
+            },
+            "required": [
+              "resume_quality",
+              "skills_breadth",
+              "experience_depth",
+              "preferences_clarity"
+            ],
+            "x-nestjs_zod-self-required": false
+          },
+          "bandThresholds": {
+            "type": "object",
+            "properties": {
+              "strong": {
+                "type": "integer",
+                "minimum": 1,
+                "exclusiveMinimum": false,
+                "maximum": 100,
+                "exclusiveMaximum": false
+              },
+              "partial": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false,
+                "maximum": 99,
+                "exclusiveMaximum": false
+              }
+            },
+            "required": [
+              "strong",
+              "partial"
+            ],
+            "x-nestjs_zod-self-required": false
+          },
+          "biasCategoriesEnabled": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "type": "string",
+              "enum": [
+                "gendered",
+                "age-coded",
+                "ableist",
+                "exclusionary",
+                "other"
+              ]
+            }
+          },
+          "customFlaggedTerms": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          "piiRedactionEnabled": {
+            "type": "boolean"
+          },
+          "piiFieldsRedacted": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            }
+          }
+        }
+      },
+      "PreviewImpactDto": {
+        "type": "object",
+        "properties": {
+          "proposedConfig": {
+            "type": "object",
+            "properties": {
+              "matchWeights": {
+                "type": "object",
+                "properties": {
+                  "skills": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": false,
+                    "maximum": 100,
+                    "exclusiveMaximum": false
+                  },
+                  "experience": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": false,
+                    "maximum": 100,
+                    "exclusiveMaximum": false
+                  },
+                  "education": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": false,
+                    "maximum": 100,
+                    "exclusiveMaximum": false
+                  },
+                  "cultural_fit": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": false,
+                    "maximum": 100,
+                    "exclusiveMaximum": false
+                  }
+                },
+                "required": [
+                  "skills",
+                  "experience",
+                  "education",
+                  "cultural_fit"
+                ]
+              },
+              "bandThresholds": {
+                "type": "object",
+                "properties": {
+                  "strong": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "exclusiveMinimum": false,
+                    "maximum": 100,
+                    "exclusiveMaximum": false
+                  },
+                  "partial": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": false,
+                    "maximum": 99,
+                    "exclusiveMaximum": false
+                  }
+                },
+                "required": [
+                  "strong",
+                  "partial"
+                ]
+              }
+            },
+            "x-nestjs_zod-self-required": true
+          },
+          "sampleSize": {
+            "type": "integer",
+            "minimum": 1,
+            "exclusiveMinimum": false,
+            "maximum": 500,
+            "exclusiveMaximum": false,
+            "default": 100
+          }
+        },
+        "required": [
+          "proposedConfig"
+        ]
+      },
+      "BandDistributionDto": {
+        "type": "object",
+        "properties": {
+          "strong": {
+            "type": "number"
+          },
+          "partial": {
+            "type": "number"
+          },
+          "limited": {
+            "type": "number"
+          },
+          "avgScore": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "strong",
+          "partial",
+          "limited",
+          "avgScore"
+        ]
+      },
+      "TopMoverDto": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string"
+          },
+          "candidateName": {
+            "type": "string"
+          },
+          "jobTitle": {
+            "type": "string"
+          },
+          "currentScore": {
+            "type": "number"
+          },
+          "proposedScore": {
+            "type": "number"
+          },
+          "currentBand": {
+            "type": "string"
+          },
+          "proposedBand": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "applicationId",
+          "candidateName",
+          "jobTitle",
+          "currentScore",
+          "proposedScore",
+          "currentBand",
+          "proposedBand"
+        ]
+      },
+      "PreviewImpactDataDto": {
+        "type": "object",
+        "properties": {
+          "sampledCount": {
+            "type": "number"
+          },
+          "current": {
+            "$ref": "#/components/schemas/BandDistributionDto"
+          },
+          "proposed": {
+            "$ref": "#/components/schemas/BandDistributionDto"
+          },
+          "delta": {
+            "$ref": "#/components/schemas/BandDistributionDto"
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopMoverDto"
+            }
+          }
+        },
+        "required": [
+          "sampledCount",
+          "current",
+          "proposed",
+          "delta",
+          "examples"
+        ]
+      },
+      "PreviewImpactEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PreviewImpactDataDto"
           }
         },
         "required": [

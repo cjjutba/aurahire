@@ -1,14 +1,86 @@
-export const metadata = { title: "AI Config" };
+import { redirect } from "next/navigation";
+import { getCurrentSession } from "@/lib/auth/session";
+import { ConfigEditorClient } from "./_config-editor-client";
 
-export default function ComingSoonPage() {
+export const metadata = { title: "AI Scoring Configuration" };
+
+interface ConfigBody {
+  data: {
+    id: string;
+    matchWeights: {
+      skills: number;
+      experience: number;
+      education: number;
+      cultural_fit: number;
+    };
+    profileWeights: {
+      resume_quality: number;
+      skills_breadth: number;
+      experience_depth: number;
+      preferences_clarity: number;
+    };
+    bandThresholds: { strong: number; partial: number };
+    biasCategoriesEnabled: string[];
+    customFlaggedTerms: string[];
+    piiRedactionEnabled: boolean;
+    piiFieldsRedacted: string[];
+    updatedBy: { id: string; fullName: string; email: string } | null;
+    updatedAt: string;
+  };
+}
+
+export default async function AiConfigPage() {
+  const session = await getCurrentSession();
+  if (!session) redirect("/login");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+  const res = await fetch(`${apiUrl}/api/v1/admin/scoring-config`, {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      return (
+        <div className="mx-auto max-w-[840px] space-y-4">
+          <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+            AI Scoring Configuration
+          </h1>
+          <div className="rounded-[var(--radius-lg)] border border-[var(--color-status-warning)] bg-[var(--color-score-mid-soft)] p-4 text-sm text-[var(--color-ink)]">
+            No active scoring config exists. Run the slice 2.5 pre-flight seed to
+            populate the default weights.
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="text-[var(--color-status-danger)]">
+        Failed to load scoring config.
+      </div>
+    );
+  }
+  const body = (await res.json()) as ConfigBody;
+
   return (
-    <div className="mx-auto max-w-[840px]">
-      <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
-        AI Config
-      </h1>
-      <p className="mt-2 text-[var(--color-body)]">
-        Coming in a future slice.
-      </p>
+    <div className="mx-auto max-w-[840px] space-y-6 pb-24">
+      <header>
+        <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+          AI Scoring Configuration
+        </h1>
+        <p className="mt-1 text-sm text-[var(--color-body)]">
+          Tune the system-wide weights, band thresholds, and fairness controls.
+          Every save is audited and takes effect immediately on subsequent scores.
+        </p>
+        {body.data.updatedBy && (
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
+            Last updated by {body.data.updatedBy.fullName} (
+            {body.data.updatedBy.email}) ·{" "}
+            {new Date(body.data.updatedAt).toLocaleString()}
+          </p>
+        )}
+      </header>
+
+      <ConfigEditorClient initial={body.data} />
     </div>
   );
 }

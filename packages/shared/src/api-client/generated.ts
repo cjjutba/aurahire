@@ -1792,6 +1792,210 @@ export interface AdminApplicationDetailEnvelopeDto {
   data: AdminApplicationDetailDto;
 }
 
+export interface MatchWeightsDto {
+  skills: number;
+  experience: number;
+  education: number;
+  cultural_fit: number;
+}
+
+export interface ProfileWeightsDto {
+  resume_quality: number;
+  skills_breadth: number;
+  experience_depth: number;
+  preferences_clarity: number;
+}
+
+export interface BandThresholdsDto {
+  strong: number;
+  partial: number;
+}
+
+export interface ScoringConfigUpdatedByDto {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+export interface ScoringConfigDto {
+  id: string;
+  matchWeights: MatchWeightsDto;
+  profileWeights: ProfileWeightsDto;
+  bandThresholds: BandThresholdsDto;
+  biasCategoriesEnabled: string[];
+  customFlaggedTerms: string[];
+  piiRedactionEnabled: boolean;
+  piiFieldsRedacted: string[];
+  updatedBy?: ScoringConfigUpdatedByDto | null;
+  updatedAt: string;
+}
+
+export interface ScoringConfigEnvelopeDto {
+  data: ScoringConfigDto;
+}
+
+export type UpdateScoringConfigDtoMatchWeights = {
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  skills: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  experience: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  education: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  cultural_fit: number;
+};
+
+export type UpdateScoringConfigDtoProfileWeights = {
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  resume_quality: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  skills_breadth: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  experience_depth: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  preferences_clarity: number;
+};
+
+export type UpdateScoringConfigDtoBandThresholds = {
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  strong: number;
+  /**
+   * @minimum 0
+   * @maximum 99
+   */
+  partial: number;
+};
+
+export type UpdateScoringConfigDtoBiasCategoriesEnabledItem =
+  (typeof UpdateScoringConfigDtoBiasCategoriesEnabledItem)[keyof typeof UpdateScoringConfigDtoBiasCategoriesEnabledItem];
+
+export const UpdateScoringConfigDtoBiasCategoriesEnabledItem = {
+  gendered: "gendered",
+  "age-coded": "age-coded",
+  ableist: "ableist",
+  exclusionary: "exclusionary",
+  other: "other",
+} as const;
+
+export interface UpdateScoringConfigDto {
+  matchWeights?: UpdateScoringConfigDtoMatchWeights;
+  profileWeights?: UpdateScoringConfigDtoProfileWeights;
+  bandThresholds?: UpdateScoringConfigDtoBandThresholds;
+  /** @maxItems 5 */
+  biasCategoriesEnabled?: UpdateScoringConfigDtoBiasCategoriesEnabledItem[];
+  /** @maxItems 50 */
+  customFlaggedTerms?: string[];
+  piiRedactionEnabled?: boolean;
+  /** @maxItems 20 */
+  piiFieldsRedacted?: string[];
+}
+
+export type PreviewImpactDtoProposedConfigMatchWeights = {
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  skills: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  experience: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  education: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  cultural_fit: number;
+};
+
+export type PreviewImpactDtoProposedConfigBandThresholds = {
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  strong: number;
+  /**
+   * @minimum 0
+   * @maximum 99
+   */
+  partial: number;
+};
+
+export type PreviewImpactDtoProposedConfig = {
+  matchWeights?: PreviewImpactDtoProposedConfigMatchWeights;
+  bandThresholds?: PreviewImpactDtoProposedConfigBandThresholds;
+};
+
+export interface PreviewImpactDto {
+  proposedConfig: PreviewImpactDtoProposedConfig;
+  /**
+   * @minimum 1
+   * @maximum 500
+   */
+  sampleSize?: number;
+}
+
+export interface BandDistributionDto {
+  strong: number;
+  partial: number;
+  limited: number;
+  avgScore: number;
+}
+
+export interface TopMoverDto {
+  applicationId: string;
+  candidateName: string;
+  jobTitle: string;
+  currentScore: number;
+  proposedScore: number;
+  currentBand: string;
+  proposedBand: string;
+}
+
+export interface PreviewImpactDataDto {
+  sampledCount: number;
+  current: BandDistributionDto;
+  proposed: BandDistributionDto;
+  delta: BandDistributionDto;
+  examples: TopMoverDto[];
+}
+
+export interface PreviewImpactEnvelopeDto {
+  data: PreviewImpactDataDto;
+}
+
 export interface SignupCandidateDto {
   /**
    * @minLength 2
@@ -10054,6 +10258,408 @@ export function useAdminApplicationsControllerGetByIdV1<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get the active scoring configuration
+ */
+export type adminConfigControllerGetActiveV1Response200 = {
+  data: ScoringConfigEnvelopeDto;
+  status: 200;
+};
+
+export type adminConfigControllerGetActiveV1ResponseSuccess =
+  adminConfigControllerGetActiveV1Response200 & {
+    headers: Headers;
+  };
+export type adminConfigControllerGetActiveV1Response =
+  adminConfigControllerGetActiveV1ResponseSuccess;
+
+export const getAdminConfigControllerGetActiveV1Url = () => {
+  return `/api/v1/admin/scoring-config`;
+};
+
+export const adminConfigControllerGetActiveV1 = async (
+  options?: RequestInit,
+): Promise<adminConfigControllerGetActiveV1Response> => {
+  return fetcher<adminConfigControllerGetActiveV1Response>(
+    getAdminConfigControllerGetActiveV1Url(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminConfigControllerGetActiveV1QueryKey = () => {
+  return [`/api/v1/admin/scoring-config`] as const;
+};
+
+export const getAdminConfigControllerGetActiveV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminConfigControllerGetActiveV1QueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>
+  > = ({ signal }) =>
+    adminConfigControllerGetActiveV1({ signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminConfigControllerGetActiveV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>
+>;
+export type AdminConfigControllerGetActiveV1QueryError = unknown;
+
+export function useAdminConfigControllerGetActiveV1<
+  TData = Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminConfigControllerGetActiveV1<
+  TData = Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminConfigControllerGetActiveV1<
+  TData = Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get the active scoring configuration
+ */
+
+export function useAdminConfigControllerGetActiveV1<
+  TData = Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminConfigControllerGetActiveV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminConfigControllerGetActiveV1QueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update the active scoring configuration (in-place); audits the diff
+ */
+export type adminConfigControllerUpdateV1Response200 = {
+  data: ScoringConfigEnvelopeDto;
+  status: 200;
+};
+
+export type adminConfigControllerUpdateV1Response400 = {
+  data: void;
+  status: 400;
+};
+
+export type adminConfigControllerUpdateV1ResponseSuccess =
+  adminConfigControllerUpdateV1Response200 & {
+    headers: Headers;
+  };
+export type adminConfigControllerUpdateV1ResponseError =
+  adminConfigControllerUpdateV1Response400 & {
+    headers: Headers;
+  };
+
+export type adminConfigControllerUpdateV1Response =
+  | adminConfigControllerUpdateV1ResponseSuccess
+  | adminConfigControllerUpdateV1ResponseError;
+
+export const getAdminConfigControllerUpdateV1Url = () => {
+  return `/api/v1/admin/scoring-config`;
+};
+
+export const adminConfigControllerUpdateV1 = async (
+  updateScoringConfigDto: UpdateScoringConfigDto,
+  options?: RequestInit,
+): Promise<adminConfigControllerUpdateV1Response> => {
+  return fetcher<adminConfigControllerUpdateV1Response>(
+    getAdminConfigControllerUpdateV1Url(),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateScoringConfigDto),
+    },
+  );
+};
+
+export const getAdminConfigControllerUpdateV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminConfigControllerUpdateV1>>,
+    TError,
+    { data: UpdateScoringConfigDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminConfigControllerUpdateV1>>,
+  TError,
+  { data: UpdateScoringConfigDto },
+  TContext
+> => {
+  const mutationKey = ["adminConfigControllerUpdateV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminConfigControllerUpdateV1>>,
+    { data: UpdateScoringConfigDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminConfigControllerUpdateV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminConfigControllerUpdateV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminConfigControllerUpdateV1>>
+>;
+export type AdminConfigControllerUpdateV1MutationBody = UpdateScoringConfigDto;
+export type AdminConfigControllerUpdateV1MutationError = void;
+
+/**
+ * @summary Update the active scoring configuration (in-place); audits the diff
+ */
+export const useAdminConfigControllerUpdateV1 = <
+  TError = void,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminConfigControllerUpdateV1>>,
+      TError,
+      { data: UpdateScoringConfigDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminConfigControllerUpdateV1>>,
+  TError,
+  { data: UpdateScoringConfigDto },
+  TContext
+> => {
+  return useMutation(
+    getAdminConfigControllerUpdateV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Re-weight the last N match scores using proposed weights/thresholds; pure arithmetic, no AI calls
+ */
+export type adminConfigControllerPreviewImpactV1Response200 = {
+  data: PreviewImpactEnvelopeDto;
+  status: 200;
+};
+
+export type adminConfigControllerPreviewImpactV1ResponseSuccess =
+  adminConfigControllerPreviewImpactV1Response200 & {
+    headers: Headers;
+  };
+export type adminConfigControllerPreviewImpactV1Response =
+  adminConfigControllerPreviewImpactV1ResponseSuccess;
+
+export const getAdminConfigControllerPreviewImpactV1Url = () => {
+  return `/api/v1/admin/scoring-config/preview-impact`;
+};
+
+export const adminConfigControllerPreviewImpactV1 = async (
+  previewImpactDto: PreviewImpactDto,
+  options?: RequestInit,
+): Promise<adminConfigControllerPreviewImpactV1Response> => {
+  return fetcher<adminConfigControllerPreviewImpactV1Response>(
+    getAdminConfigControllerPreviewImpactV1Url(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(previewImpactDto),
+    },
+  );
+};
+
+export const getAdminConfigControllerPreviewImpactV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminConfigControllerPreviewImpactV1>>,
+    TError,
+    { data: PreviewImpactDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminConfigControllerPreviewImpactV1>>,
+  TError,
+  { data: PreviewImpactDto },
+  TContext
+> => {
+  const mutationKey = ["adminConfigControllerPreviewImpactV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminConfigControllerPreviewImpactV1>>,
+    { data: PreviewImpactDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminConfigControllerPreviewImpactV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminConfigControllerPreviewImpactV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminConfigControllerPreviewImpactV1>>
+>;
+export type AdminConfigControllerPreviewImpactV1MutationBody = PreviewImpactDto;
+export type AdminConfigControllerPreviewImpactV1MutationError = unknown;
+
+/**
+ * @summary Re-weight the last N match scores using proposed weights/thresholds; pure arithmetic, no AI calls
+ */
+export const useAdminConfigControllerPreviewImpactV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminConfigControllerPreviewImpactV1>>,
+      TError,
+      { data: PreviewImpactDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminConfigControllerPreviewImpactV1>>,
+  TError,
+  { data: PreviewImpactDto },
+  TContext
+> => {
+  return useMutation(
+    getAdminConfigControllerPreviewImpactV1MutationOptions(options),
+    queryClient,
+  );
+};
 
 /**
  * Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.

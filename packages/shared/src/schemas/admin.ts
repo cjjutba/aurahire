@@ -74,3 +74,99 @@ export const listAdminApplicationsQuerySchema = z
 export type ListAdminApplicationsQuery = z.infer<
   typeof listAdminApplicationsQuerySchema
 >;
+
+// ---------- SCORING CONFIG: nested schemas ----------
+
+export const matchWeightsSchema = z.object({
+  skills: z.number().int().min(0).max(100),
+  experience: z.number().int().min(0).max(100),
+  education: z.number().int().min(0).max(100),
+  cultural_fit: z.number().int().min(0).max(100),
+});
+export type MatchWeights = z.infer<typeof matchWeightsSchema>;
+
+export const profileWeightsSchema = z.object({
+  resume_quality: z.number().int().min(0).max(100),
+  skills_breadth: z.number().int().min(0).max(100),
+  experience_depth: z.number().int().min(0).max(100),
+  preferences_clarity: z.number().int().min(0).max(100),
+});
+export type ProfileWeights = z.infer<typeof profileWeightsSchema>;
+
+export const bandThresholdsSchema = z.object({
+  strong: z.number().int().min(1).max(100),
+  partial: z.number().int().min(0).max(99),
+});
+export type BandThresholds = z.infer<typeof bandThresholdsSchema>;
+
+const BIAS_CATEGORY_VALUES = [
+  "gendered",
+  "age-coded",
+  "ableist",
+  "exclusionary",
+  "other",
+] as const;
+
+// ---------- UPDATE SCORING CONFIG ----------
+
+const SUM_TARGET = 100;
+const SUM_TOLERANCE = 0;
+
+function sumsTo100<T extends Record<string, number>>(weights: T): boolean {
+  const total = Object.values(weights).reduce((s, v) => s + v, 0);
+  return Math.abs(total - SUM_TARGET) <= SUM_TOLERANCE;
+}
+
+export const updateScoringConfigSchema = z
+  .object({
+    matchWeights: matchWeightsSchema.optional(),
+    profileWeights: profileWeightsSchema.optional(),
+    bandThresholds: bandThresholdsSchema.optional(),
+    biasCategoriesEnabled: z.array(z.enum(BIAS_CATEGORY_VALUES)).max(5).optional(),
+    customFlaggedTerms: z.array(z.string().min(1).max(100)).max(50).optional(),
+    piiRedactionEnabled: z.boolean().optional(),
+    piiFieldsRedacted: z.array(z.string().min(1).max(50)).max(20).optional(),
+  })
+  .refine(
+    (data) => !data.matchWeights || sumsTo100(data.matchWeights),
+    { message: "matchWeights must sum to 100", path: ["matchWeights"] },
+  )
+  .refine(
+    (data) => !data.profileWeights || sumsTo100(data.profileWeights),
+    { message: "profileWeights must sum to 100", path: ["profileWeights"] },
+  )
+  .refine(
+    (data) =>
+      !data.bandThresholds ||
+      data.bandThresholds.strong > data.bandThresholds.partial,
+    {
+      message: "bandThresholds.strong must be greater than bandThresholds.partial",
+      path: ["bandThresholds"],
+    },
+  );
+export type UpdateScoringConfigInput = z.infer<typeof updateScoringConfigSchema>;
+
+// ---------- PREVIEW IMPACT REQUEST ----------
+
+export const previewImpactRequestSchema = z.object({
+  proposedConfig: z
+    .object({
+      matchWeights: matchWeightsSchema.optional(),
+      bandThresholds: bandThresholdsSchema.optional(),
+    })
+    .refine(
+      (data) => !data.matchWeights || sumsTo100(data.matchWeights),
+      { message: "matchWeights must sum to 100", path: ["matchWeights"] },
+    )
+    .refine(
+      (data) =>
+        !data.bandThresholds ||
+        data.bandThresholds.strong > data.bandThresholds.partial,
+      {
+        message: "bandThresholds.strong must be greater than bandThresholds.partial",
+        path: ["bandThresholds"],
+      },
+    ),
+  sampleSize: z.coerce.number().int().min(1).max(500).default(100),
+});
+export type PreviewImpactInput = z.infer<typeof previewImpactRequestSchema>;
