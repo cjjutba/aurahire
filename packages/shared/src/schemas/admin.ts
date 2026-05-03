@@ -213,3 +213,19 @@ export const analyticsQuerySchema = z
     { message: "dateFrom must be ≤ dateTo", path: ["dateFrom"] },
   );
 export type AnalyticsQuery = z.infer<typeof analyticsQuerySchema>;
+
+// ---------- BIAS MONITOR QUERY ----------
+
+export const biasMonitorQuerySchema = z
+  .object({
+    dateFrom: z.string().datetime().optional(),
+    dateTo: z.string().datetime().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.dateFrom || !data.dateTo) return true;
+      return new Date(data.dateFrom) <= new Date(data.dateTo);
+    },
+    { message: "dateFrom must be ≤ dateTo", path: ["dateFrom"] },
+  );
+export type BiasMonitorQuery = z.infer<typeof biasMonitorQuerySchema>;

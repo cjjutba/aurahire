@@ -2159,6 +2159,92 @@ export interface AnalyticsBundleEnvelopeDto {
   data: AnalyticsBundleDto;
 }
 
+export interface BiasMonitorRangeDto {
+  from: string;
+  to: string;
+}
+
+export interface BiasMonitorKpisDto {
+  totalFlags: number;
+  flagsPerJob: number;
+  flagsResolvedPct: number;
+  overrideRate: number;
+}
+
+export type FlagsByCategoryDtoCategory =
+  (typeof FlagsByCategoryDtoCategory)[keyof typeof FlagsByCategoryDtoCategory];
+
+export const FlagsByCategoryDtoCategory = {
+  gendered: "gendered",
+  "age-coded": "age-coded",
+  ableist: "ableist",
+  exclusionary: "exclusionary",
+  other: "other",
+} as const;
+
+export interface FlagsByCategoryDto {
+  category: FlagsByCategoryDtoCategory;
+  count: number;
+  pct: number;
+}
+
+export interface TopFlaggedTermDto {
+  term: string;
+  count: number;
+  exampleJobIds: string[];
+}
+
+export type ScoreBandSliceDtoBand =
+  (typeof ScoreBandSliceDtoBand)[keyof typeof ScoreBandSliceDtoBand];
+
+export const ScoreBandSliceDtoBand = {
+  strong: "strong",
+  partial: "partial",
+  limited: "limited",
+} as const;
+
+export interface ScoreBandSliceDto {
+  band: ScoreBandSliceDtoBand;
+  count: number;
+  pct: number;
+}
+
+export interface OverrideRecruiterDto {
+  id: string;
+  fullName: string;
+}
+
+export interface RecentOverrideDto {
+  flagId: string;
+  term: string;
+  category: string;
+  jobId: string;
+  jobTitle: string;
+  overriddenBy?: OverrideRecruiterDto | null;
+  overrideReason: string;
+  overriddenAt: string;
+}
+
+export interface BiasMonitorSampleSizeDto {
+  flags: number;
+  scores: number;
+  jobs: number;
+}
+
+export interface BiasMonitorBundleDto {
+  range: BiasMonitorRangeDto;
+  kpis: BiasMonitorKpisDto;
+  flagsByCategory: FlagsByCategoryDto[];
+  topFlaggedTerms: TopFlaggedTermDto[];
+  scoreDistributionByBand: ScoreBandSliceDto[];
+  recentOverrides: RecentOverrideDto[];
+  sampleSize: BiasMonitorSampleSizeDto;
+}
+
+export interface BiasMonitorBundleEnvelopeDto {
+  data: BiasMonitorBundleDto;
+}
+
 export interface SignupCandidateDto {
   /**
    * @minLength 2
@@ -2675,6 +2761,11 @@ export const AdminAuditControllerExportCsvV1ActorType = {
 } as const;
 
 export type AdminAnalyticsControllerOverviewV1Params = {
+  dateFrom?: string;
+  dateTo?: string;
+};
+
+export type AdminBiasMonitorControllerOverviewV1Params = {
   dateFrom?: string;
   dateTo?: string;
 };
@@ -11741,6 +11832,211 @@ export function useAdminAnalyticsControllerOverviewV1<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getAdminAnalyticsControllerOverviewV1QueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Aggregate fairness metrics — KPIs, breakdowns, top flagged terms, recent overrides. Cached 5 min.
+ */
+export type adminBiasMonitorControllerOverviewV1Response200 = {
+  data: BiasMonitorBundleEnvelopeDto;
+  status: 200;
+};
+
+export type adminBiasMonitorControllerOverviewV1ResponseSuccess =
+  adminBiasMonitorControllerOverviewV1Response200 & {
+    headers: Headers;
+  };
+export type adminBiasMonitorControllerOverviewV1Response =
+  adminBiasMonitorControllerOverviewV1ResponseSuccess;
+
+export const getAdminBiasMonitorControllerOverviewV1Url = (
+  params?: AdminBiasMonitorControllerOverviewV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/bias-monitor?${stringifiedParams}`
+    : `/api/v1/admin/bias-monitor`;
+};
+
+export const adminBiasMonitorControllerOverviewV1 = async (
+  params?: AdminBiasMonitorControllerOverviewV1Params,
+  options?: RequestInit,
+): Promise<adminBiasMonitorControllerOverviewV1Response> => {
+  return fetcher<adminBiasMonitorControllerOverviewV1Response>(
+    getAdminBiasMonitorControllerOverviewV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminBiasMonitorControllerOverviewV1QueryKey = (
+  params?: AdminBiasMonitorControllerOverviewV1Params,
+) => {
+  return [`/api/v1/admin/bias-monitor`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminBiasMonitorControllerOverviewV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+  TError = unknown,
+>(
+  params?: AdminBiasMonitorControllerOverviewV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getAdminBiasMonitorControllerOverviewV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>
+  > = ({ signal }) =>
+    adminBiasMonitorControllerOverviewV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminBiasMonitorControllerOverviewV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>
+>;
+export type AdminBiasMonitorControllerOverviewV1QueryError = unknown;
+
+export function useAdminBiasMonitorControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+  TError = unknown,
+>(
+  params: undefined | AdminBiasMonitorControllerOverviewV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminBiasMonitorControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+  TError = unknown,
+>(
+  params?: AdminBiasMonitorControllerOverviewV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminBiasMonitorControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+  TError = unknown,
+>(
+  params?: AdminBiasMonitorControllerOverviewV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Aggregate fairness metrics — KPIs, breakdowns, top flagged terms, recent overrides. Cached 5 min.
+ */
+
+export function useAdminBiasMonitorControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+  TError = unknown,
+>(
+  params?: AdminBiasMonitorControllerOverviewV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminBiasMonitorControllerOverviewV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminBiasMonitorControllerOverviewV1QueryOptions(
     params,
     options,
   );

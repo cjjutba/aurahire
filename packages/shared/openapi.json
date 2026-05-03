@@ -2873,6 +2873,52 @@
         ]
       }
     },
+    "/api/v1/admin/bias-monitor": {
+      "get": {
+        "operationId": "AdminBiasMonitorController_overview_v1",
+        "parameters": [
+          {
+            "name": "dateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BiasMonitorBundleEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Aggregate fairness metrics — KPIs, breakdowns, top flagged terms, recent overrides. Cached 5 min.",
+        "tags": [
+          "admin-bias-monitor"
+        ]
+      }
+    },
     "/api/v1/auth/signup-candidate": {
       "post": {
         "description": "Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.",
@@ -7105,6 +7151,251 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/AnalyticsBundleDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "BiasMonitorRangeDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      },
+      "BiasMonitorKpisDto": {
+        "type": "object",
+        "properties": {
+          "totalFlags": {
+            "type": "number"
+          },
+          "flagsPerJob": {
+            "type": "number"
+          },
+          "flagsResolvedPct": {
+            "type": "number"
+          },
+          "overrideRate": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalFlags",
+          "flagsPerJob",
+          "flagsResolvedPct",
+          "overrideRate"
+        ]
+      },
+      "FlagsByCategoryDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "gendered",
+              "age-coded",
+              "ableist",
+              "exclusionary",
+              "other"
+            ]
+          },
+          "count": {
+            "type": "number"
+          },
+          "pct": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "category",
+          "count",
+          "pct"
+        ]
+      },
+      "TopFlaggedTermDto": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "exampleJobIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "term",
+          "count",
+          "exampleJobIds"
+        ]
+      },
+      "ScoreBandSliceDto": {
+        "type": "object",
+        "properties": {
+          "band": {
+            "type": "string",
+            "enum": [
+              "strong",
+              "partial",
+              "limited"
+            ]
+          },
+          "count": {
+            "type": "number"
+          },
+          "pct": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "band",
+          "count",
+          "pct"
+        ]
+      },
+      "OverrideRecruiterDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ]
+      },
+      "RecentOverrideDto": {
+        "type": "object",
+        "properties": {
+          "flagId": {
+            "type": "string"
+          },
+          "term": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "jobTitle": {
+            "type": "string"
+          },
+          "overriddenBy": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OverrideRecruiterDto"
+              }
+            ]
+          },
+          "overrideReason": {
+            "type": "string"
+          },
+          "overriddenAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "flagId",
+          "term",
+          "category",
+          "jobId",
+          "jobTitle",
+          "overrideReason",
+          "overriddenAt"
+        ]
+      },
+      "BiasMonitorSampleSizeDto": {
+        "type": "object",
+        "properties": {
+          "flags": {
+            "type": "number"
+          },
+          "scores": {
+            "type": "number"
+          },
+          "jobs": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "flags",
+          "scores",
+          "jobs"
+        ]
+      },
+      "BiasMonitorBundleDto": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "$ref": "#/components/schemas/BiasMonitorRangeDto"
+          },
+          "kpis": {
+            "$ref": "#/components/schemas/BiasMonitorKpisDto"
+          },
+          "flagsByCategory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlagsByCategoryDto"
+            }
+          },
+          "topFlaggedTerms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopFlaggedTermDto"
+            }
+          },
+          "scoreDistributionByBand": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScoreBandSliceDto"
+            }
+          },
+          "recentOverrides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecentOverrideDto"
+            }
+          },
+          "sampleSize": {
+            "$ref": "#/components/schemas/BiasMonitorSampleSizeDto"
+          }
+        },
+        "required": [
+          "range",
+          "kpis",
+          "flagsByCategory",
+          "topFlaggedTerms",
+          "scoreDistributionByBand",
+          "recentOverrides",
+          "sampleSize"
+        ]
+      },
+      "BiasMonitorBundleEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BiasMonitorBundleDto"
           }
         },
         "required": [
