@@ -50,11 +50,11 @@ The date is the planned execution date (not the writing date — writing happens
 
 | Slice | Title | Plan File | Status |
 |---|---|---|---|
-| 3.1 | Admin Foundation: Stats + User Mgmt + Job Moderation | [2026-05-04-slice-3.1-admin-foundation.md](./2026-05-04-slice-3.1-admin-foundation.md) | 🔄 Executing |
-| 3.2 | Admin Application Oversight | [2026-05-04-slice-3.2-admin-application-oversight.md](./2026-05-04-slice-3.2-admin-application-oversight.md) | 📝 Plan ready |
+| 3.1 | Admin Foundation: Stats + User Mgmt + Job Moderation | [2026-05-04-slice-3.1-admin-foundation.md](./2026-05-04-slice-3.1-admin-foundation.md) | ✅ Complete |
+| 3.2 | Admin Application Oversight | [2026-05-04-slice-3.2-admin-application-oversight.md](./2026-05-04-slice-3.2-admin-application-oversight.md) | ✅ Complete |
 | 3.3 | AI Scoring Configuration + Preview Impact | [2026-05-04-slice-3.3-admin-ai-config.md](./2026-05-04-slice-3.3-admin-ai-config.md) | 📝 Plan ready |
-| 3.4 | Audit Log + System Analytics | _to be written_ | ⏳ Not started |
-| 3.5 | Bias & Fairness Monitor | _to be written_ | ⏳ Not started |
+| 3.4 | Audit Log + System Analytics | [2026-05-04-slice-3.4-audit-analytics.md](./2026-05-04-slice-3.4-audit-analytics.md) | 📝 Plan ready |
+| 3.5 | Bias & Fairness Monitor | [2026-05-04-slice-3.5-bias-fairness-monitor.md](./2026-05-04-slice-3.5-bias-fairness-monitor.md) | 📝 Plan ready |
 | 3.6 | Background Jobs (BullMQ) | _to be written_ | ⏳ Not started |
 | 3.7 | Cron Tasks + Cache Wiring | _to be written_ | ⏳ Not started |
 | 3.8 | Interview, Offer, Final Polish | _to be written_ | ⏳ Not started |

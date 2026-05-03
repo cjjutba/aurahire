@@ -1505,6 +1505,293 @@ export interface AdminJobEnvelopeDto {
   data: AdminJobDetailDto;
 }
 
+export interface AdminApplicationCandidateSummaryDto {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+export interface AdminApplicationJobSummaryDto {
+  id: string;
+  title: string;
+  companyName: string;
+  recruiterName: string;
+}
+
+export type AdminApplicationListRowDtoStatus =
+  (typeof AdminApplicationListRowDtoStatus)[keyof typeof AdminApplicationListRowDtoStatus];
+
+export const AdminApplicationListRowDtoStatus = {
+  applied: "applied",
+  screening: "screening",
+  interview: "interview",
+  offer: "offer",
+  hired: "hired",
+  rejected: "rejected",
+  withdrawn: "withdrawn",
+} as const;
+
+/**
+ * @nullable
+ */
+export type AdminApplicationListRowDtoBand =
+  | (typeof AdminApplicationListRowDtoBand)[keyof typeof AdminApplicationListRowDtoBand]
+  | null;
+
+export const AdminApplicationListRowDtoBand = {
+  strong: "strong",
+  partial: "partial",
+  limited: "limited",
+} as const;
+
+export interface AdminApplicationListRowDto {
+  id: string;
+  status: AdminApplicationListRowDtoStatus;
+  appliedAt: string;
+  candidate: AdminApplicationCandidateSummaryDto;
+  job: AdminApplicationJobSummaryDto;
+  /** @nullable */
+  overallScore?: number | null;
+  /** @nullable */
+  band?: AdminApplicationListRowDtoBand;
+  hasRedactions: boolean;
+}
+
+export interface AdminApplicationListMetaDto {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface AdminApplicationListEnvelopeDto {
+  data: AdminApplicationListRowDto[];
+  meta: AdminApplicationListMetaDto;
+}
+
+/**
+ * @nullable
+ */
+export type AdminApplicationCandidateDetailDtoPhone = {
+  [key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type AdminApplicationCandidateDetailDtoHeadline = {
+  [key: string]: unknown;
+} | null;
+
+export interface AdminApplicationCandidateDetailDto {
+  id: string;
+  fullName: string;
+  email: string;
+  /** @nullable */
+  phone?: AdminApplicationCandidateDetailDtoPhone;
+  /** @nullable */
+  headline?: AdminApplicationCandidateDetailDtoHeadline;
+}
+
+export interface AdminApplicationJobRecruiterDto {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+export interface AdminApplicationJobCompanyDto {
+  id: string;
+  name: string;
+}
+
+/**
+ * @nullable
+ */
+export type AdminApplicationJobDetailDtoEducationRequirement = {
+  [key: string]: unknown;
+} | null;
+
+export interface AdminApplicationJobDetailDto {
+  id: string;
+  title: string;
+  descriptionPlain: string;
+  requiredSkills: string[];
+  experienceLevel: string;
+  /** @nullable */
+  educationRequirement?: AdminApplicationJobDetailDtoEducationRequirement;
+  recruiter: AdminApplicationJobRecruiterDto;
+  company: AdminApplicationJobCompanyDto;
+}
+
+/**
+ * @nullable
+ */
+export type AdminEvidenceDtoSource = { [key: string]: unknown } | null;
+
+export type AdminEvidenceDtoRelevance =
+  (typeof AdminEvidenceDtoRelevance)[keyof typeof AdminEvidenceDtoRelevance];
+
+export const AdminEvidenceDtoRelevance = {
+  positive: "positive",
+  negative: "negative",
+  neutral: "neutral",
+} as const;
+
+export interface AdminEvidenceDto {
+  excerpt: string;
+  /** @nullable */
+  source?: AdminEvidenceDtoSource;
+  relevance: AdminEvidenceDtoRelevance;
+  /** @nullable */
+  contributionPoints?: number | null;
+}
+
+export interface AdminScoreComponentDto {
+  name: string;
+  score: number;
+  max: number;
+  weight: number;
+  explanation: string;
+  evidence: AdminEvidenceDto[];
+}
+
+export type AdminMatchScoreDtoBand =
+  (typeof AdminMatchScoreDtoBand)[keyof typeof AdminMatchScoreDtoBand];
+
+export const AdminMatchScoreDtoBand = {
+  strong: "strong",
+  partial: "partial",
+  limited: "limited",
+} as const;
+
+export type AdminMatchScoreDtoWeightsUsed = { [key: string]: unknown };
+
+export type AdminMatchScoreDtoRawOutput = { [key: string]: unknown };
+
+export interface AdminMatchScoreDto {
+  id: string;
+  overallScore: number;
+  band: AdminMatchScoreDtoBand;
+  components: AdminScoreComponentDto[];
+  summary: string;
+  /** @nullable */
+  redFlags: string[] | null;
+  /** @nullable */
+  greenFlags: string[] | null;
+  redactedFields: string[];
+  weightsUsed: AdminMatchScoreDtoWeightsUsed;
+  promptVersion: string;
+  modelUsed: string;
+  /** @nullable */
+  latencyMs?: number | null;
+  rawOutput: AdminMatchScoreDtoRawOutput;
+  createdAt: string;
+}
+
+export type AdminApplicationResumeDtoParseStatus =
+  (typeof AdminApplicationResumeDtoParseStatus)[keyof typeof AdminApplicationResumeDtoParseStatus];
+
+export const AdminApplicationResumeDtoParseStatus = {
+  pending: "pending",
+  parsed: "parsed",
+  failed: "failed",
+} as const;
+
+/**
+ * @nullable
+ */
+export type AdminApplicationResumeDtoParsedData = {
+  [key: string]: unknown;
+} | null;
+
+export interface AdminApplicationResumeDto {
+  id: string;
+  filename: string;
+  parseStatus: AdminApplicationResumeDtoParseStatus;
+  /** @nullable */
+  parsedData?: AdminApplicationResumeDtoParsedData;
+  uploadedAt: string;
+}
+
+export type AdminAuditEntryDtoActorType =
+  (typeof AdminAuditEntryDtoActorType)[keyof typeof AdminAuditEntryDtoActorType];
+
+export const AdminAuditEntryDtoActorType = {
+  user: "user",
+  ai: "ai",
+  system: "system",
+} as const;
+
+/**
+ * @nullable
+ */
+export type AdminAuditEntryDtoActorId = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type AdminAuditEntryDtoDetails = { [key: string]: unknown } | null;
+
+export interface AdminAuditEntryDto {
+  id: string;
+  action: string;
+  actorType: AdminAuditEntryDtoActorType;
+  /** @nullable */
+  actorId?: AdminAuditEntryDtoActorId;
+  entityType: string;
+  entityId: string;
+  /** @nullable */
+  details?: AdminAuditEntryDtoDetails;
+  createdAt: string;
+}
+
+export type AdminApplicationDetailDtoStatus =
+  (typeof AdminApplicationDetailDtoStatus)[keyof typeof AdminApplicationDetailDtoStatus];
+
+export const AdminApplicationDetailDtoStatus = {
+  applied: "applied",
+  screening: "screening",
+  interview: "interview",
+  offer: "offer",
+  hired: "hired",
+  rejected: "rejected",
+  withdrawn: "withdrawn",
+} as const;
+
+/**
+ * @nullable
+ */
+export type AdminApplicationDetailDtoCoverLetter = {
+  [key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type AdminApplicationDetailDtoRecruiterNotes = {
+  [key: string]: unknown;
+} | null;
+
+export interface AdminApplicationDetailDto {
+  id: string;
+  status: AdminApplicationDetailDtoStatus;
+  /** @nullable */
+  coverLetter?: AdminApplicationDetailDtoCoverLetter;
+  /** @nullable */
+  recruiterNotes?: AdminApplicationDetailDtoRecruiterNotes;
+  appliedAt: string;
+  statusUpdatedAt: string;
+  candidate: AdminApplicationCandidateDetailDto;
+  job: AdminApplicationJobDetailDto;
+  matchScore?: AdminMatchScoreDto | null;
+  resume: AdminApplicationResumeDto;
+  auditTrail: AdminAuditEntryDto[];
+}
+
+export interface AdminApplicationDetailEnvelopeDto {
+  data: AdminApplicationDetailDto;
+}
+
 export interface SignupCandidateDto {
   /**
    * @minLength 2
@@ -1878,6 +2165,50 @@ export const AdminJobsControllerListV1Status = {
   published: "published",
   archived: "archived",
   closed: "closed",
+} as const;
+
+export type AdminApplicationsControllerListV1Params = {
+  jobId?: string;
+  candidateId?: string;
+  status?: AdminApplicationsControllerListV1Status;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  minScore?: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  maxScore?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  /**
+   * @maxLength 200
+   */
+  q?: string;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+};
+
+export type AdminApplicationsControllerListV1Status =
+  (typeof AdminApplicationsControllerListV1Status)[keyof typeof AdminApplicationsControllerListV1Status];
+
+export const AdminApplicationsControllerListV1Status = {
+  applied: "applied",
+  screening: "screening",
+  interview: "interview",
+  offer: "offer",
+  hired: "hired",
+  rejected: "rejected",
+  withdrawn: "withdrawn",
 } as const;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -9317,6 +9648,412 @@ export const useAdminJobsControllerArchiveV1 = <
     queryClient,
   );
 };
+
+/**
+ * @summary Filter + list all applications across the system (cached 30s)
+ */
+export type adminApplicationsControllerListV1Response200 = {
+  data: AdminApplicationListEnvelopeDto;
+  status: 200;
+};
+
+export type adminApplicationsControllerListV1ResponseSuccess =
+  adminApplicationsControllerListV1Response200 & {
+    headers: Headers;
+  };
+export type adminApplicationsControllerListV1Response =
+  adminApplicationsControllerListV1ResponseSuccess;
+
+export const getAdminApplicationsControllerListV1Url = (
+  params?: AdminApplicationsControllerListV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/applications?${stringifiedParams}`
+    : `/api/v1/admin/applications`;
+};
+
+export const adminApplicationsControllerListV1 = async (
+  params?: AdminApplicationsControllerListV1Params,
+  options?: RequestInit,
+): Promise<adminApplicationsControllerListV1Response> => {
+  return fetcher<adminApplicationsControllerListV1Response>(
+    getAdminApplicationsControllerListV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminApplicationsControllerListV1QueryKey = (
+  params?: AdminApplicationsControllerListV1Params,
+) => {
+  return [`/api/v1/admin/applications`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminApplicationsControllerListV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminApplicationsControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getAdminApplicationsControllerListV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminApplicationsControllerListV1>>
+  > = ({ signal }) =>
+    adminApplicationsControllerListV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminApplicationsControllerListV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminApplicationsControllerListV1>>
+>;
+export type AdminApplicationsControllerListV1QueryError = unknown;
+
+export function useAdminApplicationsControllerListV1<
+  TData = Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+  TError = unknown,
+>(
+  params: undefined | AdminApplicationsControllerListV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminApplicationsControllerListV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminApplicationsControllerListV1<
+  TData = Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminApplicationsControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminApplicationsControllerListV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminApplicationsControllerListV1<
+  TData = Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminApplicationsControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Filter + list all applications across the system (cached 30s)
+ */
+
+export function useAdminApplicationsControllerListV1<
+  TData = Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminApplicationsControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminApplicationsControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminApplicationsControllerListV1QueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Full admin detail for an application — includes raw AI output, parsed resume + redactedFields list, and the audit trail
+ */
+export type adminApplicationsControllerGetByIdV1Response200 = {
+  data: AdminApplicationDetailEnvelopeDto;
+  status: 200;
+};
+
+export type adminApplicationsControllerGetByIdV1Response404 = {
+  data: void;
+  status: 404;
+};
+
+export type adminApplicationsControllerGetByIdV1ResponseSuccess =
+  adminApplicationsControllerGetByIdV1Response200 & {
+    headers: Headers;
+  };
+export type adminApplicationsControllerGetByIdV1ResponseError =
+  adminApplicationsControllerGetByIdV1Response404 & {
+    headers: Headers;
+  };
+
+export type adminApplicationsControllerGetByIdV1Response =
+  | adminApplicationsControllerGetByIdV1ResponseSuccess
+  | adminApplicationsControllerGetByIdV1ResponseError;
+
+export const getAdminApplicationsControllerGetByIdV1Url = (id: string) => {
+  return `/api/v1/admin/applications/${id}`;
+};
+
+export const adminApplicationsControllerGetByIdV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<adminApplicationsControllerGetByIdV1Response> => {
+  return fetcher<adminApplicationsControllerGetByIdV1Response>(
+    getAdminApplicationsControllerGetByIdV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminApplicationsControllerGetByIdV1QueryKey = (id: string) => {
+  return [`/api/v1/admin/applications/${id}`] as const;
+};
+
+export const getAdminApplicationsControllerGetByIdV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getAdminApplicationsControllerGetByIdV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>
+  > = ({ signal }) =>
+    adminApplicationsControllerGetByIdV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminApplicationsControllerGetByIdV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>
+>;
+export type AdminApplicationsControllerGetByIdV1QueryError = void;
+
+export function useAdminApplicationsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+  TError = void,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminApplicationsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminApplicationsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Full admin detail for an application — includes raw AI output, parsed resume + redactedFields list, and the audit trail
+ */
+
+export function useAdminApplicationsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminApplicationsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminApplicationsControllerGetByIdV1QueryOptions(
+    id,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.

@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { JOB_STATUS, USER_ROLES, USER_STATUS } from "../enums/index.ts";
+import {
+  APPLICATION_STATUS,
+  JOB_STATUS,
+  USER_ROLES,
+  USER_STATUS,
+} from "../enums/index.ts";
 import { uuidSchema } from "./shared.ts";
 
 // ---------- LIST USERS QUERY ----------
@@ -40,3 +45,32 @@ export const listAdminJobsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 export type ListAdminJobsQuery = z.infer<typeof listAdminJobsQuerySchema>;
+
+// ---------- LIST ADMIN APPLICATIONS QUERY ----------
+export const listAdminApplicationsQuerySchema = z
+  .object({
+    jobId: uuidSchema.optional(),
+    candidateId: uuidSchema.optional(),
+    status: z.enum(APPLICATION_STATUS).optional(),
+    minScore: z.coerce.number().int().min(0).max(100).optional(),
+    maxScore: z.coerce.number().int().min(0).max(100).optional(),
+    dateFrom: z.string().datetime().optional(),
+    dateTo: z.string().datetime().optional(),
+    q: z.string().max(200).optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+  })
+  .refine(
+    (data) =>
+      data.minScore === undefined ||
+      data.maxScore === undefined ||
+      data.minScore <= data.maxScore,
+    {
+      message: "minScore must be ≤ maxScore",
+      path: ["minScore"],
+    },
+  );
+
+export type ListAdminApplicationsQuery = z.infer<
+  typeof listAdminApplicationsQuerySchema
+>;

@@ -2257,6 +2257,183 @@
         ]
       }
     },
+    "/api/v1/admin/applications": {
+      "get": {
+        "operationId": "AdminApplicationsController_list_v1",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "candidateId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "applied",
+                "screening",
+                "interview",
+                "offer",
+                "hired",
+                "rejected",
+                "withdrawn"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "minScore",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "maxScore",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "exclusiveMinimum": false,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "default": 20,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminApplicationListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Filter + list all applications across the system (cached 30s)",
+        "tags": [
+          "admin-applications"
+        ]
+      }
+    },
+    "/api/v1/admin/applications/{id}": {
+      "get": {
+        "operationId": "AdminApplicationsController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminApplicationDetailEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Application not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Full admin detail for an application — includes raw AI output, parsed resume + redactedFields list, and the audit trail",
+        "tags": [
+          "admin-applications"
+        ]
+      }
+    },
     "/api/v1/auth/signup-candidate": {
       "post": {
         "description": "Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.",
@@ -5024,6 +5201,543 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/AdminJobDetailDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "AdminApplicationCandidateSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email"
+        ]
+      },
+      "AdminApplicationJobSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "companyName": {
+            "type": "string"
+          },
+          "recruiterName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "companyName",
+          "recruiterName"
+        ]
+      },
+      "AdminApplicationListRowDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "screening",
+              "interview",
+              "offer",
+              "hired",
+              "rejected",
+              "withdrawn"
+            ]
+          },
+          "appliedAt": {
+            "type": "string"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/AdminApplicationCandidateSummaryDto"
+          },
+          "job": {
+            "$ref": "#/components/schemas/AdminApplicationJobSummaryDto"
+          },
+          "overallScore": {
+            "type": "number",
+            "nullable": true
+          },
+          "band": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "strong",
+              "partial",
+              "limited"
+            ]
+          },
+          "hasRedactions": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "appliedAt",
+          "candidate",
+          "job",
+          "hasRedactions"
+        ]
+      },
+      "AdminApplicationListMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "AdminApplicationListEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminApplicationListRowDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/AdminApplicationListMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "AdminApplicationCandidateDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "object",
+            "nullable": true
+          },
+          "headline": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email"
+        ]
+      },
+      "AdminApplicationJobRecruiterDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email"
+        ]
+      },
+      "AdminApplicationJobCompanyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "AdminApplicationJobDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "descriptionPlain": {
+            "type": "string"
+          },
+          "requiredSkills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "experienceLevel": {
+            "type": "string"
+          },
+          "educationRequirement": {
+            "type": "object",
+            "nullable": true
+          },
+          "recruiter": {
+            "$ref": "#/components/schemas/AdminApplicationJobRecruiterDto"
+          },
+          "company": {
+            "$ref": "#/components/schemas/AdminApplicationJobCompanyDto"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "descriptionPlain",
+          "requiredSkills",
+          "experienceLevel",
+          "recruiter",
+          "company"
+        ]
+      },
+      "AdminEvidenceDto": {
+        "type": "object",
+        "properties": {
+          "excerpt": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "nullable": true
+          },
+          "relevance": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "neutral"
+            ]
+          },
+          "contributionPoints": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "excerpt",
+          "relevance"
+        ]
+      },
+      "AdminScoreComponentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "weight": {
+            "type": "number"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminEvidenceDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "score",
+          "max",
+          "weight",
+          "explanation",
+          "evidence"
+        ]
+      },
+      "AdminMatchScoreDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "overallScore": {
+            "type": "number"
+          },
+          "band": {
+            "type": "string",
+            "enum": [
+              "strong",
+              "partial",
+              "limited"
+            ]
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminScoreComponentDto"
+            }
+          },
+          "summary": {
+            "type": "string"
+          },
+          "redFlags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "greenFlags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "redactedFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "weightsUsed": {
+            "type": "object"
+          },
+          "promptVersion": {
+            "type": "string"
+          },
+          "modelUsed": {
+            "type": "string"
+          },
+          "latencyMs": {
+            "type": "number",
+            "nullable": true
+          },
+          "rawOutput": {
+            "type": "object"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "overallScore",
+          "band",
+          "components",
+          "summary",
+          "redFlags",
+          "greenFlags",
+          "redactedFields",
+          "weightsUsed",
+          "promptVersion",
+          "modelUsed",
+          "rawOutput",
+          "createdAt"
+        ]
+      },
+      "AdminApplicationResumeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "parseStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "parsed",
+              "failed"
+            ]
+          },
+          "parsedData": {
+            "type": "object",
+            "nullable": true
+          },
+          "uploadedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "parseStatus",
+          "uploadedAt"
+        ]
+      },
+      "AdminAuditEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actorType": {
+            "type": "string",
+            "enum": [
+              "user",
+              "ai",
+              "system"
+            ]
+          },
+          "actorId": {
+            "type": "object",
+            "nullable": true
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "actorType",
+          "entityType",
+          "entityId",
+          "createdAt"
+        ]
+      },
+      "AdminApplicationDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "screening",
+              "interview",
+              "offer",
+              "hired",
+              "rejected",
+              "withdrawn"
+            ]
+          },
+          "coverLetter": {
+            "type": "object",
+            "nullable": true
+          },
+          "recruiterNotes": {
+            "type": "object",
+            "nullable": true
+          },
+          "appliedAt": {
+            "type": "string"
+          },
+          "statusUpdatedAt": {
+            "type": "string"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/AdminApplicationCandidateDetailDto"
+          },
+          "job": {
+            "$ref": "#/components/schemas/AdminApplicationJobDetailDto"
+          },
+          "matchScore": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminMatchScoreDto"
+              }
+            ]
+          },
+          "resume": {
+            "$ref": "#/components/schemas/AdminApplicationResumeDto"
+          },
+          "auditTrail": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminAuditEntryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "appliedAt",
+          "statusUpdatedAt",
+          "candidate",
+          "job",
+          "resume",
+          "auditTrail"
+        ]
+      },
+      "AdminApplicationDetailEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminApplicationDetailDto"
           }
         },
         "required": [
