@@ -30,38 +30,31 @@ export class AdminStatsService {
     const todayStart = new Date(now - (now % DAY_MS));
     const weekStart = new Date(now - 7 * DAY_MS);
 
-    const [
-      totalUsers,
-      activeJobs,
-      applicationsToday,
-      applicationsThisWeek,
-      avgProfileScore,
-      avgMatchScore,
-      scoreBandHistogram,
-      biasFlagsThisWeek,
-      recentAuditEvents,
-    ] = await Promise.all([
-      this.repo.countUsers(),
-      this.repo.countActiveJobs(),
-      this.repo.countApplicationsSince(todayStart),
-      this.repo.countApplicationsSince(weekStart),
-      this.repo.avgProfileScore(),
-      this.repo.avgMatchScore(),
-      this.repo.scoreBandHistogram(30),
-      this.repo.biasFlagsThisWeek(),
-      this.repo.recentAuditEvents(10),
-    ]);
+    const snapshot = await this.repo.overview({
+      todayStart,
+      weekStart,
+      histogramSinceDays: 30,
+      auditLimit: 10,
+    });
 
     const result: AdminStatsOverviewDto = {
-      totalUsers: this.block("Total Users", totalUsers),
-      activeJobs: this.block("Active Jobs", activeJobs),
-      applicationsToday: this.block("Apps Today", applicationsToday),
-      applicationsThisWeek: this.block("Apps This Week", applicationsThisWeek),
-      avgProfileScore: this.block("Avg Profile Score", avgProfileScore),
-      avgMatchScore: this.block("Avg Match Score", avgMatchScore),
-      scoreBandHistogram: scoreBandHistogram as ScoreBandHistogramEntryDto[],
-      biasFlagsThisWeek: biasFlagsThisWeek as BiasCategoryBreakdownDto[],
-      recentAuditEvents: recentAuditEvents.map((r) => ({
+      totalUsers: this.block("Total Users", snapshot.totalUsers),
+      activeJobs: this.block("Active Jobs", snapshot.activeJobs),
+      applicationsToday: this.block("Apps Today", snapshot.applicationsToday),
+      applicationsThisWeek: this.block(
+        "Apps This Week",
+        snapshot.applicationsThisWeek,
+      ),
+      avgProfileScore: this.block(
+        "Avg Profile Score",
+        snapshot.avgProfileScore,
+      ),
+      avgMatchScore: this.block("Avg Match Score", snapshot.avgMatchScore),
+      scoreBandHistogram:
+        snapshot.scoreBandHistogram as ScoreBandHistogramEntryDto[],
+      biasFlagsThisWeek:
+        snapshot.biasFlagsThisWeek as BiasCategoryBreakdownDto[],
+      recentAuditEvents: snapshot.recentAuditEvents.map((r) => ({
         action: r.action,
         actorType: r.actorType,
         entityType: r.entityType,
