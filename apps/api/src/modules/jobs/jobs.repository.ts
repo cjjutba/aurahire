@@ -11,8 +11,10 @@ import {
   type SQL,
 } from "drizzle-orm";
 import {
+  biasFlagsTable,
   jobsTable,
   companiesTable,
+  profilesTable,
   type Job,
   type NewJob,
   type Company,
@@ -25,6 +27,25 @@ import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 
 export interface JobWithCompany extends Job {
   company: Company;
+}
+
+export interface JobRecruiter {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+export interface JobWithCompanyAndRecruiter extends JobWithCompany {
+  recruiter: JobRecruiter;
+}
+
+export interface ListJobsForAdminFilters {
+  status?: JobStatus;
+  recruiterId?: string;
+  hasBiasFlags?: boolean;
+  q?: string;
+  page: number;
+  limit: number;
 }
 
 export interface ListJobsFilters {
@@ -100,6 +121,94 @@ export class JobsRepository {
       rows: rows
         .filter((r) => r.company != null)
         .map((r) => ({ ...r.job, company: r.company! })),
+      total: Number(totalResult[0]?.count ?? 0),
+    };
+  }
+
+  async findByIdWithCompanyAndRecruiter(
+    id: string,
+  ): Promise<JobWithCompanyAndRecruiter | null> {
+    const [row] = await this.db
+      .select({
+        job: jobsTable,
+        company: companiesTable,
+        recruiter: profilesTable,
+      })
+      .from(jobsTable)
+      .leftJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
+      .leftJoin(profilesTable, eq(profilesTable.id, jobsTable.recruiterId))
+      .where(eq(jobsTable.id, id))
+      .limit(1);
+    if (!row || !row.company || !row.recruiter) return null;
+    return {
+      ...row.job,
+      company: row.company,
+      recruiter: {
+        id: row.recruiter.id,
+        fullName: row.recruiter.fullName,
+        email: row.recruiter.email,
+      },
+    };
+  }
+
+  async listForAdmin(filters: ListJobsForAdminFilters): Promise<{
+    rows: JobWithCompanyAndRecruiter[];
+    total: number;
+  }> {
+    const offset = (filters.page - 1) * filters.limit;
+    const conditions: SQL[] = [];
+    if (filters.status) conditions.push(eq(jobsTable.status, filters.status));
+    if (filters.recruiterId)
+      conditions.push(eq(jobsTable.recruiterId, filters.recruiterId));
+    if (filters.q) {
+      const pattern = `%${filters.q}%`;
+      const orClause = or(
+        ilike(jobsTable.title, pattern),
+        ilike(jobsTable.descriptionPlain, pattern),
+      );
+      if (orClause) conditions.push(orClause);
+    }
+    if (filters.hasBiasFlags) {
+      conditions.push(
+        sql`EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
+      );
+    }
+    const where =
+      conditions.length === 0
+        ? undefined
+        : conditions.length === 1
+          ? conditions[0]
+          : and(...conditions);
+
+    const [rows, totalResult] = await Promise.all([
+      this.db
+        .select({
+          job: jobsTable,
+          company: companiesTable,
+          recruiter: profilesTable,
+        })
+        .from(jobsTable)
+        .leftJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
+        .leftJoin(profilesTable, eq(profilesTable.id, jobsTable.recruiterId))
+        .where(where)
+        .orderBy(desc(jobsTable.createdAt))
+        .limit(filters.limit)
+        .offset(offset),
+      this.db.select({ count: count() }).from(jobsTable).where(where),
+    ]);
+
+    return {
+      rows: rows
+        .filter((r) => r.company != null && r.recruiter != null)
+        .map((r) => ({
+          ...r.job,
+          company: r.company!,
+          recruiter: {
+            id: r.recruiter!.id,
+            fullName: r.recruiter!.fullName,
+            email: r.recruiter!.email,
+          },
+        })),
       total: Number(totalResult[0]?.count ?? 0),
     };
   }

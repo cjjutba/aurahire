@@ -1718,18 +1718,542 @@
         ]
       }
     },
-    "/api/health": {
+    "/api/v1/admin/stats/overview": {
       "get": {
-        "operationId": "HealthController_check",
+        "operationId": "AdminStatsController_overview_v1",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Service is healthy"
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStatsOverviewEnvelopeDto"
+                }
+              }
+            }
           }
         },
-        "summary": "Service health check",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Command Center KPIs in one fetch (cached 60s)",
         "tags": [
-          "health"
+          "admin-stats"
+        ]
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "operationId": "AdminUsersController_list_v1",
+        "parameters": [
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "candidate",
+                "recruiter",
+                "admin"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "active",
+                "suspended",
+                "deleted"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "createdFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "createdTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "exclusiveMinimum": false,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "default": 20,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List/filter all users",
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}": {
+      "get": {
+        "operationId": "AdminUsersController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get user detail (incl. audit count)",
+        "tags": [
+          "admin-users"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminUsersController_delete_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cannot target self"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Hard-delete a user (soft-delete profile + delete auth.users row)",
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/suspend": {
+      "post": {
+        "operationId": "AdminUsersController_suspend_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuspendUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cannot target self"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suspend a user (status='suspended'); reason required ≥10 chars",
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/reactivate": {
+      "post": {
+        "operationId": "AdminUsersController_reactivate_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reactivate a suspended user",
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/role": {
+      "patch": {
+        "operationId": "AdminUsersController_changeRole_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeUserRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cannot demote self from admin"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a user's role",
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/force-password-reset": {
+      "post": {
+        "operationId": "AdminUsersController_forcePasswordReset_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForcePasswordResetResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Issue a password-reset token (and email it) on behalf of a user",
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
+    "/api/v1/admin/jobs": {
+      "get": {
+        "operationId": "AdminJobsController_list_v1",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "draft",
+                "published",
+                "archived",
+                "closed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "recruiterId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "hasBiasFlags",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "exclusiveMinimum": false,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "default": 20,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminJobListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List/filter all jobs across the system",
+        "tags": [
+          "admin-jobs"
+        ]
+      }
+    },
+    "/api/v1/admin/jobs/{id}": {
+      "get": {
+        "operationId": "AdminJobsController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminJobEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin view of a job (any status, any recruiter)",
+        "tags": [
+          "admin-jobs"
+        ]
+      }
+    },
+    "/api/v1/admin/jobs/{id}/archive": {
+      "post": {
+        "operationId": "AdminJobsController_archive_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminJobEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive a job (admin bypasses ownership)",
+        "tags": [
+          "admin-jobs"
         ]
       }
     },
@@ -1938,6 +2462,21 @@
         "summary": "Consume a password-reset token and set a new password",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        },
+        "summary": "Service health check",
+        "tags": [
+          "health"
         ]
       }
     }
@@ -3826,6 +4365,665 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/SignedDownloadPayloadDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "AdminStatBlockDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "trend": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "label",
+          "value",
+          "trend"
+        ]
+      },
+      "ScoreBandHistogramEntryDto": {
+        "type": "object",
+        "properties": {
+          "band": {
+            "type": "string",
+            "enum": [
+              "strong",
+              "partial",
+              "limited"
+            ]
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "band",
+          "count"
+        ]
+      },
+      "BiasCategoryBreakdownDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "gendered",
+              "age-coded",
+              "ableist",
+              "exclusionary",
+              "other"
+            ]
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "category",
+          "count"
+        ]
+      },
+      "RecentAuditEntryDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actorType": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "actorType",
+          "entityType",
+          "createdAt"
+        ]
+      },
+      "AdminStatsOverviewDto": {
+        "type": "object",
+        "properties": {
+          "totalUsers": {
+            "$ref": "#/components/schemas/AdminStatBlockDto"
+          },
+          "activeJobs": {
+            "$ref": "#/components/schemas/AdminStatBlockDto"
+          },
+          "applicationsToday": {
+            "$ref": "#/components/schemas/AdminStatBlockDto"
+          },
+          "applicationsThisWeek": {
+            "$ref": "#/components/schemas/AdminStatBlockDto"
+          },
+          "avgProfileScore": {
+            "$ref": "#/components/schemas/AdminStatBlockDto"
+          },
+          "avgMatchScore": {
+            "$ref": "#/components/schemas/AdminStatBlockDto"
+          },
+          "scoreBandHistogram": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScoreBandHistogramEntryDto"
+            }
+          },
+          "biasFlagsThisWeek": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BiasCategoryBreakdownDto"
+            }
+          },
+          "recentAuditEvents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecentAuditEntryDto"
+            }
+          }
+        },
+        "required": [
+          "totalUsers",
+          "activeJobs",
+          "applicationsToday",
+          "applicationsThisWeek",
+          "avgProfileScore",
+          "avgMatchScore",
+          "scoreBandHistogram",
+          "biasFlagsThisWeek",
+          "recentAuditEvents"
+        ]
+      },
+      "AdminStatsOverviewEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminStatsOverviewDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "AdminUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "candidate",
+              "recruiter",
+              "admin"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "deleted"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email",
+          "role",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "AdminUserListMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "AdminUserListEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminUserDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/AdminUserListMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "AdminUserDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "candidate",
+              "recruiter",
+              "admin"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "deleted"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "auditEntryCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email",
+          "role",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "auditEntryCount"
+        ]
+      },
+      "AdminUserEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminUserDetailDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "SuspendUserDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "ChangeUserRoleDto": {
+        "type": "object",
+        "properties": {
+          "newRole": {
+            "type": "string",
+            "enum": [
+              "candidate",
+              "recruiter",
+              "admin"
+            ]
+          }
+        },
+        "required": [
+          "newRole"
+        ]
+      },
+      "ForcePasswordResetDataDto": {
+        "type": "object",
+        "properties": {
+          "resetUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "emailSent": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "resetUrl",
+          "expiresAt",
+          "emailSent"
+        ]
+      },
+      "ForcePasswordResetResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ForcePasswordResetDataDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "AdminJobRecruiterDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email"
+        ]
+      },
+      "AdminJobCompanyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "AdminJobDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived",
+              "closed"
+            ]
+          },
+          "employmentType": {
+            "type": "string"
+          },
+          "workMode": {
+            "type": "string"
+          },
+          "experienceLevel": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "recruiter": {
+            "$ref": "#/components/schemas/AdminJobRecruiterDto"
+          },
+          "company": {
+            "$ref": "#/components/schemas/AdminJobCompanyDto"
+          },
+          "biasFlagsCount": {
+            "type": "number"
+          },
+          "applicationsCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "employmentType",
+          "workMode",
+          "experienceLevel",
+          "createdAt",
+          "recruiter",
+          "company",
+          "biasFlagsCount",
+          "applicationsCount"
+        ]
+      },
+      "AdminJobListMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "AdminJobListEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminJobDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/AdminJobListMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "AdminJobBiasFlagDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "term": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "flagged",
+              "overridden",
+              "resolved"
+            ]
+          },
+          "overrideReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "overriddenAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "term",
+          "category",
+          "status",
+          "createdAt"
+        ]
+      },
+      "AdminJobDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived",
+              "closed"
+            ]
+          },
+          "employmentType": {
+            "type": "string"
+          },
+          "workMode": {
+            "type": "string"
+          },
+          "experienceLevel": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "recruiter": {
+            "$ref": "#/components/schemas/AdminJobRecruiterDto"
+          },
+          "company": {
+            "$ref": "#/components/schemas/AdminJobCompanyDto"
+          },
+          "biasFlagsCount": {
+            "type": "number"
+          },
+          "applicationsCount": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "descriptionPlain": {
+            "type": "string"
+          },
+          "requiredSkills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "biasFlags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminJobBiasFlagDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "employmentType",
+          "workMode",
+          "experienceLevel",
+          "createdAt",
+          "recruiter",
+          "company",
+          "biasFlagsCount",
+          "applicationsCount",
+          "description",
+          "descriptionPlain",
+          "requiredSkills",
+          "biasFlags"
+        ]
+      },
+      "AdminJobEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminJobDetailDto"
           }
         },
         "required": [

@@ -291,6 +291,51 @@ export class AuthService {
   }
 
   // ==========================================================================
+  // ISSUE PASSWORD RESET TOKEN FOR USER (admin-driven)
+  // ==========================================================================
+
+  /**
+   * Issues a password-reset token for a known user without performing
+   * email-based lookup, audit logging, or email send. Caller is responsible
+   * for emailing + auditing. Used by AdminUsersService for force-password-reset.
+   * Returns the user-facing reset URL and the token expiry.
+   */
+  async issuePasswordResetTokenForUser(input: {
+    userId: string;
+    email: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+  }): Promise<{ url: string; expiresAt: Date }> {
+    const rawToken = this.generateRawToken();
+    const tokenHash = this.hashToken(rawToken);
+    const expiresAt = new Date(Date.now() + RESET_TTL_MS);
+
+    await this.db
+      .update(authTokensTable)
+      .set({ consumedAt: new Date() })
+      .where(
+        and(
+          eq(authTokensTable.userId, input.userId),
+          eq(authTokensTable.kind, "password_reset"),
+          isNull(authTokensTable.consumedAt),
+        ),
+      );
+
+    await this.db.insert(authTokensTable).values({
+      userId: input.userId,
+      email: input.email,
+      kind: "password_reset",
+      tokenHash,
+      expiresAt,
+      ipAddress: input.ipAddress ?? null,
+      userAgent: input.userAgent ?? null,
+    });
+
+    const url = `${this.webUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
+    return { url, expiresAt };
+  }
+
+  // ==========================================================================
   // RESET PASSWORD
   // ==========================================================================
 

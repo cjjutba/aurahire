@@ -10,7 +10,8 @@
     "lint": "eslint \"src/**/*.ts\"",
     "type-check": "tsc --noEmit -p tsconfig.json",
     "generate:openapi": "node --require @swc-node/register scripts/generate-openapi.ts",
-    "reset-db": "node --require @swc-node/register --env-file=.env scripts/reset-db.ts"
+    "reset-db": "node --require @swc-node/register --env-file=.env scripts/reset-db.ts",
+    "seed-db": "node --require @swc-node/register --env-file=.env scripts/seed-db.ts"
   },
   "dependencies": {
     "@aurahire/db": "workspace:*",

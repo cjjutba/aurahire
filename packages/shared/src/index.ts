@@ -11,6 +11,7 @@ export * from "./schemas/score.ts";
 export * from "./schemas/bias.ts";
 export * from "./schemas/bias-requests.ts";
 export * from "./schemas/applications.ts";
+export * from "./schemas/admin.ts";
 
 // Enums
 export * from "./enums/index.ts";

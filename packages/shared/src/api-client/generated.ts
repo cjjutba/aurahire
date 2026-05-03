@@ -1219,6 +1219,292 @@ export interface SignedDownloadEnvelopeDto {
   data: SignedDownloadPayloadDto;
 }
 
+export interface AdminStatBlockDto {
+  label: string;
+  value: number;
+  /** @nullable */
+  trend: string | null;
+}
+
+export type ScoreBandHistogramEntryDtoBand =
+  (typeof ScoreBandHistogramEntryDtoBand)[keyof typeof ScoreBandHistogramEntryDtoBand];
+
+export const ScoreBandHistogramEntryDtoBand = {
+  strong: "strong",
+  partial: "partial",
+  limited: "limited",
+} as const;
+
+export interface ScoreBandHistogramEntryDto {
+  band: ScoreBandHistogramEntryDtoBand;
+  count: number;
+}
+
+export type BiasCategoryBreakdownDtoCategory =
+  (typeof BiasCategoryBreakdownDtoCategory)[keyof typeof BiasCategoryBreakdownDtoCategory];
+
+export const BiasCategoryBreakdownDtoCategory = {
+  gendered: "gendered",
+  "age-coded": "age-coded",
+  ableist: "ableist",
+  exclusionary: "exclusionary",
+  other: "other",
+} as const;
+
+export interface BiasCategoryBreakdownDto {
+  category: BiasCategoryBreakdownDtoCategory;
+  count: number;
+}
+
+export interface RecentAuditEntryDto {
+  action: string;
+  actorType: string;
+  entityType: string;
+  createdAt: string;
+}
+
+export interface AdminStatsOverviewDto {
+  totalUsers: AdminStatBlockDto;
+  activeJobs: AdminStatBlockDto;
+  applicationsToday: AdminStatBlockDto;
+  applicationsThisWeek: AdminStatBlockDto;
+  avgProfileScore: AdminStatBlockDto;
+  avgMatchScore: AdminStatBlockDto;
+  scoreBandHistogram: ScoreBandHistogramEntryDto[];
+  biasFlagsThisWeek: BiasCategoryBreakdownDto[];
+  recentAuditEvents: RecentAuditEntryDto[];
+}
+
+export interface AdminStatsOverviewEnvelopeDto {
+  data: AdminStatsOverviewDto;
+}
+
+export type AdminUserDtoRole =
+  (typeof AdminUserDtoRole)[keyof typeof AdminUserDtoRole];
+
+export const AdminUserDtoRole = {
+  candidate: "candidate",
+  recruiter: "recruiter",
+  admin: "admin",
+} as const;
+
+export type AdminUserDtoStatus =
+  (typeof AdminUserDtoStatus)[keyof typeof AdminUserDtoStatus];
+
+export const AdminUserDtoStatus = {
+  active: "active",
+  suspended: "suspended",
+  deleted: "deleted",
+} as const;
+
+export interface AdminUserDto {
+  id: string;
+  fullName: string;
+  email: string;
+  role: AdminUserDtoRole;
+  status: AdminUserDtoStatus;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  avatarUrl?: string | null;
+  /** @nullable */
+  lastLoginAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUserListMetaDto {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface AdminUserListEnvelopeDto {
+  data: AdminUserDto[];
+  meta: AdminUserListMetaDto;
+}
+
+export type AdminUserDetailDtoRole =
+  (typeof AdminUserDetailDtoRole)[keyof typeof AdminUserDetailDtoRole];
+
+export const AdminUserDetailDtoRole = {
+  candidate: "candidate",
+  recruiter: "recruiter",
+  admin: "admin",
+} as const;
+
+export type AdminUserDetailDtoStatus =
+  (typeof AdminUserDetailDtoStatus)[keyof typeof AdminUserDetailDtoStatus];
+
+export const AdminUserDetailDtoStatus = {
+  active: "active",
+  suspended: "suspended",
+  deleted: "deleted",
+} as const;
+
+export interface AdminUserDetailDto {
+  id: string;
+  fullName: string;
+  email: string;
+  role: AdminUserDetailDtoRole;
+  status: AdminUserDetailDtoStatus;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  avatarUrl?: string | null;
+  /** @nullable */
+  lastLoginAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  auditEntryCount: number;
+}
+
+export interface AdminUserEnvelopeDto {
+  data: AdminUserDetailDto;
+}
+
+export interface SuspendUserDto {
+  /**
+   * @minLength 10
+   * @maxLength 1000
+   */
+  reason: string;
+}
+
+export type ChangeUserRoleDtoNewRole =
+  (typeof ChangeUserRoleDtoNewRole)[keyof typeof ChangeUserRoleDtoNewRole];
+
+export const ChangeUserRoleDtoNewRole = {
+  candidate: "candidate",
+  recruiter: "recruiter",
+  admin: "admin",
+} as const;
+
+export interface ChangeUserRoleDto {
+  newRole: ChangeUserRoleDtoNewRole;
+}
+
+export interface ForcePasswordResetDataDto {
+  resetUrl: string;
+  expiresAt: string;
+  emailSent: boolean;
+}
+
+export interface ForcePasswordResetResponseDto {
+  data: ForcePasswordResetDataDto;
+}
+
+export interface AdminJobRecruiterDto {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+export interface AdminJobCompanyDto {
+  id: string;
+  name: string;
+}
+
+export type AdminJobDtoStatus =
+  (typeof AdminJobDtoStatus)[keyof typeof AdminJobDtoStatus];
+
+export const AdminJobDtoStatus = {
+  draft: "draft",
+  published: "published",
+  archived: "archived",
+  closed: "closed",
+} as const;
+
+export interface AdminJobDto {
+  id: string;
+  title: string;
+  /** @nullable */
+  department?: string | null;
+  status: AdminJobDtoStatus;
+  employmentType: string;
+  workMode: string;
+  experienceLevel: string;
+  /** @nullable */
+  publishedAt?: string | null;
+  createdAt: string;
+  recruiter: AdminJobRecruiterDto;
+  company: AdminJobCompanyDto;
+  biasFlagsCount: number;
+  applicationsCount: number;
+}
+
+export interface AdminJobListMetaDto {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface AdminJobListEnvelopeDto {
+  data: AdminJobDto[];
+  meta: AdminJobListMetaDto;
+}
+
+export type AdminJobBiasFlagDtoStatus =
+  (typeof AdminJobBiasFlagDtoStatus)[keyof typeof AdminJobBiasFlagDtoStatus];
+
+export const AdminJobBiasFlagDtoStatus = {
+  flagged: "flagged",
+  overridden: "overridden",
+  resolved: "resolved",
+} as const;
+
+export interface AdminJobBiasFlagDto {
+  id: string;
+  term: string;
+  category: string;
+  /** @nullable */
+  severity?: string | null;
+  status: AdminJobBiasFlagDtoStatus;
+  /** @nullable */
+  overrideReason?: string | null;
+  /** @nullable */
+  overriddenAt?: string | null;
+  createdAt: string;
+}
+
+export type AdminJobDetailDtoStatus =
+  (typeof AdminJobDetailDtoStatus)[keyof typeof AdminJobDetailDtoStatus];
+
+export const AdminJobDetailDtoStatus = {
+  draft: "draft",
+  published: "published",
+  archived: "archived",
+  closed: "closed",
+} as const;
+
+export interface AdminJobDetailDto {
+  id: string;
+  title: string;
+  /** @nullable */
+  department?: string | null;
+  status: AdminJobDetailDtoStatus;
+  employmentType: string;
+  workMode: string;
+  experienceLevel: string;
+  /** @nullable */
+  publishedAt?: string | null;
+  createdAt: string;
+  recruiter: AdminJobRecruiterDto;
+  company: AdminJobCompanyDto;
+  biasFlagsCount: number;
+  applicationsCount: number;
+  description: string;
+  descriptionPlain: string;
+  requiredSkills: string[];
+  biasFlags: AdminJobBiasFlagDto[];
+}
+
+export interface AdminJobEnvelopeDto {
+  data: AdminJobDetailDto;
+}
+
 export interface SignupCandidateDto {
   /**
    * @minLength 2
@@ -1526,6 +1812,73 @@ export const JobsControllerListForCandidateV1Status = {
 export type ResumesControllerUploadV1Body = {
   file?: Blob;
 };
+
+export type AdminUsersControllerListV1Params = {
+  role?: AdminUsersControllerListV1Role;
+  status?: AdminUsersControllerListV1Status;
+  /**
+   * @maxLength 200
+   */
+  q?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+};
+
+export type AdminUsersControllerListV1Role =
+  (typeof AdminUsersControllerListV1Role)[keyof typeof AdminUsersControllerListV1Role];
+
+export const AdminUsersControllerListV1Role = {
+  candidate: "candidate",
+  recruiter: "recruiter",
+  admin: "admin",
+} as const;
+
+export type AdminUsersControllerListV1Status =
+  (typeof AdminUsersControllerListV1Status)[keyof typeof AdminUsersControllerListV1Status];
+
+export const AdminUsersControllerListV1Status = {
+  active: "active",
+  suspended: "suspended",
+  deleted: "deleted",
+} as const;
+
+export type AdminJobsControllerListV1Params = {
+  status?: AdminJobsControllerListV1Status;
+  recruiterId?: string;
+  hasBiasFlags?: boolean;
+  /**
+   * @maxLength 200
+   */
+  q?: string;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+};
+
+export type AdminJobsControllerListV1Status =
+  (typeof AdminJobsControllerListV1Status)[keyof typeof AdminJobsControllerListV1Status];
+
+export const AdminJobsControllerListV1Status = {
+  draft: "draft",
+  published: "published",
+  archived: "archived",
+  closed: "closed",
+} as const;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -7336,44 +7689,47 @@ export function useApplicationsControllerResumeDownloadV1<
 }
 
 /**
- * @summary Service health check
+ * @summary Command Center KPIs in one fetch (cached 60s)
  */
-export type healthControllerCheckResponse200 = {
-  data: void;
+export type adminStatsControllerOverviewV1Response200 = {
+  data: AdminStatsOverviewEnvelopeDto;
   status: 200;
 };
 
-export type healthControllerCheckResponseSuccess =
-  healthControllerCheckResponse200 & {
+export type adminStatsControllerOverviewV1ResponseSuccess =
+  adminStatsControllerOverviewV1Response200 & {
     headers: Headers;
   };
-export type healthControllerCheckResponse =
-  healthControllerCheckResponseSuccess;
+export type adminStatsControllerOverviewV1Response =
+  adminStatsControllerOverviewV1ResponseSuccess;
 
-export const getHealthControllerCheckUrl = () => {
-  return `/api/health`;
+export const getAdminStatsControllerOverviewV1Url = () => {
+  return `/api/v1/admin/stats/overview`;
 };
 
-export const healthControllerCheck = async (
+export const adminStatsControllerOverviewV1 = async (
   options?: RequestInit,
-): Promise<healthControllerCheckResponse> => {
-  return fetcher<healthControllerCheckResponse>(getHealthControllerCheckUrl(), {
-    ...options,
-    method: "GET",
-  });
+): Promise<adminStatsControllerOverviewV1Response> => {
+  return fetcher<adminStatsControllerOverviewV1Response>(
+    getAdminStatsControllerOverviewV1Url(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
-export const getHealthControllerCheckQueryKey = () => {
-  return [`/api/health`] as const;
+export const getAdminStatsControllerOverviewV1QueryKey = () => {
+  return [`/api/v1/admin/stats/overview`] as const;
 };
 
-export const getHealthControllerCheckQueryOptions = <
-  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+export const getAdminStatsControllerOverviewV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
   TError = unknown,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
-      Awaited<ReturnType<typeof healthControllerCheck>>,
+      Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
       TError,
       TData
     >
@@ -7382,11 +7738,13 @@ export const getHealthControllerCheckQueryOptions = <
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getHealthControllerCheckQueryKey();
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminStatsControllerOverviewV1QueryKey();
 
   const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof healthControllerCheck>>
-  > = ({ signal }) => healthControllerCheck({ signal, ...requestOptions });
+    Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>
+  > = ({ signal }) =>
+    adminStatsControllerOverviewV1({ signal, ...requestOptions });
 
   return {
     queryKey,
@@ -7394,34 +7752,34 @@ export const getHealthControllerCheckQueryOptions = <
     staleTime: 300000,
     ...queryOptions,
   } as UseQueryOptions<
-    Awaited<ReturnType<typeof healthControllerCheck>>,
+    Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type HealthControllerCheckQueryResult = NonNullable<
-  Awaited<ReturnType<typeof healthControllerCheck>>
+export type AdminStatsControllerOverviewV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>
 >;
-export type HealthControllerCheckQueryError = unknown;
+export type AdminStatsControllerOverviewV1QueryError = unknown;
 
-export function useHealthControllerCheck<
-  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+export function useAdminStatsControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
   TError = unknown,
 >(
   options: {
     query: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof healthControllerCheck>>,
+        Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
         TError,
         TData
       >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof healthControllerCheck>>,
+          Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
           TError,
-          Awaited<ReturnType<typeof healthControllerCheck>>
+          Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>
         >,
         "initialData"
       >;
@@ -7431,23 +7789,23 @@ export function useHealthControllerCheck<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useHealthControllerCheck<
-  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+export function useAdminStatsControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
   TError = unknown,
 >(
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof healthControllerCheck>>,
+        Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
         TError,
         TData
       >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof healthControllerCheck>>,
+          Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
           TError,
-          Awaited<ReturnType<typeof healthControllerCheck>>
+          Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>
         >,
         "initialData"
       >;
@@ -7457,14 +7815,14 @@ export function useHealthControllerCheck<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useHealthControllerCheck<
-  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+export function useAdminStatsControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
   TError = unknown,
 >(
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof healthControllerCheck>>,
+        Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
         TError,
         TData
       >
@@ -7476,17 +7834,17 @@ export function useHealthControllerCheck<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary Service health check
+ * @summary Command Center KPIs in one fetch (cached 60s)
  */
 
-export function useHealthControllerCheck<
-  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+export function useAdminStatsControllerOverviewV1<
+  TData = Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
   TError = unknown,
 >(
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof healthControllerCheck>>,
+        Awaited<ReturnType<typeof adminStatsControllerOverviewV1>>,
         TError,
         TData
       >
@@ -7497,7 +7855,7 @@ export function useHealthControllerCheck<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getHealthControllerCheckQueryOptions(options);
+  const queryOptions = getAdminStatsControllerOverviewV1QueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -7506,6 +7864,1459 @@ export function useHealthControllerCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List/filter all users
+ */
+export type adminUsersControllerListV1Response200 = {
+  data: AdminUserListEnvelopeDto;
+  status: 200;
+};
+
+export type adminUsersControllerListV1ResponseSuccess =
+  adminUsersControllerListV1Response200 & {
+    headers: Headers;
+  };
+export type adminUsersControllerListV1Response =
+  adminUsersControllerListV1ResponseSuccess;
+
+export const getAdminUsersControllerListV1Url = (
+  params?: AdminUsersControllerListV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/users?${stringifiedParams}`
+    : `/api/v1/admin/users`;
+};
+
+export const adminUsersControllerListV1 = async (
+  params?: AdminUsersControllerListV1Params,
+  options?: RequestInit,
+): Promise<adminUsersControllerListV1Response> => {
+  return fetcher<adminUsersControllerListV1Response>(
+    getAdminUsersControllerListV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminUsersControllerListV1QueryKey = (
+  params?: AdminUsersControllerListV1Params,
+) => {
+  return [`/api/v1/admin/users`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminUsersControllerListV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminUsersControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminUsersControllerListV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminUsersControllerListV1>>
+  > = ({ signal }) =>
+    adminUsersControllerListV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminUsersControllerListV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminUsersControllerListV1>>
+>;
+export type AdminUsersControllerListV1QueryError = unknown;
+
+export function useAdminUsersControllerListV1<
+  TData = Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+  TError = unknown,
+>(
+  params: undefined | AdminUsersControllerListV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminUsersControllerListV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminUsersControllerListV1<
+  TData = Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminUsersControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminUsersControllerListV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminUsersControllerListV1<
+  TData = Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminUsersControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List/filter all users
+ */
+
+export function useAdminUsersControllerListV1<
+  TData = Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminUsersControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminUsersControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminUsersControllerListV1QueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get user detail (incl. audit count)
+ */
+export type adminUsersControllerGetByIdV1Response200 = {
+  data: AdminUserEnvelopeDto;
+  status: 200;
+};
+
+export type adminUsersControllerGetByIdV1ResponseSuccess =
+  adminUsersControllerGetByIdV1Response200 & {
+    headers: Headers;
+  };
+export type adminUsersControllerGetByIdV1Response =
+  adminUsersControllerGetByIdV1ResponseSuccess;
+
+export const getAdminUsersControllerGetByIdV1Url = (id: string) => {
+  return `/api/v1/admin/users/${id}`;
+};
+
+export const adminUsersControllerGetByIdV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<adminUsersControllerGetByIdV1Response> => {
+  return fetcher<adminUsersControllerGetByIdV1Response>(
+    getAdminUsersControllerGetByIdV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminUsersControllerGetByIdV1QueryKey = (id: string) => {
+  return [`/api/v1/admin/users/${id}`] as const;
+};
+
+export const getAdminUsersControllerGetByIdV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminUsersControllerGetByIdV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>
+  > = ({ signal }) =>
+    adminUsersControllerGetByIdV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminUsersControllerGetByIdV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>
+>;
+export type AdminUsersControllerGetByIdV1QueryError = unknown;
+
+export function useAdminUsersControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminUsersControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminUsersControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get user detail (incl. audit count)
+ */
+
+export function useAdminUsersControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminUsersControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminUsersControllerGetByIdV1QueryOptions(
+    id,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Hard-delete a user (soft-delete profile + delete auth.users row)
+ */
+export type adminUsersControllerDeleteV1Response200 = {
+  data: AdminUserEnvelopeDto;
+  status: 200;
+};
+
+export type adminUsersControllerDeleteV1Response403 = {
+  data: void;
+  status: 403;
+};
+
+export type adminUsersControllerDeleteV1ResponseSuccess =
+  adminUsersControllerDeleteV1Response200 & {
+    headers: Headers;
+  };
+export type adminUsersControllerDeleteV1ResponseError =
+  adminUsersControllerDeleteV1Response403 & {
+    headers: Headers;
+  };
+
+export type adminUsersControllerDeleteV1Response =
+  | adminUsersControllerDeleteV1ResponseSuccess
+  | adminUsersControllerDeleteV1ResponseError;
+
+export const getAdminUsersControllerDeleteV1Url = (id: string) => {
+  return `/api/v1/admin/users/${id}`;
+};
+
+export const adminUsersControllerDeleteV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<adminUsersControllerDeleteV1Response> => {
+  return fetcher<adminUsersControllerDeleteV1Response>(
+    getAdminUsersControllerDeleteV1Url(id),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getAdminUsersControllerDeleteV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUsersControllerDeleteV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUsersControllerDeleteV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["adminUsersControllerDeleteV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUsersControllerDeleteV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminUsersControllerDeleteV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUsersControllerDeleteV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminUsersControllerDeleteV1>>
+>;
+
+export type AdminUsersControllerDeleteV1MutationError = void;
+
+/**
+ * @summary Hard-delete a user (soft-delete profile + delete auth.users row)
+ */
+export const useAdminUsersControllerDeleteV1 = <
+  TError = void,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminUsersControllerDeleteV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminUsersControllerDeleteV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getAdminUsersControllerDeleteV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Suspend a user (status='suspended'); reason required ≥10 chars
+ */
+export type adminUsersControllerSuspendV1Response200 = {
+  data: AdminUserEnvelopeDto;
+  status: 200;
+};
+
+export type adminUsersControllerSuspendV1Response403 = {
+  data: void;
+  status: 403;
+};
+
+export type adminUsersControllerSuspendV1ResponseSuccess =
+  adminUsersControllerSuspendV1Response200 & {
+    headers: Headers;
+  };
+export type adminUsersControllerSuspendV1ResponseError =
+  adminUsersControllerSuspendV1Response403 & {
+    headers: Headers;
+  };
+
+export type adminUsersControllerSuspendV1Response =
+  | adminUsersControllerSuspendV1ResponseSuccess
+  | adminUsersControllerSuspendV1ResponseError;
+
+export const getAdminUsersControllerSuspendV1Url = (id: string) => {
+  return `/api/v1/admin/users/${id}/suspend`;
+};
+
+export const adminUsersControllerSuspendV1 = async (
+  id: string,
+  suspendUserDto: SuspendUserDto,
+  options?: RequestInit,
+): Promise<adminUsersControllerSuspendV1Response> => {
+  return fetcher<adminUsersControllerSuspendV1Response>(
+    getAdminUsersControllerSuspendV1Url(id),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(suspendUserDto),
+    },
+  );
+};
+
+export const getAdminUsersControllerSuspendV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUsersControllerSuspendV1>>,
+    TError,
+    { id: string; data: SuspendUserDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUsersControllerSuspendV1>>,
+  TError,
+  { id: string; data: SuspendUserDto },
+  TContext
+> => {
+  const mutationKey = ["adminUsersControllerSuspendV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUsersControllerSuspendV1>>,
+    { id: string; data: SuspendUserDto }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminUsersControllerSuspendV1(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUsersControllerSuspendV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminUsersControllerSuspendV1>>
+>;
+export type AdminUsersControllerSuspendV1MutationBody = SuspendUserDto;
+export type AdminUsersControllerSuspendV1MutationError = void;
+
+/**
+ * @summary Suspend a user (status='suspended'); reason required ≥10 chars
+ */
+export const useAdminUsersControllerSuspendV1 = <
+  TError = void,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminUsersControllerSuspendV1>>,
+      TError,
+      { id: string; data: SuspendUserDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminUsersControllerSuspendV1>>,
+  TError,
+  { id: string; data: SuspendUserDto },
+  TContext
+> => {
+  return useMutation(
+    getAdminUsersControllerSuspendV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Reactivate a suspended user
+ */
+export type adminUsersControllerReactivateV1Response200 = {
+  data: AdminUserEnvelopeDto;
+  status: 200;
+};
+
+export type adminUsersControllerReactivateV1ResponseSuccess =
+  adminUsersControllerReactivateV1Response200 & {
+    headers: Headers;
+  };
+export type adminUsersControllerReactivateV1Response =
+  adminUsersControllerReactivateV1ResponseSuccess;
+
+export const getAdminUsersControllerReactivateV1Url = (id: string) => {
+  return `/api/v1/admin/users/${id}/reactivate`;
+};
+
+export const adminUsersControllerReactivateV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<adminUsersControllerReactivateV1Response> => {
+  return fetcher<adminUsersControllerReactivateV1Response>(
+    getAdminUsersControllerReactivateV1Url(id),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getAdminUsersControllerReactivateV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUsersControllerReactivateV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUsersControllerReactivateV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["adminUsersControllerReactivateV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUsersControllerReactivateV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminUsersControllerReactivateV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUsersControllerReactivateV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminUsersControllerReactivateV1>>
+>;
+
+export type AdminUsersControllerReactivateV1MutationError = unknown;
+
+/**
+ * @summary Reactivate a suspended user
+ */
+export const useAdminUsersControllerReactivateV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminUsersControllerReactivateV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminUsersControllerReactivateV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getAdminUsersControllerReactivateV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Change a user's role
+ */
+export type adminUsersControllerChangeRoleV1Response200 = {
+  data: AdminUserEnvelopeDto;
+  status: 200;
+};
+
+export type adminUsersControllerChangeRoleV1Response403 = {
+  data: void;
+  status: 403;
+};
+
+export type adminUsersControllerChangeRoleV1ResponseSuccess =
+  adminUsersControllerChangeRoleV1Response200 & {
+    headers: Headers;
+  };
+export type adminUsersControllerChangeRoleV1ResponseError =
+  adminUsersControllerChangeRoleV1Response403 & {
+    headers: Headers;
+  };
+
+export type adminUsersControllerChangeRoleV1Response =
+  | adminUsersControllerChangeRoleV1ResponseSuccess
+  | adminUsersControllerChangeRoleV1ResponseError;
+
+export const getAdminUsersControllerChangeRoleV1Url = (id: string) => {
+  return `/api/v1/admin/users/${id}/role`;
+};
+
+export const adminUsersControllerChangeRoleV1 = async (
+  id: string,
+  changeUserRoleDto: ChangeUserRoleDto,
+  options?: RequestInit,
+): Promise<adminUsersControllerChangeRoleV1Response> => {
+  return fetcher<adminUsersControllerChangeRoleV1Response>(
+    getAdminUsersControllerChangeRoleV1Url(id),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(changeUserRoleDto),
+    },
+  );
+};
+
+export const getAdminUsersControllerChangeRoleV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUsersControllerChangeRoleV1>>,
+    TError,
+    { id: string; data: ChangeUserRoleDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUsersControllerChangeRoleV1>>,
+  TError,
+  { id: string; data: ChangeUserRoleDto },
+  TContext
+> => {
+  const mutationKey = ["adminUsersControllerChangeRoleV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUsersControllerChangeRoleV1>>,
+    { id: string; data: ChangeUserRoleDto }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminUsersControllerChangeRoleV1(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUsersControllerChangeRoleV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminUsersControllerChangeRoleV1>>
+>;
+export type AdminUsersControllerChangeRoleV1MutationBody = ChangeUserRoleDto;
+export type AdminUsersControllerChangeRoleV1MutationError = void;
+
+/**
+ * @summary Change a user's role
+ */
+export const useAdminUsersControllerChangeRoleV1 = <
+  TError = void,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminUsersControllerChangeRoleV1>>,
+      TError,
+      { id: string; data: ChangeUserRoleDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminUsersControllerChangeRoleV1>>,
+  TError,
+  { id: string; data: ChangeUserRoleDto },
+  TContext
+> => {
+  return useMutation(
+    getAdminUsersControllerChangeRoleV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Issue a password-reset token (and email it) on behalf of a user
+ */
+export type adminUsersControllerForcePasswordResetV1Response200 = {
+  data: ForcePasswordResetResponseDto;
+  status: 200;
+};
+
+export type adminUsersControllerForcePasswordResetV1ResponseSuccess =
+  adminUsersControllerForcePasswordResetV1Response200 & {
+    headers: Headers;
+  };
+export type adminUsersControllerForcePasswordResetV1Response =
+  adminUsersControllerForcePasswordResetV1ResponseSuccess;
+
+export const getAdminUsersControllerForcePasswordResetV1Url = (id: string) => {
+  return `/api/v1/admin/users/${id}/force-password-reset`;
+};
+
+export const adminUsersControllerForcePasswordResetV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<adminUsersControllerForcePasswordResetV1Response> => {
+  return fetcher<adminUsersControllerForcePasswordResetV1Response>(
+    getAdminUsersControllerForcePasswordResetV1Url(id),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getAdminUsersControllerForcePasswordResetV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUsersControllerForcePasswordResetV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUsersControllerForcePasswordResetV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["adminUsersControllerForcePasswordResetV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUsersControllerForcePasswordResetV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminUsersControllerForcePasswordResetV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUsersControllerForcePasswordResetV1MutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof adminUsersControllerForcePasswordResetV1>>
+  >;
+
+export type AdminUsersControllerForcePasswordResetV1MutationError = unknown;
+
+/**
+ * @summary Issue a password-reset token (and email it) on behalf of a user
+ */
+export const useAdminUsersControllerForcePasswordResetV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminUsersControllerForcePasswordResetV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminUsersControllerForcePasswordResetV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getAdminUsersControllerForcePasswordResetV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary List/filter all jobs across the system
+ */
+export type adminJobsControllerListV1Response200 = {
+  data: AdminJobListEnvelopeDto;
+  status: 200;
+};
+
+export type adminJobsControllerListV1ResponseSuccess =
+  adminJobsControllerListV1Response200 & {
+    headers: Headers;
+  };
+export type adminJobsControllerListV1Response =
+  adminJobsControllerListV1ResponseSuccess;
+
+export const getAdminJobsControllerListV1Url = (
+  params?: AdminJobsControllerListV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/jobs?${stringifiedParams}`
+    : `/api/v1/admin/jobs`;
+};
+
+export const adminJobsControllerListV1 = async (
+  params?: AdminJobsControllerListV1Params,
+  options?: RequestInit,
+): Promise<adminJobsControllerListV1Response> => {
+  return fetcher<adminJobsControllerListV1Response>(
+    getAdminJobsControllerListV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminJobsControllerListV1QueryKey = (
+  params?: AdminJobsControllerListV1Params,
+) => {
+  return [`/api/v1/admin/jobs`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminJobsControllerListV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminJobsControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminJobsControllerListV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminJobsControllerListV1>>
+  > = ({ signal }) =>
+    adminJobsControllerListV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminJobsControllerListV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminJobsControllerListV1>>
+>;
+export type AdminJobsControllerListV1QueryError = unknown;
+
+export function useAdminJobsControllerListV1<
+  TData = Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+  TError = unknown,
+>(
+  params: undefined | AdminJobsControllerListV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminJobsControllerListV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminJobsControllerListV1<
+  TData = Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminJobsControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminJobsControllerListV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminJobsControllerListV1<
+  TData = Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminJobsControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List/filter all jobs across the system
+ */
+
+export function useAdminJobsControllerListV1<
+  TData = Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+  TError = unknown,
+>(
+  params?: AdminJobsControllerListV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminJobsControllerListV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminJobsControllerListV1QueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Admin view of a job (any status, any recruiter)
+ */
+export type adminJobsControllerGetByIdV1Response200 = {
+  data: AdminJobEnvelopeDto;
+  status: 200;
+};
+
+export type adminJobsControllerGetByIdV1ResponseSuccess =
+  adminJobsControllerGetByIdV1Response200 & {
+    headers: Headers;
+  };
+export type adminJobsControllerGetByIdV1Response =
+  adminJobsControllerGetByIdV1ResponseSuccess;
+
+export const getAdminJobsControllerGetByIdV1Url = (id: string) => {
+  return `/api/v1/admin/jobs/${id}`;
+};
+
+export const adminJobsControllerGetByIdV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<adminJobsControllerGetByIdV1Response> => {
+  return fetcher<adminJobsControllerGetByIdV1Response>(
+    getAdminJobsControllerGetByIdV1Url(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminJobsControllerGetByIdV1QueryKey = (id: string) => {
+  return [`/api/v1/admin/jobs/${id}`] as const;
+};
+
+export const getAdminJobsControllerGetByIdV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminJobsControllerGetByIdV1QueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>
+  > = ({ signal }) =>
+    adminJobsControllerGetByIdV1(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminJobsControllerGetByIdV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>
+>;
+export type AdminJobsControllerGetByIdV1QueryError = unknown;
+
+export function useAdminJobsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminJobsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminJobsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Admin view of a job (any status, any recruiter)
+ */
+
+export function useAdminJobsControllerGetByIdV1<
+  TData = Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminJobsControllerGetByIdV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminJobsControllerGetByIdV1QueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Archive a job (admin bypasses ownership)
+ */
+export type adminJobsControllerArchiveV1Response200 = {
+  data: AdminJobEnvelopeDto;
+  status: 200;
+};
+
+export type adminJobsControllerArchiveV1ResponseSuccess =
+  adminJobsControllerArchiveV1Response200 & {
+    headers: Headers;
+  };
+export type adminJobsControllerArchiveV1Response =
+  adminJobsControllerArchiveV1ResponseSuccess;
+
+export const getAdminJobsControllerArchiveV1Url = (id: string) => {
+  return `/api/v1/admin/jobs/${id}/archive`;
+};
+
+export const adminJobsControllerArchiveV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<adminJobsControllerArchiveV1Response> => {
+  return fetcher<adminJobsControllerArchiveV1Response>(
+    getAdminJobsControllerArchiveV1Url(id),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getAdminJobsControllerArchiveV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminJobsControllerArchiveV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminJobsControllerArchiveV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["adminJobsControllerArchiveV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminJobsControllerArchiveV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminJobsControllerArchiveV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminJobsControllerArchiveV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminJobsControllerArchiveV1>>
+>;
+
+export type AdminJobsControllerArchiveV1MutationError = unknown;
+
+/**
+ * @summary Archive a job (admin bypasses ownership)
+ */
+export const useAdminJobsControllerArchiveV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminJobsControllerArchiveV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminJobsControllerArchiveV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getAdminJobsControllerArchiveV1MutationOptions(options),
+    queryClient,
+  );
+};
 
 /**
  * Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.
@@ -8197,3 +10008,175 @@ export const useAuthControllerResetPasswordV1 = <
     queryClient,
   );
 };
+
+/**
+ * @summary Service health check
+ */
+export type healthControllerCheckResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type healthControllerCheckResponseSuccess =
+  healthControllerCheckResponse200 & {
+    headers: Headers;
+  };
+export type healthControllerCheckResponse =
+  healthControllerCheckResponseSuccess;
+
+export const getHealthControllerCheckUrl = () => {
+  return `/api/health`;
+};
+
+export const healthControllerCheck = async (
+  options?: RequestInit,
+): Promise<healthControllerCheckResponse> => {
+  return fetcher<healthControllerCheckResponse>(getHealthControllerCheckUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getHealthControllerCheckQueryKey = () => {
+  return [`/api/health`] as const;
+};
+
+export const getHealthControllerCheckQueryOptions = <
+  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof healthControllerCheck>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getHealthControllerCheckQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof healthControllerCheck>>
+  > = ({ signal }) => healthControllerCheck({ signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof healthControllerCheck>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type HealthControllerCheckQueryResult = NonNullable<
+  Awaited<ReturnType<typeof healthControllerCheck>>
+>;
+export type HealthControllerCheckQueryError = unknown;
+
+export function useHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof healthControllerCheck>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof healthControllerCheck>>,
+          TError,
+          Awaited<ReturnType<typeof healthControllerCheck>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof healthControllerCheck>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof healthControllerCheck>>,
+          TError,
+          Awaited<ReturnType<typeof healthControllerCheck>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof healthControllerCheck>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Service health check
+ */
+
+export function useHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof healthControllerCheck>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof healthControllerCheck>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getHealthControllerCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
