@@ -1,6 +1,41 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/admin/cron/run/{cronName}": {
+      "post": {
+        "operationId": "CronAdminController_run_v1",
+        "parameters": [
+          {
+            "name": "cronName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "403": {
+            "description": "Disabled in production"
+          },
+          "404": {
+            "description": "Unknown cron name"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified.",
+        "tags": [
+          "admin-cron-debug"
+        ]
+      }
+    },
     "/api/v1/profiles/me": {
       "get": {
         "operationId": "ProfilesController_getMe_v1",
@@ -1140,7 +1175,7 @@
     },
     "/api/v1/scoring/profile/compute": {
       "post": {
-        "description": "Triggers a fresh AI scoring run. Rate-limited to 1 per 60 seconds via manual check on profile_scores.created_at (no Throttler module registered yet). Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
+        "description": "Triggers a fresh AI scoring run. Rate-limited at TWO layers: ThrottlerGuard (1/60s per IP) + a per-user manual check on profile_scores.created_at (1/60s per user). Both layers are intentional — defense in depth. Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
         "operationId": "ScoringController_computeProfileScore_v1",
         "parameters": [],
         "responses": {

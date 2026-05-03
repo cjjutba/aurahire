@@ -38,6 +38,13 @@ export const AUDIT_ACTIONS = {
   SCORING_CONFIG_UPDATED: "scoring_config.updated",
   SCORE_MATCH_RECOMPUTED: "score.match.recomputed",
   QUEUE_RESCORE_BATCH_ENQUEUED: "queue.rescore_batch.enqueued",
+  // Cron-driven housekeeping
+  OFFER_EXPIRED: "offer.expired",
+  JOB_ARCHIVED_BY_CRON: "job.archived_by_cron",
+  USER_DELETED_UNVERIFIED_CLEANUP: "user.deleted_unverified_cleanup",
+  CRON_EXPIRE_OFFERS_EXECUTED: "cron.expire_offers.executed",
+  CRON_ARCHIVE_PAST_DEADLINE_JOBS_EXECUTED: "cron.archive_past_deadline_jobs.executed",
+  CRON_CLEANUP_UNVERIFIED_ACCOUNTS_EXECUTED: "cron.cleanup_unverified_accounts.executed",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS] | string;

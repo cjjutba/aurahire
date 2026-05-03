@@ -12,6 +12,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
 import type { FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
@@ -29,11 +30,12 @@ export class ScoringController {
 
   @Post("profile/compute")
   @Roles("candidate")
+  @Throttle({ profileCompute: { limit: 1, ttl: 60_000 } })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: "Compute the candidate's Profile Score from default resume + preferences",
     description:
-      "Triggers a fresh AI scoring run. Rate-limited to 1 per 60 seconds via manual check on profile_scores.created_at (no Throttler module registered yet). Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
+      "Triggers a fresh AI scoring run. Rate-limited at TWO layers: ThrottlerGuard (1/60s per IP) + a per-user manual check on profile_scores.created_at (1/60s per user). Both layers are intentional — defense in depth. Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
   })
   @ApiResponse({ status: 201, description: "Score computed", type: ProfileScoreEnvelopeDto })
   @ApiResponse({ status: 400, description: "Missing prerequisite (resume, parse, or preferences)" })

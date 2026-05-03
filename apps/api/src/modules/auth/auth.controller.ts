@@ -1,5 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Req } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
 import type { FastifyRequest } from "fastify";
 
 import { Public } from "../../common/decorators/public.decorator";
@@ -19,6 +20,7 @@ export class AuthController {
 
   @Post("signup-candidate")
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({
     summary: "Sign up a candidate (creates Supabase user, sends verification email)",
@@ -36,6 +38,7 @@ export class AuthController {
 
   @Post("signup-recruiter")
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({
     summary: "Sign up a recruiter (creates Supabase user, sends verification email)",
@@ -51,6 +54,7 @@ export class AuthController {
 
   @Post("verify-email")
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Verify an email-verification token",
@@ -68,6 +72,7 @@ export class AuthController {
 
   @Post("resend-verification")
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Resend the verification email",
@@ -83,6 +88,7 @@ export class AuthController {
 
   @Post("forgot-password")
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Request a password reset email",
@@ -98,6 +104,7 @@ export class AuthController {
 
   @Post("reset-password")
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Consume a password-reset token and set a new password" })
   @ApiResponse({ status: 200, type: AuthMessageDto })

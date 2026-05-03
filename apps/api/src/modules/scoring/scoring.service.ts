@@ -74,7 +74,10 @@ export class ScoringService {
       });
     }
 
-    // Manual rate-limit (1/60s/user) — Throttler module deferred to slice 3.7
+    // Defense in depth: this manual check enforces 1/60s PER USER. The
+    // ThrottlerGuard on ScoringController.computeProfile enforces 1/60s PER IP.
+    // Both layers are valuable — a determined attacker rotating IPs would
+    // bypass Throttler but not this user-keyed check.
     const lastScore = await this.scoringRepo.findMostRecentProfileScore(user.id);
     if (lastScore) {
       const elapsedMs = Date.now() - lastScore.createdAt.getTime();

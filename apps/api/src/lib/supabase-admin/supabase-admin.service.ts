@@ -81,6 +81,34 @@ export class SupabaseAdminService {
     };
   }
 
+  /**
+   * List Supabase auth users whose email has not been confirmed and whose
+   * `created_at` is older than `daysOld` days. Used by the
+   * `cleanup-unverified-accounts` cron. Single-page lookup (200 users) handles
+   * sprint volume; for production scale this would need pagination.
+   */
+  async listUnconfirmedOlderThan(
+    daysOld: number,
+  ): Promise<Array<{ id: string; email: string; createdAt: string }>> {
+    const { data, error } = await this.client.auth.admin.listUsers({
+      page: 1,
+      perPage: 200,
+    });
+    if (error) throw error;
+    const cutoff = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000);
+    return data.users
+      .filter(
+        (u) =>
+          (u.email_confirmed_at == null) &&
+          new Date(u.created_at) < cutoff,
+      )
+      .map((u) => ({
+        id: u.id,
+        email: u.email ?? "",
+        createdAt: u.created_at,
+      }));
+  }
+
   /** Delete a Supabase auth user. Used to roll back partial signups. */
   async deleteUser(userId: string): Promise<void> {
     const { error } = await this.client.auth.admin.deleteUser(userId);

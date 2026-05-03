@@ -2824,6 +2824,126 @@ export type AdminBiasMonitorControllerOverviewV1Params = {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
+ * @summary DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified.
+ */
+export type cronAdminControllerRunV1Response200 = {
+  data: void;
+  status: 200;
+};
+
+export type cronAdminControllerRunV1Response403 = {
+  data: void;
+  status: 403;
+};
+
+export type cronAdminControllerRunV1Response404 = {
+  data: void;
+  status: 404;
+};
+
+export type cronAdminControllerRunV1ResponseSuccess =
+  cronAdminControllerRunV1Response200 & {
+    headers: Headers;
+  };
+export type cronAdminControllerRunV1ResponseError = (
+  | cronAdminControllerRunV1Response403
+  | cronAdminControllerRunV1Response404
+) & {
+  headers: Headers;
+};
+
+export type cronAdminControllerRunV1Response =
+  | cronAdminControllerRunV1ResponseSuccess
+  | cronAdminControllerRunV1ResponseError;
+
+export const getCronAdminControllerRunV1Url = (cronName: string) => {
+  return `/api/v1/admin/cron/run/${cronName}`;
+};
+
+export const cronAdminControllerRunV1 = async (
+  cronName: string,
+  options?: RequestInit,
+): Promise<cronAdminControllerRunV1Response> => {
+  return fetcher<cronAdminControllerRunV1Response>(
+    getCronAdminControllerRunV1Url(cronName),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCronAdminControllerRunV1MutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cronAdminControllerRunV1>>,
+    TError,
+    { cronName: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cronAdminControllerRunV1>>,
+  TError,
+  { cronName: string },
+  TContext
+> => {
+  const mutationKey = ["cronAdminControllerRunV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cronAdminControllerRunV1>>,
+    { cronName: string }
+  > = (props) => {
+    const { cronName } = props ?? {};
+
+    return cronAdminControllerRunV1(cronName, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CronAdminControllerRunV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof cronAdminControllerRunV1>>
+>;
+
+export type CronAdminControllerRunV1MutationError = void;
+
+/**
+ * @summary DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified.
+ */
+export const useCronAdminControllerRunV1 = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cronAdminControllerRunV1>>,
+      TError,
+      { cronName: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof cronAdminControllerRunV1>>,
+  TError,
+  { cronName: string },
+  TContext
+> => {
+  return useMutation(
+    getCronAdminControllerRunV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
  * @summary Get the current user's profile + role-specific subprofile
  */
 export type profilesControllerGetMeV1Response200 = {
@@ -6242,7 +6362,7 @@ export const useBiasControllerOverrideV1 = <TError = void, TContext = unknown>(
 };
 
 /**
- * Triggers a fresh AI scoring run. Rate-limited to 1 per 60 seconds via manual check on profile_scores.created_at (no Throttler module registered yet). Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.
+ * Triggers a fresh AI scoring run. Rate-limited at TWO layers: ThrottlerGuard (1/60s per IP) + a per-user manual check on profile_scores.created_at (1/60s per user). Both layers are intentional — defense in depth. Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.
  * @summary Compute the candidate's Profile Score from default resume + preferences
  */
 export type scoringControllerComputeProfileScoreV1Response201 = {

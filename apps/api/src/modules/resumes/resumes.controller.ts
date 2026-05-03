@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
 import type { FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
@@ -48,6 +49,7 @@ export class ResumesController {
 
   @Post("upload")
   @Roles("candidate")
+  @Throttle({ resumeUpload: { limit: 5, ttl: 60 * 60_000 } })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: "Upload a resume PDF/DOCX and parse it via AI" })
   @ApiConsumes("multipart/form-data")

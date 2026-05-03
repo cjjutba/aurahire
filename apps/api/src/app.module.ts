@@ -1,8 +1,13 @@
-import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { Logger, MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { LoggerModule } from "nestjs-pino";
 import { CacheModule } from "@nestjs/cache-manager";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { ThrottlerStorageRedisService } from "nestjs-throttler-storage-redis";
+import Redis from "ioredis";
+import { Keyv } from "keyv";
+import KeyvRedis from "@keyv/redis";
 
 import { DbModule } from "./db";
 import { AuditModule } from "./audit";
@@ -22,14 +27,61 @@ import { ApplicationsModule } from "./modules/applications/applications.module";
 import { BiasModule } from "./modules/bias/bias.module";
 import { AdminModule } from "./modules/admin/admin.module";
 import { QueueModule } from "./queue";
+import { CronModule } from "./cron";
 import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 
 @Module({
   imports: [
-    CacheModule.register({ isGlobal: true, ttl: 60_000 }),
     ConfigModule.forRoot({ isGlobal: true, cache: true }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
+        const url = config.get<string>("REDIS_URL") ?? "redis://localhost:6379";
+        const logger = new Logger("CacheModule");
+        try {
+          // Use @keyv/redis as the cache-manager v7 store adapter. We probe the
+          // connection here so a Redis outage surfaces clearly on boot — the
+          // backend still starts, but cached aggregations fall back to memory.
+          const keyvRedis = new KeyvRedis(url, {
+            throwOnConnectError: true,
+            connectionTimeout: 5000,
+          });
+          const keyv = new Keyv({ store: keyvRedis, namespace: "aurahire" });
+          // Force a connection probe; @keyv/redis lazy-connects otherwise.
+          await keyv.get("__cache_health_probe__");
+          logger.log(`CacheModule: connected to Redis at ${url}`);
+          return { stores: [keyv], ttl: 60_000 };
+        } catch (err) {
+          logger.warn(
+            `CacheModule: Redis unreachable at ${url} (${(err as Error).message}); falling back to in-memory store. Cached aggregations will not survive restarts.`,
+          );
+          return { ttl: 60_000 };
+        }
+      },
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const url = config.get<string>("REDIS_URL") ?? "redis://localhost:6379";
+        return {
+          throttlers: [
+            // Default per-IP global limit — basic abuse protection.
+            { name: "default", limit: 100, ttl: 60_000 },
+            // Named throttlers — referenced by @Throttle({ <name>: { ... } })
+            // decorators on specific endpoints.
+            { name: "auth", limit: 5, ttl: 60_000 },
+            { name: "profileCompute", limit: 1, ttl: 60_000 },
+            { name: "resumeUpload", limit: 5, ttl: 60 * 60_000 },
+          ],
+          storage: new ThrottlerStorageRedisService(new Redis(url)),
+        };
+      },
+    }),
     LoggerModule.forRoot({
       pinoHttp: {
         transport:
@@ -49,6 +101,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     StorageModule,
     SupabaseAdminModule,
     QueueModule,
+    CronModule,
     ProfilesModule,
     RecruiterProfilesModule,
     CandidateProfilesModule,
@@ -62,6 +115,12 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     AuthModule,
   ],
   providers: [
+    // ThrottlerGuard runs FIRST so unauthenticated brute-force (login spam,
+    // upload-storms) is rate-limited before auth even fires.
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: SupabaseAuthGuard,
