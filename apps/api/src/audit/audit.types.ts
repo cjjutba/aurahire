@@ -36,6 +36,8 @@ export const AUDIT_ACTIONS = {
   USER_PASSWORD_RESET_FORCED: "user.password_reset_forced",
   JOB_ARCHIVED_BY_ADMIN: "job.archived_by_admin",
   SCORING_CONFIG_UPDATED: "scoring_config.updated",
+  SCORE_MATCH_RECOMPUTED: "score.match.recomputed",
+  QUEUE_RESCORE_BATCH_ENQUEUED: "queue.rescore_batch.enqueued",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS] | string;

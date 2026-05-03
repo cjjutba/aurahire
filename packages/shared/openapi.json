@@ -2919,6 +2919,79 @@
         ]
       }
     },
+    "/api/v1/admin/queue/rescore-batch": {
+      "post": {
+        "operationId": "AdminQueueController_enqueueRescoreBatch_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnqueueRescoreBatchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnqueueRescoreBatchResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enqueue a rescore-batch background job that recomputes the last N match scores using current weights",
+        "tags": [
+          "admin-queue"
+        ]
+      }
+    },
+    "/api/v1/admin/queue/jobs/{queueJobId}/status": {
+      "get": {
+        "operationId": "AdminQueueController_getJobStatus_v1",
+        "parameters": [
+          {
+            "name": "queueJobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueJobStatusResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Poll the status of a queued background job. Route is /admin/queue/jobs/:queueJobId/status to avoid collision with /admin/jobs/:id (3.1 job moderation).",
+        "tags": [
+          "admin-queue"
+        ]
+      }
+    },
     "/api/v1/auth/signup-candidate": {
       "post": {
         "description": "Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.",
@@ -7396,6 +7469,112 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/BiasMonitorBundleDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EnqueueRescoreBatchDto": {
+        "type": "object",
+        "properties": {
+          "sampleSize": {
+            "type": "integer",
+            "minimum": 1,
+            "exclusiveMinimum": false,
+            "maximum": 500,
+            "exclusiveMaximum": false,
+            "default": 50
+          }
+        }
+      },
+      "EnqueueRescoreBatchResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "RescoreBatchResultDto": {
+        "type": "object",
+        "properties": {
+          "processedCount": {
+            "type": "number"
+          },
+          "skippedCount": {
+            "type": "number"
+          },
+          "failedCount": {
+            "type": "number"
+          },
+          "durationMs": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "processedCount",
+          "skippedCount",
+          "failedCount",
+          "durationMs"
+        ]
+      },
+      "QueueJobStatusDataDto": {
+        "type": "object",
+        "properties": {
+          "queueJobId": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "waiting",
+              "active",
+              "completed",
+              "failed",
+              "delayed",
+              "paused",
+              "unknown"
+            ]
+          },
+          "progress": {
+            "type": "number"
+          },
+          "processedOn": {
+            "type": "string",
+            "nullable": true
+          },
+          "finishedOn": {
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RescoreBatchResultDto"
+              }
+            ]
+          },
+          "failedReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "queueJobId",
+          "state",
+          "progress"
+        ]
+      },
+      "QueueJobStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/QueueJobStatusDataDto"
           }
         },
         "required": [

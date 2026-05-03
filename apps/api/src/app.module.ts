@@ -21,6 +21,7 @@ import { ScoringModule } from "./modules/scoring/scoring.module";
 import { ApplicationsModule } from "./modules/applications/applications.module";
 import { BiasModule } from "./modules/bias/bias.module";
 import { AdminModule } from "./modules/admin/admin.module";
+import { QueueModule } from "./queue";
 import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
@@ -47,6 +48,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     AiModule,
     StorageModule,
     SupabaseAdminModule,
+    QueueModule,
     ProfilesModule,
     RecruiterProfilesModule,
     CandidateProfilesModule,

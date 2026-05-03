@@ -229,3 +229,10 @@ export const biasMonitorQuerySchema = z
     { message: "dateFrom must be ≤ dateTo", path: ["dateFrom"] },
   );
 export type BiasMonitorQuery = z.infer<typeof biasMonitorQuerySchema>;
+
+// ---------- ENQUEUE RESCORE BATCH ----------
+
+export const enqueueRescoreBatchSchema = z.object({
+  sampleSize: z.coerce.number().int().min(1).max(500).default(50),
+});
+export type EnqueueRescoreBatchInput = z.infer<typeof enqueueRescoreBatchSchema>;

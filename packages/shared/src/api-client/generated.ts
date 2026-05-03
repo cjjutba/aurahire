@@ -2245,6 +2245,57 @@ export interface BiasMonitorBundleEnvelopeDto {
   data: BiasMonitorBundleDto;
 }
 
+export interface EnqueueRescoreBatchDto {
+  /**
+   * @minimum 1
+   * @maximum 500
+   */
+  sampleSize?: number;
+}
+
+export type EnqueueRescoreBatchResponseDtoData = { [key: string]: unknown };
+
+export interface EnqueueRescoreBatchResponseDto {
+  data: EnqueueRescoreBatchResponseDtoData;
+}
+
+export interface RescoreBatchResultDto {
+  processedCount: number;
+  skippedCount: number;
+  failedCount: number;
+  durationMs: number;
+}
+
+export type QueueJobStatusDataDtoState =
+  (typeof QueueJobStatusDataDtoState)[keyof typeof QueueJobStatusDataDtoState];
+
+export const QueueJobStatusDataDtoState = {
+  waiting: "waiting",
+  active: "active",
+  completed: "completed",
+  failed: "failed",
+  delayed: "delayed",
+  paused: "paused",
+  unknown: "unknown",
+} as const;
+
+export interface QueueJobStatusDataDto {
+  queueJobId: string;
+  state: QueueJobStatusDataDtoState;
+  progress: number;
+  /** @nullable */
+  processedOn?: string | null;
+  /** @nullable */
+  finishedOn?: string | null;
+  result?: RescoreBatchResultDto | null;
+  /** @nullable */
+  failedReason?: string | null;
+}
+
+export interface QueueJobStatusResponseDto {
+  data: QueueJobStatusDataDto;
+}
+
 export interface SignupCandidateDto {
   /**
    * @minLength 2
@@ -12038,6 +12089,312 @@ export function useAdminBiasMonitorControllerOverviewV1<
 } {
   const queryOptions = getAdminBiasMonitorControllerOverviewV1QueryOptions(
     params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Enqueue a rescore-batch background job that recomputes the last N match scores using current weights
+ */
+export type adminQueueControllerEnqueueRescoreBatchV1Response202 = {
+  data: EnqueueRescoreBatchResponseDto;
+  status: 202;
+};
+
+export type adminQueueControllerEnqueueRescoreBatchV1ResponseSuccess =
+  adminQueueControllerEnqueueRescoreBatchV1Response202 & {
+    headers: Headers;
+  };
+export type adminQueueControllerEnqueueRescoreBatchV1Response =
+  adminQueueControllerEnqueueRescoreBatchV1ResponseSuccess;
+
+export const getAdminQueueControllerEnqueueRescoreBatchV1Url = () => {
+  return `/api/v1/admin/queue/rescore-batch`;
+};
+
+export const adminQueueControllerEnqueueRescoreBatchV1 = async (
+  enqueueRescoreBatchDto: EnqueueRescoreBatchDto,
+  options?: RequestInit,
+): Promise<adminQueueControllerEnqueueRescoreBatchV1Response> => {
+  return fetcher<adminQueueControllerEnqueueRescoreBatchV1Response>(
+    getAdminQueueControllerEnqueueRescoreBatchV1Url(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(enqueueRescoreBatchDto),
+    },
+  );
+};
+
+export const getAdminQueueControllerEnqueueRescoreBatchV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminQueueControllerEnqueueRescoreBatchV1>>,
+    TError,
+    { data: EnqueueRescoreBatchDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminQueueControllerEnqueueRescoreBatchV1>>,
+  TError,
+  { data: EnqueueRescoreBatchDto },
+  TContext
+> => {
+  const mutationKey = ["adminQueueControllerEnqueueRescoreBatchV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminQueueControllerEnqueueRescoreBatchV1>>,
+    { data: EnqueueRescoreBatchDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminQueueControllerEnqueueRescoreBatchV1(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminQueueControllerEnqueueRescoreBatchV1MutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof adminQueueControllerEnqueueRescoreBatchV1>>
+  >;
+export type AdminQueueControllerEnqueueRescoreBatchV1MutationBody =
+  EnqueueRescoreBatchDto;
+export type AdminQueueControllerEnqueueRescoreBatchV1MutationError = unknown;
+
+/**
+ * @summary Enqueue a rescore-batch background job that recomputes the last N match scores using current weights
+ */
+export const useAdminQueueControllerEnqueueRescoreBatchV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminQueueControllerEnqueueRescoreBatchV1>>,
+      TError,
+      { data: EnqueueRescoreBatchDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminQueueControllerEnqueueRescoreBatchV1>>,
+  TError,
+  { data: EnqueueRescoreBatchDto },
+  TContext
+> => {
+  return useMutation(
+    getAdminQueueControllerEnqueueRescoreBatchV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Poll the status of a queued background job. Route is /admin/queue/jobs/:queueJobId/status to avoid collision with /admin/jobs/:id (3.1 job moderation).
+ */
+export type adminQueueControllerGetJobStatusV1Response200 = {
+  data: QueueJobStatusResponseDto;
+  status: 200;
+};
+
+export type adminQueueControllerGetJobStatusV1ResponseSuccess =
+  adminQueueControllerGetJobStatusV1Response200 & {
+    headers: Headers;
+  };
+export type adminQueueControllerGetJobStatusV1Response =
+  adminQueueControllerGetJobStatusV1ResponseSuccess;
+
+export const getAdminQueueControllerGetJobStatusV1Url = (
+  queueJobId: string,
+) => {
+  return `/api/v1/admin/queue/jobs/${queueJobId}/status`;
+};
+
+export const adminQueueControllerGetJobStatusV1 = async (
+  queueJobId: string,
+  options?: RequestInit,
+): Promise<adminQueueControllerGetJobStatusV1Response> => {
+  return fetcher<adminQueueControllerGetJobStatusV1Response>(
+    getAdminQueueControllerGetJobStatusV1Url(queueJobId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminQueueControllerGetJobStatusV1QueryKey = (
+  queueJobId: string,
+) => {
+  return [`/api/v1/admin/queue/jobs/${queueJobId}/status`] as const;
+};
+
+export const getAdminQueueControllerGetJobStatusV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+  TError = unknown,
+>(
+  queueJobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getAdminQueueControllerGetJobStatusV1QueryKey(queueJobId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>
+  > = ({ signal }) =>
+    adminQueueControllerGetJobStatusV1(queueJobId, {
+      signal,
+      ...requestOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!queueJobId,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminQueueControllerGetJobStatusV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>
+>;
+export type AdminQueueControllerGetJobStatusV1QueryError = unknown;
+
+export function useAdminQueueControllerGetJobStatusV1<
+  TData = Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+  TError = unknown,
+>(
+  queueJobId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminQueueControllerGetJobStatusV1<
+  TData = Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+  TError = unknown,
+>(
+  queueJobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+          TError,
+          Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminQueueControllerGetJobStatusV1<
+  TData = Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+  TError = unknown,
+>(
+  queueJobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Poll the status of a queued background job. Route is /admin/queue/jobs/:queueJobId/status to avoid collision with /admin/jobs/:id (3.1 job moderation).
+ */
+
+export function useAdminQueueControllerGetJobStatusV1<
+  TData = Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+  TError = unknown,
+>(
+  queueJobId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminQueueControllerGetJobStatusV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminQueueControllerGetJobStatusV1QueryOptions(
+    queueJobId,
     options,
   );
 

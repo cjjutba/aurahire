@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth/session";
 import { ConfigEditorClient } from "./_config-editor-client";
+import { ApplyToExistingClient } from "./_apply-to-existing-client";
 
 export const metadata = { title: "AI Scoring Configuration" };
 
@@ -81,6 +82,18 @@ export default async function AiConfigPage() {
       </header>
 
       <ConfigEditorClient initial={body.data} />
+
+      <div className="my-8 border-t border-[var(--color-hairline)] pt-8">
+        <h2 className="text-base font-semibold text-[var(--color-ink)]">Backfill</h2>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Apply the currently saved weights to existing match scores. Each rescore creates a
+          new match_scores row; the original scores remain for audit. Background job — you can
+          leave this page; check the Audit Log for completion.
+        </p>
+        <div className="mt-4">
+          <ApplyToExistingClient />
+        </div>
+      </div>
     </div>
   );
 }
