@@ -283,7 +283,7 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
           <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
             Compensation
           </h2>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="salaryMin"

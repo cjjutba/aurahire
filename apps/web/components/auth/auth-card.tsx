@@ -10,7 +10,7 @@ interface AuthCardProps {
 export function AuthCard({ title, description, children, footer }: AuthCardProps) {
   return (
     <div className="w-full max-w-md">
-      <div className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
+      <div className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.04)] sm:p-8">
         <h1 className="mb-1 text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           {title}
         </h1>

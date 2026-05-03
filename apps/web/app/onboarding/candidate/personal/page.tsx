@@ -17,12 +17,18 @@ export default async function Step2Page() {
   const parsedContact = latestResume?.parsed?.contact ?? null;
   const parsedSummary = latestResume?.parsed?.summary ?? null;
 
+  // Derive headline from most recent (preferably current) experience title.
+  const experiences = latestResume?.parsed?.experience ?? [];
+  const currentRole = experiences.find((e) => e?.is_current && e?.title);
+  const mostRecentRole = experiences.find((e) => e?.title);
+  const parsedHeadline = currentRole?.title ?? mostRecentRole?.title ?? null;
+
   const aiSuggestedFields: Record<string, boolean> = {};
 
   const defaults = {
     fullName: me.fullName,
     phone: me.phone ?? parsedContact?.phone ?? "",
-    headline: me.headline,
+    headline: me.headline ?? parsedHeadline ?? null,
     summary: me.summary ?? parsedSummary ?? null,
     locationCity: me.locationCity ?? parsedContact?.location_city ?? null,
     locationRegion: me.locationRegion,
@@ -30,6 +36,7 @@ export default async function Step2Page() {
   };
 
   if (!me.phone && parsedContact?.phone) aiSuggestedFields.phone = true;
+  if (!me.headline && parsedHeadline) aiSuggestedFields.headline = true;
   if (!me.summary && parsedSummary) aiSuggestedFields.summary = true;
   if (!me.locationCity && parsedContact?.location_city) aiSuggestedFields.locationCity = true;
   if (!me.locationCountry && parsedContact?.location_country)

@@ -44,13 +44,13 @@ The date is the planned execution date (not the writing date — writing happens
 | 2.5 | Profile Scoring + Score UI Components | [2026-05-03-slice-2.5-profile-scoring-ui.md](./2026-05-03-slice-2.5-profile-scoring-ui.md) | ✅ Complete |
 | 2.6 | Match Scoring on Apply | [2026-05-03-slice-2.6-match-scoring-on-apply.md](./2026-05-03-slice-2.6-match-scoring-on-apply.md) | ✅ Complete |
 | 2.7 | Bias Check + Job Publishing | [2026-05-03-slice-2.7-bias-check-job-publishing.md](./2026-05-03-slice-2.7-bias-check-job-publishing.md) | ✅ Complete |
-| 2.8 | Day 2 Polish | [2026-05-03-slice-2.8-day-2-polish.md](./2026-05-03-slice-2.8-day-2-polish.md) | 📝 Plan ready |
+| 2.8 | Day 2 Polish | [2026-05-03-slice-2.8-day-2-polish.md](./2026-05-03-slice-2.8-day-2-polish.md) | ✅ Complete |
 
 ### Day 3 — May 4, 2026 (Admin, Background Jobs, Cron, Caching)
 
 | Slice | Title | Plan File | Status |
 |---|---|---|---|
-| 3.1 | Admin Foundation: Stats + User Mgmt + Job Moderation | _to be written_ | ⏳ Not started |
+| 3.1 | Admin Foundation: Stats + User Mgmt + Job Moderation | [2026-05-04-slice-3.1-admin-foundation.md](./2026-05-04-slice-3.1-admin-foundation.md) | 📝 Plan ready |
 | 3.2 | Admin Application Oversight | _to be written_ | ⏳ Not started |
 | 3.3 | AI Scoring Configuration + Preview Impact | _to be written_ | ⏳ Not started |
 | 3.4 | Audit Log + System Analytics | _to be written_ | ⏳ Not started |

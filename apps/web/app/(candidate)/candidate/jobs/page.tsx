@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { JobStatus } from "@aurahire/shared";
 import { JobListRow } from "@/components/jobs/job-list-row";
 import { JobFilters } from "@/components/jobs/job-filters";
+import { EmptyState } from "@/components/empty-state";
 import { getCurrentSession } from "@/lib/auth/session";
 
 interface PageProps {
@@ -66,11 +67,11 @@ export default async function CandidateJobsPage({ searchParams }: PageProps) {
       <JobFilters />
       <div className="space-y-3">
         {body.data.length === 0 ? (
-          <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-12 text-center">
-            <p className="text-[var(--color-body)]">
-              No jobs match your filters.
-            </p>
-          </div>
+          <EmptyState
+            headline="No jobs match your filters yet"
+            description="Try clearing your filters or browse all available roles."
+            cta={{ href: "/candidate/jobs", label: "Browse all" }}
+          />
         ) : (
           body.data.map((job) => (
             <JobListRow

@@ -85,7 +85,10 @@ export function CandidatePersonalInfoForm({ defaults, aiSuggestedFields = {} }: 
           name="headline"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Headline</FormLabel>
+              <FormLabel className="flex items-center gap-2">
+                Headline
+                {aiSuggestedFields.headline && <AiSuggestedBadge />}
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="e.g. Senior Software Engineer"

@@ -20,8 +20,8 @@ export function PortalShell({
     <div className="flex min-h-screen bg-[var(--color-canvas)]">
       <PortalSidebar role={role} />
       <div className="flex min-h-screen flex-1 flex-col">
-        <PortalTopbar fullName={fullName} email={email} />
-        <main className="flex-1 bg-[var(--color-surface-soft)] px-6 py-8">
+        <PortalTopbar fullName={fullName} email={email} role={role} />
+        <main className="flex-1 bg-[var(--color-surface-soft)] px-4 py-6 md:px-6 md:py-8">
           {children}
         </main>
         <PortalFooter />

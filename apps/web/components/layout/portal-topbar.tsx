@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { toast } from "sonner";
+import type { UserRole } from "@aurahire/shared";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -14,16 +16,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Breadcrumb } from "./breadcrumb";
+import { PortalSidebarContent } from "./portal-sidebar";
 
 interface PortalTopbarProps {
   fullName: string;
   email: string;
+  role: UserRole;
 }
 
-export function PortalTopbar({ fullName, email }: PortalTopbarProps) {
+export function PortalTopbar({ fullName, email, role }: PortalTopbarProps) {
   const router = useRouter();
   const initials = getInitials(fullName);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   async function handleSignOut() {
     const supabase = createSupabaseBrowserClient();
@@ -37,8 +43,27 @@ export function PortalTopbar({ fullName, email }: PortalTopbarProps) {
   }
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-[var(--color-hairline)] bg-[var(--color-canvas)] px-6">
-      <Breadcrumb />
+    <header className="flex h-16 items-center justify-between border-b border-[var(--color-hairline)] bg-[var(--color-canvas)] px-4 sm:px-6">
+      <div className="flex items-center gap-2">
+        <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+          <SheetTrigger
+            className="rounded-[var(--radius-md)] p-2 text-[var(--color-ink)] lg:hidden"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </SheetTrigger>
+          <SheetContent
+            side="left"
+            className="w-72 bg-[var(--color-surface-soft)] p-0"
+          >
+            <PortalSidebarContent
+              role={role}
+              onNavClick={() => setDrawerOpen(false)}
+            />
+          </SheetContent>
+        </Sheet>
+        <Breadcrumb />
+      </div>
       <div className="flex items-center gap-3">
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -67,10 +92,7 @@ export function PortalTopbar({ fullName, email }: PortalTopbarProps) {
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={handleSignOut}
-            >
+            <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
               Sign out
             </DropdownMenuItem>

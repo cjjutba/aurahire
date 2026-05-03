@@ -57,7 +57,7 @@ export default async function ApplicationsPage() {
             <li key={app.id}>
               <Link
                 href={`/candidate/applications/${app.id}`}
-                className="flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 transition hover:border-[var(--color-primary-soft)]"
+                className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 transition hover:border-[var(--color-primary-soft)] sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <h3 className="font-semibold text-[var(--color-ink)]">

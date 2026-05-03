@@ -58,6 +58,11 @@ export interface LatestParsedResume {
       location_country?: string | null;
     } | null;
     summary?: string | null;
+    experience?: Array<{
+      title?: string | null;
+      company?: string | null;
+      is_current?: boolean | null;
+    }> | null;
   } | null;
 }
 

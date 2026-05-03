@@ -39,7 +39,7 @@ export function TiptapEditor({ value, onChange, placeholder }: TiptapEditorProps
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-1">
+      <div className="flex flex-wrap items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-1">
         <Button
           type="button"
           variant="ghost"

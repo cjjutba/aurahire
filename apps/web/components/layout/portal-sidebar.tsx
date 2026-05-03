@@ -67,14 +67,31 @@ interface PortalSidebarProps {
 }
 
 export function PortalSidebar({ role }: PortalSidebarProps) {
+  return (
+    <aside className="hidden w-64 shrink-0 border-r border-[var(--color-hairline)] bg-[var(--color-surface-soft)] lg:flex lg:flex-col">
+      <PortalSidebarContent role={role} />
+    </aside>
+  );
+}
+
+interface PortalSidebarContentProps {
+  role: UserRole;
+  onNavClick?: () => void;
+}
+
+export function PortalSidebarContent({
+  role,
+  onNavClick,
+}: PortalSidebarContentProps) {
   const pathname = usePathname();
   const items = NAV_ITEMS[role];
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-[var(--color-hairline)] bg-[var(--color-surface-soft)] lg:flex lg:flex-col">
+    <>
       <div className="px-6 py-6">
         <Link
           href="/"
+          onClick={onNavClick}
           className="text-lg font-semibold tracking-tight text-[var(--color-ink)]"
         >
           AuraHire
@@ -92,6 +109,7 @@ export function PortalSidebar({ role }: PortalSidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavClick}
               className={[
                 "flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-sm transition",
                 isActive
@@ -105,6 +123,6 @@ export function PortalSidebar({ role }: PortalSidebarProps) {
           );
         })}
       </nav>
-    </aside>
+    </>
   );
 }

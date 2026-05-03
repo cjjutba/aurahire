@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
 import type { JobStatus } from "@aurahire/shared";
 import { JobListRow } from "@/components/jobs/job-list-row";
+import { EmptyState } from "@/components/empty-state";
 import { getCurrentSession } from "@/lib/auth/session";
 
 export const metadata = { title: "My Jobs" };
@@ -76,20 +77,11 @@ export default async function RecruiterJobsPage({ searchParams }: PageProps) {
       </header>
 
       {body.data.length === 0 ? (
-        <div className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] py-16 text-center">
-          <h3 className="text-lg font-semibold text-[var(--color-ink)]">
-            Post your first job
-          </h3>
-          <p className="mt-2 text-sm text-[var(--color-body)]">
-            Create a job posting and start receiving applications.
-          </p>
-          <Link
-            href="/recruiter/jobs/new"
-            className="mt-4 inline-flex items-center justify-center rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-6 py-2 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
-          >
-            New Job
-          </Link>
-        </div>
+        <EmptyState
+          headline="Post your first job"
+          description="Create a job posting and start receiving applications."
+          cta={{ href: "/recruiter/jobs/new", label: "New Job" }}
+        />
       ) : (
         <div className="space-y-3">
           {body.data.map((job) => (
