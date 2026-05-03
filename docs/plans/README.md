@@ -53,7 +53,7 @@ The date is the planned execution date (not the writing date — writing happens
 | 3.1 | Admin Foundation: Stats + User Mgmt + Job Moderation | [2026-05-04-slice-3.1-admin-foundation.md](./2026-05-04-slice-3.1-admin-foundation.md) | ✅ Complete |
 | 3.2 | Admin Application Oversight | [2026-05-04-slice-3.2-admin-application-oversight.md](./2026-05-04-slice-3.2-admin-application-oversight.md) | ✅ Complete |
 | 3.3 | AI Scoring Configuration + Preview Impact | [2026-05-04-slice-3.3-admin-ai-config.md](./2026-05-04-slice-3.3-admin-ai-config.md) | ✅ Complete |
-| 3.4 | Audit Log + System Analytics | [2026-05-04-slice-3.4-audit-analytics.md](./2026-05-04-slice-3.4-audit-analytics.md) | 🔄 Executing |
+| 3.4 | Audit Log + System Analytics | [2026-05-04-slice-3.4-audit-analytics.md](./2026-05-04-slice-3.4-audit-analytics.md) | ✅ Complete |
 | 3.5 | Bias & Fairness Monitor | [2026-05-04-slice-3.5-bias-fairness-monitor.md](./2026-05-04-slice-3.5-bias-fairness-monitor.md) | 📝 Plan ready |
 | 3.6 | Background Jobs (BullMQ) | [2026-05-04-slice-3.6-bullmq-batch-rescore.md](./2026-05-04-slice-3.6-bullmq-batch-rescore.md) | 📝 Plan ready |
 | 3.7 | Cron Tasks + Cache Wiring | [2026-05-04-slice-3.7-cron-cache-throttle.md](./2026-05-04-slice-3.7-cron-cache-throttle.md) | 📝 Plan ready |
