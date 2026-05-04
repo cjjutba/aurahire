@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { toastApiError } from "@/lib/toast";
 
 import {
   candidatePersonalInfoSchema,
@@ -40,8 +40,7 @@ export function CandidatePersonalInfoForm({ defaults, aiSuggestedFields = {} }: 
   const updatePersonal = useCandidateProfilesControllerUpdatePersonalV1({
     mutation: {
       onSuccess: () => router.push("/onboarding/candidate/education"),
-      onError: (err) =>
-        toast.error("Save failed", { description: (err as Error).message }),
+      onError: (err) => toastApiError(err, "Couldn't save personal info"),
     },
   });
 

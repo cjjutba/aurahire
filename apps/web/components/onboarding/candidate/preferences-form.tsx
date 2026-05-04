@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import {
   candidatePreferencesSchema,
@@ -112,20 +112,17 @@ export function CandidatePreferencesForm({ defaults }: Props) {
 
       const parsed = candidatePreferencesSchema.safeParse(data);
       if (!parsed.success) {
-        toast.error("Validation failed", {
-          description: parsed.error.errors.map((e) => e.message).join(", "),
-        });
+        toastApiError(null, "Check your input", parsed.error.errors.map((e) => e.message).join(", "));
         return;
       }
 
       await updatePreferences.mutateAsync({ data: parsed.data });
       await completeOnboarding.mutateAsync();
+      toastSuccess("Onboarding complete", "Welcome to AuraHire.");
       router.push("/candidate");
       router.refresh();
     } catch (err) {
-      toast.error("Failed to save preferences", {
-        description: (err as Error).message,
-      });
+      toastApiError(err, "Couldn't save preferences");
     }
   }
 

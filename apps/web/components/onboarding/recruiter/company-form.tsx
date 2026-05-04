@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { toastApiError } from "@/lib/toast";
 
 import { recruiterCompanySchema, type RecruiterCompany } from "@aurahire/shared";
 import { useRecruiterProfilesControllerUpdateCompanyV1 } from "@aurahire/shared";
@@ -51,8 +51,7 @@ export function RecruiterCompanyForm({ defaults }: CompanyFormProps) {
   const updateCompany = useRecruiterProfilesControllerUpdateCompanyV1({
     mutation: {
       onSuccess: () => router.push("/onboarding/recruiter/focus"),
-      onError: (err) =>
-        toast.error("Save failed", { description: (err as Error).message }),
+      onError: (err) => toastApiError(err, "Couldn't save company info"),
     },
   });
 

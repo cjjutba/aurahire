@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, FileText, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import { AiShimmer } from "@/components/ai/ai-shimmer";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ export function ResumeUpload() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in again");
+        toastApiError(null, "Please sign in again");
         setPhase("idle");
         return;
       }
@@ -85,7 +85,7 @@ export function ResumeUpload() {
 
       if (body.data.parseStatus === "parsed") {
         setPhase("success");
-        toast.success("Resume parsed successfully");
+        toastSuccess("Resume processed", "Review the prefilled fields before continuing.");
         router.push("/onboarding/candidate/personal");
         router.refresh();
       } else {

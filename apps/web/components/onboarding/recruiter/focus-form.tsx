@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import { recruiterFocusSchema, type RecruiterFocus } from "@aurahire/shared";
 import { useRecruiterProfilesControllerUpdateFocusV1 } from "@aurahire/shared";
@@ -52,11 +52,11 @@ export function RecruiterFocusForm({ defaults }: FocusFormProps) {
   const updateFocus = useRecruiterProfilesControllerUpdateFocusV1({
     mutation: {
       onSuccess: () => {
+        toastSuccess("Onboarding complete", "Welcome to AuraHire.");
         router.push("/recruiter");
         router.refresh();
       },
-      onError: (err) =>
-        toast.error("Save failed", { description: (err as Error).message }),
+      onError: (err) => toastApiError(err, "Couldn't save focus areas"),
     },
   });
 
@@ -70,9 +70,7 @@ export function RecruiterFocusForm({ defaults }: FocusFormProps) {
     };
     const parsed = recruiterFocusSchema.safeParse(data);
     if (!parsed.success) {
-      toast.error("Validation failed", {
-        description: parsed.error.errors.map((e) => e.message).join(", "),
-      });
+      toastApiError(null, "Check your input", parsed.error.errors.map((e) => e.message).join(", "));
       return;
     }
     await updateFocus.mutateAsync({ data: parsed.data });
