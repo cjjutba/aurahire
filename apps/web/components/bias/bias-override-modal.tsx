@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +49,7 @@ export function BiasOverrideModal({
   async function overrideOne(flagId: string) {
     const reason = (reasons[flagId] ?? "").trim();
     if (reason.length < 10) {
-      toast.error("Reason must be at least 10 characters");
+      toastApiError(null, "Check your input", "Please provide a justification of at least 10 characters before overriding.");
       return;
     }
     setWorking((p) => ({ ...p, [flagId]: true }));
@@ -59,7 +59,7 @@ export function BiasOverrideModal({
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in again");
+        toastApiError(null, "Couldn't save override", "Please sign in again.");
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
@@ -77,14 +77,12 @@ export function BiasOverrideModal({
 
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { message?: string };
-        toast.error("Override failed", {
-          description: body.message ?? `HTTP ${res.status}`,
-        });
+        toastApiError(null, "Couldn't save override", body.message ?? `HTTP ${res.status}`);
         return;
       }
 
       setOverridden((p) => ({ ...p, [flagId]: true }));
-      toast.success("Override saved");
+      toastSuccess("Override saved");
     } finally {
       setWorking((p) => ({ ...p, [flagId]: false }));
     }

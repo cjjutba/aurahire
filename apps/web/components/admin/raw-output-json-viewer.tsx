@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight, Copy } from "lucide-react";
-import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toast";
 
 interface Props {
   value: unknown;
@@ -20,7 +20,7 @@ export function RawOutputJsonViewer({
 
   function copy() {
     void navigator.clipboard.writeText(json);
-    toast.success("Copied JSON");
+    toastSuccess("Copied JSON");
   }
 
   return (
