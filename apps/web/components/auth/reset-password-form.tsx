@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { z } from "zod";
 
 import { passwordSchema, fetcher } from "@aurahire/shared";
@@ -47,13 +47,10 @@ export function ResetPasswordForm() {
         method: "POST",
         body: JSON.stringify({ token, password: values.password }),
       });
-      toast.success("Password updated. Please sign in.");
+      toastSuccess("Password updated", "Please sign in.");
       router.push("/login");
     } catch (err) {
-      const body = (err as { body?: { message?: string } }).body;
-      toast.error("Reset failed", {
-        description: body?.message ?? "The link may be invalid or expired.",
-      });
+      toastApiError(err, "Couldn't reset password");
     } finally {
       setIsSubmitting(false);
     }

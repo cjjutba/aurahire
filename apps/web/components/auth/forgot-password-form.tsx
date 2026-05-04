@@ -9,6 +9,7 @@ import {
   type ForgotPasswordInput,
   fetcher,
 } from "@aurahire/shared";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { AuthInput } from "@/components/auth/auth-input";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
@@ -32,8 +33,11 @@ export function ForgotPasswordForm() {
       await fetcher("/api/v1/auth/forgot-password", {
         method: "POST",
         body: JSON.stringify(values),
-      }).catch(() => {});
+      });
+      toastSuccess("Reset link sent", "Check your inbox.");
       setSent(true);
+    } catch (err) {
+      toastApiError(err, "Couldn't send reset link");
     } finally {
       setIsSubmitting(false);
     }

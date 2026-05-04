@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
 import { fetcher } from "@aurahire/shared";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
@@ -52,12 +53,14 @@ export function VerifyEmailClient() {
         });
 
         if (otpError) {
+          toastSuccess("Email verified", "Please sign in to continue.");
           setStatus("error");
           setErrorMessage("Your email is verified. Please sign in to continue.");
           setTimeout(() => router.push(`/login?verified=1`), 1500);
           return;
         }
 
+        toastSuccess("Email verified", "Redirecting to your dashboard.");
         setStatus("success");
         const dest = `/onboarding/${result.role}`;
         setTimeout(() => {
@@ -66,6 +69,7 @@ export function VerifyEmailClient() {
         }, 600);
       } catch (err) {
         const body = (err as { body?: { message?: string } }).body;
+        toastApiError(null, "Verification failed", body?.message ?? undefined);
         setStatus("error");
         setErrorMessage(
           body?.message ?? "Verification failed. The link may be invalid or expired.",

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import { loginSchema, type LoginInput } from "@aurahire/shared";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
@@ -46,17 +46,15 @@ export function LoginForm() {
 
       if (error) {
         if (error.message.toLowerCase().includes("email not confirmed")) {
-          toast.error("Please verify your email first", {
-            description: "Check your inbox for the verification link.",
-          });
+          toastApiError(null, "Sign in failed", "Please verify your email first. Check your inbox for the verification link.");
         } else {
-          toast.error("Sign in failed", { description: "Email or password incorrect." });
+          toastApiError(null, "Sign in failed", "Email or password incorrect.");
         }
         return;
       }
 
       if (!data.session) {
-        toast.error("Sign in failed", { description: "No session created." });
+        toastApiError(null, "Sign in failed", "No session created.");
         return;
       }
 
@@ -67,13 +65,13 @@ export function LoginForm() {
       });
 
       if (profileRes.status === 404) {
-        toast.error("Profile not found", { description: "Please complete registration." });
+        toastApiError(null, "Profile not found", "Please complete registration.");
         router.push("/register");
         return;
       }
 
       if (!profileRes.ok) {
-        toast.error("Sign in failed", { description: "Could not load profile." });
+        toastApiError(null, "Sign in failed", "Could not load profile.");
         return;
       }
 
@@ -85,10 +83,11 @@ export function LoginForm() {
       const dest =
         redirectTo ??
         (profileCompleted ? `/${role}` : `/onboarding/${role === "admin" ? "" : role}`);
+      toastSuccess("Signed in");
       router.push(dest);
       router.refresh();
     } catch (err) {
-      toast.error("Unexpected error", { description: (err as Error).message });
+      toastApiError(err, "Sign in failed");
     } finally {
       setIsSubmitting(false);
     }

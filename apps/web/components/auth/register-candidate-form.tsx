@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import {
   registerCandidateSchema,
@@ -52,6 +52,7 @@ export function RegisterCandidateForm() {
         body: JSON.stringify(payload),
       });
 
+      toastSuccess("Account created", "Check your email to verify.");
       router.push(`/verify-email/sent?email=${encodeURIComponent(values.email)}`);
     } catch (err) {
       const status = (err as { status?: number }).status;
@@ -61,9 +62,7 @@ export function RegisterCandidateForm() {
           message: body.message ?? "This email is already registered. Sign in instead?",
         });
       } else {
-        toast.error("Registration failed", {
-          description: body?.message ?? (err as Error).message,
-        });
+        toastApiError(err, "Couldn't create account");
       }
     } finally {
       setIsSubmitting(false);

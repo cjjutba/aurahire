@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Menu } from "lucide-react";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import type { UserRole } from "@aurahire/shared";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { setSessionOnlyMarker } from "@/lib/auth/cookie-persistence.client";
@@ -36,11 +36,12 @@ export function PortalTopbar({ fullName, email, role }: PortalTopbarProps) {
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.signOut();
     if (error) {
-      toast.error("Sign out failed", { description: error.message });
+      toastApiError(error, "Sign out failed");
       return;
     }
     // Clear the persistence marker so the next sign-in starts fresh.
     setSessionOnlyMarker(false);
+    toastSuccess("Signed out");
     router.push("/");
     router.refresh();
   }
