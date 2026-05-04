@@ -54,7 +54,7 @@ export function VerifyEmailClient() {
 
         if (otpError) {
           toastSuccess("Email verified", "Please sign in to continue.");
-          setStatus("error");
+          setStatus("success");
           setErrorMessage("Your email is verified. Please sign in to continue.");
           setTimeout(() => router.push(`/login?verified=1`), 1500);
           return;
@@ -69,7 +69,7 @@ export function VerifyEmailClient() {
         }, 600);
       } catch (err) {
         const body = (err as { body?: { message?: string } }).body;
-        toastApiError(null, "Verification failed", body?.message ?? undefined);
+        toastApiError(err, "Verification failed");
         setStatus("error");
         setErrorMessage(
           body?.message ?? "Verification failed. The link may be invalid or expired.",
