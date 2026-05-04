@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import {
+  SESSION_ONLY_MARKER,
+  stripPersistenceFromCookieOptions,
+} from "@/lib/auth/cookie-persistence";
+
 const PORTAL_PREFIXES = {
   candidate: "/candidate",
   recruiter: "/recruiter",
@@ -25,6 +30,8 @@ export async function middleware(req: NextRequest) {
 
   let res = NextResponse.next({ request: req });
 
+  const sessionOnly = req.cookies.get(SESSION_ONLY_MARKER)?.value === "1";
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -36,9 +43,12 @@ export async function middleware(req: NextRequest) {
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
           res = NextResponse.next({ request: req });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            res.cookies.set(name, value, options),
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const finalOptions = sessionOnly
+              ? stripPersistenceFromCookieOptions(options)
+              : options;
+            res.cookies.set(name, value, finalOptions);
+          });
         },
       },
     },

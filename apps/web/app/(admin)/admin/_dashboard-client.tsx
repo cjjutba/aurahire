@@ -219,6 +219,28 @@ function BiasFlagsWidget({
   );
 }
 
+const ACTOR_BG: Record<string, string> = {
+  user: "bg-[var(--color-primary-soft)] text-[var(--color-primary)]",
+  ai: "bg-[var(--color-score-mid-soft)] text-[var(--color-score-mid)]",
+  system: "bg-[var(--color-surface-strong)] text-[var(--color-muted)]",
+};
+
+function relativeTime(iso: string): string {
+  const now = Date.now();
+  const then = new Date(iso).getTime();
+  const diffMs = now - then;
+  if (diffMs < 0) return new Date(iso).toLocaleString();
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 function RecentAuditWidget({
   stats,
   isPending,
@@ -236,7 +258,7 @@ function RecentAuditWidget({
       {isPending ? (
         <div className="mt-4 space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-4 w-full" />
+            <Skeleton key={i} className="h-10 w-full" />
           ))}
         </div>
       ) : events.length === 0 ? (
@@ -244,15 +266,22 @@ function RecentAuditWidget({
           No recent activity.
         </p>
       ) : (
-        <ul className="mt-4 space-y-2">
+        <ul className="mt-3 divide-y divide-[var(--color-hairline-soft)]">
           {events.map((e, i) => (
-            <li key={i} className="text-xs">
-              <code className="rounded-[var(--radius-xs)] bg-[var(--color-surface-soft)] px-1 py-0.5 font-mono text-[var(--color-ink)]">
-                {e.action}
-              </code>
-              <span className="ml-2 text-[var(--color-muted)]">
-                {e.actorType} · {new Date(e.createdAt).toLocaleString()}
-              </span>
+            <li key={i} className="py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <code className="min-w-0 flex-1 truncate rounded-[var(--radius-xs)] bg-[var(--color-surface-soft)] px-1.5 py-0.5 font-mono text-[11px] leading-tight text-[var(--color-ink)]">
+                  {e.action}
+                </code>
+                <span
+                  className={`flex-shrink-0 rounded-[var(--radius-pill)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${ACTOR_BG[e.actorType] ?? "bg-[var(--color-surface-strong)] text-[var(--color-muted)]"}`}
+                >
+                  {e.actorType}
+                </span>
+              </div>
+              <p className="mt-1 text-[10px] text-[var(--color-muted)]">
+                {relativeTime(e.createdAt)}
+              </p>
             </li>
           ))}
         </ul>

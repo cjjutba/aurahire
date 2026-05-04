@@ -67,6 +67,47 @@ export class ApplicationsController {
     return { data };
   }
 
+  // CRITICAL: declare the literal "recruiter-stats" + "recruiter-analytics" routes
+  // BEFORE @Get(":id") so they aren't matched as ids.
+
+  @Get("recruiter-stats")
+  @Roles("recruiter")
+  @ApiOperation({
+    summary: "4-KPI dashboard summary for the current recruiter",
+  })
+  async recruiterStats(@CurrentUser() user: AuthUser): Promise<{
+    data: {
+      activeJobs: number;
+      totalApplications: number;
+      pendingReviews: number;
+      avgMatchScore: number;
+    };
+  }> {
+    const data = await this.service.recruiterStats(user);
+    return { data };
+  }
+
+  @Get("recruiter-analytics")
+  @Roles("recruiter")
+  @ApiOperation({
+    summary: "Recruiter-scoped analytics bundle: KPIs + top jobs by app count + status breakdown",
+  })
+  async recruiterAnalytics(@CurrentUser() user: AuthUser): Promise<{
+    data: {
+      kpis: {
+        activeJobs: number;
+        totalApplications: number;
+        pendingReviews: number;
+        avgMatchScore: number;
+      };
+      topJobs: Array<{ jobId: string; title: string; status: string; applicationCount: number; avgScore: number }>;
+      applicationsByStatus: Array<{ status: string; count: number }>;
+    };
+  }> {
+    const data = await this.service.recruiterAnalytics(user);
+    return { data };
+  }
+
   @Get("by-job/:jobId")
   @Roles("recruiter")
   @ApiOperation({ summary: "List applications for a job (recruiter must own it)" })

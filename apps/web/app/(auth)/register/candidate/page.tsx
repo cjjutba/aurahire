@@ -1,14 +1,17 @@
 import Link from "next/link";
-import { AuthCard } from "@/components/auth/auth-card";
+
+import { AuthShell } from "@/components/auth/auth-shell";
+import { AuthRoleTag } from "@/components/auth/auth-role-tag";
 import { RegisterCandidateForm } from "@/components/auth/register-candidate-form";
 
 export const metadata = { title: "Sign Up as Candidate" };
 
 export default function RegisterCandidatePage() {
   return (
-    <AuthCard
+    <AuthShell
+      topSlot={<AuthRoleTag>Candidate</AuthRoleTag>}
       title="Sign up as a candidate"
-      description="Find your next role with explainable AI matching."
+      subtitle="Find your next role with explainable AI matching."
       footer={
         <span>
           Already have an account?{" "}
@@ -19,6 +22,6 @@ export default function RegisterCandidatePage() {
       }
     >
       <RegisterCandidateForm />
-    </AuthCard>
+    </AuthShell>
   );
 }

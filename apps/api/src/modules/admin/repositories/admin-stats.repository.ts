@@ -50,6 +50,15 @@ export class AdminStatsRepository {
       Date.now() - params.histogramSinceDays * DAY_MS,
     );
 
+    // Drizzle's raw sql template doesn't auto-serialize Date instances the way
+    // its typed query helpers (gte/lte) do. The postgres-js driver expects
+    // strings for timestamptz parameters in this path, so we serialize each
+    // Date to ISO before embedding. Without this the driver crashes inside
+    // Buffer.byteLength on parameter binding.
+    const todayStartIso = params.todayStart.toISOString();
+    const weekStartIso = params.weekStart.toISOString();
+    const histogramSinceIso = histogramSince.toISOString();
+
     const result = await this.db.execute<{
       total_users: number;
       active_jobs: number;
@@ -71,8 +80,8 @@ export class AdminStatsRepository {
       SELECT
         (SELECT count(*)::int FROM profiles WHERE status <> 'deleted') AS total_users,
         (SELECT count(*)::int FROM jobs WHERE status = 'published') AS active_jobs,
-        (SELECT count(*)::int FROM applications WHERE applied_at >= ${params.todayStart}) AS apps_today,
-        (SELECT count(*)::int FROM applications WHERE applied_at >= ${params.weekStart}) AS apps_this_week,
+        (SELECT count(*)::int FROM applications WHERE applied_at >= ${todayStartIso}) AS apps_today,
+        (SELECT count(*)::int FROM applications WHERE applied_at >= ${weekStartIso}) AS apps_this_week,
         COALESCE((SELECT round(avg(overall_score))::int FROM profile_scores), 0) AS avg_profile_score,
         COALESCE((SELECT round(avg(overall_score))::int FROM match_scores), 0) AS avg_match_score,
         (
@@ -80,7 +89,7 @@ export class AdminStatsRepository {
           FROM (
             SELECT band, count(*)::int AS cnt
             FROM match_scores
-            WHERE created_at >= ${histogramSince}
+            WHERE created_at >= ${histogramSinceIso}
             GROUP BY band
           ) t
         ) AS score_band_histogram,
@@ -89,7 +98,7 @@ export class AdminStatsRepository {
           FROM (
             SELECT category, count(*)::int AS cnt
             FROM bias_flags
-            WHERE created_at >= ${params.weekStart}
+            WHERE created_at >= ${weekStartIso}
             GROUP BY category
           ) t
         ) AS bias_flags_this_week,

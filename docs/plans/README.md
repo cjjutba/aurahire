@@ -63,11 +63,11 @@ The date is the planned execution date (not the writing date — writing happens
 
 | Slice | Title | Plan File | Status |
 |---|---|---|---|
-| 4.1 | Frontend Deployment (Vercel) | _to be written_ | ⏳ Not started |
-| 4.2 | Backend Deployment (Railway) | _to be written_ | ⏳ Not started |
-| 4.3 | End-to-End Demo Path Verification | _to be written_ | ⏳ Not started |
-| 4.4 | Thesis Smoke Test | _to be written_ | ⏳ Not started |
-| 4.5 | Documentation Pass + Buffer | _to be written_ | ⏳ Not started |
+| 4.1 | Frontend Deployment (Vercel) | [2026-05-05-slice-4.1-vercel-deployment.md](./2026-05-05-slice-4.1-vercel-deployment.md) | 📝 Plan ready |
+| 4.2 | Backend Deployment (Railway) | [2026-05-05-slice-4.2-railway-deployment.md](./2026-05-05-slice-4.2-railway-deployment.md) | 📝 Plan ready |
+| 4.3 | End-to-End Demo Path Verification | [2026-05-05-slice-4.3-e2e-demo-verification.md](./2026-05-05-slice-4.3-e2e-demo-verification.md) | 📝 Plan ready |
+| 4.4 | Thesis Smoke Test | [2026-05-05-slice-4.4-thesis-smoke-test.md](./2026-05-05-slice-4.4-thesis-smoke-test.md) | 📝 Plan ready |
+| 4.5 | Documentation Pass + Buffer | [2026-05-05-slice-4.5-docs-pass-and-buffer.md](./2026-05-05-slice-4.5-docs-pass-and-buffer.md) | 📝 Plan ready |
 
 **Status legend:**
 - ⏳ Not started — plan not yet written

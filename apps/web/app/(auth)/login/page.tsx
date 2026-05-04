@@ -1,13 +1,14 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { AuthCard } from "@/components/auth/auth-card";
+
+import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata = { title: "Sign In" };
 
 export default function LoginPage() {
   return (
-    <AuthCard
+    <AuthShell
       title="Welcome back"
       footer={
         <span>
@@ -21,6 +22,6 @@ export default function LoginPage() {
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>
-    </AuthCard>
+    </AuthShell>
   );
 }

@@ -58,10 +58,29 @@ export interface LatestParsedResume {
       location_country?: string | null;
     } | null;
     summary?: string | null;
+    education?: Array<{
+      institution: string;
+      degree: string | null;
+      field_of_study: string | null;
+      start_year: number | null;
+      end_year: number | null;
+      gpa: string | null;
+    }> | null;
     experience?: Array<{
       title?: string | null;
       company?: string | null;
+      start_date?: string | null;
+      end_date?: string | null;
       is_current?: boolean | null;
+      responsibilities?: string[] | null;
+      technologies_used?: string[] | null;
+    }> | null;
+    skills?: string[] | null;
+    certifications?: Array<{
+      name: string;
+      issuing_organization: string | null;
+      issue_date: string | null;
+      expires: string | null;
     }> | null;
   } | null;
 }

@@ -6,6 +6,7 @@ import { LogOut, Menu } from "lucide-react";
 import { toast } from "sonner";
 import type { UserRole } from "@aurahire/shared";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { setSessionOnlyMarker } from "@/lib/auth/cookie-persistence.client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -38,6 +39,8 @@ export function PortalTopbar({ fullName, email, role }: PortalTopbarProps) {
       toast.error("Sign out failed", { description: error.message });
       return;
     }
+    // Clear the persistence marker so the next sign-in starts fresh.
+    setSessionOnlyMarker(false);
     router.push("/");
     router.refresh();
   }

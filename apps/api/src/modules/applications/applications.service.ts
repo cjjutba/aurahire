@@ -196,6 +196,49 @@ export class ApplicationsService {
     return Promise.all(apps.map((a) => this.toDto(a.id)));
   }
 
+  // ─── Recruiter dashboard stats ─────────────────────────────────────
+
+  async recruiterStats(user: AuthUser): Promise<{
+    activeJobs: number;
+    totalApplications: number;
+    pendingReviews: number;
+    avgMatchScore: number;
+  }> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
+    }
+    return this.repo.recruiterStats(user.id);
+  }
+
+  // ─── Recruiter analytics bundle ────────────────────────────────────
+
+  async recruiterAnalytics(user: AuthUser): Promise<{
+    kpis: {
+      activeJobs: number;
+      totalApplications: number;
+      pendingReviews: number;
+      avgMatchScore: number;
+    };
+    topJobs: Array<{ jobId: string; title: string; status: string; applicationCount: number; avgScore: number }>;
+    applicationsByStatus: Array<{ status: string; count: number }>;
+  }> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
+    }
+    const [kpis, topJobs, applicationsByStatus] = await Promise.all([
+      this.repo.recruiterStats(user.id),
+      this.repo.recruiterTopJobsByApplications(user.id, 5),
+      this.repo.recruiterApplicationsByStatus(user.id),
+    ]);
+    return { kpis, topJobs, applicationsByStatus };
+  }
+
   async getById(user: AuthUser, id: string): Promise<ApplicationDto> {
     const app = await this.repo.findById(id);
     if (!app) {

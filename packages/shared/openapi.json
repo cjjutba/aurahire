@@ -1513,6 +1513,46 @@
         ]
       }
     },
+    "/api/v1/applications/recruiter-stats": {
+      "get": {
+        "operationId": "ApplicationsController_recruiterStats_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "4-KPI dashboard summary for the current recruiter",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/recruiter-analytics": {
+      "get": {
+        "operationId": "ApplicationsController_recruiterAnalytics_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Recruiter-scoped analytics bundle: KPIs + top jobs by app count + status breakdown",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
     "/api/v1/applications/by-job/{jobId}": {
       "get": {
         "operationId": "ApplicationsController_listForJob_v1",

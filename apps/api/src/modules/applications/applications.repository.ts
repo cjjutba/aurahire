@@ -113,4 +113,90 @@ export class ApplicationsRepository {
       .where(eq(applicationsTable.candidateId, candidateId));
     return rows[0]?.count ?? 0;
   }
+
+  // ─── Recruiter dashboard stats ────────────────────────────────────────
+
+  async recruiterStats(recruiterId: string): Promise<{
+    activeJobs: number;
+    totalApplications: number;
+    pendingReviews: number;
+    avgMatchScore: number;
+  }> {
+    const [activeJobsRow] = await this.db
+      .select({ c: sql<number>`count(*)::int` })
+      .from(jobsTable)
+      .where(
+        and(
+          eq(jobsTable.recruiterId, recruiterId),
+          eq(jobsTable.status, "published"),
+        ),
+      );
+
+    const [appsRow] = await this.db
+      .select({
+        total: sql<number>`count(*)::int`,
+        pending: sql<number>`count(*) filter (where ${applicationsTable.status} = 'applied')::int`,
+      })
+      .from(applicationsTable)
+      .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .where(eq(jobsTable.recruiterId, recruiterId));
+
+    const [avgRow] = await this.db
+      .select({ avg: sql<number | null>`avg(${matchScoresTable.overallScore})::float` })
+      .from(matchScoresTable)
+      .innerJoin(jobsTable, eq(jobsTable.id, matchScoresTable.jobId))
+      .where(eq(jobsTable.recruiterId, recruiterId));
+
+    return {
+      activeJobs: activeJobsRow?.c ?? 0,
+      totalApplications: appsRow?.total ?? 0,
+      pendingReviews: appsRow?.pending ?? 0,
+      avgMatchScore: Math.round(avgRow?.avg ?? 0),
+    };
+  }
+
+  // ─── Recruiter analytics (top jobs + status breakdown) ────────────────
+
+  async recruiterTopJobsByApplications(
+    recruiterId: string,
+    limit: number,
+  ): Promise<Array<{ jobId: string; title: string; status: string; applicationCount: number; avgScore: number }>> {
+    const rows = await this.db
+      .select({
+        jobId: jobsTable.id,
+        title: jobsTable.title,
+        status: jobsTable.status,
+        applicationCount: sql<number>`count(distinct ${applicationsTable.id})::int`,
+        avgScore: sql<number | null>`avg(${matchScoresTable.overallScore})::float`,
+      })
+      .from(jobsTable)
+      .leftJoin(applicationsTable, eq(applicationsTable.jobId, jobsTable.id))
+      .leftJoin(matchScoresTable, eq(matchScoresTable.jobId, jobsTable.id))
+      .where(eq(jobsTable.recruiterId, recruiterId))
+      .groupBy(jobsTable.id, jobsTable.title, jobsTable.status)
+      .orderBy(desc(sql<number>`count(distinct ${applicationsTable.id})`))
+      .limit(limit);
+    return rows.map((r) => ({
+      jobId: r.jobId,
+      title: r.title,
+      status: r.status,
+      applicationCount: r.applicationCount,
+      avgScore: Math.round(r.avgScore ?? 0),
+    }));
+  }
+
+  async recruiterApplicationsByStatus(
+    recruiterId: string,
+  ): Promise<Array<{ status: string; count: number }>> {
+    const rows = await this.db
+      .select({
+        status: applicationsTable.status,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(applicationsTable)
+      .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .where(eq(jobsTable.recruiterId, recruiterId))
+      .groupBy(applicationsTable.status);
+    return rows;
+  }
 }

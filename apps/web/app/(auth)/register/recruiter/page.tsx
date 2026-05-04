@@ -1,14 +1,17 @@
 import Link from "next/link";
-import { AuthCard } from "@/components/auth/auth-card";
+
+import { AuthShell } from "@/components/auth/auth-shell";
+import { AuthRoleTag } from "@/components/auth/auth-role-tag";
 import { RegisterRecruiterForm } from "@/components/auth/register-recruiter-form";
 
 export const metadata = { title: "Sign Up as Recruiter" };
 
 export default function RegisterRecruiterPage() {
   return (
-    <AuthCard
+    <AuthShell
+      topSlot={<AuthRoleTag>Recruiter</AuthRoleTag>}
       title="Sign up as a recruiter"
-      description="Post jobs and find qualified candidates with bias mitigation built in."
+      subtitle="Post jobs and find qualified candidates with bias mitigation built in."
       footer={
         <span>
           Already have an account?{" "}
@@ -19,6 +22,6 @@ export default function RegisterRecruiterPage() {
       }
     >
       <RegisterRecruiterForm />
-    </AuthCard>
+    </AuthShell>
   );
 }

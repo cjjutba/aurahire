@@ -1,24 +1,25 @@
 import Link from "next/link";
-import { AuthCard } from "@/components/auth/auth-card";
+
+import { AuthShell } from "@/components/auth/auth-shell";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 
 export const metadata = { title: "Forgot Password" };
 
 export default function ForgotPasswordPage() {
   return (
-    <AuthCard
-      title="Reset your password"
-      description="We'll email you a link to set a new password."
+    <AuthShell
+      title="Forgot password"
+      subtitle="Enter your email and we'll send a reset link."
       footer={
         <span>
-          Remembered it?{" "}
+          Remember it?{" "}
           <Link href="/login" className="text-[var(--color-primary)] hover:underline">
-            Back to sign in
+            Sign in
           </Link>
         </span>
       }
     >
       <ForgotPasswordForm />
-    </AuthCard>
+    </AuthShell>
   );
 }

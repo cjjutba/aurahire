@@ -8047,6 +8047,378 @@ export function useApplicationsControllerListMineV1<
 }
 
 /**
+ * @summary 4-KPI dashboard summary for the current recruiter
+ */
+export type applicationsControllerRecruiterStatsV1Response200 = {
+  data: void;
+  status: 200;
+};
+
+export type applicationsControllerRecruiterStatsV1ResponseSuccess =
+  applicationsControllerRecruiterStatsV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerRecruiterStatsV1Response =
+  applicationsControllerRecruiterStatsV1ResponseSuccess;
+
+export const getApplicationsControllerRecruiterStatsV1Url = () => {
+  return `/api/v1/applications/recruiter-stats`;
+};
+
+export const applicationsControllerRecruiterStatsV1 = async (
+  options?: RequestInit,
+): Promise<applicationsControllerRecruiterStatsV1Response> => {
+  return fetcher<applicationsControllerRecruiterStatsV1Response>(
+    getApplicationsControllerRecruiterStatsV1Url(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getApplicationsControllerRecruiterStatsV1QueryKey = () => {
+  return [`/api/v1/applications/recruiter-stats`] as const;
+};
+
+export const getApplicationsControllerRecruiterStatsV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getApplicationsControllerRecruiterStatsV1QueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>
+  > = ({ signal }) =>
+    applicationsControllerRecruiterStatsV1({ signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ApplicationsControllerRecruiterStatsV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>
+>;
+export type ApplicationsControllerRecruiterStatsV1QueryError = unknown;
+
+export function useApplicationsControllerRecruiterStatsV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerRecruiterStatsV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerRecruiterStatsV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 4-KPI dashboard summary for the current recruiter
+ */
+
+export function useApplicationsControllerRecruiterStatsV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getApplicationsControllerRecruiterStatsV1QueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Recruiter-scoped analytics bundle: KPIs + top jobs by app count + status breakdown
+ */
+export type applicationsControllerRecruiterAnalyticsV1Response200 = {
+  data: void;
+  status: 200;
+};
+
+export type applicationsControllerRecruiterAnalyticsV1ResponseSuccess =
+  applicationsControllerRecruiterAnalyticsV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerRecruiterAnalyticsV1Response =
+  applicationsControllerRecruiterAnalyticsV1ResponseSuccess;
+
+export const getApplicationsControllerRecruiterAnalyticsV1Url = () => {
+  return `/api/v1/applications/recruiter-analytics`;
+};
+
+export const applicationsControllerRecruiterAnalyticsV1 = async (
+  options?: RequestInit,
+): Promise<applicationsControllerRecruiterAnalyticsV1Response> => {
+  return fetcher<applicationsControllerRecruiterAnalyticsV1Response>(
+    getApplicationsControllerRecruiterAnalyticsV1Url(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getApplicationsControllerRecruiterAnalyticsV1QueryKey = () => {
+  return [`/api/v1/applications/recruiter-analytics`] as const;
+};
+
+export const getApplicationsControllerRecruiterAnalyticsV1QueryOptions = <
+  TData = Awaited<
+    ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>
+  >,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getApplicationsControllerRecruiterAnalyticsV1QueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>>
+  > = ({ signal }) =>
+    applicationsControllerRecruiterAnalyticsV1({ signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ApplicationsControllerRecruiterAnalyticsV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>>
+>;
+export type ApplicationsControllerRecruiterAnalyticsV1QueryError = unknown;
+
+export function useApplicationsControllerRecruiterAnalyticsV1<
+  TData = Awaited<
+    ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>
+  >,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>
+          >,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerRecruiterAnalyticsV1<
+  TData = Awaited<
+    ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>
+  >,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>
+          >,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerRecruiterAnalyticsV1<
+  TData = Awaited<
+    ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>
+  >,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Recruiter-scoped analytics bundle: KPIs + top jobs by app count + status breakdown
+ */
+
+export function useApplicationsControllerRecruiterAnalyticsV1<
+  TData = Awaited<
+    ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>
+  >,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecruiterAnalyticsV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getApplicationsControllerRecruiterAnalyticsV1QueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary List applications for a job (recruiter must own it)
  */
 export type applicationsControllerListForJobV1Response200 = {

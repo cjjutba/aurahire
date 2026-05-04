@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { AuthCard } from "@/components/auth/auth-card";
+import { Briefcase, User } from "lucide-react";
+
+import { AuthShell } from "@/components/auth/auth-shell";
+import { AuthRoleCard } from "@/components/auth/auth-role-card";
 
 export const metadata = { title: "Create Account" };
 
 export default function RegisterPage() {
   return (
-    <AuthCard
+    <AuthShell
       title="Create your account"
-      description="Choose your role to get started."
+      subtitle="Choose your role to get started."
       footer={
         <span>
           Already have an account?{" "}
@@ -18,25 +21,19 @@ export default function RegisterPage() {
       }
     >
       <div className="space-y-3">
-        <Link
+        <AuthRoleCard
           href="/register/candidate"
-          className="block rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-4 transition hover:bg-[var(--color-surface-soft)]"
-        >
-          <h3 className="font-semibold text-[var(--color-ink)]">I&apos;m a Candidate</h3>
-          <p className="text-sm text-[var(--color-body)]">
-            Looking for jobs and tracking applications.
-          </p>
-        </Link>
-        <Link
+          icon={User}
+          title="I'm a Candidate"
+          description="Looking for jobs and tracking applications."
+        />
+        <AuthRoleCard
           href="/register/recruiter"
-          className="block rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-4 transition hover:bg-[var(--color-surface-soft)]"
-        >
-          <h3 className="font-semibold text-[var(--color-ink)]">I&apos;m a Recruiter</h3>
-          <p className="text-sm text-[var(--color-body)]">
-            Posting jobs and reviewing candidates.
-          </p>
-        </Link>
+          icon={Briefcase}
+          title="I'm a Recruiter"
+          description="Posting jobs and reviewing candidates."
+        />
       </div>
-    </AuthCard>
+    </AuthShell>
   );
 }
