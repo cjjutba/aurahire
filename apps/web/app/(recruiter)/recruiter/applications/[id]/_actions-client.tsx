@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toastSuccess, toastApiError } from "@/lib/toast";
+import { APPLICATION_STATUS_DISPLAY } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Textarea } from "@/components/ui/textarea";
@@ -70,7 +71,7 @@ export function ApplicationActionsClient({
         toastApiError(null, "Couldn't update status", "Please try again.");
         return;
       }
-      toastSuccess("Status updated", `Now in ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}.`);
+      toastSuccess("Status updated", `Now in ${APPLICATION_STATUS_DISPLAY[newStatus as keyof typeof APPLICATION_STATUS_DISPLAY] ?? newStatus}.`);
       router.refresh();
     } finally {
       setWorking(false);
