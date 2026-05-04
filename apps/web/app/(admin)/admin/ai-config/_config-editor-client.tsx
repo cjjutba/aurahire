@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -145,7 +145,7 @@ export function ConfigEditorClient({ initial }: Props) {
   }
   function removePiiField(field: string) {
     if (REQUIRED_PII_FIELDS.includes(field)) {
-      toast.error(`'${field}' is required and cannot be removed`);
+      toastApiError(null, "Check your input", `'${field}' is required and cannot be removed.`);
       return;
     }
     setPiiFields(piiFields.filter((f) => f !== field));
@@ -169,11 +169,11 @@ export function ConfigEditorClient({ initial }: Props) {
 
   async function save() {
     if (!allValid) {
-      toast.error("Fix validation errors before saving");
+      toastApiError(null, "Check your input", "Fix validation errors before saving.");
       return;
     }
     if (!dirty) {
-      toast.error("No changes to save");
+      toastApiError(null, "Couldn't save configuration", "No changes to save.");
       return;
     }
     setWorking(true);
@@ -194,12 +194,10 @@ export function ConfigEditorClient({ initial }: Props) {
         const body = (await res.json().catch(() => ({}))) as {
           message?: string;
         };
-        toast.error("Save failed", {
-          description: body.message ?? `HTTP ${res.status}`,
-        });
+        toastApiError(null, "Couldn't save configuration", body.message ?? `HTTP ${res.status}`);
         return;
       }
-      toast.success("Configuration saved");
+      toastSuccess("Configuration saved");
       router.refresh();
     } finally {
       setWorking(false);

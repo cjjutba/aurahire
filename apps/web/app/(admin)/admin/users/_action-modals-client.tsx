@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
+import { USER_ROLE_DISPLAY } from "@/lib/labels";
 import {
   Dialog,
   DialogContent,
@@ -85,7 +86,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
 
   async function suspend() {
     if (reason.trim().length < 10) {
-      toast.error("Reason must be at least 10 characters");
+      toastApiError(null, "Reason must be at least 10 characters");
       return;
     }
     setWorking(true);
@@ -102,10 +103,10 @@ export function ActionModalsClient({ action, onClose }: Props) {
         const body = (await res.json().catch(() => ({}))) as {
           message?: string;
         };
-        toast.error("Suspend failed", { description: body.message });
+        toastApiError(null, "Couldn't suspend user", body.message);
         return;
       }
-      toast.success("User suspended");
+      toastSuccess("User suspended");
       router.refresh();
       onClose();
     } finally {
@@ -121,10 +122,10 @@ export function ActionModalsClient({ action, onClose }: Props) {
         { method: "POST" },
       );
       if (!res.ok) {
-        toast.error("Reactivate failed");
+        toastApiError(null, "Couldn't reactivate user");
         return;
       }
-      toast.success("User reactivated");
+      toastSuccess("User reactivated");
       router.refresh();
       onClose();
     } finally {
@@ -134,7 +135,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
 
   async function changeRole() {
     if (newRole === user.role) {
-      toast.error("Pick a different role");
+      toastApiError(null, "Pick a different role");
       return;
     }
     setWorking(true);
@@ -148,10 +149,10 @@ export function ActionModalsClient({ action, onClose }: Props) {
         const body = (await res.json().catch(() => ({}))) as {
           message?: string;
         };
-        toast.error("Role change failed", { description: body.message });
+        toastApiError(null, "Couldn't change role", body.message);
         return;
       }
-      toast.success(`Role changed to ${newRole}`);
+      toastSuccess("User role changed", `Now ${USER_ROLE_DISPLAY[newRole as keyof typeof USER_ROLE_DISPLAY] ?? newRole}.`);
       router.refresh();
       onClose();
     } finally {
@@ -161,7 +162,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
 
   async function deleteUser() {
     if (emailConfirm !== user.email) {
-      toast.error("Email confirmation does not match");
+      toastApiError(null, "Email confirmation does not match");
       return;
     }
     setWorking(true);
@@ -173,10 +174,10 @@ export function ActionModalsClient({ action, onClose }: Props) {
         const body = (await res.json().catch(() => ({}))) as {
           message?: string;
         };
-        toast.error("Delete failed", { description: body.message });
+        toastApiError(null, "Couldn't delete user", body.message);
         return;
       }
-      toast.success("User deleted");
+      toastSuccess("User deleted");
       router.refresh();
       onClose();
     } finally {
@@ -192,18 +193,14 @@ export function ActionModalsClient({ action, onClose }: Props) {
         { method: "POST" },
       );
       if (!res.ok) {
-        toast.error("Reset failed");
+        toastApiError(null, "Couldn't send reset link");
         return;
       }
       const body = (await res.json()) as {
         data: { resetUrl: string; emailSent: boolean };
       };
       setResetUrl(body.data.resetUrl);
-      toast.success(
-        body.data.emailSent
-          ? "Reset email sent + URL ready"
-          : "Reset URL ready (email failed)",
-      );
+      toastSuccess("Reset link sent");
     } finally {
       setWorking(false);
     }
@@ -400,7 +397,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
                   <Button
                     onClick={() => {
                       void navigator.clipboard.writeText(resetUrl);
-                      toast.success("Copied");
+                      toastSuccess("URL copied");
                     }}
                     className="rounded-[var(--radius-pill)] bg-[var(--color-primary)]"
                   >

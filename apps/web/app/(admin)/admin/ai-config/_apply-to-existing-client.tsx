@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
@@ -62,7 +62,7 @@ export function ApplyToExistingClient() {
     try {
       const res = await authedFetch(`/api/v1/admin/queue/jobs/${queueJobId}/status`);
       if (!res.ok) {
-        toast.error("Status check failed");
+        toastApiError(null, "Couldn't start rescore");
         stopPolling();
         return;
       }
@@ -72,23 +72,17 @@ export function ApplyToExistingClient() {
       if (body.data.state === "completed") {
         stopPolling();
         const r = body.data.result;
-        toast.success(
-          `Re-score complete: ${r?.processedCount ?? 0} processed, ${r?.skippedCount ?? 0} skipped, ${r?.failedCount ?? 0} failed in ${r?.durationMs ?? 0}ms`,
-        );
+        toastSuccess("Rescore complete", `${r?.processedCount ?? 0} applications updated.`);
       } else if (body.data.state === "failed") {
         stopPolling();
-        toast.error("Re-score failed", {
-          description: body.data.failedReason ?? "(no reason)",
-        });
+        toastApiError(null, "Couldn't complete rescore", body.data.failedReason ?? "(no reason)");
       } else if (body.data.state === "unknown") {
         stopPolling();
-        toast.warning("Job status unavailable", {
-          description: "Check the audit log for completion details.",
-        });
+        toastApiError(null, "Couldn't complete rescore", "Check the audit log for completion details.");
       }
     } catch (err) {
       stopPolling();
-      toast.error("Polling error", { description: (err as Error).message });
+      toastApiError(err, "Couldn't complete rescore");
     }
   }
 
@@ -110,12 +104,8 @@ export function ApplyToExistingClient() {
         body: JSON.stringify({ sampleSize: DEFAULT_SAMPLE_SIZE }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        toast.error("Enqueue failed", {
-          description:
-            (body as { message?: string }).message ??
-            "Queue may be unavailable — verify Redis is running",
-        });
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        toastApiError(null, "Couldn't queue rescore", body.message ?? "Queue may be unavailable. Verify Redis is running.");
         return;
       }
       const body = (await res.json()) as {
@@ -131,7 +121,7 @@ export function ApplyToExistingClient() {
         failedReason: null,
       };
       setStatus(initialStatus);
-      toast.success("Re-score enqueued");
+      toastSuccess("Rescore queued");
 
       stopPolling();
       void pollOnce(body.data.queueJobId);

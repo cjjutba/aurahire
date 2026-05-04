@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import {
   Sheet,
   SheetContent,
@@ -82,7 +82,7 @@ export function JobDetailSheetClient({ jobId, open, onClose }: Props) {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in again");
+        toastApiError(null, "Couldn't archive job", "Please sign in again.");
         return;
       }
       const apiUrl =
@@ -95,10 +95,10 @@ export function JobDetailSheetClient({ jobId, open, onClose }: Props) {
         },
       );
       if (!res.ok) {
-        toast.error("Archive failed");
+        toastApiError(null, "Couldn't archive job");
         return;
       }
-      toast.success("Job archived");
+      toastSuccess("Job archived");
       router.refresh();
       onClose();
     } finally {

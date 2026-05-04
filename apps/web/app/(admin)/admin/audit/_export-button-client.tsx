@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
@@ -22,7 +22,7 @@ export function ExportButtonClient({ currentParams }: Props) {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in");
+        toastApiError(null, "Couldn't export audit log", "Please sign in again.");
         return;
       }
       const apiUrl =
@@ -40,13 +40,11 @@ export function ExportButtonClient({ currentParams }: Props) {
       );
 
       if (res.status === 413) {
-        toast.error("Export too large", {
-          description: "Narrow filters and try again.",
-        });
+        toastApiError(null, "Couldn't export audit log", "Narrow filters and try again.");
         return;
       }
       if (!res.ok) {
-        toast.error("Export failed", { description: `HTTP ${res.status}` });
+        toastApiError(null, "Couldn't export audit log", `HTTP ${res.status}`);
         return;
       }
 
@@ -64,7 +62,7 @@ export function ExportButtonClient({ currentParams }: Props) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast.success("Export downloaded");
+      toastSuccess("Audit log exported", "Download started.");
     } finally {
       setWorking(false);
     }
