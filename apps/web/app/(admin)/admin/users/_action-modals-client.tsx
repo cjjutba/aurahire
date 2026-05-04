@@ -70,6 +70,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
   const [resetUrl, setResetUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset when action target changes
     setReason("");
     setEmailConfirm("");
     setResetUrl(null);
@@ -321,7 +322,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
             <DialogHeader>
               <DialogTitle>Delete {user.fullName}?</DialogTitle>
               <DialogDescription>
-                This soft-deletes the profile (status='deleted') and removes
+                This soft-deletes the profile (status=&apos;deleted&apos;) and removes
                 the auth.users row. Their data persists for audit. Type{" "}
                 <strong>{user.email}</strong> to confirm.
               </DialogDescription>

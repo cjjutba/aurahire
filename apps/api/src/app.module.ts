@@ -25,6 +25,8 @@ import { ResumesModule } from "./modules/resumes/resumes.module";
 import { ScoringModule } from "./modules/scoring/scoring.module";
 import { ApplicationsModule } from "./modules/applications/applications.module";
 import { BiasModule } from "./modules/bias/bias.module";
+import { InterviewsModule } from "./modules/interviews/interviews.module";
+import { OffersModule } from "./modules/offers/offers.module";
 import { AdminModule } from "./modules/admin/admin.module";
 import { QueueModule } from "./queue";
 import { CronModule } from "./cron";
@@ -110,6 +112,8 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     ScoringModule,
     ApplicationsModule,
     BiasModule,
+    InterviewsModule,
+    OffersModule,
     AdminModule,
     HealthModule,
     AuthModule,

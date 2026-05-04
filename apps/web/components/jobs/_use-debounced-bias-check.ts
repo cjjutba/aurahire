@@ -26,6 +26,7 @@ export function useDebouncedBiasCheck(descriptionPlain: string): {
 
   useEffect(() => {
     if (!descriptionPlain || descriptionPlain.length < MIN_LENGTH) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset when input drops below threshold
       setFlags([]);
       setScanning(false);
       return;

@@ -22,7 +22,7 @@ export default function RegisterPage() {
           href="/register/candidate"
           className="block rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-4 transition hover:bg-[var(--color-surface-soft)]"
         >
-          <h3 className="font-semibold text-[var(--color-ink)]">I'm a Candidate</h3>
+          <h3 className="font-semibold text-[var(--color-ink)]">I&apos;m a Candidate</h3>
           <p className="text-sm text-[var(--color-body)]">
             Looking for jobs and tracking applications.
           </p>
@@ -31,7 +31,7 @@ export default function RegisterPage() {
           href="/register/recruiter"
           className="block rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-4 transition hover:bg-[var(--color-surface-soft)]"
         >
-          <h3 className="font-semibold text-[var(--color-ink)]">I'm a Recruiter</h3>
+          <h3 className="font-semibold text-[var(--color-ink)]">I&apos;m a Recruiter</h3>
           <p className="text-sm text-[var(--color-body)]">
             Posting jobs and reviewing candidates.
           </p>

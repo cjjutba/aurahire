@@ -311,6 +311,50 @@ export class ApplicationsService {
     return this.toDto(id);
   }
 
+  /**
+   * System-initiated status transition (used by OffersService when an offer
+   * is sent or accepted). Bypasses the recruiter role check + state-machine
+   * guard since the action is driven by an offer event, not direct UI action.
+   * Still audits + notifies the candidate so the trail stays complete.
+   */
+  async transitionFromSystem(
+    actor: AuthUser,
+    id: string,
+    newStatus: ApplicationStatus,
+    note: string,
+    requestMeta: RequestMeta = {},
+  ): Promise<ApplicationDto> {
+    const app = await this.repo.findById(id);
+    if (!app) {
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+    }
+    if (app.status === newStatus) {
+      return this.toDto(id);
+    }
+
+    await this.repo.update(id, {
+      status: newStatus,
+      statusUpdatedAt: new Date(),
+      recruiterNotes: this.appendNote(app.recruiterNotes, note),
+    });
+
+    await this.audit.log({
+      actorId: actor.id,
+      actorType: "user",
+      action: "application.status_changed",
+      entityType: "application",
+      entityId: id,
+      details: { from: app.status, to: newStatus, note, system: true },
+      ...requestMeta,
+    });
+
+    void this.notifyCandidateOfStatusChange(id, app.status, newStatus).catch((err) => {
+      this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
+    });
+
+    return this.toDto(id);
+  }
+
   async withdraw(
     user: AuthUser,
     id: string,

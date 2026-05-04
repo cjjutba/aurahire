@@ -6,6 +6,14 @@ import { MatchBandChip } from "@/components/score/match-band-chip";
 import { ScoreBreakdownBar } from "@/components/score/score-breakdown-bar";
 import { EvidenceCallout } from "@/components/score/evidence-callout";
 import { ApplicationActionsClient } from "./_actions-client";
+import {
+  RecruiterInterviewsSection,
+  type InterviewRow,
+} from "./_interviews-section-client";
+import {
+  RecruiterOffersSection,
+  type OfferRow,
+} from "./_offers-section";
 
 const COMPONENT_LABELS: Record<string, string> = {
   skills: "Skills",
@@ -68,10 +76,18 @@ export default async function RecruiterApplicationDetailPage({ params }: PagePro
   if (!session) redirect("/login");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-  const res = await fetch(`${apiUrl}/api/v1/applications/${id}`, {
-    headers: { Authorization: `Bearer ${session.access_token}` },
-    cache: "no-store",
-  });
+  const authHeaders = { Authorization: `Bearer ${session.access_token}` };
+  const [res, interviewsRes, offersRes] = await Promise.all([
+    fetch(`${apiUrl}/api/v1/applications/${id}`, { headers: authHeaders, cache: "no-store" }),
+    fetch(`${apiUrl}/api/v1/applications/${id}/interviews`, {
+      headers: authHeaders,
+      cache: "no-store",
+    }),
+    fetch(`${apiUrl}/api/v1/applications/${id}/offers`, {
+      headers: authHeaders,
+      cache: "no-store",
+    }),
+  ]);
 
   if (res.status === 404) notFound();
   if (!res.ok) {
@@ -81,6 +97,13 @@ export default async function RecruiterApplicationDetailPage({ params }: PagePro
   const body = (await res.json()) as { data: AppDetail };
   const app = body.data;
   const score = app.matchScore;
+
+  const interviews: InterviewRow[] = interviewsRes.ok
+    ? ((await interviewsRes.json()) as { data: InterviewRow[] }).data
+    : [];
+  const offers: OfferRow[] = offersRes.ok
+    ? ((await offersRes.json()) as { data: OfferRow[] }).data
+    : [];
 
   return (
     <div className="mx-auto max-w-[1280px] space-y-12">
@@ -210,6 +233,10 @@ export default async function RecruiterApplicationDetailPage({ params }: PagePro
           </div>
         </section>
       )}
+
+      <RecruiterInterviewsSection applicationId={app.id} interviews={interviews} />
+
+      <RecruiterOffersSection applicationId={app.id} offers={offers} />
 
       <ApplicationActionsClient
         applicationId={app.id}

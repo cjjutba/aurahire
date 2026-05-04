@@ -95,6 +95,7 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
   const createMutation = useJobsControllerCreateV1();
   const updateMutation = useJobsControllerUpdateV1();
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- RHF watch() drives bias-debounce; structural integration
   const descriptionPlainValue = form.watch("descriptionPlain") ?? "";
   const { flags: biasFlags, scanning: biasScanning } =
     useDebouncedBiasCheck(descriptionPlainValue);

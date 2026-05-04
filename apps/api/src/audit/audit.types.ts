@@ -38,8 +38,17 @@ export const AUDIT_ACTIONS = {
   SCORING_CONFIG_UPDATED: "scoring_config.updated",
   SCORE_MATCH_RECOMPUTED: "score.match.recomputed",
   QUEUE_RESCORE_BATCH_ENQUEUED: "queue.rescore_batch.enqueued",
-  // Cron-driven housekeeping
+  // Interviews
+  INTERVIEW_SCHEDULED: "interview.scheduled",
+  INTERVIEW_FEEDBACK_UPDATED: "interview.feedback_updated",
+  INTERVIEW_STATUS_CHANGED: "interview.status_changed",
+  // Offers
+  OFFER_SENT: "offer.sent",
+  OFFER_ACCEPTED: "offer.accepted",
+  OFFER_DECLINED: "offer.declined",
+  OFFER_WITHDRAWN: "offer.withdrawn",
   OFFER_EXPIRED: "offer.expired",
+  // Cron-driven housekeeping
   JOB_ARCHIVED_BY_CRON: "job.archived_by_cron",
   USER_DELETED_UNVERIFIED_CLEANUP: "user.deleted_unverified_cleanup",
   CRON_EXPIRE_OFFERS_EXECUTED: "cron.expire_offers.executed",

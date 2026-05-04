@@ -83,6 +83,7 @@ export function PreviewImpactModalClient({
 
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on close
       setData(null);
       setError(null);
       return;

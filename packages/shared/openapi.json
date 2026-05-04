@@ -1753,6 +1753,460 @@
         ]
       }
     },
+    "/api/v1/applications/{applicationId}/interviews": {
+      "post": {
+        "operationId": "InterviewsController_schedule_v1",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleInterviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Schedule an interview for an application (recruiter must own the job)",
+        "tags": [
+          "interviews"
+        ]
+      },
+      "get": {
+        "operationId": "InterviewsController_listForApplication_v1",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List interviews for an application (auth-scoped)",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/interviews/mine": {
+      "get": {
+        "operationId": "InterviewsController_listMine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List candidate's own interviews",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/interviews/by-recruiter/me": {
+      "get": {
+        "operationId": "InterviewsController_listForRecruiter_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all interviews for jobs the recruiter owns",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/interviews/{id}/feedback": {
+      "patch": {
+        "operationId": "InterviewsController_updateFeedback_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInterviewFeedbackDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update interview feedback + rating",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/interviews/{id}/status": {
+      "patch": {
+        "operationId": "InterviewsController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInterviewStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change interview status (cancel / mark completed / no-show)",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/applications/{applicationId}/offers": {
+      "post": {
+        "operationId": "OffersController_create_v1",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOfferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferEnvelopeDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "OFFER_ALREADY_PENDING"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send an offer for an application",
+        "tags": [
+          "offers"
+        ]
+      },
+      "get": {
+        "operationId": "OffersController_listForApplication_v1",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List offers for an application (auth-scoped)",
+        "tags": [
+          "offers"
+        ]
+      }
+    },
+    "/api/v1/offers/mine": {
+      "get": {
+        "operationId": "OffersController_listMine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List candidate's own offers",
+        "tags": [
+          "offers"
+        ]
+      }
+    },
+    "/api/v1/offers/{id}/accept": {
+      "post": {
+        "operationId": "OffersController_accept_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Candidate accepts a pending offer (auto-advances application → hired)",
+        "tags": [
+          "offers"
+        ]
+      }
+    },
+    "/api/v1/offers/{id}/decline": {
+      "post": {
+        "operationId": "OffersController_decline_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeclineOfferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Candidate declines a pending offer (optional reason)",
+        "tags": [
+          "offers"
+        ]
+      }
+    },
+    "/api/v1/offers/{id}/withdraw": {
+      "post": {
+        "operationId": "OffersController_withdraw_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Recruiter withdraws a pending offer",
+        "tags": [
+          "offers"
+        ]
+      }
+    },
     "/api/v1/admin/stats/overview": {
       "get": {
         "operationId": "AdminStatsController_overview_v1",
@@ -5140,6 +5594,325 @@
         "required": [
           "data"
         ]
+      },
+      "ScheduleInterviewDto": {
+        "type": "object",
+        "properties": {
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "minimum": 15,
+            "exclusiveMinimum": false,
+            "maximum": 240,
+            "exclusiveMaximum": false,
+            "default": 60
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "phone",
+              "video",
+              "in-person"
+            ]
+          },
+          "locationOrLink": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "nullable": true
+          }
+        },
+        "required": [
+          "scheduledAt",
+          "format"
+        ]
+      },
+      "InterviewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "applicationId": {
+            "type": "string"
+          },
+          "scheduledBy": {
+            "type": "string"
+          },
+          "scheduledAt": {
+            "type": "string"
+          },
+          "durationMinutes": {
+            "type": "number"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "phone",
+              "video",
+              "in-person"
+            ]
+          },
+          "locationOrLink": {
+            "type": "object",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "completed",
+              "cancelled",
+              "no-show"
+            ]
+          },
+          "feedback": {
+            "type": "object",
+            "nullable": true
+          },
+          "rating": {
+            "type": "number",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "applicationId",
+          "scheduledBy",
+          "scheduledAt",
+          "durationMinutes",
+          "format",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "InterviewEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/InterviewDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "InterviewListEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterviewDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "UpdateInterviewFeedbackDto": {
+        "type": "object",
+        "properties": {
+          "feedback": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "rating": {
+            "type": "integer",
+            "minimum": 1,
+            "exclusiveMinimum": false,
+            "maximum": 5,
+            "exclusiveMaximum": false,
+            "nullable": true
+          }
+        },
+        "required": [
+          "feedback"
+        ]
+      },
+      "UpdateInterviewStatusDto": {
+        "type": "object",
+        "properties": {
+          "newStatus": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "completed",
+              "cancelled",
+              "no-show"
+            ]
+          }
+        },
+        "required": [
+          "newStatus"
+        ]
+      },
+      "CreateOfferDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "salary": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 10000000,
+            "exclusiveMaximum": false
+          },
+          "salaryCurrency": {
+            "type": "string",
+            "default": "USD"
+          },
+          "startDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "managerName": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true
+          },
+          "benefitsSummary": {
+            "type": "string",
+            "maxLength": 2000,
+            "nullable": true
+          },
+          "customMessage": {
+            "type": "string",
+            "maxLength": 2000,
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "title",
+          "salary",
+          "startDate"
+        ]
+      },
+      "OfferDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "applicationId": {
+            "type": "string"
+          },
+          "sentBy": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "salary": {
+            "type": "number"
+          },
+          "salaryCurrency": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "managerName": {
+            "type": "object",
+            "nullable": true
+          },
+          "benefitsSummary": {
+            "type": "object",
+            "nullable": true
+          },
+          "customMessage": {
+            "type": "object",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "declined",
+              "expired",
+              "withdrawn"
+            ]
+          },
+          "sentAt": {
+            "type": "string"
+          },
+          "respondedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "applicationId",
+          "sentBy",
+          "title",
+          "salary",
+          "salaryCurrency",
+          "startDate",
+          "status",
+          "sentAt"
+        ]
+      },
+      "OfferEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/OfferDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "OfferListEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OfferDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "DeclineOfferDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true
+          }
+        }
       },
       "AdminStatBlockDto": {
         "type": "object",

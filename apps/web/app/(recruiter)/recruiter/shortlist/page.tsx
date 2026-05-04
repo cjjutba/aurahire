@@ -11,7 +11,7 @@ export default function RecruiterShortlistPage() {
           Shortlist
         </h1>
         <p className="mt-1 text-sm text-[var(--color-body)]">
-          Candidates you've shortlisted across jobs.
+          Candidates you&apos;ve shortlisted across jobs.
         </p>
       </header>
       <EmptyState

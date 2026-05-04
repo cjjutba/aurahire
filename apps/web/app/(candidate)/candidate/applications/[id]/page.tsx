@@ -6,6 +6,49 @@ import { MatchBandChip } from "@/components/score/match-band-chip";
 import { ScoreBreakdownBar } from "@/components/score/score-breakdown-bar";
 import { EvidenceCallout } from "@/components/score/evidence-callout";
 import { WithdrawButtonClient } from "./_withdraw-button-client";
+import { OfferActionsClient } from "./_offer-actions-client";
+
+interface InterviewRow {
+  id: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  format: string;
+  status: string;
+  locationOrLink: string | null;
+}
+
+interface OfferRow {
+  id: string;
+  status: string;
+  title: string;
+  salary: number;
+  salaryCurrency: string;
+  startDate: string;
+  managerName: string | null;
+  benefitsSummary: string | null;
+  customMessage: string | null;
+  expiresAt: string | null;
+  sentAt: string;
+  respondedAt: string | null;
+}
+
+const INTERVIEW_FORMAT_LABELS: Record<string, string> = {
+  phone: "Phone",
+  video: "Video",
+  "in-person": "In-Person",
+};
+
+function formatSalary(value: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(value);
+  } catch {
+    return `${currency} ${value.toLocaleString()}`;
+  }
+}
 
 const COMPONENT_LABELS: Record<string, string> = {
   skills: "Skills",
@@ -63,10 +106,18 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
   if (!session) redirect("/login");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-  const res = await fetch(`${apiUrl}/api/v1/applications/${id}`, {
-    headers: { Authorization: `Bearer ${session.access_token}` },
-    cache: "no-store",
-  });
+  const authHeaders = { Authorization: `Bearer ${session.access_token}` };
+  const [res, interviewsRes, offersRes] = await Promise.all([
+    fetch(`${apiUrl}/api/v1/applications/${id}`, { headers: authHeaders, cache: "no-store" }),
+    fetch(`${apiUrl}/api/v1/applications/${id}/interviews`, {
+      headers: authHeaders,
+      cache: "no-store",
+    }),
+    fetch(`${apiUrl}/api/v1/applications/${id}/offers`, {
+      headers: authHeaders,
+      cache: "no-store",
+    }),
+  ]);
 
   if (res.status === 404) notFound();
   if (!res.ok) {
@@ -77,6 +128,15 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
   const app = body.data;
   const score = app.matchScore;
   const canWithdraw = !["hired", "rejected", "withdrawn"].includes(app.status);
+
+  const interviews: InterviewRow[] = interviewsRes.ok
+    ? ((await interviewsRes.json()) as { data: InterviewRow[] }).data
+    : [];
+  const offers: OfferRow[] = offersRes.ok
+    ? ((await offersRes.json()) as { data: OfferRow[] }).data
+    : [];
+  const pendingOffer = offers.find((o) => o.status === "pending") ?? null;
+  const pastOffers = offers.filter((o) => o.status !== "pending");
 
   return (
     <div className="mx-auto max-w-[1024px] space-y-12">
@@ -198,6 +258,135 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
               )}
             </section>
           ))}
+
+          {pendingOffer && (
+            <section className="space-y-4 rounded-[var(--radius-lg)] border-2 border-[var(--color-primary)] bg-[var(--color-primary-soft)] p-6">
+              <header>
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-primary)]">
+                  Offer Extended
+                </h2>
+                <p className="mt-2 text-xl font-semibold text-[var(--color-ink)]">
+                  {pendingOffer.title}
+                </p>
+              </header>
+              <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+                    Salary
+                  </dt>
+                  <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">
+                    {formatSalary(pendingOffer.salary, pendingOffer.salaryCurrency)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+                    Start date
+                  </dt>
+                  <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">
+                    {pendingOffer.startDate}
+                  </dd>
+                </div>
+                {pendingOffer.managerName && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+                      Hiring manager
+                    </dt>
+                    <dd className="mt-1 text-base text-[var(--color-ink)]">
+                      {pendingOffer.managerName}
+                    </dd>
+                  </div>
+                )}
+                {pendingOffer.expiresAt && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+                      Respond by
+                    </dt>
+                    <dd className="mt-1 text-base text-[var(--color-ink)]">
+                      {new Date(pendingOffer.expiresAt).toLocaleDateString()}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+              {pendingOffer.benefitsSummary && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Benefits
+                  </h3>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-[var(--color-body)]">
+                    {pendingOffer.benefitsSummary}
+                  </p>
+                </div>
+              )}
+              {pendingOffer.customMessage && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Note from the recruiter
+                  </h3>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-[var(--color-body)]">
+                    {pendingOffer.customMessage}
+                  </p>
+                </div>
+              )}
+              <OfferActionsClient offer={pendingOffer} />
+            </section>
+          )}
+
+          {pastOffers.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Offer history
+              </h2>
+              <ul className="space-y-2">
+                {pastOffers.map((o) => (
+                  <li
+                    key={o.id}
+                    className="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-3 text-sm"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <strong className="text-[var(--color-ink)]">{o.title}</strong>
+                      <span className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+                        {o.status}
+                      </span>
+                    </div>
+                    <p className="mt-1 font-mono text-xs text-[var(--color-body)]">
+                      {formatSalary(o.salary, o.salaryCurrency)} · {o.startDate}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {interviews.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Interviews
+              </h2>
+              <ul className="space-y-2">
+                {interviews.map((i) => (
+                  <li
+                    key={i.id}
+                    className="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-3 text-sm"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <strong className="text-[var(--color-ink)]">
+                        {new Date(i.scheduledAt).toLocaleString()}
+                      </strong>
+                      <span className="text-xs text-[var(--color-muted)]">
+                        {INTERVIEW_FORMAT_LABELS[i.format] ?? i.format} · {i.durationMinutes} min ·{" "}
+                        {i.status}
+                      </span>
+                    </div>
+                    {i.locationOrLink && (
+                      <p className="mt-1 break-all text-xs text-[var(--color-body)]">
+                        {i.locationOrLink}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <section className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-6">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">

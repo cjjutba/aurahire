@@ -48,7 +48,7 @@ export function ForgotPasswordForm() {
       <div className="text-sm text-[var(--color-body)]">
         <p className="mb-2 font-semibold text-[var(--color-ink)]">Check your email</p>
         <p>
-          If an account exists for that address, we've sent a password reset link. The link
+          If an account exists for that address, we&apos;ve sent a password reset link. The link
           expires in 1 hour.
         </p>
       </div>

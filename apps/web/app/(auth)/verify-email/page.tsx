@@ -29,6 +29,7 @@ export default function VerifyEmailPage() {
 
     const token = searchParams.get("token");
     if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot guard via ranRef
       setStatus("error");
       setErrorMessage("Verification link is missing its token.");
       return;

@@ -1,0 +1,118 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Req,
+} from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import type { FastifyRequest } from "fastify";
+import type { AuthUser } from "@aurahire/shared";
+
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { Roles } from "../../common/decorators/roles.decorator";
+
+import { ScheduleInterviewDto } from "./dto/schedule-interview.dto";
+import { UpdateInterviewFeedbackDto } from "./dto/update-interview-feedback.dto";
+import { UpdateInterviewStatusDto } from "./dto/update-interview-status.dto";
+import {
+  InterviewEnvelopeDto,
+  InterviewListEnvelopeDto,
+} from "./dto/interview-response.dto";
+import { InterviewsService } from "./interviews.service";
+
+@ApiTags("interviews")
+@ApiBearerAuth()
+@Controller()
+export class InterviewsController {
+  constructor(private readonly service: InterviewsService) {}
+
+  @Post("applications/:applicationId/interviews")
+  @Roles("recruiter")
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: "Schedule an interview for an application (recruiter must own the job)" })
+  @ApiResponse({ status: 201, type: InterviewEnvelopeDto })
+  async schedule(
+    @CurrentUser() user: AuthUser,
+    @Param("applicationId") applicationId: string,
+    @Body() dto: ScheduleInterviewDto,
+    @Req() req: FastifyRequest,
+  ): Promise<InterviewEnvelopeDto> {
+    const data = await this.service.schedule(user, applicationId, dto, this.requestMeta(req));
+    return { data };
+  }
+
+  @Get("interviews/mine")
+  @Roles("candidate")
+  @ApiOperation({ summary: "List candidate's own interviews" })
+  @ApiResponse({ status: 200, type: InterviewListEnvelopeDto })
+  async listMine(@CurrentUser() user: AuthUser): Promise<InterviewListEnvelopeDto> {
+    const data = await this.service.listMine(user);
+    return { data };
+  }
+
+  @Get("interviews/by-recruiter/me")
+  @Roles("recruiter")
+  @ApiOperation({ summary: "List all interviews for jobs the recruiter owns" })
+  @ApiResponse({ status: 200, type: InterviewListEnvelopeDto })
+  async listForRecruiter(@CurrentUser() user: AuthUser): Promise<InterviewListEnvelopeDto> {
+    const data = await this.service.listForRecruiter(user);
+    return { data };
+  }
+
+  @Get("applications/:applicationId/interviews")
+  @Roles("candidate", "recruiter", "admin")
+  @ApiOperation({ summary: "List interviews for an application (auth-scoped)" })
+  @ApiResponse({ status: 200, type: InterviewListEnvelopeDto })
+  async listForApplication(
+    @CurrentUser() user: AuthUser,
+    @Param("applicationId") applicationId: string,
+  ): Promise<InterviewListEnvelopeDto> {
+    const data = await this.service.listForApplication(user, applicationId);
+    return { data };
+  }
+
+  @Patch("interviews/:id/feedback")
+  @Roles("recruiter")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Update interview feedback + rating" })
+  @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
+  async updateFeedback(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+    @Body() dto: UpdateInterviewFeedbackDto,
+    @Req() req: FastifyRequest,
+  ): Promise<InterviewEnvelopeDto> {
+    const data = await this.service.updateFeedback(user, id, dto, this.requestMeta(req));
+    return { data };
+  }
+
+  @Patch("interviews/:id/status")
+  @Roles("recruiter")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Change interview status (cancel / mark completed / no-show)" })
+  @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
+  async updateStatus(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+    @Body() dto: UpdateInterviewStatusDto,
+    @Req() req: FastifyRequest,
+  ): Promise<InterviewEnvelopeDto> {
+    const data = await this.service.updateStatus(user, id, dto, this.requestMeta(req));
+    return { data };
+  }
+
+  private requestMeta(req: FastifyRequest): {
+    ipAddress: string | null;
+    userAgent: string | null;
+  } {
+    return {
+      ipAddress: req.ip ?? null,
+      userAgent: (req.headers["user-agent"] as string | undefined) ?? null,
+    };
+  }
+}
