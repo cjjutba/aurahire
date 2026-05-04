@@ -401,7 +401,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
                   <Button
                     onClick={() => {
                       void navigator.clipboard.writeText(resetUrl);
-                      toastSuccess("URL copied");
+                      toastSuccess("Copied to clipboard", "Reset URL.");
                     }}
                     className="rounded-[var(--radius-pill)] bg-[var(--color-primary)]"
                   >

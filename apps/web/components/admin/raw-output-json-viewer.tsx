@@ -20,7 +20,7 @@ export function RawOutputJsonViewer({
 
   function copy() {
     void navigator.clipboard.writeText(json);
-    toastSuccess("Copied JSON");
+    toastSuccess("Copied to clipboard", "JSON payload.");
   }
 
   return (
