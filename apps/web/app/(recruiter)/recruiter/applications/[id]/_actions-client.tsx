@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,10 +67,10 @@ export function ApplicationActionsClient({
         body: JSON.stringify({ newStatus }),
       });
       if (!res.ok) {
-        toast.error("Status change failed");
+        toastApiError(null, "Couldn't update status", "Please try again.");
         return;
       }
-      toast.success(`Moved to ${newStatus}`);
+      toastSuccess("Status updated", `Now in ${newStatus}.`);
       router.refresh();
     } finally {
       setWorking(false);
@@ -86,10 +86,10 @@ export function ApplicationActionsClient({
         body: JSON.stringify({ notes: notes || null }),
       });
       if (!res.ok) {
-        toast.error("Save notes failed");
+        toastApiError(null, "Couldn't save notes", "Please try again.");
         return;
       }
-      toast.success("Notes saved");
+      toastSuccess("Notes saved");
     } finally {
       setWorking(false);
     }
@@ -105,7 +105,7 @@ export function ApplicationActionsClient({
         },
       );
       if (!res.ok) {
-        toast.error("Download failed");
+        toastApiError(null, "Couldn't download", "Please try again.");
         return;
       }
       const body = (await res.json()) as { data: { signedUrl: string } };

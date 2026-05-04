@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import { createJobSchema, type CreateJobInput } from "@aurahire/shared";
 import {
@@ -114,11 +114,7 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
 
       const parsed = createJobSchema.safeParse(payload);
       if (!parsed.success) {
-        toast.error("Validation failed", {
-          description: parsed.error.errors
-            .map((e) => `${e.path.join(".")}: ${e.message}`)
-            .join("; "),
-        });
+        toastApiError(null, "Check your input", parsed.error.errors.map((e) => e.message).join(", "));
         return;
       }
 
@@ -136,11 +132,11 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
         jobIdResult = res.data.id;
       }
 
-      toast.success(isEdit ? "Job updated" : "Job created");
+      toastSuccess(isEdit ? "Job updated" : "Job created");
       router.push(`/recruiter/jobs/${jobIdResult}`);
       router.refresh();
     } catch (err) {
-      toast.error("Save failed", { description: (err as Error).message });
+      toastApiError(err, "Couldn't save job");
     } finally {
       setIsSubmitting(false);
     }

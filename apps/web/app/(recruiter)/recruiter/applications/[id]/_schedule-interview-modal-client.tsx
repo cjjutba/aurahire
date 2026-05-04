@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
@@ -48,7 +48,7 @@ export function ScheduleInterviewModalClient({ applicationId, open, onOpenChange
 
   async function submit() {
     if (!scheduledAt) {
-      toast.error("Pick a date and time");
+      toastApiError(null, "Check your input", "Pick a date and time.");
       return;
     }
     setWorking(true);
@@ -58,7 +58,7 @@ export function ScheduleInterviewModalClient({ applicationId, open, onOpenChange
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Not signed in");
+        toastApiError(null, "Couldn't schedule interview", "Please sign in again.");
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
@@ -80,10 +80,10 @@ export function ScheduleInterviewModalClient({ applicationId, open, onOpenChange
       );
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { message?: string };
-        toast.error("Schedule failed", { description: body.message });
+        toastApiError(null, "Couldn't schedule interview", body.message);
         return;
       }
-      toast.success("Interview scheduled — candidate notified");
+      toastSuccess("Interview scheduled", "Candidate notified.");
       reset();
       onOpenChange(false);
       router.refresh();

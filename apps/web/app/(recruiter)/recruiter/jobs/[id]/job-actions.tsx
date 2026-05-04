@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import type { JobStatus } from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
@@ -32,7 +32,7 @@ export function JobActions({ id, status }: JobActionsProps) {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in again");
+        toastApiError(null, "Couldn't publish job", "Please sign in again.");
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
@@ -76,13 +76,11 @@ export function JobActions({ id, status }: JobActionsProps) {
 
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { message?: string };
-        toast.error("Publish failed", {
-          description: body.message ?? `HTTP ${res.status}`,
-        });
+        toastApiError(null, "Couldn't publish job", body.message ?? `HTTP ${res.status}`);
         return;
       }
 
-      toast.success("Job published");
+      toastSuccess("Job published");
       router.refresh();
     } finally {
       setWorking(false);
@@ -94,12 +92,10 @@ export function JobActions({ id, status }: JobActionsProps) {
     setWorking(true);
     try {
       await archiveMutation.mutateAsync({ id });
-      toast.success("Job archived");
+      toastSuccess("Job archived");
       router.refresh();
     } catch (err) {
-      toast.error("Archive failed", {
-        description: (err as Error).message,
-      });
+      toastApiError(err, "Couldn't archive job");
     } finally {
       setWorking(false);
     }

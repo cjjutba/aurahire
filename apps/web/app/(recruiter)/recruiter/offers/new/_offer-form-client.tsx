@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
@@ -43,15 +43,15 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
     e.preventDefault();
     const salaryNum = Number(salary);
     if (!title.trim()) {
-      toast.error("Title is required");
+      toastApiError(null, "Check your input", "Title is required.");
       return;
     }
     if (!Number.isFinite(salaryNum) || salaryNum <= 0) {
-      toast.error("Salary must be a positive number");
+      toastApiError(null, "Check your input", "Salary must be a positive number.");
       return;
     }
     if (!startDate) {
-      toast.error("Start date is required");
+      toastApiError(null, "Check your input", "Start date is required.");
       return;
     }
 
@@ -62,7 +62,7 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Not signed in");
+        toastApiError(null, "Couldn't send offer", "Please sign in again.");
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
@@ -95,15 +95,13 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
           code?: string;
         };
         if (body.code === "OFFER_ALREADY_PENDING") {
-          toast.error("There's already a pending offer", {
-            description: "Withdraw the existing offer before sending another.",
-          });
+          toastApiError(null, "Couldn't send offer", body.message ?? "Withdraw the existing offer before sending another.");
         } else {
-          toast.error("Send offer failed", { description: body.message });
+          toastApiError(null, "Couldn't send offer", body.message);
         }
         return;
       }
-      toast.success("Offer sent — candidate notified");
+      toastSuccess("Offer sent", "Candidate notified.");
       router.push(`/recruiter/applications/${applicationId}`);
       router.refresh();
     } finally {
