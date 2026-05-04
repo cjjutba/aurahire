@@ -90,13 +90,15 @@ export function ResumeUpload() {
         router.refresh();
       } else {
         setPhase("failed");
-        setErrorMessage(
-          "We couldn't parse this resume automatically. You can continue and fill out the form manually.",
-        );
+        const message =
+          "We couldn't parse this resume automatically. You can continue and fill out the form manually.";
+        setErrorMessage(message);
+        toastApiError(null, "Couldn't process resume", message);
       }
     } catch (err) {
       setPhase("failed");
       setErrorMessage((err as Error).message);
+      toastApiError(err, "Couldn't process resume");
     }
   };
 
