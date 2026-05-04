@@ -936,4 +936,29 @@ Output a message like:
 
 Notes appended during implementation. Task 1 writes its audit results here.
 
-(empty until Task 1)
+### Task 1 results
+
+Audit of the three read-only review pages in the candidate onboarding wizard.
+
+**`apps/web/app/onboarding/candidate/education/page.tsx`**
+- Component type: async server component (no `"use client"` directive)
+- Mutation handler: none — page fetches parsed resume data server-side and renders a static list of education entries or an empty-state card
+- Toast usage: none
+- No client component imported with mutations
+- Classification: **(c) no mutation** → no change needed
+
+**`apps/web/app/onboarding/candidate/experience/page.tsx`**
+- Component type: async server component (no `"use client"` directive)
+- Mutation handler: none — page fetches parsed resume data server-side and renders a static list of work experience entries or an empty-state card
+- Toast usage: none
+- No client component imported with mutations
+- Classification: **(c) no mutation** → no change needed
+
+**`apps/web/app/onboarding/candidate/skills/page.tsx`**
+- Component type: async server component (no `"use client"` directive)
+- Mutation handler: none — page fetches parsed resume data server-side and renders skill chips and certification entries or an empty-state card
+- Toast usage: none
+- No client component imported with mutations
+- Classification: **(c) no mutation** → no change needed
+
+**Summary:** All three pages are pure server-rendered review steps in the wizard. They display data already parsed from the resume (fetched via `fetchLatestParsedResume`) and provide only `<Link>` navigation (Back / Continue). There are no `useMutation` hooks, no `fetch(` calls, no `@aurahire/shared` controller imports, and no rendered client components with mutation logic. Task 4 Step 7 ("Apply Task 1 results") is a no-op — no additional files need to be added to Task 4.
