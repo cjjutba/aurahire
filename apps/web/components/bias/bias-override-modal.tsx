@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import type { BiasFlagChipFlag } from "./bias-flag-chip";
@@ -164,6 +165,7 @@ export function BiasOverrideModal({
                       }
                       className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 py-1 text-xs text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
                     >
+                      {working[flag.id] && <ButtonSpinner />}
                       {working[flag.id] ? "Saving..." : "Override with this reason"}
                     </Button>
                   </div>

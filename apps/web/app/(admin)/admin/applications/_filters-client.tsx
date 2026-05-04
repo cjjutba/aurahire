@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 
 interface Props {
   initialFilters: {
@@ -194,6 +195,7 @@ export function FiltersClient({ initialFilters }: Props) {
           disabled={isPending}
           className="rounded-[var(--radius-pill)] bg-[var(--color-primary)]"
         >
+          {isPending && <ButtonSpinner />}
           {isPending ? "Applying..." : "Apply filters"}
         </Button>
       </div>

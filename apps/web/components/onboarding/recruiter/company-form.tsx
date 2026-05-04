@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { recruiterCompanySchema, type RecruiterCompany } from "@aurahire/shared";
 import { useRecruiterProfilesControllerUpdateCompanyV1 } from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -181,6 +182,7 @@ export function RecruiterCompanyForm({ defaults }: CompanyFormProps) {
             disabled={updateCompany.isPending}
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 hover:bg-[var(--color-primary-active)]"
           >
+            {updateCompany.isPending && <ButtonSpinner />}
             {updateCompany.isPending ? "Saving..." : "Next"}
           </Button>
         </div>

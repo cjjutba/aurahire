@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -233,6 +234,7 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
           disabled={working}
           className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
         >
+          {working && <ButtonSpinner />}
           {working ? "Sending..." : "Send offer"}
         </Button>
       </div>

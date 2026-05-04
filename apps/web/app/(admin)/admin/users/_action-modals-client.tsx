@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import {
@@ -244,6 +245,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
                 disabled={working || reason.trim().length < 10}
                 className="rounded-[var(--radius-pill)] bg-[var(--color-status-danger)] hover:bg-[var(--color-status-danger)]"
               >
+                {working && <ButtonSpinner />}
                 {working ? "Suspending..." : "Confirm suspend"}
               </Button>
             </DialogFooter>
@@ -271,7 +273,8 @@ export function ActionModalsClient({ action, onClose }: Props) {
                 disabled={working}
                 className="rounded-[var(--radius-pill)] bg-[var(--color-primary)]"
               >
-                {working ? "..." : "Reactivate"}
+                {working && <ButtonSpinner />}
+                {working ? "Reactivating..." : "Reactivate"}
               </Button>
             </DialogFooter>
           </>
@@ -311,7 +314,8 @@ export function ActionModalsClient({ action, onClose }: Props) {
                 disabled={working || newRole === user.role}
                 className="rounded-[var(--radius-pill)] bg-[var(--color-primary)]"
               >
-                {working ? "..." : `Change to ${newRole}`}
+                {working && <ButtonSpinner />}
+                {working ? "Changing..." : `Change to ${newRole}`}
               </Button>
             </DialogFooter>
           </>
@@ -345,6 +349,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
                 disabled={working || emailConfirm !== user.email}
                 className="rounded-[var(--radius-pill)] bg-[var(--color-status-danger)] hover:bg-[var(--color-status-danger)]"
               >
+                {working && <ButtonSpinner />}
                 {working ? "Deleting..." : "Confirm delete"}
               </Button>
             </DialogFooter>
@@ -377,7 +382,8 @@ export function ActionModalsClient({ action, onClose }: Props) {
                   disabled={working}
                   className="rounded-[var(--radius-pill)] bg-[var(--color-primary)]"
                 >
-                  {working ? "..." : "Generate + email"}
+                  {working && <ButtonSpinner />}
+                  {working ? "Generating..." : "Generate + email"}
                 </Button>
               </DialogFooter>
             ) : (

@@ -9,24 +9,24 @@ import { toast } from "sonner";
 
 import { loginSchema, type LoginInput } from "@aurahire/shared";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { setSessionOnlyMarker } from "@/lib/auth/cookie-persistence.client";
+import { AuthInput } from "@/components/auth/auth-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
-  const form = useForm<LoginInput>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
@@ -34,6 +34,10 @@ export function LoginForm() {
   async function onSubmit(values: LoginInput) {
     setIsSubmitting(true);
     try {
+      // Set the persistence marker BEFORE creating the client / signing in,
+      // so the cookie adapter sees it and downgrades auth cookies to session
+      // cookies when "Remember me" is unchecked.
+      setSessionOnlyMarker(!rememberMe);
       const supabase = createSupabaseBrowserClient();
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
@@ -56,7 +60,6 @@ export function LoginForm() {
         return;
       }
 
-      // Fetch profile to determine redirect
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
       const profileRes = await fetch(`${apiUrl}/api/v1/profiles/me`, {
         headers: { Authorization: `Bearer ${data.session.access_token}` },
@@ -64,10 +67,7 @@ export function LoginForm() {
       });
 
       if (profileRes.status === 404) {
-        // Auth user exists but profile not initialized — orphan; rare
-        toast.error("Profile not found", {
-          description: "Please complete registration.",
-        });
+        toast.error("Profile not found", { description: "Please complete registration." });
         router.push("/register");
         return;
       }
@@ -95,51 +95,47 @@ export function LoginForm() {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" autoComplete="email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Password</FormLabel>
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-[var(--color-primary)] hover:underline"
-                >
-                  Forgot?
-                </Link>
-              </div>
-              <FormControl>
-                <Input type="password" autoComplete="current-password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-[var(--radius-pill)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-active)]"
-          size="lg"
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <AuthInput
+        id="login-email"
+        label="Email address"
+        type="email"
+        autoComplete="email"
+        error={errors.email?.message}
+        {...register("email")}
+      />
+      <AuthInput
+        id="login-password"
+        label="Password"
+        type="password"
+        autoComplete="current-password"
+        error={errors.password?.message}
+        {...register("password")}
+      />
+      <div className="flex items-center justify-between px-5 pt-1">
+        <label className="flex cursor-pointer items-center gap-2 text-xs text-[var(--color-body)] select-none">
+          <Checkbox
+            checked={rememberMe}
+            onCheckedChange={(value) => setRememberMe(value === true)}
+            aria-label="Remember me"
+          />
+          Remember me
+        </label>
+        <Link
+          href="/forgot-password"
+          className="text-xs text-[var(--color-primary)] hover:underline"
         >
-          {isSubmitting ? "Signing in..." : "Sign In"}
-        </Button>
-      </form>
-    </Form>
+          Forgot password?
+        </Link>
+      </div>
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="h-12 w-full rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-base font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+      >
+        {isSubmitting && <ButtonSpinner />}
+        {isSubmitting ? "Signing in..." : "Sign In"}
+      </Button>
+    </form>
   );
 }

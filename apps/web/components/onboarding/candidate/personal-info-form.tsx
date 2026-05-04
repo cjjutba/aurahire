@@ -12,6 +12,7 @@ import {
 import { useCandidateProfilesControllerUpdatePersonalV1 } from "@aurahire/shared";
 import { AiSuggestedBadge } from "@/components/ai/ai-suggested-badge";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -169,6 +170,7 @@ export function CandidatePersonalInfoForm({ defaults, aiSuggestedFields = {} }: 
             disabled={updatePersonal.isPending}
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 hover:bg-[var(--color-primary-active)]"
           >
+            {updatePersonal.isPending && <ButtonSpinner />}
             {updatePersonal.isPending ? "Saving..." : "Next"}
           </Button>
         </div>

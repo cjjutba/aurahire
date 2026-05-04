@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
@@ -43,12 +44,17 @@ export function OfferActionsClient({ offer }: Props) {
     } = await supabase.auth.getSession();
     if (!session) throw new Error("Not signed in");
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+    // Fastify rejects JSON Content-Type with empty body; only set the header
+    // when we're actually sending JSON.
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${session.access_token}`,
+    };
+    if (body !== undefined) {
+      headers["Content-Type"] = "application/json";
+    }
     return fetch(`${apiUrl}${path}`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        "Content-Type": "application/json",
-      },
+      headers,
       body: body ? JSON.stringify(body) : undefined,
     });
   }
@@ -141,6 +147,7 @@ export function OfferActionsClient({ offer }: Props) {
               disabled={working}
               className="rounded-[var(--radius-pill)] bg-[var(--color-score-high)] text-white hover:opacity-90"
             >
+              {working && <ButtonSpinner />}
               {working ? "Accepting..." : "Confirm accept"}
             </Button>
           </DialogFooter>
@@ -175,6 +182,7 @@ export function OfferActionsClient({ offer }: Props) {
               disabled={working}
               className="rounded-[var(--radius-pill)] bg-[var(--color-status-danger)] text-white hover:opacity-90"
             >
+              {working && <ButtonSpinner />}
               {working ? "Declining..." : "Confirm decline"}
             </Button>
           </DialogFooter>

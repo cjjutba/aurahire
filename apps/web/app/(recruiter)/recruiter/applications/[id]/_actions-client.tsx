@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
@@ -127,6 +128,7 @@ export function ApplicationActionsClient({
           variant="outline"
           className="rounded-[var(--radius-pill)]"
         >
+          {working && <ButtonSpinner />}
           Download Resume
         </Button>
         {nextStatuses.map((s) => (
@@ -140,6 +142,7 @@ export function ApplicationActionsClient({
                 : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-active)]"
             }`}
           >
+            {working && <ButtonSpinner />}
             {STATUS_LABELS[s] ?? s}
           </Button>
         ))}
@@ -160,7 +163,8 @@ export function ApplicationActionsClient({
           disabled={working}
           className="mt-3 rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
         >
-          Save notes
+          {working && <ButtonSpinner />}
+          {working ? "Saving..." : "Save notes"}
         </Button>
       </div>
     </section>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
 const POLL_INTERVAL_MS = 2000;
@@ -224,6 +225,7 @@ export function ApplyToExistingClient() {
       disabled={enqueueWorking}
       className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-active)]"
     >
+      {enqueueWorking && <ButtonSpinner />}
       {enqueueWorking
         ? "Enqueueing..."
         : `Apply weights to existing scores (last ${DEFAULT_SAMPLE_SIZE})`}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { JobStatus } from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { useJobsControllerArchiveV1 } from "@aurahire/shared";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { BiasOverrideModal } from "@/components/bias/bias-override-modal";
@@ -35,11 +36,12 @@ export function JobActions({ id, status }: JobActionsProps) {
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      // Publish takes no body; do NOT set Content-Type or Fastify will reject
+      // with "Body cannot be empty when content-type is set to 'application/json'".
       const res = await fetch(`${apiUrl}/api/v1/jobs/${id}/publish`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
         },
       });
 
@@ -112,6 +114,7 @@ export function JobActions({ id, status }: JobActionsProps) {
             disabled={working}
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
           >
+            {working && <ButtonSpinner />}
             {working ? "Publishing..." : "Publish"}
           </Button>
         )}
@@ -122,7 +125,8 @@ export function JobActions({ id, status }: JobActionsProps) {
             variant="outline"
             className="rounded-[var(--radius-pill)]"
           >
-            Archive
+            {working && <ButtonSpinner />}
+            {working ? "Archiving..." : "Archive"}
           </Button>
         )}
       </div>

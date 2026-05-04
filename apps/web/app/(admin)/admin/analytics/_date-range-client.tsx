@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -86,7 +87,8 @@ export function DateRangeClient({ initialFrom, initialTo }: Props) {
           disabled={!from || !to || isPending}
           className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-xs"
         >
-          Apply
+          {isPending && <ButtonSpinner />}
+          {isPending ? "Applying..." : "Apply"}
         </Button>
       </div>
     </div>

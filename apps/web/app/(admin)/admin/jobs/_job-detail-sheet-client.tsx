@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { BiasFlagsList } from "@/components/bias/bias-flags-list";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
@@ -190,6 +191,7 @@ export function JobDetailSheetClient({ jobId, open, onClose }: Props) {
                   disabled={working}
                   className="rounded-[var(--radius-pill)] bg-[var(--color-status-danger)]"
                 >
+                  {working && <ButtonSpinner />}
                   {working ? "Archiving…" : "Archive job"}
                 </Button>
               )}

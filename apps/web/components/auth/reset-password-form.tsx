@@ -5,19 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-
 import { z } from "zod";
+
 import { passwordSchema, fetcher } from "@aurahire/shared";
+import { AuthInput } from "@/components/auth/auth-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 
 const resetFormSchema = z
   .object({
@@ -37,7 +30,11 @@ export function ResetPasswordForm() {
   const token = searchParams.get("token");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<ResetFormInput>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ResetFormInput>({
     resolver: zodResolver(resetFormSchema),
     defaultValues: { password: "", confirmPassword: "" },
   });
@@ -64,7 +61,7 @@ export function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="text-sm text-[var(--color-body)]">
+      <div className="text-center text-sm text-[var(--color-body)]">
         <p className="mb-2 font-semibold text-[var(--color-status-danger)]">
           Reset link is missing its token
         </p>
@@ -74,43 +71,31 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>New Password</FormLabel>
-              <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm New Password</FormLabel>
-              <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-[var(--radius-pill)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-active)]"
-          size="lg"
-        >
-          {isSubmitting ? "Setting password..." : "Set new password"}
-        </Button>
-      </form>
-    </Form>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <AuthInput
+        id="reset-password"
+        label="New password"
+        type="password"
+        autoComplete="new-password"
+        error={errors.password?.message}
+        {...register("password")}
+      />
+      <AuthInput
+        id="reset-confirm"
+        label="Confirm new password"
+        type="password"
+        autoComplete="new-password"
+        error={errors.confirmPassword?.message}
+        {...register("confirmPassword")}
+      />
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="h-12 w-full rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-base font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+      >
+        {isSubmitting && <ButtonSpinner />}
+        {isSubmitting ? "Setting password..." : "Set new password"}
+      </Button>
+    </form>
   );
 }

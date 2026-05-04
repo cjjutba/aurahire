@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { SumIndicator } from "./_sum-indicator-client";
 import { PreviewImpactModalClient } from "./_preview-impact-modal-client";
@@ -457,6 +458,7 @@ export function ConfigEditorClient({ initial }: Props) {
           disabled={!allValid || !dirty || working}
           className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
         >
+          {working && <ButtonSpinner />}
           {working ? "Saving..." : "Save Configuration"}
         </Button>
       </div>

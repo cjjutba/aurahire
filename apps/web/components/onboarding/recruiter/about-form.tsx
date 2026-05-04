@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { recruiterAboutSchema, type RecruiterAbout } from "@aurahire/shared";
 import { useRecruiterProfilesControllerUpdateAboutV1 } from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
 import {
   Form,
@@ -111,6 +112,7 @@ export function RecruiterAboutForm({ defaults }: AboutFormProps) {
             disabled={updateAbout.isPending}
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 hover:bg-[var(--color-primary-active)]"
           >
+            {updateAbout.isPending && <ButtonSpinner />}
             {updateAbout.isPending ? "Saving..." : "Next"}
           </Button>
         </div>

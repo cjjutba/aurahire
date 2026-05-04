@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -162,6 +163,7 @@ export function ScheduleInterviewModalClient({ applicationId, open, onOpenChange
             disabled={working || !scheduledAt}
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
           >
+            {working && <ButtonSpinner />}
             {working ? "Scheduling..." : "Schedule"}
           </Button>
         </DialogFooter>

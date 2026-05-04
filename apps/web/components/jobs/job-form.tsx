@@ -12,6 +12,7 @@ import {
 } from "@aurahire/shared";
 
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -493,6 +494,7 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
             disabled={isSubmitting}
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 hover:bg-[var(--color-primary-active)]"
           >
+            {isSubmitting && <ButtonSpinner />}
             {isSubmitting ? "Saving..." : isEdit ? "Save changes" : "Save as draft"}
           </Button>
         </div>

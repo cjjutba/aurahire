@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
 interface Props {
@@ -76,7 +77,7 @@ export function ExportButtonClient({ currentParams }: Props) {
       variant="outline"
       className="rounded-[var(--radius-pill)]"
     >
-      <Download className="mr-1 h-3 w-3" />
+      {working ? <ButtonSpinner /> : <Download className="mr-1 h-3 w-3" />}
       {working ? "Exporting..." : "Export CSV"}
     </Button>
   );

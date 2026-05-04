@@ -13,6 +13,7 @@ import {
   useCandidateProfilesControllerCompleteV1,
 } from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -284,6 +285,7 @@ export function CandidatePreferencesForm({ defaults }: Props) {
             disabled={isPending}
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 hover:bg-[var(--color-primary-active)]"
           >
+            {isPending && <ButtonSpinner />}
             {isPending ? "Finishing..." : "Finish"}
           </Button>
         </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
 export function WithdrawButtonClient({ applicationId }: { applicationId: string }) {
@@ -48,7 +49,8 @@ export function WithdrawButtonClient({ applicationId }: { applicationId: string 
       variant="outline"
       className="rounded-[var(--radius-pill)] border-[var(--color-status-danger)] text-[var(--color-status-danger)] hover:bg-[var(--color-status-danger)] hover:text-white"
     >
-      Withdraw application
+      {working && <ButtonSpinner />}
+      {working ? "Withdrawing..." : "Withdraw application"}
     </Button>
   );
 }

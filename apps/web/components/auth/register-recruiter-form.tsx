@@ -12,22 +12,20 @@ import {
   type SignupRecruiterInput,
   fetcher,
 } from "@aurahire/shared";
+import { AuthInput } from "@/components/auth/auth-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 
 export function RegisterRecruiterForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<RegisterRecruiterInput>({
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<RegisterRecruiterInput>({
     resolver: zodResolver(registerRecruiterSchema),
     defaultValues: {
       fullName: "",
@@ -61,7 +59,7 @@ export function RegisterRecruiterForm() {
       const status = (err as { status?: number }).status;
       const body = (err as { body?: { code?: string; message?: string } }).body;
       if (status === 409 && body?.code === "EMAIL_ALREADY_REGISTERED") {
-        form.setError("email", {
+        setError("email", {
           message: body.message ?? "This email is already registered. Sign in instead?",
         });
       } else {
@@ -75,98 +73,64 @@ export function RegisterRecruiterForm() {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="fullName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input autoComplete="name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="companyName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Company Name</FormLabel>
-              <FormControl>
-                <Input autoComplete="organization" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Work Email</FormLabel>
-              <FormControl>
-                <Input type="email" autoComplete="email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone</FormLabel>
-              <FormControl>
-                <Input type="tel" autoComplete="tel" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
-              <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <p className="text-xs text-[var(--color-muted)]">
-          By creating an account you agree to the AuraHire Terms and Privacy Policy.
-        </p>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-[var(--radius-pill)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-active)]"
-          size="lg"
-        >
-          {isSubmitting ? "Creating account..." : "Create Account"}
-        </Button>
-      </form>
-    </Form>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <AuthInput
+        id="signup-recruiter-fullname"
+        label="Full name"
+        autoComplete="name"
+        error={errors.fullName?.message}
+        {...register("fullName")}
+      />
+      <AuthInput
+        id="signup-recruiter-company"
+        label="Company name"
+        autoComplete="organization"
+        error={errors.companyName?.message}
+        {...register("companyName")}
+      />
+      <AuthInput
+        id="signup-recruiter-email"
+        label="Work email"
+        type="email"
+        autoComplete="email"
+        error={errors.email?.message}
+        {...register("email")}
+      />
+      <AuthInput
+        id="signup-recruiter-phone"
+        label="Phone"
+        type="tel"
+        autoComplete="tel"
+        error={errors.phone?.message}
+        {...register("phone")}
+      />
+      <AuthInput
+        id="signup-recruiter-password"
+        label="Password"
+        type="password"
+        autoComplete="new-password"
+        error={errors.password?.message}
+        {...register("password")}
+      />
+      <AuthInput
+        id="signup-recruiter-confirm"
+        label="Confirm password"
+        type="password"
+        autoComplete="new-password"
+        error={errors.confirmPassword?.message}
+        {...register("confirmPassword")}
+      />
+      <p className="px-2 pt-1 text-center text-xs leading-relaxed text-[var(--color-muted)]">
+        By creating an account you agree to the AuraHire Terms and Privacy Policy.
+      </p>
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="h-12 w-full rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-base font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+      >
+        {isSubmitting && <ButtonSpinner />}
+        {isSubmitting ? "Creating account..." : "Create Account"}
+      </Button>
+    </form>
   );
 }

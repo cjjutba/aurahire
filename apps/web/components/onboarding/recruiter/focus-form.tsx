@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { recruiterFocusSchema, type RecruiterFocus } from "@aurahire/shared";
 import { useRecruiterProfilesControllerUpdateFocusV1 } from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -141,6 +142,7 @@ export function RecruiterFocusForm({ defaults }: FocusFormProps) {
             disabled={updateFocus.isPending}
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 hover:bg-[var(--color-primary-active)]"
           >
+            {updateFocus.isPending && <ButtonSpinner />}
             {updateFocus.isPending ? "Finishing..." : "Finish"}
           </Button>
         </div>
