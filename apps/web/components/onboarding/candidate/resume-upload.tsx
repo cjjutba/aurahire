@@ -54,7 +54,7 @@ export function ResumeUpload() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toastApiError(null, "Please sign in again");
+        toastApiError(null, "Couldn't process resume", "Please sign in again.");
         setPhase("idle");
         return;
       }
