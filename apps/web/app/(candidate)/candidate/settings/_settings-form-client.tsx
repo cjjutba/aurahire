@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import {
   candidatePersonalInfoSchema,
@@ -38,11 +38,10 @@ export function CandidateSettingsForm({ defaults }: Props) {
   const update = useCandidateProfilesControllerUpdatePersonalV1({
     mutation: {
       onSuccess: () => {
-        toast.success("Profile updated");
+        toastSuccess("Profile updated");
         router.refresh();
       },
-      onError: (err) =>
-        toast.error("Save failed", { description: (err as Error).message }),
+      onError: (err) => toastApiError(err, "Couldn't update profile"),
     },
   });
 

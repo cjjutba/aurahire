@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
@@ -65,10 +65,10 @@ export function OfferActionsClient({ offer }: Props) {
       const res = await authedPost(`/api/v1/offers/${offer.id}/accept`);
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { message?: string };
-        toast.error("Accept failed", { description: body.message });
+        toastApiError(null, "Couldn't accept offer", body.message);
         return;
       }
-      toast.success("Offer accepted — welcome aboard!");
+      toastSuccess("Offer accepted", "Welcome aboard.");
       setAcceptOpen(false);
       router.refresh();
     } finally {
@@ -84,10 +84,10 @@ export function OfferActionsClient({ offer }: Props) {
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { message?: string };
-        toast.error("Decline failed", { description: body.message });
+        toastApiError(null, "Couldn't decline offer", body.message);
         return;
       }
-      toast.success("Offer declined");
+      toastSuccess("Offer declined");
       setDeclineOpen(false);
       setReason("");
       router.refresh();

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { AiShimmer } from "@/components/ai/ai-shimmer";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
@@ -27,16 +27,16 @@ export function RecomputeButtonClient() {
       });
 
       if (res.status === 429) {
-        toast.error("Please wait a moment before recomputing");
+        toastApiError(null, "Couldn't recalculate", "Please wait a moment before recalculating.");
         return;
       }
 
       if (!res.ok) {
-        toast.error("Recompute failed");
+        toastApiError(null, "Couldn't recalculate");
         return;
       }
 
-      toast.success("Score recomputed");
+      toastSuccess("Score recalculated");
       router.refresh();
     } finally {
       setWorking(false);

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import { AiShimmer } from "@/components/ai/ai-shimmer";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export function ApplyFormClient({ jobId, resumes }: Props) {
 
   async function submit() {
     if (!resumeId) {
-      toast.error("Pick a resume first");
+      toastApiError(null, "Check your input", "Please pick a resume to apply with.");
       return;
     }
     setSubmitting(true);
@@ -47,7 +47,7 @@ export function ApplyFormClient({ jobId, resumes }: Props) {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in again");
+        toastApiError(null, "Couldn't apply", "Please sign in again.");
         return;
       }
 
@@ -66,23 +66,21 @@ export function ApplyFormClient({ jobId, resumes }: Props) {
       });
 
       if (res.status === 409) {
-        toast.error("You've already applied to this job");
+        toastApiError(null, "Couldn't apply", "You've already applied to this job.");
         return;
       }
 
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { message?: string };
-        toast.error("Apply failed", {
-          description: body.message ?? `HTTP ${res.status}`,
-        });
+        toastApiError(null, "Couldn't apply", body.message ?? "Please try again.");
         return;
       }
 
       const body = (await res.json()) as { data: { id: string } };
-      toast.success("Application submitted");
+      toastSuccess("Application sent", "We'll notify you when there's an update.");
       router.push(`/candidate/applications/${body.data.id}`);
     } catch (err) {
-      toast.error("Apply failed", { description: (err as Error).message });
+      toastApiError(err, "Couldn't apply");
     } finally {
       setSubmitting(false);
     }

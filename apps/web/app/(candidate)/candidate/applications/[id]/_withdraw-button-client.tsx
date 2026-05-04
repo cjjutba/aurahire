@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
@@ -31,11 +31,11 @@ export function WithdrawButtonClient({ applicationId }: { applicationId: string 
       );
 
       if (!res.ok) {
-        toast.error("Withdraw failed");
+        toastApiError(null, "Couldn't withdraw application");
         return;
       }
 
-      toast.success("Application withdrawn");
+      toastSuccess("Application withdrawn");
       router.refresh();
     } finally {
       setWorking(false);

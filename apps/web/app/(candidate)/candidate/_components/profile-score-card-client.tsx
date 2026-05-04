@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import { AiShimmer } from "@/components/ai/ai-shimmer";
 import { ScoreRing } from "@/components/score/score-ring";
@@ -35,7 +35,7 @@ export function ProfileScoreCardClient({ initial }: Props) {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in again");
+        toastApiError(null, "Couldn't recalculate", "Please sign in again.");
         return;
       }
 
@@ -46,31 +46,27 @@ export function ProfileScoreCardClient({ initial }: Props) {
       });
 
       if (res.status === 429) {
-        toast.error("Please wait a moment before recomputing");
+        toastApiError(null, "Couldn't recalculate", "Please wait a moment before recalculating.");
         return;
       }
 
       if (res.status === 400) {
         const body = (await res.json().catch(() => ({}))) as { message?: string };
-        toast.error("Cannot compute score yet", {
-          description:
-            body.message ??
-            "Make sure you've uploaded a resume and completed onboarding.",
-        });
+        toastApiError(null, "Couldn't recalculate", body.message ?? "Complete your profile before recalculating.");
         return;
       }
 
       if (!res.ok) {
-        toast.error("Compute failed", { description: `HTTP ${res.status}` });
+        toastApiError(null, "Couldn't recalculate");
         return;
       }
 
       const body = (await res.json()) as { data: InitialScore };
       setScore(body.data);
-      toast.success("Profile Score computed");
+      toastSuccess("Score recalculated");
       router.refresh();
     } catch (err) {
-      toast.error("Compute failed", { description: (err as Error).message });
+      toastApiError(err, "Couldn't recalculate");
     } finally {
       setComputing(false);
     }
