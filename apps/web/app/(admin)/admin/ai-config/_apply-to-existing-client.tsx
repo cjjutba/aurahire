@@ -62,7 +62,7 @@ export function ApplyToExistingClient() {
     try {
       const res = await authedFetch(`/api/v1/admin/queue/jobs/${queueJobId}/status`);
       if (!res.ok) {
-        toastApiError(null, "Couldn't start rescore");
+        toastApiError(null, "Couldn't check rescore status");
         stopPolling();
         return;
       }

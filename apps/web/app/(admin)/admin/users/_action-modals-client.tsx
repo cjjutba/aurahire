@@ -86,7 +86,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
 
   async function suspend() {
     if (reason.trim().length < 10) {
-      toastApiError(null, "Reason must be at least 10 characters");
+      toastApiError(null, "Check your input", "Reason must be at least 10 characters.");
       return;
     }
     setWorking(true);
@@ -135,7 +135,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
 
   async function changeRole() {
     if (newRole === user.role) {
-      toastApiError(null, "Pick a different role");
+      toastApiError(null, "Check your input", "Pick a different role.");
       return;
     }
     setWorking(true);
@@ -152,7 +152,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
         toastApiError(null, "Couldn't change role", body.message);
         return;
       }
-      toastSuccess("User role changed", `Now ${USER_ROLE_DISPLAY[newRole as keyof typeof USER_ROLE_DISPLAY] ?? newRole}.`);
+      toastSuccess("User role changed", `Now ${USER_ROLE_DISPLAY[newRole]}.`);
       router.refresh();
       onClose();
     } finally {
@@ -162,7 +162,7 @@ export function ActionModalsClient({ action, onClose }: Props) {
 
   async function deleteUser() {
     if (emailConfirm !== user.email) {
-      toastApiError(null, "Email confirmation does not match");
+      toastApiError(null, "Check your input", "Email confirmation does not match.");
       return;
     }
     setWorking(true);
@@ -200,7 +200,11 @@ export function ActionModalsClient({ action, onClose }: Props) {
         data: { resetUrl: string; emailSent: boolean };
       };
       setResetUrl(body.data.resetUrl);
-      toastSuccess("Reset link sent");
+      if (body.data.emailSent) {
+        toastSuccess("Reset link sent");
+      } else {
+        toastSuccess("Reset link ready", "Email delivery failed. Copy the URL below to deliver manually.");
+      }
     } finally {
       setWorking(false);
     }
