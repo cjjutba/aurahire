@@ -70,7 +70,7 @@ export function ApplicationActionsClient({
         toastApiError(null, "Couldn't update status", "Please try again.");
         return;
       }
-      toastSuccess("Status updated", `Now in ${newStatus}.`);
+      toastSuccess("Status updated", `Now in ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}.`);
       router.refresh();
     } finally {
       setWorking(false);
