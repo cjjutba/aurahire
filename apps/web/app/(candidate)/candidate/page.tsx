@@ -19,7 +19,10 @@ export default async function CandidateDashboard() {
   const profile = (await getCurrentProfile()) as ProfileMe | null;
 
   const queryClient = makeQueryClient();
-  await Promise.all([
+  // Promise.allSettled — a single 403/404 from one endpoint must not block
+  // the page render of the other sections. prefetchQuery catches errors on
+  // its own, but allSettled is the explicit, defensive form.
+  await Promise.allSettled([
     queryClient.prefetchQuery({
       queryKey: queryKeys.profileScore.me(),
       queryFn: () => serverQueries.profileScoreMe(),
