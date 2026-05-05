@@ -7,10 +7,9 @@ import {
   UnprocessableEntityException,
   forwardRef,
 } from "@nestjs/common";
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import type { Cache } from "cache-manager";
 import type { AuthUser } from "@aurahire/shared";
 
+import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { AuditService } from "../../audit";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { BiasService } from "../bias/bias.service";
@@ -20,8 +19,6 @@ import type { UpdateJobDto } from "./dto/update-job.dto";
 import type { ListJobsQueryDto } from "./dto/list-jobs-query.dto";
 import type { JobResponseDto } from "./dto/job-response.dto";
 
-const PUBLIC_CACHE_TTL_MS = 60_000;
-
 @Injectable()
 export class JobsService {
   constructor(
@@ -30,7 +27,7 @@ export class JobsService {
     @Inject(forwardRef(() => BiasService))
     private readonly biasService: BiasService,
     private readonly audit: AuditService,
-    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    private readonly cacheService: CacheService,
   ) {}
 
   // ---------------------------------------------------------------- CREATE
@@ -90,7 +87,7 @@ export class JobsService {
       ...requestMeta,
     });
 
-    await this.invalidatePublicCache();
+    await this.invalidateAfterWrite({ recruiterId: user.id, jobId: job.id });
 
     return this.toResponse(await this.requireJobWithCompany(job.id));
   }
@@ -138,7 +135,7 @@ export class JobsService {
       ...requestMeta,
     });
 
-    await this.invalidatePublicCache();
+    await this.invalidateAfterWrite({ recruiterId: user.id, jobId: id });
 
     return this.toResponse(await this.requireJobWithCompany(id));
   }
@@ -183,7 +180,7 @@ export class JobsService {
       ...requestMeta,
     });
 
-    await this.invalidatePublicCache();
+    await this.invalidateAfterWrite({ recruiterId: user.id, jobId: id });
 
     return this.toResponse(await this.requireJobWithCompany(id));
   }
@@ -206,7 +203,7 @@ export class JobsService {
       ...requestMeta,
     });
 
-    await this.invalidatePublicCache();
+    await this.invalidateAfterWrite({ recruiterId: user.id, jobId: id });
 
     return this.toResponse(await this.requireJobWithCompany(id));
   }
@@ -217,52 +214,51 @@ export class JobsService {
     data: JobResponseDto[];
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
-    const cacheKey = `jobs:public:${this.serializeQuery(query)}`;
-    const cached = await this.cache.get<{
-      data: JobResponseDto[];
-      meta: { page: number; limit: number; total: number; totalPages: number };
-    }>(cacheKey);
-    if (cached) return cached;
-
-    const filters: ListJobsFilters = {
-      q: query.q,
-      mode: query.mode,
-      experienceLevel: query.experienceLevel,
-      locationCountry: query.locationCountry,
-      status: "published",
-      sort: query.sort === "recent-activity" ? "recent" : query.sort,
-      page: query.page,
-      limit: query.limit,
-    };
-
-    const { rows, total } = await this.repo.list(filters);
-    const result = {
-      data: rows.map((r) => this.toResponse(r)),
-      meta: {
-        page: query.page,
-        limit: query.limit,
-        total,
-        totalPages: Math.max(1, Math.ceil(total / query.limit)),
+    const cacheKey = `jobs:public:list:${this.serializeQuery(query)}`;
+    return this.cacheService.getOrSet({
+      key: cacheKey,
+      ttlSeconds: TTL_SECONDS.hot,
+      tags: [TAGS.jobsPublic()],
+      telemetryName: "jobs:public:list",
+      load: async () => {
+        const filters: ListJobsFilters = {
+          q: query.q,
+          mode: query.mode,
+          experienceLevel: query.experienceLevel,
+          locationCountry: query.locationCountry,
+          status: "published",
+          sort: query.sort === "recent-activity" ? "recent" : query.sort,
+          page: query.page,
+          limit: query.limit,
+        };
+        const { rows, total } = await this.repo.list(filters);
+        return {
+          data: rows.map((r) => this.toResponse(r)),
+          meta: {
+            page: query.page,
+            limit: query.limit,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / query.limit)),
+          },
+        };
       },
-    };
-
-    await this.cache.set(cacheKey, result, PUBLIC_CACHE_TTL_MS);
-    return result;
+    });
   }
 
   async getPublic(id: string): Promise<JobResponseDto> {
-    const cacheKey = `jobs:public:${id}`;
-    const cached = await this.cache.get<JobResponseDto>(cacheKey);
-    if (cached) return cached;
-
-    const row = await this.repo.findByIdWithCompany(id);
-    if (!row || row.status !== "published") {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
-    }
-
-    const result = this.toResponse(row);
-    await this.cache.set(cacheKey, result, PUBLIC_CACHE_TTL_MS);
-    return result;
+    return this.cacheService.getOrSet<JobResponseDto>({
+      key: `jobs:public:detail:${id}`,
+      ttlSeconds: TTL_SECONDS.hot,
+      tags: [TAGS.jobsPublic(), TAGS.jobDetail(id)],
+      telemetryName: "jobs:public:detail",
+      load: async () => {
+        const row = await this.repo.findByIdWithCompany(id);
+        if (!row || row.status !== "published") {
+          throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+        }
+        return this.toResponse(row);
+      },
+    });
   }
 
   // ---------------------------------- RECRUITER LIST + DETAIL (own jobs)
@@ -275,48 +271,56 @@ export class JobsService {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
 
-    if (query.include === "stats") {
-      const sort: "recent" | "recent-activity" =
-        query.sort === "recent-activity" ? "recent-activity" : "recent";
-      const { rows, total } = await this.repo.listMineWithStats(user.id, {
-        page: query.page,
-        limit: query.limit,
-        status: query.status,
-        sort,
-      });
-      return {
-        data: rows.map((r) => ({ ...this.toResponse(r), stats: r.stats })),
-        meta: {
+    const cacheKey = `jobs:recruiter:${user.id}:list:${this.serializeQuery(query)}:inc=${query.include ?? "none"}`;
+
+    return this.cacheService.getOrSet({
+      key: cacheKey,
+      ttlSeconds: TTL_SECONDS.hot,
+      tags: [TAGS.jobsRecruiter(user.id)],
+      telemetryName: "jobs:recruiter:list",
+      load: async () => {
+        if (query.include === "stats") {
+          const sort: "recent" | "recent-activity" =
+            query.sort === "recent-activity" ? "recent-activity" : "recent";
+          const { rows, total } = await this.repo.listMineWithStats(user.id, {
+            page: query.page,
+            limit: query.limit,
+            status: query.status,
+            sort,
+          });
+          return {
+            data: rows.map((r) => ({ ...this.toResponse(r), stats: r.stats })),
+            meta: {
+              page: query.page,
+              limit: query.limit,
+              total,
+              totalPages: Math.max(1, Math.ceil(total / query.limit)),
+            },
+          };
+        }
+        const filters: ListJobsFilters = {
+          q: query.q,
+          mode: query.mode,
+          experienceLevel: query.experienceLevel,
+          locationCountry: query.locationCountry,
+          sort: query.sort === "recent-activity" ? "recent" : query.sort,
           page: query.page,
           limit: query.limit,
-          total,
-          totalPages: Math.max(1, Math.ceil(total / query.limit)),
-        },
-      };
-    }
-
-    const filters: ListJobsFilters = {
-      q: query.q,
-      mode: query.mode,
-      experienceLevel: query.experienceLevel,
-      locationCountry: query.locationCountry,
-      sort: query.sort === "recent-activity" ? "recent" : query.sort,
-      page: query.page,
-      limit: query.limit,
-      recruiterId: user.id,
-      status: query.status,
-    };
-
-    const { rows, total } = await this.repo.list(filters);
-    return {
-      data: rows.map((r) => this.toResponse(r)),
-      meta: {
-        page: query.page,
-        limit: query.limit,
-        total,
-        totalPages: Math.max(1, Math.ceil(total / query.limit)),
+          recruiterId: user.id,
+          status: query.status,
+        };
+        const { rows, total } = await this.repo.list(filters);
+        return {
+          data: rows.map((r) => this.toResponse(r)),
+          meta: {
+            page: query.page,
+            limit: query.limit,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / query.limit)),
+          },
+        };
       },
-    };
+    });
   }
 
   async getForRecruiter(user: AuthUser, id: string): Promise<JobResponseDto> {
@@ -360,10 +364,10 @@ export class JobsService {
     return row;
   }
 
-  private async invalidatePublicCache(): Promise<void> {
-    // Sprint: rely on the 60s TTL for eventual consistency.
-    // Slice 3.7 (Redis-backed cache) will introduce keyset tracking for
-    // granular per-key invalidation.
+  private async invalidateAfterWrite(opts: { recruiterId: string; jobId?: string }): Promise<void> {
+    const tags: string[] = [TAGS.jobsPublic(), TAGS.jobsRecruiter(opts.recruiterId)];
+    if (opts.jobId) tags.push(TAGS.jobDetail(opts.jobId));
+    await this.cacheService.bustTags(tags);
   }
 
   private serializeQuery(q: ListJobsQueryDto): string {
