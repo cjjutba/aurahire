@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Briefcase, Inbox, MoreHorizontal } from "lucide-react";
+import { Briefcase, Inbox } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth/session";
 import { PipelineAnalyticsCard, type PipelineAnalyticsData } from "./_dashboard-client";
 
@@ -267,33 +267,23 @@ function JobCard({ job }: { job: JobWithStats }) {
         href={`/recruiter/jobs/${job.id}`}
         className="block rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6 transition hover:border-[var(--color-primary-soft)]"
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
-            >
-              <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
-              {status.label}
-            </span>
-            {job.publishedAt && (
-              <span className="text-xs text-[var(--color-muted)]">
-                · Posted{" "}
-                {new Date(job.publishedAt).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            aria-label="More actions"
-            className="rounded-[var(--radius-md)] p-1 text-[var(--color-muted)] hover:bg-[var(--color-surface-strong)]"
-            onClick={(e) => e.preventDefault()}
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
           >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+            <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+            {status.label}
+          </span>
+          {job.publishedAt && (
+            <span className="text-xs text-[var(--color-muted)]">
+              · Posted{" "}
+              {new Date(job.publishedAt).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+          )}
         </div>
         <div className="mt-3 text-base font-semibold text-[var(--color-ink)]">
           {job.title}
