@@ -222,6 +222,7 @@ export const applicationsTable = pgTable(
     recruiterNotes: text("recruiter_notes"),
     appliedAt: timestamp("applied_at", { withTimezone: true }).notNull().defaultNow(),
     statusUpdatedAt: timestamp("status_updated_at", { withTimezone: true }).notNull().defaultNow(),
+    shortlistedAt: timestamp("shortlisted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -231,6 +232,7 @@ export const applicationsTable = pgTable(
     candidateIdx: index("applications_candidate_idx").on(t.candidateId),
     statusIdx: index("applications_status_idx").on(t.status),
     appliedIdx: index("applications_applied_idx").on(t.appliedAt),
+    shortlistedIdx: index("applications_shortlisted_idx").on(t.shortlistedAt),
   }),
 );
 
