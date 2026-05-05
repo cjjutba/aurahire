@@ -1180,6 +1180,55 @@ export interface ApplicationListEnvelopeDto {
   data: ApplicationDto[];
 }
 
+export interface RecruiterStatsResultDto {
+  activeJobs: number;
+  /** Deprecated alias for totalApps. Will be removed in a future release. */
+  totalApplications: number;
+  totalApps: number;
+  /** Deprecated alias for pendingReview. Will be removed in a future release. */
+  pendingReviews: number;
+  pendingReview: number;
+  inInterview: number;
+  offered: number;
+  hired: number;
+  avgMatchScore: number;
+  biasFlags: number;
+}
+
+export interface RecruiterStatsEnvelopeDto {
+  data: RecruiterStatsResultDto;
+}
+
+export interface RecruiterAnalyticsKpisDto {
+  activeJobs: number;
+  totalApplications: number;
+  pendingReviews: number;
+  avgMatchScore: number;
+}
+
+export interface RecruiterAnalyticsTopJobDto {
+  jobId: string;
+  title: string;
+  status: string;
+  applicationCount: number;
+  avgScore: number;
+}
+
+export interface RecruiterAnalyticsStatusBreakdownDto {
+  status: string;
+  count: number;
+}
+
+export interface RecruiterAnalyticsResultDto {
+  kpis: RecruiterAnalyticsKpisDto;
+  topJobs: RecruiterAnalyticsTopJobDto[];
+  applicationsByStatus: RecruiterAnalyticsStatusBreakdownDto[];
+}
+
+export interface RecruiterAnalyticsEnvelopeDto {
+  data: RecruiterAnalyticsResultDto;
+}
+
 export type UpdateApplicationStatusDtoNewStatus =
   (typeof UpdateApplicationStatusDtoNewStatus)[keyof typeof UpdateApplicationStatusDtoNewStatus];
 
@@ -8098,7 +8147,7 @@ export function useApplicationsControllerListMineV1<
  * @summary Dashboard summary for the current recruiter (range-filterable)
  */
 export type applicationsControllerRecruiterStatsV1Response200 = {
-  data: void;
+  data: RecruiterStatsEnvelopeDto;
   status: 200;
 };
 
@@ -8309,7 +8358,7 @@ export function useApplicationsControllerRecruiterStatsV1<
  * @summary Recruiter-scoped analytics bundle: KPIs + top jobs by app count + status breakdown
  */
 export type applicationsControllerRecruiterAnalyticsV1Response200 = {
-  data: void;
+  data: RecruiterAnalyticsEnvelopeDto;
   status: 200;
 };
 

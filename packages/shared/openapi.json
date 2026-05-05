@@ -1569,7 +1569,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecruiterStatsEnvelopeDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1589,7 +1596,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecruiterAnalyticsEnvelopeDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5656,6 +5670,167 @@
             "items": {
               "$ref": "#/components/schemas/ApplicationDto"
             }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "RecruiterStatsResultDto": {
+        "type": "object",
+        "properties": {
+          "activeJobs": {
+            "type": "number"
+          },
+          "totalApplications": {
+            "type": "number",
+            "description": "Deprecated alias for totalApps. Will be removed in a future release."
+          },
+          "totalApps": {
+            "type": "number"
+          },
+          "pendingReviews": {
+            "type": "number",
+            "description": "Deprecated alias for pendingReview. Will be removed in a future release."
+          },
+          "pendingReview": {
+            "type": "number"
+          },
+          "inInterview": {
+            "type": "number"
+          },
+          "offered": {
+            "type": "number"
+          },
+          "hired": {
+            "type": "number"
+          },
+          "avgMatchScore": {
+            "type": "number"
+          },
+          "biasFlags": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "activeJobs",
+          "totalApplications",
+          "totalApps",
+          "pendingReviews",
+          "pendingReview",
+          "inInterview",
+          "offered",
+          "hired",
+          "avgMatchScore",
+          "biasFlags"
+        ]
+      },
+      "RecruiterStatsEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RecruiterStatsResultDto"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "RecruiterAnalyticsKpisDto": {
+        "type": "object",
+        "properties": {
+          "activeJobs": {
+            "type": "number"
+          },
+          "totalApplications": {
+            "type": "number"
+          },
+          "pendingReviews": {
+            "type": "number"
+          },
+          "avgMatchScore": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "activeJobs",
+          "totalApplications",
+          "pendingReviews",
+          "avgMatchScore"
+        ]
+      },
+      "RecruiterAnalyticsTopJobDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "applicationCount": {
+            "type": "number"
+          },
+          "avgScore": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "jobId",
+          "title",
+          "status",
+          "applicationCount",
+          "avgScore"
+        ]
+      },
+      "RecruiterAnalyticsStatusBreakdownDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "status",
+          "count"
+        ]
+      },
+      "RecruiterAnalyticsResultDto": {
+        "type": "object",
+        "properties": {
+          "kpis": {
+            "$ref": "#/components/schemas/RecruiterAnalyticsKpisDto"
+          },
+          "topJobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecruiterAnalyticsTopJobDto"
+            }
+          },
+          "applicationsByStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecruiterAnalyticsStatusBreakdownDto"
+            }
+          }
+        },
+        "required": [
+          "kpis",
+          "topJobs",
+          "applicationsByStatus"
+        ]
+      },
+      "RecruiterAnalyticsEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RecruiterAnalyticsResultDto"
           }
         },
         "required": [

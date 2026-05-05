@@ -86,6 +86,63 @@ export class ApplicationListEnvelopeDto {
   data!: ApplicationDto[];
 }
 
+// ─── Recruiter Stats envelope ──────────────────────────────────────────────
+
+export class RecruiterStatsResultDto {
+  @ApiProperty() activeJobs!: number;
+  @ApiProperty({ description: "Deprecated alias for totalApps. Will be removed in a future release." })
+  totalApplications!: number;
+  @ApiProperty() totalApps!: number;
+  @ApiProperty({ description: "Deprecated alias for pendingReview. Will be removed in a future release." })
+  pendingReviews!: number;
+  @ApiProperty() pendingReview!: number;
+  @ApiProperty() inInterview!: number;
+  @ApiProperty() offered!: number;
+  @ApiProperty() hired!: number;
+  @ApiProperty() avgMatchScore!: number;
+  @ApiProperty() biasFlags!: number;
+}
+
+export class RecruiterStatsEnvelopeDto {
+  @ApiProperty({ type: () => RecruiterStatsResultDto })
+  data!: RecruiterStatsResultDto;
+}
+
+// ─── Recruiter Analytics envelope ─────────────────────────────────────────
+
+export class RecruiterAnalyticsTopJobDto {
+  @ApiProperty() jobId!: string;
+  @ApiProperty() title!: string;
+  @ApiProperty() status!: string;
+  @ApiProperty() applicationCount!: number;
+  @ApiProperty() avgScore!: number;
+}
+
+export class RecruiterAnalyticsStatusBreakdownDto {
+  @ApiProperty() status!: string;
+  @ApiProperty() count!: number;
+}
+
+export class RecruiterAnalyticsKpisDto {
+  @ApiProperty() activeJobs!: number;
+  @ApiProperty() totalApplications!: number;
+  @ApiProperty() pendingReviews!: number;
+  @ApiProperty() avgMatchScore!: number;
+}
+
+export class RecruiterAnalyticsResultDto {
+  @ApiProperty({ type: () => RecruiterAnalyticsKpisDto }) kpis!: RecruiterAnalyticsKpisDto;
+  @ApiProperty({ type: [RecruiterAnalyticsTopJobDto] }) topJobs!: RecruiterAnalyticsTopJobDto[];
+  @ApiProperty({ type: [RecruiterAnalyticsStatusBreakdownDto] }) applicationsByStatus!: RecruiterAnalyticsStatusBreakdownDto[];
+}
+
+export class RecruiterAnalyticsEnvelopeDto {
+  @ApiProperty({ type: () => RecruiterAnalyticsResultDto })
+  data!: RecruiterAnalyticsResultDto;
+}
+
+// ─── Signed download ────────────────────────────────────────────────────────
+
 export class SignedDownloadPayloadDto {
   @ApiProperty() signedUrl!: string;
   @ApiProperty() expiresAt!: string;

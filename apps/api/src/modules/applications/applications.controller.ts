@@ -31,6 +31,8 @@ import { UpdateApplicationNotesDto } from "./dto/update-notes.dto";
 import {
   ApplicationEnvelopeDto,
   ApplicationListEnvelopeDto,
+  RecruiterAnalyticsEnvelopeDto,
+  RecruiterStatsEnvelopeDto,
   SignedDownloadEnvelopeDto,
 } from "./dto/application-response.dto";
 import { ApplicationsService } from "./applications.service";
@@ -80,23 +82,11 @@ export class ApplicationsController {
     summary: "Dashboard summary for the current recruiter (range-filterable)",
   })
   @ApiQuery({ name: "range", required: false, enum: ["7d", "30d", "90d", "all"] })
+  @ApiResponse({ status: 200, type: RecruiterStatsEnvelopeDto })
   async recruiterStats(
     @CurrentUser() user: AuthUser,
     @Query() query: RecruiterStatsQueryDto,
-  ): Promise<{
-    data: {
-      activeJobs: number;
-      totalApplications: number;
-      totalApps: number;
-      pendingReviews: number;
-      pendingReview: number;
-      inInterview: number;
-      offered: number;
-      hired: number;
-      avgMatchScore: number;
-      biasFlags: number;
-    };
-  }> {
+  ): Promise<RecruiterStatsEnvelopeDto> {
     const data = await this.service.recruiterStats(user, query.range);
     return { data };
   }
@@ -106,20 +96,21 @@ export class ApplicationsController {
   @ApiOperation({
     summary: "Recruiter-scoped analytics bundle: KPIs + top jobs by app count + status breakdown",
   })
-  async recruiterAnalytics(@CurrentUser() user: AuthUser): Promise<{
-    data: {
-      kpis: {
-        activeJobs: number;
-        totalApplications: number;
-        pendingReviews: number;
-        avgMatchScore: number;
-      };
-      topJobs: Array<{ jobId: string; title: string; status: string; applicationCount: number; avgScore: number }>;
-      applicationsByStatus: Array<{ status: string; count: number }>;
+  @ApiResponse({ status: 200, type: RecruiterAnalyticsEnvelopeDto })
+  async recruiterAnalytics(@CurrentUser() user: AuthUser): Promise<RecruiterAnalyticsEnvelopeDto> {
+    const result = await this.service.recruiterAnalytics(user);
+    return {
+      data: {
+        kpis: {
+          activeJobs: result.kpis.activeJobs,
+          totalApplications: result.kpis.totalApplications,
+          pendingReviews: result.kpis.pendingReviews,
+          avgMatchScore: result.kpis.avgMatchScore,
+        },
+        topJobs: result.topJobs,
+        applicationsByStatus: result.applicationsByStatus,
+      },
     };
-  }> {
-    const data = await this.service.recruiterAnalytics(user);
-    return { data };
   }
 
   @Get("recent")
