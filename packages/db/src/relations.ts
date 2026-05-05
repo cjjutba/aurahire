@@ -4,6 +4,7 @@ import {
   candidateProfilesTable,
   recruiterProfilesTable,
   companiesTable,
+  companyMembersTable,
   jobsTable,
   resumesTable,
   applicationsTable,
@@ -26,6 +27,11 @@ export const profilesRelations = relations(profilesTable, ({ one, many }) => ({
     fields: [profilesTable.id],
     references: [recruiterProfilesTable.id],
   }),
+  lastActiveCompany: one(companiesTable, {
+    fields: [profilesTable.lastActiveCompanyId],
+    references: [companiesTable.id],
+  }),
+  memberships: many(companyMembersTable),
   resumes: many(resumesTable),
   applicationsAsCandidate: many(applicationsTable),
   jobsAsRecruiter: many(jobsTable),
@@ -49,10 +55,6 @@ export const recruiterProfilesRelations = relations(recruiterProfilesTable, ({ o
     fields: [recruiterProfilesTable.id],
     references: [profilesTable.id],
   }),
-  company: one(companiesTable, {
-    fields: [recruiterProfilesTable.companyId],
-    references: [companiesTable.id],
-  }),
 }));
 
 export const companiesRelations = relations(companiesTable, ({ one, many }) => ({
@@ -60,8 +62,23 @@ export const companiesRelations = relations(companiesTable, ({ one, many }) => (
     fields: [companiesTable.createdBy],
     references: [profilesTable.id],
   }),
-  recruiters: many(recruiterProfilesTable),
+  members: many(companyMembersTable),
   jobs: many(jobsTable),
+}));
+
+export const companyMembersRelations = relations(companyMembersTable, ({ one }) => ({
+  company: one(companiesTable, {
+    fields: [companyMembersTable.companyId],
+    references: [companiesTable.id],
+  }),
+  user: one(profilesTable, {
+    fields: [companyMembersTable.userId],
+    references: [profilesTable.id],
+  }),
+  invitedByProfile: one(profilesTable, {
+    fields: [companyMembersTable.invitedBy],
+    references: [profilesTable.id],
+  }),
 }));
 
 export const jobsRelations = relations(jobsTable, ({ one, many }) => ({
@@ -183,5 +200,9 @@ export const auditLogsRelations = relations(auditLogsTable, ({ one }) => ({
   actor: one(profilesTable, {
     fields: [auditLogsTable.actorId],
     references: [profilesTable.id],
+  }),
+  company: one(companiesTable, {
+    fields: [auditLogsTable.companyId],
+    references: [companiesTable.id],
   }),
 }));

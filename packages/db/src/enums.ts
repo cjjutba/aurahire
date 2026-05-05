@@ -74,6 +74,9 @@ export const SCORE_COMPONENT_PROFILE = [
 ] as const;
 export const SCORE_COMPONENT_MATCH = ["skills", "experience", "education", "cultural_fit"] as const;
 
+export const COMPANY_MEMBER_ROLE = ["owner", "admin", "recruiter"] as const;
+export const COMPANY_MEMBER_STATUS = ["invited", "active", "suspended", "left"] as const;
+
 // TypeScript types derived from the const tuples
 export type UserRole = (typeof USER_ROLES)[number];
 export type UserStatus = (typeof USER_STATUS)[number];
@@ -97,3 +100,5 @@ export type AuditActorType = (typeof AUDIT_ACTOR_TYPE)[number];
 export type ParseConfidence = (typeof PARSE_CONFIDENCE)[number];
 export type EvidenceRelevance = (typeof EVIDENCE_RELEVANCE)[number];
 export type ScoreType = (typeof SCORE_TYPE)[number];
+export type CompanyMemberRole = (typeof COMPANY_MEMBER_ROLE)[number];
+export type CompanyMemberStatus = (typeof COMPANY_MEMBER_STATUS)[number];

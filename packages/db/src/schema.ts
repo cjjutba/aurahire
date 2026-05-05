@@ -35,6 +35,8 @@ import {
   BIAS_SEVERITY,
   AUDIT_ACTOR_TYPE,
   SCORE_TYPE,
+  COMPANY_MEMBER_ROLE,
+  COMPANY_MEMBER_STATUS,
 } from "./enums";
 
 // ============================================================================
@@ -52,6 +54,11 @@ export const profilesTable = pgTable(
     avatarUrl: text("avatar_url"),
     status: text("status", { enum: USER_STATUS }).notNull().default("active"),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    // Per-user active-company pointer. The FK constraint is declared in the
+    // 0003_multi_tenancy.sql migration (NOT inline here) to break a circular
+    // type-inference loop with companiesTable.createdBy → profilesTable.id.
+    // The relation is wired in relations.ts so query joins still work.
+    lastActiveCompanyId: uuid("last_active_company_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -59,6 +66,7 @@ export const profilesTable = pgTable(
     emailIdx: index("profiles_email_idx").on(t.email),
     roleIdx: index("profiles_role_idx").on(t.role),
     statusIdx: index("profiles_status_idx").on(t.status),
+    lastActiveCompanyIdx: index("profiles_last_active_company_idx").on(t.lastActiveCompanyId),
   }),
 );
 
@@ -113,25 +121,49 @@ export const companiesTable = pgTable(
   }),
 );
 
-export const recruiterProfilesTable = pgTable(
-  "recruiter_profiles",
+export const recruiterProfilesTable = pgTable("recruiter_profiles", {
+  id: uuid("id")
+    .primaryKey()
+    .references(() => profilesTable.id, { onDelete: "cascade" }),
+  jobTitle: text("job_title"),
+  department: text("department"),
+  rolesHiringFor: text("roles_hiring_for").array().notNull().default(sql`'{}'::text[]`),
+  hiringVolumePerQuarter: text("hiring_volume_per_quarter"),
+  profileCompleted: boolean("profile_completed").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// One row per (user, company) membership. Replaces the old 1:1 link from
+// `recruiter_profiles.company_id`. user_id is NULLABLE so a row can represent
+// a pending invitation (no user account yet) — `email` is snapshotted at
+// invite time so the row survives `profiles` deletion.
+export const companyMembersTable = pgTable(
+  "company_members",
   {
-    id: uuid("id")
-      .primaryKey()
-      .references(() => profilesTable.id, { onDelete: "cascade" }),
+    id: uuid("id").primaryKey().defaultRandom(),
     companyId: uuid("company_id")
       .notNull()
-      .references(() => companiesTable.id, { onDelete: "restrict" }),
-    jobTitle: text("job_title"),
-    department: text("department"),
-    rolesHiringFor: text("roles_hiring_for").array().notNull().default(sql`'{}'::text[]`),
-    hiringVolumePerQuarter: text("hiring_volume_per_quarter"),
-    profileCompleted: boolean("profile_completed").notNull().default(false),
+      .references(() => companiesTable.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => profilesTable.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    role: text("role", { enum: COMPANY_MEMBER_ROLE }).notNull(),
+    status: text("status", { enum: COMPANY_MEMBER_STATUS }).notNull(),
+    invitationToken: text("invitation_token").unique(),
+    invitationExpiresAt: timestamp("invitation_expires_at", { withTimezone: true }),
+    invitedBy: uuid("invited_by").references(() => profilesTable.id, { onDelete: "set null" }),
+    invitedAt: timestamp("invited_at", { withTimezone: true }).notNull().defaultNow(),
+    joinedAt: timestamp("joined_at", { withTimezone: true }),
+    removedAt: timestamp("removed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
-    companyIdx: index("recruiter_profiles_company_idx").on(t.companyId),
+    companyUserUnique: unique("company_members_company_user_unique").on(t.companyId, t.userId),
+    companyEmailUnique: unique("company_members_company_email_unique").on(t.companyId, t.email),
+    userStatusIdx: index("company_members_user_status_idx").on(t.userId, t.status),
+    companyStatusIdx: index("company_members_company_status_idx").on(t.companyId, t.status),
+    invitationTokenIdx: index("company_members_invitation_token_idx").on(t.invitationToken),
   }),
 );
 
@@ -482,6 +514,9 @@ export const auditLogsTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     actorId: uuid("actor_id").references(() => profilesTable.id, { onDelete: "set null" }),
     actorType: text("actor_type", { enum: AUDIT_ACTOR_TYPE }).notNull(),
+    // Per-tenant explainability. Nullable so cross-tenant admin/system
+    // actions can still log with no company context.
+    companyId: uuid("company_id").references(() => companiesTable.id, { onDelete: "set null" }),
     action: text("action").notNull(),
     entityType: text("entity_type").notNull(),
     entityId: uuid("entity_id").notNull(),
@@ -495,6 +530,7 @@ export const auditLogsTable = pgTable(
     actorIdx: index("audit_logs_actor_idx").on(t.actorId, t.createdAt),
     entityIdx: index("audit_logs_entity_idx").on(t.entityType, t.entityId),
     actionIdx: index("audit_logs_action_idx").on(t.action),
+    companyIdx: index("audit_logs_company_id_idx").on(t.companyId),
   }),
 );
 
@@ -534,3 +570,5 @@ export type AuditLog = typeof auditLogsTable.$inferSelect;
 export type NewAuditLog = typeof auditLogsTable.$inferInsert;
 export type AuthToken = typeof authTokensTable.$inferSelect;
 export type NewAuthToken = typeof authTokensTable.$inferInsert;
+export type CompanyMember = typeof companyMembersTable.$inferSelect;
+export type NewCompanyMember = typeof companyMembersTable.$inferInsert;

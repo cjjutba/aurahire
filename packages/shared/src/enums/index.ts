@@ -26,6 +26,8 @@ export {
   SCORE_TYPE,
   SCORE_COMPONENT_PROFILE,
   SCORE_COMPONENT_MATCH,
+  COMPANY_MEMBER_ROLE,
+  COMPANY_MEMBER_STATUS,
 } from "@aurahire/db";
 
 export type {
@@ -51,4 +53,6 @@ export type {
   ParseConfidence,
   EvidenceRelevance,
   ScoreType,
+  CompanyMemberRole,
+  CompanyMemberStatus,
 } from "@aurahire/db";
