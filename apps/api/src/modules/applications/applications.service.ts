@@ -26,6 +26,9 @@ import { canTransition } from "./state-machine";
 import type {
   ApplicationDto,
   ApplicationCandidateDto,
+} from "./dto/application-response.dto";
+import {
+  ApplicationCompanyDto,
   ApplicationJobDto,
   MatchScoreDto,
 } from "./dto/application-response.dto";
@@ -589,7 +592,7 @@ export class ApplicationsService {
       appliedAt: row.appliedAt.toISOString(),
       statusUpdatedAt: row.statusUpdatedAt.toISOString(),
       matchScore: row.matchScore
-        ? ({
+        ? Object.assign(new MatchScoreDto(), {
             id: row.matchScore.id,
             overallScore: row.matchScore.overallScore,
             band: row.matchScore.band,
@@ -603,7 +606,7 @@ export class ApplicationsService {
             modelUsed: "",
             latencyMs: 0,
             createdAt: "",
-          } as unknown as MatchScoreDto)
+          })
         : null,
       candidate:
         row.candidateFullName && row.candidateEmail
@@ -616,14 +619,14 @@ export class ApplicationsService {
             }
           : null,
       job: row.jobTitle
-        ? ({
+        ? Object.assign(new ApplicationJobDto(), {
             id: row.jobId,
             title: row.jobTitle,
             department: null,
             employmentType: "",
             workMode: "",
-            company: { id: "", name: "" },
-          } as ApplicationJobDto)
+            company: Object.assign(new ApplicationCompanyDto(), { id: "", name: "" }),
+          })
         : null,
     };
   }
