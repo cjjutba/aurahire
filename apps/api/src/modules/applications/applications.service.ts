@@ -15,6 +15,7 @@ import type {
 } from "@aurahire/shared";
 
 import { AuditService } from "../../audit";
+import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { EmailService } from "../../email/email.service";
 import { JobsRepository } from "../jobs/jobs.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository";
@@ -55,6 +56,7 @@ export class ApplicationsService {
     private readonly storage: StorageService,
     private readonly email: EmailService,
     private readonly audit: AuditService,
+    private readonly cacheService: CacheService,
   ) {}
 
   // -----------------------------------------------------------------
@@ -139,6 +141,12 @@ export class ApplicationsService {
       ...requestMeta,
     });
 
+    await this.cacheService.bustTags([
+      TAGS.applicationsCandidate(user.id),
+      TAGS.dashboardRecruiter(job.recruiterId),
+      TAGS.applicationsRecruiter(job.recruiterId),
+    ]);
+
     let matchScoreDto: MatchScoreDto | null = null;
     try {
       matchScoreDto = await this.scoringService.computeMatchScore(
@@ -180,8 +188,16 @@ export class ApplicationsService {
         message: "Candidate role required",
       });
     }
-    const apps = await this.repo.findByCandidateId(user.id);
-    return Promise.all(apps.map((a) => this.toDto(a.id)));
+    return this.cacheService.getOrSet<ApplicationDto[]>({
+      key: `applications:candidate:${user.id}:list`,
+      ttlSeconds: TTL_SECONDS.hot,
+      tags: [TAGS.applicationsCandidate(user.id)],
+      telemetryName: "applications:candidate:list",
+      load: async () => {
+        const apps = await this.repo.findByCandidateId(user.id);
+        return Promise.all(apps.map((a) => this.toDto(a.id)));
+      },
+    });
   }
 
   async listForJob(user: AuthUser, jobId: string): Promise<ApplicationDto[]> {
@@ -222,7 +238,13 @@ export class ApplicationsService {
         message: "Recruiter role required",
       });
     }
-    return this.repo.recruiterStats(user.id, range);
+    return this.cacheService.getOrSet({
+      key: `dashboard:recruiter:${user.id}:stats:${range}`,
+      ttlSeconds: TTL_SECONDS.hot,
+      tags: [TAGS.dashboardRecruiter(user.id)],
+      telemetryName: "dashboard:recruiter:stats",
+      load: () => this.repo.recruiterStats(user.id, range),
+    });
   }
 
   async recentForRecruiter(
@@ -236,8 +258,16 @@ export class ApplicationsService {
       });
     }
 
-    const rows = await this.repo.listRecentForRecruiter(user.id, limit);
-    return rows.map((row) => this.toDashboardDto(row));
+    return this.cacheService.getOrSet<ApplicationDto[]>({
+      key: `dashboard:recruiter:${user.id}:recent:${limit}`,
+      ttlSeconds: TTL_SECONDS.hot,
+      tags: [TAGS.dashboardRecruiter(user.id)],
+      telemetryName: "dashboard:recruiter:recent",
+      load: async () => {
+        const rows = await this.repo.listRecentForRecruiter(user.id, limit);
+        return rows.map((row) => this.toDashboardDto(row));
+      },
+    });
   }
 
   // ─── Recruiter analytics bundle ────────────────────────────────────
@@ -258,12 +288,20 @@ export class ApplicationsService {
         message: "Recruiter role required",
       });
     }
-    const [kpis, topJobs, applicationsByStatus] = await Promise.all([
-      this.repo.recruiterStats(user.id, "all"),
-      this.repo.recruiterTopJobsByApplications(user.id, 5),
-      this.repo.recruiterApplicationsByStatus(user.id),
-    ]);
-    return { kpis, topJobs, applicationsByStatus };
+    return this.cacheService.getOrSet({
+      key: `dashboard:recruiter:${user.id}:analytics`,
+      ttlSeconds: TTL_SECONDS.hot,
+      tags: [TAGS.dashboardRecruiter(user.id)],
+      telemetryName: "dashboard:recruiter:analytics",
+      load: async () => {
+        const [kpis, topJobs, applicationsByStatus] = await Promise.all([
+          this.repo.recruiterStats(user.id, "all"),
+          this.repo.recruiterTopJobsByApplications(user.id, 5),
+          this.repo.recruiterApplicationsByStatus(user.id),
+        ]);
+        return { kpis, topJobs, applicationsByStatus };
+      },
+    });
   }
 
   async getById(user: AuthUser, id: string): Promise<ApplicationDto> {
@@ -337,6 +375,12 @@ export class ApplicationsService {
       ...requestMeta,
     });
 
+    await this.cacheService.bustTags([
+      TAGS.dashboardRecruiter(user.id),
+      TAGS.applicationsRecruiter(user.id),
+      TAGS.applicationsCandidate(app.candidateId),
+    ]);
+
     void this.notifyCandidateOfStatusChange(id, app.status, dto.newStatus).catch((err) => {
       this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
     });
@@ -378,6 +422,12 @@ export class ApplicationsService {
       ...requestMeta,
     });
 
+    await this.cacheService.bustTags([
+      TAGS.dashboardRecruiter(user.id),
+      TAGS.applicationsRecruiter(user.id),
+      TAGS.applicationsCandidate(app.candidateId),
+    ]);
+
     return this.toDto(id);
   }
 
@@ -417,6 +467,17 @@ export class ApplicationsService {
       details: { from: app.status, to: newStatus, note, system: true },
       ...requestMeta,
     });
+
+    const job = await this.jobsRepo.findById(app.jobId);
+    if (job) {
+      await this.cacheService.bustTags([
+        TAGS.dashboardRecruiter(job.recruiterId),
+        TAGS.applicationsRecruiter(job.recruiterId),
+        TAGS.applicationsCandidate(app.candidateId),
+      ]);
+    } else {
+      await this.cacheService.bustTags([TAGS.applicationsCandidate(app.candidateId)]);
+    }
 
     void this.notifyCandidateOfStatusChange(id, app.status, newStatus).catch((err) => {
       this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
@@ -462,6 +523,17 @@ export class ApplicationsService {
       entityId: id,
       ...requestMeta,
     });
+
+    const withdrawnJob = await this.jobsRepo.findById(app.jobId);
+    if (withdrawnJob) {
+      await this.cacheService.bustTags([
+        TAGS.applicationsCandidate(user.id),
+        TAGS.dashboardRecruiter(withdrawnJob.recruiterId),
+        TAGS.applicationsRecruiter(withdrawnJob.recruiterId),
+      ]);
+    } else {
+      await this.cacheService.bustTags([TAGS.applicationsCandidate(user.id)]);
+    }
 
     return this.toDto(id);
   }
