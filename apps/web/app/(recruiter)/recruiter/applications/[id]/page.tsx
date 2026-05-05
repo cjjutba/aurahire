@@ -6,6 +6,7 @@ import { MatchBandChip } from "@/components/score/match-band-chip";
 import { ScoreBreakdownBar } from "@/components/score/score-breakdown-bar";
 import { EvidenceCallout } from "@/components/score/evidence-callout";
 import { ApplicationActionsClient } from "./_actions-client";
+import { ShortlistButtonClient } from "./_shortlist-button-client";
 import {
   RecruiterInterviewsSection,
   type InterviewRow,
@@ -66,6 +67,7 @@ interface AppDetail {
   } | null;
   job: { id: string; title: string; company: { name: string } } | null;
   matchScore: MatchScoreData | null;
+  shortlistedAt: string | null;
 }
 
 export const metadata = { title: "Application Review" };
@@ -128,11 +130,15 @@ export default async function RecruiterApplicationDetailPage({ params }: PagePro
               {app.candidate?.phone ? ` · ${app.candidate.phone}` : ""}
             </p>
           </div>
-          <div className="text-right">
+          <div className="flex flex-col items-end gap-2">
+            <ShortlistButtonClient
+              applicationId={app.id}
+              initialShortlistedAt={app.shortlistedAt}
+            />
             <p className="text-xs text-[var(--color-muted)]">
               Applied {new Date(app.appliedAt).toLocaleString()}
             </p>
-            <p className="mt-1 text-sm">
+            <p className="text-sm">
               Status: <strong>{app.status}</strong>
             </p>
           </div>
