@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -26,13 +27,16 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { ApplyToJobDto } from "./dto/apply.dto";
 import { RecentApplicationsQueryDto } from "./dto/recent-applications-query.dto";
 import { RecruiterStatsQueryDto } from "./dto/recruiter-stats-query.dto";
+import { ShortlistQueryDto } from "./dto/shortlist-query.dto";
 import { UpdateApplicationStatusDto } from "./dto/update-status.dto";
 import { UpdateApplicationNotesDto } from "./dto/update-notes.dto";
 import {
+  ApplicationDto,
   ApplicationEnvelopeDto,
   ApplicationListEnvelopeDto,
   RecruiterAnalyticsEnvelopeDto,
   RecruiterStatsEnvelopeDto,
+  ShortlistListEnvelopeDto,
   SignedDownloadEnvelopeDto,
 } from "./dto/application-response.dto";
 import { ApplicationsService } from "./applications.service";
@@ -128,6 +132,20 @@ export class ApplicationsController {
     return { data };
   }
 
+  @Get("shortlist")
+  @Roles("recruiter")
+  @ApiOperation({ summary: "List the recruiter's shortlisted applications" })
+  @ApiResponse({ status: 200, type: ShortlistListEnvelopeDto })
+  async listShortlist(
+    @CurrentUser() user: AuthUser,
+    @Query() query: ShortlistQueryDto,
+  ): Promise<{
+    data: ApplicationDto[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    return this.service.listShortlistForRecruiter(user, query);
+  }
+
   @Get("by-job/:jobId")
   @Roles("recruiter")
   @ApiOperation({ summary: "List applications for a job (recruiter must own it)" })
@@ -180,6 +198,32 @@ export class ApplicationsController {
     @Req() req: FastifyRequest,
   ): Promise<ApplicationEnvelopeDto> {
     const data = await this.service.updateNotes(user, id, dto, this.requestMeta(req));
+    return { data };
+  }
+
+  @Post(":id/shortlist")
+  @Roles("recruiter")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Add this application to the recruiter's shortlist" })
+  @ApiResponse({ status: 200, type: ApplicationEnvelopeDto })
+  async shortlist(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+  ): Promise<ApplicationEnvelopeDto> {
+    const data = await this.service.addToShortlist(user, id);
+    return { data };
+  }
+
+  @Delete(":id/shortlist")
+  @Roles("recruiter")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Remove this application from the recruiter's shortlist" })
+  @ApiResponse({ status: 200, type: ApplicationEnvelopeDto })
+  async unshortlist(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+  ): Promise<ApplicationEnvelopeDto> {
+    const data = await this.service.removeFromShortlist(user, id);
     return { data };
   }
 

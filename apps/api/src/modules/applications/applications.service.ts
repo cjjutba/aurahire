@@ -270,6 +270,104 @@ export class ApplicationsService {
     });
   }
 
+  async addToShortlist(user: AuthUser, applicationId: string): Promise<ApplicationDto> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+    }
+    const owned = await this.repo.findApplicationContextForRecruiter(applicationId, user.id);
+    if (!owned) {
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+    }
+    const updated = await this.repo.setShortlistedAt(applicationId, new Date());
+    await this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: "application.shortlisted",
+      entityType: "application",
+      entityId: applicationId,
+      details: {},
+    });
+    return {
+      id: updated.id,
+      jobId: updated.jobId,
+      candidateId: updated.candidateId,
+      resumeId: updated.resumeId,
+      coverLetter: updated.coverLetter,
+      status: updated.status,
+      recruiterNotes: updated.recruiterNotes,
+      appliedAt: updated.appliedAt.toISOString(),
+      statusUpdatedAt: updated.statusUpdatedAt.toISOString(),
+      shortlistedAt: updated.shortlistedAt?.toISOString() ?? null,
+      matchScore: null,
+      candidate: null,
+      job: null,
+    };
+  }
+
+  async removeFromShortlist(user: AuthUser, applicationId: string): Promise<ApplicationDto> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+    }
+    const owned = await this.repo.findApplicationContextForRecruiter(applicationId, user.id);
+    if (!owned) {
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+    }
+    const updated = await this.repo.setShortlistedAt(applicationId, null);
+    await this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: "application.unshortlisted",
+      entityType: "application",
+      entityId: applicationId,
+      details: {},
+    });
+    return {
+      id: updated.id,
+      jobId: updated.jobId,
+      candidateId: updated.candidateId,
+      resumeId: updated.resumeId,
+      coverLetter: updated.coverLetter,
+      status: updated.status,
+      recruiterNotes: updated.recruiterNotes,
+      appliedAt: updated.appliedAt.toISOString(),
+      statusUpdatedAt: updated.statusUpdatedAt.toISOString(),
+      shortlistedAt: updated.shortlistedAt?.toISOString() ?? null,
+      matchScore: null,
+      candidate: null,
+      job: null,
+    };
+  }
+
+  async listShortlistForRecruiter(
+    user: AuthUser,
+    query: {
+      page: number;
+      limit: number;
+      q?: string;
+      status?: ApplicationStatus;
+      jobId?: string;
+      band?: "strong" | "partial" | "limited";
+      sort: "recently-shortlisted" | "highest-score" | "earliest-applied";
+    },
+  ): Promise<{
+    data: ApplicationDto[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+    }
+    const { rows, total } = await this.repo.listShortlistedForRecruiter(user.id, query);
+    return {
+      data: rows.map((row) => this.toDashboardDto(row)),
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / query.limit)),
+      },
+    };
+  }
+
   // ─── Recruiter analytics bundle ────────────────────────────────────
 
   async recruiterAnalytics(user: AuthUser): Promise<{
@@ -632,6 +730,7 @@ export class ApplicationsService {
       recruiterNotes: app.recruiterNotes,
       appliedAt: app.appliedAt.toISOString(),
       statusUpdatedAt: app.statusUpdatedAt.toISOString(),
+      shortlistedAt: app.shortlistedAt?.toISOString() ?? null,
       matchScore,
       candidate,
       job,
@@ -648,6 +747,7 @@ export class ApplicationsService {
     recruiterNotes: string | null;
     appliedAt: Date;
     statusUpdatedAt: Date;
+    shortlistedAt: Date | null;
     matchScore: { id: string; overallScore: number; band: string } | null;
     candidateFullName: string | null;
     candidateEmail: string | null;
@@ -663,6 +763,7 @@ export class ApplicationsService {
       recruiterNotes: row.recruiterNotes,
       appliedAt: row.appliedAt.toISOString(),
       statusUpdatedAt: row.statusUpdatedAt.toISOString(),
+      shortlistedAt: row.shortlistedAt?.toISOString() ?? null,
       matchScore: row.matchScore
         ? Object.assign(new MatchScoreDto(), {
             id: row.matchScore.id,

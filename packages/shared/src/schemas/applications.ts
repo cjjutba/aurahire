@@ -35,3 +35,15 @@ export const recruiterStatsQuerySchema = z.object({
 
 export type RecruiterStatsQuery = z.infer<typeof recruiterStatsQuerySchema>;
 export type RecruiterStatsRange = RecruiterStatsQuery["range"];
+
+export const shortlistQuerySchema = z.object({
+  q: z.string().max(200).optional(),
+  status: z.enum(APPLICATION_STATUS).optional(),
+  jobId: uuidSchema.optional(),
+  band: z.enum(["strong", "partial", "limited"]).optional(),
+  sort: z.enum(["recently-shortlisted", "highest-score", "earliest-applied"]).optional().default("recently-shortlisted"),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(25),
+});
+
+export type ShortlistQuery = z.infer<typeof shortlistQuerySchema>;

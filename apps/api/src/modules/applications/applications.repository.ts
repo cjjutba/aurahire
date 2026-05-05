@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, sql, type SQL } from "drizzle-orm";
 import {
   applicationsTable,
   biasFlagsTable,
@@ -10,6 +10,7 @@ import {
   type NewApplication,
   type MatchScore,
 } from "@aurahire/db";
+import type { ApplicationStatus } from "@aurahire/shared";
 
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 
@@ -254,6 +255,111 @@ export class ApplicationsRepository {
       .where(eq(jobsTable.recruiterId, recruiterId))
       .groupBy(applicationsTable.status);
     return rows;
+  }
+
+  async setShortlistedAt(applicationId: string, value: Date | null): Promise<Application> {
+    const [row] = await this.db
+      .update(applicationsTable)
+      .set({ shortlistedAt: value, updatedAt: new Date() })
+      .where(eq(applicationsTable.id, applicationId))
+      .returning();
+    if (!row) throw new Error("Application update failed");
+    return row;
+  }
+
+  async listShortlistedForRecruiter(
+    recruiterId: string,
+    options: {
+      page: number;
+      limit: number;
+      q?: string;
+      status?: ApplicationStatus;
+      jobId?: string;
+      band?: "strong" | "partial" | "limited";
+      sort: "recently-shortlisted" | "highest-score" | "earliest-applied";
+    },
+  ): Promise<{
+    rows: Array<
+      Application & {
+        matchScore: MatchScore | null;
+        candidateFullName: string | null;
+        candidateEmail: string | null;
+        jobTitle: string | null;
+      }
+    >;
+    total: number;
+  }> {
+    const conditions: SQL[] = [
+      eq(jobsTable.recruiterId, recruiterId),
+      isNotNull(applicationsTable.shortlistedAt),
+    ];
+    if (options.status) {
+      conditions.push(eq(applicationsTable.status, options.status));
+    }
+    if (options.jobId) {
+      conditions.push(eq(applicationsTable.jobId, options.jobId));
+    }
+    if (options.band) {
+      conditions.push(eq(matchScoresTable.band, options.band));
+    }
+    if (options.q && options.q.trim()) {
+      const term = `%${options.q.trim().toLowerCase()}%`;
+      conditions.push(
+        sql`(lower(${profilesTable.fullName}) like ${term} or lower(${jobsTable.title}) like ${term})`,
+      );
+    }
+    const where = conditions.length === 1 ? conditions[0] : and(...conditions);
+
+    const countRows = await this.db
+      .select({ count: count() })
+      .from(applicationsTable)
+      .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
+      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .where(where);
+    const total = countRows[0]?.count ?? 0;
+
+    let orderClause: SQL;
+    switch (options.sort) {
+      case "highest-score":
+        orderClause = sql`coalesce(${matchScoresTable.overallScore}, -1) desc, ${applicationsTable.shortlistedAt} desc`;
+        break;
+      case "earliest-applied":
+        orderClause = sql`${applicationsTable.appliedAt} asc`;
+        break;
+      case "recently-shortlisted":
+      default:
+        orderClause = sql`${applicationsTable.shortlistedAt} desc`;
+        break;
+    }
+
+    const rows = await this.db
+      .select({
+        application: applicationsTable,
+        matchScore: matchScoresTable,
+        candidateFullName: profilesTable.fullName,
+        candidateEmail: profilesTable.email,
+        jobTitle: jobsTable.title,
+      })
+      .from(applicationsTable)
+      .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
+      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .where(where)
+      .orderBy(orderClause)
+      .limit(options.limit)
+      .offset((options.page - 1) * options.limit);
+
+    return {
+      rows: rows.map((r) => ({
+        ...r.application,
+        matchScore: r.matchScore,
+        candidateFullName: r.candidateFullName,
+        candidateEmail: r.candidateEmail,
+        jobTitle: r.jobTitle,
+      })),
+      total: Number(total),
+    };
   }
 
   async listRecentForRecruiter(

@@ -68,6 +68,7 @@ export class ApplicationDto {
   @ApiPropertyOptional({ nullable: true }) recruiterNotes!: string | null;
   @ApiProperty() appliedAt!: string;
   @ApiProperty() statusUpdatedAt!: string;
+  @ApiPropertyOptional({ nullable: true }) shortlistedAt!: string | null;
   @ApiPropertyOptional({ type: () => MatchScoreDto, nullable: true })
   matchScore!: MatchScoreDto | null;
   @ApiPropertyOptional({ type: () => ApplicationCandidateDto, nullable: true })
@@ -84,6 +85,18 @@ export class ApplicationEnvelopeDto {
 export class ApplicationListEnvelopeDto {
   @ApiProperty({ type: [ApplicationDto] })
   data!: ApplicationDto[];
+}
+
+export class PaginationMetaDto {
+  @ApiProperty() page!: number;
+  @ApiProperty() limit!: number;
+  @ApiProperty() total!: number;
+  @ApiProperty() totalPages!: number;
+}
+
+export class ShortlistListEnvelopeDto {
+  @ApiProperty({ type: [ApplicationDto] }) data!: ApplicationDto[];
+  @ApiProperty({ type: () => PaginationMetaDto }) meta!: PaginationMetaDto;
 }
 
 // ─── Recruiter Stats envelope ──────────────────────────────────────────────
