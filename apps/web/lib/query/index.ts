@@ -16,3 +16,4 @@ export type {
   RecruiterAnalyticsResponse,
   RecruiterRecentApplicationItem,
 } from "./queries";
+export { PrefetchedHydration } from "./hydration";
