@@ -53,8 +53,12 @@ export interface RecruiterShortlistParams {
   page?: number;
 }
 export interface RecruiterInterviewsParams {
+  q?: string;
   status?: string;
+  format?: string;
+  sort?: string;
   page?: number;
+  limit?: number;
 }
 export interface RecruiterApplicationsByJobParams {
   status?: string;

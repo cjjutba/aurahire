@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
+export class InterviewCandidateRefDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() fullName!: string;
+  @ApiProperty() email!: string;
+}
+
+export class InterviewJobRefDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() title!: string;
+}
+
 export class InterviewDto {
   @ApiProperty() id!: string;
   @ApiProperty() applicationId!: string;
@@ -16,6 +27,10 @@ export class InterviewDto {
   @ApiPropertyOptional({ nullable: true, type: Number }) rating!: number | null;
   @ApiProperty() createdAt!: string;
   @ApiProperty() updatedAt!: string;
+  @ApiPropertyOptional({ type: () => InterviewCandidateRefDto, nullable: true })
+  candidate?: InterviewCandidateRefDto | null;
+  @ApiPropertyOptional({ type: () => InterviewJobRefDto, nullable: true })
+  job?: InterviewJobRefDto | null;
 }
 
 export class InterviewEnvelopeDto {
@@ -23,7 +38,16 @@ export class InterviewEnvelopeDto {
   data!: InterviewDto;
 }
 
+export class InterviewListMetaDto {
+  @ApiProperty() page!: number;
+  @ApiProperty() limit!: number;
+  @ApiProperty() total!: number;
+  @ApiProperty() totalPages!: number;
+}
+
 export class InterviewListEnvelopeDto {
   @ApiProperty({ type: [InterviewDto] })
   data!: InterviewDto[];
+  @ApiPropertyOptional({ type: () => InterviewListMetaDto })
+  meta?: InterviewListMetaDto;
 }

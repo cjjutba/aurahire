@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, count, desc, eq, isNotNull, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNotNull, sql, type SQL } from "drizzle-orm";
 import {
   applicationsTable,
   biasFlagsTable,
@@ -159,9 +159,7 @@ export class ApplicationsRepository {
       .where(
         and(
           eq(jobsTable.recruiterId, recruiterId),
-          ...(rangeFilter
-            ? [sql`${applicationsTable.appliedAt} >= ${rangeFilter}`]
-            : []),
+          ...(rangeFilter ? [gte(applicationsTable.appliedAt, rangeFilter)] : []),
         ),
       );
 

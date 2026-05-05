@@ -46,7 +46,7 @@ export function CandidateJobsListClient({
   const total = data?.meta?.total ?? 0;
 
   return (
-    <div className="mx-auto max-w-[1024px] space-y-6">
+    <div className="mx-auto max-w-[1280px] space-y-6">
       <header>
         <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
           Browse Jobs

@@ -13,6 +13,8 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
+import { EmailBrandHeader } from "./_brand-header";
+
 interface PasswordResetProps {
   resetUrl: string;
 }
@@ -42,18 +44,7 @@ export function PasswordResetTemplate({
             margin: "0 auto",
           }}
         >
-          <Text
-            style={{
-              fontSize: "12px",
-              fontWeight: 600,
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              color: "#7c828a",
-              margin: "0 0 8px 0",
-            }}
-          >
-            AuraHire
-          </Text>
+          <EmailBrandHeader />
 
           <Heading
             style={{

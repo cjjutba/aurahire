@@ -11,6 +11,8 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
+import { EmailBrandHeader } from "./_brand-header";
+
 interface Props {
   recruiterName: string;
   candidateName: string;
@@ -51,6 +53,7 @@ export function OfferDecisionEmail({
             margin: "0 auto",
           }}
         >
+          <EmailBrandHeader />
           <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
             {headline}
           </Heading>

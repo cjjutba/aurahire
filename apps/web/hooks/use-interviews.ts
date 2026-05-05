@@ -11,6 +11,7 @@ import { clientApiFetch } from "./_client-fetch";
 
 interface InterviewsListResponse {
   data: unknown[];
+  meta?: { page: number; limit: number; total: number; totalPages: number };
 }
 
 export function useRecruiterInterviewsQuery(params: RecruiterInterviewsParams) {
@@ -18,7 +19,14 @@ export function useRecruiterInterviewsQuery(params: RecruiterInterviewsParams) {
     queryKey: queryKeys.recruiterInterviews.list(params),
     queryFn: ({ signal }) =>
       clientApiFetch<InterviewsListResponse>("/api/v1/interviews/by-recruiter/me", {
-        query: { status: params.status, page: params.page },
+        query: {
+          q: params.q,
+          status: params.status,
+          format: params.format,
+          sort: params.sort,
+          page: params.page,
+          limit: params.limit,
+        },
         signal,
       }),
   });

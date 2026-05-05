@@ -46,32 +46,34 @@ export default async function EditJobPage({ params }: PageProps) {
   const job = body.data;
 
   return (
-    <div className="mx-auto max-w-[840px]">
-      <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
-        Edit job
-      </h1>
-      <div className="mt-8 rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
-        <JobForm
-          jobId={id}
-          defaults={{
-            title: job.title,
-            department: job.department,
-            employmentType: job.employmentType,
-            workMode: job.workMode,
-            locationCity: job.locationCity,
-            locationRegion: job.locationRegion,
-            locationCountry: job.locationCountry,
-            salaryMin: job.salaryMin,
-            salaryMax: job.salaryMax,
-            salaryCurrency: job.salaryCurrency,
-            description: job.description,
-            descriptionPlain: job.descriptionPlain,
-            requiredSkills: job.requiredSkills,
-            experienceLevel: job.experienceLevel,
-            educationRequirement: job.educationRequirement,
-            applicationDeadline: job.applicationDeadline,
-          }}
-        />
+    <div className="mx-auto max-w-[1280px]">
+      <div className="max-w-[840px]">
+        <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+          Edit job
+        </h1>
+        <div className="mt-8 rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
+          <JobForm
+            jobId={id}
+            defaults={{
+              title: job.title,
+              department: job.department,
+              employmentType: job.employmentType,
+              workMode: job.workMode,
+              locationCity: job.locationCity,
+              locationRegion: job.locationRegion,
+              locationCountry: job.locationCountry,
+              salaryMin: job.salaryMin,
+              salaryMax: job.salaryMax,
+              salaryCurrency: job.salaryCurrency,
+              description: job.description,
+              descriptionPlain: job.descriptionPlain,
+              requiredSkills: job.requiredSkills,
+              experienceLevel: job.experienceLevel,
+              educationRequirement: job.educationRequirement,
+              applicationDeadline: job.applicationDeadline,
+            }}
+          />
+        </div>
       </div>
     </div>
   );

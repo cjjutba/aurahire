@@ -23,7 +23,7 @@ export function ApplicationsListClient() {
   const rows = (data?.data ?? []) as AppRow[];
 
   return (
-    <div className="mx-auto max-w-[1024px]">
+    <div className="mx-auto max-w-[1280px]">
       <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
         My Applications
       </h1>

@@ -11,6 +11,8 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
+import { EmailBrandHeader } from "./_brand-header";
+
 interface Props {
   candidateName: string;
   jobTitle: string;
@@ -44,6 +46,7 @@ export function OfferExpiredEmail({
             margin: "0 auto",
           }}
         >
+          <EmailBrandHeader />
           <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
             Offer Expired
           </Heading>

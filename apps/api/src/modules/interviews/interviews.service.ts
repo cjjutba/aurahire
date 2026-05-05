@@ -8,6 +8,7 @@ import {
 import type {
   AuthUser,
   InterviewStatus,
+  RecruiterInterviewsQuery,
   ScheduleInterviewInput,
   UpdateInterviewFeedbackInput,
   UpdateInterviewStatusInput,
@@ -20,7 +21,7 @@ import { EmailService } from "../../email/email.service";
 import { ApplicationsRepository } from "../applications/applications.repository";
 import { JobsRepository } from "../jobs/jobs.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository";
-import { InterviewsRepository } from "./interviews.repository";
+import { InterviewsRepository, type RecruiterInterviewRow } from "./interviews.repository";
 import type { InterviewDto } from "./dto/interview-response.dto";
 import { InterviewScheduledEmail } from "../../email/templates/interview-scheduled";
 import { InterviewCancelledEmail } from "../../email/templates/interview-cancelled";
@@ -234,20 +235,26 @@ export class InterviewsService {
     return rows.map((r) => this.toDto(r));
   }
 
-  async listForRecruiter(user: AuthUser): Promise<InterviewDto[]> {
+  async listForRecruiter(
+    user: AuthUser,
+    query: RecruiterInterviewsQuery,
+  ): Promise<{
+    data: InterviewDto[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
     if (user.role !== "recruiter") {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
-    return this.cacheService.getOrSet<InterviewDto[]>({
-      key: `interviews:recruiter:${user.id}:list`,
-      ttlSeconds: TTL_SECONDS.hot,
-      tags: [TAGS.interviewsRecruiter(user.id)],
-      telemetryName: "interviews:recruiter:list",
-      load: async () => {
-        const rows = await this.repo.findByRecruiterId(user.id);
-        return rows.map((r) => this.toDto(r));
+    const { rows, total } = await this.repo.listForRecruiterPaginated(user.id, query);
+    return {
+      data: rows.map((row) => this.toDtoFromRecruiterRow(row)),
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / query.limit)),
       },
-    });
+    };
   }
 
   // -----------------------------------------------------------------
@@ -364,6 +371,24 @@ export class InterviewsService {
       rating: i.rating,
       createdAt: i.createdAt.toISOString(),
       updatedAt: i.updatedAt.toISOString(),
+    };
+  }
+
+  private toDtoFromRecruiterRow(row: RecruiterInterviewRow): InterviewDto {
+    return {
+      ...this.toDto(row),
+      candidate:
+        row.candidateId && row.candidateFullName !== null
+          ? {
+              id: row.candidateId,
+              fullName: row.candidateFullName,
+              email: row.candidateEmail ?? "",
+            }
+          : null,
+      job:
+        row.jobId && row.jobTitle
+          ? { id: row.jobId, title: row.jobTitle }
+          : null,
     };
   }
 }

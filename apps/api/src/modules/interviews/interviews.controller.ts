@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
@@ -16,6 +17,7 @@ import type { AuthUser } from "@aurahire/shared";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 
+import { RecruiterInterviewsQueryDto } from "./dto/recruiter-interviews-query.dto";
 import { ScheduleInterviewDto } from "./dto/schedule-interview.dto";
 import { UpdateInterviewFeedbackDto } from "./dto/update-interview-feedback.dto";
 import { UpdateInterviewStatusDto } from "./dto/update-interview-status.dto";
@@ -59,9 +61,12 @@ export class InterviewsController {
   @Roles("recruiter")
   @ApiOperation({ summary: "List all interviews for jobs the recruiter owns" })
   @ApiResponse({ status: 200, type: InterviewListEnvelopeDto })
-  async listForRecruiter(@CurrentUser() user: AuthUser): Promise<InterviewListEnvelopeDto> {
-    const data = await this.service.listForRecruiter(user);
-    return { data };
+  async listForRecruiter(
+    @CurrentUser() user: AuthUser,
+    @Query() query: RecruiterInterviewsQueryDto,
+  ): Promise<InterviewListEnvelopeDto> {
+    const { data, meta } = await this.service.listForRecruiter(user, query);
+    return { data, meta };
   }
 
   @Get("applications/:applicationId/interviews")

@@ -34,27 +34,29 @@ export default async function NewOfferPage({ searchParams }: PageProps) {
   const body = (await res.json()) as { data: AppContext };
 
   return (
-    <div className="mx-auto max-w-[720px] space-y-6">
-      <Link
-        href={`/recruiter/applications/${body.data.id}`}
-        className="text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]"
-      >
-        ← Back to application
-      </Link>
-      <header>
-        <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
-          Send Offer
-        </h1>
-        <p className="mt-1 text-sm text-[var(--color-body)]">
-          To <strong>{body.data.candidate?.fullName ?? "candidate"}</strong> for{" "}
-          <strong>{body.data.job?.title ?? "the role"}</strong>
-          {body.data.job?.company.name ? <> at {body.data.job.company.name}</> : null}.
-        </p>
-      </header>
-      <OfferFormClient
-        applicationId={body.data.id}
-        defaultTitle={body.data.job?.title ?? ""}
-      />
+    <div className="mx-auto max-w-[1280px] space-y-6">
+      <div className="max-w-[720px] space-y-6">
+        <Link
+          href={`/recruiter/applications/${body.data.id}`}
+          className="text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+        >
+          ← Back to application
+        </Link>
+        <header>
+          <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+            Send Offer
+          </h1>
+          <p className="mt-1 text-sm text-[var(--color-body)]">
+            To <strong>{body.data.candidate?.fullName ?? "candidate"}</strong> for{" "}
+            <strong>{body.data.job?.title ?? "the role"}</strong>
+            {body.data.job?.company.name ? <> at {body.data.job.company.name}</> : null}.
+          </p>
+        </header>
+        <OfferFormClient
+          applicationId={body.data.id}
+          defaultTitle={body.data.job?.title ?? ""}
+        />
+      </div>
     </div>
   );
 }

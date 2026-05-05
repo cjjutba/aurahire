@@ -88,10 +88,19 @@ export const serverQueries = {
       { query: { page: params.page } },
     ),
   recruiterInterviews: (params: RecruiterInterviewsParams) =>
-    serverApiFetch<{ data: unknown[] }>(
-      "/api/v1/interviews/by-recruiter/me",
-      { query: { status: params.status, page: params.page } },
-    ),
+    serverApiFetch<{
+      data: unknown[];
+      meta?: { page: number; limit: number; total: number; totalPages: number };
+    }>("/api/v1/interviews/by-recruiter/me", {
+      query: {
+        q: params.q,
+        status: params.status,
+        format: params.format,
+        sort: params.sort,
+        page: params.page,
+        limit: params.limit,
+      },
+    }),
   recruiterApplicationsByJob: (jobId: string, params: RecruiterApplicationsByJobParams) =>
     serverApiFetch<{ data: unknown[]; meta: { total: number } }>(
       "/api/v1/applications",

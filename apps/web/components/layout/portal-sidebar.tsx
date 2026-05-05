@@ -15,9 +15,8 @@ import {
   Building2,
   ShieldAlert,
   ScrollText,
-  Sliders,
+  SlidersHorizontal,
   BookOpen,
-  ExternalLink,
   ChevronsUpDown,
   LogOut,
 } from "lucide-react";
@@ -48,6 +47,12 @@ interface NavSection {
   label: string;
   items: NavItem[];
 }
+
+const HELP_HREF: Record<UserRole, string> = {
+  candidate: "/candidate/help",
+  recruiter: "/recruiter/help",
+  admin: "/admin/help",
+};
 
 const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
   candidate: [
@@ -111,7 +116,7 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
     {
       label: "Insights",
       items: [
-        { href: "/admin/ai-config", label: "AI Config", icon: Sliders },
+        { href: "/admin/ai-config", label: "AI Config", icon: SlidersHorizontal },
         { href: "/admin/audit", label: "Audit Log", icon: ScrollText },
         { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
         { href: "/admin/bias-monitor", label: "Bias Monitor", icon: ShieldAlert },
@@ -160,10 +165,10 @@ export function PortalSidebarContent({
   const sections = NAV_SECTIONS[role];
   const initials = getInitials(fullName);
   const tenantInitials = companyName ? getInitials(companyName) : "AH";
-  const activeHref = resolveActiveHref(
-    pathname,
-    sections.flatMap((s) => s.items.map((i) => i.href)),
-  );
+  const activeHref = resolveActiveHref(pathname, [
+    ...sections.flatMap((s) => s.items.map((i) => i.href)),
+    HELP_HREF[role],
+  ]);
 
   async function handleSignOut() {
     const supabase = createSupabaseBrowserClient();
@@ -239,16 +244,20 @@ export function PortalSidebarContent({
         ))}
       </nav>
 
-      {/* Bottom block: Docs + user chip */}
+      {/* Bottom block: Help + user chip */}
       <div className="border-t border-[var(--color-hairline-soft)] p-3">
         <Link
-          href="/help"
+          href={HELP_HREF[role]}
           onClick={onNavClick}
-          className="flex h-9 items-center gap-3 rounded-[var(--radius-md)] px-3 text-sm text-[var(--color-body)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]"
+          className={[
+            "flex h-9 items-center gap-3 rounded-[var(--radius-md)] px-3 text-sm transition",
+            activeHref === HELP_HREF[role]
+              ? "bg-[var(--color-primary-soft)] font-semibold text-[var(--color-primary)]"
+              : "text-[var(--color-body)] hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]",
+          ].join(" ")}
         >
           <BookOpen className="h-[18px] w-[18px]" />
-          <span className="flex-1">Docs</span>
-          <ExternalLink className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+          <span className="flex-1">Help &amp; Docs</span>
         </Link>
         <DropdownMenu>
           <DropdownMenuTrigger

@@ -10,6 +10,8 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
+import { EmailBrandHeader } from "./_brand-header";
+
 interface TestEmailProps {
   recipientName: string;
 }
@@ -29,6 +31,7 @@ export function TestEmail({ recipientName }: TestEmailProps): React.ReactElement
             margin: "0 auto",
           }}
         >
+          <EmailBrandHeader />
           <Heading style={{ color: "#0a0b0d", fontWeight: 400 }}>
             Hello, {recipientName}
           </Heading>

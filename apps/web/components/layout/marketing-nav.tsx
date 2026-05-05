@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { BrandWordmark } from "@/components/brand/brand-wordmark";
 
 const NAV_LINKS = [
   { href: "/about", label: "About" },
@@ -16,11 +17,8 @@ export function MarketingNav() {
   return (
     <header className="border-b border-[var(--color-hairline-soft)] bg-[var(--color-canvas)]">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 sm:px-6">
-        <Link
-          href="/"
-          className="text-lg font-semibold tracking-tight text-[var(--color-ink)]"
-        >
-          AuraHire
+        <Link href="/" aria-label="AuraHire home">
+          <BrandWordmark size="md" priority />
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
           {NAV_LINKS.map((link) => (

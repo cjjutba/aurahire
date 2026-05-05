@@ -139,7 +139,7 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
   const pastOffers = offers.filter((o) => o.status !== "pending");
 
   return (
-    <div className="mx-auto max-w-[1024px] space-y-12">
+    <div className="mx-auto max-w-[1280px] space-y-12">
       <Link
         href="/candidate/applications"
         className="text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]"

@@ -170,10 +170,10 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
         <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           Shortlist
         </h1>
-        <p className="mt-1 text-sm text-[var(--color-body)]">
-          {meta.total > 0
-            ? `${meta.total} candidate${meta.total === 1 ? "" : "s"} shortlisted across jobs`
-            : "No candidates shortlisted yet"}
+        <p className="mt-2 text-sm text-[var(--color-body)]">
+          {meta.total === 0
+            ? "No candidates shortlisted yet"
+            : `${meta.total} candidate${meta.total === 1 ? "" : "s"} shortlisted`}
         </p>
       </header>
 

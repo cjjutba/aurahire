@@ -56,7 +56,7 @@ export default async function ProfilePage() {
 
   if (!res.ok) {
     return (
-      <div className="mx-auto max-w-[840px] py-12 text-center">
+      <div className="mx-auto max-w-[1280px] py-12 text-center">
         <p className="text-[var(--color-status-danger)]">
           Failed to load profile score.
         </p>
@@ -68,7 +68,7 @@ export default async function ProfilePage() {
 
   if (!body.data) {
     return (
-      <div className="mx-auto max-w-[840px] py-16 text-center">
+      <div className="mx-auto max-w-[1280px] py-16 text-center">
         <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
           No score yet
         </h1>
@@ -88,7 +88,7 @@ export default async function ProfilePage() {
   const data = body.data;
 
   return (
-    <div className="mx-auto max-w-[1024px] space-y-12">
+    <div className="mx-auto max-w-[1280px] space-y-12">
       <header className="flex flex-col items-start gap-8 md:flex-row md:items-center">
         <ScoreRing score={data.overallScore} band={data.band} size="lg" />
         <div className="space-y-3">

@@ -57,7 +57,7 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
     flagsResult.status === "fulfilled" ? flagsResult.value.data : [];
 
   return (
-    <div className="mx-auto max-w-[1024px] space-y-6">
+    <div className="mx-auto max-w-[1280px] space-y-6">
       <Link
         href="/recruiter/jobs"
         className="inline-block text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]"
