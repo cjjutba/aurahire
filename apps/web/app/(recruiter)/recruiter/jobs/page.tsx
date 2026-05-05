@@ -181,7 +181,7 @@ export default async function RecruiterJobsPage({ searchParams }: PageProps) {
       {/* Header */}
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+          <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
             My Jobs
           </h1>
           <p className="mt-1 text-sm text-[var(--color-body)]">

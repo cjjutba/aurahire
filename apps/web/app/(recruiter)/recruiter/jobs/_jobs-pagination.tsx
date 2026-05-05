@@ -22,7 +22,7 @@ export function JobsPagination({ meta, searchParams }: Props) {
     return `/recruiter/jobs${qs ? `?${qs}` : ""}`;
   }
 
-  const window = pageWindow(meta.page, meta.totalPages);
+  const pages = pageWindow(meta.page, meta.totalPages);
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
@@ -41,7 +41,7 @@ export function JobsPagination({ meta, searchParams }: Props) {
           <ChevronLeft className="h-4 w-4" />
         </PageLink>
 
-        {window.map((w, i) =>
+        {pages.map((w, i) =>
           w === "..." ? (
             <span
               key={`gap-${i}`}
