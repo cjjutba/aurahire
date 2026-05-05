@@ -150,9 +150,9 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
     );
   }
 
-  const body = (await res.json()) as { data: ShortlistEnvelope };
-  const rows = body.data.data;
-  const meta = body.data.meta;
+  const body = (await res.json()) as ShortlistEnvelope;
+  const rows = body.data;
+  const meta = body.meta;
 
   // Build query string for pagination links (without "page")
   const filterParams = new URLSearchParams();
