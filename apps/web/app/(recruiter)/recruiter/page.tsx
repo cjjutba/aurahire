@@ -1,16 +1,28 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Briefcase, Inbox, Clock, Sparkles, ArrowRight } from "lucide-react";
+import { Briefcase, Inbox, MoreHorizontal } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth/session";
+import { PipelineAnalyticsCard, type PipelineAnalyticsData } from "./_dashboard-client";
 
 export const metadata = { title: "Recruiter Dashboard" };
 
-interface StatsBody {
-  data: {
-    activeJobs: number;
-    totalApplications: number;
-    pendingReviews: number;
-    avgMatchScore: number;
+interface JobWithStats {
+  id: string;
+  title: string;
+  status: "draft" | "published" | "closed" | "archived";
+  workMode: string;
+  employmentType: string;
+  locationCountry: string | null;
+  salaryMin: string | null;
+  salaryMax: string | null;
+  salaryCurrency: string | null;
+  publishedAt: string | null;
+  stats: {
+    candidates: number;
+    new: number;
+    interviewed: number;
+    offered: number;
+    hired: number;
+    avgScore: number;
   };
 }
 
@@ -20,18 +32,82 @@ interface RecentApp {
   appliedAt: string;
   candidate: { fullName: string; email: string } | null;
   job: { id: string; title: string } | null;
-  matchScore: { band: "strong" | "partial" | "limited"; overallScore: number } | null;
+  matchScore: { band: string; overallScore: number } | null;
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  applied: "var(--color-primary)",
-  screening: "var(--color-score-mid)",
-  interview: "var(--color-primary-active)",
-  offer: "var(--color-score-high)",
-  hired: "var(--color-score-high)",
-  rejected: "var(--color-score-low)",
-  withdrawn: "var(--color-muted)",
+const APP_STATUS: Record<
+  string,
+  { label: string; dot: string; text: string }
+> = {
+  applied: {
+    label: "Applied",
+    dot: "bg-[var(--color-status-info)]",
+    text: "text-[var(--color-status-info)]",
+  },
+  screening: {
+    label: "Screening",
+    dot: "bg-[var(--color-status-info)]",
+    text: "text-[var(--color-status-info)]",
+  },
+  interview: {
+    label: "Interview",
+    dot: "bg-[var(--color-status-info)]",
+    text: "text-[var(--color-status-info)]",
+  },
+  offer: {
+    label: "Offer",
+    dot: "bg-[var(--color-status-success)]",
+    text: "text-[var(--color-status-success)]",
+  },
+  hired: {
+    label: "Hired",
+    dot: "bg-[var(--color-status-success)]",
+    text: "text-[var(--color-status-success)]",
+  },
+  rejected: {
+    label: "Rejected",
+    dot: "bg-[var(--color-status-danger)]",
+    text: "text-[var(--color-status-danger)]",
+  },
+  withdrawn: {
+    label: "Withdrawn",
+    dot: "bg-[var(--color-muted)]",
+    text: "text-[var(--color-muted)]",
+  },
 };
+
+const JOB_STATUS: Record<
+  string,
+  { label: string; dot: string; text: string }
+> = {
+  published: {
+    label: "Published",
+    dot: "bg-[var(--color-status-success)]",
+    text: "text-[var(--color-status-success)]",
+  },
+  draft: {
+    label: "Draft",
+    dot: "bg-[var(--color-muted)]",
+    text: "text-[var(--color-muted)]",
+  },
+  closed: {
+    label: "Closed",
+    dot: "bg-[var(--color-status-danger)]",
+    text: "text-[var(--color-status-danger)]",
+  },
+  archived: {
+    label: "Archived",
+    dot: "bg-[var(--color-muted)]",
+    text: "text-[var(--color-muted)]",
+  },
+};
+
+function scoreBandColor(score: number): string {
+  if (score === 0) return "text-[var(--color-muted)]";
+  if (score < 40) return "text-[var(--color-score-low)]";
+  if (score < 70) return "text-[var(--color-score-mid)]";
+  return "text-[var(--color-score-high)]";
+}
 
 export default async function RecruiterDashboard() {
   const session = await getCurrentSession();
@@ -39,134 +115,316 @@ export default async function RecruiterDashboard() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
   const headers = { Authorization: `Bearer ${session.access_token}` };
+  const accessToken = session.access_token;
 
-  // Stats + jobs (for "Recent activity" we pull the recruiter's first 5 jobs' apps)
-  const [statsRes, jobsRes] = await Promise.all([
-    fetch(`${apiUrl}/api/v1/applications/recruiter-stats`, { headers, cache: "no-store" }),
-    fetch(`${apiUrl}/api/v1/jobs/mine?limit=5`, { headers, cache: "no-store" }),
+  const [jobsRes, statsRes, recentRes] = await Promise.all([
+    fetch(
+      `${apiUrl}/api/v1/jobs/mine?include=stats&sort=recent-activity&limit=5`,
+      { headers, cache: "no-store" },
+    ),
+    fetch(`${apiUrl}/api/v1/applications/recruiter-stats?range=7d`, {
+      headers,
+      cache: "no-store",
+    }),
+    fetch(`${apiUrl}/api/v1/applications/recent?limit=6`, {
+      headers,
+      cache: "no-store",
+    }),
   ]);
 
-  let stats = { activeJobs: 0, totalApplications: 0, pendingReviews: 0, avgMatchScore: 0 };
-  if (statsRes.ok) {
-    const body = (await statsRes.json()) as StatsBody;
-    stats = body.data;
-  }
+  const jobs: JobWithStats[] = jobsRes.ok
+    ? ((await jobsRes.json()) as { data: JobWithStats[] }).data
+    : [];
 
-  // Pull recent apps across the recruiter's top 5 jobs (best-effort)
-  let recentApps: RecentApp[] = [];
-  if (jobsRes.ok) {
-    const jobsBody = (await jobsRes.json()) as { data: Array<{ id: string }> };
-    const appsLists = await Promise.all(
-      jobsBody.data.slice(0, 5).map((j) =>
-        fetch(`${apiUrl}/api/v1/applications/by-job/${j.id}`, {
-          headers,
-          cache: "no-store",
-        })
-          .then((r) => (r.ok ? (r.json() as Promise<{ data: RecentApp[] }>) : { data: [] }))
-          .then((b) => b.data)
-          .catch(() => [] as RecentApp[]),
-      ),
+  const initialStats: PipelineAnalyticsData = statsRes.ok
+    ? (await statsRes.json()).data
+    : {
+        activeJobs: 0,
+        totalApps: 0,
+        pendingReview: 0,
+        inInterview: 0,
+        offered: 0,
+        hired: 0,
+        avgMatchScore: 0,
+        biasFlags: 0,
+      };
+
+  const recent: RecentApp[] = recentRes.ok
+    ? ((await recentRes.json()) as { data: RecentApp[] }).data
+    : [];
+
+  async function fetchStats(
+    range: "7d" | "30d" | "90d" | "all",
+  ): Promise<PipelineAnalyticsData> {
+    "use server";
+    const res = await fetch(
+      `${apiUrl}/api/v1/applications/recruiter-stats?range=${range}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+      },
     );
-    recentApps = appsLists
-      .flat()
-      .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
-      .slice(0, 6);
+    if (!res.ok) throw new Error("Failed to fetch stats");
+    const body = (await res.json()) as { data: PipelineAnalyticsData };
+    return body.data;
   }
-
-  const tiles = [
-    { label: "Active Jobs", value: stats.activeJobs, icon: Briefcase, href: "/recruiter/jobs" },
-    { label: "Applications", value: stats.totalApplications, icon: Inbox, href: "/recruiter/jobs" },
-    { label: "Pending Reviews", value: stats.pendingReviews, icon: Clock, href: "/recruiter/jobs" },
-    { label: "Avg Match Score", value: stats.avgMatchScore, icon: Sparkles, href: "/recruiter/analytics" },
-  ];
 
   return (
-    <div className="mx-auto max-w-[1280px] space-y-8">
+    <div className="space-y-8">
+      {/* Page header */}
       <header>
-        <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+        <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           Recruiter Dashboard
         </h1>
-        <p className="mt-2 text-sm text-[var(--color-body)]">
-          Pipeline at a glance.
-        </p>
+        <p className="mt-2 text-sm text-[var(--color-body)]">Pipeline at a glance.</p>
       </header>
 
-      {/* KPI tiles */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {tiles.map(({ label, value, icon: Icon, href }) => (
-          <Link
-            key={label}
-            href={href}
-            className="group rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6 transition hover:border-[var(--color-primary-soft)]"
-          >
-            <div className="flex items-start justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                {label}
-              </h3>
-              <Icon className="h-4 w-4 text-[var(--color-muted)]" />
-            </div>
-            <p className="mt-3 font-mono text-3xl font-medium text-[var(--color-ink)]">
-              {value}
-            </p>
-          </Link>
-        ))}
-      </div>
-
-      {/* Recent activity */}
-      <section className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
-        <header className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-base font-semibold text-[var(--color-ink)]">
-            Recent applications
-          </h2>
-          <Link
+      {/* Section 1: Active Jobs */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Briefcase className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+              Active Jobs
+            </span>
+          </div>
+          <a
             href="/recruiter/jobs"
-            className="inline-flex items-center gap-1 text-xs text-[var(--color-primary)] hover:underline"
+            className="text-sm font-medium text-[var(--color-primary)] hover:underline"
           >
-            View all jobs <ArrowRight className="h-3 w-3" />
-          </Link>
-        </header>
-        {recentApps.length === 0 ? (
-          <p className="text-sm text-[var(--color-muted)]">
-            No applications yet. Once candidates apply to your jobs, they&apos;ll appear here.
-          </p>
+            View all jobs →
+          </a>
+        </div>
+        {jobs.length === 0 ? (
+          <EmptyJobsState />
         ) : (
-          <ul className="divide-y divide-[var(--color-hairline-soft)]">
-            {recentApps.map((app) => (
-              <li key={app.id} className="py-3">
-                <Link
-                  href={`/recruiter/applications/${app.id}`}
-                  className="flex items-baseline justify-between gap-3 hover:opacity-80"
-                >
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[var(--color-ink)]">
-                      {app.candidate?.fullName ?? "(unknown candidate)"}
-                    </p>
-                    <p className="text-xs text-[var(--color-muted)]">
-                      Applied to <strong>{app.job?.title ?? "(job)"}</strong>
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {app.matchScore && (
-                      <span className="font-mono text-xs text-[var(--color-ink)]">
-                        {app.matchScore.overallScore}/100
-                      </span>
-                    )}
-                    <span
-                      className="rounded-[var(--radius-pill)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-                      style={{ color: STATUS_COLOR[app.status] ?? "var(--color-muted)" }}
-                    >
-                      {app.status}
-                    </span>
-                    <time className="text-xs text-[var(--color-muted)]">
-                      {new Date(app.appliedAt).toLocaleDateString()}
-                    </time>
-                  </div>
-                </Link>
-              </li>
+          <ul className="space-y-3">
+            {jobs.map((job) => (
+              <JobCard key={job.id} job={job} />
             ))}
           </ul>
         )}
       </section>
+
+      {/* Section 2: Pipeline Analytics */}
+      <PipelineAnalyticsCard
+        initialRange="7d"
+        initialData={initialStats}
+        fetchForRange={fetchStats}
+      />
+
+      {/* Section 3: Recent Applications */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Inbox className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+              Recent Applications
+            </span>
+          </div>
+          <a
+            href="/recruiter/applications"
+            className="text-sm font-medium text-[var(--color-primary)] hover:underline"
+          >
+            View all →
+          </a>
+        </div>
+        <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)]">
+          {recent.length === 0 ? (
+            <EmptyAppsState />
+          ) : (
+            <ul className="divide-y divide-[var(--color-hairline-soft)]">
+              {recent.map((app) => (
+                <RecentAppRow key={app.id} app={app} />
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
     </div>
+  );
+}
+
+const DEFAULT_JOB_STATUS = { label: "Draft", dot: "bg-[var(--color-muted)]", text: "text-[var(--color-muted)]" };
+const DEFAULT_APP_STATUS = { label: "Applied", dot: "bg-[var(--color-status-info)]", text: "text-[var(--color-status-info)]" };
+
+function JobCard({ job }: { job: JobWithStats }) {
+  const status = JOB_STATUS[job.status] ?? DEFAULT_JOB_STATUS;
+  const subtitle = [
+    job.workMode,
+    job.employmentType,
+    job.locationCountry,
+    job.salaryMin && job.salaryMax
+      ? `${formatSalary(job.salaryMin)}–${formatSalary(job.salaryMax)} ${job.salaryCurrency ?? "USD"}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <li>
+      <a
+        href={`/recruiter/jobs/${job.id}`}
+        className="block rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6 transition hover:border-[var(--color-primary-soft)]"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+              {status.label}
+            </span>
+            {job.publishedAt && (
+              <span className="text-xs text-[var(--color-muted)]">
+                · Posted{" "}
+                {new Date(job.publishedAt).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            aria-label="More actions"
+            className="rounded-[var(--radius-md)] p-1 text-[var(--color-muted)] hover:bg-[var(--color-surface-strong)]"
+            onClick={(e) => e.preventDefault()}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="mt-3 text-base font-semibold text-[var(--color-ink)]">
+          {job.title}
+        </div>
+        <div className="mt-1 text-sm text-[var(--color-body)]">{subtitle}</div>
+        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[var(--color-hairline-soft)] pt-4 md:grid-cols-6">
+          <Metric label="Candidates" value={job.stats.candidates} />
+          <Metric label="New" value={job.stats.new} />
+          <Metric label="Interviewed" value={job.stats.interviewed} />
+          <Metric label="Offered" value={job.stats.offered} />
+          <Metric label="Hired" value={job.stats.hired} />
+          <Metric
+            label="Avg Score"
+            value={job.stats.avgScore}
+            valueClass={scoreBandColor(job.stats.avgScore)}
+          />
+        </div>
+      </a>
+    </li>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  valueClass,
+}: {
+  label: string;
+  value: number;
+  valueClass?: string;
+}) {
+  return (
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+        {label}
+      </div>
+      <div className={`mt-1 font-mono text-base font-medium ${valueClass ?? "text-[var(--color-ink)]"}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function RecentAppRow({ app }: { app: RecentApp }) {
+  const status = APP_STATUS[app.status] ?? DEFAULT_APP_STATUS;
+  return (
+    <li>
+      <a
+        href={`/recruiter/applications/${app.id}`}
+        className="flex items-center gap-4 px-4 py-3 transition hover:bg-[var(--color-surface-soft)]"
+      >
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+          {status.label}
+        </span>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface-strong)] text-xs font-semibold text-[var(--color-ink)]">
+          {getInitials(app.candidate?.fullName ?? "?")}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-medium text-[var(--color-ink)]">
+            {app.candidate?.fullName ?? "(unknown candidate)"}
+          </div>
+          <div className="truncate text-xs text-[var(--color-muted)]">
+            Applied to <strong className="font-semibold">{app.job?.title ?? "(job)"}</strong>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {app.matchScore && (
+            <span className="font-mono text-xs">
+              <span className={scoreBandColor(app.matchScore.overallScore)}>
+                {app.matchScore.overallScore}
+              </span>
+              <span className="text-[var(--color-muted)]">/100</span>
+            </span>
+          )}
+          <time className="text-xs text-[var(--color-muted)]">
+            {new Date(app.appliedAt).toLocaleDateString()}
+          </time>
+        </div>
+      </a>
+    </li>
+  );
+}
+
+function EmptyJobsState() {
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
+      <Briefcase className="mx-auto h-6 w-6 text-[var(--color-muted)]" aria-hidden />
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">No active jobs</div>
+      <div className="mt-1 text-xs text-[var(--color-muted)]">
+        Post your first opening to start collecting candidates.
+      </div>
+      <a
+        href="/recruiter/jobs/new"
+        className="mt-4 inline-flex h-11 items-center rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-5 text-sm font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+      >
+        + Create your first job
+      </a>
+    </div>
+  );
+}
+
+function EmptyAppsState() {
+  return (
+    <div className="px-4 py-12 text-center">
+      <Inbox className="mx-auto h-6 w-6 text-[var(--color-muted)]" aria-hidden />
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
+        No applications yet
+      </div>
+      <div className="mt-1 text-xs text-[var(--color-muted)]">
+        Once candidates apply to your jobs, they&apos;ll appear here.
+      </div>
+    </div>
+  );
+}
+
+function formatSalary(s: string): string {
+  const n = Number(s);
+  if (Number.isNaN(n)) return s;
+  return n.toLocaleString();
+}
+
+function getInitials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("") || "?"
   );
 }
