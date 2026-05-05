@@ -15,6 +15,7 @@ import { EmailModule } from "./email";
 import { AiModule } from "./ai";
 import { StorageModule } from "./storage";
 import { SupabaseAdminModule } from "./lib/supabase-admin";
+import { CacheModule as AppCacheModule } from "./cache";
 import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ProfilesModule } from "./modules/profiles/profiles.module";
@@ -65,6 +66,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
         }
       },
     }),
+    AppCacheModule,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
