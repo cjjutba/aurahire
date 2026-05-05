@@ -10,6 +10,7 @@ import {
   PARSE_RESUME_SYSTEM_PROMPT,
   buildParseResumeUserPrompt,
 } from "./prompts/parse-resume";
+import { CacheService, TTL_SECONDS, sha256OfStable } from "../cache";
 
 const RESUMES_BUCKET = "resumes";
 const PDF_MIME = "application/pdf";
@@ -38,6 +39,7 @@ export class ParseResumeService {
   constructor(
     private readonly openai: OpenAIService,
     private readonly storage: StorageService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async parse(input: ParseResumeInput): Promise<ParseResumeOutput> {
@@ -55,21 +57,29 @@ export class ParseResumeService {
 
     const truncated = rawText.length > 30_000 ? rawText.slice(0, 30_000) : rawText;
 
-    const result = await this.openai.generateStructured({
-      schema: parsedResumeSchema,
-      schemaName: "ParsedResume",
-      systemPrompt: PARSE_RESUME_SYSTEM_PROMPT,
-      userPrompt: buildParseResumeUserPrompt(truncated),
-      requestId: `${reqId}:parse-v${PARSE_RESUME_VERSION}`,
+    const inputHash = sha256OfStable({ truncatedText: truncated, promptVersion: PARSE_RESUME_VERSION });
+    const aiResult = await this.cacheService.getOrSet<Omit<ParseResumeOutput, "rawText">>({
+      key: `ai:parse-resume:${inputHash}`,
+      ttlSeconds: TTL_SECONDS.ai,
+      telemetryName: "ai:parse-resume",
+      load: async () => {
+        const result = await this.openai.generateStructured({
+          schema: parsedResumeSchema,
+          schemaName: "ParsedResume",
+          systemPrompt: PARSE_RESUME_SYSTEM_PROMPT,
+          userPrompt: buildParseResumeUserPrompt(truncated),
+          requestId: `${reqId}:parse-v${PARSE_RESUME_VERSION}`,
+        });
+        return {
+          parsed: result.data,
+          latencyMs: result.latencyMs,
+          model: result.model,
+          promptVersion: PARSE_RESUME_VERSION,
+        };
+      },
     });
 
-    return {
-      parsed: result.data,
-      rawText,
-      latencyMs: result.latencyMs,
-      model: result.model,
-      promptVersion: PARSE_RESUME_VERSION,
-    };
+    return { ...aiResult, rawText };
   }
 
   private async extractText(
