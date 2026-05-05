@@ -14,6 +14,7 @@ export default async function RecruiterLayout({
         fullName: string;
         email: string;
         profileCompleted: boolean;
+        company: { id: string; name: string } | null;
       }
     | null;
 
@@ -31,6 +32,7 @@ export default async function RecruiterLayout({
       role="recruiter"
       fullName={profile.fullName}
       email={profile.email}
+      companyName={profile.company?.name ?? null}
     >
       {children}
     </PortalShell>

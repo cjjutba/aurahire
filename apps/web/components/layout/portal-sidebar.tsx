@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { UserRole } from "@aurahire/shared";
+import { BrandWordmark } from "@/components/brand/brand-wordmark";
 
 interface NavItem {
   href: string;
@@ -64,9 +65,13 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 interface PortalSidebarProps {
   role: UserRole;
+  fullName: string;
+  email: string;
+  companyName: string | null;
 }
 
-export function PortalSidebar({ role }: PortalSidebarProps) {
+export function PortalSidebar({ role, fullName: _fullName, email: _email, companyName: _companyName }: PortalSidebarProps) {
+  // _fullName / _email / _companyName are accepted now and consumed by Task 6's rewrite.
   return (
     <aside className="hidden w-64 shrink-0 border-r border-[var(--color-hairline)] bg-[var(--color-surface-soft)] lg:flex lg:flex-col">
       <PortalSidebarContent role={role} />
@@ -89,12 +94,8 @@ export function PortalSidebarContent({
   return (
     <>
       <div className="px-6 py-6">
-        <Link
-          href="/"
-          onClick={onNavClick}
-          className="text-lg font-semibold tracking-tight text-[var(--color-ink)]"
-        >
-          AuraHire
+        <Link href="/" onClick={onNavClick} aria-label="AuraHire home">
+          <BrandWordmark size="md" />
         </Link>
         <span className="mt-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           {ROLE_LABELS[role]}

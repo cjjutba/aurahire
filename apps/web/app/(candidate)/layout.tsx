@@ -31,6 +31,7 @@ export default async function CandidateLayout({
       role="candidate"
       fullName={profile.fullName}
       email={profile.email}
+      companyName={null}
     >
       {children}
     </PortalShell>
