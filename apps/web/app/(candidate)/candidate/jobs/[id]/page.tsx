@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { JobDetail } from "@/components/jobs/job-detail";
 import { getCurrentSession } from "@/lib/auth/session";
-import { serverApiFetch, ServerApiError } from "@/lib/query";
+import { serverApiFetch, ServerApiError } from "@/lib/query/server";
 
 interface PageProps {
   params: Promise<{ id: string }>;

@@ -1,5 +1,4 @@
 export { makeQueryClient } from "./query-client";
-export { serverApiFetch, ServerApiError } from "./server-fetch";
 export { queryKeys } from "./keys";
 export type {
   RecruiterJobsListParams,
@@ -10,7 +9,8 @@ export type {
   CandidateApplicationsParams,
   CandidateInterviewsParams,
 } from "./keys";
-export { serverQueries } from "./queries";
+// Type-only re-exports — TypeScript erases these so client bundles
+// don't transitively import the server-only ./queries.ts module.
 export type {
   RecruiterStatsResponse,
   RecruiterAnalyticsResponse,

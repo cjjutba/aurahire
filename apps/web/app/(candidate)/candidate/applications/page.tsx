@@ -1,12 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { getCurrentSession } from "@/lib/auth/session";
-import {
-  makeQueryClient,
-  PrefetchedHydration,
-  queryKeys,
-  serverQueries,
-} from "@/lib/query";
+import { makeQueryClient, PrefetchedHydration, queryKeys } from "@/lib/query";
+import { serverQueries } from "@/lib/query/server";
 
 import { ApplicationsListClient } from "./_applications-client";
 

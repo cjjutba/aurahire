@@ -4,7 +4,7 @@ import { Pencil } from "lucide-react";
 import { JobDetail } from "@/components/jobs/job-detail";
 import { getCurrentSession } from "@/lib/auth/session";
 import { BiasFlagsList } from "@/components/bias/bias-flags-list";
-import { serverApiFetch, ServerApiError } from "@/lib/query";
+import { serverApiFetch, ServerApiError } from "@/lib/query/server";
 import { JobActions } from "./job-actions";
 
 interface PageProps {
