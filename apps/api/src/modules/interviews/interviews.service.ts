@@ -15,6 +15,7 @@ import type {
 
 import { AuditService } from "../../audit";
 import { AUDIT_ACTIONS } from "../../audit/audit.types";
+import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { EmailService } from "../../email/email.service";
 import { ApplicationsRepository } from "../applications/applications.repository";
 import { JobsRepository } from "../jobs/jobs.repository";
@@ -40,6 +41,7 @@ export class InterviewsService {
     private readonly profilesRepo: ProfilesRepository,
     private readonly email: EmailService,
     private readonly audit: AuditService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async schedule(
@@ -98,6 +100,12 @@ export class InterviewsService {
       ...requestMeta,
     });
 
+    await this.cacheService.bustTags([
+      TAGS.interviewsRecruiter(user.id),
+      TAGS.interviewsCandidate(application.candidateId),
+      TAGS.dashboardRecruiter(user.id),
+    ]);
+
     void this.notifyCandidateScheduled(interview.id).catch((err) => {
       this.logger.warn(`Notify candidate failed: ${(err as Error).message}`);
     });
@@ -131,6 +139,15 @@ export class InterviewsService {
       ...requestMeta,
     });
 
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (app) {
+      await this.cacheService.bustTags([
+        TAGS.interviewsRecruiter(user.id),
+        TAGS.interviewsCandidate(app.candidateId),
+        TAGS.dashboardRecruiter(user.id),
+      ]);
+    }
+
     return this.toDto(updated);
   }
 
@@ -163,6 +180,15 @@ export class InterviewsService {
       ...requestMeta,
     });
 
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (app) {
+      await this.cacheService.bustTags([
+        TAGS.interviewsRecruiter(user.id),
+        TAGS.interviewsCandidate(app.candidateId),
+        TAGS.dashboardRecruiter(user.id),
+      ]);
+    }
+
     if (dto.newStatus === "cancelled") {
       void this.notifyCandidateCancelled(interviewId).catch((err) => {
         this.logger.warn(`Cancel notify failed: ${(err as Error).message}`);
@@ -176,8 +202,16 @@ export class InterviewsService {
     if (user.role !== "candidate") {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Candidate role required" });
     }
-    const rows = await this.repo.findByCandidateId(user.id);
-    return rows.map((r) => this.toDto(r));
+    return this.cacheService.getOrSet<InterviewDto[]>({
+      key: `interviews:candidate:${user.id}:list`,
+      ttlSeconds: TTL_SECONDS.hot,
+      tags: [TAGS.interviewsCandidate(user.id)],
+      telemetryName: "interviews:candidate:list",
+      load: async () => {
+        const rows = await this.repo.findByCandidateId(user.id);
+        return rows.map((r) => this.toDto(r));
+      },
+    });
   }
 
   async listForApplication(user: AuthUser, applicationId: string): Promise<InterviewDto[]> {
@@ -204,8 +238,16 @@ export class InterviewsService {
     if (user.role !== "recruiter") {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
-    const rows = await this.repo.findByRecruiterId(user.id);
-    return rows.map((r) => this.toDto(r));
+    return this.cacheService.getOrSet<InterviewDto[]>({
+      key: `interviews:recruiter:${user.id}:list`,
+      ttlSeconds: TTL_SECONDS.hot,
+      tags: [TAGS.interviewsRecruiter(user.id)],
+      telemetryName: "interviews:recruiter:list",
+      load: async () => {
+        const rows = await this.repo.findByRecruiterId(user.id);
+        return rows.map((r) => this.toDto(r));
+      },
+    });
   }
 
   // -----------------------------------------------------------------
