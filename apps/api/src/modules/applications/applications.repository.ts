@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { and, desc, eq, sql } from "drizzle-orm";
 import {
   applicationsTable,
+  biasFlagsTable,
   jobsTable,
   matchScoresTable,
   profilesTable,
@@ -117,12 +118,23 @@ export class ApplicationsRepository {
 
   // ─── Recruiter dashboard stats ────────────────────────────────────────
 
-  async recruiterStats(recruiterId: string): Promise<{
+  async recruiterStats(
+    recruiterId: string,
+    range: "7d" | "30d" | "90d" | "all",
+  ): Promise<{
     activeJobs: number;
-    totalApplications: number;
-    pendingReviews: number;
+    totalApplications: number;       // alias for totalApps (deprecated, keep for one release)
+    totalApps: number;
+    pendingReviews: number;          // alias for pendingReview (deprecated, keep for one release)
+    pendingReview: number;
+    inInterview: number;
+    offered: number;
+    hired: number;
     avgMatchScore: number;
+    biasFlags: number;
   }> {
+    const rangeFilter = this.rangeFilter(range);
+
     const [activeJobsRow] = await this.db
       .select({ c: sql<number>`count(*)::int` })
       .from(jobsTable)
@@ -137,10 +149,20 @@ export class ApplicationsRepository {
       .select({
         total: sql<number>`count(*)::int`,
         pending: sql<number>`count(*) filter (where ${applicationsTable.status} = 'applied')::int`,
+        interview: sql<number>`count(*) filter (where ${applicationsTable.status} = 'interview')::int`,
+        offered: sql<number>`count(*) filter (where ${applicationsTable.status} = 'offer')::int`,
+        hired: sql<number>`count(*) filter (where ${applicationsTable.status} = 'hired')::int`,
       })
       .from(applicationsTable)
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .where(eq(jobsTable.recruiterId, recruiterId));
+      .where(
+        and(
+          eq(jobsTable.recruiterId, recruiterId),
+          ...(rangeFilter
+            ? [sql`${applicationsTable.appliedAt} >= ${rangeFilter}`]
+            : []),
+        ),
+      );
 
     const [avgRow] = await this.db
       .select({ avg: sql<number | null>`avg(${matchScoresTable.overallScore})::float` })
@@ -148,12 +170,45 @@ export class ApplicationsRepository {
       .innerJoin(jobsTable, eq(jobsTable.id, matchScoresTable.jobId))
       .where(eq(jobsTable.recruiterId, recruiterId));
 
+    const biasFlags = await this.countUnresolvedBiasFlagsForRecruiter(recruiterId);
+
+    const total = appsRow?.total ?? 0;
+    const pending = appsRow?.pending ?? 0;
+
     return {
       activeJobs: activeJobsRow?.c ?? 0,
-      totalApplications: appsRow?.total ?? 0,
-      pendingReviews: appsRow?.pending ?? 0,
+      totalApplications: total,
+      totalApps: total,
+      pendingReviews: pending,
+      pendingReview: pending,
+      inInterview: appsRow?.interview ?? 0,
+      offered: appsRow?.offered ?? 0,
+      hired: appsRow?.hired ?? 0,
       avgMatchScore: Math.round(avgRow?.avg ?? 0),
+      biasFlags,
     };
+  }
+
+  private rangeFilter(range: "7d" | "30d" | "90d" | "all"): Date | null {
+    if (range === "all") return null;
+    const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
+    return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  }
+
+  private async countUnresolvedBiasFlagsForRecruiter(
+    recruiterId: string,
+  ): Promise<number> {
+    const [row] = await this.db
+      .select({ c: sql<number>`count(*)::int` })
+      .from(biasFlagsTable)
+      .innerJoin(jobsTable, eq(jobsTable.id, biasFlagsTable.jobId))
+      .where(
+        and(
+          eq(jobsTable.recruiterId, recruiterId),
+          eq(biasFlagsTable.status, "flagged"),
+        ),
+      );
+    return row?.c ?? 0;
   }
 
   // ─── Recruiter analytics (top jobs + status breakdown) ────────────────

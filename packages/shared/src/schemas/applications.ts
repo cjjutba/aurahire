@@ -28,3 +28,10 @@ export const recentApplicationsQuerySchema = z.object({
 });
 
 export type RecentApplicationsQuery = z.infer<typeof recentApplicationsQuerySchema>;
+
+export const recruiterStatsQuerySchema = z.object({
+  range: z.enum(["7d", "30d", "90d", "all"]).optional().default("7d"),
+});
+
+export type RecruiterStatsQuery = z.infer<typeof recruiterStatsQuerySchema>;
+export type RecruiterStatsRange = RecruiterStatsQuery["range"];

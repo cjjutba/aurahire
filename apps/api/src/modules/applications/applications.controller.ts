@@ -25,6 +25,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 
 import { ApplyToJobDto } from "./dto/apply.dto";
 import { RecentApplicationsQueryDto } from "./dto/recent-applications-query.dto";
+import { RecruiterStatsQueryDto } from "./dto/recruiter-stats-query.dto";
 import { UpdateApplicationStatusDto } from "./dto/update-status.dto";
 import { UpdateApplicationNotesDto } from "./dto/update-notes.dto";
 import {
@@ -76,17 +77,27 @@ export class ApplicationsController {
   @Get("recruiter-stats")
   @Roles("recruiter")
   @ApiOperation({
-    summary: "4-KPI dashboard summary for the current recruiter",
+    summary: "Dashboard summary for the current recruiter (range-filterable)",
   })
-  async recruiterStats(@CurrentUser() user: AuthUser): Promise<{
+  @ApiQuery({ name: "range", required: false, enum: ["7d", "30d", "90d", "all"] })
+  async recruiterStats(
+    @CurrentUser() user: AuthUser,
+    @Query() query: RecruiterStatsQueryDto,
+  ): Promise<{
     data: {
       activeJobs: number;
       totalApplications: number;
+      totalApps: number;
       pendingReviews: number;
+      pendingReview: number;
+      inInterview: number;
+      offered: number;
+      hired: number;
       avgMatchScore: number;
+      biasFlags: number;
     };
   }> {
-    const data = await this.service.recruiterStats(user);
+    const data = await this.service.recruiterStats(user, query.range);
     return { data };
   }
 

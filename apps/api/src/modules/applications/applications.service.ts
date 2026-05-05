@@ -198,11 +198,20 @@ export class ApplicationsService {
 
   // ─── Recruiter dashboard stats ─────────────────────────────────────
 
-  async recruiterStats(user: AuthUser): Promise<{
+  async recruiterStats(
+    user: AuthUser,
+    range: "7d" | "30d" | "90d" | "all" = "7d",
+  ): Promise<{
     activeJobs: number;
     totalApplications: number;
+    totalApps: number;
     pendingReviews: number;
+    pendingReview: number;
+    inInterview: number;
+    offered: number;
+    hired: number;
     avgMatchScore: number;
+    biasFlags: number;
   }> {
     if (user.role !== "recruiter") {
       throw new ForbiddenException({
@@ -210,7 +219,7 @@ export class ApplicationsService {
         message: "Recruiter role required",
       });
     }
-    return this.repo.recruiterStats(user.id);
+    return this.repo.recruiterStats(user.id, range);
   }
 
   async recentForRecruiter(
@@ -247,7 +256,7 @@ export class ApplicationsService {
       });
     }
     const [kpis, topJobs, applicationsByStatus] = await Promise.all([
-      this.repo.recruiterStats(user.id),
+      this.repo.recruiterStats(user.id, "all"),
       this.repo.recruiterTopJobsByApplications(user.id, 5),
       this.repo.recruiterApplicationsByStatus(user.id),
     ]);
