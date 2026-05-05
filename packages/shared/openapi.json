@@ -481,6 +481,17 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "name": "include",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "stats"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -750,7 +761,8 @@
               "enum": [
                 "recent",
                 "best-match",
-                "salary-high"
+                "salary-high",
+                "recent-activity"
               ],
               "type": "string"
             }
@@ -765,6 +777,17 @@
                 "published",
                 "archived",
                 "closed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "include",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "stats"
               ],
               "type": "string"
             }
@@ -787,7 +810,7 @@
             "bearer": []
           }
         ],
-        "summary": "List own jobs (any status); paginated",
+        "summary": "List own jobs (any status); paginated. Supports ?include=stats for per-job aggregates.",
         "tags": [
           "jobs"
         ]
@@ -880,7 +903,8 @@
               "enum": [
                 "recent",
                 "best-match",
-                "salary-high"
+                "salary-high",
+                "recent-activity"
               ],
               "type": "string"
             }
@@ -895,6 +919,17 @@
                 "published",
                 "archived",
                 "closed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "include",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "stats"
               ],
               "type": "string"
             }
@@ -1516,7 +1551,22 @@
     "/api/v1/applications/recruiter-stats": {
       "get": {
         "operationId": "ApplicationsController_recruiterStats_v1",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "range",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "7d",
+                "30d",
+                "90d",
+                "all"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -1527,7 +1577,7 @@
             "bearer": []
           }
         ],
-        "summary": "4-KPI dashboard summary for the current recruiter",
+        "summary": "Dashboard summary for the current recruiter (range-filterable)",
         "tags": [
           "applications"
         ]
@@ -1548,6 +1598,47 @@
           }
         ],
         "summary": "Recruiter-scoped analytics bundle: KPIs + top jobs by app count + status breakdown",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/recent": {
+      "get": {
+        "operationId": "ApplicationsController_recent_v1",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 20,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "default": 6,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Recent applications across all of this recruiter's jobs",
         "tags": [
           "applications"
         ]

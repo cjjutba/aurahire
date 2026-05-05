@@ -2626,6 +2626,7 @@ export type JobsControllerListPublicV1Params = {
   locationCountry?: string;
   sort?: JobsControllerListPublicV1Sort;
   status?: JobsControllerListPublicV1Status;
+  include?: JobsControllerListPublicV1Include;
 };
 
 export type JobsControllerListPublicV1Mode =
@@ -2671,6 +2672,13 @@ export const JobsControllerListPublicV1Status = {
   closed: "closed",
 } as const;
 
+export type JobsControllerListPublicV1Include =
+  (typeof JobsControllerListPublicV1Include)[keyof typeof JobsControllerListPublicV1Include];
+
+export const JobsControllerListPublicV1Include = {
+  stats: "stats",
+} as const;
+
 export type JobsControllerListMineV1Params = {
   /**
    * @minimum 1
@@ -2693,6 +2701,7 @@ export type JobsControllerListMineV1Params = {
   locationCountry?: string;
   sort?: JobsControllerListMineV1Sort;
   status?: JobsControllerListMineV1Status;
+  include?: JobsControllerListMineV1Include;
 };
 
 export type JobsControllerListMineV1Mode =
@@ -2726,6 +2735,7 @@ export const JobsControllerListMineV1Sort = {
   recent: "recent",
   "best-match": "best-match",
   "salary-high": "salary-high",
+  "recent-activity": "recent-activity",
 } as const;
 
 export type JobsControllerListMineV1Status =
@@ -2736,6 +2746,13 @@ export const JobsControllerListMineV1Status = {
   published: "published",
   archived: "archived",
   closed: "closed",
+} as const;
+
+export type JobsControllerListMineV1Include =
+  (typeof JobsControllerListMineV1Include)[keyof typeof JobsControllerListMineV1Include];
+
+export const JobsControllerListMineV1Include = {
+  stats: "stats",
 } as const;
 
 export type JobsControllerListForCandidateV1Params = {
@@ -2760,6 +2777,7 @@ export type JobsControllerListForCandidateV1Params = {
   locationCountry?: string;
   sort?: JobsControllerListForCandidateV1Sort;
   status?: JobsControllerListForCandidateV1Status;
+  include?: JobsControllerListForCandidateV1Include;
 };
 
 export type JobsControllerListForCandidateV1Mode =
@@ -2793,6 +2811,7 @@ export const JobsControllerListForCandidateV1Sort = {
   recent: "recent",
   "best-match": "best-match",
   "salary-high": "salary-high",
+  "recent-activity": "recent-activity",
 } as const;
 
 export type JobsControllerListForCandidateV1Status =
@@ -2805,8 +2824,37 @@ export const JobsControllerListForCandidateV1Status = {
   closed: "closed",
 } as const;
 
+export type JobsControllerListForCandidateV1Include =
+  (typeof JobsControllerListForCandidateV1Include)[keyof typeof JobsControllerListForCandidateV1Include];
+
+export const JobsControllerListForCandidateV1Include = {
+  stats: "stats",
+} as const;
+
 export type ResumesControllerUploadV1Body = {
   file?: Blob;
+};
+
+export type ApplicationsControllerRecruiterStatsV1Params = {
+  range?: ApplicationsControllerRecruiterStatsV1Range;
+};
+
+export type ApplicationsControllerRecruiterStatsV1Range =
+  (typeof ApplicationsControllerRecruiterStatsV1Range)[keyof typeof ApplicationsControllerRecruiterStatsV1Range];
+
+export const ApplicationsControllerRecruiterStatsV1Range = {
+  "7d": "7d",
+  "30d": "30d",
+  "90d": "90d",
+  all: "all",
+} as const;
+
+export type ApplicationsControllerRecentV1Params = {
+  /**
+   * @minimum 1
+   * @maximum 20
+   */
+  limit?: number;
 };
 
 export type AdminUsersControllerListV1Params = {
@@ -5231,7 +5279,7 @@ export const useJobsControllerArchiveV1 = <TError = void, TContext = unknown>(
 };
 
 /**
- * @summary List own jobs (any status); paginated
+ * @summary List own jobs (any status); paginated. Supports ?include=stats for per-job aggregates.
  */
 export type jobsControllerListMineV1Response200 = {
   data: JobListResponseDto;
@@ -5399,7 +5447,7 @@ export function useJobsControllerListMineV1<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary List own jobs (any status); paginated
+ * @summary List own jobs (any status); paginated. Supports ?include=stats for per-job aggregates.
  */
 
 export function useJobsControllerListMineV1<
@@ -8047,7 +8095,7 @@ export function useApplicationsControllerListMineV1<
 }
 
 /**
- * @summary 4-KPI dashboard summary for the current recruiter
+ * @summary Dashboard summary for the current recruiter (range-filterable)
  */
 export type applicationsControllerRecruiterStatsV1Response200 = {
   data: void;
@@ -8061,15 +8109,30 @@ export type applicationsControllerRecruiterStatsV1ResponseSuccess =
 export type applicationsControllerRecruiterStatsV1Response =
   applicationsControllerRecruiterStatsV1ResponseSuccess;
 
-export const getApplicationsControllerRecruiterStatsV1Url = () => {
-  return `/api/v1/applications/recruiter-stats`;
+export const getApplicationsControllerRecruiterStatsV1Url = (
+  params?: ApplicationsControllerRecruiterStatsV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/applications/recruiter-stats?${stringifiedParams}`
+    : `/api/v1/applications/recruiter-stats`;
 };
 
 export const applicationsControllerRecruiterStatsV1 = async (
+  params?: ApplicationsControllerRecruiterStatsV1Params,
   options?: RequestInit,
 ): Promise<applicationsControllerRecruiterStatsV1Response> => {
   return fetcher<applicationsControllerRecruiterStatsV1Response>(
-    getApplicationsControllerRecruiterStatsV1Url(),
+    getApplicationsControllerRecruiterStatsV1Url(params),
     {
       ...options,
       method: "GET",
@@ -8077,33 +8140,44 @@ export const applicationsControllerRecruiterStatsV1 = async (
   );
 };
 
-export const getApplicationsControllerRecruiterStatsV1QueryKey = () => {
-  return [`/api/v1/applications/recruiter-stats`] as const;
+export const getApplicationsControllerRecruiterStatsV1QueryKey = (
+  params?: ApplicationsControllerRecruiterStatsV1Params,
+) => {
+  return [
+    `/api/v1/applications/recruiter-stats`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
 export const getApplicationsControllerRecruiterStatsV1QueryOptions = <
   TData = Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
   TError = unknown,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<
-      Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
-      TError,
-      TData
-    >
-  >;
-  request?: SecondParameter<typeof fetcher>;
-}) => {
+>(
+  params?: ApplicationsControllerRecruiterStatsV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
     queryOptions?.queryKey ??
-    getApplicationsControllerRecruiterStatsV1QueryKey();
+    getApplicationsControllerRecruiterStatsV1QueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>
   > = ({ signal }) =>
-    applicationsControllerRecruiterStatsV1({ signal, ...requestOptions });
+    applicationsControllerRecruiterStatsV1(params, {
+      signal,
+      ...requestOptions,
+    });
 
   return {
     queryKey,
@@ -8126,6 +8200,7 @@ export function useApplicationsControllerRecruiterStatsV1<
   TData = Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
   TError = unknown,
 >(
+  params: undefined | ApplicationsControllerRecruiterStatsV1Params,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -8152,6 +8227,7 @@ export function useApplicationsControllerRecruiterStatsV1<
   TData = Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
   TError = unknown,
 >(
+  params?: ApplicationsControllerRecruiterStatsV1Params,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -8178,6 +8254,7 @@ export function useApplicationsControllerRecruiterStatsV1<
   TData = Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
   TError = unknown,
 >(
+  params?: ApplicationsControllerRecruiterStatsV1Params,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -8193,13 +8270,14 @@ export function useApplicationsControllerRecruiterStatsV1<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary 4-KPI dashboard summary for the current recruiter
+ * @summary Dashboard summary for the current recruiter (range-filterable)
  */
 
 export function useApplicationsControllerRecruiterStatsV1<
   TData = Awaited<ReturnType<typeof applicationsControllerRecruiterStatsV1>>,
   TError = unknown,
 >(
+  params?: ApplicationsControllerRecruiterStatsV1Params,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -8214,8 +8292,10 @@ export function useApplicationsControllerRecruiterStatsV1<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions =
-    getApplicationsControllerRecruiterStatsV1QueryOptions(options);
+  const queryOptions = getApplicationsControllerRecruiterStatsV1QueryOptions(
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -8409,6 +8489,210 @@ export function useApplicationsControllerRecruiterAnalyticsV1<
 } {
   const queryOptions =
     getApplicationsControllerRecruiterAnalyticsV1QueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Recent applications across all of this recruiter's jobs
+ */
+export type applicationsControllerRecentV1Response200 = {
+  data: ApplicationListEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerRecentV1ResponseSuccess =
+  applicationsControllerRecentV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerRecentV1Response =
+  applicationsControllerRecentV1ResponseSuccess;
+
+export const getApplicationsControllerRecentV1Url = (
+  params?: ApplicationsControllerRecentV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/applications/recent?${stringifiedParams}`
+    : `/api/v1/applications/recent`;
+};
+
+export const applicationsControllerRecentV1 = async (
+  params?: ApplicationsControllerRecentV1Params,
+  options?: RequestInit,
+): Promise<applicationsControllerRecentV1Response> => {
+  return fetcher<applicationsControllerRecentV1Response>(
+    getApplicationsControllerRecentV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getApplicationsControllerRecentV1QueryKey = (
+  params?: ApplicationsControllerRecentV1Params,
+) => {
+  return [`/api/v1/applications/recent`, ...(params ? [params] : [])] as const;
+};
+
+export const getApplicationsControllerRecentV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+  TError = unknown,
+>(
+  params?: ApplicationsControllerRecentV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getApplicationsControllerRecentV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof applicationsControllerRecentV1>>
+  > = ({ signal }) =>
+    applicationsControllerRecentV1(params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ApplicationsControllerRecentV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerRecentV1>>
+>;
+export type ApplicationsControllerRecentV1QueryError = unknown;
+
+export function useApplicationsControllerRecentV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+  TError = unknown,
+>(
+  params: undefined | ApplicationsControllerRecentV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerRecentV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerRecentV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+  TError = unknown,
+>(
+  params?: ApplicationsControllerRecentV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerRecentV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerRecentV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+  TError = unknown,
+>(
+  params?: ApplicationsControllerRecentV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Recent applications across all of this recruiter's jobs
+ */
+
+export function useApplicationsControllerRecentV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+  TError = unknown,
+>(
+  params?: ApplicationsControllerRecentV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerRecentV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getApplicationsControllerRecentV1QueryOptions(
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
