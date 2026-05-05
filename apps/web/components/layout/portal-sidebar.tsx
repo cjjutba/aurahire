@@ -129,7 +129,7 @@ interface PortalSidebarProps {
 
 export function PortalSidebar({ role, fullName, email, companyName }: PortalSidebarProps) {
   return (
-    <aside className="hidden w-64 shrink-0 bg-[var(--color-canvas)] lg:flex lg:flex-col">
+    <aside className="hidden w-64 shrink-0 bg-[var(--color-canvas)] lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:self-start">
       <PortalSidebarContent
         role={role}
         fullName={fullName}
@@ -160,6 +160,10 @@ export function PortalSidebarContent({
   const sections = NAV_SECTIONS[role];
   const initials = getInitials(fullName);
   const tenantInitials = companyName ? getInitials(companyName) : "AH";
+  const activeHref = resolveActiveHref(
+    pathname,
+    sections.flatMap((s) => s.items.map((i) => i.href)),
+  );
 
   async function handleSignOut() {
     const supabase = createSupabaseBrowserClient();
@@ -211,8 +215,7 @@ export function PortalSidebarContent({
             </div>
             <div className="space-y-1">
               {section.items.map((item) => {
-                const isActive =
-                  pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const isActive = activeHref === item.href;
                 const Icon = item.icon;
                 return (
                   <Link
@@ -283,6 +286,18 @@ export function PortalSidebarContent({
       </div>
     </div>
   );
+}
+
+function resolveActiveHref(pathname: string, hrefs: string[]): string | null {
+  let best: string | null = null;
+  for (const href of hrefs) {
+    const matches = pathname === href || pathname.startsWith(`${href}/`);
+    if (!matches) continue;
+    if (best === null || href.length > best.length) {
+      best = href;
+    }
+  }
+  return best;
 }
 
 function getInitials(name: string): string {
