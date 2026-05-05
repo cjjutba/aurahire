@@ -12,28 +12,42 @@ import type {
 } from "./keys";
 
 export interface RecruiterStatsResponse {
-  totals: {
-    candidates: number;
-    new: number;
-    interviewed: number;
-    offered: number;
-    hired: number;
+  data: {
+    activeJobs?: number;
+    totalApps?: number;
+    totalApplications?: number;
+    pendingReview?: number;
+    pendingReviews?: number;
+    avgMatchScore?: number;
   };
-  range: string;
 }
 
 export interface RecruiterAnalyticsResponse {
-  pipeline: Array<{ stage: string; count: number }>;
-  conversion: { applied_to_hired: number };
+  data: {
+    kpis: {
+      activeJobs: number;
+      totalApplications: number;
+      pendingReviews: number;
+      avgMatchScore: number;
+    };
+    topJobs: Array<{
+      jobId: string;
+      title: string;
+      status: string;
+      applicationCount: number;
+      avgScore: number;
+    }>;
+    applicationsByStatus: Array<{ status: string; count: number }>;
+  };
 }
 
 export interface RecruiterRecentApplicationItem {
   id: string;
-  candidateName: string;
-  jobTitle: string;
   status: string;
   appliedAt: string;
-  matchScore: number | null;
+  candidate: { fullName: string; email: string } | null;
+  job: { id: string; title: string } | null;
+  matchScore: { band: string; overallScore: number } | null;
 }
 
 export const serverQueries = {

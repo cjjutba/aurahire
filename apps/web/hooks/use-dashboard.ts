@@ -18,6 +18,7 @@ export function useRecruiterStatsQuery(range: string) {
         query: { range },
         signal,
       }),
+    placeholderData: (prev) => prev,
   });
 }
 
