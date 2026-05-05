@@ -213,6 +213,21 @@ export class ApplicationsService {
     return this.repo.recruiterStats(user.id);
   }
 
+  async recentForRecruiter(
+    user: AuthUser,
+    limit: number,
+  ): Promise<ApplicationDto[]> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
+    }
+
+    const rows = await this.repo.listRecentForRecruiter(user.id, limit);
+    return rows.map((row) => this.toDashboardDto(row));
+  }
+
   // ─── Recruiter analytics bundle ────────────────────────────────────
 
   async recruiterAnalytics(user: AuthUser): Promise<{
@@ -536,6 +551,71 @@ export class ApplicationsService {
       matchScore,
       candidate,
       job,
+    };
+  }
+
+  private toDashboardDto(row: {
+    id: string;
+    jobId: string;
+    candidateId: string;
+    resumeId: string;
+    coverLetter: string | null;
+    status: ApplicationStatus;
+    recruiterNotes: string | null;
+    appliedAt: Date;
+    statusUpdatedAt: Date;
+    matchScore: { id: string; overallScore: number; band: string } | null;
+    candidateFullName: string | null;
+    candidateEmail: string | null;
+    jobTitle: string | null;
+  }): ApplicationDto {
+    return {
+      id: row.id,
+      jobId: row.jobId,
+      candidateId: row.candidateId,
+      resumeId: row.resumeId,
+      coverLetter: row.coverLetter,
+      status: row.status,
+      recruiterNotes: row.recruiterNotes,
+      appliedAt: row.appliedAt.toISOString(),
+      statusUpdatedAt: row.statusUpdatedAt.toISOString(),
+      matchScore: row.matchScore
+        ? ({
+            id: row.matchScore.id,
+            overallScore: row.matchScore.overallScore,
+            band: row.matchScore.band,
+            // Dashboard rows do not need the full breakdown — only score + band.
+            components: [],
+            summary: "",
+            redFlags: null,
+            greenFlags: null,
+            redactedFields: [],
+            promptVersion: "",
+            modelUsed: "",
+            latencyMs: 0,
+            createdAt: "",
+          } as unknown as MatchScoreDto)
+        : null,
+      candidate:
+        row.candidateFullName && row.candidateEmail
+          ? {
+              id: row.candidateId,
+              fullName: row.candidateFullName,
+              email: row.candidateEmail,
+              phone: null,
+              headline: null,
+            }
+          : null,
+      job: row.jobTitle
+        ? ({
+            id: row.jobId,
+            title: row.jobTitle,
+            department: null,
+            employmentType: "",
+            workMode: "",
+            company: { id: "", name: "" },
+          } as ApplicationJobDto)
+        : null,
     };
   }
 

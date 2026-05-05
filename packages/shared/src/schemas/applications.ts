@@ -22,3 +22,9 @@ export const updateApplicationNotesSchema = z.object({
 });
 
 export type UpdateApplicationNotesInput = z.infer<typeof updateApplicationNotesSchema>;
+
+export const recentApplicationsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(20).optional().default(6),
+});
+
+export type RecentApplicationsQuery = z.infer<typeof recentApplicationsQuerySchema>;

@@ -7,11 +7,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
@@ -22,6 +24,7 @@ import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 
 import { ApplyToJobDto } from "./dto/apply.dto";
+import { RecentApplicationsQueryDto } from "./dto/recent-applications-query.dto";
 import { UpdateApplicationStatusDto } from "./dto/update-status.dto";
 import { UpdateApplicationNotesDto } from "./dto/update-notes.dto";
 import {
@@ -105,6 +108,21 @@ export class ApplicationsController {
     };
   }> {
     const data = await this.service.recruiterAnalytics(user);
+    return { data };
+  }
+
+  @Get("recent")
+  @Roles("recruiter")
+  @ApiOperation({
+    summary: "Recent applications across all of this recruiter's jobs",
+  })
+  @ApiQuery({ name: "limit", required: false, type: Number })
+  @ApiResponse({ status: 200, type: ApplicationListEnvelopeDto })
+  async recent(
+    @CurrentUser() user: AuthUser,
+    @Query() query: RecentApplicationsQueryDto,
+  ): Promise<ApplicationListEnvelopeDto> {
+    const data = await this.service.recentForRecruiter(user, query.limit);
     return { data };
   }
 

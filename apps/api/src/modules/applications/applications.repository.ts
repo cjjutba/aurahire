@@ -4,6 +4,7 @@ import {
   applicationsTable,
   jobsTable,
   matchScoresTable,
+  profilesTable,
   type Application,
   type NewApplication,
   type MatchScore,
@@ -198,5 +199,42 @@ export class ApplicationsRepository {
       .where(eq(jobsTable.recruiterId, recruiterId))
       .groupBy(applicationsTable.status);
     return rows;
+  }
+
+  async listRecentForRecruiter(
+    recruiterId: string,
+    limit: number,
+  ): Promise<
+    Array<
+      Application & {
+        matchScore: MatchScore | null;
+        candidateFullName: string | null;
+        candidateEmail: string | null;
+        jobTitle: string | null;
+      }
+    >
+  > {
+    const rows = await this.db
+      .select({
+        application: applicationsTable,
+        matchScore: matchScoresTable,
+        candidateFullName: profilesTable.fullName,
+        candidateEmail: profilesTable.email,
+        jobTitle: jobsTable.title,
+      })
+      .from(applicationsTable)
+      .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
+      .where(eq(jobsTable.recruiterId, recruiterId))
+      .orderBy(desc(applicationsTable.appliedAt))
+      .limit(limit);
+    return rows.map((r) => ({
+      ...r.application,
+      matchScore: r.matchScore,
+      candidateFullName: r.candidateFullName,
+      candidateEmail: r.candidateEmail,
+      jobTitle: r.jobTitle,
+    }));
   }
 }
