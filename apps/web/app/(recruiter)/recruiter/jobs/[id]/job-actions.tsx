@@ -7,6 +7,7 @@ import type { JobStatus } from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { useJobsControllerArchiveV1 } from "@aurahire/shared";
+import { useInvalidate } from "@/hooks/use-invalidate-queries";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { BiasOverrideModal } from "@/components/bias/bias-override-modal";
 import type { BiasFlagChipFlag } from "@/components/bias/bias-flag-chip";
@@ -22,6 +23,7 @@ export function JobActions({ id, status }: JobActionsProps) {
   const [biasModalOpen, setBiasModalOpen] = useState(false);
   const [pendingFlags, setPendingFlags] = useState<BiasFlagChipFlag[]>([]);
 
+  const inv = useInvalidate();
   const archiveMutation = useJobsControllerArchiveV1();
 
   async function publish() {
@@ -81,6 +83,9 @@ export function JobActions({ id, status }: JobActionsProps) {
       }
 
       toastSuccess("Job published");
+      void inv.recruiterJobs();
+      void inv.recruiterDashboard();
+      void inv.candidateJobs();
       router.refresh();
     } finally {
       setWorking(false);
@@ -93,6 +98,9 @@ export function JobActions({ id, status }: JobActionsProps) {
     try {
       await archiveMutation.mutateAsync({ id });
       toastSuccess("Job archived");
+      void inv.recruiterJobs();
+      void inv.recruiterDashboard();
+      void inv.candidateJobs();
       router.refresh();
     } catch (err) {
       toastApiError(err, "Couldn't archive job");

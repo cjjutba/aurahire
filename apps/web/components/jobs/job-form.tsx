@@ -11,6 +11,7 @@ import {
   useJobsControllerUpdateV1,
 } from "@aurahire/shared";
 
+import { useInvalidate } from "@/hooks/use-invalidate-queries";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
@@ -93,6 +94,7 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
     },
   });
 
+  const inv = useInvalidate();
   const createMutation = useJobsControllerCreateV1();
   const updateMutation = useJobsControllerUpdateV1();
 
@@ -125,11 +127,16 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
           data: parsed.data,
         })) as unknown as { data: { id: string } };
         jobIdResult = res.data.id;
+        void inv.recruiterJobs();
+        void inv.recruiterDashboard();
+        void inv.candidateJobs();
       } else {
         const res = (await createMutation.mutateAsync({
           data: parsed.data,
         })) as unknown as { data: { id: string } };
         jobIdResult = res.data.id;
+        void inv.recruiterJobs();
+        void inv.recruiterDashboard();
       }
 
       toastSuccess(isEdit ? "Job updated" : "Job created");
