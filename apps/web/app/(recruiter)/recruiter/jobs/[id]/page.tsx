@@ -4,6 +4,7 @@ import { Pencil } from "lucide-react";
 import { JobDetail } from "@/components/jobs/job-detail";
 import { getCurrentSession } from "@/lib/auth/session";
 import { BiasFlagsList } from "@/components/bias/bias-flags-list";
+import { serverApiFetch, ServerApiError } from "@/lib/query";
 import { JobActions } from "./job-actions";
 
 interface PageProps {
@@ -25,18 +26,23 @@ interface BiasFlagRow {
 }
 
 export default async function RecruiterJobDetailPage({ params }: PageProps) {
-  const { id } = await params;
+  const { id } = (await params);
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-  const res = await fetch(`${apiUrl}/api/v1/jobs/${id}/for-recruiter`, {
-    headers: { Authorization: `Bearer ${session.access_token}` },
-    cache: "no-store",
-  });
+  const [jobResult, appsResult, flagsResult] = await Promise.allSettled([
+    serverApiFetch<{ data: JobDetailJob }>(`/api/v1/jobs/${id}/for-recruiter`),
+    serverApiFetch<{ data: unknown[] }>(`/api/v1/applications/by-job/${id}`),
+    serverApiFetch<{ data: BiasFlagRow[] }>(`/api/v1/bias/jobs/${id}/flags`),
+  ]);
 
-  if (res.status === 404) notFound();
-  if (!res.ok) {
+  if (jobResult.status === "rejected") {
+    if (
+      jobResult.reason instanceof ServerApiError &&
+      jobResult.reason.status === 404
+    ) {
+      notFound();
+    }
     return (
       <div className="text-[var(--color-status-danger)]">
         Failed to load job.
@@ -44,29 +50,11 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
     );
   }
 
-  const body = (await res.json()) as { data: JobDetailJob };
-
-  // Fetch applications count for this job
-  let applicationsCount = 0;
-  const appsRes = await fetch(`${apiUrl}/api/v1/applications/by-job/${id}`, {
-    headers: { Authorization: `Bearer ${session.access_token}` },
-    cache: "no-store",
-  });
-  if (appsRes.ok) {
-    const appsBody = (await appsRes.json()) as { data: unknown[] };
-    applicationsCount = appsBody.data.length;
-  }
-
-  // Fetch persisted bias flags for this job (ignore failures silently)
-  let biasFlags: BiasFlagRow[] = [];
-  const flagsRes = await fetch(`${apiUrl}/api/v1/bias/jobs/${id}/flags`, {
-    headers: { Authorization: `Bearer ${session.access_token}` },
-    cache: "no-store",
-  });
-  if (flagsRes.ok) {
-    const flagsBody = (await flagsRes.json()) as { data: BiasFlagRow[] };
-    biasFlags = flagsBody.data;
-  }
+  const job = jobResult.value.data;
+  const applicationsCount =
+    appsResult.status === "fulfilled" ? appsResult.value.data.length : 0;
+  const biasFlags: BiasFlagRow[] =
+    flagsResult.status === "fulfilled" ? flagsResult.value.data : [];
 
   return (
     <div className="mx-auto max-w-[1024px] space-y-6">
@@ -77,7 +65,7 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
         ← Back to all jobs
       </Link>
       <JobDetail
-        job={body.data}
+        job={job}
         showStatusChip
         actions={
           <div className="flex items-center gap-2">
@@ -96,7 +84,7 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
             >
               <Pencil className="h-3.5 w-3.5" /> Edit
             </Link>
-            <JobActions id={id} status={body.data.status} />
+            <JobActions id={id} status={job.status} />
           </div>
         }
       />
