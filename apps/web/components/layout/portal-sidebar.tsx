@@ -187,7 +187,7 @@ export function PortalSidebarContent({
         </Link>
         <button
           type="button"
-          className="mt-4 flex w-full items-center gap-2 text-left"
+          className="mt-4 flex w-full items-center gap-2 text-left cursor-default"
           aria-label="Workspace"
         >
           <Avatar className="h-8 w-8">
