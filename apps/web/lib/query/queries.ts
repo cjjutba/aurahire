@@ -77,9 +77,9 @@ export const serverQueries = {
       { query: { page: params.page } },
     ),
   recruiterInterviews: (params: RecruiterInterviewsParams) =>
-    serverApiFetch<{ data: unknown[]; meta: { total: number } }>(
-      "/api/v1/interviews",
-      { query: { status: params.status, page: params.page, scope: "recruiter" } },
+    serverApiFetch<{ data: unknown[] }>(
+      "/api/v1/interviews/by-recruiter/me",
+      { query: { status: params.status, page: params.page } },
     ),
   recruiterApplicationsByJob: (jobId: string, params: RecruiterApplicationsByJobParams) =>
     serverApiFetch<{ data: unknown[]; meta: { total: number } }>(
@@ -106,9 +106,9 @@ export const serverQueries = {
       { query: { status: params.status, page: params.page } },
     ),
   candidateInterviews: (params: CandidateInterviewsParams) =>
-    serverApiFetch<{ data: unknown[]; meta: { total: number } }>(
-      "/api/v1/interviews",
-      { query: { status: params.status, page: params.page, scope: "candidate" } },
+    serverApiFetch<{ data: unknown[] }>(
+      "/api/v1/interviews/mine",
+      { query: { status: params.status, page: params.page } },
     ),
   profileScoreMe: () =>
     serverApiFetch<unknown>("/api/v1/scoring/profile/me"),
