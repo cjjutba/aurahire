@@ -11,9 +11,11 @@ import {
   type SQL,
 } from "drizzle-orm";
 import {
+  applicationsTable,
   biasFlagsTable,
-  jobsTable,
   companiesTable,
+  jobsTable,
+  matchScoresTable,
   profilesTable,
   type Job,
   type NewJob,
@@ -37,6 +39,19 @@ export interface JobRecruiter {
 
 export interface JobWithCompanyAndRecruiter extends JobWithCompany {
   recruiter: JobRecruiter;
+}
+
+export interface JobStats {
+  candidates: number;
+  new: number;
+  interviewed: number;
+  offered: number;
+  hired: number;
+  avgScore: number;
+}
+
+export interface JobWithCompanyAndStats extends JobWithCompany {
+  stats: JobStats;
 }
 
 export interface ListJobsForAdminFilters {
@@ -122,6 +137,72 @@ export class JobsRepository {
         .filter((r) => r.company != null)
         .map((r) => ({ ...r.job, company: r.company! })),
       total: Number(totalResult[0]?.count ?? 0),
+    };
+  }
+
+  async listMineWithStats(
+    recruiterId: string,
+    options: {
+      page: number;
+      limit: number;
+      status?: JobStatus;
+      sort?: "recent" | "recent-activity";
+    },
+  ): Promise<{ rows: JobWithCompanyAndStats[]; total: number }> {
+    const conditions: SQL[] = [eq(jobsTable.recruiterId, recruiterId)];
+    if (options.status) {
+      conditions.push(eq(jobsTable.status, options.status));
+    }
+    const where = conditions.length === 1 ? conditions[0] : and(...conditions);
+
+    const totalResult = await this.db
+      .select({ count: count() })
+      .from(jobsTable)
+      .where(where);
+    const total = totalResult[0]?.count ?? 0;
+
+    const orderClause =
+      options.sort === "recent-activity"
+        ? sql`max(${applicationsTable.appliedAt}) desc nulls last`
+        : desc(jobsTable.createdAt);
+
+    const rows = await this.db
+      .select({
+        job: jobsTable,
+        company: companiesTable,
+        candidates: sql<number>`count(distinct ${applicationsTable.id})::int`,
+        newCount: sql<number>`count(distinct ${applicationsTable.id}) filter (where ${applicationsTable.status} = 'applied')::int`,
+        interviewed: sql<number>`count(distinct ${applicationsTable.id}) filter (where ${applicationsTable.status} = 'interview')::int`,
+        offered: sql<number>`count(distinct ${applicationsTable.id}) filter (where ${applicationsTable.status} = 'offer')::int`,
+        hired: sql<number>`count(distinct ${applicationsTable.id}) filter (where ${applicationsTable.status} = 'hired')::int`,
+        avgScore: sql<number | null>`avg(${matchScoresTable.overallScore})::float`,
+      })
+      .from(jobsTable)
+      .innerJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
+      .leftJoin(applicationsTable, eq(applicationsTable.jobId, jobsTable.id))
+      .leftJoin(matchScoresTable, eq(matchScoresTable.jobId, jobsTable.id))
+      .where(where)
+      .groupBy(jobsTable.id, companiesTable.id)
+      .orderBy(orderClause)
+      .limit(options.limit)
+      .offset((options.page - 1) * options.limit);
+
+    return {
+      rows: rows
+        .filter((r) => r.company !== null)
+        .map((r) => ({
+          ...r.job,
+          company: r.company as Company,
+          stats: {
+            candidates: r.candidates,
+            new: r.newCount,
+            interviewed: r.interviewed,
+            offered: r.offered,
+            hired: r.hired,
+            avgScore: Math.round(r.avgScore ?? 0),
+          },
+        })),
+      total,
     };
   }
 

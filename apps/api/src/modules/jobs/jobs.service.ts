@@ -14,7 +14,7 @@ import type { AuthUser } from "@aurahire/shared";
 import { AuditService } from "../../audit";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { BiasService } from "../bias/bias.service";
-import { JobsRepository, type JobWithCompany, type ListJobsFilters } from "./jobs.repository";
+import { JobsRepository, type JobWithCompany, type ListJobsFilters, type JobStats } from "./jobs.repository";
 import type { CreateJobDto } from "./dto/create-job.dto";
 import type { UpdateJobDto } from "./dto/update-job.dto";
 import type { ListJobsQueryDto } from "./dto/list-jobs-query.dto";
@@ -230,7 +230,7 @@ export class JobsService {
       experienceLevel: query.experienceLevel,
       locationCountry: query.locationCountry,
       status: "published",
-      sort: query.sort,
+      sort: query.sort === "recent-activity" ? "recent" : query.sort,
       page: query.page,
       limit: query.limit,
     };
@@ -268,11 +268,31 @@ export class JobsService {
   // ---------------------------------- RECRUITER LIST + DETAIL (own jobs)
 
   async listMine(user: AuthUser, query: ListJobsQueryDto): Promise<{
-    data: JobResponseDto[];
+    data: JobResponseDto[] | (JobResponseDto & { stats: JobStats })[];
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
     if (user.role !== "recruiter") {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+    }
+
+    if (query.include === "stats") {
+      const sort: "recent" | "recent-activity" =
+        query.sort === "recent-activity" ? "recent-activity" : "recent";
+      const { rows, total } = await this.repo.listMineWithStats(user.id, {
+        page: query.page,
+        limit: query.limit,
+        status: query.status,
+        sort,
+      });
+      return {
+        data: rows.map((r) => ({ ...this.toResponse(r), stats: r.stats })),
+        meta: {
+          page: query.page,
+          limit: query.limit,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / query.limit)),
+        },
+      };
     }
 
     const filters: ListJobsFilters = {
@@ -280,7 +300,7 @@ export class JobsService {
       mode: query.mode,
       experienceLevel: query.experienceLevel,
       locationCountry: query.locationCountry,
-      sort: query.sort,
+      sort: query.sort === "recent-activity" ? "recent" : query.sort,
       page: query.page,
       limit: query.limit,
       recruiterId: user.id,

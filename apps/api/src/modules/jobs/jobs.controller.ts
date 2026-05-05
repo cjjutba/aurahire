@@ -112,7 +112,10 @@ export class JobsController {
   @Get("mine")
   @ApiBearerAuth()
   @Roles("recruiter")
-  @ApiOperation({ summary: "List own jobs (any status); paginated" })
+  @ApiOperation({
+    summary: "List own jobs (any status); paginated. Supports ?include=stats for per-job aggregates.",
+  })
+  @ApiQuery({ name: "include", required: false, enum: ["stats"] })
   @ApiResponse({ status: 200, type: JobListResponseDto })
   async listMine(
     @CurrentUser() user: AuthUser,

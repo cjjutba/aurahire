@@ -70,10 +70,11 @@ export const listJobsQuerySchema = paginationSchema.extend({
   experienceLevel: z.enum(EXPERIENCE_LEVEL).optional(),
   locationCountry: z.string().max(100).optional(),
   sort: z
-    .enum(["recent", "best-match", "salary-high"])
+    .enum(["recent", "best-match", "salary-high", "recent-activity"])
     .default("recent")
     .optional(),
   status: z.enum(JOB_STATUS).optional(),
+  include: z.enum(["stats"]).optional(),
 });
 
 export type ListJobsQuery = z.infer<typeof listJobsQuerySchema>;
