@@ -65,9 +65,20 @@ export const serverQueries = {
       { query: { limit } },
     ),
   recruiterJobsList: (params: RecruiterJobsListParams) =>
-    serverApiFetch<{ data: unknown[]; meta: { total: number; page: number; limit: number } }>(
+    serverApiFetch<{ data: unknown[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(
       "/api/v1/jobs/mine",
-      { query: { status: params.status, page: params.page, include: params.include } },
+      {
+        query: {
+          q: params.q,
+          status: params.status,
+          mode: params.mode,
+          experienceLevel: params.experienceLevel,
+          sort: params.sort,
+          page: params.page,
+          limit: params.limit,
+          include: params.include,
+        },
+      },
     ),
   recruiterJobDetail: (id: string) =>
     serverApiFetch<unknown>(`/api/v1/jobs/${id}`),

@@ -9,7 +9,14 @@ import { JobsListClient } from "./_jobs-list-client";
 export const metadata = { title: "My Jobs" };
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    mode?: string;
+    experienceLevel?: string;
+    sort?: string;
+    page?: string;
+  }>;
 }
 
 export default async function RecruiterJobsPage({ searchParams }: PageProps) {
@@ -18,8 +25,14 @@ export default async function RecruiterJobsPage({ searchParams }: PageProps) {
 
   const sp = await searchParams;
   const params = {
+    q: sp.q?.trim() || undefined,
     status: sp.status && sp.status !== "all" ? sp.status : undefined,
-    page: sp.page ? Number(sp.page) : undefined,
+    mode: sp.mode && sp.mode !== "all" ? sp.mode : undefined,
+    experienceLevel: sp.experienceLevel && sp.experienceLevel !== "all" ? sp.experienceLevel : undefined,
+    sort: sp.sort ?? "recent",
+    page: sp.page ? Math.max(1, Number(sp.page)) : 1,
+    limit: 25,
+    include: "stats" as const,
   };
 
   const queryClient = makeQueryClient();
@@ -30,7 +43,7 @@ export default async function RecruiterJobsPage({ searchParams }: PageProps) {
 
   return (
     <PrefetchedHydration queryClient={queryClient}>
-      <JobsListClient status={params.status} page={params.page} />
+      <JobsListClient params={params} />
     </PrefetchedHydration>
   );
 }

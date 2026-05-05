@@ -40,8 +40,13 @@ export const queryKeys = {
 } as const;
 
 export interface RecruiterJobsListParams {
+  q?: string;
   status?: string;
+  mode?: string;
+  experienceLevel?: string;
+  sort?: string;
   page?: number;
+  limit?: number;
   include?: "stats";
 }
 export interface RecruiterShortlistParams {
