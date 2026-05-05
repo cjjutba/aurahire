@@ -16,6 +16,7 @@ import {
 import type { ProfileScore as DbProfileScore } from "@aurahire/db";
 
 import { AuditService } from "../../audit";
+import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { ScoreProfileService } from "../../ai/score-profile.service";
 import { ScoreMatchService } from "../../ai/score-match.service";
 import { ProfilesRepository } from "../profiles/profiles.repository";
@@ -61,6 +62,7 @@ export class ScoringService {
     private readonly resumesRepo: ResumesRepository,
     private readonly scoringRepo: ScoringRepository,
     private readonly audit: AuditService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async computeProfileScore(
@@ -181,6 +183,8 @@ export class ScoringService {
       ...requestMeta,
     });
 
+    await this.cacheService.bustTag(TAGS.profileScore(user.id));
+
     this.logger.log(
       `Profile score computed for ${user.id}: ${profileScore.overallScore}/100 (${profileScore.band})`,
     );
@@ -196,10 +200,18 @@ export class ScoringService {
       });
     }
 
-    const score = await this.scoringRepo.findMostRecentProfileScore(user.id);
-    if (!score) return null;
+    return this.cacheService.getOrSet<ProfileScoreDto | null>({
+      key: `profile-score:${user.id}`,
+      ttlSeconds: TTL_SECONDS.warm,
+      tags: [TAGS.profileScore(user.id)],
+      telemetryName: "profile-score:read",
+      load: async () => {
+        const score = await this.scoringRepo.findMostRecentProfileScore(user.id);
+        if (!score) return null;
 
-    return this.fromDbRow(score);
+        return this.fromDbRow(score);
+      },
+    });
   }
 
   private toDto(
