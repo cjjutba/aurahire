@@ -99,7 +99,7 @@ export const serverQueries = {
       },
     ),
   candidateJobDetail: (id: string) =>
-    serverApiFetch<unknown>(`/api/v1/jobs/for-candidate/${id}`),
+    serverApiFetch<unknown>(`/api/v1/jobs/${id}/for-candidate`),
   candidateApplications: (params: CandidateApplicationsParams) =>
     serverApiFetch<{ data: unknown[]; meta: { total: number } }>(
       "/api/v1/applications/mine",

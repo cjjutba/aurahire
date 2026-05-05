@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { JobDetail } from "@/components/jobs/job-detail";
 import { getCurrentSession } from "@/lib/auth/session";
+import { serverApiFetch, ServerApiError } from "@/lib/query";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -16,14 +17,18 @@ export default async function CandidateJobDetailPage({ params }: PageProps) {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-  const res = await fetch(`${apiUrl}/api/v1/jobs/${id}/for-candidate`, {
-    headers: { Authorization: `Bearer ${session.access_token}` },
-    cache: "no-store",
-  });
-
-  if (res.status === 404) notFound();
-  const body = (await res.json()) as { data: JobDetailJob };
+  let job: JobDetailJob;
+  try {
+    const body = await serverApiFetch<{ data: JobDetailJob }>(
+      `/api/v1/jobs/${id}/for-candidate`,
+    );
+    job = body.data;
+  } catch (err) {
+    if (err instanceof ServerApiError && err.status === 404) notFound();
+    return (
+      <div className="text-[var(--color-status-danger)]">Failed to load job.</div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1024px] space-y-6">
@@ -34,7 +39,7 @@ export default async function CandidateJobDetailPage({ params }: PageProps) {
         ← Back to jobs
       </Link>
       <JobDetail
-        job={body.data}
+        job={job}
         actions={
           <Link
             href={`/candidate/jobs/${id}/apply`}

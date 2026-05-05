@@ -1,30 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { toastSuccess, toastApiError } from "@/lib/toast";
 
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { AiShimmer } from "@/components/ai/ai-shimmer";
 import { ScoreRing } from "@/components/score/score-ring";
 import { MatchBandChip } from "@/components/score/match-band-chip";
 import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { useProfileScoreQuery } from "@/hooks/use-profile-score";
+import { queryKeys } from "@/lib/query";
 
-interface InitialScore {
+interface ProfileScore {
   id: string;
   overallScore: number;
   band: "strong" | "partial" | "limited";
   createdAt: string;
 }
 
-interface Props {
-  initial: InitialScore | null;
-}
-
-export function ProfileScoreCardClient({ initial }: Props) {
-  const router = useRouter();
-  const [score, setScore] = useState<InitialScore | null>(initial);
+export function ProfileScoreCardClient() {
+  const qc = useQueryClient();
+  const query = useProfileScoreQuery();
+  const score = (query.data as { data?: ProfileScore })?.data ?? null;
   const [computing, setComputing] = useState(false);
 
   async function compute() {
@@ -49,22 +48,18 @@ export function ProfileScoreCardClient({ initial }: Props) {
         toastApiError(null, "Couldn't recalculate", "Please wait a moment before recalculating.");
         return;
       }
-
       if (res.status === 400) {
         const body = (await res.json().catch(() => ({}))) as { message?: string };
         toastApiError(null, "Couldn't recalculate", body.message ?? "Complete your profile before recalculating.");
         return;
       }
-
       if (!res.ok) {
         toastApiError(null, "Couldn't recalculate");
         return;
       }
 
-      const body = (await res.json()) as { data: InitialScore };
-      setScore(body.data);
+      await qc.invalidateQueries({ queryKey: queryKeys.profileScore.me() });
       toastSuccess("Score recalculated");
-      router.refresh();
     } catch (err) {
       toastApiError(err, "Couldn't recalculate");
     } finally {
