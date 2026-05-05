@@ -14,6 +14,7 @@ import type {
 
 import { AuditService } from "../../../audit";
 import { AUDIT_ACTIONS } from "../../../audit/audit.types";
+import { CacheService, TTL_SECONDS, TAGS } from "../../../cache";
 import {
   AdminConfigRepository,
   type ScoringConfigWithUpdatedBy,
@@ -34,6 +35,7 @@ export class AdminConfigService {
   constructor(
     private readonly repo: AdminConfigRepository,
     private readonly audit: AuditService,
+    private readonly cacheService: CacheService,
   ) {}
 
   // -----------------------------------------------------------------
@@ -41,14 +43,22 @@ export class AdminConfigService {
   // -----------------------------------------------------------------
 
   async getActive(): Promise<ScoringConfigDto> {
-    const row = await this.repo.getActive();
-    if (!row) {
-      throw new NotFoundException({
-        code: "NO_ACTIVE_CONFIG",
-        message: "No active scoring config exists. Run pre-flight seed.",
-      });
-    }
-    return this.toDto(row);
+    return this.cacheService.getOrSet<ScoringConfigDto>({
+      key: "scoring-config:active",
+      ttlSeconds: TTL_SECONDS.cool, // 1 hour
+      tags: [TAGS.scoringConfigActive()],
+      telemetryName: "scoring-config",
+      load: async () => {
+        const row = await this.repo.getActive();
+        if (!row) {
+          throw new NotFoundException({
+            code: "NO_ACTIVE_CONFIG",
+            message: "No active scoring config exists. Run pre-flight seed.",
+          });
+        }
+        return this.toDto(row);
+      },
+    });
   }
 
   // -----------------------------------------------------------------
@@ -143,6 +153,8 @@ export class AdminConfigService {
       details: { changedFields, before, after } as Record<string, unknown>,
       ...requestMeta,
     });
+
+    await this.cacheService.bustTag(TAGS.scoringConfigActive());
 
     this.logger.log(
       `scoring_config updated by ${actor.id}: ${changedFields.join(", ")}`,
