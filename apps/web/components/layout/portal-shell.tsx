@@ -26,7 +26,7 @@ export function PortalShell({
   return (
     <div className="flex min-h-screen bg-[var(--color-canvas)]">
       <PortalSidebar role={role} fullName={fullName} email={email} companyName={companyName} />
-      <main className="relative flex-1 px-4 pt-20 pb-6 md:px-8 md:py-8 lg:pt-8">
+      <main className="relative flex-1 px-4 pb-6 pt-20 md:px-8 md:pb-8 lg:py-8">
         <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
           <SheetTrigger
             className="absolute left-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-ink)] hover:bg-[var(--color-surface-strong)] lg:hidden"
