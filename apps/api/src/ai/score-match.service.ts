@@ -12,6 +12,7 @@ import {
   SCORE_MATCH_SYSTEM_PROMPT,
   buildScoreMatchUserPrompt,
 } from "./prompts/score-match";
+import { CacheService, TTL_SECONDS, sha256OfStable } from "../cache";
 
 export interface ScoreMatchInput {
   parsedResume: ParsedResume;
@@ -47,6 +48,7 @@ export class ScoreMatchService {
   constructor(
     private readonly openai: OpenAIService,
     private readonly redact: RedactPiiService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async score(input: ScoreMatchInput): Promise<ScoreMatchOutput> {
@@ -56,36 +58,59 @@ export class ScoreMatchService {
       input.parsedResume,
       reqId,
     );
-
     this.logger.log(
       `[${reqId}] redacted ${redactedFields.length} fields before match scoring`,
     );
 
-    const userPrompt = buildScoreMatchUserPrompt({
-      jobTitle: input.job.title,
-      jobDepartment: input.job.department,
-      jobExperienceLevel: input.job.experienceLevel,
-      jobEducationRequirement: input.job.educationRequirement,
-      jobRequiredSkills: input.job.requiredSkills,
-      jobDescriptionPlain: input.job.descriptionPlain,
-      redactedResumeJson: JSON.stringify(redacted, null, 2),
+    const cacheInputHash = sha256OfStable({
+      redacted,
+      job: {
+        title: input.job.title,
+        department: input.job.department,
+        experienceLevel: input.job.experienceLevel,
+        educationRequirement: input.job.educationRequirement,
+        requiredSkills: input.job.requiredSkills,
+        descriptionPlain: input.job.descriptionPlain,
+      },
       weights: input.weights,
-    });
-
-    const result = await this.openai.generateStructured({
-      schema: matchScoreSchema,
-      schemaName: "MatchScore",
-      systemPrompt: SCORE_MATCH_SYSTEM_PROMPT,
-      userPrompt,
-      requestId: `${reqId}:match-v${SCORE_MATCH_VERSION}`,
-    });
-
-    return {
-      score: result.data,
-      redactedFields,
-      latencyMs: result.latencyMs,
-      model: result.model,
       promptVersion: SCORE_MATCH_VERSION,
-    };
+    });
+
+    const aiResult = await this.cacheService.getOrSet<
+      Omit<ScoreMatchOutput, "redactedFields">
+    >({
+      key: `ai:score-match:${cacheInputHash}`,
+      ttlSeconds: TTL_SECONDS.ai,
+      telemetryName: "ai:score-match",
+      load: async () => {
+        const userPrompt = buildScoreMatchUserPrompt({
+          jobTitle: input.job.title,
+          jobDepartment: input.job.department,
+          jobExperienceLevel: input.job.experienceLevel,
+          jobEducationRequirement: input.job.educationRequirement,
+          jobRequiredSkills: input.job.requiredSkills,
+          jobDescriptionPlain: input.job.descriptionPlain,
+          redactedResumeJson: JSON.stringify(redacted, null, 2),
+          weights: input.weights,
+        });
+
+        const result = await this.openai.generateStructured({
+          schema: matchScoreSchema,
+          schemaName: "MatchScore",
+          systemPrompt: SCORE_MATCH_SYSTEM_PROMPT,
+          userPrompt,
+          requestId: `${reqId}:match-v${SCORE_MATCH_VERSION}`,
+        });
+
+        return {
+          score: result.data,
+          latencyMs: result.latencyMs,
+          model: result.model,
+          promptVersion: SCORE_MATCH_VERSION,
+        };
+      },
+    });
+
+    return { ...aiResult, redactedFields };
   }
 }
