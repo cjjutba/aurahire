@@ -1155,6 +1155,11 @@ export const ApplicationDtoStatus = {
  */
 export type ApplicationDtoRecruiterNotes = { [key: string]: unknown } | null;
 
+/**
+ * @nullable
+ */
+export type ApplicationDtoShortlistedAt = { [key: string]: unknown } | null;
+
 export interface ApplicationDto {
   id: string;
   jobId: string;
@@ -1167,6 +1172,8 @@ export interface ApplicationDto {
   recruiterNotes?: ApplicationDtoRecruiterNotes;
   appliedAt: string;
   statusUpdatedAt: string;
+  /** @nullable */
+  shortlistedAt?: ApplicationDtoShortlistedAt;
   matchScore?: MatchScoreDto | null;
   candidate?: ApplicationCandidateDto | null;
   job?: ApplicationJobDto | null;
@@ -1227,6 +1234,11 @@ export interface RecruiterAnalyticsResultDto {
 
 export interface RecruiterAnalyticsEnvelopeDto {
   data: RecruiterAnalyticsResultDto;
+}
+
+export interface ShortlistListEnvelopeDto {
+  data: ApplicationDto[];
+  meta: PaginationMetaDto;
 }
 
 export type UpdateApplicationStatusDtoNewStatus =
@@ -2905,6 +2917,57 @@ export type ApplicationsControllerRecentV1Params = {
    */
   limit?: number;
 };
+
+export type ApplicationsControllerListShortlistV1Params = {
+  /**
+   * @maxLength 200
+   */
+  q?: string;
+  status?: ApplicationsControllerListShortlistV1Status;
+  jobId?: string;
+  band?: ApplicationsControllerListShortlistV1Band;
+  sort?: ApplicationsControllerListShortlistV1Sort;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+};
+
+export type ApplicationsControllerListShortlistV1Status =
+  (typeof ApplicationsControllerListShortlistV1Status)[keyof typeof ApplicationsControllerListShortlistV1Status];
+
+export const ApplicationsControllerListShortlistV1Status = {
+  applied: "applied",
+  screening: "screening",
+  interview: "interview",
+  offer: "offer",
+  hired: "hired",
+  rejected: "rejected",
+  withdrawn: "withdrawn",
+} as const;
+
+export type ApplicationsControllerListShortlistV1Band =
+  (typeof ApplicationsControllerListShortlistV1Band)[keyof typeof ApplicationsControllerListShortlistV1Band];
+
+export const ApplicationsControllerListShortlistV1Band = {
+  strong: "strong",
+  partial: "partial",
+  limited: "limited",
+} as const;
+
+export type ApplicationsControllerListShortlistV1Sort =
+  (typeof ApplicationsControllerListShortlistV1Sort)[keyof typeof ApplicationsControllerListShortlistV1Sort];
+
+export const ApplicationsControllerListShortlistV1Sort = {
+  "recently-shortlisted": "recently-shortlisted",
+  "highest-score": "highest-score",
+  "earliest-applied": "earliest-applied",
+} as const;
 
 export type AdminUsersControllerListV1Params = {
   role?: AdminUsersControllerListV1Role;
@@ -8752,6 +8815,217 @@ export function useApplicationsControllerRecentV1<
 }
 
 /**
+ * @summary List the recruiter's shortlisted applications
+ */
+export type applicationsControllerListShortlistV1Response200 = {
+  data: ShortlistListEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerListShortlistV1ResponseSuccess =
+  applicationsControllerListShortlistV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerListShortlistV1Response =
+  applicationsControllerListShortlistV1ResponseSuccess;
+
+export const getApplicationsControllerListShortlistV1Url = (
+  params?: ApplicationsControllerListShortlistV1Params,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/applications/shortlist?${stringifiedParams}`
+    : `/api/v1/applications/shortlist`;
+};
+
+export const applicationsControllerListShortlistV1 = async (
+  params?: ApplicationsControllerListShortlistV1Params,
+  options?: RequestInit,
+): Promise<applicationsControllerListShortlistV1Response> => {
+  return fetcher<applicationsControllerListShortlistV1Response>(
+    getApplicationsControllerListShortlistV1Url(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getApplicationsControllerListShortlistV1QueryKey = (
+  params?: ApplicationsControllerListShortlistV1Params,
+) => {
+  return [
+    `/api/v1/applications/shortlist`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getApplicationsControllerListShortlistV1QueryOptions = <
+  TData = Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+  TError = unknown,
+>(
+  params?: ApplicationsControllerListShortlistV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getApplicationsControllerListShortlistV1QueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>
+  > = ({ signal }) =>
+    applicationsControllerListShortlistV1(params, {
+      signal,
+      ...requestOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    staleTime: 300000,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ApplicationsControllerListShortlistV1QueryResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>
+>;
+export type ApplicationsControllerListShortlistV1QueryError = unknown;
+
+export function useApplicationsControllerListShortlistV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+  TError = unknown,
+>(
+  params: undefined | ApplicationsControllerListShortlistV1Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerListShortlistV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+  TError = unknown,
+>(
+  params?: ApplicationsControllerListShortlistV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+          TError,
+          Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useApplicationsControllerListShortlistV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+  TError = unknown,
+>(
+  params?: ApplicationsControllerListShortlistV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List the recruiter's shortlisted applications
+ */
+
+export function useApplicationsControllerListShortlistV1<
+  TData = Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+  TError = unknown,
+>(
+  params?: ApplicationsControllerListShortlistV1Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof applicationsControllerListShortlistV1>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getApplicationsControllerListShortlistV1QueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary List applications for a job (recruiter must own it)
  */
 export type applicationsControllerListForJobV1Response200 = {
@@ -9357,6 +9631,216 @@ export const useApplicationsControllerUpdateNotesV1 = <
 > => {
   return useMutation(
     getApplicationsControllerUpdateNotesV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Add this application to the recruiter's shortlist
+ */
+export type applicationsControllerShortlistV1Response200 = {
+  data: ApplicationEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerShortlistV1ResponseSuccess =
+  applicationsControllerShortlistV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerShortlistV1Response =
+  applicationsControllerShortlistV1ResponseSuccess;
+
+export const getApplicationsControllerShortlistV1Url = (id: string) => {
+  return `/api/v1/applications/${id}/shortlist`;
+};
+
+export const applicationsControllerShortlistV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<applicationsControllerShortlistV1Response> => {
+  return fetcher<applicationsControllerShortlistV1Response>(
+    getApplicationsControllerShortlistV1Url(id),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getApplicationsControllerShortlistV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof applicationsControllerShortlistV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof applicationsControllerShortlistV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["applicationsControllerShortlistV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof applicationsControllerShortlistV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return applicationsControllerShortlistV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ApplicationsControllerShortlistV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerShortlistV1>>
+>;
+
+export type ApplicationsControllerShortlistV1MutationError = unknown;
+
+/**
+ * @summary Add this application to the recruiter's shortlist
+ */
+export const useApplicationsControllerShortlistV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof applicationsControllerShortlistV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof applicationsControllerShortlistV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getApplicationsControllerShortlistV1MutationOptions(options),
+    queryClient,
+  );
+};
+
+/**
+ * @summary Remove this application from the recruiter's shortlist
+ */
+export type applicationsControllerUnshortlistV1Response200 = {
+  data: ApplicationEnvelopeDto;
+  status: 200;
+};
+
+export type applicationsControllerUnshortlistV1ResponseSuccess =
+  applicationsControllerUnshortlistV1Response200 & {
+    headers: Headers;
+  };
+export type applicationsControllerUnshortlistV1Response =
+  applicationsControllerUnshortlistV1ResponseSuccess;
+
+export const getApplicationsControllerUnshortlistV1Url = (id: string) => {
+  return `/api/v1/applications/${id}/shortlist`;
+};
+
+export const applicationsControllerUnshortlistV1 = async (
+  id: string,
+  options?: RequestInit,
+): Promise<applicationsControllerUnshortlistV1Response> => {
+  return fetcher<applicationsControllerUnshortlistV1Response>(
+    getApplicationsControllerUnshortlistV1Url(id),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getApplicationsControllerUnshortlistV1MutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof applicationsControllerUnshortlistV1>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof fetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof applicationsControllerUnshortlistV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["applicationsControllerUnshortlistV1"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof applicationsControllerUnshortlistV1>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return applicationsControllerUnshortlistV1(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ApplicationsControllerUnshortlistV1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof applicationsControllerUnshortlistV1>>
+>;
+
+export type ApplicationsControllerUnshortlistV1MutationError = unknown;
+
+/**
+ * @summary Remove this application from the recruiter's shortlist
+ */
+export const useApplicationsControllerUnshortlistV1 = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof applicationsControllerUnshortlistV1>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof fetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof applicationsControllerUnshortlistV1>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getApplicationsControllerUnshortlistV1MutationOptions(options),
     queryClient,
   );
 };

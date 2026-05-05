@@ -1658,6 +1658,120 @@
         ]
       }
     },
+    "/api/v1/applications/shortlist": {
+      "get": {
+        "operationId": "ApplicationsController_listShortlist_v1",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "applied",
+                "screening",
+                "interview",
+                "offer",
+                "hired",
+                "rejected",
+                "withdrawn"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "jobId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "band",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "strong",
+                "partial",
+                "limited"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recently-shortlisted",
+              "enum": [
+                "recently-shortlisted",
+                "highest-score",
+                "earliest-applied"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "exclusiveMinimum": false,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "default": 25,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortlistListEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the recruiter's shortlisted applications",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
     "/api/v1/applications/by-job/{jobId}": {
       "get": {
         "operationId": "ApplicationsController_listForJob_v1",
@@ -1820,6 +1934,76 @@
           }
         ],
         "summary": "Update recruiter notes on an application",
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/shortlist": {
+      "post": {
+        "operationId": "ApplicationsController_shortlist_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add this application to the recruiter's shortlist",
+        "tags": [
+          "applications"
+        ]
+      },
+      "delete": {
+        "operationId": "ApplicationsController_unshortlist_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove this application from the recruiter's shortlist",
         "tags": [
           "applications"
         ]
@@ -5616,6 +5800,10 @@
           "statusUpdatedAt": {
             "type": "string"
           },
+          "shortlistedAt": {
+            "type": "object",
+            "nullable": true
+          },
           "matchScore": {
             "nullable": true,
             "allOf": [
@@ -5835,6 +6023,24 @@
         },
         "required": [
           "data"
+        ]
+      },
+      "ShortlistListEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
         ]
       },
       "UpdateApplicationStatusDto": {
