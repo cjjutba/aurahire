@@ -163,7 +163,8 @@ export const companyMembersTable = pgTable(
     companyEmailUnique: unique("company_members_company_email_unique").on(t.companyId, t.email),
     userStatusIdx: index("company_members_user_status_idx").on(t.userId, t.status),
     companyStatusIdx: index("company_members_company_status_idx").on(t.companyId, t.status),
-    invitationTokenIdx: index("company_members_invitation_token_idx").on(t.invitationToken),
+    // No separate index on invitationToken — the .unique() above is backed by
+    // an automatic btree index sufficient for token lookups.
   }),
 );
 

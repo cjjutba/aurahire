@@ -39,6 +39,9 @@
 --     itself only disappears when its parent company is deleted).
 --   - `last_active_company_id` is then populated for every recruiter from the
 --     same backfill output.
+--   - `audit_logs.company_id` is intentionally NOT backfilled; historical rows
+--     remain NULL and are visible to admin-only views. Forward audit entries
+--     (post-cutover) will populate company_id via the audit service in Phase 2.
 --
 -- WARNING — ONE-WAY CUTOVER
 --   Once this migration is applied, the column `recruiter_profiles.company_id`
@@ -100,9 +103,9 @@ CREATE INDEX IF NOT EXISTS "company_members_user_status_idx"
   ON "company_members" ("user_id", "status");
 CREATE INDEX IF NOT EXISTS "company_members_company_status_idx"
   ON "company_members" ("company_id", "status");
-CREATE INDEX IF NOT EXISTS "company_members_invitation_token_idx"
-  ON "company_members" ("invitation_token")
-  WHERE "invitation_token" IS NOT NULL;
+-- Note: no separate index on "invitation_token" — the UNIQUE constraint above
+-- (company_members_invitation_token_unique) is backed by an automatic btree
+-- index, which is sufficient for token lookups.
 
 -- RLS — service role only for now. Phase 2 will add member-readable policies.
 -- Service-role connections bypass RLS, so the backend can read/write freely.
