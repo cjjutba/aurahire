@@ -6,6 +6,7 @@ import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { getActiveCompanyId } from "@/lib/active-company";
 
 interface ShortlistRowActionsProps {
   applicationId: string;
@@ -19,11 +20,13 @@ async function authedFetch(path: string, init: RequestInit): Promise<Response> {
   } = await supabase.auth.getSession();
   if (!session) throw new Error("Not signed in");
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+  const activeCompanyId = getActiveCompanyId();
   return fetch(`${apiUrl}${path}`, {
     ...init,
     headers: {
       ...(init.headers ?? {}),
       Authorization: `Bearer ${session.access_token}`,
+      ...(activeCompanyId ? { "X-Active-Company-Id": activeCompanyId } : {}),
     },
   });
 }

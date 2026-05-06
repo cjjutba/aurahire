@@ -212,6 +212,7 @@ export class ProfilesService {
       phone: profile.phone,
       avatarUrl: profile.avatarUrl,
       profileCompleted: candidateProfile?.profileCompleted ?? false,
+      lastActiveCompanyId: profile.lastActiveCompanyId,
       candidateProfile: candidateProfile
         ? {
             headline: candidateProfile.headline,
@@ -240,6 +241,7 @@ export class ProfilesService {
       phone: profile.phone,
       avatarUrl: profile.avatarUrl,
       profileCompleted: recruiterProfile?.profileCompleted ?? false,
+      lastActiveCompanyId: profile.lastActiveCompanyId,
       candidateProfile: null,
       recruiterProfile: recruiterProfile
         ? {
@@ -339,6 +341,7 @@ export class ProfilesService {
       phone: profile.phone,
       avatarUrl: profile.avatarUrl,
       profileCompleted: true,
+      lastActiveCompanyId: profile.lastActiveCompanyId,
       candidateProfile: null,
       recruiterProfile: null,
       company: null,

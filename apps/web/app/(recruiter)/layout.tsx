@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { PortalShell } from "@/components/layout/portal-shell";
+import { ActiveCompanyProvider } from "@/contexts/active-company-context";
 
 export default async function RecruiterLayout({
   children,
@@ -14,6 +15,10 @@ export default async function RecruiterLayout({
         fullName: string;
         email: string;
         profileCompleted: boolean;
+        // Phase 3: surfaced in the API response so we can seed the active
+        // company singleton with the server-known value before the
+        // memberships query resolves on the client.
+        lastActiveCompanyId: string | null;
         company: { id: string; name: string } | null;
       }
     | null;
@@ -28,13 +33,17 @@ export default async function RecruiterLayout({
   }
 
   return (
-    <PortalShell
-      role="recruiter"
-      fullName={profile.fullName}
-      email={profile.email}
-      companyName={profile.company?.name ?? null}
+    <ActiveCompanyProvider
+      initialActiveCompanyId={profile.lastActiveCompanyId ?? null}
     >
-      {children}
-    </PortalShell>
+      <PortalShell
+        role="recruiter"
+        fullName={profile.fullName}
+        email={profile.email}
+        companyName={profile.company?.name ?? null}
+      >
+        {children}
+      </PortalShell>
+    </ActiveCompanyProvider>
   );
 }

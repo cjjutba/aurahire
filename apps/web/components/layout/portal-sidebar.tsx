@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
+import { CompanySwitcher } from "@/components/layout/company-switcher";
 
 interface NavItem {
   href: string;
@@ -194,21 +195,27 @@ export function PortalSidebarContent({
         >
           <BrandWordmark size="md" />
         </Link>
-        <button
-          type="button"
-          className="mt-4 flex w-full items-center gap-2 text-left cursor-default"
-          aria-label="Workspace"
-        >
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-[var(--color-surface-strong)] text-xs font-semibold text-[var(--color-ink)]">
-              {tenantInitials}
-            </AvatarFallback>
-          </Avatar>
-          <span className="flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
-            {companyName ?? "Workspace"}
-          </span>
-          <ChevronsUpDown className="h-4 w-4 text-[var(--color-muted)]" aria-hidden />
-        </button>
+        {role === "recruiter" ? (
+          // Recruiters have multi-tenancy: switcher reads memberships +
+          // active company from ActiveCompanyContext.
+          <CompanySwitcher />
+        ) : (
+          // Candidate + admin portals don't have multi-company semantics.
+          // Keep a static chip for visual continuity (it's display-only).
+          <div
+            className="mt-4 flex w-full items-center gap-2"
+            aria-label="Workspace"
+          >
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-[var(--color-surface-strong)] text-xs font-semibold text-[var(--color-ink)]">
+                {tenantInitials}
+              </AvatarFallback>
+            </Avatar>
+            <span className="flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
+              {companyName ?? "Workspace"}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Sections */}

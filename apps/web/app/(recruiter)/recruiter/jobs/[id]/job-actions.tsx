@@ -9,6 +9,7 @@ import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { useJobsControllerArchiveV1 } from "@aurahire/shared";
 import { useInvalidate } from "@/hooks/use-invalidate-queries";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { getActiveCompanyId } from "@/lib/active-company";
 import { BiasOverrideModal } from "@/components/bias/bias-override-modal";
 import type { BiasFlagChipFlag } from "@/components/bias/bias-flag-chip";
 
@@ -38,12 +39,16 @@ export function JobActions({ id, status }: JobActionsProps) {
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const activeCompanyId = getActiveCompanyId();
       // Publish takes no body; do NOT set Content-Type or Fastify will reject
       // with "Body cannot be empty when content-type is set to 'application/json'".
       const res = await fetch(`${apiUrl}/api/v1/jobs/${id}/publish`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          ...(activeCompanyId
+            ? { "X-Active-Company-Id": activeCompanyId }
+            : {}),
         },
       });
 

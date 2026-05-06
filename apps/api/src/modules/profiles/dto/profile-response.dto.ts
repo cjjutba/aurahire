@@ -37,6 +37,9 @@ export class ProfileResponseDto {
   @ApiProperty({ nullable: true }) phone!: string | null;
   @ApiProperty({ nullable: true }) avatarUrl!: string | null;
   @ApiProperty() profileCompleted!: boolean;
+  // Phase 3: surfaced so the web app can seed ActiveCompanyContext with the
+  // server-rendered initial value before TanStack Query rehydrates client-side.
+  @ApiProperty({ nullable: true }) lastActiveCompanyId!: string | null;
   @ApiProperty({ type: () => CandidateSubprofileDto, nullable: true })
   candidateProfile!: CandidateSubprofileDto | null;
   @ApiProperty({ type: () => RecruiterSubprofileDto, nullable: true })

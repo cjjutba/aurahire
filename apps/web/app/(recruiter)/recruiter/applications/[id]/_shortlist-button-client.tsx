@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Star } from "lucide-react";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { getActiveCompanyId } from "@/lib/active-company";
 
 interface Props {
   applicationId: string;
@@ -24,11 +25,13 @@ export function ShortlistButtonClient({ applicationId, initialShortlistedAt }: P
     } = await supabase.auth.getSession();
     if (!session) throw new Error("Not signed in");
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+    const activeCompanyId = getActiveCompanyId();
     return fetch(`${apiUrl}${path}`, {
       ...init,
       headers: {
         ...(init.headers ?? {}),
         Authorization: `Bearer ${session.access_token}`,
+        ...(activeCompanyId ? { "X-Active-Company-Id": activeCompanyId } : {}),
       },
     });
   }

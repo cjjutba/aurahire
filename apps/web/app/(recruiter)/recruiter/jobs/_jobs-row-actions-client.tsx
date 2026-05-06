@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { getActiveCompanyId } from "@/lib/active-company";
 
 interface JobRowActionsClientProps {
   jobId: string;
@@ -39,9 +40,15 @@ export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps)
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const activeCompanyId = getActiveCompanyId();
       const res = await fetch(`${apiUrl}/api/v1/jobs/${jobId}/publish`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(activeCompanyId
+            ? { "X-Active-Company-Id": activeCompanyId }
+            : {}),
+        },
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as {
@@ -72,9 +79,15 @@ export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps)
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const activeCompanyId = getActiveCompanyId();
       const res = await fetch(`${apiUrl}/api/v1/jobs/${jobId}/archive`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(activeCompanyId
+            ? { "X-Active-Company-Id": activeCompanyId }
+            : {}),
+        },
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as {

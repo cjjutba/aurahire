@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { getActiveCompanyId } from "@/lib/active-company";
 import type { BiasFlagChipFlag } from "./bias-flag-chip";
 
 interface Props {
@@ -63,6 +64,7 @@ export function BiasOverrideModal({
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const activeCompanyId = getActiveCompanyId();
       const res = await fetch(
         `${apiUrl}/api/v1/bias/jobs/${jobId}/flags/${flagId}/override`,
         {
@@ -70,6 +72,9 @@ export function BiasOverrideModal({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
             "Content-Type": "application/json",
+            ...(activeCompanyId
+              ? { "X-Active-Company-Id": activeCompanyId }
+              : {}),
           },
           body: JSON.stringify({ reason }),
         },

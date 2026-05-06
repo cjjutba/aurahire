@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { getActiveCompanyId } from "@/lib/active-company";
 
 const NEXT_STATUSES: Record<string, string[]> = {
   applied: ["screening", "rejected"],
@@ -50,11 +51,13 @@ export function ApplicationActionsClient({
     } = await supabase.auth.getSession();
     if (!session) throw new Error("Not signed in");
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+    const activeCompanyId = getActiveCompanyId();
     return fetch(`${apiUrl}${path}`, {
       ...init,
       headers: {
         ...(init.headers ?? {}),
         Authorization: `Bearer ${session.access_token}`,
+        ...(activeCompanyId ? { "X-Active-Company-Id": activeCompanyId } : {}),
       },
     });
   }
