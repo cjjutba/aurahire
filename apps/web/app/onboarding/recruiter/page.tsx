@@ -2,14 +2,28 @@ import { redirect } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/wizard-shell";
 import { RecruiterAboutForm } from "@/components/onboarding/recruiter/about-form";
 import { getCurrentSession } from "@/lib/auth/session";
+import { fetchMyMemberships } from "@/lib/memberships-server";
 
 export const metadata = { title: "About You — Onboarding" };
 
-const STEPS = [{ label: "About" }, { label: "Company" }, { label: "Focus" }];
+// Phase 4: post-membership-acquisition the wizard shrinks to 2 steps. The
+// company step is implicit — either created via /onboarding/recruiter/
+// company-create or joined via an invitation.
+const STEPS = [{ label: "About" }, { label: "Focus" }];
 
 export default async function RecruiterAboutPage() {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
+
+  // No active membership → user hasn't picked the create-vs-join fork yet.
+  // Bounce them through it. Backfilled accounts (created before the fork
+  // existed) already have a membership, so this only triggers for genuinely
+  // new flows.
+  const memberships = await fetchMyMemberships(session.access_token);
+  const activeMemberships = memberships.filter((m) => m.status === "active");
+  if (activeMemberships.length === 0) {
+    redirect("/onboarding/start");
+  }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
   const res = await fetch(`${apiUrl}/api/v1/recruiter-profiles/me`, {

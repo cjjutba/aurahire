@@ -5,7 +5,10 @@ import { getCurrentSession } from "@/lib/auth/session";
 
 export const metadata = { title: "Hiring Focus — Onboarding" };
 
-const STEPS = [{ label: "About" }, { label: "Company" }, { label: "Focus" }];
+// Phase 4: 2-step wizard post-membership-acquisition. The company step is
+// implicit (either created via /onboarding/recruiter/company-create or
+// joined via /onboarding/invite before reaching this wizard).
+const STEPS = [{ label: "About" }, { label: "Focus" }];
 
 type HiringVolume = "1-5" | "6-10" | "11-25" | "25+";
 
@@ -43,7 +46,7 @@ export default async function RecruiterFocusPage() {
       title="Your hiring focus"
       description="What kinds of roles do you typically hire for?"
       steps={STEPS}
-      currentStep={3}
+      currentStep={2}
     >
       <RecruiterFocusForm
         defaults={{

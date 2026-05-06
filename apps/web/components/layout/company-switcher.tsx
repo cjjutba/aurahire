@@ -117,7 +117,9 @@ export function CompanySwitcher() {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => router.push("/onboarding/company?from=switcher")}
+          onClick={() =>
+            router.push("/onboarding/recruiter/company-create?from=switcher")
+          }
           className="flex cursor-pointer items-center gap-2"
         >
           <Plus className="h-4 w-4" />

@@ -33,7 +33,10 @@ export function RecruiterAboutForm({ defaults }: AboutFormProps) {
 
   const updateAbout = useRecruiterProfilesControllerUpdateAboutV1({
     mutation: {
-      onSuccess: () => router.push("/onboarding/recruiter/company"),
+      // Phase 4: company step is no longer in the wizard (it's resolved by
+      // the create-vs-join fork at /onboarding/start), so About → Focus
+      // directly.
+      onSuccess: () => router.push("/onboarding/recruiter/focus"),
       onError: (err) => toastApiError(err, "Couldn't save about info"),
     },
   });

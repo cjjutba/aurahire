@@ -130,7 +130,7 @@ export function RecruiterFocusForm({ defaults }: FocusFormProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/onboarding/recruiter/company")}
+            onClick={() => router.push("/onboarding/recruiter")}
             className="rounded-[var(--radius-pill)] px-8"
           >
             Back
