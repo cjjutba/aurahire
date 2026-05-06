@@ -1,7 +1,6 @@
 import { forwardRef, Module } from "@nestjs/common";
 
 import { DbModule } from "../../db";
-import { ActiveCompanyGuard } from "../../common/guards/active-company.guard";
 import { ProfilesModule } from "../profiles/profiles.module";
 import { CompaniesController } from "./companies.controller";
 import { CompaniesRepository } from "./companies.repository";
@@ -9,10 +8,14 @@ import { CompaniesService } from "./companies.service";
 import { CompanyMembersRepository } from "./company-members.repository";
 
 /**
- * Phase 2b: full controller + service for the companies feature lands here.
+ * Companies feature module. Owns the controller/service for company CRUD
+ * + member management plus the `CompanyMembersRepository` consumed by the
+ * globally-registered `ActiveCompanyGuard`.
  *
- * `CompanyMembersRepository` is exported so `ActiveCompanyGuard` (registered
- * by other modules later) and the InvitationsModule can both consume it.
+ * `CompanyMembersRepository` is exported because:
+ *   - `ActiveCompanyGuard` (registered as APP_GUARD in `app.module.ts`)
+ *     resolves the repo through the root injector via this export
+ *   - InvitationsModule joins membership writes through the same repo
  *
  * Forward-ref on ProfilesModule because ProfilesModule depends on this
  * module for `CompanyMembersRepository` — both halves need each other's
@@ -24,21 +27,7 @@ import { CompanyMembersRepository } from "./company-members.repository";
 @Module({
   imports: [DbModule, forwardRef(() => ProfilesModule)],
   controllers: [CompaniesController],
-  providers: [
-    CompaniesService,
-    CompaniesRepository,
-    CompanyMembersRepository,
-    // ActiveCompanyGuard is consumed via @UseGuards() on this module's
-    // controller — must be DI-instantiable here. Re-exported so other
-    // modules that use the same @UseGuards pattern (Invitations, Profiles)
-    // pick it up via this import.
-    ActiveCompanyGuard,
-  ],
-  exports: [
-    CompaniesService,
-    CompaniesRepository,
-    CompanyMembersRepository,
-    ActiveCompanyGuard,
-  ],
+  providers: [CompaniesService, CompaniesRepository, CompanyMembersRepository],
+  exports: [CompaniesService, CompaniesRepository, CompanyMembersRepository],
 })
 export class CompaniesModule {}

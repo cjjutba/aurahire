@@ -66,11 +66,11 @@ export class InterviewsRepository {
     return rows.map((r) => r.interview);
   }
 
-  async listForRecruiterPaginated(
-    recruiterId: string,
+  async listForCompanyPaginated(
+    companyId: string,
     options: RecruiterInterviewsQuery,
   ): Promise<{ rows: RecruiterInterviewRow[]; total: number }> {
-    const conditions: SQL[] = [eq(jobsTable.recruiterId, recruiterId)];
+    const conditions: SQL[] = [eq(jobsTable.companyId, companyId)];
     if (options.status) {
       conditions.push(eq(interviewsTable.status, options.status));
     }

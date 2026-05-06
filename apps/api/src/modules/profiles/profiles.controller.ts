@@ -6,7 +6,6 @@ import {
   HttpStatus,
   Patch,
   Req,
-  UseGuards,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -19,7 +18,6 @@ import type { AuthUser } from "@aurahire/shared";
 
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { SkipActiveCompany } from "../../common/decorators/skip-active-company.decorator";
-import { ActiveCompanyGuard } from "../../common/guards/active-company.guard";
 
 import { MembershipsListEnvelopeDto } from "./dto/membership-response.dto";
 import { ProfileResponseEnvelopeDto } from "./dto/profile-response.dto";
@@ -29,7 +27,6 @@ import { ProfilesService } from "./profiles.service";
 @ApiTags("profiles")
 @ApiBearerAuth()
 @Controller("profiles")
-@UseGuards(ActiveCompanyGuard)
 export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
 

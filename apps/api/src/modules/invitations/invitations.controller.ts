@@ -7,7 +7,6 @@ import {
   Post,
   Query,
   Req,
-  UseGuards,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -22,7 +21,6 @@ import type { AuthUser } from "@aurahire/shared";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Public } from "../../common/decorators/public.decorator";
 import { SkipActiveCompany } from "../../common/decorators/skip-active-company.decorator";
-import { ActiveCompanyGuard } from "../../common/guards/active-company.guard";
 
 import { InvitationsService } from "./invitations.service";
 import {
@@ -37,7 +35,6 @@ import {
 @ApiTags("invitations")
 @ApiBearerAuth()
 @Controller("invitations")
-@UseGuards(ActiveCompanyGuard)
 export class InvitationsController {
   constructor(private readonly invitations: InvitationsService) {}
 

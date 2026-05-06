@@ -299,6 +299,13 @@ export class ScoringService {
       educationRequirement: string | null;
       requiredSkills: string[];
       descriptionPlain: string;
+      /**
+       * Tenant context for the audit row. Applications are *always* under a
+       * company-owned job, so this is non-null in practice. Kept optional to
+       * keep call sites that pre-date Phase 2c building until they're
+       * threaded through.
+       */
+      companyId?: string | null;
     },
     requestMeta: RequestMeta = {},
   ): Promise<MatchScoreDto> {
@@ -362,6 +369,7 @@ export class ScoringService {
       action: "score.match.computed",
       entityType: "match_score",
       entityId: matchScore.id,
+      companyId: job.companyId ?? null,
       details: {
         applicationId,
         jobId,

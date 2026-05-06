@@ -14,6 +14,10 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagg
 import type { FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
+import {
+  ActiveCompany,
+  type ActiveCompanyContext,
+} from "../../common/decorators/active-company.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 
@@ -36,15 +40,25 @@ export class InterviewsController {
   @Post("applications/:applicationId/interviews")
   @Roles("recruiter")
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: "Schedule an interview for an application (recruiter must own the job)" })
+  @ApiOperation({
+    summary:
+      "Schedule an interview for an application (the application's job must belong to the active company)",
+  })
   @ApiResponse({ status: 201, type: InterviewEnvelopeDto })
   async schedule(
     @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("applicationId") applicationId: string,
     @Body() dto: ScheduleInterviewDto,
     @Req() req: FastifyRequest,
   ): Promise<InterviewEnvelopeDto> {
-    const data = await this.service.schedule(user, applicationId, dto, this.requestMeta(req));
+    const data = await this.service.schedule(
+      user,
+      activeCompany.companyId,
+      applicationId,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -57,15 +71,30 @@ export class InterviewsController {
     return { data };
   }
 
+  /**
+   * Path is preserved as `/interviews/by-recruiter/me` even though the
+   * implementation now scopes by company. The frontend already ships
+   * against this path and Phase 3 will reconsider the URL semantics.
+   * Functionally it returns "every interview for jobs in my active
+   * company" — which is what the current UI expects when it asks for
+   * "my interviews."
+   */
   @Get("interviews/by-recruiter/me")
   @Roles("recruiter")
-  @ApiOperation({ summary: "List all interviews for jobs the recruiter owns" })
+  @ApiOperation({
+    summary: "List all interviews for the active company's jobs (paginated)",
+  })
   @ApiResponse({ status: 200, type: InterviewListEnvelopeDto })
   async listForRecruiter(
     @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Query() query: RecruiterInterviewsQueryDto,
   ): Promise<InterviewListEnvelopeDto> {
-    const { data, meta } = await this.service.listForRecruiter(user, query);
+    const { data, meta } = await this.service.listForRecruiter(
+      user,
+      activeCompany.companyId,
+      query,
+    );
     return { data, meta };
   }
 
@@ -75,9 +104,12 @@ export class InterviewsController {
   @ApiResponse({ status: 200, type: InterviewListEnvelopeDto })
   async listForApplication(
     @CurrentUser() user: AuthUser,
+    @Req() req: FastifyRequest,
     @Param("applicationId") applicationId: string,
   ): Promise<InterviewListEnvelopeDto> {
-    const data = await this.service.listForApplication(user, applicationId);
+    const reqWithCtx = req as FastifyRequest & { activeCompanyId?: string };
+    const companyId = reqWithCtx.activeCompanyId ?? null;
+    const data = await this.service.listForApplication(user, companyId, applicationId);
     return { data };
   }
 
@@ -88,11 +120,18 @@ export class InterviewsController {
   @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
   async updateFeedback(
     @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("id") id: string,
     @Body() dto: UpdateInterviewFeedbackDto,
     @Req() req: FastifyRequest,
   ): Promise<InterviewEnvelopeDto> {
-    const data = await this.service.updateFeedback(user, id, dto, this.requestMeta(req));
+    const data = await this.service.updateFeedback(
+      user,
+      activeCompany.companyId,
+      id,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -103,11 +142,18 @@ export class InterviewsController {
   @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
   async updateStatus(
     @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("id") id: string,
     @Body() dto: UpdateInterviewStatusDto,
     @Req() req: FastifyRequest,
   ): Promise<InterviewEnvelopeDto> {
-    const data = await this.service.updateStatus(user, id, dto, this.requestMeta(req));
+    const data = await this.service.updateStatus(
+      user,
+      activeCompany.companyId,
+      id,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 

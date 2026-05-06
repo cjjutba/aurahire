@@ -90,6 +90,7 @@ export class BiasService {
 
   async scanJob(
     user: AuthUser,
+    companyId: string,
     jobId: string,
     requestMeta: RequestMeta = {},
   ): Promise<BiasFlagDto[]> {
@@ -101,7 +102,7 @@ export class BiasService {
     }
 
     const job = await this.jobsRepo.findById(jobId);
-    if (!job || job.recruiterId !== user.id) {
+    if (!job || job.companyId !== companyId) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
     }
 
@@ -140,6 +141,7 @@ export class BiasService {
       action: "job.bias_check_run",
       entityType: "job",
       entityId: jobId,
+      companyId,
       details: {
         flagCount: inserted.length,
         categories: inserted.map((r) => r.category),
@@ -161,6 +163,7 @@ export class BiasService {
 
   async override(
     user: AuthUser,
+    companyId: string,
     jobId: string,
     flagId: string,
     reason: string,
@@ -174,7 +177,7 @@ export class BiasService {
     }
 
     const job = await this.jobsRepo.findById(jobId);
-    if (!job || job.recruiterId !== user.id) {
+    if (!job || job.companyId !== companyId) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
     }
 
@@ -198,6 +201,7 @@ export class BiasService {
       action: "bias_flag.overridden",
       entityType: "bias_flag",
       entityId: flagId,
+      companyId,
       details: {
         jobId,
         term: flag.term,
@@ -214,7 +218,11 @@ export class BiasService {
   // LIST
   // -----------------------------------------------------------------
 
-  async listForJob(user: AuthUser, jobId: string): Promise<BiasFlagDto[]> {
+  async listForJob(
+    user: AuthUser,
+    companyId: string | null,
+    jobId: string,
+  ): Promise<BiasFlagDto[]> {
     if (user.role !== "recruiter" && user.role !== "admin") {
       throw new ForbiddenException({
         code: "FORBIDDEN",
@@ -226,7 +234,9 @@ export class BiasService {
     if (!job) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
     }
-    if (user.role === "recruiter" && job.recruiterId !== user.id) {
+    // Recruiters scope to their active company; admins (companyId === null)
+    // bypass the tenant check since they act across tenants.
+    if (user.role === "recruiter" && job.companyId !== companyId) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
     }
 

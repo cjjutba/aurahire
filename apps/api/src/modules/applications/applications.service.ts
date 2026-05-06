@@ -137,14 +137,18 @@ export class ApplicationsService {
       action: "application.created",
       entityType: "application",
       entityId: application.id,
+      // Audit logs use the *job's* company so admin per-tenant queries
+      // catch every application that landed under company X — even if the
+      // applying candidate isn't a member of any tenant.
+      companyId: job.companyId,
       details: { jobId: dto.jobId, resumeId },
       ...requestMeta,
     });
 
     await this.cacheService.bustTags([
       TAGS.applicationsCandidate(user.id),
-      TAGS.dashboardRecruiter(job.recruiterId),
-      TAGS.applicationsRecruiter(job.recruiterId),
+      TAGS.companyDashboard(job.companyId),
+      TAGS.companyApplications(job.companyId),
     ]);
 
     let matchScoreDto: MatchScoreDto | null = null;
@@ -161,6 +165,7 @@ export class ApplicationsService {
           educationRequirement: job.educationRequirement,
           requiredSkills: job.requiredSkills,
           descriptionPlain: job.descriptionPlain,
+          companyId: job.companyId,
         },
         requestMeta,
       );
@@ -200,7 +205,11 @@ export class ApplicationsService {
     });
   }
 
-  async listForJob(user: AuthUser, jobId: string): Promise<ApplicationDto[]> {
+  async listForJob(
+    user: AuthUser,
+    companyId: string,
+    jobId: string,
+  ): Promise<ApplicationDto[]> {
     if (user.role !== "recruiter") {
       throw new ForbiddenException({
         code: "FORBIDDEN",
@@ -208,17 +217,18 @@ export class ApplicationsService {
       });
     }
     const job = await this.jobsRepo.findById(jobId);
-    if (!job || job.recruiterId !== user.id) {
+    if (!job || job.companyId !== companyId) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
     }
     const apps = await this.repo.findByJobIdSortedByMatchScore(jobId);
     return Promise.all(apps.map((a) => this.toDto(a.id)));
   }
 
-  // ─── Recruiter dashboard stats ─────────────────────────────────────
+  // ─── Recruiter dashboard stats (company-scoped) ────────────────────
 
   async recruiterStats(
     user: AuthUser,
+    companyId: string,
     range: "7d" | "30d" | "90d" | "all" = "7d",
   ): Promise<{
     activeJobs: number;
@@ -239,16 +249,17 @@ export class ApplicationsService {
       });
     }
     return this.cacheService.getOrSet({
-      key: `dashboard:recruiter:${user.id}:stats:${range}`,
+      key: `dashboard:company:${companyId}:stats:${range}`,
       ttlSeconds: TTL_SECONDS.hot,
-      tags: [TAGS.dashboardRecruiter(user.id)],
-      telemetryName: "dashboard:recruiter:stats",
-      load: () => this.repo.recruiterStats(user.id, range),
+      tags: [TAGS.companyDashboard(companyId)],
+      telemetryName: "dashboard:company:stats",
+      load: () => this.repo.companyStats(companyId, range),
     });
   }
 
   async recentForRecruiter(
     user: AuthUser,
+    companyId: string,
     limit: number,
   ): Promise<ApplicationDto[]> {
     if (user.role !== "recruiter") {
@@ -259,22 +270,26 @@ export class ApplicationsService {
     }
 
     return this.cacheService.getOrSet<ApplicationDto[]>({
-      key: `dashboard:recruiter:${user.id}:recent:${limit}`,
+      key: `dashboard:company:${companyId}:recent:${limit}`,
       ttlSeconds: TTL_SECONDS.hot,
-      tags: [TAGS.dashboardRecruiter(user.id)],
-      telemetryName: "dashboard:recruiter:recent",
+      tags: [TAGS.companyDashboard(companyId)],
+      telemetryName: "dashboard:company:recent",
       load: async () => {
-        const rows = await this.repo.listRecentForRecruiter(user.id, limit);
+        const rows = await this.repo.listRecentForCompany(companyId, limit);
         return rows.map((row) => this.toDashboardDto(row));
       },
     });
   }
 
-  async addToShortlist(user: AuthUser, applicationId: string): Promise<ApplicationDto> {
+  async addToShortlist(
+    user: AuthUser,
+    companyId: string,
+    applicationId: string,
+  ): Promise<ApplicationDto> {
     if (user.role !== "recruiter") {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
-    const owned = await this.repo.findApplicationContextForRecruiter(applicationId, user.id);
+    const owned = await this.repo.findApplicationContextForCompany(applicationId, companyId);
     if (!owned) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
     }
@@ -285,8 +300,14 @@ export class ApplicationsService {
       action: "application.shortlisted",
       entityType: "application",
       entityId: applicationId,
+      companyId,
       details: {},
     });
+    await this.cacheService.bustTags([
+      TAGS.companyDashboard(companyId),
+      TAGS.companyApplications(companyId),
+      TAGS.companyShortlist(companyId),
+    ]);
     return {
       id: updated.id,
       jobId: updated.jobId,
@@ -304,11 +325,15 @@ export class ApplicationsService {
     };
   }
 
-  async removeFromShortlist(user: AuthUser, applicationId: string): Promise<ApplicationDto> {
+  async removeFromShortlist(
+    user: AuthUser,
+    companyId: string,
+    applicationId: string,
+  ): Promise<ApplicationDto> {
     if (user.role !== "recruiter") {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
-    const owned = await this.repo.findApplicationContextForRecruiter(applicationId, user.id);
+    const owned = await this.repo.findApplicationContextForCompany(applicationId, companyId);
     if (!owned) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
     }
@@ -319,8 +344,14 @@ export class ApplicationsService {
       action: "application.unshortlisted",
       entityType: "application",
       entityId: applicationId,
+      companyId,
       details: {},
     });
+    await this.cacheService.bustTags([
+      TAGS.companyDashboard(companyId),
+      TAGS.companyApplications(companyId),
+      TAGS.companyShortlist(companyId),
+    ]);
     return {
       id: updated.id,
       jobId: updated.jobId,
@@ -340,6 +371,7 @@ export class ApplicationsService {
 
   async listShortlistForRecruiter(
     user: AuthUser,
+    companyId: string,
     query: {
       page: number;
       limit: number;
@@ -356,7 +388,7 @@ export class ApplicationsService {
     if (user.role !== "recruiter") {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
-    const { rows, total } = await this.repo.listShortlistedForRecruiter(user.id, query);
+    const { rows, total } = await this.repo.listShortlistedForCompany(companyId, query);
     return {
       data: rows.map((row) => this.toDashboardDto(row)),
       meta: {
@@ -370,7 +402,10 @@ export class ApplicationsService {
 
   // ─── Recruiter analytics bundle ────────────────────────────────────
 
-  async recruiterAnalytics(user: AuthUser): Promise<{
+  async recruiterAnalytics(
+    user: AuthUser,
+    companyId: string,
+  ): Promise<{
     kpis: {
       activeJobs: number;
       totalApplications: number;
@@ -387,22 +422,34 @@ export class ApplicationsService {
       });
     }
     return this.cacheService.getOrSet({
-      key: `dashboard:recruiter:${user.id}:analytics`,
+      key: `dashboard:company:${companyId}:analytics`,
       ttlSeconds: TTL_SECONDS.hot,
-      tags: [TAGS.dashboardRecruiter(user.id)],
-      telemetryName: "dashboard:recruiter:analytics",
+      tags: [TAGS.companyDashboard(companyId)],
+      telemetryName: "dashboard:company:analytics",
       load: async () => {
         const [kpis, topJobs, applicationsByStatus] = await Promise.all([
-          this.repo.recruiterStats(user.id, "all"),
-          this.repo.recruiterTopJobsByApplications(user.id, 5),
-          this.repo.recruiterApplicationsByStatus(user.id),
+          this.repo.companyStats(companyId, "all"),
+          this.repo.companyTopJobsByApplications(companyId, 5),
+          this.repo.companyApplicationsByStatus(companyId),
         ]);
         return { kpis, topJobs, applicationsByStatus };
       },
     });
   }
 
-  async getById(user: AuthUser, id: string): Promise<ApplicationDto> {
+  /**
+   * Read an application detail. Auth model:
+   *  - Candidate: must own the row (`candidate_id = user.id`)
+   *  - Recruiter: the job's company must equal the caller's active company
+   *  - Admin: bypass
+   *
+   * `companyId` is required for recruiter callers and ignored for the others.
+   */
+  async getById(
+    user: AuthUser,
+    companyId: string | null,
+    id: string,
+  ): Promise<ApplicationDto> {
     const app = await this.repo.findById(id);
     if (!app) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
@@ -413,7 +460,7 @@ export class ApplicationsService {
     }
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
-      if (!job || job.recruiterId !== user.id) {
+      if (!job || job.companyId !== companyId) {
         throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
       }
     }
@@ -427,6 +474,7 @@ export class ApplicationsService {
 
   async updateStatus(
     user: AuthUser,
+    companyId: string,
     id: string,
     dto: UpdateApplicationStatusInput,
     requestMeta: RequestMeta = {},
@@ -444,7 +492,7 @@ export class ApplicationsService {
     }
 
     const job = await this.jobsRepo.findById(app.jobId);
-    if (!job || job.recruiterId !== user.id) {
+    if (!job || job.companyId !== companyId) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
     }
 
@@ -469,13 +517,15 @@ export class ApplicationsService {
       action: "application.status_changed",
       entityType: "application",
       entityId: id,
+      companyId,
       details: { from: app.status, to: dto.newStatus, note: dto.note ?? null },
       ...requestMeta,
     });
 
     await this.cacheService.bustTags([
-      TAGS.dashboardRecruiter(user.id),
-      TAGS.applicationsRecruiter(user.id),
+      TAGS.companyDashboard(companyId),
+      TAGS.companyApplications(companyId),
+      TAGS.companyShortlist(companyId),
       TAGS.applicationsCandidate(app.candidateId),
     ]);
 
@@ -488,6 +538,7 @@ export class ApplicationsService {
 
   async updateNotes(
     user: AuthUser,
+    companyId: string,
     id: string,
     dto: UpdateApplicationNotesInput,
     requestMeta: RequestMeta = {},
@@ -505,7 +556,7 @@ export class ApplicationsService {
     }
 
     const job = await this.jobsRepo.findById(app.jobId);
-    if (!job || job.recruiterId !== user.id) {
+    if (!job || job.companyId !== companyId) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
     }
 
@@ -517,12 +568,13 @@ export class ApplicationsService {
       action: "application.notes_updated",
       entityType: "application",
       entityId: id,
+      companyId,
       ...requestMeta,
     });
 
     await this.cacheService.bustTags([
-      TAGS.dashboardRecruiter(user.id),
-      TAGS.applicationsRecruiter(user.id),
+      TAGS.companyDashboard(companyId),
+      TAGS.companyApplications(companyId),
       TAGS.applicationsCandidate(app.candidateId),
     ]);
 
@@ -556,21 +608,28 @@ export class ApplicationsService {
       recruiterNotes: this.appendNote(app.recruiterNotes, note),
     });
 
+    const job = await this.jobsRepo.findById(app.jobId);
+
     await this.audit.log({
       actorId: actor.id,
       actorType: "user",
       action: "application.status_changed",
       entityType: "application",
       entityId: id,
+      // Pull tenant from the job since the system actor (often the
+      // recruiter who triggered an offer event) may not have an active
+      // company context for the same tenant — the *application* belongs
+      // to job.companyId either way.
+      companyId: job?.companyId ?? null,
       details: { from: app.status, to: newStatus, note, system: true },
       ...requestMeta,
     });
 
-    const job = await this.jobsRepo.findById(app.jobId);
     if (job) {
       await this.cacheService.bustTags([
-        TAGS.dashboardRecruiter(job.recruiterId),
-        TAGS.applicationsRecruiter(job.recruiterId),
+        TAGS.companyDashboard(job.companyId),
+        TAGS.companyApplications(job.companyId),
+        TAGS.companyShortlist(job.companyId),
         TAGS.applicationsCandidate(app.candidateId),
       ]);
     } else {
@@ -613,21 +672,24 @@ export class ApplicationsService {
       statusUpdatedAt: new Date(),
     });
 
+    const withdrawnJob = await this.jobsRepo.findById(app.jobId);
+
     await this.audit.log({
       actorId: user.id,
       actorType: "user",
       action: "application.withdrawn",
       entityType: "application",
       entityId: id,
+      // The candidate-acting-on-self pattern; tag with the company that
+      // owns the job so per-tenant audit queries see this row.
+      companyId: withdrawnJob?.companyId ?? null,
       ...requestMeta,
     });
-
-    const withdrawnJob = await this.jobsRepo.findById(app.jobId);
     if (withdrawnJob) {
       await this.cacheService.bustTags([
         TAGS.applicationsCandidate(user.id),
-        TAGS.dashboardRecruiter(withdrawnJob.recruiterId),
-        TAGS.applicationsRecruiter(withdrawnJob.recruiterId),
+        TAGS.companyDashboard(withdrawnJob.companyId),
+        TAGS.companyApplications(withdrawnJob.companyId),
       ]);
     } else {
       await this.cacheService.bustTags([TAGS.applicationsCandidate(user.id)]);
@@ -642,6 +704,7 @@ export class ApplicationsService {
 
   async getResumeDownload(
     user: AuthUser,
+    companyId: string | null,
     applicationId: string,
   ): Promise<{ signedUrl: string; expiresAt: string }> {
     const app = await this.repo.findById(applicationId);
@@ -654,7 +717,7 @@ export class ApplicationsService {
     }
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
-      if (!job || job.recruiterId !== user.id) {
+      if (!job || job.companyId !== companyId) {
         throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
       }
     }
@@ -846,6 +909,7 @@ export class ApplicationsService {
       action: "application.email_sent",
       entityType: "application",
       entityId: applicationId,
+      companyId: jobRow.companyId,
       details: { recipient: recruiter.email, kind: "received" },
     });
   }

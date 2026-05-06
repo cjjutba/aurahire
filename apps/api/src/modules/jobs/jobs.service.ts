@@ -34,6 +34,7 @@ export class JobsService {
 
   async create(
     user: AuthUser,
+    companyId: string,
     dto: CreateJobDto,
     requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
   ): Promise<JobResponseDto> {
@@ -55,20 +56,12 @@ export class JobsService {
       });
     }
 
-    // Phase 2b stopgap: read the active company id from the user's profile.
-    // Phase 2c will replace this with `@ActiveCompany() { companyId }` injected
-    // by ActiveCompanyGuard once the guard is wired globally.
-    const activeCompanyId = await this.profilesRepo.findActiveCompanyIdForUser(user.id);
-    if (!activeCompanyId) {
-      throw new BadRequestException({
-        code: "NO_ACTIVE_COMPANY",
-        message: "No active company set — create or join one before posting jobs",
-      });
-    }
-
+    // recruiter_id is kept on jobs as audit trail (the *creator*); company_id
+    // is the access-control axis. ActiveCompanyGuard already verified that
+    // the caller is an active member of `companyId`, so no further check.
     const job = await this.repo.insert({
       recruiterId: user.id,
-      companyId: activeCompanyId,
+      companyId,
       title: dto.title,
       department: dto.department ?? null,
       employmentType: dto.employmentType,
@@ -94,11 +87,12 @@ export class JobsService {
       action: "job.created",
       entityType: "job",
       entityId: job.id,
+      companyId,
       details: { title: job.title },
       ...requestMeta,
     });
 
-    await this.invalidateAfterWrite({ recruiterId: user.id, jobId: job.id });
+    await this.invalidateAfterWrite({ companyId, jobId: job.id });
 
     return this.toResponse(await this.requireJobWithCompany(job.id));
   }
@@ -107,11 +101,12 @@ export class JobsService {
 
   async update(
     user: AuthUser,
+    companyId: string,
     id: string,
     dto: UpdateJobDto,
     requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
   ): Promise<JobResponseDto> {
-    await this.assertOwnership(user, id);
+    await this.assertCompanyOwnership(companyId, id);
 
     const patch: Partial<Parameters<JobsRepository["update"]>[1]> = {};
     if (dto.title !== undefined) patch.title = dto.title;
@@ -143,10 +138,11 @@ export class JobsService {
       action: "job.updated",
       entityType: "job",
       entityId: id,
+      companyId,
       ...requestMeta,
     });
 
-    await this.invalidateAfterWrite({ recruiterId: user.id, jobId: id });
+    await this.invalidateAfterWrite({ companyId, jobId: id });
 
     return this.toResponse(await this.requireJobWithCompany(id));
   }
@@ -155,10 +151,11 @@ export class JobsService {
 
   async publish(
     user: AuthUser,
+    companyId: string,
     id: string,
     requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
   ): Promise<JobResponseDto> {
-    const job = await this.assertOwnership(user, id);
+    const job = await this.assertCompanyOwnership(companyId, id);
 
     if (job.status !== "draft") {
       throw new BadRequestException({
@@ -168,7 +165,7 @@ export class JobsService {
     }
 
     // Run a fresh bias scan; persists into bias_flags
-    await this.biasService.scanJob(user, id, requestMeta);
+    await this.biasService.scanJob(user, companyId, id, requestMeta);
 
     // Block publish if any flagged rows remain (recruiter must override or edit)
     const unresolved = await this.biasService.findFlagged(id);
@@ -188,20 +185,22 @@ export class JobsService {
       action: "job.published",
       entityType: "job",
       entityId: id,
+      companyId,
       ...requestMeta,
     });
 
-    await this.invalidateAfterWrite({ recruiterId: user.id, jobId: id });
+    await this.invalidateAfterWrite({ companyId, jobId: id });
 
     return this.toResponse(await this.requireJobWithCompany(id));
   }
 
   async archive(
     user: AuthUser,
+    companyId: string,
     id: string,
     requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
   ): Promise<JobResponseDto> {
-    await this.assertOwnership(user, id);
+    await this.assertCompanyOwnership(companyId, id);
 
     await this.repo.update(id, { status: "archived" });
 
@@ -211,10 +210,11 @@ export class JobsService {
       action: "job.archived",
       entityType: "job",
       entityId: id,
+      companyId,
       ...requestMeta,
     });
 
-    await this.invalidateAfterWrite({ recruiterId: user.id, jobId: id });
+    await this.invalidateAfterWrite({ companyId, jobId: id });
 
     return this.toResponse(await this.requireJobWithCompany(id));
   }
@@ -272,9 +272,13 @@ export class JobsService {
     });
   }
 
-  // ---------------------------------- RECRUITER LIST + DETAIL (own jobs)
+  // ---------------------------------- RECRUITER LIST + DETAIL (active company)
 
-  async listMine(user: AuthUser, query: ListJobsQueryDto): Promise<{
+  async listForActiveCompany(
+    user: AuthUser,
+    companyId: string,
+    query: ListJobsQueryDto,
+  ): Promise<{
     data: JobResponseDto[] | (JobResponseDto & { stats: JobStats })[];
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
@@ -282,18 +286,18 @@ export class JobsService {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
 
-    const cacheKey = `jobs:recruiter:${user.id}:list:${this.serializeQuery(query)}:inc=${query.include ?? "none"}`;
+    const cacheKey = `jobs:company:${companyId}:list:${this.serializeQuery(query)}:inc=${query.include ?? "none"}`;
 
     return this.cacheService.getOrSet({
       key: cacheKey,
       ttlSeconds: TTL_SECONDS.hot,
-      tags: [TAGS.jobsRecruiter(user.id)],
-      telemetryName: "jobs:recruiter:list",
+      tags: [TAGS.companyJobs(companyId)],
+      telemetryName: "jobs:company:list",
       load: async () => {
         if (query.include === "stats") {
           const sort: "recent" | "recent-activity" =
             query.sort === "recent-activity" ? "recent-activity" : "recent";
-          const { rows, total } = await this.repo.listMineWithStats(user.id, {
+          const { rows, total } = await this.repo.listForCompanyWithStats(companyId, {
             page: query.page,
             limit: query.limit,
             status: query.status,
@@ -317,7 +321,7 @@ export class JobsService {
           sort: query.sort === "recent-activity" ? "recent" : query.sort,
           page: query.page,
           limit: query.limit,
-          recruiterId: user.id,
+          companyId,
           status: query.status,
         };
         const { rows, total } = await this.repo.list(filters);
@@ -334,8 +338,15 @@ export class JobsService {
     });
   }
 
-  async getForRecruiter(user: AuthUser, id: string): Promise<JobResponseDto> {
-    const row = await this.assertOwnership(user, id);
+  async getForRecruiter(
+    user: AuthUser,
+    companyId: string,
+    id: string,
+  ): Promise<JobResponseDto> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+    }
+    const row = await this.assertCompanyOwnership(companyId, id);
     const withCompany = await this.repo.findByIdWithCompany(row.id);
     if (!withCompany) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
@@ -356,12 +367,16 @@ export class JobsService {
 
   // -------------------------------------------------------------- PRIVATE
 
-  private async assertOwnership(user: AuthUser, id: string) {
-    if (user.role !== "recruiter") {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
-    }
+  /**
+   * Verify a job exists AND belongs to the active company. The
+   * `ActiveCompanyGuard` already verified the caller is a member of
+   * `companyId`; this check stops members of *other* companies from
+   * reaching jobs they don't own. NotFound (not Forbidden) so we don't
+   * leak the existence of jobs in other tenants.
+   */
+  private async assertCompanyOwnership(companyId: string, id: string) {
     const job = await this.repo.findById(id);
-    if (!job || job.recruiterId !== user.id) {
+    if (!job || job.companyId !== companyId) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
     }
     return job;
@@ -375,8 +390,8 @@ export class JobsService {
     return row;
   }
 
-  private async invalidateAfterWrite(opts: { recruiterId: string; jobId?: string }): Promise<void> {
-    const tags: string[] = [TAGS.jobsPublic(), TAGS.jobsRecruiter(opts.recruiterId)];
+  private async invalidateAfterWrite(opts: { companyId: string; jobId?: string }): Promise<void> {
+    const tags: string[] = [TAGS.jobsPublic(), TAGS.companyJobs(opts.companyId)];
     if (opts.jobId) tags.push(TAGS.jobDetail(opts.jobId));
     await this.cacheService.bustTags(tags);
   }

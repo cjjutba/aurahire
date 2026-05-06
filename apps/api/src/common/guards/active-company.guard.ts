@@ -25,22 +25,25 @@ const UUID_RE =
  * attaches `req.activeCompanyId` + `req.companyRole`. Runs AFTER
  * `SupabaseAuthGuard` and `RolesGuard`.
  *
- * Resolution priority:
- *   1. `@Public()` or `@SkipActiveCompany()` → bypass entirely
- *   2. `req.user.role === 'admin'` → bypass (admins act across tenants)
- *   3. `X-Active-Company-Id` header (validated as UUID)
- *   4. `profiles.last_active_company_id` (read from DB; the in-memory
- *      AuthUser doesn't carry it)
- *   5. None → 403 NO_ACTIVE_COMPANY
+ * Bypass priority (each short-circuits the rest):
+ *   1. `@Public()` route → bypass entirely (no auth either)
+ *   2. No `req.user` (defer to upstream guards) → bypass
+ *   3. `user.role === 'admin'` → bypass (admins act across tenants;
+ *      controllers that mix admin + member access branch on role)
+ *   4. `user.role === 'candidate'` → bypass (multi-tenancy doesn't apply
+ *      to candidates; their resources are scoped by candidate_id)
+ *   5. `@SkipActiveCompany()` route → bypass (used for endpoints that
+ *      run BEFORE membership exists: POST /companies, /invitations/accept,
+ *      /profiles/me, etc.)
+ *   6. Resolve company id: `X-Active-Company-Id` header (UUID-validated)
+ *      then `profiles.last_active_company_id` from the DB
+ *   7. None → 403 NO_ACTIVE_COMPANY
+ *   8. Membership check (status='active' only). Stale, invited, suspended,
+ *      and left rows return null → 403 NOT_A_MEMBER.
+ *   9. `@RequireCompanyRole(...)` enforcement.
  *
- * Membership check uses `CompanyMembersRepository.findActiveMembership`
- * which only returns rows with `status='active'` — invited / suspended /
- * left rows are not authorized to act.
- *
- * NOTE for Phase 2a: this guard is NOT registered globally. It will be
- * enabled in Phase 2c after every recruiter endpoint has been scoped to
- * `req.activeCompanyId`. Wiring it before that would 403 every recruiter
- * request.
+ * Registered globally as the third APP_GUARD (after SupabaseAuthGuard +
+ * RolesGuard) in `app.module.ts`.
  */
 @Injectable()
 export class ActiveCompanyGuard implements CanActivate {
@@ -51,20 +54,12 @@ export class ActiveCompanyGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // 1. @Public() bypass — defense in depth.
+    // 1. @Public() bypass — defense in depth (these routes also skip auth).
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
     if (isPublic) return true;
-
-    // 2. @SkipActiveCompany() bypass — for routes needed BEFORE membership
-    // exists (POST /companies, /invitations/accept, etc.).
-    const skip = this.reflector.getAllAndOverride<boolean>(
-      SKIP_ACTIVE_COMPANY_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-    if (skip) return true;
 
     const req = context.switchToHttp().getRequest<{
       user?: AuthUser;
@@ -74,11 +69,13 @@ export class ActiveCompanyGuard implements CanActivate {
     }>();
     const user = req.user;
 
-    // 3. Should be unreachable — SupabaseAuthGuard runs first. Defer to
-    // that guard rather than throwing here.
+    // 2. No user — defer to SupabaseAuthGuard (which runs before us).
+    // Reaching here without a user means the upstream guard either
+    // already returned 401 or this is an unauthenticated request that
+    // somehow slipped past; either way, do not throw a misleading error.
     if (!user) return true;
 
-    // 4. Admin global users bypass tenant scoping. They DO NOT get a
+    // 3. Admins bypass tenant scoping entirely. They DO NOT get a
     // companyRole; controllers that mix admin + member access must
     // branch on `req.user.role === 'admin'` explicitly.
     if (user.role === "admin") {
@@ -87,7 +84,27 @@ export class ActiveCompanyGuard implements CanActivate {
       return true;
     }
 
-    // 5. Resolve active company id: header → profile fallback.
+    // 4. Candidates are not part of the multi-tenancy model. Their
+    // resources are scoped by `candidate_id`, never by company. Skip
+    // the membership lookup entirely so candidate-only endpoints don't
+    // need an explicit @SkipActiveCompany() decorator.
+    if (user.role === "candidate") {
+      req.activeCompanyId = undefined;
+      req.companyRole = null;
+      return true;
+    }
+
+    // 5. @SkipActiveCompany() bypass — for routes needed BEFORE membership
+    // exists (POST /companies, /invitations/accept, /profiles/me, etc.).
+    // Checked AFTER admin/candidate role bypasses so that role-based skips
+    // win over per-route opt-out (the role bypasses are stricter).
+    const skip = this.reflector.getAllAndOverride<boolean>(
+      SKIP_ACTIVE_COMPANY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (skip) return true;
+
+    // 6. Resolve active company id: header → profile fallback.
     const headerCompanyId = this.readHeader(req.headers);
     let companyId: string | null = headerCompanyId;
 
@@ -106,7 +123,7 @@ export class ActiveCompanyGuard implements CanActivate {
       });
     }
 
-    // 6. Membership verification. The repo method already filters
+    // 7. Membership verification. The repo method already filters
     // status='active' — invited / suspended / left rows return null here.
     const membership = await this.companyMembersRepo.findActiveMembership(
       user.id,
@@ -119,7 +136,7 @@ export class ActiveCompanyGuard implements CanActivate {
       });
     }
 
-    // 7. @RequireCompanyRole(...) check.
+    // 8. @RequireCompanyRole(...) check.
     const requiredCompanyRoles = this.reflector.getAllAndOverride<
       CompanyMemberRole[] | undefined
     >(REQUIRE_COMPANY_ROLE_KEY, [context.getHandler(), context.getClass()]);

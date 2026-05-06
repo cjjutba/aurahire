@@ -124,21 +124,6 @@ export class ProfilesRepository {
   }
 
   /**
-   * Phase 2b stopgap helper: Phase 2c will replace this with the
-   * `req.activeCompanyId` resolved by `ActiveCompanyGuard`. Until then,
-   * direct profile reads provide the (single) active company id for
-   * recruiter-side endpoints that need to scope by company.
-   */
-  async findActiveCompanyIdForUser(userId: string): Promise<string | null> {
-    const [row] = await this.db
-      .select({ lastActiveCompanyId: profilesTable.lastActiveCompanyId })
-      .from(profilesTable)
-      .where(eq(profilesTable.id, userId))
-      .limit(1);
-    return row?.lastActiveCompanyId ?? null;
-  }
-
-  /**
    * Repoint a user's `last_active_company_id`. Pass null to clear it (used
    * when the user leaves their last company).
    */

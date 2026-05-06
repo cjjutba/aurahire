@@ -45,6 +45,7 @@ export class OffersService {
 
   async create(
     user: AuthUser,
+    companyId: string,
     applicationId: string,
     dto: CreateOfferInput,
     requestMeta: RequestMeta = {},
@@ -53,9 +54,9 @@ export class OffersService {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
 
-    const application = await this.applicationsRepo.findApplicationContextForRecruiter(
+    const application = await this.applicationsRepo.findApplicationContextForCompany(
       applicationId,
-      user.id,
+      companyId,
     );
     if (!application) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
@@ -90,6 +91,7 @@ export class OffersService {
       action: AUDIT_ACTIONS.OFFER_SENT,
       entityType: "offer",
       entityId: offer.id,
+      companyId,
       details: {
         applicationId,
         title: offer.title,
@@ -150,12 +152,16 @@ export class OffersService {
       respondedAt: new Date(),
     });
 
+    // Tag the audit row with the company that owns the underlying job
+    // so per-tenant audit queries see the candidate decision.
+    const job = await this.jobsRepo.findById(application.jobId);
     await this.audit.log({
       actorId: user.id,
       actorType: "user",
       action: AUDIT_ACTIONS.OFFER_ACCEPTED,
       entityType: "offer",
       entityId: offerId,
+      companyId: job?.companyId ?? null,
       details: { applicationId: offer.applicationId },
       ...requestMeta,
     });
@@ -214,12 +220,14 @@ export class OffersService {
         : {}),
     });
 
+    const declinedJob = await this.jobsRepo.findById(application.jobId);
     await this.audit.log({
       actorId: user.id,
       actorType: "user",
       action: AUDIT_ACTIONS.OFFER_DECLINED,
       entityType: "offer",
       entityId: offerId,
+      companyId: declinedJob?.companyId ?? null,
       details: { applicationId: offer.applicationId, reasonLength: dto.reason?.length ?? 0 },
       ...requestMeta,
     });
@@ -233,6 +241,7 @@ export class OffersService {
 
   async withdraw(
     user: AuthUser,
+    companyId: string,
     offerId: string,
     requestMeta: RequestMeta = {},
   ): Promise<OfferDto> {
@@ -244,9 +253,9 @@ export class OffersService {
     if (!offer) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
     }
-    const application = await this.applicationsRepo.findApplicationContextForRecruiter(
+    const application = await this.applicationsRepo.findApplicationContextForCompany(
       offer.applicationId,
-      user.id,
+      companyId,
     );
     if (!application) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
@@ -266,6 +275,7 @@ export class OffersService {
       action: AUDIT_ACTIONS.OFFER_WITHDRAWN,
       entityType: "offer",
       entityId: offerId,
+      companyId,
       details: { applicationId: offer.applicationId },
       ...requestMeta,
     });
@@ -281,7 +291,11 @@ export class OffersService {
     return rows.map((r) => this.toDto(r));
   }
 
-  async listForApplication(user: AuthUser, applicationId: string): Promise<OfferDto[]> {
+  async listForApplication(
+    user: AuthUser,
+    companyId: string | null,
+    applicationId: string,
+  ): Promise<OfferDto[]> {
     const app = await this.applicationsRepo.findById(applicationId);
     if (!app) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
@@ -292,7 +306,7 @@ export class OffersService {
     }
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
-      if (!job || job.recruiterId !== user.id) {
+      if (!job || job.companyId !== companyId) {
         throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
       }
     }

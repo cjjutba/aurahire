@@ -35,6 +35,7 @@ import { QueueModule } from "./queue";
 import { CronModule } from "./cron";
 import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
+import { ActiveCompanyGuard } from "./common/guards/active-company.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 
 @Module({
@@ -143,6 +144,17 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    // ActiveCompanyGuard runs LAST among the four global guards. It
+    // resolves the active company for recruiter requests and attaches
+    // `req.activeCompanyId` + `req.companyRole`. Routes annotated
+    // `@Public()` skip auth entirely; admin + candidate roles bypass
+    // tenant scoping; `@SkipActiveCompany()` opts out per-route for
+    // pre-membership endpoints (signup, invitation accept, etc.).
+    // Depends on `CompanyMembersRepository` from CompaniesModule.
+    {
+      provide: APP_GUARD,
+      useClass: ActiveCompanyGuard,
     },
   ],
 })

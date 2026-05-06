@@ -9,7 +9,6 @@ import {
   Patch,
   Post,
   Req,
-  UseGuards,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -28,7 +27,6 @@ import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequireCompanyRole } from "../../common/decorators/require-company-role.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { SkipActiveCompany } from "../../common/decorators/skip-active-company.decorator";
-import { ActiveCompanyGuard } from "../../common/guards/active-company.guard";
 
 import { CompaniesService } from "./companies.service";
 import { CreateCompanyDto } from "./dto/create-company.dto";
@@ -54,18 +52,18 @@ import {
  * Companies + member-management endpoints.
  *
  * The controller is split between routes that resolve to the caller's
- * active company (`/companies/me/...` — guarded by `ActiveCompanyGuard`)
- * and `POST /companies` which creates a new company and is reachable
- * before the caller has any active company (`@SkipActiveCompany`).
+ * active company (`/companies/me/...` — covered by the global
+ * `ActiveCompanyGuard`) and `POST /companies` which creates a new
+ * company and is reachable before the caller has any active company
+ * (annotated `@SkipActiveCompany`).
  *
- * `ActiveCompanyGuard` is registered on the controller class so every
- * `/me/...` route resolves the active company id automatically. The
+ * `ActiveCompanyGuard` is registered globally in `app.module.ts`, so
+ * `/me/...` routes resolve the active company id automatically. The
  * `@SkipActiveCompany()` decorator on POST / opts out of that resolution.
  */
 @ApiTags("companies")
 @ApiBearerAuth()
 @Controller("companies")
-@UseGuards(ActiveCompanyGuard)
 export class CompaniesController {
   constructor(private readonly companies: CompaniesService) {}
 

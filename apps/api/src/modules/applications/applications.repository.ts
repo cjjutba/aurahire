@@ -83,9 +83,16 @@ export class ApplicationsRepository {
     return row ?? null;
   }
 
-  async findApplicationContextForRecruiter(
+  /**
+   * Phase 2c: company-scoped application lookup. Returns the application
+   * row only if it sits under a job owned by `companyId`. Used everywhere
+   * the recruiter-side flow asserts "this application belongs to my
+   * tenant" — replaces the legacy `findApplicationContextForRecruiter`
+   * which keyed on `jobs.recruiter_id` (single-tenant assumption).
+   */
+  async findApplicationContextForCompany(
     applicationId: string,
-    recruiterId: string,
+    companyId: string,
   ): Promise<Application | null> {
     const [row] = await this.db
       .select({ application: applicationsTable })
@@ -94,7 +101,7 @@ export class ApplicationsRepository {
       .where(
         and(
           eq(applicationsTable.id, applicationId),
-          eq(jobsTable.recruiterId, recruiterId),
+          eq(jobsTable.companyId, companyId),
         ),
       )
       .limit(1);
@@ -117,10 +124,13 @@ export class ApplicationsRepository {
     return rows[0]?.count ?? 0;
   }
 
-  // ─── Recruiter dashboard stats ────────────────────────────────────────
+  // ─── Company dashboard stats ──────────────────────────────────────────
+  // Phase 2c: every recruiter-side aggregate now scopes by `jobs.company_id`
+  // instead of `jobs.recruiter_id`. Members of the same company see the
+  // same numbers; the recruiter who created the job is no longer special.
 
-  async recruiterStats(
-    recruiterId: string,
+  async companyStats(
+    companyId: string,
     range: "7d" | "30d" | "90d" | "all",
   ): Promise<{
     activeJobs: number;
@@ -141,7 +151,7 @@ export class ApplicationsRepository {
       .from(jobsTable)
       .where(
         and(
-          eq(jobsTable.recruiterId, recruiterId),
+          eq(jobsTable.companyId, companyId),
           eq(jobsTable.status, "published"),
         ),
       );
@@ -158,7 +168,7 @@ export class ApplicationsRepository {
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
       .where(
         and(
-          eq(jobsTable.recruiterId, recruiterId),
+          eq(jobsTable.companyId, companyId),
           ...(rangeFilter ? [gte(applicationsTable.appliedAt, rangeFilter)] : []),
         ),
       );
@@ -167,9 +177,9 @@ export class ApplicationsRepository {
       .select({ avg: sql<number | null>`avg(${matchScoresTable.overallScore})::float` })
       .from(matchScoresTable)
       .innerJoin(jobsTable, eq(jobsTable.id, matchScoresTable.jobId))
-      .where(eq(jobsTable.recruiterId, recruiterId));
+      .where(eq(jobsTable.companyId, companyId));
 
-    const biasFlags = await this.countUnresolvedBiasFlagsForRecruiter(recruiterId);
+    const biasFlags = await this.countUnresolvedBiasFlagsForCompany(companyId);
 
     const total = appsRow?.total ?? 0;
     const pending = appsRow?.pending ?? 0;
@@ -194,8 +204,8 @@ export class ApplicationsRepository {
     return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   }
 
-  private async countUnresolvedBiasFlagsForRecruiter(
-    recruiterId: string,
+  private async countUnresolvedBiasFlagsForCompany(
+    companyId: string,
   ): Promise<number> {
     const [row] = await this.db
       .select({ c: sql<number>`count(*)::int` })
@@ -203,17 +213,17 @@ export class ApplicationsRepository {
       .innerJoin(jobsTable, eq(jobsTable.id, biasFlagsTable.jobId))
       .where(
         and(
-          eq(jobsTable.recruiterId, recruiterId),
+          eq(jobsTable.companyId, companyId),
           eq(biasFlagsTable.status, "flagged"),
         ),
       );
     return row?.c ?? 0;
   }
 
-  // ─── Recruiter analytics (top jobs + status breakdown) ────────────────
+  // ─── Company analytics (top jobs + status breakdown) ──────────────────
 
-  async recruiterTopJobsByApplications(
-    recruiterId: string,
+  async companyTopJobsByApplications(
+    companyId: string,
     limit: number,
   ): Promise<Array<{ jobId: string; title: string; status: string; applicationCount: number; avgScore: number }>> {
     const rows = await this.db
@@ -227,7 +237,7 @@ export class ApplicationsRepository {
       .from(jobsTable)
       .leftJoin(applicationsTable, eq(applicationsTable.jobId, jobsTable.id))
       .leftJoin(matchScoresTable, eq(matchScoresTable.jobId, jobsTable.id))
-      .where(eq(jobsTable.recruiterId, recruiterId))
+      .where(eq(jobsTable.companyId, companyId))
       .groupBy(jobsTable.id, jobsTable.title, jobsTable.status)
       .orderBy(desc(sql<number>`count(distinct ${applicationsTable.id})`))
       .limit(limit);
@@ -240,8 +250,8 @@ export class ApplicationsRepository {
     }));
   }
 
-  async recruiterApplicationsByStatus(
-    recruiterId: string,
+  async companyApplicationsByStatus(
+    companyId: string,
   ): Promise<Array<{ status: string; count: number }>> {
     const rows = await this.db
       .select({
@@ -250,7 +260,7 @@ export class ApplicationsRepository {
       })
       .from(applicationsTable)
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .where(eq(jobsTable.recruiterId, recruiterId))
+      .where(eq(jobsTable.companyId, companyId))
       .groupBy(applicationsTable.status);
     return rows;
   }
@@ -265,8 +275,8 @@ export class ApplicationsRepository {
     return row;
   }
 
-  async listShortlistedForRecruiter(
-    recruiterId: string,
+  async listShortlistedForCompany(
+    companyId: string,
     options: {
       page: number;
       limit: number;
@@ -288,7 +298,7 @@ export class ApplicationsRepository {
     total: number;
   }> {
     const conditions: SQL[] = [
-      eq(jobsTable.recruiterId, recruiterId),
+      eq(jobsTable.companyId, companyId),
       isNotNull(applicationsTable.shortlistedAt),
     ];
     if (options.status) {
@@ -360,8 +370,8 @@ export class ApplicationsRepository {
     };
   }
 
-  async listRecentForRecruiter(
-    recruiterId: string,
+  async listRecentForCompany(
+    companyId: string,
     limit: number,
   ): Promise<
     Array<
@@ -385,7 +395,7 @@ export class ApplicationsRepository {
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
       .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
       .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
-      .where(eq(jobsTable.recruiterId, recruiterId))
+      .where(eq(jobsTable.companyId, companyId))
       .orderBy(desc(applicationsTable.appliedAt))
       .limit(limit);
     return rows.map((r) => ({

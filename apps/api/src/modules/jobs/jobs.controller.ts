@@ -20,6 +20,10 @@ import {
 import type { FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
+import {
+  ActiveCompany,
+  type ActiveCompanyContext,
+} from "../../common/decorators/active-company.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Public } from "../../common/decorators/public.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -43,15 +47,21 @@ export class JobsController {
   @Post()
   @ApiBearerAuth()
   @Roles("recruiter")
-  @ApiOperation({ summary: "Create a new job (status='draft')" })
+  @ApiOperation({ summary: "Create a new job (status='draft') in the caller's active company" })
   @ApiResponse({ status: 201, type: JobResponseEnvelopeDto })
   @ApiResponse({ status: 400, description: "Onboarding incomplete OR validation failed" })
   async create(
     @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Body() dto: CreateJobDto,
     @Req() req: FastifyRequest,
   ): Promise<JobResponseEnvelopeDto> {
-    const data = await this.service.create(user, dto, this.requestMeta(req));
+    const data = await this.service.create(
+      user,
+      activeCompany.companyId,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -59,16 +69,23 @@ export class JobsController {
   @ApiBearerAuth()
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Update a job (recruiter must own it)" })
+  @ApiOperation({ summary: "Update a job (must belong to the caller's active company)" })
   @ApiResponse({ status: 200, type: JobResponseEnvelopeDto })
-  @ApiResponse({ status: 404, description: "Job not found OR not owned" })
+  @ApiResponse({ status: 404, description: "Job not found OR not owned by active company" })
   async update(
     @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("id") id: string,
     @Body() dto: UpdateJobDto,
     @Req() req: FastifyRequest,
   ): Promise<JobResponseEnvelopeDto> {
-    const data = await this.service.update(user, id, dto, this.requestMeta(req));
+    const data = await this.service.update(
+      user,
+      activeCompany.companyId,
+      id,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -77,17 +94,23 @@ export class JobsController {
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Publish a draft job (NAIVE — bias check wraps this in Slice 2.7)",
+    summary: "Publish a draft job (gated on bias-flag resolution)",
   })
   @ApiResponse({ status: 200, type: JobResponseEnvelopeDto })
   @ApiResponse({ status: 400, description: "Job is not in 'draft' status" })
-  @ApiResponse({ status: 404, description: "Job not found OR not owned" })
+  @ApiResponse({ status: 404, description: "Job not found OR not owned by active company" })
   async publish(
     @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("id") id: string,
     @Req() req: FastifyRequest,
   ): Promise<JobResponseEnvelopeDto> {
-    const data = await this.service.publish(user, id, this.requestMeta(req));
+    const data = await this.service.publish(
+      user,
+      activeCompany.companyId,
+      id,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -97,31 +120,48 @@ export class JobsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Archive a job" })
   @ApiResponse({ status: 200, type: JobResponseEnvelopeDto })
-  @ApiResponse({ status: 404, description: "Job not found OR not owned" })
+  @ApiResponse({ status: 404, description: "Job not found OR not owned by active company" })
   async archive(
     @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("id") id: string,
     @Req() req: FastifyRequest,
   ): Promise<JobResponseEnvelopeDto> {
-    const data = await this.service.archive(user, id, this.requestMeta(req));
+    const data = await this.service.archive(
+      user,
+      activeCompany.companyId,
+      id,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
   // -------------------------------------------- RECRUITER LIST + DETAIL
 
+  /**
+   * Phase 2c: URL preserved as `/jobs/mine` for frontend stability — the
+   * recruiter UI ships against this path and Phase 3 will reconsider the
+   * URL semantics. The implementation is now company-scoped: returns
+   * every job owned by the caller's active company, regardless of which
+   * member created it. The "mine" in the URL is a legacy artifact of the
+   * single-tenant origin; functionally it now means "the active company's
+   * jobs."
+   */
   @Get("mine")
   @ApiBearerAuth()
   @Roles("recruiter")
   @ApiOperation({
-    summary: "List own jobs (any status); paginated. Supports ?include=stats for per-job aggregates.",
+    summary:
+      "List jobs owned by the caller's active company (any status); paginated. Supports ?include=stats.",
   })
   @ApiQuery({ name: "include", required: false, enum: ["stats"] })
   @ApiResponse({ status: 200, type: JobListResponseDto })
-  async listMine(
+  async listForActiveCompany(
     @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Query() query: ListJobsQueryDto,
   ): Promise<JobListResponseDto> {
-    return this.service.listMine(user, query);
+    return this.service.listForActiveCompany(user, activeCompany.companyId, query);
   }
 
   // Candidate list comes BEFORE parameterized GETs to avoid `for-candidate`
@@ -141,14 +181,17 @@ export class JobsController {
   @Get(":id/for-recruiter")
   @ApiBearerAuth()
   @Roles("recruiter")
-  @ApiOperation({ summary: "Recruiter view of own job (any status)" })
+  @ApiOperation({
+    summary: "Recruiter view of a job owned by the active company (any status)",
+  })
   @ApiResponse({ status: 200, type: JobResponseEnvelopeDto })
-  @ApiResponse({ status: 404, description: "Job not found OR not owned" })
+  @ApiResponse({ status: 404, description: "Job not found OR not owned by active company" })
   async getForRecruiter(
     @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("id") id: string,
   ): Promise<JobResponseEnvelopeDto> {
-    const data = await this.service.getForRecruiter(user, id);
+    const data = await this.service.getForRecruiter(user, activeCompany.companyId, id);
     return { data };
   }
 

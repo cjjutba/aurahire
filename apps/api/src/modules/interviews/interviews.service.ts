@@ -47,6 +47,7 @@ export class InterviewsService {
 
   async schedule(
     user: AuthUser,
+    companyId: string,
     applicationId: string,
     dto: ScheduleInterviewInput,
     requestMeta: RequestMeta = {},
@@ -55,9 +56,9 @@ export class InterviewsService {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
 
-    const application = await this.applicationsRepo.findApplicationContextForRecruiter(
+    const application = await this.applicationsRepo.findApplicationContextForCompany(
       applicationId,
-      user.id,
+      companyId,
     );
     if (!application) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
@@ -93,6 +94,7 @@ export class InterviewsService {
       action: AUDIT_ACTIONS.INTERVIEW_SCHEDULED,
       entityType: "interview",
       entityId: interview.id,
+      companyId,
       details: {
         applicationId,
         scheduledAt: interview.scheduledAt.toISOString(),
@@ -102,9 +104,9 @@ export class InterviewsService {
     });
 
     await this.cacheService.bustTags([
-      TAGS.interviewsRecruiter(user.id),
+      TAGS.companyInterviews(companyId),
       TAGS.interviewsCandidate(application.candidateId),
-      TAGS.dashboardRecruiter(user.id),
+      TAGS.companyDashboard(companyId),
     ]);
 
     void this.notifyCandidateScheduled(interview.id).catch((err) => {
@@ -116,11 +118,12 @@ export class InterviewsService {
 
   async updateFeedback(
     user: AuthUser,
+    companyId: string,
     interviewId: string,
     dto: UpdateInterviewFeedbackInput,
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
-    const interview = await this.requireRecruiterOwnership(user, interviewId);
+    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
 
     const updated = await this.repo.update(interviewId, {
       feedback: dto.feedback,
@@ -133,6 +136,7 @@ export class InterviewsService {
       action: AUDIT_ACTIONS.INTERVIEW_FEEDBACK_UPDATED,
       entityType: "interview",
       entityId: interviewId,
+      companyId,
       details: {
         applicationId: interview.applicationId,
         rating: dto.rating ?? null,
@@ -143,9 +147,9 @@ export class InterviewsService {
     const app = await this.applicationsRepo.findById(interview.applicationId);
     if (app) {
       await this.cacheService.bustTags([
-        TAGS.interviewsRecruiter(user.id),
+        TAGS.companyInterviews(companyId),
         TAGS.interviewsCandidate(app.candidateId),
-        TAGS.dashboardRecruiter(user.id),
+        TAGS.companyDashboard(companyId),
       ]);
     }
 
@@ -154,11 +158,12 @@ export class InterviewsService {
 
   async updateStatus(
     user: AuthUser,
+    companyId: string,
     interviewId: string,
     dto: UpdateInterviewStatusInput,
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
-    const interview = await this.requireRecruiterOwnership(user, interviewId);
+    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
 
     if (interview.status !== "scheduled") {
       throw new BadRequestException({
@@ -177,6 +182,7 @@ export class InterviewsService {
       action: AUDIT_ACTIONS.INTERVIEW_STATUS_CHANGED,
       entityType: "interview",
       entityId: interviewId,
+      companyId,
       details: { from: interview.status, to: dto.newStatus },
       ...requestMeta,
     });
@@ -184,9 +190,9 @@ export class InterviewsService {
     const app = await this.applicationsRepo.findById(interview.applicationId);
     if (app) {
       await this.cacheService.bustTags([
-        TAGS.interviewsRecruiter(user.id),
+        TAGS.companyInterviews(companyId),
         TAGS.interviewsCandidate(app.candidateId),
-        TAGS.dashboardRecruiter(user.id),
+        TAGS.companyDashboard(companyId),
       ]);
     }
 
@@ -215,7 +221,11 @@ export class InterviewsService {
     });
   }
 
-  async listForApplication(user: AuthUser, applicationId: string): Promise<InterviewDto[]> {
+  async listForApplication(
+    user: AuthUser,
+    companyId: string | null,
+    applicationId: string,
+  ): Promise<InterviewDto[]> {
     const app = await this.applicationsRepo.findById(applicationId);
     if (!app) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
@@ -226,7 +236,7 @@ export class InterviewsService {
     }
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
-      if (!job || job.recruiterId !== user.id) {
+      if (!job || job.companyId !== companyId) {
         throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
       }
     }
@@ -237,6 +247,7 @@ export class InterviewsService {
 
   async listForRecruiter(
     user: AuthUser,
+    companyId: string,
     query: RecruiterInterviewsQuery,
   ): Promise<{
     data: InterviewDto[];
@@ -245,7 +256,7 @@ export class InterviewsService {
     if (user.role !== "recruiter") {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
-    const { rows, total } = await this.repo.listForRecruiterPaginated(user.id, query);
+    const { rows, total } = await this.repo.listForCompanyPaginated(companyId, query);
     return {
       data: rows.map((row) => this.toDtoFromRecruiterRow(row)),
       meta: {
@@ -261,8 +272,9 @@ export class InterviewsService {
   // PRIVATE
   // -----------------------------------------------------------------
 
-  private async requireRecruiterOwnership(
+  private async requireCompanyOwnership(
     user: AuthUser,
+    companyId: string,
     interviewId: string,
   ): Promise<{
     id: string;
@@ -285,9 +297,9 @@ export class InterviewsService {
     if (!interview) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
     }
-    const ownership = await this.applicationsRepo.findApplicationContextForRecruiter(
+    const ownership = await this.applicationsRepo.findApplicationContextForCompany(
       interview.applicationId,
-      user.id,
+      companyId,
     );
     if (!ownership) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });

@@ -69,7 +69,13 @@ export interface ListJobsFilters {
   experienceLevel?: ExperienceLevel;
   locationCountry?: string;
   status?: JobStatus | JobStatus[];
-  recruiterId?: string;
+  /**
+   * Phase 2c access-control axis. When set, only rows whose
+   * `jobs.company_id` matches are returned. Replaces the prior
+   * `recruiterId` scoping field — `recruiter_id` remains on the row as
+   * audit trail (who created it) but is no longer a filter.
+   */
+  companyId?: string;
   sort?: "recent" | "best-match" | "salary-high";
   page: number;
   limit: number;
@@ -140,8 +146,8 @@ export class JobsRepository {
     };
   }
 
-  async listMineWithStats(
-    recruiterId: string,
+  async listForCompanyWithStats(
+    companyId: string,
     options: {
       page: number;
       limit: number;
@@ -149,7 +155,7 @@ export class JobsRepository {
       sort?: "recent" | "recent-activity";
     },
   ): Promise<{ rows: JobWithCompanyAndStats[]; total: number }> {
-    const conditions: SQL[] = [eq(jobsTable.recruiterId, recruiterId)];
+    const conditions: SQL[] = [eq(jobsTable.companyId, companyId)];
     if (options.status) {
       conditions.push(eq(jobsTable.status, options.status));
     }
@@ -318,8 +324,11 @@ export class JobsRepository {
       }
     }
 
-    if (filters.recruiterId) {
-      conditions.push(eq(jobsTable.recruiterId, filters.recruiterId));
+    // Phase 2c: company-scoped access. recruiter_id stays on the row but is
+    // no longer used as a filter for member access (members of the same
+    // company see all of its jobs, even ones they didn't create).
+    if (filters.companyId) {
+      conditions.push(eq(jobsTable.companyId, filters.companyId));
     }
 
     if (filters.q) {
