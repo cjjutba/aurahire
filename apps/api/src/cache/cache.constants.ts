@@ -39,6 +39,18 @@ export const TAGS = {
     `interviews:candidate:${candidateId}`,
   shortlistRecruiter: (recruiterId: string) => `shortlist:recruiter:${recruiterId}`,
   profileScore: (userId: string) => `profile-score:${userId}`,
+  // ─── Company-scoped tags (Phase 2 multi-tenancy) ─────────────────────
+  // Recruiter-keyed tags above are kept for one release while Phase 2c
+  // threads `companyId` through every recruiter-side cache call. Once that
+  // sweep lands, the recruiter-keyed tags become dead code and get removed.
+  companyJobs: (companyId: string) => `jobs:company:${companyId}`,
+  companyApplications: (companyId: string) => `applications:company:${companyId}`,
+  companyInterviews: (companyId: string) => `interviews:company:${companyId}`,
+  companyOffers: (companyId: string) => `offers:company:${companyId}`,
+  companyShortlist: (companyId: string) => `shortlist:company:${companyId}`,
+  companyDashboard: (companyId: string) => `dashboard:company:${companyId}`,
+  companyMembership: (companyId: string) => `company-members:${companyId}`,
+  userMemberships: (userId: string) => `user-memberships:${userId}`,
 } as const;
 
 /** Injection token for the ioredis client owned by CacheModule. */

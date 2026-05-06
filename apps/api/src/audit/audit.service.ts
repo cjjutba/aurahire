@@ -21,6 +21,7 @@ export class AuditService {
         action: input.action,
         entityType: input.entityType,
         entityId: input.entityId,
+        companyId: input.companyId ?? null,
         details: input.details ?? {},
         ipAddress: input.ipAddress ?? null,
         userAgent: input.userAgent ?? null,
