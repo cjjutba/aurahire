@@ -55,9 +55,20 @@ export class JobsService {
       });
     }
 
+    // Phase 2b stopgap: read the active company id from the user's profile.
+    // Phase 2c will replace this with `@ActiveCompany() { companyId }` injected
+    // by ActiveCompanyGuard once the guard is wired globally.
+    const activeCompanyId = await this.profilesRepo.findActiveCompanyIdForUser(user.id);
+    if (!activeCompanyId) {
+      throw new BadRequestException({
+        code: "NO_ACTIVE_COMPANY",
+        message: "No active company set — create or join one before posting jobs",
+      });
+    }
+
     const job = await this.repo.insert({
       recruiterId: user.id,
-      companyId: recruiterProfile.companyId,
+      companyId: activeCompanyId,
       title: dto.title,
       department: dto.department ?? null,
       employmentType: dto.employmentType,

@@ -14,6 +14,7 @@ export * from "./schemas/applications.ts";
 export * from "./schemas/admin.ts";
 export * from "./schemas/interviews.ts";
 export * from "./schemas/offers.ts";
+export * from "./schemas/companies.ts";
 
 // Enums
 export * from "./enums/index.ts";

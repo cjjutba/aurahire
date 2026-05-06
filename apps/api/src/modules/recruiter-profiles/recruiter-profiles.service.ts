@@ -21,7 +21,8 @@ export class RecruiterProfilesService {
     this.assertRecruiter(user);
 
     // Profile + recruiter_profile have no dependency between them — parallel.
-    // Company depends on recruiter_profile.companyId, so it follows.
+    // Company depends on profile.lastActiveCompanyId (Phase 2b: replaces the
+    // dropped recruiter_profiles.company_id column), so it follows.
     const [profile, recruiterProfile] = await Promise.all([
       this.repo.findById(user.id),
       this.repo.findRecruiterProfile(user.id),
@@ -36,7 +37,14 @@ export class RecruiterProfilesService {
       });
     }
 
-    const company = await this.repo.findCompanyById(recruiterProfile.companyId);
+    const activeCompanyId = profile.lastActiveCompanyId;
+    if (!activeCompanyId) {
+      throw new NotFoundException({
+        code: "NO_ACTIVE_COMPANY",
+        message: "No active company set",
+      });
+    }
+    const company = await this.repo.findCompanyById(activeCompanyId);
     if (!company) {
       throw new NotFoundException({ code: "COMPANY_NOT_FOUND", message: "Company missing" });
     }
@@ -57,7 +65,14 @@ export class RecruiterProfilesService {
       { jobTitle: dto.jobTitle ?? null, department: dto.department ?? null },
     );
 
-    const company = await this.repo.findCompanyById(recruiterProfile.companyId);
+    const activeCompanyId = profile.lastActiveCompanyId;
+    if (!activeCompanyId) {
+      throw new NotFoundException({
+        code: "NO_ACTIVE_COMPANY",
+        message: "No active company set",
+      });
+    }
+    const company = await this.repo.findCompanyById(activeCompanyId);
     if (!company) {
       throw new NotFoundException({ code: "COMPANY_NOT_FOUND", message: "Company missing" });
     }
@@ -81,8 +96,9 @@ export class RecruiterProfilesService {
   ): Promise<RecruiterProfileMeDto> {
     this.assertRecruiter(user);
 
-    // We need recruiterProfile.companyId before we can UPDATE companies.
-    // Profile fetch and recruiter_profile fetch can run in parallel.
+    // Phase 2b: the recruiter→company link moved to profile.lastActiveCompanyId.
+    // Profile fetch and recruiter_profile fetch can still run in parallel; the
+    // company UPDATE depends on the profile's active-company pointer.
     const [profile, recruiterProfile] = await Promise.all([
       this.repo.findById(user.id),
       this.repo.findRecruiterProfile(user.id),
@@ -96,8 +112,15 @@ export class RecruiterProfilesService {
         message: "Recruiter profile missing",
       });
     }
+    const activeCompanyId = profile.lastActiveCompanyId;
+    if (!activeCompanyId) {
+      throw new NotFoundException({
+        code: "NO_ACTIVE_COMPANY",
+        message: "No active company set",
+      });
+    }
 
-    const company = await this.repo.updateCompany(recruiterProfile.companyId, {
+    const company = await this.repo.updateCompany(activeCompanyId, {
       name: dto.companyName,
       industry: dto.industry ?? null,
       size: dto.size ?? null,
@@ -111,7 +134,8 @@ export class RecruiterProfilesService {
       actorType: "user",
       action: "user.onboarding.company_updated",
       entityType: "company",
-      entityId: recruiterProfile.companyId,
+      entityId: activeCompanyId,
+      companyId: activeCompanyId,
       ...requestMeta,
     });
 
@@ -139,7 +163,14 @@ export class RecruiterProfilesService {
       throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
     }
 
-    const company = await this.repo.findCompanyById(recruiterProfile.companyId);
+    const activeCompanyId = profile.lastActiveCompanyId;
+    if (!activeCompanyId) {
+      throw new NotFoundException({
+        code: "NO_ACTIVE_COMPANY",
+        message: "No active company set",
+      });
+    }
+    const company = await this.repo.findCompanyById(activeCompanyId);
     if (!company) {
       throw new NotFoundException({ code: "COMPANY_NOT_FOUND", message: "Company missing" });
     }
@@ -150,6 +181,7 @@ export class RecruiterProfilesService {
       action: "user.onboarding.completed",
       entityType: "recruiter_profile",
       entityId: user.id,
+      companyId: activeCompanyId,
       details: { role: "recruiter" },
       ...requestMeta,
     });

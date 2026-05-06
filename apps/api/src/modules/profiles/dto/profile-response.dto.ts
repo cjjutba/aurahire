@@ -10,7 +10,11 @@ export class CandidateSubprofileDto {
 }
 
 export class RecruiterSubprofileDto {
-  @ApiProperty() companyId!: string;
+  // Phase 2b: companyId is no longer a recruiter-profile column. The field
+  // is sourced from profiles.last_active_company_id (the user's active
+  // company pointer) and is nullable for recruiters who have left every
+  // company they belonged to.
+  @ApiProperty({ nullable: true }) companyId!: string | null;
   @ApiProperty({ nullable: true }) jobTitle!: string | null;
   @ApiProperty({ nullable: true }) department!: string | null;
   @ApiProperty() profileCompleted!: boolean;

@@ -22,6 +22,7 @@ import { ProfilesModule } from "./modules/profiles/profiles.module";
 import { RecruiterProfilesModule } from "./modules/recruiter-profiles/recruiter-profiles.module";
 import { CandidateProfilesModule } from "./modules/candidate-profiles/candidate-profiles.module";
 import { CompaniesModule } from "./modules/companies/companies.module";
+import { InvitationsModule } from "./modules/invitations/invitations.module";
 import { JobsModule } from "./modules/jobs/jobs.module";
 import { ResumesModule } from "./modules/resumes/resumes.module";
 import { ScoringModule } from "./modules/scoring/scoring.module";
@@ -116,6 +117,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     RecruiterProfilesModule,
     CandidateProfilesModule,
     CompaniesModule,
+    InvitationsModule,
     JobsModule,
     ResumesModule,
     ScoringModule,

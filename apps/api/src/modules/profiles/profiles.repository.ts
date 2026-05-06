@@ -5,6 +5,7 @@ import {
   candidateProfilesTable,
   recruiterProfilesTable,
   companiesTable,
+  companyMembersTable,
   type Profile,
   type NewProfile,
   type CandidateProfile,
@@ -75,7 +76,7 @@ export class ProfilesRepository {
   async insertRecruiter(
     profileData: NewProfile,
     companyData: NewCompany,
-    recruiterData: Omit<NewRecruiterProfile, "id" | "companyId">,
+    recruiterData: Omit<NewRecruiterProfile, "id">,
   ): Promise<{
     profile: Profile;
     company: Company;
@@ -91,11 +92,64 @@ export class ProfilesRepository {
       if (!company) throw new Error("Failed to insert company");
       const [recruiterProfile] = await tx
         .insert(recruiterProfilesTable)
-        .values({ ...recruiterData, id: profile.id, companyId: company.id })
+        .values({ ...recruiterData, id: profile.id })
         .returning();
       if (!recruiterProfile) throw new Error("Failed to insert recruiter profile");
+
+      // Multi-tenancy: the new recruiter is the founding owner of their company.
+      // Insert the corresponding company_members row + point profile at the
+      // company so ActiveCompanyGuard's fallback path (and Phase 2b stopgap
+      // reads of profiles.lastActiveCompanyId) resolve immediately.
+      const now = new Date();
+      await tx.insert(companyMembersTable).values({
+        companyId: company.id,
+        userId: profile.id,
+        email: profile.email,
+        role: "owner",
+        status: "active",
+        invitedAt: now,
+        joinedAt: now,
+      });
+      await tx
+        .update(profilesTable)
+        .set({ lastActiveCompanyId: company.id, updatedAt: now })
+        .where(eq(profilesTable.id, profile.id));
+
+      // Reflect the lastActiveCompanyId update in the returned profile object
+      // so callers that read it immediately don't have to re-fetch.
+      profile.lastActiveCompanyId = company.id;
+
       return { profile, company, recruiterProfile };
     });
+  }
+
+  /**
+   * Phase 2b stopgap helper: Phase 2c will replace this with the
+   * `req.activeCompanyId` resolved by `ActiveCompanyGuard`. Until then,
+   * direct profile reads provide the (single) active company id for
+   * recruiter-side endpoints that need to scope by company.
+   */
+  async findActiveCompanyIdForUser(userId: string): Promise<string | null> {
+    const [row] = await this.db
+      .select({ lastActiveCompanyId: profilesTable.lastActiveCompanyId })
+      .from(profilesTable)
+      .where(eq(profilesTable.id, userId))
+      .limit(1);
+    return row?.lastActiveCompanyId ?? null;
+  }
+
+  /**
+   * Repoint a user's `last_active_company_id`. Pass null to clear it (used
+   * when the user leaves their last company).
+   */
+  async setActiveCompany(
+    userId: string,
+    companyId: string | null,
+  ): Promise<void> {
+    await this.db
+      .update(profilesTable)
+      .set({ lastActiveCompanyId: companyId, updatedAt: new Date() })
+      .where(eq(profilesTable.id, userId));
   }
 
   async updateProfile(
