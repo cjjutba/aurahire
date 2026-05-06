@@ -21,6 +21,7 @@ interface Detail {
     email: string;
     role: string | null;
   } | null;
+  company: { id: string; name: string; logoUrl: string | null } | null;
   entityType: string;
   entityId: string;
   details: Record<string, unknown>;
@@ -124,6 +125,14 @@ export function AuditDetailSheetClient({ entryId, open, onClose }: Props) {
                   {detail.entityId}
                 </span>
               </p>
+              {detail.company && (
+                <p className="text-[var(--color-body)]">
+                  Company:{" "}
+                  <strong className="text-[var(--color-ink)]">
+                    {detail.company.name}
+                  </strong>
+                </p>
+              )}
               {detail.ipAddress && (
                 <p className="text-[var(--color-muted)]">
                   IP: {detail.ipAddress}

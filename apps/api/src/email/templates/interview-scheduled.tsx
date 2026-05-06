@@ -22,6 +22,7 @@ interface Props {
   format: string;
   locationOrLink: string | null;
   applicationUrl: string;
+  company?: { name: string; logoUrl: string | null } | null;
 }
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -39,6 +40,7 @@ export function InterviewScheduledEmail({
   format,
   locationOrLink,
   applicationUrl,
+  company,
 }: Props): React.ReactElement {
   const when = new Date(scheduledAt).toLocaleString();
   const formatLabel = FORMAT_LABELS[format] ?? format;
@@ -63,7 +65,7 @@ export function InterviewScheduledEmail({
             margin: "0 auto",
           }}
         >
-          <EmailBrandHeader />
+          <EmailBrandHeader company={company} />
           <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
             Interview scheduled
           </Heading>

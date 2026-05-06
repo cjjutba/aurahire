@@ -21,7 +21,11 @@ import { EmailService } from "../../email/email.service";
 import { ApplicationsRepository } from "../applications/applications.repository";
 import { JobsRepository } from "../jobs/jobs.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository";
-import { InterviewsRepository, type RecruiterInterviewRow } from "./interviews.repository";
+import {
+  InterviewsRepository,
+  type CandidateInterviewRow,
+  type RecruiterInterviewRow,
+} from "./interviews.repository";
 import type { InterviewDto } from "./dto/interview-response.dto";
 import { InterviewScheduledEmail } from "../../email/templates/interview-scheduled";
 import { InterviewCancelledEmail } from "../../email/templates/interview-cancelled";
@@ -216,7 +220,7 @@ export class InterviewsService {
       telemetryName: "interviews:candidate:list",
       load: async () => {
         const rows = await this.repo.findByCandidateId(user.id);
-        return rows.map((r) => this.toDto(r));
+        return rows.map((r) => this.toCandidateDto(r));
       },
     });
   }
@@ -329,6 +333,7 @@ export class InterviewsService {
         format: interview.format,
         locationOrLink: interview.locationOrLink,
         applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
     });
   }
@@ -352,6 +357,7 @@ export class InterviewsService {
         companyName: jobRow.company.name,
         scheduledAt: interview.scheduledAt.toISOString(),
         applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
     });
   }
@@ -383,6 +389,24 @@ export class InterviewsService {
       rating: i.rating,
       createdAt: i.createdAt.toISOString(),
       updatedAt: i.updatedAt.toISOString(),
+    };
+  }
+
+  private toCandidateDto(row: CandidateInterviewRow): InterviewDto {
+    return {
+      ...this.toDto(row),
+      job:
+        row.jobId && row.jobTitle
+          ? { id: row.jobId, title: row.jobTitle }
+          : null,
+      company:
+        row.companyId && row.companyName
+          ? {
+              id: row.companyId,
+              name: row.companyName,
+              logoUrl: row.companyLogoUrl,
+            }
+          : null,
     };
   }
 

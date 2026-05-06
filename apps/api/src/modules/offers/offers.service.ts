@@ -344,6 +344,7 @@ export class OffersService {
             : new Date(offer.startDate).toISOString().slice(0, 10),
         expiresAt: offer.expiresAt ? offer.expiresAt.toISOString() : null,
         applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
     });
   }
@@ -371,6 +372,7 @@ export class OffersService {
         jobTitle: offer.title,
         decision,
         applicationUrl: `${appUrl}/recruiter/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
     });
   }

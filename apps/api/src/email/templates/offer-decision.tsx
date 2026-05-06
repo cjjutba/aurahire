@@ -19,6 +19,7 @@ interface Props {
   jobTitle: string;
   decision: "accepted" | "declined";
   applicationUrl: string;
+  company?: { name: string; logoUrl: string | null } | null;
 }
 
 export function OfferDecisionEmail({
@@ -27,6 +28,7 @@ export function OfferDecisionEmail({
   jobTitle,
   decision,
   applicationUrl,
+  company,
 }: Props): React.ReactElement {
   const accepted = decision === "accepted";
   const headline = accepted ? "Offer accepted" : "Offer declined";
@@ -53,7 +55,7 @@ export function OfferDecisionEmail({
             margin: "0 auto",
           }}
         >
-          <EmailBrandHeader />
+          <EmailBrandHeader company={company} />
           <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
             {headline}
           </Heading>

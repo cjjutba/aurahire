@@ -1,4 +1,4 @@
-import { Briefcase, MapPin, Calendar, DollarSign } from "lucide-react";
+import { Briefcase, MapPin, Calendar, DollarSign, Building2 } from "lucide-react";
 import type { JobStatus } from "@aurahire/shared";
 import { JobStatusChip } from "./job-status-chip";
 
@@ -22,7 +22,7 @@ interface JobDetailProps {
     applicationDeadline: string | null;
     status: JobStatus;
     publishedAt: string | null;
-    company: { name: string };
+    company: { name: string; logoUrl?: string | null };
   };
   showStatusChip?: boolean;
   actions?: React.ReactNode;
@@ -31,16 +31,33 @@ interface JobDetailProps {
 export function JobDetail({ job, showStatusChip, actions }: JobDetailProps) {
   return (
     <article className="space-y-8">
-      <header className="space-y-3">
+      <header className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
-              {job.title}
-            </h1>
-            <p className="mt-1 text-base text-[var(--color-body)]">
-              {job.company.name}
-              {job.department ? ` · ${job.department}` : ""}
-            </p>
+          <div className="flex items-start gap-4">
+            {job.company.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={job.company.logoUrl}
+                alt=""
+                className="h-14 w-14 shrink-0 rounded-[var(--radius-md)] object-cover"
+              />
+            ) : (
+              <div
+                aria-hidden
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-strong)] text-[var(--color-muted)]"
+              >
+                <Building2 className="h-6 w-6" />
+              </div>
+            )}
+            <div>
+              <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+                {job.title}
+              </h1>
+              <p className="mt-1 text-base font-medium text-[var(--color-body)]">
+                {job.company.name}
+                {job.department ? ` · ${job.department}` : ""}
+              </p>
+            </div>
           </div>
           {actions}
         </div>

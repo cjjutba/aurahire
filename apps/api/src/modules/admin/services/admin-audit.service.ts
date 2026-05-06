@@ -29,6 +29,7 @@ export class AdminAuditService {
       entityType: query.entityType,
       action: query.action,
       actorType: query.actorType,
+      companyId: query.companyId,
       dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
       dateTo: query.dateTo ? new Date(query.dateTo) : undefined,
       page: query.page,
@@ -71,6 +72,7 @@ export class AdminAuditService {
         entityType: query.entityType,
         action: query.action,
         actorType: query.actorType,
+        companyId: query.companyId,
         dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
         dateTo: query.dateTo ? new Date(query.dateTo) : undefined,
       },
@@ -92,6 +94,8 @@ export class AdminAuditService {
       "actor_id",
       "actor_name",
       "actor_email",
+      "company_id",
+      "company_name",
       "entity_type",
       "entity_id",
       "details",
@@ -108,6 +112,8 @@ export class AdminAuditService {
         r.log.actorId ?? "",
         r.actor?.fullName ?? "",
         r.actor?.email ?? "",
+        r.company?.id ?? "",
+        r.company?.name ?? "",
         r.log.entityType,
         r.log.entityId,
         JSON.stringify(r.log.details ?? {}),
@@ -141,6 +147,13 @@ export class AdminAuditService {
             fullName: r.actor.fullName,
             email: r.actor.email,
             role: r.actor.role,
+          }
+        : null,
+      company: r.company
+        ? {
+            id: r.company.id,
+            name: r.company.name,
+            logoUrl: r.company.logoUrl,
           }
         : null,
       entityType: r.log.entityType,

@@ -20,6 +20,7 @@ interface Props {
   matchBand: string | null;
   matchScore: number | null;
   applicationUrl: string;
+  company?: { name: string; logoUrl: string | null } | null;
 }
 
 export function ApplicationReceivedEmail({
@@ -29,6 +30,7 @@ export function ApplicationReceivedEmail({
   matchBand,
   matchScore,
   applicationUrl,
+  company,
 }: Props): React.ReactElement {
   return (
     <Html>
@@ -50,7 +52,7 @@ export function ApplicationReceivedEmail({
             margin: "0 auto",
           }}
         >
-          <EmailBrandHeader />
+          <EmailBrandHeader company={company} />
           <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
             New application
           </Heading>

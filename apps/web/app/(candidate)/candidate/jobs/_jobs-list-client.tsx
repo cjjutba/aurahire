@@ -20,7 +20,7 @@ interface CandidateJobRow {
   salaryCurrency: string;
   status: JobStatus;
   publishedAt: string | null;
-  company: { name: string };
+  company: { name: string; logoUrl: string | null };
 }
 
 interface CandidateJobsListClientProps {

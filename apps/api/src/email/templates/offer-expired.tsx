@@ -18,6 +18,7 @@ interface Props {
   jobTitle: string;
   companyName: string;
   applicationUrl: string;
+  company?: { name: string; logoUrl: string | null } | null;
 }
 
 export function OfferExpiredEmail({
@@ -25,6 +26,7 @@ export function OfferExpiredEmail({
   jobTitle,
   companyName,
   applicationUrl,
+  company,
 }: Props): React.ReactElement {
   return (
     <Html>
@@ -46,7 +48,7 @@ export function OfferExpiredEmail({
             margin: "0 auto",
           }}
         >
-          <EmailBrandHeader />
+          <EmailBrandHeader company={company} />
           <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
             Offer Expired
           </Heading>

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { Building2 } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth/session";
 import { ScoreRing } from "@/components/score/score-ring";
 import { MatchBandChip } from "@/components/score/match-band-chip";
@@ -94,7 +95,11 @@ interface AppDetail {
   id: string;
   status: string;
   appliedAt: string;
-  job: { id: string; title: string; company: { name: string } } | null;
+  job: {
+    id: string;
+    title: string;
+    company: { name: string; logoUrl: string | null };
+  } | null;
   matchScore: MatchScoreData | null;
 }
 
@@ -161,16 +166,35 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
           <header className="flex flex-col gap-8 md:flex-row md:items-center">
             <ScoreRing score={score.overallScore} band={score.band} size="lg" />
             <div className="space-y-3">
-              <p className="text-sm text-[var(--color-muted)]">
-                Application for{" "}
-                <Link
-                  href={`/candidate/jobs/${app.job?.id ?? ""}`}
-                  className="text-[var(--color-primary)] hover:underline"
-                >
-                  {app.job?.title ?? "Job"}
-                </Link>{" "}
-                at {app.job?.company.name ?? ""}
-              </p>
+              <div className="flex items-center gap-3">
+                {app.job?.company.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={app.job.company.logoUrl}
+                    alt=""
+                    className="h-10 w-10 shrink-0 rounded-[var(--radius-sm)] object-cover"
+                  />
+                ) : (
+                  <div
+                    aria-hidden
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface-strong)] text-[var(--color-muted)]"
+                  >
+                    <Building2 className="h-5 w-5" />
+                  </div>
+                )}
+                <p className="text-sm text-[var(--color-muted)]">
+                  <Link
+                    href={`/candidate/jobs/${app.job?.id ?? ""}`}
+                    className="text-[var(--color-primary)] hover:underline"
+                  >
+                    {app.job?.title ?? "Job"}
+                  </Link>{" "}
+                  at{" "}
+                  <strong className="text-[var(--color-ink)]">
+                    {app.job?.company.name ?? ""}
+                  </strong>
+                </p>
+              </div>
               <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
                 Your match
               </h1>

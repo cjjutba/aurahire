@@ -50,6 +50,7 @@ export class ExpireOffersCron {
           candidateName: profilesTable.fullName,
           jobTitle: jobsTable.title,
           companyName: companiesTable.name,
+          companyLogoUrl: companiesTable.logoUrl,
         })
         .from(offersTable)
         .innerJoin(
@@ -113,6 +114,7 @@ export class ExpireOffersCron {
               jobTitle: c.jobTitle,
               companyName: c.companyName,
               applicationUrl: `${appUrl}/dashboard/applications/${c.applicationId}`,
+              company: { name: c.companyName, logoUrl: c.companyLogoUrl },
             }),
           });
         } catch (innerErr) {

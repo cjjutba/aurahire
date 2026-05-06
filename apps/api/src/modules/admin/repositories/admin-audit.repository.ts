@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import {
   auditLogsTable,
+  companiesTable,
   profilesTable,
   type AuditLog,
   type Profile,
@@ -16,6 +17,7 @@ export interface ListAdminAuditFilters {
   entityType?: string;
   action?: string;
   actorType?: AuditActorType;
+  companyId?: string;
   dateFrom?: Date;
   dateTo?: Date;
   page: number;
@@ -25,6 +27,7 @@ export interface ListAdminAuditFilters {
 export interface AuditJoinedRow {
   log: AuditLog;
   actor: Profile | null;
+  company: { id: string; name: string; logoUrl: string | null } | null;
 }
 
 @Injectable()
@@ -42,9 +45,13 @@ export class AdminAuditRepository {
       .select({
         log: auditLogsTable,
         actor: profilesTable,
+        companyId: companiesTable.id,
+        companyName: companiesTable.name,
+        companyLogoUrl: companiesTable.logoUrl,
       })
       .from(auditLogsTable)
       .leftJoin(profilesTable, eq(profilesTable.id, auditLogsTable.actorId))
+      .leftJoin(companiesTable, eq(companiesTable.id, auditLogsTable.companyId))
       .where(where)
       .orderBy(desc(auditLogsTable.createdAt))
       .limit(filters.limit)
@@ -54,10 +61,18 @@ export class AdminAuditRepository {
       .select({ c: sql<number>`count(*)::int` })
       .from(auditLogsTable)
       .leftJoin(profilesTable, eq(profilesTable.id, auditLogsTable.actorId))
+      .leftJoin(companiesTable, eq(companiesTable.id, auditLogsTable.companyId))
       .where(where);
 
     return {
-      rows: rows.map((r) => ({ log: r.log, actor: r.actor ?? null })),
+      rows: rows.map((r) => ({
+        log: r.log,
+        actor: r.actor ?? null,
+        company:
+          r.companyId && r.companyName
+            ? { id: r.companyId, name: r.companyName, logoUrl: r.companyLogoUrl }
+            : null,
+      })),
       total: totalRows[0]?.c ?? 0,
     };
   }
@@ -67,13 +82,28 @@ export class AdminAuditRepository {
       .select({
         log: auditLogsTable,
         actor: profilesTable,
+        companyId: companiesTable.id,
+        companyName: companiesTable.name,
+        companyLogoUrl: companiesTable.logoUrl,
       })
       .from(auditLogsTable)
       .leftJoin(profilesTable, eq(profilesTable.id, auditLogsTable.actorId))
+      .leftJoin(companiesTable, eq(companiesTable.id, auditLogsTable.companyId))
       .where(eq(auditLogsTable.id, id))
       .limit(1);
     if (!row) return null;
-    return { log: row.log, actor: row.actor ?? null };
+    return {
+      log: row.log,
+      actor: row.actor ?? null,
+      company:
+        row.companyId && row.companyName
+          ? {
+              id: row.companyId,
+              name: row.companyName,
+              logoUrl: row.companyLogoUrl,
+            }
+          : null,
+    };
   }
 
   /** For CSV export: same filters, no pagination, capped at maxRows. */
@@ -86,18 +116,27 @@ export class AdminAuditRepository {
       .select({
         log: auditLogsTable,
         actor: profilesTable,
+        companyId: companiesTable.id,
+        companyName: companiesTable.name,
+        companyLogoUrl: companiesTable.logoUrl,
       })
       .from(auditLogsTable)
       .leftJoin(profilesTable, eq(profilesTable.id, auditLogsTable.actorId))
+      .leftJoin(companiesTable, eq(companiesTable.id, auditLogsTable.companyId))
       .where(where)
       .orderBy(desc(auditLogsTable.createdAt))
       .limit(maxRows + 1);
 
     const truncated = rows.length > maxRows;
     return {
-      rows: rows
-        .slice(0, maxRows)
-        .map((r) => ({ log: r.log, actor: r.actor ?? null })),
+      rows: rows.slice(0, maxRows).map((r) => ({
+        log: r.log,
+        actor: r.actor ?? null,
+        company:
+          r.companyId && r.companyName
+            ? { id: r.companyId, name: r.companyName, logoUrl: r.companyLogoUrl }
+            : null,
+      })),
       truncated,
       rowCount: rows.length > maxRows ? maxRows : rows.length,
     };
@@ -117,6 +156,8 @@ export class AdminAuditRepository {
       conditions.push(ilike(auditLogsTable.action, `%${filters.action}%`));
     if (filters.actorType)
       conditions.push(eq(auditLogsTable.actorType, filters.actorType));
+    if (filters.companyId)
+      conditions.push(eq(auditLogsTable.companyId, filters.companyId));
     if (filters.dateFrom)
       conditions.push(gte(auditLogsTable.createdAt, filters.dateFrom));
     if (filters.dateTo)

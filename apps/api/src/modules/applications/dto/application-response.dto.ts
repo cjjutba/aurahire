@@ -44,6 +44,7 @@ export class ApplicationCandidateDto {
 export class ApplicationCompanyDto {
   @ApiProperty() id!: string;
   @ApiProperty() name!: string;
+  @ApiPropertyOptional({ nullable: true }) logoUrl!: string | null;
 }
 
 export class ApplicationJobDto {

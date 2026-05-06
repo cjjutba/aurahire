@@ -187,10 +187,17 @@ export const listAdminAuditQuerySchema = z.object({
       "bias_flag",
       "scoring_config",
       "resume",
+      "company",
+      "company_member",
+      "interview",
+      "offer",
+      "cron",
     ])
     .optional(),
   action: z.string().max(100).optional(),
   actorType: z.enum(AUDIT_ACTOR_TYPE).optional(),
+  /** Cross-tenant filter: scope to a specific company. */
+  companyId: uuidSchema.optional(),
   dateFrom: z.string().datetime().optional(),
   dateTo: z.string().datetime().optional(),
   page: z.coerce.number().int().min(1).default(1),

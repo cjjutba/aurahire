@@ -779,7 +779,11 @@ export class ApplicationsService {
           department: jobRow.department,
           employmentType: jobRow.employmentType,
           workMode: jobRow.workMode,
-          company: { id: jobRow.company.id, name: jobRow.company.name },
+          company: {
+            id: jobRow.company.id,
+            name: jobRow.company.name,
+            logoUrl: jobRow.company.logoUrl,
+          },
         }
       : null;
 
@@ -861,7 +865,11 @@ export class ApplicationsService {
             department: null,
             employmentType: "",
             workMode: "",
-            company: Object.assign(new ApplicationCompanyDto(), { id: "", name: "" }),
+            company: Object.assign(new ApplicationCompanyDto(), {
+              id: "",
+              name: "",
+              logoUrl: null,
+            }),
           })
         : null,
     };
@@ -900,6 +908,7 @@ export class ApplicationsService {
         matchBand: matchScore?.band ?? null,
         matchScore: matchScore?.overallScore ?? null,
         applicationUrl: `${appUrl}/recruiter/applications/${applicationId}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
     });
 
@@ -940,6 +949,7 @@ export class ApplicationsService {
         previousStatus: fromStatus,
         newStatus: toStatus,
         applicationUrl: `${appUrl}/candidate/applications/${applicationId}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
     });
   }

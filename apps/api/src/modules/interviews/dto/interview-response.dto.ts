@@ -11,6 +11,12 @@ export class InterviewJobRefDto {
   @ApiProperty() title!: string;
 }
 
+export class InterviewCompanyRefDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() name!: string;
+  @ApiPropertyOptional({ nullable: true }) logoUrl!: string | null;
+}
+
 export class InterviewDto {
   @ApiProperty() id!: string;
   @ApiProperty() applicationId!: string;
@@ -31,6 +37,8 @@ export class InterviewDto {
   candidate?: InterviewCandidateRefDto | null;
   @ApiPropertyOptional({ type: () => InterviewJobRefDto, nullable: true })
   job?: InterviewJobRefDto | null;
+  @ApiPropertyOptional({ type: () => InterviewCompanyRefDto, nullable: true })
+  company?: InterviewCompanyRefDto | null;
 }
 
 export class InterviewEnvelopeDto {

@@ -19,6 +19,7 @@ interface Props {
   companyName: string;
   scheduledAt: string;
   applicationUrl: string;
+  company?: { name: string; logoUrl: string | null } | null;
 }
 
 export function InterviewCancelledEmail({
@@ -27,6 +28,7 @@ export function InterviewCancelledEmail({
   companyName,
   scheduledAt,
   applicationUrl,
+  company,
 }: Props): React.ReactElement {
   const when = new Date(scheduledAt).toLocaleString();
 
@@ -50,7 +52,7 @@ export function InterviewCancelledEmail({
             margin: "0 auto",
           }}
         >
-          <EmailBrandHeader />
+          <EmailBrandHeader company={company} />
           <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
             Interview cancelled
           </Heading>

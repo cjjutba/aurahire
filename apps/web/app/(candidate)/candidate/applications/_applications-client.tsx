@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Building2 } from "lucide-react";
 
 import { MatchBandChip } from "@/components/score/match-band-chip";
 import { useMyApplicationsQuery } from "@/hooks/use-applications";
@@ -9,7 +10,10 @@ interface AppRow {
   id: string;
   status: string;
   appliedAt: string;
-  job: { title: string; company: { name: string } } | null;
+  job: {
+    title: string;
+    company: { name: string; logoUrl: string | null };
+  } | null;
   matchScore: { band: "strong" | "partial" | "limited"; overallScore: number } | null;
 }
 
@@ -52,17 +56,34 @@ export function ApplicationsListClient() {
                 href={`/candidate/applications/${app.id}`}
                 className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 transition hover:border-[var(--color-primary-soft)] sm:flex-row sm:items-center sm:justify-between"
               >
-                <div>
-                  <h3 className="font-semibold text-[var(--color-ink)]">
-                    {app.job?.title ?? "Job"}
-                  </h3>
-                  <p className="text-sm text-[var(--color-body)]">
-                    {app.job?.company.name ?? ""}
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--color-muted)]">
-                    Applied {new Date(app.appliedAt).toLocaleDateString()} · Status:{" "}
-                    {app.status}
-                  </p>
+                <div className="flex items-start gap-3">
+                  {app.job?.company.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={app.job.company.logoUrl}
+                      alt=""
+                      className="h-10 w-10 shrink-0 rounded-[var(--radius-sm)] object-cover"
+                    />
+                  ) : (
+                    <div
+                      aria-hidden
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface-strong)] text-[var(--color-muted)]"
+                    >
+                      <Building2 className="h-5 w-5" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-[var(--color-ink)]">
+                      Applied to {app.job?.company.name ?? "company"}
+                    </h3>
+                    <p className="text-sm text-[var(--color-body)]">
+                      {app.job?.title ?? "Job"}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">
+                      Applied {new Date(app.appliedAt).toLocaleDateString()} · Status:{" "}
+                      {app.status}
+                    </p>
+                  </div>
                 </div>
                 {app.matchScore ? (
                   <div className="flex items-center gap-3">

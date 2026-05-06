@@ -20,6 +20,7 @@ interface Props {
   previousStatus: string;
   newStatus: string;
   applicationUrl: string;
+  company?: { name: string; logoUrl: string | null } | null;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -39,6 +40,7 @@ export function ApplicationStatusChangedEmail({
   previousStatus,
   newStatus,
   applicationUrl,
+  company,
 }: Props): React.ReactElement {
   const fromLabel = STATUS_LABELS[previousStatus] ?? previousStatus;
   const toLabel = STATUS_LABELS[newStatus] ?? newStatus;
@@ -63,7 +65,7 @@ export function ApplicationStatusChangedEmail({
             margin: "0 auto",
           }}
         >
-          <EmailBrandHeader />
+          <EmailBrandHeader company={company} />
           <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
             Application Update
           </Heading>

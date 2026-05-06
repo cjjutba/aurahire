@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { and, count, desc, eq, sql, type SQL } from "drizzle-orm";
 import {
   applicationsTable,
+  companiesTable,
   interviewsTable,
   jobsTable,
   profilesTable,
@@ -18,6 +19,14 @@ export interface RecruiterInterviewRow extends Interview {
   candidateEmail: string | null;
   jobId: string | null;
   jobTitle: string | null;
+}
+
+export interface CandidateInterviewRow extends Interview {
+  jobId: string | null;
+  jobTitle: string | null;
+  companyId: string | null;
+  companyName: string | null;
+  companyLogoUrl: string | null;
 }
 
 export interface RecruiterInterviewsQuery {
@@ -56,14 +65,32 @@ export class InterviewsRepository {
       .orderBy(desc(interviewsTable.scheduledAt));
   }
 
-  async findByCandidateId(candidateId: string): Promise<Interview[]> {
+  async findByCandidateId(
+    candidateId: string,
+  ): Promise<CandidateInterviewRow[]> {
     const rows = await this.db
-      .select({ interview: interviewsTable })
+      .select({
+        interview: interviewsTable,
+        jobId: jobsTable.id,
+        jobTitle: jobsTable.title,
+        companyId: companiesTable.id,
+        companyName: companiesTable.name,
+        companyLogoUrl: companiesTable.logoUrl,
+      })
       .from(interviewsTable)
       .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+      .leftJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .leftJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
       .where(eq(applicationsTable.candidateId, candidateId))
       .orderBy(desc(interviewsTable.scheduledAt));
-    return rows.map((r) => r.interview);
+    return rows.map((r) => ({
+      ...r.interview,
+      jobId: r.jobId,
+      jobTitle: r.jobTitle,
+      companyId: r.companyId,
+      companyName: r.companyName,
+      companyLogoUrl: r.companyLogoUrl,
+    }));
   }
 
   async listForCompanyPaginated(

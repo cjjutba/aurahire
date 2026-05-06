@@ -110,7 +110,8 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
       label: "Operations",
       items: [
         { href: "/admin/users", label: "Users", icon: Users },
-        { href: "/admin/jobs", label: "Job Moderation", icon: Building2 },
+        { href: "/admin/companies", label: "Companies", icon: Building2 },
+        { href: "/admin/jobs", label: "Job Moderation", icon: Briefcase },
         { href: "/admin/applications", label: "Applications", icon: FileText },
       ],
     },

@@ -14,6 +14,7 @@ interface Row {
     email: string;
     role: string | null;
   } | null;
+  company: { id: string; name: string; logoUrl: string | null } | null;
   entityType: string;
   entityId: string;
   detailsSnippet: string;
@@ -44,6 +45,7 @@ export function AuditTableClient({ rows, meta }: Props) {
               <th className="p-3">Actor</th>
               <th className="p-3">Action</th>
               <th className="p-3">Entity</th>
+              <th className="p-3">Company</th>
               <th className="p-3">Details</th>
             </tr>
           </thead>
@@ -83,6 +85,29 @@ export function AuditTableClient({ rows, meta }: Props) {
                   <span className="ml-1 font-mono text-[var(--color-muted)]">
                     #{r.entityId.slice(0, 8)}
                   </span>
+                </td>
+                <td className="p-3 text-xs">
+                  {r.company ? (
+                    <div className="flex items-center gap-2">
+                      {r.company.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={r.company.logoUrl}
+                          alt=""
+                          className="h-5 w-5 shrink-0 rounded-[var(--radius-xs)] object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-xs)] bg-[var(--color-surface-strong)] text-[10px] font-semibold uppercase text-[var(--color-muted)]">
+                          {r.company.name.charAt(0)}
+                        </span>
+                      )}
+                      <span className="truncate text-[var(--color-body)]">
+                        {r.company.name}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-[var(--color-muted-soft)]">—</span>
+                  )}
                 </td>
                 <td className="max-w-[400px] truncate p-3 font-mono text-xs text-[var(--color-muted)]">
                   {r.detailsSnippet}

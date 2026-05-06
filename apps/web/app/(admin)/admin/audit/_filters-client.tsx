@@ -13,6 +13,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 
+interface CompanyOption {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+}
+
 interface Props {
   initialFilters: {
     actorId?: string;
@@ -20,9 +26,11 @@ interface Props {
     entityType?: string;
     action?: string;
     actorType?: string;
+    companyId?: string;
     dateFrom?: string;
     dateTo?: string;
   };
+  companies: CompanyOption[];
 }
 
 const ENTITY_TYPES = [
@@ -34,11 +42,16 @@ const ENTITY_TYPES = [
   "bias_flag",
   "scoring_config",
   "resume",
+  "company",
+  "company_member",
+  "interview",
+  "offer",
+  "cron",
 ] as const;
 
 const ACTOR_TYPES = ["user", "ai", "system"] as const;
 
-export function FiltersClient({ initialFilters }: Props) {
+export function FiltersClient({ initialFilters, companies }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -49,6 +62,9 @@ export function FiltersClient({ initialFilters }: Props) {
   const [action, setAction] = useState(initialFilters.action ?? "");
   const [actorType, setActorType] = useState(
     initialFilters.actorType ?? "all",
+  );
+  const [companyId, setCompanyId] = useState(
+    initialFilters.companyId ?? "all",
   );
   const [dateFrom, setDateFrom] = useState(
     initialFilters.dateFrom ? initialFilters.dateFrom.slice(0, 10) : "",
@@ -67,6 +83,8 @@ export function FiltersClient({ initialFilters }: Props) {
     else next.delete("action");
     if (actorType && actorType !== "all") next.set("actorType", actorType);
     else next.delete("actorType");
+    if (companyId && companyId !== "all") next.set("companyId", companyId);
+    else next.delete("companyId");
     if (dateFrom) next.set("dateFrom", new Date(dateFrom).toISOString());
     else next.delete("dateFrom");
     if (dateTo)
@@ -81,6 +99,7 @@ export function FiltersClient({ initialFilters }: Props) {
     setEntityType("all");
     setAction("");
     setActorType("all");
+    setCompanyId("all");
     setDateFrom("");
     setDateTo("");
     startTransition(() => router.push("?"));
@@ -88,7 +107,7 @@ export function FiltersClient({ initialFilters }: Props) {
 
   return (
     <div className="space-y-3 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-4">
-      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-7">
         <div>
           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
             Actor
@@ -152,6 +171,27 @@ export function FiltersClient({ initialFilters }: Props) {
               {ACTOR_TYPES.map((t) => (
                 <SelectItem key={t} value={t} className="capitalize">
                   {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Company
+          </label>
+          <Select
+            value={companyId}
+            onValueChange={(v) => setCompanyId(v ?? "all")}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All companies" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All companies</SelectItem>
+              {companies.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarClock } from "lucide-react";
+import { Building2, CalendarClock } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
 import { useMyInterviewsQuery } from "@/hooks/use-interviews";
@@ -14,6 +14,36 @@ interface InterviewRow {
   format: string;
   locationOrLink: string | null;
   status: string;
+  job?: { id: string; title: string } | null;
+  company?: { id: string; name: string; logoUrl: string | null } | null;
+}
+
+function CompanyTag({
+  company,
+  jobTitle,
+}: {
+  company: InterviewRow["company"];
+  jobTitle: string | null | undefined;
+}) {
+  if (!company && !jobTitle) return null;
+  return (
+    <div className="mt-1 flex items-center gap-2 text-xs text-[var(--color-body)]">
+      {company?.logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={company.logoUrl}
+          alt=""
+          className="h-4 w-4 shrink-0 rounded-[var(--radius-xs)] object-cover"
+        />
+      ) : company ? (
+        <Building2 className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted)]" />
+      ) : null}
+      <span className="truncate">
+        {jobTitle ?? "Interview"}
+        {company?.name ? ` · ${company.name}` : ""}
+      </span>
+    </div>
+  );
 }
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -80,6 +110,7 @@ export function CandidateInterviewsClient() {
                         {FORMAT_LABELS[i.format] ?? i.format} · {i.durationMinutes} min
                       </span>
                     </div>
+                    <CompanyTag company={i.company} jobTitle={i.job?.title} />
                     {i.locationOrLink && (
                       <p className="mt-1 break-all text-xs text-[var(--color-body)]">
                         {i.locationOrLink}
@@ -115,6 +146,7 @@ export function CandidateInterviewsClient() {
                         {FORMAT_LABELS[i.format] ?? i.format} · {i.status}
                       </span>
                     </div>
+                    <CompanyTag company={i.company} jobTitle={i.job?.title} />
                   </li>
                 ))}
               </ul>
