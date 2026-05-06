@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import { recruiterAboutSchema, type RecruiterAbout } from "@aurahire/shared";
 import { useRecruiterProfilesControllerUpdateAboutV1 } from "@aurahire/shared";
+
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,13 @@ interface Props {
   defaults: RecruiterAbout;
 }
 
-export function RecruiterSettingsForm({ defaults }: Props) {
+/**
+ * Recruiter profile form — moved verbatim from the old single-page
+ * settings client. The mutation calls the existing recruiter-profiles
+ * controller; we keep that endpoint (rather than extending PATCH
+ * /profiles/me) because Phase 5's Hard Rule prohibits new backend work.
+ */
+export function RecruiterProfileForm({ defaults }: Props) {
   const router = useRouter();
 
   const form = useForm<RecruiterAbout>({
@@ -108,7 +115,7 @@ export function RecruiterSettingsForm({ defaults }: Props) {
             </FormItem>
           )}
         />
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end pt-2">
           <Button
             type="submit"
             disabled={updateAbout.isPending || !form.formState.isDirty}

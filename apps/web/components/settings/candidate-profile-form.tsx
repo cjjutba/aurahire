@@ -3,13 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toastSuccess, toastApiError } from "@/lib/toast";
 
 import {
   candidatePersonalInfoSchema,
   type CandidatePersonalInfo,
 } from "@aurahire/shared";
 import { useCandidateProfilesControllerUpdatePersonalV1 } from "@aurahire/shared";
+
+import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
@@ -27,7 +28,13 @@ interface Props {
   defaults: CandidatePersonalInfo;
 }
 
-export function CandidateSettingsForm({ defaults }: Props) {
+/**
+ * Candidate profile form — moved verbatim from the old single-page
+ * settings client. Same rationale as the recruiter form: keeps using the
+ * existing candidate-profiles controller because Phase 5 must not add
+ * new backend endpoints.
+ */
+export function CandidateProfileForm({ defaults }: Props) {
   const router = useRouter();
 
   const form = useForm<CandidatePersonalInfo>({
@@ -149,7 +156,7 @@ export function CandidateSettingsForm({ defaults }: Props) {
             )}
           />
         </div>
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end pt-2">
           <Button
             type="submit"
             disabled={update.isPending || !form.formState.isDirty}
