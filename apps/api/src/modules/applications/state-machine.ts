@@ -1,12 +1,12 @@
 import type { ApplicationStatus } from "@aurahire/shared";
 
 const VALID_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
-  applied: ["screening", "rejected"],
-  screening: ["interview", "rejected"],
-  interview: ["offer", "rejected"],
-  offer: ["hired", "rejected", "withdrawn"],
-  hired: [],
-  rejected: [],
+  applied:   ["screening", "interview", "rejected", "withdrawn"],
+  screening: ["interview",              "rejected", "withdrawn"],
+  interview: ["offer",                  "rejected", "withdrawn"],
+  offer:     ["hired",                  "rejected", "withdrawn"],
+  hired:     [],
+  rejected:  [],
   withdrawn: [],
 };
 

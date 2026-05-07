@@ -255,9 +255,13 @@ export class JobsRepository {
       );
       if (orClause) conditions.push(orClause);
     }
-    if (filters.hasBiasFlags) {
+    if (filters.hasBiasFlags === true) {
       conditions.push(
         sql`EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
+      );
+    } else if (filters.hasBiasFlags === false) {
+      conditions.push(
+        sql`NOT EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
       );
     }
     const where =
