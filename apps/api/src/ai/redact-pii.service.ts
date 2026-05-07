@@ -3,10 +3,12 @@ import type { ParsedResume } from "@aurahire/shared";
 
 import { OpenAIService } from "./openai.service";
 import {
-  REDACT_TEXT_SYSTEM_PROMPT,
-  REDACT_TEXT_VERSION,
-  buildRedactTextUserPrompt,
-} from "./prompts/redact-text";
+  REDACT_BATCH_SYSTEM_PROMPT,
+  REDACT_BATCH_VERSION,
+  buildRedactBatchUserPrompt,
+  redactBatchOutputSchema,
+  type RedactBatchInputItem,
+} from "./prompts/redact-batch";
 
 /**
  * Fields that are ALWAYS redacted from a parsed resume before AI scoring.
@@ -46,7 +48,6 @@ export class RedactPiiService {
     };
 
     for (const path of ALWAYS_REDACTED_PATHS) {
-      // path is "contact.<key>"
       const [, key] = path.split(".");
       if (!key) continue;
       const k = key as keyof typeof cleaned.contact;
@@ -60,13 +61,16 @@ export class RedactPiiService {
   }
 
   /**
-   * Full redaction pipeline: structured scrub + LLM-assisted free-text scrub.
-   * Call this before any scoring AI call.
+   * Full redaction pipeline: structured scrub + LLM-assisted batched scrub.
    *
-   * Free-text scrub calls are dispatched in PARALLEL via Promise.allSettled.
-   * Application of results is then walked in deterministic declaration order
-   * (summary first, then experience row-major) so `redactedFields` ordering
-   * is stable regardless of which OpenAI call resolves first.
+   * Every free-text field (summary + each long responsibility) is sent in
+   * ONE structured OpenAI call (prompt v2.0.0). The AI returns the cleaned
+   * text per id; we apply results in declaration order so `redactedFields`
+   * ordering is stable.
+   *
+   * Best-effort: if the batch call fails or returns missing ids, the
+   * affected fields keep their originals — contact-field redactions still
+   * apply, and the worker continues with whatever cleaning landed.
    */
   async redactResume(
     parsed: ParsedResume,
@@ -117,36 +121,45 @@ export class RedactPiiService {
       return { redacted, redactedFields };
     }
 
-    const settled = await Promise.allSettled(
-      tasks.map((t) => this.scrubText(t.original, requestId)),
-    );
+    const items: RedactBatchInputItem[] = tasks.map((t) => ({
+      id: t.path,
+      text: t.original,
+    }));
 
-    settled.forEach((result, idx) => {
-      const task = tasks[idx]!;
-      if (result.status === "rejected") {
-        this.logger.warn(
-          `Scrub failed for ${task.path}: ${(result.reason as Error).message}`,
-        );
-        return;
+    try {
+      const result = await this.openai.generateStructured({
+        schema: redactBatchOutputSchema,
+        schemaName: "RedactBatchOutput",
+        systemPrompt: REDACT_BATCH_SYSTEM_PROMPT,
+        userPrompt: buildRedactBatchUserPrompt(items),
+        requestId: requestId
+          ? `${requestId}:redact-v${REDACT_BATCH_VERSION}`
+          : undefined,
+      });
+
+      const byId = new Map(
+        result.data.items.map((it) => [it.id, it.scrubbed]),
+      );
+
+      for (const task of tasks) {
+        const scrubbed = byId.get(task.path);
+        if (scrubbed === undefined) {
+          this.logger.warn(
+            `Redact batch dropped id ${task.path}; keeping original`,
+          );
+          continue;
+        }
+        if (scrubbed !== task.original) {
+          task.apply(scrubbed);
+          redactedFields.push(task.path);
+        }
       }
-      const scrubbed = result.value;
-      if (scrubbed !== task.original) {
-        task.apply(scrubbed);
-        redactedFields.push(task.path);
-      }
-    });
+    } catch (err) {
+      this.logger.warn(
+        `Batched redaction failed; keeping originals: ${(err as Error).message}`,
+      );
+    }
 
     return { redacted, redactedFields };
-  }
-
-  private async scrubText(text: string, requestId?: string): Promise<string> {
-    const result = await this.openai.generateText({
-      systemPrompt: REDACT_TEXT_SYSTEM_PROMPT,
-      userPrompt: buildRedactTextUserPrompt(text),
-      requestId: requestId
-        ? `${requestId}:redact-v${REDACT_TEXT_VERSION}`
-        : undefined,
-    });
-    return result.text.trim();
   }
 }
