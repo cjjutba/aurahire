@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type {
+  ApplicationStatus,
   AuthUser,
   InterviewStatus,
   RecruiterInterviewsQuery,
@@ -16,6 +17,7 @@ import type {
 
 import { AuditService } from "../../audit";
 import { AUDIT_ACTIONS } from "../../audit/audit.types";
+import { canTransition } from "../applications/state-machine";
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { EmailService } from "../../email/email.service";
 import { EventsService } from "../../realtime";
@@ -81,6 +83,47 @@ export class InterviewsService {
       throw new BadRequestException({
         code: "PAST_DATE",
         message: "Interview cannot be scheduled in the past",
+      });
+    }
+
+    // Auto-advance application status: applied | screening → interview.
+    // Applications already in interview (multi-round), offer, or later states
+    // are left unchanged.
+    const currentStatus = application.status as ApplicationStatus;
+    if (currentStatus === "applied" || currentStatus === "screening") {
+      if (!canTransition(currentStatus, "interview")) {
+        throw new BadRequestException({
+          code: "INVALID_STATUS_TRANSITION",
+          message: `Cannot advance from ${currentStatus} to interview`,
+        });
+      }
+      await this.applicationsRepo.update(applicationId, {
+        status: "interview",
+        statusUpdatedAt: new Date(),
+      });
+      await this.audit.log({
+        actorId: user.id,
+        actorType: "user",
+        action: "application.status_changed",
+        entityType: "application",
+        entityId: applicationId,
+        companyId,
+        details: {
+          from: currentStatus,
+          to: "interview",
+          system: false,
+          viaSchedule: true,
+        },
+        ...requestMeta,
+      });
+      this.events.emitApplicationStatusChanged({
+        applicationId,
+        candidateId: application.candidateId,
+        jobId: application.jobId,
+        recruiterId: user.id,
+        previousStatus: currentStatus,
+        status: "interview",
+        changedAt: new Date().toISOString(),
       });
     }
 
