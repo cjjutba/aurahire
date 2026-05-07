@@ -30,6 +30,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 
 import { ApplyToJobDto } from "./dto/apply.dto";
 import { RecentApplicationsQueryDto } from "./dto/recent-applications-query.dto";
+import { RecruiterApplicationsListQueryDto } from "./dto/recruiter-applications-list-query.dto";
 import { RecruiterStatsQueryDto } from "./dto/recruiter-stats-query.dto";
 import { ShortlistQueryDto } from "./dto/shortlist-query.dto";
 import { UpdateApplicationStatusDto } from "./dto/update-status.dto";
@@ -163,6 +164,23 @@ export class ApplicationsController {
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
     return this.service.listShortlistForRecruiter(user, activeCompany.companyId, query);
+  }
+
+  @Get("recruiter-list")
+  @Roles("recruiter")
+  @ApiOperation({
+    summary: "List all applications across the active company's jobs (paginated, filterable)",
+  })
+  @ApiResponse({ status: 200, type: ShortlistListEnvelopeDto })
+  async listAllForRecruiter(
+    @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
+    @Query() query: RecruiterApplicationsListQueryDto,
+  ): Promise<{
+    data: ApplicationDto[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    return this.service.listAllForRecruiter(user, activeCompany.companyId, query);
   }
 
   @Get("by-job/:jobId")

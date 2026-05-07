@@ -166,15 +166,58 @@ export class ApplicationsService {
           : new Date(application.createdAt).toISOString(),
     });
 
-    // Match scoring is now async — enqueue the work and let the worker
-    // emit application.scored over realtime when the score lands. The DB
-    // row already has score_status='computing' from the schema default.
-    await this.matchScoreQueue.enqueue({
-      applicationId: application.id,
-      candidateId: user.id,
-      jobId: dto.jobId,
-      resumeId,
-    });
+    // Synchronous fast-path: if a preview already covers this exact
+    // (candidate, job, resume) triple — i.e. the candidate saw "See my match"
+    // before applying, or it was auto-pre-computed during resume parse — we
+    // promote it inline. No OpenAI call, no queue, no shimmer on the detail
+    // page. The async worker stays as the fallback for first-time scoring.
+    let promotedScore: MatchScoreDto | null = null;
+    try {
+      promotedScore = await this.scoringService.tryPromoteMatchPreview(
+        application.id,
+        user.id,
+        dto.jobId,
+        resumeId,
+        {
+          title: job.title,
+          department: job.department,
+          experienceLevel: job.experienceLevel,
+          educationRequirement: job.educationRequirement,
+          requiredSkills: job.requiredSkills,
+          descriptionPlain: job.descriptionPlain,
+          companyId: job.companyId,
+        },
+        requestMeta,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Sync preview promotion failed for application ${application.id}: ${(err as Error).message}. Falling back to async worker.`,
+      );
+    }
+
+    if (promotedScore) {
+      await this.repo.update(application.id, { scoreStatus: "completed" });
+      this.events.emitApplicationScored({
+        applicationId: application.id,
+        jobId: application.jobId,
+        recruiterId: job.recruiterId,
+        candidateId: application.candidateId,
+        overallScore: promotedScore.overallScore,
+        band: promotedScore.band,
+        scoredAt: new Date().toISOString(),
+      });
+    } else {
+      // No preview to promote — defer to the async worker. The DB row
+      // already has score_status='computing' from the schema default; the
+      // worker will flip it to 'completed' (or 'failed') and broadcast
+      // application.scored when done.
+      await this.matchScoreQueue.enqueue({
+        applicationId: application.id,
+        candidateId: user.id,
+        jobId: dto.jobId,
+        resumeId,
+      });
+    }
 
     void this.notifyRecruiterOfApplication(application.id).catch((err) => {
       this.logger.warn(`Recruiter notify failed: ${(err as Error).message}`);
@@ -961,7 +1004,7 @@ export class ApplicationsService {
 
     const matchScore = await this.scoringService.getMatchScoreByApplicationId(applicationId);
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
 
     await this.email.send({
       to: recruiter.email,
@@ -1002,7 +1045,7 @@ export class ApplicationsService {
     const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     if (!jobRow) return;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
 
     await this.email.send({
       to: candidate.email,

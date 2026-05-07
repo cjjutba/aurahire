@@ -1,8 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, count, desc, eq, gte, isNotNull, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, sql, type SQL } from "drizzle-orm";
 import {
   applicationsTable,
-  biasFlagsTable,
   jobsTable,
   matchScoresTable,
   profilesTable,
@@ -145,56 +144,109 @@ export class ApplicationsRepository {
     biasFlags: number;
   }> {
     const rangeFilter = this.rangeFilter(range);
+    // postgres-js wants a string for timestamptz parameter binding; serialize
+    // the Date here (mirrors the pattern in admin-stats.repository.ts).
+    const rangeFilterIso = rangeFilter ? rangeFilter.toISOString() : null;
 
-    const [activeJobsRow] = await this.db
-      .select({ c: sql<number>`count(*)::int` })
-      .from(jobsTable)
-      .where(
-        and(
-          eq(jobsTable.companyId, companyId),
-          eq(jobsTable.status, "published"),
+    // Single roundtrip: four independent CTEs evaluated by the planner in one
+    // query, replacing four sequential SELECTs. Numbers are identical to the
+    // prior implementation; the only difference is the wire-trip count.
+    const result = await this.db.execute<{
+      active_jobs: number;
+      total: number;
+      pending: number;
+      interview: number;
+      offered: number;
+      hired: number;
+      avg_score: number | null;
+      bias_flags: number;
+    }>(sql`
+      WITH
+        active_jobs AS (
+          SELECT COUNT(*)::int AS c
+          FROM jobs
+          WHERE company_id = ${companyId}::uuid
+            AND status = 'published'
         ),
-      );
-
-    const [appsRow] = await this.db
-      .select({
-        total: sql<number>`count(*)::int`,
-        pending: sql<number>`count(*) filter (where ${applicationsTable.status} = 'applied')::int`,
-        interview: sql<number>`count(*) filter (where ${applicationsTable.status} = 'interview')::int`,
-        offered: sql<number>`count(*) filter (where ${applicationsTable.status} = 'offer')::int`,
-        hired: sql<number>`count(*) filter (where ${applicationsTable.status} = 'hired')::int`,
-      })
-      .from(applicationsTable)
-      .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .where(
-        and(
-          eq(jobsTable.companyId, companyId),
-          ...(rangeFilter ? [gte(applicationsTable.appliedAt, rangeFilter)] : []),
+        apps_stats AS (
+          SELECT
+            COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE a.status = 'applied')::int AS pending,
+            COUNT(*) FILTER (WHERE a.status = 'interview')::int AS interview,
+            COUNT(*) FILTER (WHERE a.status = 'offer')::int AS offered,
+            COUNT(*) FILTER (WHERE a.status = 'hired')::int AS hired
+          FROM applications a
+          INNER JOIN jobs j ON j.id = a.job_id
+          WHERE j.company_id = ${companyId}::uuid
+            AND (${rangeFilterIso}::timestamptz IS NULL OR a.applied_at >= ${rangeFilterIso}::timestamptz)
         ),
-      );
+        avg_score AS (
+          SELECT AVG(ms.overall_score)::float AS avg_score
+          FROM match_scores ms
+          INNER JOIN jobs j ON j.id = ms.job_id
+          WHERE j.company_id = ${companyId}::uuid
+        ),
+        bias_flags AS (
+          SELECT COUNT(*)::int AS c
+          FROM bias_flags bf
+          INNER JOIN jobs j ON j.id = bf.job_id
+          WHERE j.company_id = ${companyId}::uuid
+            AND bf.status = 'flagged'
+        )
+      SELECT
+        active_jobs.c AS active_jobs,
+        apps_stats.total,
+        apps_stats.pending,
+        apps_stats.interview,
+        apps_stats.offered,
+        apps_stats.hired,
+        avg_score.avg_score,
+        bias_flags.c AS bias_flags
+      FROM active_jobs, apps_stats, avg_score, bias_flags
+    `);
 
-    const [avgRow] = await this.db
-      .select({ avg: sql<number | null>`avg(${matchScoresTable.overallScore})::float` })
-      .from(matchScoresTable)
-      .innerJoin(jobsTable, eq(jobsTable.id, matchScoresTable.jobId))
-      .where(eq(jobsTable.companyId, companyId));
+    // Drizzle's postgres-js wrapper returns rows directly as the awaited array
+    // (matches the pattern in admin-stats.repository.ts: `result[0]`).
+    const row = (result as Array<{
+      active_jobs: number;
+      total: number;
+      pending: number;
+      interview: number;
+      offered: number;
+      hired: number;
+      avg_score: number | null;
+      bias_flags: number;
+    }>)[0];
 
-    const biasFlags = await this.countUnresolvedBiasFlagsForCompany(companyId);
+    if (!row) {
+      return {
+        activeJobs: 0,
+        totalApplications: 0,
+        totalApps: 0,
+        pendingReviews: 0,
+        pendingReview: 0,
+        inInterview: 0,
+        offered: 0,
+        hired: 0,
+        avgMatchScore: 0,
+        biasFlags: 0,
+      };
+    }
 
-    const total = appsRow?.total ?? 0;
-    const pending = appsRow?.pending ?? 0;
+    const total = Number(row.total ?? 0);
+    const pending = Number(row.pending ?? 0);
 
     return {
-      activeJobs: activeJobsRow?.c ?? 0,
+      activeJobs: Number(row.active_jobs ?? 0),
       totalApplications: total,
       totalApps: total,
       pendingReviews: pending,
       pendingReview: pending,
-      inInterview: appsRow?.interview ?? 0,
-      offered: appsRow?.offered ?? 0,
-      hired: appsRow?.hired ?? 0,
-      avgMatchScore: Math.round(avgRow?.avg ?? 0),
-      biasFlags,
+      inInterview: Number(row.interview ?? 0),
+      offered: Number(row.offered ?? 0),
+      hired: Number(row.hired ?? 0),
+      avgMatchScore: Math.round(Number(row.avg_score ?? 0)),
+      biasFlags: Number(row.bias_flags ?? 0),
     };
   }
 
@@ -202,22 +254,6 @@ export class ApplicationsRepository {
     if (range === "all") return null;
     const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
     return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-  }
-
-  private async countUnresolvedBiasFlagsForCompany(
-    companyId: string,
-  ): Promise<number> {
-    const [row] = await this.db
-      .select({ c: sql<number>`count(*)::int` })
-      .from(biasFlagsTable)
-      .innerJoin(jobsTable, eq(jobsTable.id, biasFlagsTable.jobId))
-      .where(
-        and(
-          eq(jobsTable.companyId, companyId),
-          eq(biasFlagsTable.status, "flagged"),
-        ),
-      );
-    return row?.c ?? 0;
   }
 
   // ─── Company analytics (top jobs + status breakdown) ──────────────────
@@ -338,6 +374,98 @@ export class ApplicationsRepository {
       case "recently-shortlisted":
       default:
         orderClause = sql`${applicationsTable.shortlistedAt} desc`;
+        break;
+    }
+
+    const rows = await this.db
+      .select({
+        application: applicationsTable,
+        matchScore: matchScoresTable,
+        candidateFullName: profilesTable.fullName,
+        candidateEmail: profilesTable.email,
+        jobTitle: jobsTable.title,
+      })
+      .from(applicationsTable)
+      .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
+      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .where(where)
+      .orderBy(orderClause)
+      .limit(options.limit)
+      .offset((options.page - 1) * options.limit);
+
+    return {
+      rows: rows.map((r) => ({
+        ...r.application,
+        matchScore: r.matchScore,
+        candidateFullName: r.candidateFullName,
+        candidateEmail: r.candidateEmail,
+        jobTitle: r.jobTitle,
+      })),
+      total: Number(total),
+    };
+  }
+
+  async listAllForCompany(
+    companyId: string,
+    options: {
+      page: number;
+      limit: number;
+      q?: string;
+      status?: ApplicationStatus;
+      jobId?: string;
+      band?: "strong" | "partial" | "limited";
+      sort: "recent" | "oldest" | "score-high";
+    },
+  ): Promise<{
+    rows: Array<
+      Application & {
+        matchScore: MatchScore | null;
+        candidateFullName: string | null;
+        candidateEmail: string | null;
+        jobTitle: string | null;
+      }
+    >;
+    total: number;
+  }> {
+    const conditions: SQL[] = [eq(jobsTable.companyId, companyId)];
+    if (options.status) {
+      conditions.push(eq(applicationsTable.status, options.status));
+    }
+    if (options.jobId) {
+      conditions.push(eq(applicationsTable.jobId, options.jobId));
+    }
+    if (options.band) {
+      conditions.push(eq(matchScoresTable.band, options.band));
+    }
+    if (options.q && options.q.trim()) {
+      const term = `%${options.q.trim().toLowerCase()}%`;
+      conditions.push(
+        sql`(lower(${profilesTable.fullName}) like ${term} or lower(${jobsTable.title}) like ${term})`,
+      );
+    }
+    const where = conditions.length === 1 ? conditions[0] : and(...conditions);
+
+    const countRows = await this.db
+      .select({ count: count() })
+      .from(applicationsTable)
+      .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
+      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .where(where);
+    const total = countRows[0]?.count ?? 0;
+
+    let orderClause: SQL;
+    switch (options.sort) {
+      case "score-high":
+        orderClause = sql`coalesce(${matchScoresTable.overallScore}, -1) desc, ${applicationsTable.appliedAt} desc`;
+        break;
+      case "oldest":
+        orderClause = sql`${applicationsTable.appliedAt} asc`;
+        break;
+      case "recent":
+      default:
+        orderClause = sql`${applicationsTable.appliedAt} desc`;
         break;
     }
 
