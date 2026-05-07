@@ -18,6 +18,8 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:6379:6379"
+    # BullMQ requires `noeviction` so queued jobs are never silently dropped
+    # under memory pressure. 512mb is plenty for thesis-scale traffic.
     command:
       - redis-server
       - --appendonly
@@ -25,7 +27,7 @@ services:
       - --maxmemory
       - "512mb"
       - --maxmemory-policy
-      - allkeys-lru
+      - noeviction
       - --requirepass
       - "${REDIS_PASSWORD}"
     volumes:
