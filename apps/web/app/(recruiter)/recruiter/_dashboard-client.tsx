@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,8 @@ import {
   useRecruiterAnalyticsQuery,
   useRecruiterRecentApplicationsQuery,
 } from "@/hooks/use-dashboard";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { RealtimeEvent } from "@/lib/realtime";
 import type { RecruiterStatsResponse } from "@/lib/query";
 
 type Range = "7d" | "30d" | "90d" | "all";
@@ -391,6 +394,14 @@ export function RecruiterDashboardClient({
   recentLimit: number;
 }) {
   const [range, setRange] = useState<Range>(defaultRange);
+  const queryClient = useQueryClient();
+
+  const invalidateDashboard = (): void => {
+    void queryClient.invalidateQueries({ queryKey: ["recruiter-dashboard"] });
+  };
+
+  useRealtimeChannel(RealtimeEvent.ApplicationCreated, invalidateDashboard);
+  useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, invalidateDashboard);
 
   const stats = useRecruiterStatsQuery(range);
   const analytics = useRecruiterAnalyticsQuery();
