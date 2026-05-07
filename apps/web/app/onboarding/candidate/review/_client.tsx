@@ -6,6 +6,7 @@ import { HighlightProvider } from "@/components/onboarding/resume-preview/highli
 import { ResumePreviewPane } from "@/components/onboarding/resume-preview/resume-preview-pane";
 import { ResumeSheet } from "@/components/onboarding/mobile/resume-sheet";
 import { ReviewStep } from "@/components/onboarding/candidate/review/review-step";
+import { LowConfidenceBanner } from "@/components/onboarding/candidate/low-confidence-banner";
 import { ONBOARDING_STEPS, type LatestParsedResume } from "@/app/onboarding/candidate/_steps";
 import type { SaveStatus } from "@/components/onboarding/save-status-indicator";
 import type { HighlightCategory } from "@/components/onboarding/resume-preview/derive-highlights";
@@ -64,6 +65,7 @@ export function ReviewStepClient({
         title="Review what we found"
         subtitle="Double-check the AI's extraction. Edit anything that's off, add what's missing."
       >
+        <LowConfidenceBanner confidence={latestResume?.parsed?.parse_confidence ?? null} />
         <ReviewStep
           initialExperience={initialExperience}
           initialEducation={initialEducation}

@@ -9,6 +9,7 @@ import {
   CandidatePersonalInfoForm,
   type PersonalFormValues,
 } from "@/components/onboarding/candidate/personal-info-form";
+import { LowConfidenceBanner } from "@/components/onboarding/candidate/low-confidence-banner";
 import { ONBOARDING_STEPS, type LatestParsedResume } from "@/app/onboarding/candidate/_steps";
 import type { SaveStatus } from "@/components/onboarding/save-status-indicator";
 
@@ -49,6 +50,7 @@ export function PersonalStepClient({
         title="Tell us about yourself"
         subtitle="Some fields are prefilled from your resume — review and edit as needed."
       >
+        <LowConfidenceBanner confidence={latestResume?.parsed?.parse_confidence ?? null} />
         <CandidatePersonalInfoForm
           defaults={defaults}
           aiSuggestedFields={aiSuggestedFields}
