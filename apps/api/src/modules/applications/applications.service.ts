@@ -655,6 +655,16 @@ export class ApplicationsService {
         TAGS.companyShortlist(job.companyId),
         TAGS.applicationsCandidate(app.candidateId),
       ]);
+
+      this.events.emitApplicationStatusChanged({
+        applicationId: id,
+        jobId: app.jobId,
+        recruiterId: job.recruiterId,
+        candidateId: app.candidateId,
+        previousStatus: app.status as ApplicationStatus,
+        status: newStatus,
+        changedAt: new Date().toISOString(),
+      });
     } else {
       await this.cacheService.bustTags([TAGS.applicationsCandidate(app.candidateId)]);
     }
