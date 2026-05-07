@@ -108,10 +108,17 @@ export class EventsService {
           // Gateway not yet initialized (boot path or test); silently drop.
           return;
         }
-        server.to([...rooms]).emit(event, payload);
+        // Socket.io accepts a readonly tuple-of-rooms — no copy needed.
+        server.to(rooms as string[]).emit(event, payload);
       } catch (err) {
+        // Include rooms + payload-key set so an ops alert points at the
+        // affected tenant/scope rather than just the event name.
+        const payloadKeys =
+          payload && typeof payload === "object"
+            ? Object.keys(payload as Record<string, unknown>).join(",")
+            : "<non-object>";
         this.logger.warn(
-          `Realtime emit failed for ${event}: ${(err as Error).message}`,
+          `Realtime emit failed for ${event}: ${(err as Error).message} (rooms=${rooms.join("|")} payloadKeys=${payloadKeys})`,
         );
       }
     });

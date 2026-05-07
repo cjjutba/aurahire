@@ -12,12 +12,26 @@
 157-245-195-180.sslip.io {
     encode gzip zstd
 
-    # Forward everything to the NestJS API (PM2 keeps it alive on :3333)
+    # WebSocket path — long-lived connections, keep-alive heartbeats handled
+    # by Socket.io (pingInterval 25s default). Disable read_timeout so an idle
+    # WS isn't severed at the proxy layer; the upstream is in charge of the
+    # connection lifecycle.
+    @websockets path /socket.io/*
+    reverse_proxy @websockets localhost:3333 {
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Real-IP {remote_host}
+        transport http {
+            read_timeout 0
+        }
+    }
+
+    # Default REST/HTML traffic. Long timeout so resume parsing + AI scoring
+    # don't get cut off, but bounded so a stuck upstream eventually surfaces.
     reverse_proxy localhost:3333 {
         header_up X-Forwarded-Proto {scheme}
         header_up X-Forwarded-For {remote_host}
         header_up X-Real-IP {remote_host}
-        # Long timeout so resume parsing + AI scoring don't get cut off
         transport http {
             response_header_timeout 60s
             read_timeout 60s
