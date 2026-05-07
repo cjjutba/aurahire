@@ -157,7 +157,10 @@ export function ParsingProgressCard({
         <div
           className="relative mt-5 h-[2px] w-full overflow-hidden rounded-full bg-[var(--color-surface-strong)]"
           role="progressbar"
-          aria-label="Parsing resume"
+          aria-label={isDone ? "Resume parsed" : "Parsing resume"}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={isDone ? 100 : undefined}
           aria-valuetext={
             isDone ? "Done" : (STAGES[activeIdx]?.label ?? "Working")
           }
