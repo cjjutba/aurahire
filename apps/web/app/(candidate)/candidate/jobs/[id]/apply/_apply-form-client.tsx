@@ -169,6 +169,11 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
         </div>
       </section>
 
+      <ResumeMatchBanner
+        preview={preview}
+        selectedResumeMatchesPreview={selectedResumeMatchesPreview}
+      />
+
       {/* Cover letter card */}
       <section className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
         <div className="flex items-start justify-between gap-4">
@@ -361,4 +366,54 @@ function relativeDate(iso: string): string {
   if (days < 30) return `${Math.floor(days / 7)}w ago`;
   if (days < 365) return `${Math.floor(days / 30)}mo ago`;
   return `${Math.floor(days / 365)}y ago`;
+}
+
+function ResumeMatchBanner({
+  preview,
+  selectedResumeMatchesPreview,
+}: {
+  preview: ApplyMatchPreview | null;
+  selectedResumeMatchesPreview: boolean;
+}) {
+  if (preview && selectedResumeMatchesPreview) {
+    return (
+      <div className="flex items-start gap-2.5 rounded-[var(--radius-md)] bg-[var(--color-primary-soft)] px-4 py-3 text-xs text-[var(--color-primary)]">
+        <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span>
+          <strong className="font-semibold">
+            Apply to lock in this score — no recompute needed.
+          </strong>{" "}
+          We&apos;ll attach the match preview shown above to your application.
+        </span>
+      </div>
+    );
+  }
+  if (preview && !selectedResumeMatchesPreview) {
+    return (
+      <div className="flex items-start gap-2.5 rounded-[var(--radius-md)] bg-[var(--color-score-mid-soft)] px-4 py-3 text-xs text-[var(--color-score-mid)]">
+        <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span>
+          <strong className="font-semibold">
+            You picked a different resume than the one your match was scored
+            against.
+          </strong>{" "}
+          We&apos;ll compute a fresh match when you submit.
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-start gap-2.5 rounded-[var(--radius-md)] bg-[var(--color-surface-soft)] px-4 py-3 text-xs text-[var(--color-body)]">
+      <Sparkles
+        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-primary)]"
+        aria-hidden
+      />
+      <span>
+        <strong className="font-semibold text-[var(--color-ink)]">
+          No match preview yet.
+        </strong>{" "}
+        We&apos;ll score your resume against this job when you submit.
+      </span>
+    </div>
+  );
 }
