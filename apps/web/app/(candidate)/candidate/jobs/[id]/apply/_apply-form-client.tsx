@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import { Check, FileText, Loader2, Sparkles, Star } from "lucide-react";
 
 import { AiShimmer } from "@/components/ai/ai-shimmer";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ApplyMatchSummary,
   type ApplyMatchPreview,
 } from "@/components/score/apply-match-summary";
-import { Textarea } from "@/components/ui/textarea";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 
