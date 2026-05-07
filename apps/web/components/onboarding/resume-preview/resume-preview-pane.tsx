@@ -69,6 +69,8 @@ export function ResumePreviewPane({
 
   const onLoadError = useCallback((err: Error) => {
     if (typeof window !== "undefined") {
+      // Surface the underlying PDF.js failure so we can diagnose URL/CORS/worker
+      // issues from the browser console without needing a remote logger.
       // eslint-disable-next-line no-console -- diagnostic for client-side PDF render failures
       console.warn("[resume-preview] PDF load failed:", err);
     }
@@ -317,9 +319,8 @@ function ViewToggleButton({
       role="tab"
       aria-selected={selected}
       aria-disabled={disabled}
-      disabled={disabled}
       title={disabled ? disabledReason : undefined}
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       className={[
         "inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] px-3 py-1.5 text-xs font-semibold transition-colors",
         disabled
