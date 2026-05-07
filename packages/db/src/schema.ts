@@ -19,6 +19,7 @@ import {
   USER_ROLES,
   USER_STATUS,
   APPLICATION_STATUS,
+  APPLICATION_SCORE_STATUS,
   OFFER_STATUS,
   INTERVIEW_FORMAT,
   INTERVIEW_STATUS,
@@ -257,6 +258,9 @@ export const applicationsTable = pgTable(
       .references(() => resumesTable.id, { onDelete: "restrict" }),
     coverLetter: text("cover_letter"),
     status: text("status", { enum: APPLICATION_STATUS }).notNull().default("applied"),
+    scoreStatus: text("score_status", { enum: APPLICATION_SCORE_STATUS })
+      .notNull()
+      .default("computing"),
     recruiterNotes: text("recruiter_notes"),
     appliedAt: timestamp("applied_at", { withTimezone: true }).notNull().defaultNow(),
     statusUpdatedAt: timestamp("status_updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -269,6 +273,7 @@ export const applicationsTable = pgTable(
     jobIdx: index("applications_job_idx").on(t.jobId),
     candidateIdx: index("applications_candidate_idx").on(t.candidateId),
     statusIdx: index("applications_status_idx").on(t.status),
+    scoreStatusIdx: index("applications_score_status_idx").on(t.scoreStatus),
     appliedIdx: index("applications_applied_idx").on(t.appliedAt),
     shortlistedIdx: index("applications_shortlisted_idx").on(t.shortlistedAt),
   }),
