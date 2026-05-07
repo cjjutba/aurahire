@@ -13,6 +13,7 @@ export * from "./schemas/bias-requests";
 export * from "./schemas/applications";
 export * from "./schemas/admin";
 export * from "./schemas/interviews";
+export * from "./schemas/interview-venues";
 export * from "./schemas/offers";
 export * from "./schemas/companies";
 export * from "./schemas/notifications";

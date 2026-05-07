@@ -47,3 +47,22 @@ export const shortlistQuerySchema = z.object({
 });
 
 export type ShortlistQuery = z.infer<typeof shortlistQuerySchema>;
+
+export const recruiterApplicationsListQuerySchema = z.object({
+  q: z.string().max(200).optional(),
+  status: z.enum(APPLICATION_STATUS).optional(),
+  jobId: uuidSchema.optional(),
+  band: z.enum(["strong", "partial", "limited"]).optional(),
+  sort: z.enum(["recent", "oldest", "score-high"]).optional().default("recent"),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(25),
+});
+
+export type RecruiterApplicationsListQuery = z.infer<
+  typeof recruiterApplicationsListQuerySchema
+>;
+
+export const withdrawApplicationSchema = z.object({
+  reason: z.string().trim().max(500).nullable().optional(),
+});
+export type WithdrawApplicationInput = z.infer<typeof withdrawApplicationSchema>;
