@@ -42,6 +42,7 @@ import {
   NOTIFICATION_EVENT_TYPE,
   NOTIFICATION_MODE,
   NOTIFICATION_SCOPE,
+  INTERVIEW_RECOMMENDATION,
 } from "./enums";
 
 // ============================================================================
@@ -300,11 +301,59 @@ export const interviewsTable = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
     feedbackDueNotifiedAt: timestamp("feedback_due_notified_at", { withTimezone: true }),
+    venueName: text("venue_name").notNull().default(""),
+    addressLine: text("address_line").notNull().default(""),
+    roomOrFloor: text("room_or_floor"),
+    mapUrl: text("map_url"),
+    reportingInstructions: text("reporting_instructions"),
+    whatToBring: text("what_to_bring"),
+    interviewerName: text("interviewer_name"),
+    interviewerTitle: text("interviewer_title"),
+    candidateSummary: text("candidate_summary"),
+    recommendation: text("recommendation", { enum: INTERVIEW_RECOMMENDATION }),
+    sharedWithCandidateAt: timestamp("shared_with_candidate_at", { withTimezone: true }),
+    rescheduledFromId: uuid("rescheduled_from_id"),
+    rescheduledToId: uuid("rescheduled_to_id"),
   },
   (t) => ({
     applicationIdx: index("interviews_application_idx").on(t.applicationId),
     scheduledAtIdx: index("interviews_scheduled_at_idx").on(t.scheduledAt),
     ratingCheck: check("interviews_rating_range", sql`${t.rating} IS NULL OR (${t.rating} >= 1 AND ${t.rating} <= 5)`),
+    recommendationIdx: index("interviews_recommendation_idx").on(t.applicationId, t.recommendation),
+    sharedIdx: index("interviews_shared_idx")
+      .on(t.applicationId)
+      .where(sql`shared_with_candidate_at IS NOT NULL`),
+  }),
+);
+
+export const interviewVenuesTable = pgTable(
+  "interview_venues",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => companiesTable.id, { onDelete: "cascade" }),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => profilesTable.id),
+    label: text("label").notNull(),
+    venueName: text("venue_name").notNull(),
+    addressLine: text("address_line").notNull(),
+    roomOrFloor: text("room_or_floor"),
+    mapUrl: text("map_url"),
+    reportingInstructions: text("reporting_instructions"),
+    whatToBring: text("what_to_bring"),
+    interviewerName: text("interviewer_name"),
+    interviewerTitle: text("interviewer_title"),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    companyLabelUnique: unique("interview_venues_company_label_unique").on(t.companyId, t.label),
+    companyDefaultIdx: index("interview_venues_company_default_idx")
+      .on(t.companyId)
+      .where(sql`is_default = true`),
   }),
 );
 
@@ -679,6 +728,8 @@ export type Application = typeof applicationsTable.$inferSelect;
 export type NewApplication = typeof applicationsTable.$inferInsert;
 export type Interview = typeof interviewsTable.$inferSelect;
 export type NewInterview = typeof interviewsTable.$inferInsert;
+export type InterviewVenue = typeof interviewVenuesTable.$inferSelect;
+export type NewInterviewVenue = typeof interviewVenuesTable.$inferInsert;
 export type Offer = typeof offersTable.$inferSelect;
 export type NewOffer = typeof offersTable.$inferInsert;
 export type ProfileScore = typeof profileScoresTable.$inferSelect;
