@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, FileText, FileType2 } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, FileText, FileType2, RotateCcw } from "lucide-react";
 import { PdfRenderer } from "./pdf-renderer";
 import { HighlightOverlay, type PositionedHighlight } from "./highlight-overlay";
 import { LinearizedResumeView } from "./linearized-resume-view";
@@ -127,33 +128,40 @@ export function ResumePreviewPane({
 
   return (
     <div className={className}>
-      {/* Header row: toggle (when both modes usable) or label, plus open-in-new-tab affordance */}
-      {(canToggle || hasPdf) && (
-        <div className="mb-3 flex items-center justify-between gap-3">
-          {canToggle ? (
-            <div
-              role="tablist"
-              aria-label="Resume view mode"
-              className="inline-flex rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-0.5"
-            >
-              <ViewToggleButton
-                icon={<FileType2 className="h-3.5 w-3.5" aria-hidden />}
-                label="PDF"
-                selected={displayedMode === "pdf"}
-                onClick={() => setUserMode("pdf")}
-              />
-              <ViewToggleButton
-                icon={<FileText className="h-3.5 w-3.5" aria-hidden />}
-                label="Text"
-                selected={displayedMode === "text"}
-                onClick={() => setUserMode("text")}
-              />
-            </div>
-          ) : (
-            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-muted)]">
-              Your resume
-            </span>
-          )}
+      {/* Header row: toggle (when both modes usable) or label, plus replace + open affordances. */}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        {canToggle ? (
+          <div
+            role="tablist"
+            aria-label="Resume view mode"
+            className="inline-flex rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-0.5"
+          >
+            <ViewToggleButton
+              icon={<FileType2 className="h-3.5 w-3.5" aria-hidden />}
+              label="PDF"
+              selected={displayedMode === "pdf"}
+              onClick={() => setUserMode("pdf")}
+            />
+            <ViewToggleButton
+              icon={<FileText className="h-3.5 w-3.5" aria-hidden />}
+              label="Text"
+              selected={displayedMode === "text"}
+              onClick={() => setUserMode("text")}
+            />
+          </div>
+        ) : (
+          <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-muted)]">
+            Your resume
+          </span>
+        )}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/onboarding/candidate?replace=1"
+            className="inline-flex items-center gap-1 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-ink)]"
+          >
+            <RotateCcw className="h-3 w-3" aria-hidden />
+            Replace resume
+          </Link>
           {hasPdf && signedPdfUrl && (
             <a
               href={signedPdfUrl}
@@ -167,7 +175,7 @@ export function ResumePreviewPane({
             </a>
           )}
         </div>
-      )}
+      </div>
 
       {effectiveMode === "loading" && (
         <div className="rounded-lg border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 text-sm text-[var(--color-muted)]">
