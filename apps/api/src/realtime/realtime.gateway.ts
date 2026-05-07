@@ -67,21 +67,38 @@ export class RealtimeGateway
 
   afterInit(server: Server): void {
     this.server = server;
+    // Auth runs as Socket.io middleware so that rejection happens BEFORE the
+    // connection completes. Calling next(err) makes Socket.io serialize the
+    // error to the client as a transport-level connect_error with err.data
+    // populated — which is what the SocketProvider's connect_error listener
+    // observes. Doing the check inside handleConnection (post-connect) would
+    // not surface it that way.
+    server.use(async (socket, next) => {
+      const handshakeAuth = socket.handshake.auth as { token?: unknown } | undefined;
+      const rawToken = handshakeAuth?.token;
+      const token = typeof rawToken === "string" ? rawToken : undefined;
+      const user = await this.jwt.authenticate(token);
+      if (!user) {
+        this.logger.warn(`WS handshake rejected (auth) for client ${socket.id}`);
+        const err: Error & { data?: { code: string } } = new Error("UNAUTHORIZED");
+        err.data = { code: "UNAUTHORIZED" };
+        next(err);
+        return;
+      }
+      (socket.data as SocketData).user = user;
+      next();
+    });
     this.logger.log("Realtime gateway initialized");
   }
 
-  async handleConnection(client: AuthSocket): Promise<void> {
-    const rawToken: unknown = client.handshake.auth?.token;
-    const token = typeof rawToken === "string" ? rawToken : undefined;
-    const user = await this.jwt.authenticate(token);
+  handleConnection(client: AuthSocket): void {
+    // Auth ran in the middleware above; user is guaranteed to be present.
+    const user = client.data.user;
     if (!user) {
-      this.logger.warn(`WS handshake rejected (auth) for client ${client.id}`);
-      client.emit("connect_error", { code: "UNAUTHORIZED" });
+      // Defensive — shouldn't reach here. If it does, force-close.
       client.disconnect(true);
       return;
     }
-
-    client.data.user = user;
 
     const joined: string[] = [];
     void client.join(Rooms.user(user.id));
