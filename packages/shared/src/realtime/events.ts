@@ -94,6 +94,10 @@ export const offerSentSchema = z.object({
 });
 export type OfferSentPayload = z.infer<typeof offerSentSchema>;
 
+// `actorId` is nullable (system-generated entries have no human actor).
+// `entityId` is NOT nullable to match the DB column constraint
+// (audit_logs.entity_id is NOT NULL — every audit row references a concrete
+// entity).
 export const auditEntrySchema = z.object({
   auditId: z.string().uuid(),
   actorId: z.string().uuid().nullable(),

@@ -66,7 +66,8 @@ export class RealtimeGateway
   ) {}
 
   afterInit(server: Server): void {
-    this.server = server;
+    // @WebSocketServer() already populates this.server; the explicit
+    // assignment is intentionally absent.
     // Auth runs as Socket.io middleware so that rejection happens BEFORE the
     // connection completes. Calling next(err) makes Socket.io serialize the
     // error to the client as a transport-level connect_error with err.data
@@ -135,7 +136,7 @@ export class RealtimeGateway
     @ConnectedSocket() client: AuthSocket,
     @MessageBody() body: unknown,
   ): Promise<void> {
-    if (!this.limiter.allow(client.id)) {
+    if (!this.limiter.allow(client.id, "subscribe")) {
       client.emit("subscribe_error", { reason: "rate_limited" });
       client.disconnect(true);
       return;
@@ -181,7 +182,7 @@ export class RealtimeGateway
     @ConnectedSocket() client: AuthSocket,
     @MessageBody() body: unknown,
   ): void {
-    if (!this.limiter.allow(client.id)) {
+    if (!this.limiter.allow(client.id, "unsubscribe")) {
       client.disconnect(true);
       return;
     }

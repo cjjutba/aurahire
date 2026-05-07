@@ -396,8 +396,16 @@ export function RecruiterDashboardClient({
   const [range, setRange] = useState<Range>(defaultRange);
   const queryClient = useQueryClient();
 
+  // Targeted invalidation: only stats + recent depend on application events.
+  // Analytics aggregations (heavier query) only need a refetch on the natural
+  // refetchInterval, not on every incoming event.
   const invalidateDashboard = (): void => {
-    void queryClient.invalidateQueries({ queryKey: ["recruiter-dashboard"] });
+    void queryClient.invalidateQueries({
+      queryKey: ["recruiter-dashboard", "stats"],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ["recruiter-dashboard", "recent"],
+    });
   };
 
   useRealtimeChannel(RealtimeEvent.ApplicationCreated, invalidateDashboard);
