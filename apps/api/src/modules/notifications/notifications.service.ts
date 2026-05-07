@@ -92,4 +92,56 @@ export class NotificationsService {
     if (SECURITY_EVENTS.has(eventType)) return "instant";
     return this.prefs.getEffectiveMode(userId, eventType);
   }
+
+  async listForUser(
+    userId: string,
+    query: { tab: "unread" | "all"; limit: number; cursor?: string },
+  ) {
+    const result = await this.repo.listForUser(userId, query);
+    return {
+      items: result.items.map((row) => ({
+        id: row.id,
+        eventType: row.eventType,
+        scope: row.scope,
+        title: row.title,
+        body: row.body,
+        link: row.link,
+        entityType: row.entityType,
+        entityId: row.entityId,
+        actorId: row.actorId,
+        metadata: row.metadata,
+        readAt: row.readAt?.toISOString() ?? null,
+        createdAt: row.createdAt.toISOString(),
+      })),
+      nextCursor: result.nextCursor,
+    };
+  }
+
+  async getUnreadCount(userId: string) {
+    const count = await this.repo.countUnread(userId);
+    return { count, displayCount: count > 99 ? "99+" : String(count) };
+  }
+
+  async markRead(id: string, userId: string) {
+    const { unreadCount } = await this.repo.markRead(id, userId);
+    return {
+      unreadCount,
+      count: unreadCount,
+      displayCount: unreadCount > 99 ? "99+" : String(unreadCount),
+    };
+  }
+
+  async markAllRead(userId: string) {
+    await this.repo.markAllRead(userId);
+    return { unreadCount: 0, count: 0, displayCount: "0" };
+  }
+
+  async dismiss(id: string, userId: string) {
+    const { unreadCount } = await this.repo.dismiss(id, userId);
+    return {
+      unreadCount,
+      count: unreadCount,
+      displayCount: unreadCount > 99 ? "99+" : String(unreadCount),
+    };
+  }
 }

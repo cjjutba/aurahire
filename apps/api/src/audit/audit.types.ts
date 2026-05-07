@@ -76,6 +76,16 @@ export const AUDIT_ACTIONS = {
   COMPANY_MEMBER_REMOVED: "company_member.removed",
   COMPANY_MEMBER_LEFT: "company_member.left",
   COMPANY_MEMBER_OWNERSHIP_TRANSFERRED: "company_member.ownership_transferred",
+  // Notifications
+  NOTIFICATIONS_MARKED_ALL_READ: "notifications.marked_all_read",
+  NOTIFICATION_PREFERENCE_UPDATED: "notification_preference.updated",
+  NOTIFICATION_PREFERENCES_RESET: "notification_preferences.reset",
+  DIGEST_EMAIL_BATCH_RUN: "notifications.digest_email_batch_run",
+  NOTIFICATIONS_RETENTION_RUN: "notifications.retention_run",
+  INTERVIEW_REMINDER_RUN: "cron.interview_reminder.executed",
+  OFFER_EXPIRY_REMINDER_RUN: "cron.offer_expiry_reminder.executed",
+  INTERVIEW_FEEDBACK_DUE_RUN: "cron.interview_feedback_due.executed",
+  SYSTEM_AI_SCORING_FAILURE_NOTIFIED: "system.ai_scoring_failure_notified",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS] | string;
