@@ -6,7 +6,7 @@ import {
   EDUCATION_REQUIREMENT,
   JOB_STATUS,
 } from "../enums";
-import { paginationSchema } from "./shared.ts";
+import { paginationSchema } from "./shared";
 
 const moneySchema = z.coerce.number().int().nonnegative().nullable().optional();
 

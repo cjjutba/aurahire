@@ -4,7 +4,7 @@ import {
   phoneSchema,
   passwordSchema,
   fullNameSchema,
-} from "./shared.ts";
+} from "./shared";
 
 // ============================================================================
 // LOGIN

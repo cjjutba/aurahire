@@ -17,7 +17,7 @@ import {
   biasFlagsTable,
   scoringConfigTable,
   auditLogsTable,
-} from "./schema.ts";
+} from "./schema";
 
 export const profilesRelations = relations(profilesTable, ({ one, many }) => ({
   candidateProfile: one(candidateProfilesTable, {

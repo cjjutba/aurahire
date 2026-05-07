@@ -1,4 +1,4 @@
-export * from "./generated.ts";
+export * from "./generated";
 export {
   fetcher,
   setAccessToken,
@@ -6,4 +6,4 @@ export {
   setActiveCompanyResolver,
   type Fetcher,
   type FetcherOptions,
-} from "./fetcher.ts";
+} from "./fetcher";

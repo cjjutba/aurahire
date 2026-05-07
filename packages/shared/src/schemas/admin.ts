@@ -6,8 +6,8 @@ import {
   JOB_STATUS,
   USER_ROLES,
   USER_STATUS,
-} from "../enums/index.ts";
-import { uuidSchema } from "./shared.ts";
+} from "../enums/index";
+import { uuidSchema } from "./shared";
 
 // ---------- LIST USERS QUERY ----------
 export const listAdminUsersQuerySchema = z.object({
