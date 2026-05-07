@@ -20,19 +20,22 @@ interface Props {
 
 type PdfStatus = "loading" | "rendered" | "image-only" | "failed";
 type ViewMode = "pdf" | "text";
-type EffectiveMode = ViewMode | "loading" | "empty";
 
 const IMAGE_ONLY_PDF_THRESHOLD = 50;
 
 /**
- * Right-pane resume preview. Renders the *actual uploaded PDF* by default,
- * with parsed-data highlight overlays placed over the PDF.js text layer.
- * Falls back to a linearized text view when:
- *   - the signed PDF URL is missing,
- *   - PDF.js fails to load the document, or
- *   - the document is image-only (no extractable text layer).
+ * Right-pane resume preview shown on `/onboarding/candidate/personal` and
+ * `/onboarding/candidate/review`. Two tabs:
  *
- * Users can flip between PDF and Text manually via the segmented toggle.
+ *   • Original     — PDF.js-rendered canonical PDF with field-tied highlight
+ *                    overlays. For DOCX uploads the backend exposes a canonical
+ *                    PDF derivative, so DOCX renders here too.
+ *   • Parsed Text  — linearized rawText with inline highlights.
+ *
+ * The toggle is always visible when at least one source is available; each
+ * tab handles its own empty state and offers a one-click jump to the other
+ * tab when its content can't render. Highlight behavior (active categories,
+ * hover pulse, click-to-focus-field) is identical on both tabs.
  */
 export function ResumePreviewPane({
   signedPdfUrl,
@@ -65,8 +68,6 @@ export function ResumePreviewPane({
   }, []);
 
   const onLoadError = useCallback((err: Error) => {
-    // Surface the underlying PDF.js failure so we can diagnose URL/CORS/worker
-    // issues from the browser console without needing a remote logger.
     if (typeof window !== "undefined") {
       // eslint-disable-next-line no-console -- diagnostic for client-side PDF render failures
       console.warn("[resume-preview] PDF load failed:", err);
@@ -74,32 +75,36 @@ export function ResumePreviewPane({
     setPdfStatus("failed");
   }, []);
 
-  const effectiveMode: EffectiveMode = useMemo(() => {
-    if (!hasPdf && !hasText) return "empty";
+  // Per-tab availability. Used both to disable tab buttons and to decide
+  // whether each tab renders content or an empty state.
+  const originalAvailable = hasPdf && pdfStatus !== "failed";
+  const parsedTextAvailable = hasText;
+  const anyAvailable = originalAvailable || parsedTextAvailable;
 
-    if (userMode === "text") {
-      return hasText ? "text" : "empty";
-    }
-    if (userMode === "pdf") {
-      if (!hasPdf) return hasText ? "text" : "empty";
-      if (pdfStatus === "loading") return "loading";
-      if (pdfStatus === "failed") return hasText ? "text" : "empty";
-      return "pdf";
-    }
-
-    // Auto: prefer PDF, fall back to text on failure / image-only.
-    if (!hasPdf) return hasText ? "text" : "empty";
-    if (pdfStatus === "loading") return "loading";
+  // Default tab when the user hasn't explicitly picked. Auto-flips as
+  // pdfStatus transitions (loading → rendered → image-only/failed). Once
+  // userMode is set, this whole block is bypassed.
+  const displayedMode: ViewMode = useMemo(() => {
+    if (userMode) return userMode;
     if (pdfStatus === "rendered") return "pdf";
-    if (pdfStatus === "image-only") {
-      return hasText ? "text" : "pdf";
-    }
-    return hasText ? "text" : "empty";
-  }, [hasPdf, hasText, userMode, pdfStatus]);
+    if (pdfStatus === "loading") return hasPdf ? "pdf" : "text";
+    if (pdfStatus === "image-only") return parsedTextAvailable ? "text" : "pdf";
+    // failed
+    return parsedTextAvailable ? "text" : "pdf";
+  }, [userMode, pdfStatus, hasPdf, parsedTextAvailable]);
 
-  // Compute highlight rects whenever PDF view is active and pages are ready.
+  // The PDF container shows only when we're on Original AND the PDF actually
+  // rendered (or rendered as image-only). For loading/failed states we
+  // surface a placeholder *instead of* the hidden container.
+  const showPdfDocument =
+    displayedMode === "pdf" &&
+    (pdfStatus === "rendered" || pdfStatus === "image-only");
+
+  // Compute highlight rects whenever Original is shown AND the PDF rendered.
   const positioned: PositionedHighlight[] = useMemo(() => {
-    if (effectiveMode !== "pdf" || pages.length === 0) return [];
+    if (displayedMode !== "pdf" || pdfStatus !== "rendered" || pages.length === 0) {
+      return [];
+    }
     const out: PositionedHighlight[] = [];
     for (let p = 0; p < pages.length; p++) {
       for (const h of highlights) {
@@ -108,29 +113,23 @@ export function ResumePreviewPane({
       }
     }
     return out;
-  }, [effectiveMode, pages, highlights]);
+  }, [displayedMode, pdfStatus, pages, highlights]);
 
-  // Re-collect page containers whenever PDF view becomes active.
+  // Re-collect page containers whenever Original becomes the rendered tab.
   useEffect(() => {
-    if (effectiveMode !== "pdf") return;
+    if (!showPdfDocument) return;
     if (!containerRef.current) return;
     const nodes = Array.from(
       containerRef.current.querySelectorAll<HTMLElement>(":scope > div"),
     );
     setPageContainers(nodes);
-  }, [effectiveMode]);
-
-  const canToggle = hasPdf && hasText && pdfStatus !== "failed";
-  const displayedMode: ViewMode =
-    userMode ?? (effectiveMode === "pdf" ? "pdf" : "text");
-  const showImageOnlyHint =
-    effectiveMode === "pdf" && pdfStatus === "image-only";
+  }, [showPdfDocument]);
 
   return (
     <div className={className}>
-      {/* Header row: toggle (when both modes usable) or label, plus replace + open affordances. */}
+      {/* Header: always-on toggle (when any source exists) + side actions. */}
       <div className="mb-3 flex items-center justify-between gap-3">
-        {canToggle ? (
+        {anyAvailable ? (
           <div
             role="tablist"
             aria-label="Resume view mode"
@@ -138,14 +137,18 @@ export function ResumePreviewPane({
           >
             <ViewToggleButton
               icon={<FileType2 className="h-3.5 w-3.5" aria-hidden />}
-              label="PDF"
+              label="Original"
               selected={displayedMode === "pdf"}
+              disabled={!originalAvailable}
+              disabledReason="Original document couldn't be loaded."
               onClick={() => setUserMode("pdf")}
             />
             <ViewToggleButton
               icon={<FileText className="h-3.5 w-3.5" aria-hidden />}
-              label="Text"
+              label="Parsed Text"
               selected={displayedMode === "text"}
+              disabled={!parsedTextAvailable}
+              disabledReason="Parsed text isn't available for this resume."
               onClick={() => setUserMode("text")}
             />
           </div>
@@ -177,35 +180,71 @@ export function ResumePreviewPane({
         </div>
       </div>
 
-      {effectiveMode === "loading" && (
-        <div className="rounded-lg border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 text-sm text-[var(--color-muted)]">
-          Loading preview…
-        </div>
-      )}
-
-      {effectiveMode === "empty" && (
+      {/* No source available at all. */}
+      {!anyAvailable && (
         <div className="rounded-lg border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 text-sm text-[var(--color-muted)]">
           No resume preview available.
         </div>
       )}
 
-      {effectiveMode === "text" && hasText && (
-        <LinearizedResumeView
-          rawText={rawText!}
-          highlights={highlights}
-          activeCategories={activeCategories}
-        />
+      {/* Original tab content (when selected). The PDF document itself is
+          rendered separately below (kept mounted to stay warm). */}
+      {anyAvailable && displayedMode === "pdf" && (
+        <>
+          {pdfStatus === "loading" && hasPdf && (
+            <div className="rounded-lg border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 text-sm text-[var(--color-muted)]">
+              Loading preview…
+            </div>
+          )}
+          {(pdfStatus === "failed" || !hasPdf) && (
+            <PreviewEmptyState
+              message="We couldn't render the original document."
+              ctaLabel="View Parsed Text"
+              onCta={() => setUserMode("text")}
+              ctaDisabled={!parsedTextAvailable}
+            />
+          )}
+        </>
+      )}
+
+      {/* Parsed Text tab content (when selected). */}
+      {anyAvailable && displayedMode === "text" && (
+        <>
+          {hasText ? (
+            <LinearizedResumeView
+              rawText={rawText!}
+              highlights={highlights}
+              activeCategories={activeCategories}
+            />
+          ) : (
+            <PreviewEmptyState
+              message="Parsed text isn't available for this resume."
+              ctaLabel="View Original"
+              onCta={() => setUserMode("pdf")}
+              ctaDisabled={!originalAvailable}
+            />
+          )}
+        </>
+      )}
+
+      {/* Image-only banner (Original tab, image-only PDFs only). */}
+      {displayedMode === "pdf" && pdfStatus === "image-only" && (
+        <p className="mt-3 rounded-md border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-xs text-[var(--color-muted)]">
+          This PDF appears to be image-only — highlights aren&apos;t available
+          on the document. Switch to <strong>Parsed Text</strong> for the
+          highlighted content.
+        </p>
       )}
 
       {/*
-        Mount the PDF renderer whenever a URL exists, even when text view is
+        PDF renderer. Mounted whenever a URL exists, even when Parsed Text is
         showing — this keeps the canvas + text layer warm so toggling back to
-        PDF is instant. Hidden via display:none, not unmounted.
+        Original is instant. Hidden via display:none when not visible.
       */}
       {hasPdf && (
         <div
           ref={containerRef}
-          className={effectiveMode === "pdf" ? "block" : "hidden"}
+          className={showPdfDocument ? "block" : "hidden"}
         >
           <PdfRenderer
             url={signedPdfUrl!}
@@ -215,15 +254,8 @@ export function ResumePreviewPane({
         </div>
       )}
 
-      {showImageOnlyHint && (
-        <p className="mt-3 rounded-md border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-xs text-[var(--color-muted)]">
-          This PDF appears to be image-only — highlights aren&apos;t available
-          on the document. Switch to <strong>Text</strong> for the parsed
-          content.
-        </p>
-      )}
-
-      {effectiveMode === "pdf" &&
+      {showPdfDocument &&
+        pdfStatus === "rendered" &&
         pageContainers.length > 0 &&
         positioned.length > 0 && (
           <HighlightOverlay
@@ -236,15 +268,47 @@ export function ResumePreviewPane({
   );
 }
 
+function PreviewEmptyState({
+  message,
+  ctaLabel,
+  onCta,
+  ctaDisabled,
+}: {
+  message: string;
+  ctaLabel: string;
+  onCta: () => void;
+  ctaDisabled: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8 text-center">
+      <FileText className="h-6 w-6 text-[var(--color-muted)]" aria-hidden />
+      <p className="text-sm text-[var(--color-body)]">{message}</p>
+      {!ctaDisabled && (
+        <button
+          type="button"
+          onClick={onCta}
+          className="inline-flex items-center gap-1 rounded-[var(--radius-pill)] bg-[var(--color-primary-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-[var(--color-on-primary)]"
+        >
+          {ctaLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ViewToggleButton({
   icon,
   label,
   selected,
+  disabled,
+  disabledReason,
   onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   selected: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
   onClick: () => void;
 }) {
   return (
@@ -252,12 +316,17 @@ function ViewToggleButton({
       type="button"
       role="tab"
       aria-selected={selected}
+      aria-disabled={disabled}
+      disabled={disabled}
+      title={disabled ? disabledReason : undefined}
       onClick={onClick}
       className={[
         "inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] px-3 py-1.5 text-xs font-semibold transition-colors",
-        selected
-          ? "bg-[var(--color-primary)] text-[var(--color-on-primary)]"
-          : "text-[var(--color-body)] hover:text-[var(--color-ink)]",
+        disabled
+          ? "cursor-not-allowed text-[var(--color-muted)] opacity-40"
+          : selected
+            ? "bg-[var(--color-primary)] text-[var(--color-on-primary)]"
+            : "text-[var(--color-body)] hover:text-[var(--color-ink)]",
       ].join(" ")}
     >
       {icon}
