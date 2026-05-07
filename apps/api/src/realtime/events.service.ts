@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import {
   RealtimeEvent,
   type ApplicationCreatedPayload,
+  type ApplicationScoredPayload,
   type ApplicationStatusChangedPayload,
   type AuditEntryPayload,
   type BiasFlagCreatedPayload,
@@ -42,6 +43,18 @@ export class EventsService {
   emitApplicationStatusChanged(payload: ApplicationStatusChangedPayload): void {
     this.broadcast(
       RealtimeEvent.ApplicationStatusChanged,
+      payload,
+      [
+        Rooms.user(payload.candidateId),
+        Rooms.recruiter(payload.recruiterId),
+        Rooms.job(payload.jobId),
+      ],
+    );
+  }
+
+  emitApplicationScored(payload: ApplicationScoredPayload): void {
+    this.broadcast(
+      RealtimeEvent.ApplicationScored,
       payload,
       [
         Rooms.user(payload.candidateId),
