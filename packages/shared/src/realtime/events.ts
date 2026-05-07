@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { APPLICATION_STATUS, BIAS_CATEGORY, INTERVIEW_FORMAT } from "../enums";
+
 // Event names — the single source of truth used by both backend emitters and
 // frontend listeners. Past-tense, dotted-namespace.
 export const RealtimeEvent = {
@@ -30,8 +32,8 @@ export const applicationStatusChangedSchema = z.object({
   jobId: z.string().uuid(),
   recruiterId: z.string().uuid(),
   candidateId: z.string().uuid(),
-  previousStatus: z.string(),
-  status: z.string(),
+  previousStatus: z.enum(APPLICATION_STATUS),
+  status: z.enum(APPLICATION_STATUS),
   changedAt: isoDate,
 });
 export type ApplicationStatusChangedPayload = z.infer<
@@ -45,7 +47,7 @@ export const interviewScheduledSchema = z.object({
   recruiterId: z.string().uuid(),
   candidateId: z.string().uuid(),
   scheduledFor: isoDate,
-  format: z.string(),
+  format: z.enum(INTERVIEW_FORMAT),
 });
 export type InterviewScheduledPayload = z.infer<typeof interviewScheduledSchema>;
 
@@ -63,7 +65,7 @@ export const auditEntrySchema = z.object({
   actorId: z.string().uuid().nullable(),
   action: z.string(),
   entityType: z.string(),
-  entityId: z.string().uuid().nullable(),
+  entityId: z.string().uuid(),
   createdAt: isoDate,
   summary: z.string(),
 });
@@ -73,7 +75,7 @@ export const biasFlagCreatedSchema = z.object({
   flagId: z.string().uuid(),
   jobId: z.string().uuid(),
   term: z.string(),
-  category: z.string(),
+  category: z.enum(BIAS_CATEGORY),
   createdAt: isoDate,
 });
 export type BiasFlagCreatedPayload = z.infer<typeof biasFlagCreatedSchema>;
