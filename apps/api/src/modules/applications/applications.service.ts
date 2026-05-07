@@ -16,6 +16,7 @@ import type {
 
 import { AuditService } from "../../audit";
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
+import { EventsService } from "../../realtime";
 import { EmailService } from "../../email/email.service";
 import { JobsRepository } from "../jobs/jobs.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository";
@@ -57,6 +58,7 @@ export class ApplicationsService {
     private readonly email: EmailService,
     private readonly audit: AuditService,
     private readonly cacheService: CacheService,
+    private readonly events: EventsService,
   ) {}
 
   // -----------------------------------------------------------------
@@ -150,6 +152,17 @@ export class ApplicationsService {
       TAGS.companyDashboard(job.companyId),
       TAGS.companyApplications(job.companyId),
     ]);
+
+    this.events.emitApplicationCreated({
+      applicationId: application.id,
+      jobId: application.jobId,
+      recruiterId: job.recruiterId,
+      candidateId: application.candidateId,
+      createdAt:
+        application.createdAt instanceof Date
+          ? application.createdAt.toISOString()
+          : new Date(application.createdAt).toISOString(),
+    });
 
     let matchScoreDto: MatchScoreDto | null = null;
     try {
@@ -529,6 +542,16 @@ export class ApplicationsService {
       TAGS.applicationsCandidate(app.candidateId),
     ]);
 
+    this.events.emitApplicationStatusChanged({
+      applicationId: id,
+      jobId: app.jobId,
+      recruiterId: job.recruiterId,
+      candidateId: app.candidateId,
+      previousStatus: app.status as ApplicationStatus,
+      status: dto.newStatus,
+      changedAt: new Date().toISOString(),
+    });
+
     void this.notifyCandidateOfStatusChange(id, app.status, dto.newStatus).catch((err) => {
       this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
     });
@@ -691,6 +714,16 @@ export class ApplicationsService {
         TAGS.companyDashboard(withdrawnJob.companyId),
         TAGS.companyApplications(withdrawnJob.companyId),
       ]);
+
+      this.events.emitApplicationStatusChanged({
+        applicationId: id,
+        jobId: app.jobId,
+        recruiterId: withdrawnJob.recruiterId,
+        candidateId: app.candidateId,
+        previousStatus: app.status as ApplicationStatus,
+        status: "withdrawn",
+        changedAt: new Date().toISOString(),
+      });
     } else {
       await this.cacheService.bustTags([TAGS.applicationsCandidate(user.id)]);
     }
