@@ -31,6 +31,11 @@ export class InterviewDto {
   status!: string;
   @ApiPropertyOptional({ nullable: true }) feedback!: string | null;
   @ApiPropertyOptional({ nullable: true, type: Number }) rating!: number | null;
+  @ApiPropertyOptional({
+    nullable: true,
+    enum: ["proceed", "hold", "reject"],
+  })
+  recommendation!: "proceed" | "hold" | "reject" | null;
   @ApiProperty() createdAt!: string;
   @ApiProperty() updatedAt!: string;
   @ApiPropertyOptional({ type: () => InterviewCandidateRefDto, nullable: true })

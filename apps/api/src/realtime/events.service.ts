@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import {
   RealtimeEvent,
   type ApplicationCreatedPayload,
+  type ApplicationRecommendationSetPayload,
   type ApplicationScoredPayload,
   type ApplicationStatusChangedPayload,
   type ApplicationWithdrawnPayload,
@@ -70,6 +71,14 @@ export class EventsService {
       RealtimeEvent.ApplicationWithdrawn,
       payload,
       [Rooms.user(payload.candidateId), Rooms.job(payload.jobId)],
+    );
+  }
+
+  emitApplicationRecommendationSet(payload: ApplicationRecommendationSetPayload): void {
+    this.broadcast(
+      RealtimeEvent.ApplicationRecommendationSet,
+      payload,
+      [Rooms.recruiter(payload.recruiterId)],
     );
   }
 

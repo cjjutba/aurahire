@@ -185,24 +185,55 @@ export class InterviewsService {
   ): Promise<InterviewDto> {
     const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
 
+    const previousRecommendation = interview.recommendation ?? null;
+    const newRecommendation = dto.recommendation ?? null;
+
     const updated = await this.repo.update(interviewId, {
       feedback: dto.feedback,
       rating: dto.rating ?? null,
+      recommendation: newRecommendation,
     });
 
     await this.audit.log({
       actorId: user.id,
       actorType: "user",
-      action: AUDIT_ACTIONS.INTERVIEW_FEEDBACK_UPDATED,
+      action: AUDIT_ACTIONS.INTERVIEW_FEEDBACK_SUBMITTED,
       entityType: "interview",
       entityId: interviewId,
       companyId,
       details: {
         applicationId: interview.applicationId,
         rating: dto.rating ?? null,
+        hasRecommendation: newRecommendation !== null,
       },
       ...requestMeta,
     });
+
+    if (newRecommendation !== previousRecommendation) {
+      await this.audit.log({
+        actorId: user.id,
+        actorType: "user",
+        action: AUDIT_ACTIONS.INTERVIEW_RECOMMENDATION_SET,
+        entityType: "interview",
+        entityId: interviewId,
+        companyId,
+        details: {
+          applicationId: interview.applicationId,
+          from: previousRecommendation,
+          to: newRecommendation,
+        },
+        ...requestMeta,
+      });
+
+      if (newRecommendation) {
+        this.events.emitApplicationRecommendationSet({
+          applicationId: interview.applicationId,
+          interviewId,
+          recruiterId: user.id,
+          recommendation: newRecommendation as "proceed" | "hold" | "reject",
+        });
+      }
+    }
 
     const app = await this.applicationsRepo.findById(interview.applicationId);
     if (app) {
@@ -479,6 +510,7 @@ export class InterviewsService {
     status: string;
     feedback: string | null;
     rating: number | null;
+    recommendation: string | null;
     createdAt: Date;
     updatedAt: Date;
   }> {
@@ -561,6 +593,7 @@ export class InterviewsService {
     status: string;
     feedback: string | null;
     rating: number | null;
+    recommendation?: string | null;
     createdAt: Date;
     updatedAt: Date;
   }): InterviewDto {
@@ -575,6 +608,7 @@ export class InterviewsService {
       status: i.status,
       feedback: i.feedback,
       rating: i.rating,
+      recommendation: (i.recommendation ?? null) as "proceed" | "hold" | "reject" | null,
       createdAt: i.createdAt.toISOString(),
       updatedAt: i.updatedAt.toISOString(),
     };
