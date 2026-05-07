@@ -55,12 +55,22 @@ const KNOWN_LABELS: Record<string, string> = {
   "application.status_changed": "Application status changed",
   "application.notes_updated": "Application notes updated",
   "application.withdrawn": "Application withdrawn",
+  "application.withdrawn_by_candidate": "Application withdrawn by candidate",
   "application.email_sent": "Candidate emailed",
 
   // Interviews
   "interview.scheduled": "Interview scheduled",
   "interview.feedback_updated": "Interview feedback updated",
+  "interview.feedback_submitted": "Interview feedback submitted",
+  "interview.feedback_shared": "Interview feedback shared with candidate",
+  "interview.recommendation_set": "Interview recommendation set",
+  "interview.auto_completed": "Interview auto-completed",
+  "interview.no_show_marked": "Interview marked as no-show",
+  "interview.rescheduled": "Interview rescheduled",
   "interview.status_changed": "Interview status changed",
+  "interview_venue.created": "Interview venue created",
+  "interview_venue.updated": "Interview venue updated",
+  "interview_venue.deleted": "Interview venue deleted",
 
   // Offers
   "offer.sent": "Offer sent",
@@ -107,6 +117,7 @@ const KNOWN_LABELS: Record<string, string> = {
   "cron.interview_reminder.executed": "Interview reminder cron ran",
   "cron.offer_expiry_reminder.executed": "Offer expiry reminder cron ran",
   "cron.interview_feedback_due.executed": "Interview feedback reminder cron ran",
+  "cron.interview_autocomplete.executed": "Interview auto-complete cron ran",
   "system.ai_scoring_failure_notified": "AI scoring failure notified",
 };
 

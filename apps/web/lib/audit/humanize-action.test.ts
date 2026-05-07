@@ -74,6 +74,36 @@ describe("humanizeAuditAction", () => {
         "Password reset (forced by admin)",
       );
     });
+
+    it("humanizes interview.rescheduled", () => {
+      expect(humanizeAuditAction("interview.rescheduled")).toBe(
+        "Interview rescheduled",
+      );
+    });
+
+    it("humanizes interview.no_show_marked", () => {
+      expect(humanizeAuditAction("interview.no_show_marked")).toBe(
+        "Interview marked as no-show",
+      );
+    });
+
+    it("humanizes interview_venue.created", () => {
+      expect(humanizeAuditAction("interview_venue.created")).toBe(
+        "Interview venue created",
+      );
+    });
+
+    it("humanizes application.withdrawn_by_candidate", () => {
+      expect(humanizeAuditAction("application.withdrawn_by_candidate")).toBe(
+        "Application withdrawn by candidate",
+      );
+    });
+
+    it("humanizes cron.interview_autocomplete.executed", () => {
+      expect(
+        humanizeAuditAction("cron.interview_autocomplete.executed"),
+      ).toBe("Interview auto-complete cron ran");
+    });
   });
 
   describe("fallback for unknown codes", () => {
