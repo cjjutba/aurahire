@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { AuthTokenProvider } from "@/components/providers/auth-token-provider";
 import { ConfirmProvider } from "@/components/providers/confirm-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { SocketProvider } from "@/components/providers/socket-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -32,10 +33,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AuthTokenProvider>
           <QueryProvider>
-            <ConfirmProvider>
-              {children}
-              <Toaster position="top-right" richColors closeButton />
-            </ConfirmProvider>
+            <SocketProvider>
+              <ConfirmProvider>
+                {children}
+                <Toaster position="top-right" richColors closeButton />
+              </ConfirmProvider>
+            </SocketProvider>
           </QueryProvider>
         </AuthTokenProvider>
       </body>
