@@ -10,6 +10,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { RawOutputJsonViewer } from "@/components/admin/raw-output-json-viewer";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { humanizeAuditAction } from "@/lib/audit/humanize-action";
 
 interface Detail {
   id: string;
@@ -88,7 +89,14 @@ export function AuditDetailSheetClient({ entryId, open, onClose }: Props) {
         className="w-full overflow-y-auto bg-[var(--color-canvas)] sm:max-w-2xl"
       >
         <SheetHeader>
-          <SheetTitle>{detail?.action ?? "Loading…"}</SheetTitle>
+          <SheetTitle>
+            {detail ? humanizeAuditAction(detail.action) : "Loading…"}
+          </SheetTitle>
+          {detail && (
+            <p className="mt-1 font-mono text-xs text-[var(--color-muted)]">
+              {detail.action}
+            </p>
+          )}
         </SheetHeader>
         {error && (
           <p className="mt-6 text-sm text-[var(--color-status-danger)]">
