@@ -4,6 +4,7 @@ import {
   type ApplicationCreatedPayload,
   type ApplicationScoredPayload,
   type ApplicationStatusChangedPayload,
+  type ApplicationWithdrawnPayload,
   type AuditEntryPayload,
   type BiasFlagCreatedPayload,
   type InterviewScheduledPayload,
@@ -61,6 +62,14 @@ export class EventsService {
         Rooms.recruiter(payload.recruiterId),
         Rooms.job(payload.jobId),
       ],
+    );
+  }
+
+  emitApplicationWithdrawn(payload: ApplicationWithdrawnPayload): void {
+    this.broadcast(
+      RealtimeEvent.ApplicationWithdrawn,
+      payload,
+      [Rooms.user(payload.candidateId), Rooms.job(payload.jobId)],
     );
   }
 
