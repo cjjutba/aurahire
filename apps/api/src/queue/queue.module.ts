@@ -4,9 +4,11 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 
 import {
   MATCH_PREVIEW_PRECOMPUTE_QUEUE,
+  MATCH_SCORE_QUEUE,
   RESCORE_BATCH_QUEUE,
 } from "./queue.constants";
 import { MatchPreviewQueueService } from "./match-preview-queue.service";
+import { MatchScoreQueueService } from "./match-score-queue.service";
 
 const logger = new Logger("QueueModule");
 
@@ -35,8 +37,11 @@ const logger = new Logger("QueueModule");
     BullModule.registerQueue({
       name: MATCH_PREVIEW_PRECOMPUTE_QUEUE,
     }),
+    BullModule.registerQueue({
+      name: MATCH_SCORE_QUEUE,
+    }),
   ],
-  providers: [MatchPreviewQueueService],
-  exports: [BullModule, MatchPreviewQueueService],
+  providers: [MatchPreviewQueueService, MatchScoreQueueService],
+  exports: [BullModule, MatchPreviewQueueService, MatchScoreQueueService],
 })
 export class QueueModule {}
