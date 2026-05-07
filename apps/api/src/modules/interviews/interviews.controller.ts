@@ -9,9 +9,10 @@ import {
   Post,
   Query,
   Req,
+  Res,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import type { FastifyRequest } from "fastify";
+import type { FastifyReply, FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
 import {
@@ -94,6 +95,21 @@ export class InterviewsController {
   async listMine(@CurrentUser() user: AuthUser): Promise<InterviewListEnvelopeDto> {
     const data = await this.service.listMine(user);
     return { data };
+  }
+
+  @Get("interviews/:id/ics")
+  @Roles("candidate", "recruiter", "admin")
+  @ApiOperation({ summary: "Download interview as an ICS calendar file" })
+  @ApiResponse({ status: 200, description: "ICS calendar file" })
+  async downloadIcs(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+    @Res({ passthrough: false }) res: FastifyReply,
+  ): Promise<void> {
+    const ics = await this.service.getIcs(user, id);
+    res.header("Content-Type", "text/calendar; charset=utf-8");
+    res.header("Content-Disposition", `attachment; filename="interview-${id}.ics"`);
+    void res.send(ics);
   }
 
   /**

@@ -32,6 +32,7 @@ import {
 import type { InterviewDto } from "./dto/interview-response.dto";
 import { InterviewScheduledEmail } from "../../email/templates/interview-scheduled";
 import { InterviewCancelledEmail } from "../../email/templates/interview-cancelled";
+import { buildInterviewIcs } from "../../lib/calendar/build-interview-ics";
 
 interface RequestMeta {
   ipAddress?: string | null;
@@ -402,6 +403,59 @@ export class InterviewsService {
       recruiterId: user.id,
       candidateId: application.candidateId,
       excludeInterviewId: dto.excludeInterviewId,
+    });
+  }
+
+  async getIcs(user: AuthUser, interviewId: string): Promise<string> {
+    const interview = await this.repo.findById(interviewId);
+    if (!interview) {
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+    }
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (!app) {
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+    }
+
+    // Candidate must own the application; recruiter must belong to the company that owns the job.
+    if (user.role === "candidate" && app.candidateId !== user.id) {
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+    }
+    if (user.role === "recruiter") {
+      const job = await this.jobsRepo.findById(app.jobId);
+      if (!job) {
+        throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+      }
+      // Company-membership enforcement is delegated to the @ActiveCompany() decorator
+      // on the controller endpoint — the companyId check lives there.
+    }
+
+    const candidate = await this.profilesRepo.findById(app.candidateId);
+    const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
+    if (!candidate || !jobRow) {
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+    }
+
+    return buildInterviewIcs({
+      interview: {
+        id: interview.id,
+        rescheduledFromId: interview.rescheduledFromId ?? null,
+        scheduledAt: interview.scheduledAt,
+        durationMinutes: interview.durationMinutes,
+        venueName: interview.venueName ?? "",
+        addressLine: interview.addressLine ?? "",
+        roomOrFloor: interview.roomOrFloor ?? null,
+        reportingInstructions: interview.reportingInstructions ?? null,
+        whatToBring: interview.whatToBring ?? null,
+        interviewerName: interview.interviewerName ?? null,
+        interviewerTitle: interview.interviewerTitle ?? null,
+        mapUrl: interview.mapUrl ?? null,
+      },
+      candidate: { fullName: candidate.fullName, email: candidate.email },
+      job: { title: jobRow.title },
+      company: {
+        name: jobRow.company.name,
+        recruiterEmail: "no-reply@aurahire.site",
+      },
     });
   }
 
