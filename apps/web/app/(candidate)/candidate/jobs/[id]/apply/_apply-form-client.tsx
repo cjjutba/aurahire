@@ -118,6 +118,17 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
   }
 
   if (submitting) {
+    if (preview && selectedResumeMatchesPreview) {
+      return (
+        <div className="flex items-center justify-center gap-3 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-sm text-[var(--color-body)]">
+          <Loader2
+            className="h-4 w-4 animate-spin text-[var(--color-primary)]"
+            aria-hidden
+          />
+          <span>Submitting application…</span>
+        </div>
+      );
+    }
     return (
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
         <AiShimmer
@@ -233,7 +244,9 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
           className="inline-flex h-11 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-6 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
         >
           <Sparkles className="h-4 w-4" />
-          Submit application
+          {preview && selectedResumeMatchesPreview
+            ? "Lock in match & apply"
+            : "Submit application"}
         </button>
       </div>
 
@@ -253,7 +266,7 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
           className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-5 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
         >
           <Sparkles className="h-4 w-4" />
-          Submit
+          {preview && selectedResumeMatchesPreview ? "Lock in & apply" : "Submit"}
         </button>
       </div>
     </>
