@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Building2, FileText } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth/session";
 import { ApplyFormClient } from "./_apply-form-client";
+import type { ApplyMatchPreview } from "@/components/score/apply-match-summary";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -43,7 +44,7 @@ export default async function ApplyPage({ params }: PageProps) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
   const authHeaders = { Authorization: `Bearer ${session.access_token}` };
 
-  const [jobRes, resumesRes, appsRes] = await Promise.all([
+  const [jobRes, resumesRes, appsRes, previewRes] = await Promise.all([
     fetch(`${apiUrl}/api/v1/jobs/${jobId}/for-candidate`, {
       headers: authHeaders,
       cache: "no-store",
@@ -53,6 +54,10 @@ export default async function ApplyPage({ params }: PageProps) {
       cache: "no-store",
     }),
     fetch(`${apiUrl}/api/v1/applications/mine`, {
+      headers: authHeaders,
+      cache: "no-store",
+    }),
+    fetch(`${apiUrl}/api/v1/scoring/match-preview/${jobId}`, {
       headers: authHeaders,
       cache: "no-store",
     }),
@@ -85,6 +90,14 @@ export default async function ApplyPage({ params }: PageProps) {
   const job = jobBody.data;
   const parsedResumes = resumesBody.data.filter((r) => r.parseStatus === "parsed");
 
+  let preview: ApplyMatchPreview | null = null;
+  if (previewRes.ok) {
+    const previewBody = (await previewRes.json()) as {
+      data: ApplyMatchPreview | null;
+    };
+    preview = previewBody.data;
+  }
+
   return (
     <div className="mx-auto max-w-[1280px] space-y-6 pb-24 lg:pb-6">
       {/* Back link */}
@@ -116,7 +129,11 @@ export default async function ApplyPage({ params }: PageProps) {
           {parsedResumes.length === 0 ? (
             <NoResumesCard />
           ) : (
-            <ApplyFormClient jobId={jobId} resumes={parsedResumes} />
+            <ApplyFormClient
+              jobId={jobId}
+              resumes={parsedResumes}
+              preview={preview}
+            />
           )}
         </div>
 
