@@ -15,6 +15,18 @@ export const APPLICATION_STATUS = [
   "withdrawn",
 ] as const;
 
+/**
+ * Lifecycle of the AI match-score for an application.
+ *  - "computing": worker has been enqueued; UI shows AiShimmer.
+ *  - "completed": match_score row exists and was emitted via realtime.
+ *  - "failed": worker exhausted retries; UI shows a manual-retry affordance.
+ */
+export const APPLICATION_SCORE_STATUS = [
+  "computing",
+  "completed",
+  "failed",
+] as const;
+
 export const OFFER_STATUS = ["pending", "accepted", "declined", "expired", "withdrawn"] as const;
 export const INTERVIEW_FORMAT = ["phone", "video", "in-person"] as const;
 export const INTERVIEW_STATUS = ["scheduled", "completed", "cancelled", "no-show"] as const;
@@ -81,6 +93,7 @@ export const COMPANY_MEMBER_STATUS = ["invited", "active", "suspended", "left"] 
 export type UserRole = (typeof USER_ROLES)[number];
 export type UserStatus = (typeof USER_STATUS)[number];
 export type ApplicationStatus = (typeof APPLICATION_STATUS)[number];
+export type ApplicationScoreStatus = (typeof APPLICATION_SCORE_STATUS)[number];
 export type OfferStatus = (typeof OFFER_STATUS)[number];
 export type InterviewFormat = (typeof INTERVIEW_FORMAT)[number];
 export type InterviewStatus = (typeof INTERVIEW_STATUS)[number];
