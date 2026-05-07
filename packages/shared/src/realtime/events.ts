@@ -12,6 +12,7 @@ import {
 export const RealtimeEvent = {
   ApplicationCreated: "application.created",
   ApplicationStatusChanged: "application.status_changed",
+  ApplicationScored: "application.scored",
   InterviewScheduled: "interview.scheduled",
   InterviewStatusChanged: "interview.status_changed",
   OfferSent: "offer.sent",
@@ -45,6 +46,20 @@ export const applicationStatusChangedSchema = z.object({
 export type ApplicationStatusChangedPayload = z.infer<
   typeof applicationStatusChangedSchema
 >;
+
+// Emitted from the async match-score worker after the match_score row lands.
+// Targets the candidate's user room, the recruiter, and the job room so every
+// open surface (applicant detail page, recruiter pipeline card) updates live.
+export const applicationScoredSchema = z.object({
+  applicationId: z.string().uuid(),
+  jobId: z.string().uuid(),
+  recruiterId: z.string().uuid(),
+  candidateId: z.string().uuid(),
+  overallScore: z.number().int().min(0).max(100),
+  band: z.enum(["strong", "partial", "limited"]),
+  scoredAt: isoDate,
+});
+export type ApplicationScoredPayload = z.infer<typeof applicationScoredSchema>;
 
 export const interviewScheduledSchema = z.object({
   interviewId: z.string().uuid(),
@@ -103,6 +118,7 @@ export type BiasFlagCreatedPayload = z.infer<typeof biasFlagCreatedSchema>;
 export interface RealtimeEventPayloadMap {
   [RealtimeEvent.ApplicationCreated]: ApplicationCreatedPayload;
   [RealtimeEvent.ApplicationStatusChanged]: ApplicationStatusChangedPayload;
+  [RealtimeEvent.ApplicationScored]: ApplicationScoredPayload;
   [RealtimeEvent.InterviewScheduled]: InterviewScheduledPayload;
   [RealtimeEvent.InterviewStatusChanged]: InterviewStatusChangedPayload;
   [RealtimeEvent.OfferSent]: OfferSentPayload;
