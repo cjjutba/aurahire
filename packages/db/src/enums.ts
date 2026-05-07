@@ -102,3 +102,38 @@ export type EvidenceRelevance = (typeof EVIDENCE_RELEVANCE)[number];
 export type ScoreType = (typeof SCORE_TYPE)[number];
 export type CompanyMemberRole = (typeof COMPANY_MEMBER_ROLE)[number];
 export type CompanyMemberStatus = (typeof COMPANY_MEMBER_STATUS)[number];
+
+// Notification system — used by `notificationsTable` and `notificationPreferencesTable`.
+export const NOTIFICATION_EVENT_TYPE = [
+  // Candidate (personal scope)
+  "application_status_changed",
+  "interview_scheduled",
+  "interview_reminder_24h",
+  "interview_cancelled",
+  "offer_received",
+  "offer_expiring_soon",
+  // Recruiter (personal scope)
+  "new_application_received",
+  "candidate_withdrew",
+  "interview_feedback_due",
+  "offer_accepted",
+  "offer_declined",
+  "bias_flag_raised",
+  "team_invite_accepted",
+  "team_invite_declined",
+  // Admin (system scope)
+  "system_bias_flag_raised",
+  "system_ai_scoring_failure",
+  "system_moderation_queue_item",
+  // Security (always-instant, not user-toggleable)
+  "account_password_reset",
+  "account_email_verified",
+  "account_login_new_device",
+] as const;
+
+export const NOTIFICATION_MODE = ["instant", "digest", "off"] as const;
+export const NOTIFICATION_SCOPE = ["personal", "system"] as const;
+
+export type NotificationEventType = (typeof NOTIFICATION_EVENT_TYPE)[number];
+export type NotificationMode = (typeof NOTIFICATION_MODE)[number];
+export type NotificationScope = (typeof NOTIFICATION_SCOPE)[number];
