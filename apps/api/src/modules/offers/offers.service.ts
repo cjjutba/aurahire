@@ -108,7 +108,7 @@ export class OffersService {
       applicationId: offer.applicationId,
       recruiterId: user.id,
       candidateId: application.candidateId,
-      sentAt: new Date().toISOString(),
+      sentAt: offer.sentAt.toISOString(),
     });
 
     // Auto-advance application status to 'offer' so the candidate's view + the
