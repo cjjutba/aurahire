@@ -14,9 +14,10 @@ import { Roles } from "../common/decorators/roles.decorator";
 import { ExpireOffersCron } from "./expire-offers.cron";
 import { ArchivePastDeadlineJobsCron } from "./archive-past-deadline-jobs.cron";
 import { CleanupUnverifiedAccountsCron } from "./cleanup-unverified-accounts.cron";
+import { DigestEmailCron } from "./digest-email.cron";
 
 interface CronRunResultDto {
-  data: { affectedRows: number; durationMs: number };
+  data: Record<string, unknown>;
 }
 
 /**
@@ -32,6 +33,7 @@ export class CronAdminController {
     private readonly expireOffers: ExpireOffersCron,
     private readonly archiveJobs: ArchivePastDeadlineJobsCron,
     private readonly cleanupUnverified: CleanupUnverifiedAccountsCron,
+    private readonly digestEmail: DigestEmailCron,
   ) {}
 
   @Post("run/:cronName")
@@ -39,7 +41,7 @@ export class CronAdminController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified.",
+      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email.",
   })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 403, description: "Disabled in production" })
@@ -52,7 +54,7 @@ export class CronAdminController {
       });
     }
 
-    let result: { affectedRows: number; durationMs: number };
+    let result: Record<string, unknown>;
     switch (cronName) {
       case "expire-offers":
         result = await this.expireOffers.execute();
@@ -65,11 +67,14 @@ export class CronAdminController {
       case "cleanup-unverified-accounts":
         result = await this.cleanupUnverified.execute();
         break;
+      case "digest-email":
+        result = await this.digestEmail.execute();
+        break;
       default:
         throw new NotFoundException({
           code: "UNKNOWN_CRON",
           message: `Unknown cron name: ${cronName}`,
-          available: ["expire-offers", "archive-jobs", "cleanup-unverified"],
+          available: ["expire-offers", "archive-jobs", "cleanup-unverified", "digest-email"],
         });
     }
 

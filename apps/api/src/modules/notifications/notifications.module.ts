@@ -21,6 +21,6 @@ import { AuditModule } from "../../audit";
   ],
   controllers: [NotificationsController],
   providers: [NotificationsService, NotificationsRepository, NotificationEmailProcessor],
-  exports: [NotificationsService],
+  exports: [BullModule, NotificationsService, NotificationsRepository],
 })
 export class NotificationsModule {}
