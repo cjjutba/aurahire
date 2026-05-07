@@ -8,8 +8,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-echo "==> Pull latest"
-git pull origin main
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "==> Pull latest (${CURRENT_BRANCH})"
+git pull origin "${CURRENT_BRANCH}"
 
 echo "==> Install deps (frozen lockfile)"
 pnpm install --frozen-lockfile
