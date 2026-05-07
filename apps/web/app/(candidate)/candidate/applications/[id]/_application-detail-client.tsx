@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Building2, ChevronRight, Sparkles, AlertTriangle } from "lucide-react";
 
+import { AiShimmer } from "@/components/ai/ai-shimmer";
 import {
   ScoreDashboard,
   type ScoreDashboardComponent,
@@ -87,6 +88,7 @@ interface OfferRow {
 export interface AppDetail {
   id: string;
   status: string;
+  scoreStatus: "computing" | "completed" | "failed";
   appliedAt: string;
   job: {
     id: string;
@@ -188,6 +190,38 @@ export function ApplicationDetailClient({
   );
 
   if (!score) {
+    if (app.scoreStatus === "computing") {
+      return (
+        <div className="mx-auto max-w-[1280px] space-y-8">
+          {header}
+          <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
+            <AiShimmer
+              caption="Computing your match against this job — analyzing skills, experience, education, and cultural fit..."
+              height={240}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    if (app.scoreStatus === "failed") {
+      return (
+        <div className="mx-auto max-w-[1280px] space-y-8">
+          {header}
+          <div className="rounded-[var(--radius-lg)] border border-[var(--color-status-danger)] bg-[var(--color-canvas)] p-8 text-center">
+            <h2 className="text-lg font-semibold text-[var(--color-status-danger)]">
+              Match score couldn&apos;t be computed
+            </h2>
+            <p className="mt-2 text-sm text-[var(--color-body)]">
+              Our scoring engine ran into a problem. The application was saved;
+              please refresh later or contact support if this persists.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // scoreStatus === "completed" but matchScore is missing — unexpected.
     return (
       <div className="mx-auto max-w-[1280px] space-y-8">
         {header}
@@ -196,8 +230,7 @@ export function ApplicationDetailClient({
             Score pending
           </h2>
           <p className="mt-2 text-sm text-[var(--color-body)]">
-            Match scoring failed or is still in progress. Try refreshing in a
-            moment.
+            Try refreshing in a moment.
           </p>
         </div>
       </div>

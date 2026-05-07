@@ -69,6 +69,16 @@ export function ApplicationDetailDataClient({
     queryClient.invalidateQueries({ queryKey: ["candidate-applications"] });
   });
 
+  // Async scoring: when the worker finishes, refetch detail so the
+  // AiShimmer placeholder swaps for the rendered score ring + breakdown.
+  useRealtimeChannel(RealtimeEvent.ApplicationScored, (payload) => {
+    if (payload.applicationId !== applicationId) return;
+    queryClient.invalidateQueries({
+      queryKey: ["candidate-applications", "detail", applicationId],
+    });
+    queryClient.invalidateQueries({ queryKey: ["candidate-applications"] });
+  });
+
   useRealtimeChannel(RealtimeEvent.InterviewScheduled, (payload) => {
     if (payload.applicationId !== applicationId) return;
     queryClient.invalidateQueries({
