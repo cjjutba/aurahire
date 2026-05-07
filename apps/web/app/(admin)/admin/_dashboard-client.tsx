@@ -7,7 +7,10 @@ import {
   type AdminStatsOverviewDto,
   type AdminStatsOverviewEnvelopeDto,
 } from "@aurahire/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { RealtimeEvent } from "@/lib/realtime";
 
 type Stats = AdminStatsOverviewDto;
 
@@ -39,11 +42,20 @@ const BAND_COLOR: Record<string, string> = {
 
 export function DashboardClient() {
   const tokenReady = useAuthTokenReady();
+  const queryClient = useQueryClient();
   const { data, isPending, isError } = useAdminStatsControllerOverviewV1({
     query: {
       staleTime: 60_000,
       enabled: tokenReady,
     },
+  });
+
+  useRealtimeChannel(RealtimeEvent.AuditEntry, () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/v1/admin/stats/overview"] });
+  });
+
+  useRealtimeChannel(RealtimeEvent.BiasFlagCreated, () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/v1/admin/stats/overview"] });
   });
 
   if (isError) {

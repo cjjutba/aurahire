@@ -3,6 +3,7 @@ import { getCurrentSession } from "@/lib/auth/session";
 import { FiltersClient } from "./_filters-client";
 import { AuditTableClient } from "./_audit-table-client";
 import { ExportButtonClient } from "./_export-button-client";
+import { AuditRealtimeClient } from "./_audit-realtime-client";
 
 export const metadata = { title: "Audit Log" };
 
@@ -93,6 +94,7 @@ export default async function AuditPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto max-w-[1280px] space-y-6">
+      <AuditRealtimeClient />
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">

@@ -7,6 +7,7 @@ import { FlagBreakdownChartClient } from "./_flag-breakdown-chart-client";
 import { TopTermsTable } from "./_top-terms-table";
 import { ScoreDistributionAuditClient } from "./_score-distribution-audit-client";
 import { RecentOverridesList } from "./_recent-overrides-list";
+import { BiasMonitorRealtimeClient } from "./_bias-monitor-realtime-client";
 
 export const metadata = { title: "Bias & Fairness Monitor" };
 
@@ -78,6 +79,7 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
   return (
     <TooltipProvider delay={150}>
       <div className="mx-auto max-w-[1280px] space-y-8">
+        <BiasMonitorRealtimeClient />
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
