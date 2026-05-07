@@ -9,7 +9,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
-import type { Server, Socket } from "socket.io";
+import type { DefaultEventsMap, Server, Socket } from "socket.io";
 import { eq, and } from "drizzle-orm";
 import { jobsTable } from "@aurahire/db";
 import {
@@ -27,7 +27,7 @@ import { DRIZZLE_CLIENT, type DrizzleClient } from "../db/db.module";
 interface SocketData {
   user?: AuthUser;
 }
-type AuthSocket = Socket<unknown, unknown, unknown, SocketData>;
+type AuthSocket = Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, SocketData>;
 
 /**
  * Single Socket.io entry point for the API.
