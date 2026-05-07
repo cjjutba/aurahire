@@ -9,6 +9,7 @@ import {
   resumesTable,
   applicationsTable,
   interviewsTable,
+  interviewVenuesTable,
   offersTable,
   profileScoresTable,
   matchScoresTable,
@@ -134,6 +135,17 @@ export const interviewsRelations = relations(interviewsTable, ({ one }) => ({
   }),
   scheduledByProfile: one(profilesTable, {
     fields: [interviewsTable.scheduledBy],
+    references: [profilesTable.id],
+  }),
+}));
+
+export const interviewVenuesRelations = relations(interviewVenuesTable, ({ one }) => ({
+  company: one(companiesTable, {
+    fields: [interviewVenuesTable.companyId],
+    references: [companiesTable.id],
+  }),
+  creator: one(profilesTable, {
+    fields: [interviewVenuesTable.createdBy],
     references: [profilesTable.id],
   }),
 }));

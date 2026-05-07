@@ -313,3 +313,32 @@ CREATE POLICY "audit_logs_admin_select" ON public.audit_logs
 -- No INSERT/UPDATE/DELETE policies on audit_logs:
 -- - Service role bypasses RLS for inserts (via backend AuditService)
 -- - Append-only: no app code should ever update or delete audit rows
+
+-- ============================================================================
+-- interview_venues
+-- ============================================================================
+ALTER TABLE public.interview_venues ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "interview_venues_company_select" ON public.interview_venues
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.company_members cm
+      WHERE cm.company_id = interview_venues.company_id AND cm.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "interview_venues_recruiter_write" ON public.interview_venues
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.company_members cm
+      JOIN public.profiles p ON p.id = cm.user_id
+      WHERE cm.company_id = interview_venues.company_id
+        AND cm.user_id = auth.uid()
+        AND p.role = 'recruiter'
+    )
+  );
+
+CREATE POLICY "interview_venues_admin_all" ON public.interview_venues
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  );
