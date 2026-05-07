@@ -7,6 +7,7 @@ import { CleanupUnverifiedAccountsCron } from "./cleanup-unverified-accounts.cro
 import { DigestEmailCron } from "./digest-email.cron";
 import { NotificationsRetentionCron } from "./notifications-retention.cron";
 import { InterviewReminderCron } from "./interview-reminder.cron";
+import { OfferExpiryReminderCron } from "./offer-expiry-reminder.cron";
 import { CronAdminController } from "./cron-admin.controller";
 import { NotificationsModule } from "../modules/notifications/notifications.module";
 
@@ -20,6 +21,7 @@ import { NotificationsModule } from "../modules/notifications/notifications.modu
     DigestEmailCron,
     NotificationsRetentionCron,
     InterviewReminderCron,
+    OfferExpiryReminderCron,
   ],
   exports: [
     ExpireOffersCron,
@@ -28,6 +30,7 @@ import { NotificationsModule } from "../modules/notifications/notifications.modu
     DigestEmailCron,
     NotificationsRetentionCron,
     InterviewReminderCron,
+    OfferExpiryReminderCron,
   ],
 })
 export class CronModule {}

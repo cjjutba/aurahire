@@ -17,6 +17,7 @@ import { CleanupUnverifiedAccountsCron } from "./cleanup-unverified-accounts.cro
 import { DigestEmailCron } from "./digest-email.cron";
 import { NotificationsRetentionCron } from "./notifications-retention.cron";
 import { InterviewReminderCron } from "./interview-reminder.cron";
+import { OfferExpiryReminderCron } from "./offer-expiry-reminder.cron";
 
 interface CronRunResultDto {
   data: Record<string, unknown>;
@@ -38,6 +39,7 @@ export class CronAdminController {
     private readonly digestEmail: DigestEmailCron,
     private readonly notificationsRetention: NotificationsRetentionCron,
     private readonly interviewReminder: InterviewReminderCron,
+    private readonly offerExpiryReminder: OfferExpiryReminderCron,
   ) {}
 
   @Post("run/:cronName")
@@ -80,11 +82,14 @@ export class CronAdminController {
       case "interview-reminder":
         result = await this.interviewReminder.execute();
         break;
+      case "offer-expiry-reminder":
+        result = await this.offerExpiryReminder.execute();
+        break;
       default:
         throw new NotFoundException({
           code: "UNKNOWN_CRON",
           message: `Unknown cron name: ${cronName}`,
-          available: ["expire-offers", "archive-jobs", "cleanup-unverified", "digest-email", "notifications-retention", "interview-reminder"],
+          available: ["expire-offers", "archive-jobs", "cleanup-unverified", "digest-email", "notifications-retention", "interview-reminder", "offer-expiry-reminder"],
         });
     }
 
