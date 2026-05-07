@@ -18,6 +18,7 @@ import { AuditService } from "../../audit";
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { EventsService } from "../../realtime";
 import { EmailService } from "../../email/email.service";
+import { MatchScoreQueueService } from "../../queue/match-score-queue.service";
 import { JobsRepository } from "../jobs/jobs.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { ResumesRepository } from "../resumes/resumes.repository";
@@ -59,6 +60,7 @@ export class ApplicationsService {
     private readonly audit: AuditService,
     private readonly cacheService: CacheService,
     private readonly events: EventsService,
+    private readonly matchScoreQueue: MatchScoreQueueService,
   ) {}
 
   // -----------------------------------------------------------------
@@ -164,35 +166,21 @@ export class ApplicationsService {
           : new Date(application.createdAt).toISOString(),
     });
 
-    let matchScoreDto: MatchScoreDto | null = null;
-    try {
-      matchScoreDto = await this.scoringService.computeMatchScore(
-        application.id,
-        user.id,
-        dto.jobId,
-        resumeId,
-        {
-          title: job.title,
-          department: job.department,
-          experienceLevel: job.experienceLevel,
-          educationRequirement: job.educationRequirement,
-          requiredSkills: job.requiredSkills,
-          descriptionPlain: job.descriptionPlain,
-          companyId: job.companyId,
-        },
-        requestMeta,
-      );
-    } catch (err) {
-      this.logger.error(
-        `Match score failed for application ${application.id}: ${(err as Error).message}`,
-      );
-    }
+    // Match scoring is now async — enqueue the work and let the worker
+    // emit application.scored over realtime when the score lands. The DB
+    // row already has score_status='computing' from the schema default.
+    await this.matchScoreQueue.enqueue({
+      applicationId: application.id,
+      candidateId: user.id,
+      jobId: dto.jobId,
+      resumeId,
+    });
 
     void this.notifyRecruiterOfApplication(application.id).catch((err) => {
       this.logger.warn(`Recruiter notify failed: ${(err as Error).message}`);
     });
 
-    return this.toDto(application.id, { matchScore: matchScoreDto });
+    return this.toDto(application.id);
   }
 
   // -----------------------------------------------------------------
@@ -328,6 +316,7 @@ export class ApplicationsService {
       resumeId: updated.resumeId,
       coverLetter: updated.coverLetter,
       status: updated.status,
+      scoreStatus: updated.scoreStatus,
       recruiterNotes: updated.recruiterNotes,
       appliedAt: updated.appliedAt.toISOString(),
       statusUpdatedAt: updated.statusUpdatedAt.toISOString(),
@@ -372,6 +361,7 @@ export class ApplicationsService {
       resumeId: updated.resumeId,
       coverLetter: updated.coverLetter,
       status: updated.status,
+      scoreStatus: updated.scoreStatus,
       recruiterNotes: updated.recruiterNotes,
       appliedAt: updated.appliedAt.toISOString(),
       statusUpdatedAt: updated.statusUpdatedAt.toISOString(),
@@ -402,6 +392,40 @@ export class ApplicationsService {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
     }
     const { rows, total } = await this.repo.listShortlistedForCompany(companyId, query);
+    return {
+      data: rows.map((row) => this.toDashboardDto(row)),
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / query.limit)),
+      },
+    };
+  }
+
+  async listAllForRecruiter(
+    user: AuthUser,
+    companyId: string,
+    query: {
+      page: number;
+      limit: number;
+      q?: string;
+      status?: ApplicationStatus;
+      jobId?: string;
+      band?: "strong" | "partial" | "limited";
+      sort: "recent" | "oldest" | "score-high";
+    },
+  ): Promise<{
+    data: ApplicationDto[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
+    }
+    const { rows, total } = await this.repo.listAllForCompany(companyId, query);
     return {
       data: rows.map((row) => this.toDashboardDto(row)),
       meta: {
@@ -787,19 +811,14 @@ export class ApplicationsService {
   // PRIVATE
   // -----------------------------------------------------------------
 
-  private async toDto(
-    applicationId: string,
-    overrides?: { matchScore?: MatchScoreDto | null },
-  ): Promise<ApplicationDto> {
+  private async toDto(applicationId: string): Promise<ApplicationDto> {
     const app = await this.repo.findById(applicationId);
     if (!app) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
     }
 
     const matchScore =
-      overrides?.matchScore !== undefined
-        ? overrides.matchScore
-        : await this.scoringService.getMatchScoreByApplicationId(applicationId);
+      await this.scoringService.getMatchScoreByApplicationId(applicationId);
 
     const candidateProfile = await this.profilesRepo.findById(app.candidateId);
     const candidateProfileExt = await this.profilesRepo.findCandidateProfile(app.candidateId);
@@ -837,6 +856,7 @@ export class ApplicationsService {
       resumeId: app.resumeId,
       coverLetter: app.coverLetter,
       status: app.status,
+      scoreStatus: app.scoreStatus,
       recruiterNotes: app.recruiterNotes,
       appliedAt: app.appliedAt.toISOString(),
       statusUpdatedAt: app.statusUpdatedAt.toISOString(),
@@ -854,11 +874,12 @@ export class ApplicationsService {
     resumeId: string;
     coverLetter: string | null;
     status: ApplicationStatus;
+    scoreStatus: "computing" | "completed" | "failed";
     recruiterNotes: string | null;
     appliedAt: Date;
     statusUpdatedAt: Date;
     shortlistedAt: Date | null;
-    matchScore: { id: string; overallScore: number; band: string } | null;
+    matchScore: { id: string; overallScore: number; band: "strong" | "partial" | "limited" } | null;
     candidateFullName: string | null;
     candidateEmail: string | null;
     jobTitle: string | null;
@@ -870,6 +891,7 @@ export class ApplicationsService {
       resumeId: row.resumeId,
       coverLetter: row.coverLetter,
       status: row.status,
+      scoreStatus: row.scoreStatus,
       recruiterNotes: row.recruiterNotes,
       appliedAt: row.appliedAt.toISOString(),
       statusUpdatedAt: row.statusUpdatedAt.toISOString(),

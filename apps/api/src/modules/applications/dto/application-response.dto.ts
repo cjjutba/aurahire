@@ -67,6 +67,12 @@ export class ApplicationDto {
     enum: ["applied", "screening", "interview", "offer", "hired", "rejected", "withdrawn"],
   })
   status!: string;
+  @ApiProperty({
+    enum: ["computing", "completed", "failed"],
+    description:
+      "Lifecycle of the AI match-score: 'computing' while the worker runs, 'completed' once the score row is persisted, 'failed' after retries exhausted.",
+  })
+  scoreStatus!: "computing" | "completed" | "failed";
   @ApiPropertyOptional({ nullable: true }) recruiterNotes!: string | null;
   @ApiProperty() appliedAt!: string;
   @ApiProperty() statusUpdatedAt!: string;
