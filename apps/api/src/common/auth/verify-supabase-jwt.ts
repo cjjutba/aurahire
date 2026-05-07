@@ -1,10 +1,5 @@
 import { Logger } from "@nestjs/common";
-import {
-  createRemoteJWKSet,
-  jwtVerify,
-  type JWTPayload,
-  type JWTVerifyResult,
-} from "jose";
+import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
 
 export interface SupabaseJwtVerifierOptions {
   supabaseUrl: string;
@@ -35,7 +30,7 @@ export function createSupabaseJwtVerifier(
   return {
     async verify(token: string): Promise<JWTPayload> {
       try {
-        const result: JWTVerifyResult = await jwtVerify(token, jwks, {
+        const result = await jwtVerify(token, jwks, {
           issuer,
           audience: "authenticated",
         });
