@@ -38,6 +38,9 @@ import {
   SCORE_TYPE,
   COMPANY_MEMBER_ROLE,
   COMPANY_MEMBER_STATUS,
+  NOTIFICATION_EVENT_TYPE,
+  NOTIFICATION_MODE,
+  NOTIFICATION_SCOPE,
 } from "./enums";
 
 // ============================================================================
@@ -596,6 +599,42 @@ export const auditLogsTable = pgTable(
 );
 
 // ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+export const notificationsTable = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => profilesTable.id, { onDelete: "cascade" }),
+    eventType: text("event_type", { enum: NOTIFICATION_EVENT_TYPE }).notNull(),
+    scope: text("scope", { enum: NOTIFICATION_SCOPE }).notNull().default("personal"),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    link: text("link"),
+    entityType: text("entity_type"),
+    entityId: uuid("entity_id"),
+    actorId: uuid("actor_id").references(() => profilesTable.id, { onDelete: "set null" }),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    dismissedAt: timestamp("dismissed_at", { withTimezone: true }),
+    digestPending: boolean("digest_pending").notNull().default(false),
+    emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userUnreadIdx: index("notifications_user_unread_idx").on(t.userId, t.readAt, t.createdAt),
+    userCreatedIdx: index("notifications_user_created_idx").on(t.userId, t.createdAt),
+    createdAtIdx: index("notifications_created_at_idx").on(t.createdAt),
+    digestPendingIdx: index("notifications_digest_pending_idx")
+      .on(t.digestPending)
+      .where(sql`${t.digestPending} = true`),
+  }),
+);
+
+// ============================================================================
 // TYPE EXPORTS (for application-layer use)
 // ============================================================================
 
@@ -635,3 +674,5 @@ export type AuthToken = typeof authTokensTable.$inferSelect;
 export type NewAuthToken = typeof authTokensTable.$inferInsert;
 export type CompanyMember = typeof companyMembersTable.$inferSelect;
 export type NewCompanyMember = typeof companyMembersTable.$inferInsert;
+export type Notification = typeof notificationsTable.$inferSelect;
+export type NewNotification = typeof notificationsTable.$inferInsert;
