@@ -12,9 +12,10 @@ import type {
   ApplyToJobInput,
   UpdateApplicationStatusInput,
   UpdateApplicationNotesInput,
+  WithdrawApplicationInput,
 } from "@aurahire/shared";
 
-import { AuditService } from "../../audit";
+import { AuditService, AUDIT_ACTIONS } from "../../audit";
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { EventsService } from "../../realtime";
 import { EmailService } from "../../email/email.service";
@@ -745,29 +746,27 @@ export class ApplicationsService {
 
   async withdraw(
     user: AuthUser,
-    id: string,
+    applicationId: string,
+    dto: WithdrawApplicationInput,
     requestMeta: RequestMeta = {},
   ): Promise<ApplicationDto> {
-    if (user.role !== "candidate") {
-      throw new ForbiddenException({
-        code: "FORBIDDEN",
-        message: "Candidate role required",
-      });
-    }
-
-    const app = await this.repo.findById(id);
-    if (!app || app.candidateId !== user.id) {
+    const app = await this.repo.findById(applicationId);
+    if (!app) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
     }
 
-    if (["hired", "rejected", "withdrawn"].includes(app.status)) {
+    // Only the candidate or an admin may withdraw.
+    if (user.role !== "admin" && user.id !== app.candidateId) {
+      throw new ForbiddenException({ code: "FORBIDDEN", message: "Only the candidate can withdraw" });
+    }
+    if (!canTransition(app.status as ApplicationStatus, "withdrawn")) {
       throw new BadRequestException({
-        code: "ALREADY_TERMINAL",
-        message: "Application is already in a terminal state",
+        code: "INVALID_STATUS_TRANSITION",
+        message: `Cannot withdraw from ${app.status}`,
       });
     }
 
-    await this.repo.update(id, {
+    await this.repo.update(applicationId, {
       status: "withdrawn",
       statusUpdatedAt: new Date(),
     });
@@ -777,35 +776,33 @@ export class ApplicationsService {
     await this.audit.log({
       actorId: user.id,
       actorType: "user",
-      action: "application.withdrawn",
+      action: AUDIT_ACTIONS.APPLICATION_WITHDRAWN_BY_CANDIDATE,
       entityType: "application",
-      entityId: id,
-      // The candidate-acting-on-self pattern; tag with the company that
-      // owns the job so per-tenant audit queries see this row.
+      entityId: applicationId,
       companyId: withdrawnJob?.companyId ?? null,
+      details: { from: app.status, reason: dto.reason ?? null },
       ...requestMeta,
     });
-    if (withdrawnJob) {
-      await this.cacheService.bustTags([
-        TAGS.applicationsCandidate(user.id),
-        TAGS.companyDashboard(withdrawnJob.companyId),
-        TAGS.companyApplications(withdrawnJob.companyId),
-      ]);
 
-      this.events.emitApplicationStatusChanged({
-        applicationId: id,
-        jobId: app.jobId,
-        recruiterId: withdrawnJob.recruiterId,
-        candidateId: app.candidateId,
-        previousStatus: app.status as ApplicationStatus,
-        status: "withdrawn",
-        changedAt: new Date().toISOString(),
-      });
-    } else {
-      await this.cacheService.bustTags([TAGS.applicationsCandidate(user.id)]);
-    }
+    await this.cacheService.bustTags([
+      TAGS.applicationsCandidate(app.candidateId),
+      ...(withdrawnJob
+        ? [
+            TAGS.companyDashboard(withdrawnJob.companyId),
+            TAGS.companyApplications(withdrawnJob.companyId),
+          ]
+        : []),
+    ]);
 
-    return this.toDto(id);
+    this.events.emitApplicationWithdrawn({
+      applicationId,
+      candidateId: app.candidateId,
+      recruiterId: withdrawnJob?.recruiterId ?? null,
+      jobId: app.jobId,
+      reason: dto.reason ?? null,
+    });
+
+    return this.toDto(applicationId);
   }
 
   // -----------------------------------------------------------------

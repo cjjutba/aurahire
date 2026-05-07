@@ -35,6 +35,7 @@ import { RecruiterStatsQueryDto } from "./dto/recruiter-stats-query.dto";
 import { ShortlistQueryDto } from "./dto/shortlist-query.dto";
 import { UpdateApplicationStatusDto } from "./dto/update-status.dto";
 import { UpdateApplicationNotesDto } from "./dto/update-notes.dto";
+import { WithdrawApplicationDto } from "./dto/withdraw-application.dto";
 import {
   ApplicationDto,
   ApplicationEnvelopeDto,
@@ -288,16 +289,17 @@ export class ApplicationsController {
   }
 
   @Post(":id/withdraw")
-  @Roles("candidate")
+  @Roles("candidate", "admin")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Withdraw own application" })
+  @ApiOperation({ summary: "Candidate withdraws their application" })
   @ApiResponse({ status: 200, type: ApplicationEnvelopeDto })
   async withdraw(
     @CurrentUser() user: AuthUser,
     @Param("id") id: string,
+    @Body() dto: WithdrawApplicationDto,
     @Req() req: FastifyRequest,
   ): Promise<ApplicationEnvelopeDto> {
-    const data = await this.service.withdraw(user, id, this.requestMeta(req));
+    const data = await this.service.withdraw(user, id, dto, this.requestMeta(req));
     return { data };
   }
 
