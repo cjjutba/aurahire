@@ -8,6 +8,7 @@ import { DigestEmailCron } from "./digest-email.cron";
 import { NotificationsRetentionCron } from "./notifications-retention.cron";
 import { InterviewReminderCron } from "./interview-reminder.cron";
 import { OfferExpiryReminderCron } from "./offer-expiry-reminder.cron";
+import { InterviewFeedbackDueCron } from "./interview-feedback-due.cron";
 import { CronAdminController } from "./cron-admin.controller";
 import { NotificationsModule } from "../modules/notifications/notifications.module";
 
@@ -22,6 +23,7 @@ import { NotificationsModule } from "../modules/notifications/notifications.modu
     NotificationsRetentionCron,
     InterviewReminderCron,
     OfferExpiryReminderCron,
+    InterviewFeedbackDueCron,
   ],
   exports: [
     ExpireOffersCron,
@@ -31,6 +33,7 @@ import { NotificationsModule } from "../modules/notifications/notifications.modu
     NotificationsRetentionCron,
     InterviewReminderCron,
     OfferExpiryReminderCron,
+    InterviewFeedbackDueCron,
   ],
 })
 export class CronModule {}

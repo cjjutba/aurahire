@@ -18,6 +18,7 @@ import { DigestEmailCron } from "./digest-email.cron";
 import { NotificationsRetentionCron } from "./notifications-retention.cron";
 import { InterviewReminderCron } from "./interview-reminder.cron";
 import { OfferExpiryReminderCron } from "./offer-expiry-reminder.cron";
+import { InterviewFeedbackDueCron } from "./interview-feedback-due.cron";
 
 interface CronRunResultDto {
   data: Record<string, unknown>;
@@ -40,6 +41,7 @@ export class CronAdminController {
     private readonly notificationsRetention: NotificationsRetentionCron,
     private readonly interviewReminder: InterviewReminderCron,
     private readonly offerExpiryReminder: OfferExpiryReminderCron,
+    private readonly interviewFeedbackDue: InterviewFeedbackDueCron,
   ) {}
 
   @Post("run/:cronName")
@@ -47,7 +49,7 @@ export class CronAdminController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, notifications-retention, interview-reminder.",
+      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, notifications-retention, interview-reminder, offer-expiry-reminder, interview-feedback-due.",
   })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 403, description: "Disabled in production" })
@@ -85,11 +87,14 @@ export class CronAdminController {
       case "offer-expiry-reminder":
         result = await this.offerExpiryReminder.execute();
         break;
+      case "interview-feedback-due":
+        result = await this.interviewFeedbackDue.execute();
+        break;
       default:
         throw new NotFoundException({
           code: "UNKNOWN_CRON",
           message: `Unknown cron name: ${cronName}`,
-          available: ["expire-offers", "archive-jobs", "cleanup-unverified", "digest-email", "notifications-retention", "interview-reminder", "offer-expiry-reminder"],
+          available: ["expire-offers", "archive-jobs", "cleanup-unverified", "digest-email", "notifications-retention", "interview-reminder", "offer-expiry-reminder", "interview-feedback-due"],
         });
     }
 
