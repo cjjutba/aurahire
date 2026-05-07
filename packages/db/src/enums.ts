@@ -29,7 +29,14 @@ export const APPLICATION_SCORE_STATUS = [
 
 export const OFFER_STATUS = ["pending", "accepted", "declined", "expired", "withdrawn"] as const;
 export const INTERVIEW_FORMAT = ["phone", "video", "in-person"] as const;
-export const INTERVIEW_STATUS = ["scheduled", "completed", "cancelled", "no-show"] as const;
+export const INTERVIEW_STATUS = [
+  "scheduled",
+  "completed",
+  "cancelled",
+  "no-show",
+  "rescheduled",
+] as const;
+export const INTERVIEW_RECOMMENDATION = ["proceed", "hold", "reject"] as const;
 
 export const JOB_STATUS = ["draft", "published", "archived", "closed"] as const;
 export const EMPLOYMENT_TYPE = ["full-time", "part-time", "contract"] as const;
@@ -97,6 +104,7 @@ export type ApplicationScoreStatus = (typeof APPLICATION_SCORE_STATUS)[number];
 export type OfferStatus = (typeof OFFER_STATUS)[number];
 export type InterviewFormat = (typeof INTERVIEW_FORMAT)[number];
 export type InterviewStatus = (typeof INTERVIEW_STATUS)[number];
+export type InterviewRecommendation = (typeof INTERVIEW_RECOMMENDATION)[number];
 export type JobStatus = (typeof JOB_STATUS)[number];
 export type EmploymentType = (typeof EMPLOYMENT_TYPE)[number];
 export type WorkMode = (typeof WORK_MODE)[number];
