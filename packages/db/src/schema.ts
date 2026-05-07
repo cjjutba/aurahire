@@ -293,6 +293,8 @@ export const interviewsTable = pgTable(
     rating: integer("rating"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
+    feedbackDueNotifiedAt: timestamp("feedback_due_notified_at", { withTimezone: true }),
   },
   (t) => ({
     applicationIdx: index("interviews_application_idx").on(t.applicationId),
@@ -325,6 +327,7 @@ export const offersTable = pgTable(
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    expiryReminderSentAt: timestamp("expiry_reminder_sent_at", { withTimezone: true }),
   },
   (t) => ({
     statusIdx: index("offers_status_idx").on(t.status),
