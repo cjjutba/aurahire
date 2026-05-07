@@ -3,9 +3,12 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { Building2, ChevronRight, Search } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { MatchBandChip } from "@/components/score/match-band-chip";
 import { useMyApplicationsQuery } from "@/hooks/use-applications";
+import { RealtimeEvent } from "@/lib/realtime";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 
 import { ApplicationsToolbarClient } from "./_applications-toolbar-client";
 import { ApplicationsPagination } from "./_applications-pagination";
@@ -57,7 +60,15 @@ interface ApplicationsListClientProps {
 }
 
 export function ApplicationsListClient({ params }: ApplicationsListClientProps) {
+  const queryClient = useQueryClient();
   const { data, isError } = useMyApplicationsQuery({});
+
+  const invalidateList = (): void => {
+    queryClient.invalidateQueries({ queryKey: ["candidate-applications"] });
+  };
+
+  useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, invalidateList);
+  useRealtimeChannel(RealtimeEvent.OfferSent, invalidateList);
 
   const all = useMemo(
     () => (data?.data ?? []) as AppRow[],

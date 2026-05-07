@@ -2,10 +2,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { getCurrentSession } from "@/lib/auth/session";
 
-import {
-  ApplicationDetailClient,
-  type AppDetail,
-} from "./_application-detail-client";
+import type { AppDetail } from "./_application-detail-client";
+import { ApplicationDetailDataClient } from "./_application-detail-data-client";
 
 interface InterviewRow {
   id: string;
@@ -84,11 +82,12 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
   const pastOffers = offers.filter((o) => o.status !== "pending");
 
   return (
-    <ApplicationDetailClient
-      app={app}
-      interviews={interviews}
-      pendingOffer={pendingOffer}
-      pastOffers={pastOffers}
+    <ApplicationDetailDataClient
+      applicationId={id}
+      initialApp={app}
+      initialInterviews={interviews}
+      initialPendingOffer={pendingOffer}
+      initialPastOffers={pastOffers}
     />
   );
 }

@@ -3,8 +3,11 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { Building2, ChevronRight, FileText } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useMyInterviewsQuery } from "@/hooks/use-interviews";
+import { RealtimeEvent } from "@/lib/realtime";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 
 import { CandidateInterviewsToolbarClient } from "./_interviews-toolbar-client";
 import { CandidateInterviewsPagination } from "./_interviews-pagination";
@@ -87,7 +90,12 @@ interface CandidateInterviewsClientProps {
 }
 
 export function CandidateInterviewsClient({ params }: CandidateInterviewsClientProps) {
+  const queryClient = useQueryClient();
   const { data, isError } = useMyInterviewsQuery({});
+
+  useRealtimeChannel(RealtimeEvent.InterviewScheduled, () => {
+    queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
+  });
 
   const all = useMemo(
     () => (data?.data ?? []) as InterviewRow[],
