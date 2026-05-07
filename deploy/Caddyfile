@@ -1,0 +1,43 @@
+# AuraHire — Caddy reverse proxy
+#
+# Caddy auto-issues a Let's Encrypt cert for the sslip.io hostname on first
+# request, then renews automatically. Port 80 must be reachable from the public
+# internet (UFW already allows 80/443 — see provision.sh).
+#
+# Install path on droplet:  /etc/caddy/Caddyfile
+# Validate config:          sudo caddy validate --config /etc/caddy/Caddyfile
+# Reload (no downtime):     sudo systemctl reload caddy
+# Logs:                     sudo journalctl -u caddy -f
+
+157-245-195-180.sslip.io {
+    encode gzip zstd
+
+    # Forward everything to the NestJS API (PM2 keeps it alive on :3333)
+    reverse_proxy localhost:3333 {
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Real-IP {remote_host}
+        # Long timeout so resume parsing + AI scoring don't get cut off
+        transport http {
+            response_header_timeout 60s
+            read_timeout 60s
+        }
+    }
+
+    # Belt-and-braces security headers (Helmet on the API also sets some)
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+        format json
+    }
+}
