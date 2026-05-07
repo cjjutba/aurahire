@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, forwardRef } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import {
   RealtimeEvent,
   type ApplicationCreatedPayload,
@@ -28,11 +28,7 @@ import { RealtimeGateway } from "./realtime.gateway";
 export class EventsService {
   private readonly logger = new Logger(EventsService.name);
 
-  constructor(
-    // forwardRef breaks the gateway↔service circular import.
-    @Inject(forwardRef(() => RealtimeGateway))
-    private readonly gateway: RealtimeGateway,
-  ) {}
+  constructor(private readonly gateway: RealtimeGateway) {}
 
   emitApplicationCreated(payload: ApplicationCreatedPayload): void {
     this.broadcast(

@@ -1,4 +1,4 @@
-import { Logger } from "@nestjs/common";
+import { Inject, Logger } from "@nestjs/common";
 import {
   ConnectedSocket,
   MessageBody,
@@ -21,7 +21,6 @@ import {
 import { Rooms } from "./room.constants";
 import { WsJwtUtil } from "./ws-jwt.util";
 import { SocketRateLimiter } from "./realtime-rate-limit";
-import { Inject } from "@nestjs/common";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../db/db.module";
 
 interface SocketData {
@@ -72,10 +71,8 @@ export class RealtimeGateway
   }
 
   async handleConnection(client: AuthSocket): Promise<void> {
-    const token =
-      typeof client.handshake.auth?.token === "string"
-        ? (client.handshake.auth.token as string)
-        : undefined;
+    const rawToken: unknown = client.handshake.auth?.token;
+    const token = typeof rawToken === "string" ? rawToken : undefined;
     const user = await this.jwt.authenticate(token);
     if (!user) {
       this.logger.warn(`WS handshake rejected (auth) for client ${client.id}`);
