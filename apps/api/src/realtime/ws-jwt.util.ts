@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { eq } from "drizzle-orm";
+import type { JWTPayload } from "jose";
 import { profilesTable } from "@aurahire/db";
 import type { AuthUser } from "@aurahire/shared";
 
@@ -32,7 +33,7 @@ export class WsJwtUtil {
   async authenticate(token: string | undefined): Promise<AuthUser | null> {
     if (!token || typeof token !== "string") return null;
 
-    let payload;
+    let payload: JWTPayload;
     try {
       payload = await this.verifier.verify(token);
     } catch {
