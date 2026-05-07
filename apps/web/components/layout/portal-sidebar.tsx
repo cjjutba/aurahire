@@ -43,6 +43,10 @@ interface NavItem {
   href: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
+  // Path prefix for active-state matching when it differs from `href`. Lets
+  // Settings link straight to `/settings/profile` while still highlighting
+  // on every `/settings/*` sub-page.
+  matchPrefix?: string;
 }
 
 interface NavSection {
@@ -77,7 +81,12 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
       items: [
         { href: "/candidate/profile", label: "Profile", icon: User },
         { href: "/candidate/resume", label: "Resume", icon: FileText },
-        { href: "/candidate/settings", label: "Settings", icon: Settings },
+        {
+          href: "/candidate/settings/profile",
+          label: "Settings",
+          icon: Settings,
+          matchPrefix: "/candidate/settings",
+        },
       ],
     },
   ],
@@ -98,7 +107,12 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
       label: "Account",
       items: [
         { href: "/recruiter/analytics", label: "Analytics", icon: BarChart3 },
-        { href: "/recruiter/settings", label: "Settings", icon: Settings },
+        {
+          href: "/recruiter/settings/profile",
+          label: "Settings",
+          icon: Settings,
+          matchPrefix: "/recruiter/settings",
+        },
       ],
     },
   ],
@@ -160,8 +174,10 @@ export function PortalSidebarContent({
   const sections = NAV_SECTIONS[role];
   const initials = getInitials(fullName);
   const activeHref = resolveActiveHref(pathname, [
-    ...sections.flatMap((s) => s.items.map((i) => i.href)),
-    HELP_HREF[role],
+    ...sections.flatMap((s) =>
+      s.items.map((i) => ({ href: i.href, prefix: i.matchPrefix ?? i.href }))
+    ),
+    { href: HELP_HREF[role], prefix: HELP_HREF[role] },
   ]);
 
   async function handleSignOut() {
@@ -278,16 +294,20 @@ export function PortalSidebarContent({
   );
 }
 
-function resolveActiveHref(pathname: string, hrefs: string[]): string | null {
-  let best: string | null = null;
-  for (const href of hrefs) {
-    const matches = pathname === href || pathname.startsWith(`${href}/`);
+function resolveActiveHref(
+  pathname: string,
+  items: { href: string; prefix: string }[],
+): string | null {
+  let best: { href: string; prefix: string } | null = null;
+  for (const item of items) {
+    const matches =
+      pathname === item.prefix || pathname.startsWith(`${item.prefix}/`);
     if (!matches) continue;
-    if (best === null || href.length > best.length) {
-      best = href;
+    if (best === null || item.prefix.length > best.prefix.length) {
+      best = item;
     }
   }
-  return best;
+  return best?.href ?? null;
 }
 
 function getInitials(name: string): string {

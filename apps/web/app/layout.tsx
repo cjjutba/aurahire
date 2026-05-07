@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { AuthTokenProvider } from "@/components/providers/auth-token-provider";
+import { ConfirmProvider } from "@/components/providers/confirm-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -31,8 +32,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AuthTokenProvider>
           <QueryProvider>
-            {children}
-            <Toaster position="top-right" richColors closeButton />
+            <ConfirmProvider>
+              {children}
+              <Toaster position="top-right" richColors closeButton />
+            </ConfirmProvider>
           </QueryProvider>
         </AuthTokenProvider>
       </body>

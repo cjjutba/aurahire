@@ -5,14 +5,23 @@ import { useRouter } from "next/navigation";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
 export function WithdrawButtonClient({ applicationId }: { applicationId: string }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [working, setWorking] = useState(false);
 
   async function withdraw() {
-    if (!window.confirm("Withdraw this application? This cannot be undone.")) return;
+    const ok = await confirm({
+      title: "Withdraw this application?",
+      description:
+        "This cannot be undone. You'll need to reapply if you change your mind.",
+      confirmLabel: "Withdraw application",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setWorking(true);
     try {
       const supabase = createSupabaseBrowserClient();

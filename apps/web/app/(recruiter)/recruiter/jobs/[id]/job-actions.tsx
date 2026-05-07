@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Archive, Send } from "lucide-react";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import type { JobStatus } from "@aurahire/shared";
-import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { useJobsControllerArchiveV1 } from "@aurahire/shared";
 import { useInvalidate } from "@/hooks/use-invalidate-queries";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
@@ -20,6 +21,7 @@ interface JobActionsProps {
 
 export function JobActions({ id, status }: JobActionsProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [working, setWorking] = useState(false);
   const [biasModalOpen, setBiasModalOpen] = useState(false);
   const [pendingFlags, setPendingFlags] = useState<BiasFlagChipFlag[]>([]);
@@ -98,7 +100,13 @@ export function JobActions({ id, status }: JobActionsProps) {
   }
 
   async function archive() {
-    if (!window.confirm("Archive this job? Candidates will no longer see it.")) return;
+    const ok = await confirm({
+      title: "Archive this job?",
+      description: "Candidates will no longer see it. You can unarchive it later from your job list.",
+      confirmLabel: "Archive job",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setWorking(true);
     try {
       await archiveMutation.mutateAsync({ id });
@@ -116,27 +124,46 @@ export function JobActions({ id, status }: JobActionsProps) {
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2">
         {status === "draft" && (
-          <Button
+          <button
+            type="button"
             onClick={publish}
             disabled={working}
-            className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+            className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-6 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
           >
-            {working && <ButtonSpinner />}
-            {working ? "Publishing..." : "Publish"}
-          </Button>
+            {working ? (
+              <>
+                <ButtonSpinner />
+                Publishing...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4" />
+                Publish job
+              </>
+            )}
+          </button>
         )}
         {status !== "archived" && (
-          <Button
+          <button
+            type="button"
             onClick={archive}
             disabled={working}
-            variant="outline"
-            className="rounded-[var(--radius-pill)]"
+            className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-5 text-sm font-medium text-[var(--color-status-danger)] transition hover:bg-[var(--color-score-low-soft)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {working && <ButtonSpinner />}
-            {working ? "Archiving..." : "Archive"}
-          </Button>
+            {working ? (
+              <>
+                <ButtonSpinner />
+                Archiving...
+              </>
+            ) : (
+              <>
+                <Archive className="h-4 w-4" />
+                Archive job
+              </>
+            )}
+          </button>
         )}
       </div>
 

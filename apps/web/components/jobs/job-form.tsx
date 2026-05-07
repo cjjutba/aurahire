@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -33,7 +33,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { TiptapEditor } from "./tiptap-editor";
+import { TiptapEditor, type TiptapEditorHandle } from "./tiptap-editor";
 import { useDebouncedBiasCheck } from "./_use-debounced-bias-check";
 import { BiasFlagsList } from "@/components/bias/bias-flags-list";
 
@@ -106,6 +106,38 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
   const descriptionPlainValue = form.watch("descriptionPlain") ?? "";
   const { flags: biasFlags, scanning: biasScanning } =
     useDebouncedBiasCheck(descriptionPlainValue);
+
+  // The Tiptap editor exposes a scrollToTerm() method via this ref so the
+  // bias-flag chips can drive the editor (open the popover AND surface the
+  // term in the description at the same time).
+  const editorRef = useRef<TiptapEditorHandle | null>(null);
+
+  // Pass severity-tinted flags into the editor for inline underlines. Memoize
+  // to avoid the editor effect firing on every render of the form.
+  const editorBiasFlags = useMemo(
+    () =>
+      biasFlags.map((f) => ({
+        term: f.term,
+        severity: f.severity,
+      })),
+    [biasFlags],
+  );
+
+  // Drives button visibility/emphasis. We read from biasFlags (last known
+  // result) — never from biasScanning — so the buttons don't flicker while a
+  // re-scan is in flight. The "Checking…" caption below conveys scan status
+  // without rearranging the action area.
+  //
+  // Only medium/high flags gate publish. LOW flags surface in the UI and the
+  // audit trail but don't block — they're informational. This mirrors the
+  // backend gate in jobs.service.ts publish().
+  const hasGatingFlags = biasFlags.some(
+    (f) => f.severity === "medium" || f.severity === "high",
+  );
+  const hasOnlyLowFlags = biasFlags.length > 0 && !hasGatingFlags;
+  const gatingCount = biasFlags.filter(
+    (f) => f.severity === "medium" || f.severity === "high",
+  ).length;
 
   async function handleSubmit(values: JobFormUI, mode: SubmitMode) {
     setSubmittingAs(mode);
@@ -400,12 +432,14 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
                 <FormLabel>Job Description *</FormLabel>
                 <FormControl>
                   <TiptapEditor
+                    ref={editorRef}
                     value={field.value}
                     placeholder="Describe the role, responsibilities, and what you're looking for…"
                     onChange={(html, plainText) => {
                       field.onChange(html);
                       form.setValue("descriptionPlain", plainText);
                     }}
+                    biasFlags={editorBiasFlags}
                   />
                 </FormControl>
                 <FormMessage />
@@ -422,6 +456,7 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
                 suggestion: f.suggestion,
               }))}
               scanning={biasScanning}
+              onFlagSelect={(flag) => editorRef.current?.scrollToTerm(flag.term)}
             />
           )}
         </section>
@@ -522,47 +557,74 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
           />
         </section>
 
-        <div className="flex flex-wrap justify-end gap-3 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={isSubmitting}
-            className="rounded-[var(--radius-pill)] px-6"
-          >
-            Cancel
-          </Button>
-          {isEdit ? (
+        <div className="flex flex-col items-end gap-2 pt-4">
+          {!isEdit && biasScanning && (
+            <p className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
+              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-score-mid)]" />
+              Checking for bias…
+            </p>
+          )}
+          {!isEdit && hasGatingFlags && !biasScanning && (
+            <p className="text-xs text-[var(--color-muted)]">
+              Publishing is gated until {gatingCount === 1 ? "1 flag is" : `${gatingCount} flags are`} resolved or overridden.
+            </p>
+          )}
+          {!isEdit && hasOnlyLowFlags && !biasScanning && (
+            <p className="text-xs text-[var(--color-muted)]">
+              Low-severity flags surfaced for awareness — not blocking.
+            </p>
+          )}
+          <div className="flex flex-wrap justify-end gap-3">
             <Button
-              type="submit"
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
               disabled={isSubmitting}
-              className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+              className="rounded-[var(--radius-pill)] px-6"
             >
-              {submittingAs === "draft" && <ButtonSpinner />}
-              {submittingAs === "draft" ? "Saving..." : "Save changes"}
+              Cancel
             </Button>
-          ) : (
-            <>
+            {isEdit ? (
               <Button
                 type="submit"
-                variant="secondary"
                 disabled={isSubmitting}
-                className="rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-6 text-[var(--color-ink)] hover:bg-[var(--color-hairline)]"
+                className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+              >
+                {submittingAs === "draft" && <ButtonSpinner />}
+                {submittingAs === "draft" ? "Saving..." : "Save changes"}
+              </Button>
+            ) : hasGatingFlags ? (
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
               >
                 {submittingAs === "draft" && <ButtonSpinner />}
                 {submittingAs === "draft" ? "Saving..." : "Save as Draft"}
               </Button>
-              <Button
-                type="button"
-                disabled={isSubmitting}
-                onClick={form.handleSubmit((v) => handleSubmit(v, "publish"))}
-                className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
-              >
-                {submittingAs === "publish" && <ButtonSpinner />}
-                {submittingAs === "publish" ? "Creating..." : "Create Job"}
-              </Button>
-            </>
-          )}
+            ) : (
+              <>
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  disabled={isSubmitting}
+                  className="rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-6 text-[var(--color-ink)] hover:bg-[var(--color-hairline)]"
+                >
+                  {submittingAs === "draft" && <ButtonSpinner />}
+                  {submittingAs === "draft" ? "Saving..." : "Save as Draft"}
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={form.handleSubmit((v) => handleSubmit(v, "publish"))}
+                  className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+                >
+                  {submittingAs === "publish" && <ButtonSpinner />}
+                  {submittingAs === "publish" ? "Creating..." : "Create Job"}
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </form>
     </Form>

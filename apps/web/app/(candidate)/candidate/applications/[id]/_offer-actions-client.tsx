@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
 interface OfferRow {
@@ -32,8 +33,8 @@ interface Props {
 
 export function OfferActionsClient({ offer }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [working, setWorking] = useState(false);
-  const [acceptOpen, setAcceptOpen] = useState(false);
   const [declineOpen, setDeclineOpen] = useState(false);
   const [reason, setReason] = useState("");
 
@@ -60,6 +61,14 @@ export function OfferActionsClient({ offer }: Props) {
   }
 
   async function accept() {
+    const ok = await confirm({
+      title: "Accept this offer?",
+      description:
+        "Your application status will move to Hired and the recruiter will be notified.",
+      confirmLabel: "Accept offer",
+      variant: "info",
+    });
+    if (!ok) return;
     setWorking(true);
     try {
       const res = await authedPost(`/api/v1/offers/${offer.id}/accept`);
@@ -69,7 +78,6 @@ export function OfferActionsClient({ offer }: Props) {
         return;
       }
       toastSuccess("Offer accepted", "Welcome aboard.");
-      setAcceptOpen(false);
       router.refresh();
     } finally {
       setWorking(false);
@@ -108,11 +116,12 @@ export function OfferActionsClient({ offer }: Props) {
     <>
       <div className="flex flex-wrap gap-2">
         <Button
-          onClick={() => setAcceptOpen(true)}
+          onClick={() => void accept()}
           disabled={working}
           className="rounded-[var(--radius-pill)] bg-[var(--color-score-high)] text-white hover:opacity-90"
         >
-          Accept Offer
+          {working && <ButtonSpinner />}
+          {working ? "Accepting..." : "Accept Offer"}
         </Button>
         <Button
           onClick={() => setDeclineOpen(true)}
@@ -123,36 +132,6 @@ export function OfferActionsClient({ offer }: Props) {
           Decline
         </Button>
       </div>
-
-      <Dialog open={acceptOpen} onOpenChange={setAcceptOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Accept this offer?</DialogTitle>
-            <DialogDescription>
-              Your application status will move to <strong>Hired</strong> and the recruiter will be
-              notified.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setAcceptOpen(false)}
-              className="rounded-[var(--radius-pill)]"
-              disabled={working}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={accept}
-              disabled={working}
-              className="rounded-[var(--radius-pill)] bg-[var(--color-score-high)] text-white hover:opacity-90"
-            >
-              {working && <ButtonSpinner />}
-              {working ? "Accepting..." : "Confirm accept"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={declineOpen} onOpenChange={setDeclineOpen}>
         <DialogContent className="max-w-md">

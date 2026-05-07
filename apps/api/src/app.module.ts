@@ -31,6 +31,7 @@ import { BiasModule } from "./modules/bias/bias.module";
 import { InterviewsModule } from "./modules/interviews/interviews.module";
 import { OffersModule } from "./modules/offers/offers.module";
 import { AdminModule } from "./modules/admin/admin.module";
+import { RealtimeModule } from "./realtime";
 import { QueueModule } from "./queue";
 import { CronModule } from "./cron";
 import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
@@ -127,6 +128,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     InterviewsModule,
     OffersModule,
     AdminModule,
+    RealtimeModule,
     HealthModule,
     AuthModule,
   ],

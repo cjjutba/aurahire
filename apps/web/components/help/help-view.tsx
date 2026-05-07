@@ -25,6 +25,11 @@ const HELP_CONTENT: Record<HelpVariant, HelpPageContent> = {
   admin: adminHelp,
 };
 
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 interface HelpViewProps {
   variant: HelpVariant;
 }
@@ -37,6 +42,7 @@ export function HelpView({ variant }: HelpViewProps) {
   );
   const [tocOpen, setTocOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const tocScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Cmd/Ctrl+K focuses search
   useEffect(() => {
@@ -109,12 +115,32 @@ export function HelpView({ variant }: HelpViewProps) {
     return () => observer.disconnect();
   }, [allSectionIds]);
 
+  // Keep the active TOC item visible inside the bounded scroll container.
+  // `block: "nearest"` is a no-op when the target is already on-screen,
+  // so this never fights manual TOC scrolling.
+  useEffect(() => {
+    if (!activeId) return;
+    const container = tocScrollRef.current;
+    if (!container) return;
+    const btn = container.querySelector<HTMLButtonElement>(
+      `[data-toc-id="${activeId}"]`,
+    );
+    if (!btn) return;
+    btn.scrollIntoView({
+      block: "nearest",
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+  }, [activeId]);
+
   function handleTocClick(id: string) {
     const el = document.getElementById(id);
     if (!el) return;
     setActiveId(id);
     setTocOpen(false);
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
     if (typeof history !== "undefined") {
       history.replaceState(null, "", `#${id}`);
     }
@@ -268,20 +294,38 @@ export function HelpView({ variant }: HelpViewProps) {
 
         {/* Desktop sticky TOC */}
         <aside className="hidden lg:block">
-          <div className="sticky top-8">
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+          <div className="sticky top-8 flex max-h-[calc(100vh-4rem)] flex-col">
+            <div className="mb-3 shrink-0 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
               On this page
             </div>
-            <TocList
-              groups={filtered.groups}
-              activeId={activeId}
-              onPick={handleTocClick}
-              extra={
-                filtered.faq.length > 0
-                  ? [{ id: "faq", title: "Frequently asked" }]
-                  : []
-              }
-            />
+            <div className="relative min-h-0 flex-1">
+              {/* top edge fade — hides clipped content above the fold */}
+              <div
+                className="pointer-events-none absolute inset-x-0 top-0 z-10 h-3 bg-gradient-to-b from-[var(--color-canvas)] to-transparent"
+                aria-hidden
+              />
+              {/* scroll surface */}
+              <div
+                ref={tocScrollRef}
+                className="h-full overflow-y-auto pb-3 pr-2 pt-1 [scrollbar-width:thin]"
+              >
+                <TocList
+                  groups={filtered.groups}
+                  activeId={activeId}
+                  onPick={handleTocClick}
+                  extra={
+                    filtered.faq.length > 0
+                      ? [{ id: "faq", title: "Frequently asked" }]
+                      : []
+                  }
+                />
+              </div>
+              {/* bottom edge fade — hides clipped content below the fold */}
+              <div
+                className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-3 bg-gradient-to-t from-[var(--color-canvas)] to-transparent"
+                aria-hidden
+              />
+            </div>
           </div>
         </aside>
       </div>
@@ -319,7 +363,7 @@ function SectionView({ section }: { section: HelpSection }) {
                   ?.writeText(url.toString())
                   .catch(() => undefined);
                 document.getElementById(section.id)?.scrollIntoView({
-                  behavior: "smooth",
+                  behavior: prefersReducedMotion() ? "auto" : "smooth",
                   block: "start",
                 });
                 if (typeof history !== "undefined") {
@@ -373,12 +417,15 @@ function TocList({
                 <li key={s.id}>
                   <button
                     type="button"
+                    data-toc-id={s.id}
+                    aria-current={active ? "location" : undefined}
                     onClick={() => onPick(s.id)}
                     className={cn(
-                      "block w-full truncate rounded-[var(--radius-sm)] px-2 py-1.5 text-left transition",
+                      "relative block w-full truncate rounded-[var(--radius-sm)] py-1.5 pl-3 pr-2 text-left transition",
+                      "before:absolute before:inset-y-1 before:left-0 before:w-[2px] before:rounded-full before:transition-colors before:content-['']",
                       active
-                        ? "bg-[var(--color-primary-soft)] font-medium text-[var(--color-primary)]"
-                        : "text-[var(--color-body)] hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]",
+                        ? "font-medium text-[var(--color-ink)] before:bg-[var(--color-primary)]"
+                        : "text-[var(--color-body)] before:bg-transparent hover:text-[var(--color-ink)]",
                     )}
                   >
                     {s.title}
@@ -398,12 +445,15 @@ function TocList({
                 <li key={item.id}>
                   <button
                     type="button"
+                    data-toc-id={item.id}
+                    aria-current={active ? "location" : undefined}
                     onClick={() => onPick(item.id)}
                     className={cn(
-                      "block w-full truncate rounded-[var(--radius-sm)] px-2 py-1.5 text-left transition",
+                      "relative block w-full truncate rounded-[var(--radius-sm)] py-1.5 pl-3 pr-2 text-left transition",
+                      "before:absolute before:inset-y-1 before:left-0 before:w-[2px] before:rounded-full before:transition-colors before:content-['']",
                       active
-                        ? "bg-[var(--color-primary-soft)] font-medium text-[var(--color-primary)]"
-                        : "text-[var(--color-body)] hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]",
+                        ? "font-medium text-[var(--color-ink)] before:bg-[var(--color-primary)]"
+                        : "text-[var(--color-body)] before:bg-transparent hover:text-[var(--color-ink)]",
                     )}
                   >
                     {item.title}

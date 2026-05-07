@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { BiasFlagsList } from "@/components/bias/bias-flags-list";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
@@ -45,6 +46,7 @@ interface Props {
 
 export function JobDetailSheetClient({ jobId, open, onClose }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [working, setWorking] = useState(false);
 
@@ -74,7 +76,14 @@ export function JobDetailSheetClient({ jobId, open, onClose }: Props) {
 
   async function archive() {
     if (!detail) return;
-    if (!window.confirm("Archive this job?")) return;
+    const ok = await confirm({
+      title: "Archive this job?",
+      description:
+        "Candidates will no longer see it in search results. You can review archived jobs in the admin job list.",
+      confirmLabel: "Archive job",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setWorking(true);
     try {
       const supabase = createSupabaseBrowserClient();

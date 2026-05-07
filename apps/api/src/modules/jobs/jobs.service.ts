@@ -175,13 +175,22 @@ export class JobsService {
     // Run a fresh bias scan; persists into bias_flags
     await this.biasService.scanJob(user, companyId, id, requestMeta);
 
-    // Block publish if any flagged rows remain (recruiter must override or edit)
+    // Severity-aware gate: only medium/high bias flags block publish.
+    // Low-severity flags are informational — they persist into bias_flags for
+    // the audit trail and surface in the editor preview, but the recruiter
+    // can publish without an override. This matches the "info / warning /
+    // error" calibration in the v1.2.0 prompt: low = soft phrasing in
+    // friendly context, medium/high = established coded language with
+    // documented exclusionary effect.
     const unresolved = await this.biasService.findFlagged(id);
-    if (unresolved.length > 0) {
+    const gating = unresolved.filter(
+      (f) => f.severity === "medium" || f.severity === "high",
+    );
+    if (gating.length > 0) {
       throw new UnprocessableEntityException({
         code: "BIAS_CHECK_REQUIRED",
-        message: `${unresolved.length} bias flag${unresolved.length === 1 ? "" : "s"} require${unresolved.length === 1 ? "s" : ""} override or edit before publish`,
-        flags: unresolved,
+        message: `${gating.length} bias flag${gating.length === 1 ? "" : "s"} require${gating.length === 1 ? "s" : ""} override or edit before publish`,
+        flags: gating,
       });
     }
 

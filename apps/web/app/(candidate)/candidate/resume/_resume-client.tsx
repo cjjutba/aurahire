@@ -35,19 +35,12 @@ import type {
 import { getAccessToken } from "@aurahire/shared";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { queryKeys } from "@/lib/query";
 import { toastApiError, toastSuccess } from "@/lib/toast";
 import {
@@ -809,12 +802,12 @@ export function CandidateResumeClient() {
   const { data, isLoading, isError } = useMyResumesQuery();
   const resumes = useMemo(() => data?.data ?? [], [data]);
 
+  const confirm = useConfirm();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<{
     id: string;
     action: string;
   } | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<ResumeRow | null>(null);
   const justUploadedIdRef = useRef<string | null>(null);
 
   // Auto-select default → first resume → newly uploaded resume.
@@ -894,7 +887,18 @@ export function CandidateResumeClient() {
     }
   }
 
-  async function performDelete(resume: ResumeRow) {
+  async function requestDelete(resume: ResumeRow) {
+    const ok = await confirm({
+      title: "Delete this resume?",
+      description: `${resume.filename}${
+        resume.isDefault
+          ? " is your default resume. You'll need to set another as default."
+          : ""
+      } This action can't be undone.`,
+      confirmLabel: "Delete resume",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setBusyAction({ id: resume.id, action: "delete" });
     try {
       await apiCall(`/api/v1/resumes/${resume.id}`, { method: "DELETE" });
@@ -905,7 +909,6 @@ export function CandidateResumeClient() {
       toastApiError(err, "Couldn't delete");
     } finally {
       setBusyAction(null);
-      setConfirmDelete(null);
     }
   }
 
@@ -938,7 +941,7 @@ export function CandidateResumeClient() {
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
           {/* Left rail: list + upload */}
-          <aside className="flex flex-col gap-4">
+          <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start">
             <UploadDropzone onUploaded={onUploaded} />
             <div>
               <div className="mb-2 flex items-center justify-between">
@@ -971,7 +974,7 @@ export function CandidateResumeClient() {
                       selected={r.id === selectedId}
                       onSelect={() => setSelectedId(r.id)}
                       onSetDefault={() => void setDefault(r)}
-                      onDelete={() => setConfirmDelete(r)}
+                      onDelete={() => void requestDelete(r)}
                       onReparse={() => void reparse(r)}
                       onDownload={() => void download(r)}
                       busyAction={
@@ -1004,42 +1007,6 @@ export function CandidateResumeClient() {
         </div>
       )}
 
-      <Dialog open={Boolean(confirmDelete)} onOpenChange={(open) => !open && setConfirmDelete(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete this resume?</DialogTitle>
-            <DialogDescription>
-              {confirmDelete?.filename}
-              {confirmDelete?.isDefault
-                ? " is your default resume. You'll need to set another resume as default."
-                : ""}{" "}
-              This action can&apos;t be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(null)}
-              className="inline-flex h-9 items-center rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-4 text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-hairline)]"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={busyAction?.action === "delete"}
-              onClick={() => confirmDelete && void performDelete(confirmDelete)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-status-danger)] px-4 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
-            >
-              {busyAction?.action === "delete" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Trash2 className="h-3.5 w-3.5" />
-              )}
-              Delete
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

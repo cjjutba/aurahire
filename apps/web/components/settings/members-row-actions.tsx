@@ -37,11 +37,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useConfirm } from "@/components/providers/confirm-provider";
 
 type DialogMode =
   | { kind: "none" }
   | { kind: "change-role" }
-  | { kind: "remove" }
   | { kind: "transfer" };
 
 interface Props {
@@ -55,6 +55,7 @@ interface Props {
 }
 
 export function MembersRowActions({ member, callerRole }: Props) {
+  const confirm = useConfirm();
   const [dialog, setDialog] = useState<DialogMode>({ kind: "none" });
 
   const isPending = member.status === "invited";
@@ -110,13 +111,19 @@ export function MembersRowActions({ member, callerRole }: Props) {
     }
   }
 
-  async function handleSubmitRemove() {
+  async function requestRemove() {
+    const ok = await confirm({
+      title: isPending ? "Revoke invitation?" : "Remove team member?",
+      description: isPending
+        ? `${member.email} will no longer be able to accept the invite.`
+        : `${member.user?.fullName ?? member.email} will lose access immediately. They keep any data already created in this workspace.`,
+      confirmLabel: isPending ? "Revoke invitation" : "Remove member",
+      variant: "destructive",
+    });
+    if (!ok) return;
     try {
       await remove.mutateAsync(member.id);
-      toastSuccess(
-        isPending ? "Invitation revoked" : "Member removed",
-      );
-      setDialog({ kind: "none" });
+      toastSuccess(isPending ? "Invitation revoked" : "Member removed");
     } catch (err) {
       toastApiError(err, isPending ? "Couldn't revoke" : "Couldn't remove");
     }
@@ -170,7 +177,7 @@ export function MembersRowActions({ member, callerRole }: Props) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => setDialog({ kind: "remove" })}
+                onClick={() => void requestRemove()}
               >
                 Revoke invitation
               </DropdownMenuItem>
@@ -209,7 +216,7 @@ export function MembersRowActions({ member, callerRole }: Props) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     variant="destructive"
-                    onClick={() => setDialog({ kind: "remove" })}
+                    onClick={() => void requestRemove()}
                   >
                     Remove from team
                   </DropdownMenuItem>
@@ -265,49 +272,6 @@ export function MembersRowActions({ member, callerRole }: Props) {
             >
               {update.isPending && <ButtonSpinner />}
               {update.isPending ? "Saving..." : "Save role"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Remove dialog (also doubles for revoke pending invite) */}
-      <Dialog
-        open={dialog.kind === "remove"}
-        onOpenChange={(o) => !o && setDialog({ kind: "none" })}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {isPending ? "Revoke invitation?" : "Remove team member?"}
-            </DialogTitle>
-            <DialogDescription>
-              {isPending
-                ? `${member.email} will no longer be able to accept the invite.`
-                : `${member.user?.fullName ?? member.email} will lose access immediately. They keep any data already created in this workspace.`}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDialog({ kind: "none" })}
-              disabled={remove.isPending}
-              className="rounded-[var(--radius-pill)] px-6"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSubmitRemove}
-              disabled={remove.isPending}
-              className="rounded-[var(--radius-pill)] bg-[var(--color-status-danger)] px-6 text-[var(--color-on-primary)] hover:opacity-90"
-            >
-              {remove.isPending && <ButtonSpinner />}
-              {remove.isPending
-                ? "Working..."
-                : isPending
-                  ? "Revoke"
-                  : "Remove"}
             </Button>
           </DialogFooter>
         </DialogContent>

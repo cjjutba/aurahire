@@ -34,6 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useConfirm } from "@/components/providers/confirm-provider";
 
 /**
  * Danger-zone subsections. The page composes these conditionally based
@@ -54,7 +55,7 @@ export function LeaveCompanyCard() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const leave = useLeaveCompanyMutation();
-  const [open, setOpen] = useState(false);
+  const confirm = useConfirm();
 
   const role = ctx?.activeMembership?.role ?? null;
   const companyName = ctx?.activeMembership?.companyName ?? "this company";
@@ -67,7 +68,15 @@ export function LeaveCompanyCard() {
       ? "Owners must transfer ownership before leaving. Use the section below."
       : null;
 
-  async function handleConfirm() {
+  async function requestLeave() {
+    const ok = await confirm({
+      title: `Leave ${companyName}?`,
+      description:
+        "You'll lose access to this workspace immediately. You can be re-invited later.",
+      confirmLabel: "Leave company",
+      variant: "destructive",
+    });
+    if (!ok) return;
     try {
       const res = await leave.mutateAsync();
       // The backend returns the next active membership (or null).
@@ -85,7 +94,6 @@ export function LeaveCompanyCard() {
         router.push("/onboarding/start");
         router.refresh();
       }
-      setOpen(false);
     } catch (err) {
       toastApiError(err, "Couldn't leave company");
     }
@@ -108,45 +116,14 @@ export function LeaveCompanyCard() {
       <div className="mt-4">
         <Button
           type="button"
-          onClick={() => setOpen(true)}
-          disabled={!!blockReason}
+          onClick={() => void requestLeave()}
+          disabled={!!blockReason || leave.isPending}
           className="rounded-[var(--radius-pill)] bg-[var(--color-status-danger)] px-6 text-[var(--color-on-primary)] hover:opacity-90 disabled:opacity-40"
         >
-          Leave {companyName}…
+          {leave.isPending && <ButtonSpinner />}
+          {leave.isPending ? "Leaving..." : `Leave ${companyName}…`}
         </Button>
       </div>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Leave {companyName}?</DialogTitle>
-            <DialogDescription>
-              You'll lose access to this workspace immediately. You can be
-              re-invited later.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={leave.isPending}
-              className="rounded-[var(--radius-pill)] px-6"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleConfirm}
-              disabled={leave.isPending}
-              className="rounded-[var(--radius-pill)] bg-[var(--color-status-danger)] px-6 text-[var(--color-on-primary)] hover:opacity-90"
-            >
-              {leave.isPending && <ButtonSpinner />}
-              {leave.isPending ? "Leaving..." : "Leave company"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

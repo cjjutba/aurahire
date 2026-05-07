@@ -31,8 +31,12 @@ export class RedisIoAdapter extends IoAdapter {
       return;
     }
     // Pub/sub adapter needs distinct connections (Redis pub/sub blocks the conn).
+    // lazyConnect:true so the awaited connect() actually blocks until the TCP
+    // handshake completes — required because @socket.io/redis-adapter calls
+    // psubscribe inside its constructor with enableOfflineQueue:false, and
+    // that throws "Stream isn't writeable" if the sub isn't ready yet.
     this.pub = new Redis(url, {
-      lazyConnect: false,
+      lazyConnect: true,
       maxRetriesPerRequest: null,
       enableOfflineQueue: false,
       retryStrategy: (times) => Math.min(50 * 2 ** Math.min(times, 6), 2000),
@@ -40,10 +44,7 @@ export class RedisIoAdapter extends IoAdapter {
     this.sub = this.pub.duplicate();
     this.pub.on("error", (e) => this.logger.warn(`pub error: ${e.message}`));
     this.sub.on("error", (e) => this.logger.warn(`sub error: ${e.message}`));
-    await Promise.all([this.pub.connect(), this.sub.connect()]).catch(() => {
-      // ioredis with lazyConnect:false connects automatically; .connect() is
-      // idempotent / errors here are also surfaced via the 'error' listeners.
-    });
+    await Promise.all([this.pub.connect(), this.sub.connect()]);
     this.logger.log("Socket.io Redis adapter connected");
   }
 

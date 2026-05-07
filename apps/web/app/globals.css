@@ -174,3 +174,47 @@ body {
 .animate-stage-fade-in {
   animation: stage-fade-in 220ms ease-out;
 }
+
+/* ---- Bias inline highlights (TipTap ProseMirror decorations) ---- */
+/* Severity-tinted wavy underline applied to flagged terms inside the job
+ * description editor. Uses the same scoring tokens as the rest of the
+ * scoring/bias surfaces so colors stay coherent with the design system. */
+.bias-mark {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 3px;
+  border-radius: 2px;
+  padding: 0 1px;
+  cursor: help;
+  transition: background-color 160ms ease-out;
+}
+.bias-mark--low {
+  text-decoration-color: var(--color-score-mid);
+  background-color: color-mix(in srgb, var(--color-score-mid-soft) 55%, transparent);
+}
+.bias-mark--medium {
+  text-decoration-color: #f97316; /* orange-500: between amber and red */
+  background-color: color-mix(in srgb, #fed7aa 55%, transparent);
+}
+.bias-mark--high {
+  text-decoration-color: var(--color-score-low);
+  background-color: color-mix(in srgb, var(--color-score-low-soft) 60%, transparent);
+}
+
+/* Flash applied transiently when a recruiter clicks a chip in the bias-flag
+ * list. The decoration class is auto-cleared after the animation by the
+ * Tiptap extension so the term returns to the default tint. */
+@keyframes bias-mark-flash {
+  0% {
+    background-color: var(--color-primary-soft);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 25%, transparent);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.bias-mark--flash {
+  animation: bias-mark-flash 1.4s ease-out;
+}

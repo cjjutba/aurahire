@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 
 const POLL_INTERVAL_MS = 2000;
@@ -41,6 +42,7 @@ async function authedFetch(path: string, init?: RequestInit) {
 }
 
 export function ApplyToExistingClient() {
+  const confirm = useConfirm();
   const [status, setStatus] = useState<JobStatus | null>(null);
   const [enqueueWorking, setEnqueueWorking] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -87,13 +89,14 @@ export function ApplyToExistingClient() {
   }
 
   async function enqueue() {
-    if (
-      !window.confirm(
-        `Re-score the last ${DEFAULT_SAMPLE_SIZE} applications with current weights? This creates new match_scores rows; original scores remain for audit. Cannot be undone.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Re-score the last ${DEFAULT_SAMPLE_SIZE} applications?`,
+      description:
+        "This creates new match_scores rows with the current weights. Original scores remain for audit. This cannot be undone.",
+      confirmLabel: "Run rescore",
+      variant: "warning",
+    });
+    if (!ok) return;
 
     setEnqueueWorking(true);
     setStatus(null);

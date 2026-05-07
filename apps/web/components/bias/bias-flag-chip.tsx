@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -21,6 +21,7 @@ interface Props {
   flag: BiasFlagChipFlag;
   onOverride?: () => void;
   onDismiss?: () => void;
+  onSelect?: () => void;
 }
 
 const SEVERITY_LABEL: Record<string, string> = {
@@ -37,7 +38,27 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: "Other",
 };
 
-export function BiasFlagChip({ flag, onOverride, onDismiss }: Props) {
+// Severity → chip palette. LOW renders in a muted info treatment so it reads
+// as informational, not blocking. MEDIUM/HIGH keep the amber alert palette
+// because those are the severities that gate publish (see jobs.service.ts).
+function chipPaletteFor(severity: BiasFlagChipFlag["severity"]): string {
+  if (severity === "low") {
+    return "bg-[var(--color-surface-strong)] text-[var(--color-body)]";
+  }
+  if (severity === "high") {
+    return "bg-[var(--color-score-low-soft)] text-[var(--color-score-low)]";
+  }
+  // medium (default for null/undefined too — assume blocking)
+  return "bg-[var(--color-score-mid-soft)] text-[var(--color-score-mid)]";
+}
+
+function categoryLabelColorFor(severity: BiasFlagChipFlag["severity"]): string {
+  if (severity === "low") return "text-[var(--color-muted)]";
+  if (severity === "high") return "text-[var(--color-score-low)]";
+  return "text-[var(--color-score-mid)]";
+}
+
+export function BiasFlagChip({ flag, onOverride, onDismiss, onSelect }: Props) {
   const isOverridden = flag.status === "overridden";
   const isResolved = flag.status === "resolved";
 
@@ -45,14 +66,18 @@ export function BiasFlagChip({ flag, onOverride, onDismiss }: Props) {
     ? "bg-[var(--color-surface-strong)] text-[var(--color-muted)]"
     : isResolved
       ? "bg-[var(--color-score-high-soft)] text-[var(--color-score-high)]"
-      : "bg-[var(--color-score-mid-soft)] text-[var(--color-score-mid)]";
+      : chipPaletteFor(flag.severity);
+
+  const isLow = flag.severity === "low" && !isOverridden && !isResolved;
+  const ChipIcon = isLow ? Info : AlertTriangle;
 
   return (
     <Popover>
       <PopoverTrigger
         className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] px-3 py-1 text-xs font-medium ${chipColors} transition hover:opacity-80`}
+        onClick={onSelect}
       >
-        <AlertTriangle className="h-3 w-3" />
+        <ChipIcon className="h-3 w-3" />
         <span>&ldquo;{flag.term}&rdquo;</span>
         {flag.severity && (
           <span className="text-[10px] uppercase tracking-wider opacity-70">
@@ -64,7 +89,9 @@ export function BiasFlagChip({ flag, onOverride, onDismiss }: Props) {
       <PopoverContent className="w-80 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-4 shadow-md">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-score-mid)]">
+            <span
+              className={`text-xs font-semibold uppercase tracking-wider ${categoryLabelColorFor(flag.severity)}`}
+            >
               {CATEGORY_LABEL[flag.category] ?? flag.category}
             </span>
             {flag.severity && (
@@ -85,6 +112,11 @@ export function BiasFlagChip({ flag, onOverride, onDismiss }: Props) {
                 {flag.suggestion}
               </p>
             </div>
+          )}
+          {isLow && (
+            <p className="text-xs italic text-[var(--color-muted)]">
+              Informational — does not block publish.
+            </p>
           )}
           {(onOverride || onDismiss) && !isOverridden && !isResolved && (
             <div className="flex gap-2 pt-2">
