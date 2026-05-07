@@ -12,6 +12,7 @@ import type { BiasFlag } from "@aurahire/db";
 
 import { AuditService } from "../../audit";
 import { DetectBiasService } from "../../ai/detect-bias.service";
+import { EventsService } from "../../realtime";
 import { JobsRepository } from "../jobs/jobs.repository";
 import { ScoringRepository } from "../scoring/scoring.repository";
 import { BiasRepository } from "./bias.repository";
@@ -39,6 +40,7 @@ export class BiasService {
     private readonly jobsRepo: JobsRepository,
     private readonly scoringRepo: ScoringRepository,
     private readonly audit: AuditService,
+    private readonly events: EventsService,
   ) {}
 
   // -----------------------------------------------------------------
@@ -130,6 +132,19 @@ export class BiasService {
     }));
 
     const inserted = await this.biasRepo.insertMany(newRows);
+
+    for (const row of inserted) {
+      this.events.emitBiasFlagCreated({
+        flagId: row.id,
+        jobId: row.jobId,
+        term: row.term,
+        category: row.category,
+        createdAt:
+          row.createdAt instanceof Date
+            ? row.createdAt.toISOString()
+            : new Date(row.createdAt).toISOString(),
+      });
+    }
 
     const explanationByTerm = new Map(
       aiResult.flags.map((f) => [f.term.toLowerCase(), f.explanation]),
