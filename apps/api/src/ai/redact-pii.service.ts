@@ -62,6 +62,11 @@ export class RedactPiiService {
   /**
    * Full redaction pipeline: structured scrub + LLM-assisted free-text scrub.
    * Call this before any scoring AI call.
+   *
+   * Free-text scrub calls are dispatched in PARALLEL via Promise.allSettled.
+   * Application of results is then walked in deterministic declaration order
+   * (summary first, then experience row-major) so `redactedFields` ordering
+   * is stable regardless of which OpenAI call resolves first.
    */
   async redactResume(
     parsed: ParsedResume,
@@ -69,40 +74,67 @@ export class RedactPiiService {
   ): Promise<RedactionResult> {
     const { redacted, redactedFields } = this.redactStructured(parsed);
 
-    // Scrub summary
-    if (redacted.summary && redacted.summary.text.length >= FREE_TEXT_MIN_LENGTH) {
-      try {
-        const scrubbed = await this.scrubText(redacted.summary.text, requestId);
-        if (scrubbed !== redacted.summary.text) {
-          redacted.summary = { ...redacted.summary, text: scrubbed };
-          redactedFields.push("summary");
-        }
-      } catch (err) {
-        // Free-text scrub is best-effort; log and continue
-        this.logger.warn(`Summary scrub failed: ${(err as Error).message}`);
-      }
+    type ScrubTask = {
+      path: string;
+      original: string;
+      apply: (scrubbed: string) => void;
+    };
+    const tasks: ScrubTask[] = [];
+
+    if (
+      redacted.summary &&
+      redacted.summary.text.length >= FREE_TEXT_MIN_LENGTH
+    ) {
+      const summary = redacted.summary;
+      tasks.push({
+        path: "summary",
+        original: summary.text,
+        apply: (scrubbed) => {
+          redacted.summary = { ...summary, text: scrubbed };
+        },
+      });
     }
 
-    // Scrub experience responsibilities
     for (let i = 0; i < redacted.experience.length; i++) {
       const exp = redacted.experience[i]!;
       for (let j = 0; j < exp.responsibilities.length; j++) {
         const r = exp.responsibilities[j]!;
         if (r.length >= FREE_TEXT_MIN_LENGTH) {
-          try {
-            const scrubbed = await this.scrubText(r, requestId);
-            if (scrubbed !== r) {
-              exp.responsibilities[j] = scrubbed;
-              redactedFields.push(`experience.${i}.responsibilities.${j}`);
-            }
-          } catch (err) {
-            this.logger.warn(
-              `Experience[${i}].responsibilities[${j}] scrub failed: ${(err as Error).message}`,
-            );
-          }
+          const idxI = i;
+          const idxJ = j;
+          tasks.push({
+            path: `experience.${idxI}.responsibilities.${idxJ}`,
+            original: r,
+            apply: (scrubbed) => {
+              redacted.experience[idxI]!.responsibilities[idxJ] = scrubbed;
+            },
+          });
         }
       }
     }
+
+    if (tasks.length === 0) {
+      return { redacted, redactedFields };
+    }
+
+    const settled = await Promise.allSettled(
+      tasks.map((t) => this.scrubText(t.original, requestId)),
+    );
+
+    settled.forEach((result, idx) => {
+      const task = tasks[idx]!;
+      if (result.status === "rejected") {
+        this.logger.warn(
+          `Scrub failed for ${task.path}: ${(result.reason as Error).message}`,
+        );
+        return;
+      }
+      const scrubbed = result.value;
+      if (scrubbed !== task.original) {
+        task.apply(scrubbed);
+        redactedFields.push(task.path);
+      }
+    });
 
     return { redacted, redactedFields };
   }
