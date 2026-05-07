@@ -15,6 +15,7 @@ import type {
 import { AuditService } from "../../audit";
 import { AUDIT_ACTIONS } from "../../audit/audit.types";
 import { EmailService } from "../../email/email.service";
+import { EventsService } from "../../realtime";
 import { ApplicationsRepository } from "../applications/applications.repository";
 import { ApplicationsService } from "../applications/applications.service";
 import { JobsRepository } from "../jobs/jobs.repository";
@@ -41,6 +42,7 @@ export class OffersService {
     private readonly profilesRepo: ProfilesRepository,
     private readonly email: EmailService,
     private readonly audit: AuditService,
+    private readonly events: EventsService,
   ) {}
 
   async create(
@@ -99,6 +101,14 @@ export class OffersService {
         salaryCurrency: dto.salaryCurrency,
       },
       ...requestMeta,
+    });
+
+    this.events.emitOfferSent({
+      offerId: offer.id,
+      applicationId: offer.applicationId,
+      recruiterId: user.id,
+      candidateId: application.candidateId,
+      sentAt: new Date().toISOString(),
     });
 
     // Auto-advance application status to 'offer' so the candidate's view + the

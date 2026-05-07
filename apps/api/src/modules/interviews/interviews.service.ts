@@ -18,6 +18,7 @@ import { AuditService } from "../../audit";
 import { AUDIT_ACTIONS } from "../../audit/audit.types";
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { EmailService } from "../../email/email.service";
+import { EventsService } from "../../realtime";
 import { ApplicationsRepository } from "../applications/applications.repository";
 import { JobsRepository } from "../jobs/jobs.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository";
@@ -47,6 +48,7 @@ export class InterviewsService {
     private readonly email: EmailService,
     private readonly audit: AuditService,
     private readonly cacheService: CacheService,
+    private readonly events: EventsService,
   ) {}
 
   async schedule(
@@ -112,6 +114,16 @@ export class InterviewsService {
       TAGS.interviewsCandidate(application.candidateId),
       TAGS.companyDashboard(companyId),
     ]);
+
+    this.events.emitInterviewScheduled({
+      interviewId: interview.id,
+      applicationId: interview.applicationId,
+      jobId: application.jobId,
+      recruiterId: user.id,
+      candidateId: application.candidateId,
+      scheduledFor: interview.scheduledAt.toISOString(),
+      format: interview.format,
+    });
 
     void this.notifyCandidateScheduled(interview.id).catch((err) => {
       this.logger.warn(`Notify candidate failed: ${(err as Error).message}`);
