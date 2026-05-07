@@ -700,6 +700,17 @@ async function main(): Promise<void> {
     `;
     process.stdout.write(`  ✓ company_members row (recruiter = owner)\n`);
 
+    // Phase 2c: profiles.last_active_company_id is the server-side source of
+    // truth used by ActiveCompanyGuard's DB fallback (the X-Active-Company-Id
+    // header is localStorage-only and not visible to SSR fetches). Without
+    // this update the seeded recruiter would 403 on every SSR page load.
+    await sql`
+      UPDATE profiles
+      SET last_active_company_id = ${companyRow.id}
+      WHERE id = ${recruiterUser.id}
+    `;
+    process.stdout.write(`  ✓ profiles.last_active_company_id = ${companyRow.id}\n`);
+
     // Active scoring_config
     await sql`
       INSERT INTO scoring_config (

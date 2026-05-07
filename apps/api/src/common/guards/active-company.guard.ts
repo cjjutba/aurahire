@@ -104,7 +104,7 @@ export class ActiveCompanyGuard implements CanActivate {
     );
     if (skip) return true;
 
-    // 6. Resolve active company id: header → profile fallback.
+    // 6. Resolve active company id: header → profile fallback → single-membership auto-resolve.
     const headerCompanyId = this.readHeader(req.headers);
     let companyId: string | null = headerCompanyId;
 
@@ -113,6 +113,25 @@ export class ActiveCompanyGuard implements CanActivate {
       // include lastActiveCompanyId, and trusting a cached value would
       // race against in-flight company switches.
       companyId = await this.lookupLastActiveCompanyId(user.id);
+    }
+
+    if (!companyId) {
+      // Auto-heal: a user with exactly one active membership but no pointer
+      // (seed gap, partial onboarding, leftover state) is unambiguously
+      // resolvable. Pick that membership and persist the pointer so future
+      // requests skip this branch. With 0 or 2+ memberships we still 403 —
+      // the caller has to onboard or explicitly switch.
+      const memberships = await this.companyMembersRepo.listActiveForUser(
+        user.id,
+      );
+      const sole = memberships[0];
+      if (memberships.length === 1 && sole) {
+        companyId = sole.company.id;
+        await this.db
+          .update(profilesTable)
+          .set({ lastActiveCompanyId: companyId })
+          .where(eq(profilesTable.id, user.id));
+      }
     }
 
     if (!companyId) {
