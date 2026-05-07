@@ -21,7 +21,8 @@ export class MatchComponentDto {
 export class MatchScoreDto {
   @ApiProperty() id!: string;
   @ApiProperty() overallScore!: number;
-  @ApiProperty({ enum: ["strong", "partial", "limited"] }) band!: string;
+  @ApiProperty({ enum: ["strong", "partial", "limited"] })
+  band!: "strong" | "partial" | "limited";
   @ApiProperty({ type: [MatchComponentDto] }) components!: MatchComponentDto[];
   @ApiProperty() summary!: string;
   @ApiProperty({ nullable: true, type: [String] }) redFlags!: string[] | null;

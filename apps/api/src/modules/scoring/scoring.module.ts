@@ -6,6 +6,7 @@ import { ScoringController } from "./scoring.controller";
 import { ScoringRepository } from "./scoring.repository";
 import { ScoringService } from "./scoring.service";
 import { MatchPreviewPrecomputeProcessor } from "./processors/match-preview-precompute.processor";
+import { MatchScoreProcessor } from "./processors/match-score.processor";
 
 @Module({
   imports: [forwardRef(() => JobsModule), ProfilesModule, ResumesModule],
@@ -14,6 +15,7 @@ import { MatchPreviewPrecomputeProcessor } from "./processors/match-preview-prec
     ScoringService,
     ScoringRepository,
     MatchPreviewPrecomputeProcessor,
+    MatchScoreProcessor,
   ],
   exports: [ScoringService, ScoringRepository],
 })
