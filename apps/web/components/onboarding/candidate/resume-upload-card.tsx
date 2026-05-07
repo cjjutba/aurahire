@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadCloud } from "lucide-react";
 import { ParsingProgressCard } from "./parsing-progress-card";
-import { ParseSuccessCard } from "./parse-success-card";
 import { ResumeStaleRecoveryCard } from "./resume-stale-recovery-card";
 import type { LatestParsedResume } from "@/app/onboarding/candidate/_steps";
 
@@ -16,31 +15,42 @@ const MAX_BYTES = 10 * 1024 * 1024;
 interface Props {
   latestResume: LatestParsedResume | null;
   accessToken: string;
+  /**
+   * When true, ignore an existing parsed resume and render the dropzone.
+   * Used by the replace flow (`/onboarding/candidate?replace=1`).
+   */
+  forceIdle?: boolean;
 }
 
 type Stage = "idle" | "uploading" | "done" | "failed";
 
-export function ResumeUploadCard({ latestResume, accessToken }: Props) {
+export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  // Initial stage based on existing resume row.
-  const [stage, setStage] = useState<Stage>(
-    latestResume?.parseStatus === "parsed"
-      ? "done"
-      : latestResume?.parseStatus === "failed"
-        ? "failed"
-        : "idle",
+  // Initial stage based on existing resume row, unless forceIdle overrides.
+  const [stage, setStage] = useState<Stage>(() => {
+    if (forceIdle) return "idle";
+    if (latestResume?.parseStatus === "parsed") return "done";
+    if (latestResume?.parseStatus === "failed") return "failed";
+    return "idle";
+  });
+  const [resume, setResume] = useState<LatestParsedResume | null>(
+    forceIdle ? null : latestResume,
   );
-  const [resume, setResume] = useState<LatestParsedResume | null>(latestResume);
   const [activeFile, setActiveFile] = useState<{
     name: string;
     size: number;
     type: string;
   } | null>(null);
 
-  // Stale "parsing" recovery state — render the recovery card.
-  if (latestResume?.parseStatus === "parsing" && stage !== "uploading") {
+  // Stale "parsing" recovery state — render the recovery card, unless we're
+  // explicitly in the replace flow (then the user wants the dropzone).
+  if (
+    !forceIdle &&
+    latestResume?.parseStatus === "parsing" &&
+    stage !== "uploading"
+  ) {
     return (
       <ResumeStaleRecoveryCard
         resumeId={latestResume.id}
@@ -109,17 +119,23 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
 
   if (stage === "uploading") {
     return (
-      <div>
-        <p className="mb-3 text-xs text-[var(--color-muted)]">
-          Hang tight — this usually takes 5–15 seconds.
-        </p>
-        <ParsingProgressCard file={activeFile} />
-      </div>
+      <ParsingProgressCard
+        file={activeFile}
+        parseStatus="parsing"
+        parsed={null}
+      />
     );
   }
 
   if (stage === "done" && resume) {
-    return <ParseSuccessCard parsed={resume.parsed} />;
+    return (
+      <ParsingProgressCard
+        file={activeFile}
+        parseStatus="done"
+        parsed={resume.parsed}
+        onAutoAdvance={() => router.push("/onboarding/candidate/personal")}
+      />
+    );
   }
 
   if (stage === "failed") {
