@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, FileText, Loader2, Sparkles, Star } from "lucide-react";
 
-import { AiShimmer } from "@/components/ai/ai-shimmer";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ApplyMatchSummary,
@@ -118,27 +117,19 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
   }
 
   if (submitting) {
-    if (preview && selectedResumeMatchesPreview) {
-      return (
-        <div
-          role="status"
-          aria-busy={true}
-          className="flex items-center justify-center gap-3 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-sm text-[var(--color-body)]"
-        >
-          <Loader2
-            className="h-4 w-4 animate-spin text-[var(--color-primary)]"
-            aria-hidden
-          />
-          <span>Submitting application…</span>
-        </div>
-      );
-    }
+    // Apply now returns ~200ms; the wait UI for the AI match score
+    // lives on the application detail page (driven by scoreStatus).
     return (
-      <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
-        <AiShimmer
-          caption="Computing your match against this job — analyzing skills, experience, education, and cultural fit..."
-          height={240}
+      <div
+        role="status"
+        aria-busy={true}
+        className="flex items-center justify-center gap-3 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-sm text-[var(--color-body)]"
+      >
+        <Loader2
+          className="h-4 w-4 animate-spin text-[var(--color-primary)]"
+          aria-hidden
         />
+        <span>Submitting application…</span>
       </div>
     );
   }
