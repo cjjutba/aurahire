@@ -18,6 +18,7 @@ export class AuditService {
    * Audit writes must not break user flows.
    */
   async log(input: AuditLogInput): Promise<void> {
+    let row: { id: string; createdAt: Date | string } | undefined;
     try {
       const inserted = await this.db
         .insert(auditLogsTable)
@@ -36,26 +37,27 @@ export class AuditService {
           id: auditLogsTable.id,
           createdAt: auditLogsTable.createdAt,
         });
-
-      const row = inserted[0];
-      if (row) {
-        this.events.emitAuditEntry({
-          auditId: row.id,
-          actorId: input.actorId ?? null,
-          action: input.action,
-          entityType: input.entityType,
-          entityId: input.entityId,
-          createdAt:
-            row.createdAt instanceof Date
-              ? row.createdAt.toISOString()
-              : new Date(row.createdAt).toISOString(),
-          summary: `${input.action} on ${input.entityType}`,
-        });
-      }
+      row = inserted[0];
     } catch (err) {
       this.logger.error(
         `Audit write failed for action=${input.action} entity=${input.entityType}:${input.entityId}: ${(err as Error).message}`,
       );
+      return;
+    }
+
+    if (row) {
+      this.events.emitAuditEntry({
+        auditId: row.id,
+        actorId: input.actorId ?? null,
+        action: input.action,
+        entityType: input.entityType,
+        entityId: input.entityId,
+        createdAt:
+          row.createdAt instanceof Date
+            ? row.createdAt.toISOString()
+            : new Date(row.createdAt).toISOString(),
+        summary: `${input.action} on ${input.entityType}`,
+      });
     }
   }
 }
