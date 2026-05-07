@@ -3,9 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, FileText, Sparkles, Star } from "lucide-react";
+import { Check, FileText, Loader2, Sparkles, Star } from "lucide-react";
 
 import { AiShimmer } from "@/components/ai/ai-shimmer";
+import {
+  ApplyMatchSummary,
+  type ApplyMatchPreview,
+} from "@/components/score/apply-match-summary";
 import { Textarea } from "@/components/ui/textarea";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { toastSuccess, toastApiError } from "@/lib/toast";
@@ -22,11 +26,12 @@ interface ResumeOption {
 interface Props {
   jobId: string;
   resumes: ResumeOption[];
+  preview: ApplyMatchPreview | null;
 }
 
 const COVER_LETTER_MAX = 5000;
 
-export function ApplyFormClient({ jobId, resumes }: Props) {
+export function ApplyFormClient({ jobId, resumes, preview }: Props) {
   const router = useRouter();
   const defaultResumeId =
     resumes.find((r) => r.isDefault)?.id ?? resumes[0]?.id ?? "";
@@ -36,6 +41,13 @@ export function ApplyFormClient({ jobId, resumes }: Props) {
 
   const charsLeft = COVER_LETTER_MAX - coverLetter.length;
   const overLimit = charsLeft < 0;
+
+  const selectedResumeMatchesPreview =
+    preview !== null && preview.resumeId === resumeId;
+
+  function switchToPreviewResume() {
+    if (preview) setResumeId(preview.resumeId);
+  }
 
   async function submit() {
     if (!resumeId) {
@@ -118,6 +130,14 @@ export function ApplyFormClient({ jobId, resumes }: Props) {
 
   return (
     <>
+      {preview && (
+        <ApplyMatchSummary
+          preview={preview}
+          selectedResumeMatchesPreview={selectedResumeMatchesPreview}
+          onSwitchToPreviewResume={switchToPreviewResume}
+        />
+      )}
+
       {/* Resume picker card */}
       <section className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
         <div className="flex items-start justify-between gap-4">
