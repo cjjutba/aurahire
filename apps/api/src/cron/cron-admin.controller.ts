@@ -15,6 +15,7 @@ import { ExpireOffersCron } from "./expire-offers.cron";
 import { ArchivePastDeadlineJobsCron } from "./archive-past-deadline-jobs.cron";
 import { CleanupUnverifiedAccountsCron } from "./cleanup-unverified-accounts.cron";
 import { DigestEmailCron } from "./digest-email.cron";
+import { NotificationsRetentionCron } from "./notifications-retention.cron";
 
 interface CronRunResultDto {
   data: Record<string, unknown>;
@@ -34,6 +35,7 @@ export class CronAdminController {
     private readonly archiveJobs: ArchivePastDeadlineJobsCron,
     private readonly cleanupUnverified: CleanupUnverifiedAccountsCron,
     private readonly digestEmail: DigestEmailCron,
+    private readonly notificationsRetention: NotificationsRetentionCron,
   ) {}
 
   @Post("run/:cronName")
@@ -41,7 +43,7 @@ export class CronAdminController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email.",
+      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, notifications-retention.",
   })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 403, description: "Disabled in production" })
@@ -70,11 +72,14 @@ export class CronAdminController {
       case "digest-email":
         result = await this.digestEmail.execute();
         break;
+      case "notifications-retention":
+        result = await this.notificationsRetention.execute();
+        break;
       default:
         throw new NotFoundException({
           code: "UNKNOWN_CRON",
           message: `Unknown cron name: ${cronName}`,
-          available: ["expire-offers", "archive-jobs", "cleanup-unverified", "digest-email"],
+          available: ["expire-offers", "archive-jobs", "cleanup-unverified", "digest-email", "notifications-retention"],
         });
     }
 
