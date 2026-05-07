@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, count, desc, eq, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ne, sql, type SQL } from "drizzle-orm";
 import {
   applicationsTable,
   companiesTable,
@@ -174,5 +174,62 @@ export class InterviewsRepository {
       .returning();
     if (!row) throw new Error("Interview update failed");
     return row;
+  }
+
+  async findOverlapping(args: {
+    startsAt: Date;
+    endsAt: Date;
+    recruiterId?: string;
+    candidateId?: string;
+    excludeInterviewId?: string;
+  }): Promise<
+    Array<{
+      id: string;
+      applicationId: string;
+      scheduledAt: Date;
+      durationMinutes: number;
+      scheduledBy: string;
+    }>
+  > {
+    const conditions: SQL[] = [
+      eq(interviewsTable.status, "scheduled"),
+      sql`(
+        ${interviewsTable.scheduledAt} < ${args.endsAt.toISOString()}::timestamptz
+        AND (${interviewsTable.scheduledAt} + (${interviewsTable.durationMinutes} || ' minutes')::interval)
+            > ${args.startsAt.toISOString()}::timestamptz
+      )`,
+    ];
+    if (args.excludeInterviewId) {
+      conditions.push(ne(interviewsTable.id, args.excludeInterviewId));
+    }
+
+    if (args.recruiterId && !args.candidateId) {
+      conditions.push(eq(interviewsTable.scheduledBy, args.recruiterId));
+      return this.db
+        .select({
+          id: interviewsTable.id,
+          applicationId: interviewsTable.applicationId,
+          scheduledAt: interviewsTable.scheduledAt,
+          durationMinutes: interviewsTable.durationMinutes,
+          scheduledBy: interviewsTable.scheduledBy,
+        })
+        .from(interviewsTable)
+        .where(and(...conditions));
+    }
+    if (args.candidateId && !args.recruiterId) {
+      return this.db
+        .select({
+          id: interviewsTable.id,
+          applicationId: interviewsTable.applicationId,
+          scheduledAt: interviewsTable.scheduledAt,
+          durationMinutes: interviewsTable.durationMinutes,
+          scheduledBy: interviewsTable.scheduledBy,
+        })
+        .from(interviewsTable)
+        .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+        .where(and(...conditions, eq(applicationsTable.candidateId, args.candidateId)));
+    }
+    // No filter combination supplied — return empty rather than scanning all interviews.
+    return [];
   }
 }

@@ -337,6 +337,74 @@ export class InterviewsService {
     };
   }
 
+  async checkConflicts(input: {
+    scheduledAt: Date;
+    durationMinutes: number;
+    recruiterId: string;
+    candidateId: string;
+    excludeInterviewId?: string;
+  }): Promise<{
+    recruiterConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
+    candidateConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
+  }> {
+    const startsAt = new Date(input.scheduledAt);
+    const endsAt = new Date(startsAt.getTime() + input.durationMinutes * 60_000);
+
+    const [recruiterRows, candidateRows] = await Promise.all([
+      this.repo.findOverlapping({
+        startsAt,
+        endsAt,
+        recruiterId: input.recruiterId,
+        excludeInterviewId: input.excludeInterviewId,
+      }),
+      this.repo.findOverlapping({
+        startsAt,
+        endsAt,
+        candidateId: input.candidateId,
+        excludeInterviewId: input.excludeInterviewId,
+      }),
+    ]);
+
+    const toSummary = (r: { id: string; scheduledAt: Date; durationMinutes: number }) => ({
+      id: r.id,
+      scheduledAt: r.scheduledAt.toISOString(),
+      durationMinutes: r.durationMinutes,
+    });
+
+    return {
+      recruiterConflicts: recruiterRows.map(toSummary),
+      candidateConflicts: candidateRows.map(toSummary),
+    };
+  }
+
+  async checkConflictsForApplication(
+    user: AuthUser,
+    companyId: string,
+    applicationId: string,
+    dto: { scheduledAt: string; durationMinutes: number; excludeInterviewId?: string },
+  ): Promise<{
+    recruiterConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
+    candidateConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
+  }> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+    }
+    const application = await this.applicationsRepo.findApplicationContextForCompany(
+      applicationId,
+      companyId,
+    );
+    if (!application) {
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+    }
+    return this.checkConflicts({
+      scheduledAt: new Date(dto.scheduledAt),
+      durationMinutes: dto.durationMinutes,
+      recruiterId: user.id,
+      candidateId: application.candidateId,
+      excludeInterviewId: dto.excludeInterviewId,
+    });
+  }
+
   // -----------------------------------------------------------------
   // PRIVATE
   // -----------------------------------------------------------------

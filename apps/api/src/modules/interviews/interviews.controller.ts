@@ -21,6 +21,7 @@ import {
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 
+import { InterviewConflictsDto } from "./dto/interview-conflicts.dto";
 import { RecruiterInterviewsQueryDto } from "./dto/recruiter-interviews-query.dto";
 import { ScheduleInterviewDto } from "./dto/schedule-interview.dto";
 import { UpdateInterviewFeedbackDto } from "./dto/update-interview-feedback.dto";
@@ -36,6 +37,30 @@ import { InterviewsService } from "./interviews.service";
 @Controller()
 export class InterviewsController {
   constructor(private readonly service: InterviewsService) {}
+
+  @Post("applications/:applicationId/interviews/check-conflicts")
+  @Roles("recruiter")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Soft-check overlapping interviews for recruiter and candidate" })
+  async checkConflicts(
+    @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
+    @Param("applicationId") applicationId: string,
+    @Body() dto: InterviewConflictsDto,
+  ): Promise<{
+    data: {
+      recruiterConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
+      candidateConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
+    };
+  }> {
+    const data = await this.service.checkConflictsForApplication(
+      user,
+      activeCompany.companyId,
+      applicationId,
+      dto,
+    );
+    return { data };
+  }
 
   @Post("applications/:applicationId/interviews")
   @Roles("recruiter")
