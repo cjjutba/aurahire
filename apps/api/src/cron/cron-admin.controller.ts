@@ -16,6 +16,7 @@ import { ArchivePastDeadlineJobsCron } from "./archive-past-deadline-jobs.cron";
 import { CleanupUnverifiedAccountsCron } from "./cleanup-unverified-accounts.cron";
 import { DigestEmailCron } from "./digest-email.cron";
 import { NotificationsRetentionCron } from "./notifications-retention.cron";
+import { InterviewReminderCron } from "./interview-reminder.cron";
 
 interface CronRunResultDto {
   data: Record<string, unknown>;
@@ -36,6 +37,7 @@ export class CronAdminController {
     private readonly cleanupUnverified: CleanupUnverifiedAccountsCron,
     private readonly digestEmail: DigestEmailCron,
     private readonly notificationsRetention: NotificationsRetentionCron,
+    private readonly interviewReminder: InterviewReminderCron,
   ) {}
 
   @Post("run/:cronName")
@@ -43,7 +45,7 @@ export class CronAdminController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, notifications-retention.",
+      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, notifications-retention, interview-reminder.",
   })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 403, description: "Disabled in production" })
@@ -75,11 +77,14 @@ export class CronAdminController {
       case "notifications-retention":
         result = await this.notificationsRetention.execute();
         break;
+      case "interview-reminder":
+        result = await this.interviewReminder.execute();
+        break;
       default:
         throw new NotFoundException({
           code: "UNKNOWN_CRON",
           message: `Unknown cron name: ${cronName}`,
-          available: ["expire-offers", "archive-jobs", "cleanup-unverified", "digest-email", "notifications-retention"],
+          available: ["expire-offers", "archive-jobs", "cleanup-unverified", "digest-email", "notifications-retention", "interview-reminder"],
         });
     }
 

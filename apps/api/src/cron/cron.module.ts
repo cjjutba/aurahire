@@ -6,6 +6,7 @@ import { ArchivePastDeadlineJobsCron } from "./archive-past-deadline-jobs.cron";
 import { CleanupUnverifiedAccountsCron } from "./cleanup-unverified-accounts.cron";
 import { DigestEmailCron } from "./digest-email.cron";
 import { NotificationsRetentionCron } from "./notifications-retention.cron";
+import { InterviewReminderCron } from "./interview-reminder.cron";
 import { CronAdminController } from "./cron-admin.controller";
 import { NotificationsModule } from "../modules/notifications/notifications.module";
 
@@ -18,6 +19,7 @@ import { NotificationsModule } from "../modules/notifications/notifications.modu
     CleanupUnverifiedAccountsCron,
     DigestEmailCron,
     NotificationsRetentionCron,
+    InterviewReminderCron,
   ],
   exports: [
     ExpireOffersCron,
@@ -25,6 +27,7 @@ import { NotificationsModule } from "../modules/notifications/notifications.modu
     CleanupUnverifiedAccountsCron,
     DigestEmailCron,
     NotificationsRetentionCron,
+    InterviewReminderCron,
   ],
 })
 export class CronModule {}
