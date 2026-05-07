@@ -30,6 +30,9 @@ export * from "./skills-taxonomy.ts";
 export * from "./types/auth-user.ts";
 export * from "./types/api-error.ts";
 
+// Realtime
+export * from "./realtime";
+
 // API client (orval-generated TanStack Query hooks + fetcher)
 export * from "./api-client/index.ts";
 
