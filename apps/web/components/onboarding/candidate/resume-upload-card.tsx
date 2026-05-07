@@ -1,7 +1,7 @@
 // apps/web/components/onboarding/candidate/resume-upload-card.tsx
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadCloud } from "lucide-react";
 import { ParsingProgressCard } from "./parsing-progress-card";
@@ -26,6 +26,10 @@ type Stage = "idle" | "uploading" | "done" | "failed";
 
 export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false }: Props) {
   const router = useRouter();
+  const goToPersonal = useCallback(
+    () => router.push("/onboarding/candidate/personal"),
+    [router],
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Initial stage based on existing resume row, unless forceIdle overrides.
@@ -133,7 +137,7 @@ export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false 
         file={activeFile}
         parseStatus="done"
         parsed={resume.parsed}
-        onAutoAdvance={() => router.push("/onboarding/candidate/personal")}
+        onAutoAdvance={goToPersonal}
       />
     );
   }
