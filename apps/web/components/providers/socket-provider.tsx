@@ -40,7 +40,11 @@ export function useSocket(): SocketContextValue {
  * Lifecycle:
  *  - Token absent  → no socket. Status `idle`.
  *  - Token present → create socket, autoConnect=false, then connect.
- *  - Token rotated → disconnect + reconnect so the new token is presented at handshake.
+ *  - Token rotated → effect cleanup tears down the prior socket; the next
+ *    effect run lazy-creates a fresh socket which presents the new token at
+ *    handshake. (We considered reusing the same socket and calling
+ *    disconnect/connect, but the cleanup runs first either way, so a fresh
+ *    instance is the simpler path.)
  *  - User signs out → token becomes null → disconnect + null out the socket.
  */
 export function SocketProvider({ children }: { children: ReactNode }) {
@@ -83,31 +87,35 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Lazy-create on first authenticated render.
-    if (!socketRef.current) {
-      const sock = makeSocket({ getToken: () => tokenRef.current });
-      sock.on("connect", () => setStatus("connected"));
-      sock.on("disconnect", () => setStatus("disconnected"));
-      sock.on("connect_error", (err) => {
-        const code =
-          (err as { data?: { code?: string } }).data?.code ?? err.message;
-        setStatus(code === "UNAUTHORIZED" ? "unauthorized" : "disconnected");
-      });
-      socketRef.current = sock;
-      setStatus("connecting");
-      sock.connect();
-      return () => {
-        sock.disconnect();
-        socketRef.current = null;
-      };
-    }
-
-    // Token rotation path: same socket instance, force a re-handshake so the
-    // server validates the fresh token.
-    const sock = socketRef.current;
-    sock.disconnect();
+    // Lazy-create. Effect cleanup nulls the ref on token change, so on
+    // rotation we land here again with a fresh instance.
+    const sock = makeSocket({ getToken: () => tokenRef.current });
+    sock.on("connect", () => setStatus("connected"));
+    sock.on("disconnect", () => setStatus("disconnected"));
+    sock.on("connect_error", (err) => {
+      const code =
+        (err as { data?: { code?: string } }).data?.code ?? err.message;
+      setStatus(code === "UNAUTHORIZED" ? "unauthorized" : "disconnected");
+    });
+    // Server-emitted RBAC rejection (subscribed to a job the user doesn't own,
+    // rate-limited, etc.). Surface as a console.warn so ops can spot silent
+    // RBAC violations during smoke tests; never throws.
+    sock.on(
+      "subscribe_error",
+      (err: { resource?: string; id?: string; reason?: string }) => {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[realtime] subscribe_error reason=${err.reason ?? "unknown"} resource=${err.resource ?? "-"} id=${err.id ?? "-"}`,
+        );
+      },
+    );
+    socketRef.current = sock;
     setStatus("connecting");
     sock.connect();
+    return () => {
+      sock.disconnect();
+      socketRef.current = null;
+    };
   }, [token]);
 
   const value = useMemo<SocketContextValue>(
