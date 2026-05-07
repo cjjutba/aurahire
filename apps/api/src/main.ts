@@ -50,7 +50,7 @@ async function bootstrap() {
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
-    allowedHeaders: ["Authorization", "Content-Type", "X-Request-Id"],
+    allowedHeaders: ["Authorization", "Content-Type", "X-Request-Id", "X-Active-Company-Id"],
   });
 
   // Global prefix + versioning

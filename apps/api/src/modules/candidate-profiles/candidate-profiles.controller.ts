@@ -79,6 +79,23 @@ export class CandidateProfilesController {
     return { data };
   }
 
+  @Patch("me/complete-onboarding")
+  @HttpCode(HttpStatus.OK)
+  @Roles("candidate")
+  @ApiOperation({
+    summary: "Complete onboarding (sets profile_completed = true)",
+    description:
+      "Validates per-step onboarding minimums (personal name, at least one experience/education/3 skills, desired roles + open-to) then marks the profile complete. Used by the Finish button.",
+  })
+  @ApiResponse({ status: 200, type: CandidateProfileEnvelopeDto })
+  async completeOnboarding(
+    @CurrentUser() user: AuthUser,
+    @Req() req: FastifyRequest,
+  ): Promise<CandidateProfileEnvelopeDto> {
+    const data = await this.service.completeOnboarding(user, this.requestMeta(req));
+    return { data };
+  }
+
   private requestMeta(req: FastifyRequest): {
     ipAddress: string | null;
     userAgent: string | null;

@@ -556,6 +556,11 @@ export interface CreateJobDto {
   educationRequirement?: CreateJobDtoEducationRequirement;
   /** @nullable */
   applicationDeadline?: string | null;
+  /**
+   * When true, the job is created and published in a single call (subject
+   * to bias-flag check). When omitted/false the job is created as a draft.
+   */
+  publishImmediately?: boolean;
 }
 
 /**

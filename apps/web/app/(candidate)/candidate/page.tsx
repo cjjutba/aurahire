@@ -31,6 +31,10 @@ export default async function CandidateDashboard() {
       queryKey: queryKeys.candidateApplications.list({}),
       queryFn: () => serverQueries.candidateApplications({}),
     }),
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.candidateInterviews.list({}),
+      queryFn: () => serverQueries.candidateInterviews({}),
+    }),
   ]);
 
   return (

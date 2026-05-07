@@ -11,7 +11,12 @@ const NAV_LINKS = [
   { href: "/jobs", label: "Browse Jobs" },
 ] as const;
 
-export function MarketingNav() {
+interface MarketingNavProps {
+  /** When the visitor is authenticated, the URL of their role's dashboard. */
+  dashboardHref?: string | null;
+}
+
+export function MarketingNav({ dashboardHref = null }: MarketingNavProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -32,18 +37,29 @@ export function MarketingNav() {
           ))}
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            href="/login"
-            className="hidden text-sm font-medium text-[var(--color-body)] transition hover:text-[var(--color-ink)] sm:inline"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/register"
-            className="inline-flex h-9 items-center justify-center rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] sm:px-5"
-          >
-            Get Started
-          </Link>
+          {dashboardHref ? (
+            <Link
+              href={dashboardHref}
+              className="inline-flex h-9 items-center justify-center rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] sm:px-5"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="hidden text-sm font-medium text-[var(--color-body)] transition hover:text-[var(--color-ink)] sm:inline"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="inline-flex h-9 items-center justify-center rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] sm:px-5"
+              >
+                Get Started
+              </Link>
+            </>
+          )}
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
@@ -67,13 +83,23 @@ export function MarketingNav() {
                     {link.label}
                   </Link>
                 ))}
-                <Link
-                  href="/login"
-                  onClick={() => setOpen(false)}
-                  className="rounded-[var(--radius-md)] px-3 py-3 text-base font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)] sm:hidden"
-                >
-                  Sign In
-                </Link>
+                {dashboardHref ? (
+                  <Link
+                    href={dashboardHref}
+                    onClick={() => setOpen(false)}
+                    className="rounded-[var(--radius-md)] px-3 py-3 text-base font-semibold text-[var(--color-primary)] hover:bg-[var(--color-surface-soft)]"
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="rounded-[var(--radius-md)] px-3 py-3 text-base font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)] sm:hidden"
+                  >
+                    Sign In
+                  </Link>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

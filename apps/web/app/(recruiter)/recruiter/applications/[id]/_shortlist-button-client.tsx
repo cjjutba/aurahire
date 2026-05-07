@@ -6,6 +6,7 @@ import { Star } from "lucide-react";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { getActiveCompanyId } from "@/lib/active-company";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 
 interface Props {
   applicationId: string;
@@ -77,14 +78,27 @@ export function ShortlistButtonClient({ applicationId, initialShortlistedAt }: P
       onClick={toggle}
       disabled={busy}
       aria-pressed={isShortlisted}
+      aria-busy={busy}
       aria-label={isShortlisted ? "Remove from shortlist" : "Add to shortlist"}
       className={`${baseClasses} ${stateClasses}`}
     >
-      <Star
-        className={`h-4 w-4 ${isShortlisted ? "fill-current" : ""}`}
-        aria-hidden
-      />
-      <span>{isShortlisted ? "Shortlisted" : "Shortlist"}</span>
+      {busy ? (
+        <ButtonSpinner />
+      ) : (
+        <Star
+          className={`h-4 w-4 ${isShortlisted ? "fill-current" : ""}`}
+          aria-hidden
+        />
+      )}
+      <span>
+        {busy
+          ? isShortlisted
+            ? "Removing..."
+            : "Adding..."
+          : isShortlisted
+            ? "Shortlisted"
+            : "Shortlist"}
+      </span>
     </button>
   );
 }

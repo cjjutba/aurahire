@@ -53,6 +53,7 @@ See `CLAUDE.md` § "Hard rules for Claude Code" for the full list. Highlights:
 - **Do not run Docker commands** (`docker compose up`, `docker run`, `docker exec`, etc.). Mailpit + Redis containers are managed by the human via `docker-compose.dev.yml`. You may edit the compose file but never run docker.
 - **Do not run database mutations** (`drizzle-kit push`, migrations, seeds).
 - **Do not deploy** (Vercel, Railway).
+- **Do not run destructive or history-rewriting git commands** (`git stash`, `git reset --hard`, `git checkout -- .`, `git restore .`, `git clean -fd`, `git commit --amend`, `git rebase`, `git revert`, `git branch -D`, `git push --force`/`--force-with-lease`, `git push --delete`, `--no-verify`, etc.). Read-only git (`status`, `diff`, `log`, `show`, `fetch`) is fine; new commits and new branches are fine when the human asks. Never use a destructive command as a shortcut around an obstacle — diagnose the root cause and ask the human first.
 - **Do not install global system packages** (`brew`, `apt`, `npm -g`).
 - **Do not make billed external calls** (OpenAI, Resend) for testing — let the human test.
 

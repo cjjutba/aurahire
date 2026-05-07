@@ -31,7 +31,6 @@ export function RegisterRecruiterForm() {
       fullName: "",
       email: "",
       phone: "",
-      companyName: "",
       password: "",
       confirmPassword: "",
       agreedToTerms: true,
@@ -45,7 +44,6 @@ export function RegisterRecruiterForm() {
         fullName: values.fullName,
         email: values.email,
         phone: values.phone,
-        companyName: values.companyName,
         password: values.password,
       };
 
@@ -79,13 +77,6 @@ export function RegisterRecruiterForm() {
         autoComplete="name"
         error={errors.fullName?.message}
         {...register("fullName")}
-      />
-      <AuthInput
-        id="signup-recruiter-company"
-        label="Company name"
-        autoComplete="organization"
-        error={errors.companyName?.message}
-        {...register("companyName")}
       />
       <AuthInput
         id="signup-recruiter-email"

@@ -143,7 +143,12 @@ export class ProfilesService {
   }
 
   /**
-   * Initialize a recruiter profile + company. Same optimizations as candidate init.
+   * Initialize a recruiter profile after email verification.
+   *
+   * Phase 4: company creation is deferred to /onboarding/start (the
+   * create-vs-join fork). This method now creates only the `profiles` +
+   * `recruiter_profiles` rows; `last_active_company_id` stays null until
+   * the user picks a path. Same optimizations as candidate init.
    */
   async initRecruiterProfile(
     authUserId: string,
@@ -152,10 +157,9 @@ export class ProfilesService {
     requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
   ): Promise<ProfileResponseDto> {
     let profile: Profile;
-    let company: Company;
     let recruiterProfile: RecruiterProfile;
     try {
-      const result = await this.repo.insertRecruiter(
+      const result = await this.repo.insertRecruiterWithoutCompany(
         {
           id: authUserId,
           role: "recruiter",
@@ -165,16 +169,11 @@ export class ProfilesService {
           status: "active",
         },
         {
-          name: dto.companyName,
-          createdBy: authUserId,
-        },
-        {
           rolesHiringFor: [],
           profileCompleted: false,
         },
       );
       profile = result.profile;
-      company = result.company;
       recruiterProfile = result.recruiterProfile;
     } catch (err) {
       if (isUniqueViolation(err)) {
@@ -192,11 +191,11 @@ export class ProfilesService {
       action: AUDIT_ACTIONS.USER_REGISTERED_RECRUITER,
       entityType: "user",
       entityId: profile.id,
-      details: { email, companyId: company.id },
+      details: { email },
       ...requestMeta,
     });
 
-    return this.toRecruiterResponse(profile, recruiterProfile, company);
+    return this.toRecruiterResponse(profile, recruiterProfile, null);
   }
 
   private toCandidateResponse(

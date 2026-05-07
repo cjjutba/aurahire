@@ -1,15 +1,11 @@
 import { redirect } from "next/navigation";
-import { WizardShell } from "@/components/onboarding/wizard-shell";
+import { OnboardingShell } from "@/components/onboarding/onboarding-shell";
 import { RecruiterAboutForm } from "@/components/onboarding/recruiter/about-form";
 import { getCurrentSession } from "@/lib/auth/session";
 import { fetchMyMemberships } from "@/lib/memberships-server";
+import { RECRUITER_ONBOARDING_STEPS } from "./_steps";
 
 export const metadata = { title: "About You — Onboarding" };
-
-// Phase 4: post-membership-acquisition the wizard shrinks to 2 steps. The
-// company step is implicit — either created via /onboarding/recruiter/
-// company-create or joined via an invitation.
-const STEPS = [{ label: "About" }, { label: "Focus" }];
 
 export default async function RecruiterAboutPage() {
   const session = await getCurrentSession();
@@ -53,11 +49,12 @@ export default async function RecruiterAboutPage() {
   if (body.data.profileCompleted) redirect("/recruiter");
 
   return (
-    <WizardShell
+    <OnboardingShell
+      steps={RECRUITER_ONBOARDING_STEPS}
+      currentStepId="about"
+      saveStatus="idle"
       title="Tell us about yourself"
-      description="Just the basics — we'll tailor the platform to your role."
-      steps={STEPS}
-      currentStep={1}
+      subtitle="Just the basics — we'll tailor the platform to your role."
     >
       <RecruiterAboutForm
         defaults={{
@@ -67,6 +64,6 @@ export default async function RecruiterAboutPage() {
           department: body.data.department,
         }}
       />
-    </WizardShell>
+    </OnboardingShell>
   );
 }

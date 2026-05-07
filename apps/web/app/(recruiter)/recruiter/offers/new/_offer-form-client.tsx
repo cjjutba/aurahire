@@ -116,7 +116,7 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
     >
       <div>
         <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-          Job title
+          Job title <span aria-hidden className="text-[var(--color-status-danger)]">*</span>
         </label>
         <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
       </div>
@@ -124,7 +124,7 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="sm:col-span-2">
           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Salary
+            Salary <span aria-hidden className="text-[var(--color-status-danger)]">*</span>
           </label>
           <Input
             type="number"
@@ -161,7 +161,7 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Start date
+            Start date <span aria-hidden className="text-[var(--color-status-danger)]">*</span>
           </label>
           <Input
             type="date"

@@ -3,12 +3,15 @@ import { and, desc, eq } from "drizzle-orm";
 import {
   profileScoresTable,
   matchScoresTable,
+  matchScorePreviewsTable,
   evidenceExcerptsTable,
   scoringConfigTable,
   type ProfileScore,
   type NewProfileScore,
   type MatchScore,
   type NewMatchScore,
+  type MatchScorePreview,
+  type NewMatchScorePreview,
   type EvidenceExcerpt,
   type NewEvidenceExcerpt,
   type ScoringConfig,
@@ -121,5 +124,127 @@ export class ScoringRepository {
       .where(eq(matchScoresTable.applicationId, applicationId))
       .limit(1);
     return row ?? null;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // MATCH-SCORE PREVIEWS
+  // ─────────────────────────────────────────────────────────────────────
+
+  /** Find an existing preview for the natural key (candidate, job, resume). */
+  async findMatchPreview(
+    candidateId: string,
+    jobId: string,
+    resumeId: string,
+  ): Promise<MatchScorePreview | null> {
+    const [row] = await this.db
+      .select()
+      .from(matchScorePreviewsTable)
+      .where(
+        and(
+          eq(matchScorePreviewsTable.candidateId, candidateId),
+          eq(matchScorePreviewsTable.jobId, jobId),
+          eq(matchScorePreviewsTable.resumeId, resumeId),
+        ),
+      )
+      .limit(1);
+    return row ?? null;
+  }
+
+  /**
+   * Find the most recent preview for a (candidate, job) pair regardless of
+   * resume — used when the candidate just wants to see the latest preview
+   * they've computed for this job.
+   */
+  async findLatestMatchPreviewForJob(
+    candidateId: string,
+    jobId: string,
+  ): Promise<MatchScorePreview | null> {
+    const [row] = await this.db
+      .select()
+      .from(matchScorePreviewsTable)
+      .where(
+        and(
+          eq(matchScorePreviewsTable.candidateId, candidateId),
+          eq(matchScorePreviewsTable.jobId, jobId),
+        ),
+      )
+      .orderBy(desc(matchScorePreviewsTable.createdAt))
+      .limit(1);
+    return row ?? null;
+  }
+
+  async insertMatchPreview(
+    data: NewMatchScorePreview,
+  ): Promise<MatchScorePreview> {
+    const [row] = await this.db
+      .insert(matchScorePreviewsTable)
+      .values(data)
+      .returning();
+    if (!row) throw new Error("Match preview insert failed");
+    return row;
+  }
+
+  /**
+   * UPSERT — insert or replace a preview for the (candidate, job, resume)
+   * tuple. Used when re-computing on demand for the same key.
+   */
+  async upsertMatchPreview(
+    data: NewMatchScorePreview,
+  ): Promise<MatchScorePreview> {
+    const [row] = await this.db
+      .insert(matchScorePreviewsTable)
+      .values(data)
+      .onConflictDoUpdate({
+        target: [
+          matchScorePreviewsTable.candidateId,
+          matchScorePreviewsTable.jobId,
+          matchScorePreviewsTable.resumeId,
+        ],
+        set: {
+          overallScore: data.overallScore,
+          band: data.band,
+          components: data.components,
+          redactedFields: data.redactedFields,
+          weightsUsed: data.weightsUsed,
+          promptVersion: data.promptVersion,
+          modelUsed: data.modelUsed,
+          rawOutput: data.rawOutput,
+          latencyMs: data.latencyMs,
+          source: data.source,
+          createdAt: new Date(),
+        },
+      })
+      .returning();
+    if (!row) throw new Error("Match preview upsert failed");
+    return row;
+  }
+
+  /**
+   * List a candidate's previews ordered by score (descending). Used by the
+   * "Recommended for you" feed.
+   */
+  async listMatchPreviewsForCandidate(
+    candidateId: string,
+    limit = 25,
+  ): Promise<MatchScorePreview[]> {
+    return this.db
+      .select()
+      .from(matchScorePreviewsTable)
+      .where(eq(matchScorePreviewsTable.candidateId, candidateId))
+      .orderBy(desc(matchScorePreviewsTable.overallScore))
+      .limit(limit);
+  }
+
+  /**
+   * Delete previews scored against a specific resume — fired when the
+   * candidate replaces their default resume so stale previews don't show
+   * in their "Recommended" feed.
+   */
+  async deleteMatchPreviewsByResume(resumeId: string): Promise<number> {
+    const result = await this.db
+      .delete(matchScorePreviewsTable)
+      .where(eq(matchScorePreviewsTable.resumeId, resumeId))
+      .returning({ id: matchScorePreviewsTable.id });
+    return result.length;
   }
 }

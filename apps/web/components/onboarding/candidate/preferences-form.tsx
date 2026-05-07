@@ -1,22 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toastSuccess, toastApiError } from "@/lib/toast";
-
-import {
-  candidatePreferencesSchema,
-  type CandidatePreferences,
-} from "@aurahire/shared";
-import {
-  useCandidateProfilesControllerUpdatePreferencesV1,
-  useCandidateProfilesControllerCompleteV1,
-} from "@aurahire/shared";
-import { Button } from "@/components/ui/button";
+import { useAutosave } from "@/components/onboarding/use-autosave";
+import { useTabCloseProtection } from "@/components/onboarding/use-tab-close-protection";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -24,39 +13,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 
-const SENIORITY_OPTIONS = [
-  "Junior",
-  "Mid",
-  "Senior",
-  "Lead",
-  "Manager",
-  "Director",
-] as const;
-const OPEN_TO_OPTIONS = [
-  { value: "full-time", label: "Full-time" },
-  { value: "part-time", label: "Part-time" },
-  { value: "contract", label: "Contract" },
-  { value: "remote", label: "Remote" },
-  { value: "hybrid", label: "Hybrid" },
-  { value: "on-site", label: "On-site" },
-] as const;
+const WORK_MODES = ["full-time", "part-time", "contract", "remote", "hybrid", "on-site"] as const;
 
-interface Props {
-  defaults: CandidatePreferences;
-}
+const WORK_MODE_LABELS: Record<(typeof WORK_MODES)[number], string> = {
+  "full-time": "Full-time",
+  "part-time": "Part-time",
+  contract: "Contract",
+  remote: "Remote",
+  hybrid: "Hybrid",
+  "on-site": "On-site",
+};
 
-interface PreferencesFormUI {
-  desiredRolesRaw: string;
-  desiredSeniority: string | null;
+const SENIORITY = ["entry", "mid", "senior", "lead", "principal"] as const;
+
+const SENIORITY_LABELS: Record<(typeof SENIORITY)[number], string> = {
+  entry: "Entry",
+  mid: "Mid",
+  senior: "Senior",
+  lead: "Lead",
+  principal: "Principal",
+};
+
+export interface PreferencesFormValues {
+  desiredRoles: string; // comma-separated input, split before submit
+  desiredSeniority: string;
   openTo: string[];
   desiredSalaryMin: string;
   desiredSalaryMax: string;
@@ -64,229 +45,255 @@ interface PreferencesFormUI {
   availableStartDate: string;
 }
 
-export function CandidatePreferencesForm({ defaults }: Props) {
-  const router = useRouter();
+interface PreferencesPayload {
+  desiredRoles?: string[];
+  desiredSeniority?: string | null;
+  openTo?: string[];
+  desiredSalaryMin?: number | null;
+  desiredSalaryMax?: number | null;
+  desiredCurrency?: string;
+  availableStartDate?: string | null;
+}
 
-  const form = useForm<PreferencesFormUI>({
-    defaultValues: {
-      desiredRolesRaw: (defaults.desiredRoles ?? []).join(", "),
-      desiredSeniority: defaults.desiredSeniority ?? null,
-      openTo: defaults.openTo ?? [],
-      desiredSalaryMin:
-        defaults.desiredSalaryMin != null
-          ? String(defaults.desiredSalaryMin)
-          : "",
-      desiredSalaryMax:
-        defaults.desiredSalaryMax != null
-          ? String(defaults.desiredSalaryMax)
-          : "",
-      desiredCurrency: defaults.desiredCurrency ?? "USD",
-      availableStartDate: defaults.availableStartDate ?? "",
+interface Props {
+  defaults: PreferencesFormValues;
+  accessToken: string;
+  onSaveStatusChange: (status: "idle" | "saving" | "error") => void;
+}
+
+export function CandidatePreferencesForm({
+  defaults,
+  accessToken,
+  onSaveStatusChange,
+}: Props) {
+  const router = useRouter();
+  const { register, formState, getValues, watch, setValue } = useForm<PreferencesFormValues>({
+    defaultValues: defaults,
+  });
+  const [finishing, setFinishing] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
+
+  const buildPayload = (values: PreferencesFormValues): PreferencesPayload => ({
+    desiredRoles: values.desiredRoles
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+    desiredSeniority: values.desiredSeniority || null,
+    openTo: values.openTo,
+    desiredSalaryMin: values.desiredSalaryMin
+      ? Number.parseInt(values.desiredSalaryMin, 10)
+      : null,
+    desiredSalaryMax: values.desiredSalaryMax
+      ? Number.parseInt(values.desiredSalaryMax, 10)
+      : null,
+    desiredCurrency: values.desiredCurrency || "USD",
+    availableStartDate: values.availableStartDate || null,
+  });
+
+  const { schedule, status, retry } = useAutosave<PreferencesPayload>({
+    save: async (payload) => {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const res = await fetch(`${apiUrl}/api/v1/candidate-profiles/preferences`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`PATCH failed: ${res.status}`);
     },
   });
 
-  const updatePreferences = useCandidateProfilesControllerUpdatePreferencesV1();
-  const completeOnboarding = useCandidateProfilesControllerCompleteV1();
+  useEffect(() => {
+    onSaveStatusChange(status);
+  }, [status, onSaveStatusChange]);
 
-  const isPending =
-    updatePreferences.isPending || completeOnboarding.isPending;
+  useTabCloseProtection(formState.isDirty);
 
-  async function onSubmit(values: PreferencesFormUI) {
+  const handleBlur = () => {
+    schedule(buildPayload(getValues()));
+  };
+
+  const handleFinish = async () => {
+    setFinishError(null);
+    setFinishing(true);
     try {
-      const data: CandidatePreferences = {
-        desiredRoles: values.desiredRolesRaw
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        desiredSeniority: values.desiredSeniority,
-        openTo: values.openTo,
-        desiredSalaryMin: values.desiredSalaryMin
-          ? Number(values.desiredSalaryMin)
-          : null,
-        desiredSalaryMax: values.desiredSalaryMax
-          ? Number(values.desiredSalaryMax)
-          : null,
-        desiredCurrency: values.desiredCurrency || "USD",
-        availableStartDate: values.availableStartDate || null,
-      };
-
-      const parsed = candidatePreferencesSchema.safeParse(data);
-      if (!parsed.success) {
-        toastApiError(null, "Check your input", parsed.error.errors.map((e) => e.message).join(", "));
+      // Flush any pending autosave first.
+      await retry();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const res = await fetch(`${apiUrl}/api/v1/candidate-profiles/me/complete-onboarding`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { message?: string } | null;
+        setFinishError(body?.message ?? `Couldn't complete onboarding (${res.status})`);
         return;
       }
-
-      await updatePreferences.mutateAsync({ data: parsed.data });
-      await completeOnboarding.mutateAsync();
-      toastSuccess("Onboarding complete", "Welcome to AuraHire.");
       router.push("/candidate");
-      router.refresh();
     } catch (err) {
-      toastApiError(err, "Couldn't save preferences");
+      setFinishError((err as Error).message);
+    } finally {
+      setFinishing(false);
     }
-  }
+  };
+
+  const openTo = watch("openTo");
+
+  const toggleWorkMode = (mode: (typeof WORK_MODES)[number]) => {
+    const set = new Set(openTo);
+    if (set.has(mode)) set.delete(mode);
+    else set.add(mode);
+    const next = Array.from(set);
+    setValue("openTo", next, { shouldDirty: true });
+    schedule(buildPayload({ ...getValues(), openTo: next }));
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="desiredRolesRaw"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Desired Roles</FormLabel>
-              <FormControl>
-                <Textarea
-                  rows={2}
-                  placeholder="Software Engineer, Product Designer"
-                  {...field}
-                />
-              </FormControl>
-              <p className="text-xs text-[var(--color-muted)]">
-                Comma-separated.
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
+    <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="desiredRoles" className="text-xs font-semibold text-[var(--color-ink)]">
+          Desired Roles <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+        </label>
+        <textarea
+          id="desiredRoles"
+          rows={2}
+          placeholder="Software Engineer, Product Designer"
+          className="rounded-xl border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+          {...register("desiredRoles", { onBlur: handleBlur })}
         />
+        <p className="text-xs text-[var(--color-muted)]">Comma-separated.</p>
+      </div>
 
-        <FormField
-          control={form.control}
-          name="desiredSeniority"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Seniority</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value ?? undefined}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select seniority" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {SENIORITY_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div className="flex flex-col gap-1">
+        <label
+          htmlFor="desiredSeniority"
+          className="text-xs font-semibold text-[var(--color-ink)]"
+        >
+          Seniority <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+        </label>
+        <Select
+          value={watch("desiredSeniority") || undefined}
+          onValueChange={(v) => {
+            setValue("desiredSeniority", v ?? "", { shouldDirty: true });
+            schedule(buildPayload({ ...getValues(), desiredSeniority: v ?? "" }));
+          }}
+        >
+          <SelectTrigger id="desiredSeniority">
+            <SelectValue placeholder="Select seniority" />
+          </SelectTrigger>
+          <SelectContent>
+            {SENIORITY.map((s) => (
+              <SelectItem key={s} value={s}>
+                {SENIORITY_LABELS[s]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-        <FormField
-          control={form.control}
-          name="openTo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Open To</FormLabel>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {OPEN_TO_OPTIONS.map((opt) => {
-                  const checked = field.value.includes(opt.value);
-                  return (
-                    <label
-                      key={opt.value}
-                      className="flex items-center gap-2 text-sm text-[var(--color-body)]"
-                    >
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={(c) => {
-                          if (c) field.onChange([...field.value, opt.value]);
-                          else
-                            field.onChange(
-                              field.value.filter((v) => v !== opt.value),
-                            );
-                        }}
-                      />
-                      {opt.label}
-                    </label>
-                  );
-                })}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div>
+        <div className="text-xs font-semibold text-[var(--color-ink)]">
+          Open To <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {WORK_MODES.map((mode) => (
+            <label key={mode} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={openTo.includes(mode)}
+                onChange={() => toggleWorkMode(mode)}
+              />
+              {WORK_MODE_LABELS[mode]}
+            </label>
+          ))}
+        </div>
+      </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <FormField
-            control={form.control}
-            name="desiredSalaryMin"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Salary Min</FormLabel>
-                <FormControl>
-                  <Input type="number" min="0" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="desiredSalaryMax"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Salary Max</FormLabel>
-                <FormControl>
-                  <Input type="number" min="0" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="desiredCurrency"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Currency</FormLabel>
-                <FormControl>
-                  <Input maxLength={3} placeholder="USD" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="desiredSalaryMin"
+            className="text-xs font-semibold text-[var(--color-ink)]"
+          >
+            Salary Min <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+          </label>
+          <input
+            id="desiredSalaryMin"
+            type="number"
+            className="rounded-xl border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-primary)] focus:outline-none"
+            {...register("desiredSalaryMin", { onBlur: handleBlur })}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="availableStartDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Available Start Date</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex justify-between pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/onboarding/candidate/skills")}
-            className="rounded-[var(--radius-pill)] px-8"
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="desiredSalaryMax"
+            className="text-xs font-semibold text-[var(--color-ink)]"
           >
-            Back
-          </Button>
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 hover:bg-[var(--color-primary-active)]"
-          >
-            {isPending && <ButtonSpinner />}
-            {isPending ? "Finishing..." : "Finish"}
-          </Button>
+            Salary Max <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+          </label>
+          <input
+            id="desiredSalaryMax"
+            type="number"
+            className="rounded-xl border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-primary)] focus:outline-none"
+            {...register("desiredSalaryMax", { onBlur: handleBlur })}
+          />
         </div>
-      </form>
-    </Form>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="desiredCurrency"
+            className="text-xs font-semibold text-[var(--color-ink)]"
+          >
+            Currency <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+          </label>
+          <input
+            id="desiredCurrency"
+            placeholder="USD"
+            className="rounded-xl border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-primary)] focus:outline-none"
+            {...register("desiredCurrency", { onBlur: handleBlur })}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label
+          htmlFor="availableStartDate"
+          className="text-xs font-semibold text-[var(--color-ink)]"
+        >
+          Available Start Date <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+        </label>
+        <input
+          id="availableStartDate"
+          type="date"
+          className="rounded-xl border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-primary)] focus:outline-none"
+          {...register("availableStartDate", { onBlur: handleBlur })}
+        />
+      </div>
+
+      {finishError && (
+        <p className="text-sm text-[var(--color-status-danger)]">{finishError}</p>
+      )}
+
+      <div className="flex justify-between pt-3">
+        <button
+          type="button"
+          onClick={() => router.push("/onboarding/candidate/review")}
+          disabled={finishing}
+          className="rounded-full bg-[var(--color-surface-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--color-ink)] disabled:opacity-50"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={handleFinish}
+          disabled={finishing}
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
+        >
+          {finishing && <ButtonSpinner />}
+          {finishing ? "Finishing..." : "Finish"}
+        </button>
+      </div>
+    </form>
   );
 }

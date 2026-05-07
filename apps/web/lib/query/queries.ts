@@ -107,17 +107,19 @@ export const serverQueries = {
       { query: { jobId, status: params.status, page: params.page } },
     ),
   candidateJobsList: (params: CandidateJobsListParams) =>
-    serverApiFetch<{ data: unknown[]; meta: { total: number } }>(
-      "/api/v1/jobs/for-candidate",
-      {
-        query: {
-          q: params.q,
-          mode: params.mode,
-          experienceLevel: params.experienceLevel,
-          page: params.page,
-        },
+    serverApiFetch<{
+      data: unknown[];
+      meta: { page: number; limit: number; total: number; totalPages: number };
+    }>("/api/v1/jobs/for-candidate", {
+      query: {
+        q: params.q,
+        mode: params.mode,
+        experienceLevel: params.experienceLevel,
+        sort: params.sort,
+        page: params.page,
+        limit: params.limit,
       },
-    ),
+    }),
   candidateJobDetail: (id: string) =>
     serverApiFetch<unknown>(`/api/v1/jobs/${id}/for-candidate`),
   candidateApplications: (params: CandidateApplicationsParams) =>

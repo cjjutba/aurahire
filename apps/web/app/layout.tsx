@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthTokenProvider>
           <QueryProvider>
             {children}
-            <Toaster position="bottom-right" richColors closeButton />
+            <Toaster position="top-right" richColors closeButton />
           </QueryProvider>
         </AuthTokenProvider>
       </body>

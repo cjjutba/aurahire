@@ -104,7 +104,7 @@ export function SecurityPasswordForm({ email }: { email: string }) {
           name="currentPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Current password</FormLabel>
+              <FormLabel>Current password *</FormLabel>
               <FormControl>
                 <Input
                   type="password"
@@ -121,7 +121,7 @@ export function SecurityPasswordForm({ email }: { email: string }) {
           name="newPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>New password</FormLabel>
+              <FormLabel>New password *</FormLabel>
               <FormControl>
                 <Input
                   type="password"
@@ -138,7 +138,7 @@ export function SecurityPasswordForm({ email }: { email: string }) {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirm new password</FormLabel>
+              <FormLabel>Confirm new password *</FormLabel>
               <FormControl>
                 <Input
                   type="password"

@@ -8,9 +8,11 @@ import {
   Clock,
   Inbox,
   PieChart,
+  Plus,
   Sparkles,
   TrendingUp,
 } from "lucide-react";
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -290,7 +292,7 @@ function RecentAppRow({ app }: { app: RecentApp }) {
   );
 }
 
-function EmptyAppsState() {
+function EmptyAppsState({ hasJobs }: { hasJobs: boolean }) {
   return (
     <div className="px-4 py-12 text-center">
       <Inbox className="mx-auto h-6 w-6 text-[var(--color-muted)]" aria-hidden />
@@ -298,9 +300,45 @@ function EmptyAppsState() {
         No applications yet
       </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
-        Once candidates apply to your jobs, they&apos;ll appear here.
+        {hasJobs
+          ? "Once candidates apply to your jobs, they'll appear here."
+          : "Post a job to start collecting applications."}
       </div>
+      {!hasJobs && (
+        <Link
+          href="/recruiter/jobs/new"
+          className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Post your first job
+        </Link>
+      )}
     </div>
+  );
+}
+
+function FirstRunWelcomeCard({ recruiterName }: { recruiterName?: string | null }) {
+  const greeting = recruiterName ? `Welcome, ${recruiterName.split(" ")[0]}.` : "Welcome to AuraHire.";
+  return (
+    <section className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-gradient-to-br from-[var(--color-primary-soft)]/40 to-[var(--color-canvas)] p-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
+            {greeting}
+          </h2>
+          <p className="mt-2 max-w-[640px] text-sm text-[var(--color-body)]">
+            You&apos;re all set. Post your first job to start matching with qualified candidates — AuraHire will score every application against your criteria and explain how each candidate matched.
+          </p>
+        </div>
+        <Link
+          href="/recruiter/jobs/new"
+          className="inline-flex h-12 shrink-0 items-center gap-2 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-6 text-base font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
+        >
+          <Plus className="h-4 w-4" />
+          Post your first job
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -371,6 +409,14 @@ export function RecruiterDashboardClient({
 
   const recentApps: RecentApp[] = recent.data?.data ?? [];
 
+  // First-run state: stats loaded and the recruiter has zero jobs AND zero apps.
+  // Skip the welcome card during initial fetch so we don't flash it briefly.
+  const isFirstRun =
+    !stats.isLoading &&
+    !analytics.isLoading &&
+    kpis.activeJobs === 0 &&
+    kpis.totalApps === 0;
+
   return (
     <div className="space-y-8">
       <header>
@@ -381,6 +427,8 @@ export function RecruiterDashboardClient({
           Pipeline at a glance.
         </p>
       </header>
+
+      {isFirstRun && <FirstRunWelcomeCard />}
 
       {/* Section 1: KPI Hero Row with date filter */}
       <section>
@@ -473,7 +521,7 @@ export function RecruiterDashboardClient({
         </div>
         <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)]">
           {recentApps.length === 0 ? (
-            <EmptyAppsState />
+            <EmptyAppsState hasJobs={kpis.activeJobs > 0} />
           ) : (
             <ul className="divide-y divide-[var(--color-hairline-soft)]">
               {recentApps.map((app) => (

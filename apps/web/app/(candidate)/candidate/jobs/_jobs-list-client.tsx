@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import type { JobStatus } from "@aurahire/shared";
 
-import { JobListRow } from "@/components/jobs/job-list-row";
-import { JobFilters } from "@/components/jobs/job-filters";
-import { EmptyState } from "@/components/empty-state";
+import { JobCard } from "@/components/jobs/job-card";
+import type { CandidateJobsListParams } from "@/lib/query";
 import { useCandidateJobsQuery } from "@/hooks/use-candidate-jobs";
+
+import { CandidateJobsToolbarClient } from "./_jobs-toolbar-client";
+import { CandidateJobsPagination } from "./_jobs-pagination";
 
 interface CandidateJobRow {
   id: string;
@@ -24,51 +27,118 @@ interface CandidateJobRow {
 }
 
 interface CandidateJobsListClientProps {
-  q?: string;
-  mode?: string;
-  experienceLevel?: string;
-  page?: number;
+  params: CandidateJobsListParams & { page: number; limit: number; sort: string };
+  appliedJobMap?: Record<string, string>;
 }
 
 export function CandidateJobsListClient({
-  q,
-  mode,
-  experienceLevel,
-  page,
+  params,
+  appliedJobMap = {},
 }: CandidateJobsListClientProps) {
-  const { data, isLoading, isError } = useCandidateJobsQuery({ q, mode, experienceLevel, page });
+  const { data, isLoading, isError } = useCandidateJobsQuery(params);
 
   if (isError) {
-    return <div className="text-[var(--color-status-danger)]">Failed to load jobs.</div>;
+    return (
+      <div className="mx-auto max-w-[1280px]">
+        <p className="text-sm text-[var(--color-status-danger)]">
+          Failed to load jobs. Please refresh the page.
+        </p>
+      </div>
+    );
   }
 
   const rows = (data?.data ?? []) as CandidateJobRow[];
-  const total = data?.meta?.total ?? 0;
+  const meta = data?.meta ?? {
+    page: params.page,
+    limit: params.limit,
+    total: 0,
+    totalPages: 1,
+  };
+  const filtersActive = !!(params.q || params.mode || params.experienceLevel);
 
   return (
     <div className="mx-auto max-w-[1280px] space-y-6">
+      {/* Header */}
       <header>
-        <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+        <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           Browse Jobs
         </h1>
-        <p className="mt-1 text-sm text-[var(--color-body)]">
-          {isLoading ? "—" : `${total} jobs · match scoring arrives in a future slice`}
+        <p className="mt-2 text-sm text-[var(--color-body)]">
+          {isLoading
+            ? "—"
+            : meta.total === 0
+              ? "No jobs available"
+              : `${meta.total} job${meta.total === 1 ? "" : "s"} · match scoring arrives in a future slice`}
         </p>
       </header>
-      <JobFilters />
-      <div className="space-y-3">
-        {!isLoading && rows.length === 0 ? (
-          <EmptyState
-            headline="No jobs match your filters yet"
-            description="Try clearing your filters or browse all available roles."
-            cta={{ href: "/candidate/jobs", label: "Browse all" }}
+
+      {/* Toolbar */}
+      <CandidateJobsToolbarClient
+        initialQuery={params.q ?? ""}
+        mode={params.mode ?? "all"}
+        experienceLevel={params.experienceLevel ?? "all"}
+        sort={params.sort}
+      />
+
+      {/* Grid or empty state */}
+      {!isLoading && rows.length === 0 ? (
+        filtersActive ? <EmptyFiltered /> : <EmptyJobs />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {rows.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                href={`/candidate/jobs/${job.id}`}
+                applied={!!appliedJobMap[job.id]}
+              />
+            ))}
+          </div>
+          <CandidateJobsPagination
+            meta={{
+              page: meta.page,
+              limit: meta.limit,
+              total: meta.total,
+              totalPages: meta.totalPages ?? Math.max(1, Math.ceil(meta.total / meta.limit)),
+            }}
+            searchParams={{
+              q: params.q,
+              mode: params.mode,
+              experienceLevel: params.experienceLevel,
+              sort: params.sort,
+            }}
           />
-        ) : (
-          rows.map((job) => (
-            <JobListRow key={job.id} job={job} href={`/candidate/jobs/${job.id}`} />
-          ))
-        )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function EmptyJobs() {
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">No jobs available</div>
+      <div className="mt-1 text-xs text-[var(--color-muted)]">
+        New openings appear here as soon as recruiters publish them.
       </div>
+    </div>
+  );
+}
+
+function EmptyFiltered() {
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">No jobs match your filters</div>
+      <div className="mt-1 text-xs text-[var(--color-muted)]">
+        Try different search terms or clear the filters.
+      </div>
+      <Link
+        href="/candidate/jobs"
+        className="mt-4 inline-flex h-9 items-center rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-4 text-sm font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)]"
+      >
+        Clear filters
+      </Link>
     </div>
   );
 }

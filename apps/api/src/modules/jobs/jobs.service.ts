@@ -94,6 +94,14 @@ export class JobsService {
 
     await this.invalidateAfterWrite({ companyId, jobId: job.id });
 
+    // Atomic create-and-publish: if the recruiter requested immediate
+    // publish, transition the job in the same request. On bias-flag failure
+    // publish() throws 422 with the flags; we let that propagate (the job
+    // stays as a draft so the recruiter can resolve flags and retry).
+    if (dto.publishImmediately) {
+      return this.publish(user, companyId, job.id, requestMeta);
+    }
+
     return this.toResponse(await this.requireJobWithCompany(job.id));
   }
 

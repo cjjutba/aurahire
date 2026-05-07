@@ -104,7 +104,7 @@ export function ScheduleInterviewModalClient({ applicationId, open, onOpenChange
         <div className="space-y-4">
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-              Date &amp; Time
+              Date &amp; Time <span aria-hidden className="text-[var(--color-status-danger)]">*</span>
             </label>
             <Input
               type="datetime-local"

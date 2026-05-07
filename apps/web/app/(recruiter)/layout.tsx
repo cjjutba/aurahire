@@ -19,7 +19,6 @@ export default async function RecruiterLayout({
         // company singleton with the server-known value before the
         // memberships query resolves on the client.
         lastActiveCompanyId: string | null;
-        company: { id: string; name: string } | null;
       }
     | null;
 
@@ -40,7 +39,6 @@ export default async function RecruiterLayout({
         role="recruiter"
         fullName={profile.fullName}
         email={profile.email}
-        companyName={profile.company?.name ?? null}
       >
         {children}
       </PortalShell>

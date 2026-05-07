@@ -24,6 +24,7 @@ import type { ComponentType } from "react";
 import type { UserRole } from "@aurahire/shared";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { setSessionOnlyMarker } from "@/lib/auth/cookie-persistence.client";
+import { setActiveCompanyId } from "@/lib/active-company";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -131,18 +132,12 @@ interface PortalSidebarProps {
   role: UserRole;
   fullName: string;
   email: string;
-  companyName: string | null;
 }
 
-export function PortalSidebar({ role, fullName, email, companyName }: PortalSidebarProps) {
+export function PortalSidebar({ role, fullName, email }: PortalSidebarProps) {
   return (
     <aside className="hidden w-64 shrink-0 bg-[var(--color-canvas)] lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:self-start">
-      <PortalSidebarContent
-        role={role}
-        fullName={fullName}
-        email={email}
-        companyName={companyName}
-      />
+      <PortalSidebarContent role={role} fullName={fullName} email={email} />
     </aside>
   );
 }
@@ -151,7 +146,6 @@ interface PortalSidebarContentProps {
   role: UserRole;
   fullName: string;
   email: string;
-  companyName: string | null;
   onNavClick?: () => void;
 }
 
@@ -159,14 +153,12 @@ export function PortalSidebarContent({
   role,
   fullName,
   email,
-  companyName,
   onNavClick,
 }: PortalSidebarContentProps) {
   const pathname = usePathname();
   const router = useRouter();
   const sections = NAV_SECTIONS[role];
   const initials = getInitials(fullName);
-  const tenantInitials = companyName ? getInitials(companyName) : "AH";
   const activeHref = resolveActiveHref(pathname, [
     ...sections.flatMap((s) => s.items.map((i) => i.href)),
     HELP_HREF[role],
@@ -180,6 +172,7 @@ export function PortalSidebarContent({
       return;
     }
     setSessionOnlyMarker(false);
+    setActiveCompanyId(null);
     toastSuccess("Signed out");
     router.push("/");
     router.refresh();
@@ -196,27 +189,7 @@ export function PortalSidebarContent({
         >
           <BrandWordmark size="md" />
         </Link>
-        {role === "recruiter" ? (
-          // Recruiters have multi-tenancy: switcher reads memberships +
-          // active company from ActiveCompanyContext.
-          <CompanySwitcher />
-        ) : (
-          // Candidate + admin portals don't have multi-company semantics.
-          // Keep a static chip for visual continuity (it's display-only).
-          <div
-            className="mt-4 flex w-full items-center gap-2"
-            aria-label="Workspace"
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-[var(--color-surface-strong)] text-xs font-semibold text-[var(--color-ink)]">
-                {tenantInitials}
-              </AvatarFallback>
-            </Avatar>
-            <span className="flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
-              {companyName ?? "Workspace"}
-            </span>
-          </div>
-        )}
+        {role === "recruiter" ? <CompanySwitcher /> : null}
       </div>
 
       {/* Sections */}

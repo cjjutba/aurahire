@@ -9,6 +9,7 @@ import {
   numeric,
   date,
   unique,
+  uniqueIndex,
   index,
   check,
   inet,
@@ -223,6 +224,7 @@ export const resumesTable = pgTable(
     mimeType: text("mime_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
     storagePath: text("storage_path").notNull(),
+    canonicalPdfPath: text("canonical_pdf_path"),
     rawText: text("raw_text"),
     parsedData: jsonb("parsed_data"),
     parseStatus: text("parse_status", { enum: RESUME_PARSE_STATUS }).notNull().default("pending"),
@@ -402,6 +404,64 @@ export const matchScoresTable = pgTable(
   }),
 );
 
+/**
+ * Match-score previews — pre-application "See my match" results.
+ *
+ * A preview is an explainable AI score computed *before* the candidate
+ * applies, scoped by (candidate_id, job_id, resume_id). When the candidate
+ * later applies and submits using the same resume, the preview is promoted
+ * into match_scores instead of triggering a fresh AI call — making Apply
+ * instant. Old previews are eligible for cleanup when the candidate's
+ * default resume changes.
+ */
+export const matchScorePreviewsTable = pgTable(
+  "match_score_previews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => profilesTable.id, { onDelete: "cascade" }),
+    jobId: uuid("job_id")
+      .notNull()
+      .references(() => jobsTable.id, { onDelete: "cascade" }),
+    resumeId: uuid("resume_id")
+      .notNull()
+      .references(() => resumesTable.id, { onDelete: "cascade" }),
+    overallScore: integer("overall_score").notNull(),
+    band: text("band", { enum: SCORE_BAND }).notNull(),
+    components: jsonb("components").notNull(),
+    redactedFields: text("redacted_fields").array().notNull().default(sql`'{}'::text[]`),
+    weightsUsed: jsonb("weights_used").notNull(),
+    promptVersion: text("prompt_version").notNull(),
+    modelUsed: text("model_used").notNull(),
+    rawOutput: jsonb("raw_output").notNull(),
+    latencyMs: integer("latency_ms"),
+    /** "system" = auto-computed at resume-parse time, "candidate" = explicit "See my match" click. */
+    source: text("source", { enum: ["system", "candidate"] }).notNull().default("candidate"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    // One preview per (candidate, job, resume) tuple — re-computing for the
+    // same resume hits the existing row.
+    uniqueByResume: uniqueIndex("match_score_previews_candidate_job_resume_uniq").on(
+      t.candidateId,
+      t.jobId,
+      t.resumeId,
+    ),
+    candidateIdx: index("match_score_previews_candidate_idx").on(t.candidateId),
+    candidateScoreIdx: index("match_score_previews_candidate_score_idx").on(
+      t.candidateId,
+      t.overallScore,
+    ),
+    jobIdx: index("match_score_previews_job_idx").on(t.jobId),
+    resumeIdx: index("match_score_previews_resume_idx").on(t.resumeId),
+    overallScoreCheck: check(
+      "match_score_previews_overall_range",
+      sql`${t.overallScore} >= 0 AND ${t.overallScore} <= 100`,
+    ),
+  }),
+);
+
 export const evidenceExcerptsTable = pgTable(
   "evidence_excerpts",
   {
@@ -561,6 +621,8 @@ export type ProfileScore = typeof profileScoresTable.$inferSelect;
 export type NewProfileScore = typeof profileScoresTable.$inferInsert;
 export type MatchScore = typeof matchScoresTable.$inferSelect;
 export type NewMatchScore = typeof matchScoresTable.$inferInsert;
+export type MatchScorePreview = typeof matchScorePreviewsTable.$inferSelect;
+export type NewMatchScorePreview = typeof matchScorePreviewsTable.$inferInsert;
 export type EvidenceExcerpt = typeof evidenceExcerptsTable.$inferSelect;
 export type NewEvidenceExcerpt = typeof evidenceExcerptsTable.$inferInsert;
 export type BiasFlag = typeof biasFlagsTable.$inferSelect;

@@ -62,21 +62,21 @@ export default async function OnboardingStartPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[860px] px-4 py-6 sm:py-10">
+    <div className="mx-auto w-full max-w-[860px] px-4 py-12 sm:py-16">
       <div className="text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--color-muted)]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-primary)]">
           Get started
         </p>
         <h1 className="mt-3 font-[var(--font-display)] text-[36px] font-normal tracking-[-0.5px] text-[var(--color-ink)] sm:text-[44px]">
           How do you want to start?
         </h1>
-        <p className="mx-auto mt-3 max-w-[520px] text-sm text-[var(--color-body)]">
-          Set up a new workspace for your team, or accept an invitation if a
+        <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-relaxed text-[var(--color-body)]">
+          Set up a new company for your team, or accept an invitation if a
           teammate already invited you.
         </p>
       </div>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2">
+      <div className="mt-12 grid gap-4 sm:grid-cols-2">
         <ChoiceCard
           href="/onboarding/recruiter/company-create"
           icon={
@@ -86,7 +86,7 @@ export default async function OnboardingStartPage() {
             />
           }
           title="Create a new company"
-          description="Set up a workspace for your team. You'll be the owner and can invite teammates after."
+          description="Set up a company for your team. You'll be the owner and can invite teammates after."
         />
         <ChoiceCard
           href="/onboarding/invite"

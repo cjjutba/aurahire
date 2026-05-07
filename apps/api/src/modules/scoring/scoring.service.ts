@@ -13,12 +13,16 @@ import {
   type ProfileScore as ProfileScoreOutput,
   type MatchScore as MatchScoreOutput,
 } from "@aurahire/shared";
-import type { ProfileScore as DbProfileScore } from "@aurahire/db";
+import type {
+  ProfileScore as DbProfileScore,
+  MatchScorePreview as DbMatchScorePreview,
+} from "@aurahire/db";
 
 import { AuditService } from "../../audit";
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { ScoreProfileService } from "../../ai/score-profile.service";
 import { ScoreMatchService } from "../../ai/score-match.service";
+import { JobsRepository } from "../jobs/jobs.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { ResumesRepository } from "../resumes/resumes.repository";
 import { ScoringRepository } from "./scoring.repository";
@@ -31,6 +35,7 @@ import type {
   MatchComponentDto,
   MatchEvidenceDto,
 } from "../applications/dto/application-response.dto";
+import type { MatchScorePreviewDto } from "./dto/match-preview-response.dto";
 
 interface ProfileWeights {
   completeness: number;
@@ -46,9 +51,35 @@ interface MatchWeights {
   cultural_fit: number;
 }
 
+interface BandThresholds {
+  strong: number;
+  partial: number;
+}
+
 interface RequestMeta {
   ipAddress?: string | null;
   userAgent?: string | null;
+}
+
+/**
+ * Sum the AI's per-component scores into a deterministic overall.
+ * The AI is asked to do this in the prompt but doesn't reliably maintain
+ * the invariant — so the engine enforces it. Result is clamped to 0..100.
+ */
+function deriveOverallScore(
+  components: ReadonlyArray<{ score: number }>,
+): number {
+  const sum = components.reduce((acc, c) => acc + (Number(c.score) || 0), 0);
+  return Math.round(Math.max(0, Math.min(100, sum)));
+}
+
+function deriveBand(
+  score: number,
+  thresholds: BandThresholds,
+): "strong" | "partial" | "limited" {
+  if (score >= thresholds.strong) return "strong";
+  if (score >= thresholds.partial) return "partial";
+  return "limited";
 }
 
 @Injectable()
@@ -58,6 +89,7 @@ export class ScoringService {
   constructor(
     private readonly scoreProfile: ScoreProfileService,
     private readonly scoreMatch: ScoreMatchService,
+    private readonly jobsRepo: JobsRepository,
     private readonly profilesRepo: ProfilesRepository,
     private readonly resumesRepo: ResumesRepository,
     private readonly scoringRepo: ScoringRepository,
@@ -127,6 +159,7 @@ export class ScoringService {
       });
     }
     const weights = config.profileWeights as ProfileWeights;
+    const bandThresholds = config.bandThresholds as BandThresholds;
 
     const aiResult = await this.scoreProfile.score({
       parsedResume: defaultResume.parsedData as unknown as ParsedResume,
@@ -135,6 +168,12 @@ export class ScoringService {
       weights,
       requestId: `score-profile:${user.id}`,
     });
+
+    // Engine-enforced arithmetic: overall = Σ component.score; band derived
+    // from thresholds. The AI's overall_score / band are kept in raw_output
+    // for audit but never surface to clients or downstream logic.
+    const derivedOverall = deriveOverallScore(aiResult.score.components);
+    const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
     const evidenceRows = aiResult.score.components.flatMap((comp) =>
       comp.evidence.map((ev) => ({
@@ -150,8 +189,8 @@ export class ScoringService {
       {
         candidateId: user.id,
         resumeId: defaultResume.id,
-        overallScore: aiResult.score.overall_score,
-        band: aiResult.score.band,
+        overallScore: derivedOverall,
+        band: derivedBand,
         components: aiResult.score.components as unknown as Record<string, unknown>,
         improvementSuggestions: aiResult.score
           .improvement_suggestions as unknown as Record<string, unknown>,
@@ -189,7 +228,14 @@ export class ScoringService {
       `Profile score computed for ${user.id}: ${profileScore.overallScore}/100 (${profileScore.band})`,
     );
 
-    return this.toDto(profileScore.id, aiResult.score, aiResult, profileScore.createdAt);
+    return this.toDto(
+      profileScore.id,
+      aiResult.score,
+      aiResult,
+      profileScore.createdAt,
+      derivedOverall,
+      derivedBand,
+    );
   }
 
   async getProfileScoreMe(user: AuthUser): Promise<ProfileScoreDto | null> {
@@ -219,11 +265,13 @@ export class ScoringService {
     score: ProfileScoreOutput,
     aiMeta: { latencyMs: number; model: string; promptVersion: string; redactedFields: string[] },
     createdAt: Date,
+    overallOverride?: number,
+    bandOverride?: "strong" | "partial" | "limited",
   ): ProfileScoreDto {
     return {
       id: scoreId,
-      overallScore: score.overall_score,
-      band: score.band,
+      overallScore: overallOverride ?? score.overall_score,
+      band: bandOverride ?? score.band,
       components: score.components.map((c) => ({
         name: c.name,
         score: c.score,
@@ -325,13 +373,44 @@ export class ScoringService {
       });
     }
     const weights = config.matchWeights as MatchWeights;
+    const bandThresholds = config.bandThresholds as BandThresholds;
 
-    const aiResult = await this.scoreMatch.score({
-      parsedResume: resume.parsedData as unknown as ParsedResume,
-      job,
-      weights,
-      requestId: `score-match:${applicationId}`,
-    });
+    // Promotion path — if the candidate ran "See my match" or we
+    // auto-pre-computed during resume parse for the same (candidate, job,
+    // resume) triple, reuse the already-paid-for AI result instead of
+    // burning a fresh OpenAI call. Apply becomes effectively instant.
+    const preview = await this.scoringRepo.findMatchPreview(
+      candidateId,
+      jobId,
+      resumeId,
+    );
+
+    let aiResult: Awaited<ReturnType<typeof this.scoreMatch.score>>;
+    let promotedFromPreviewId: string | null = null;
+    if (preview) {
+      aiResult = {
+        score: preview.rawOutput as unknown as MatchScoreOutput,
+        redactedFields: preview.redactedFields,
+        promptVersion: preview.promptVersion,
+        model: preview.modelUsed,
+        latencyMs: preview.latencyMs ?? 0,
+      };
+      promotedFromPreviewId = preview.id;
+      this.logger.log(
+        `Promoting preview ${preview.id} for application ${applicationId} (skipping fresh AI call)`,
+      );
+    } else {
+      aiResult = await this.scoreMatch.score({
+        parsedResume: resume.parsedData as unknown as ParsedResume,
+        job,
+        weights,
+        requestId: `score-match:${applicationId}`,
+      });
+    }
+
+    // Engine-enforced arithmetic — see deriveOverallScore note above.
+    const derivedOverall = deriveOverallScore(aiResult.score.components);
+    const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
     const evidenceRows = aiResult.score.components.flatMap((comp) =>
       comp.evidence.map((ev) => ({
@@ -349,8 +428,8 @@ export class ScoringService {
         candidateId,
         jobId,
         resumeId,
-        overallScore: aiResult.score.overall_score,
-        band: aiResult.score.band,
+        overallScore: derivedOverall,
+        band: derivedBand,
         components: aiResult.score.components as unknown as Record<string, unknown>,
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
@@ -380,6 +459,7 @@ export class ScoringService {
         latencyMs: aiResult.latencyMs,
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
+        promotedFromPreviewId,
       },
       ...requestMeta,
     });
@@ -393,6 +473,8 @@ export class ScoringService {
       aiResult.score,
       aiResult,
       matchScore.createdAt,
+      derivedOverall,
+      derivedBand,
     );
   }
 
@@ -432,16 +514,271 @@ export class ScoringService {
     };
   }
 
+  // -----------------------------------------------------------------
+  // MATCH-SCORE PREVIEWS — pre-application "See my match" + auto-precompute
+  // -----------------------------------------------------------------
+
+  /**
+   * Compute a match-score preview for the current candidate against `jobId`
+   * using the candidate's default resume. Idempotent per (candidate, job,
+   * resume) — repeated calls for the same triple UPSERT and bump the row's
+   * createdAt. Skips computation entirely if a fresh preview already exists.
+   */
+  async computeMatchPreview(
+    user: AuthUser,
+    jobId: string,
+    options: { source: "candidate" | "system"; force?: boolean } = {
+      source: "candidate",
+    },
+  ): Promise<MatchScorePreviewDto> {
+    if (user.role !== "candidate") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
+    }
+
+    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(user.id);
+    if (!defaultResume) {
+      throw new BadRequestException({
+        code: "NO_DEFAULT_RESUME",
+        message: "Upload a resume first",
+      });
+    }
+    if (defaultResume.parseStatus !== "parsed" || !defaultResume.parsedData) {
+      throw new BadRequestException({
+        code: "RESUME_NOT_PARSED",
+        message: "Your resume hasn't been parsed yet. Try again in a moment.",
+      });
+    }
+
+    const job = await this.jobsRepo.findById(jobId);
+    if (!job) {
+      throw new BadRequestException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
+    }
+    if (job.status !== "published") {
+      throw new BadRequestException({
+        code: "JOB_NOT_PUBLISHED",
+        message: "Match preview is only available for published jobs",
+      });
+    }
+
+    // Short-circuit: if a preview already exists for this (candidate, job,
+    // resume), return it instead of paying for another AI call. Pass
+    // force:true to override.
+    if (!options.force) {
+      const existing = await this.scoringRepo.findMatchPreview(
+        user.id,
+        jobId,
+        defaultResume.id,
+      );
+      if (existing) {
+        return this.matchPreviewRowToDto(existing);
+      }
+    }
+
+    const config = await this.scoringRepo.getActiveConfig();
+    if (!config) {
+      throw new ServiceUnavailableException({
+        code: "NO_SCORING_CONFIG",
+        message: "Scoring is temporarily unavailable",
+      });
+    }
+    const weights = config.matchWeights as MatchWeights;
+    const bandThresholds = config.bandThresholds as BandThresholds;
+
+    const aiResult = await this.scoreMatch.score({
+      parsedResume: defaultResume.parsedData as unknown as ParsedResume,
+      job: {
+        title: job.title,
+        department: job.department,
+        experienceLevel: job.experienceLevel,
+        educationRequirement: job.educationRequirement,
+        requiredSkills: job.requiredSkills,
+        descriptionPlain: job.descriptionPlain,
+      },
+      weights,
+      requestId: `match-preview:${user.id}:${jobId}`,
+    });
+
+    const derivedOverall = deriveOverallScore(aiResult.score.components);
+    const derivedBand = deriveBand(derivedOverall, bandThresholds);
+
+    const preview = await this.scoringRepo.upsertMatchPreview({
+      candidateId: user.id,
+      jobId,
+      resumeId: defaultResume.id,
+      overallScore: derivedOverall,
+      band: derivedBand,
+      components: aiResult.score.components as unknown as Record<string, unknown>,
+      redactedFields: aiResult.redactedFields,
+      weightsUsed: weights as unknown as Record<string, unknown>,
+      promptVersion: aiResult.promptVersion,
+      modelUsed: aiResult.model,
+      rawOutput: aiResult.score as unknown as Record<string, unknown>,
+      latencyMs: aiResult.latencyMs,
+      source: options.source,
+    });
+
+    await this.audit.log({
+      actorId: user.id,
+      actorType: options.source === "candidate" ? "user" : "system",
+      action: "score.match.preview.computed",
+      entityType: "match_score_preview",
+      entityId: preview.id,
+      companyId: job.companyId,
+      details: {
+        jobId,
+        resumeId: defaultResume.id,
+        overallScore: preview.overallScore,
+        band: preview.band,
+        model: aiResult.model,
+        promptVersion: aiResult.promptVersion,
+        latencyMs: aiResult.latencyMs,
+        source: options.source,
+      },
+    });
+
+    this.logger.log(
+      `Match preview computed for candidate ${user.id} × job ${jobId}: ${preview.overallScore}/100 (${preview.band}, source=${options.source})`,
+    );
+
+    return this.matchPreviewRowToDto(preview);
+  }
+
+  /**
+   * Read-only fetch of an existing preview for a (candidate, job) pair.
+   * Returns the latest preview regardless of resume version — the UI uses
+   * this to decide whether to render "See my match" or the existing score.
+   */
+  async getMatchPreviewByJob(
+    user: AuthUser,
+    jobId: string,
+  ): Promise<MatchScorePreviewDto | null> {
+    if (user.role !== "candidate") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
+    }
+    const row = await this.scoringRepo.findLatestMatchPreviewForJob(
+      user.id,
+      jobId,
+    );
+    if (!row) return null;
+    return this.matchPreviewRowToDto(row);
+  }
+
+  /**
+   * List a candidate's previews ordered by score for the "Recommended for
+   * you" feed. Joins job + company so the UI can render rich rows in one
+   * round-trip.
+   */
+  async listMatchPreviewsForCandidate(
+    user: AuthUser,
+    limit = 25,
+  ): Promise<MatchScorePreviewDto[]> {
+    if (user.role !== "candidate") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
+    }
+    const rows = await this.scoringRepo.listMatchPreviewsForCandidate(
+      user.id,
+      limit,
+    );
+    if (rows.length === 0) return [];
+
+    const jobIds = Array.from(new Set(rows.map((r) => r.jobId)));
+    const jobs = await Promise.all(
+      jobIds.map((id) => this.jobsRepo.findByIdWithCompany(id)),
+    );
+    const jobsById = new Map(
+      jobs
+        .filter((j): j is NonNullable<typeof j> => !!j)
+        .map((j) => [j.id, j]),
+    );
+
+    return rows.map((row) => {
+      const j = jobsById.get(row.jobId);
+      const dto = this.matchPreviewRowToDto(row);
+      if (j) {
+        dto.job = {
+          id: j.id,
+          title: j.title,
+          company: {
+            id: j.company.id,
+            name: j.company.name,
+            logoUrl: j.company.logoUrl ?? null,
+          },
+        };
+      }
+      return dto;
+    });
+  }
+
+  /**
+   * Service hook fired by the resumes module when the candidate's default
+   * resume changes. Stale previews scored against the old resume are
+   * deleted so the recommended feed only shows results scored against the
+   * candidate's current default resume.
+   */
+  async invalidatePreviewsForResume(resumeId: string): Promise<void> {
+    const deleted = await this.scoringRepo.deleteMatchPreviewsByResume(resumeId);
+    if (deleted > 0) {
+      this.logger.log(
+        `Invalidated ${deleted} match preview(s) for resume ${resumeId}`,
+      );
+    }
+  }
+
+  private matchPreviewRowToDto(row: DbMatchScorePreview): MatchScorePreviewDto {
+    const components = (row.components as MatchScoreOutput["components"]) ?? [];
+    return {
+      id: row.id,
+      jobId: row.jobId,
+      resumeId: row.resumeId,
+      overallScore: row.overallScore,
+      band: row.band,
+      components: components.map<MatchComponentDto>((c) => ({
+        name: c.name,
+        score: c.score,
+        max: c.max,
+        weight: c.weight,
+        explanation: c.explanation,
+        evidence: c.evidence.map<MatchEvidenceDto>((e) => ({
+          excerpt: e.excerpt,
+          source: e.source,
+          relevance: e.relevance,
+          contributionPoints: e.contribution_points,
+        })),
+      })),
+      redactedFields: row.redactedFields,
+      promptVersion: row.promptVersion,
+      modelUsed: row.modelUsed,
+      latencyMs: row.latencyMs ?? 0,
+      source: row.source,
+      createdAt: row.createdAt.toISOString(),
+      job: null,
+    };
+  }
+
   private matchScoreToDto(
     scoreId: string,
     score: MatchScoreOutput,
     aiMeta: { latencyMs: number; model: string; promptVersion: string; redactedFields: string[] },
     createdAt: Date,
+    overallOverride?: number,
+    bandOverride?: "strong" | "partial" | "limited",
   ): MatchScoreDto {
     return {
       id: scoreId,
-      overallScore: score.overall_score,
-      band: score.band,
+      overallScore: overallOverride ?? score.overall_score,
+      band: bandOverride ?? score.band,
       components: score.components.map<MatchComponentDto>((c) => ({
         name: c.name,
         score: c.score,

@@ -70,11 +70,11 @@ export class RedactPiiService {
     const { redacted, redactedFields } = this.redactStructured(parsed);
 
     // Scrub summary
-    if (redacted.summary && redacted.summary.length >= FREE_TEXT_MIN_LENGTH) {
+    if (redacted.summary && redacted.summary.text.length >= FREE_TEXT_MIN_LENGTH) {
       try {
-        const scrubbed = await this.scrubText(redacted.summary, requestId);
-        if (scrubbed !== redacted.summary) {
-          redacted.summary = scrubbed;
+        const scrubbed = await this.scrubText(redacted.summary.text, requestId);
+        if (scrubbed !== redacted.summary.text) {
+          redacted.summary = { ...redacted.summary, text: scrubbed };
           redactedFields.push("summary");
         }
       } catch (err) {

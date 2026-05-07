@@ -25,7 +25,6 @@ export default async function AdminLayout({
       role="admin"
       fullName={profile.fullName}
       email={profile.email}
-      companyName={null}
     >
       {children}
     </PortalShell>

@@ -108,6 +108,44 @@ You may **write** the migration SQL, the schema TypeScript, the seed script. The
 
 You may write deployment configs (`vercel.json`, `railway.toml`, GitHub Actions workflows). The human triggers deploys.
 
+### 3a. Claude does NOT run destructive or history-rewriting git commands
+
+These commands can erase the human's in-progress work, hide changes, rewrite shared history, or overwrite remotes. **The human runs them.** If a situation seems to need one, **stop and ask the human first** — never use a destructive git command as a shortcut to escape an obstacle.
+
+**Never run any of:**
+- `git stash` / `git stash pop` / `git stash drop` / `git stash clear` (hides or discards in-progress work)
+- `git reset --hard` / `git reset --merge` / `git reset --keep` (discards uncommitted changes)
+- `git checkout -- <path>` / `git checkout .` / `git restore <path>` / `git restore .` (discards uncommitted changes to tracked files)
+- `git clean -f` / `git clean -fd` / `git clean -fdx` (deletes untracked files, including ones the human may not have committed yet)
+- `git rm -f` / `git rm -rf` (force-removes tracked files)
+- `git commit --amend` (rewrites the previous commit — even unpublished, it can lose co-authored or hook-rejected work)
+- `git rebase` / `git rebase -i` / `git rebase --onto` / `git cherry-pick` (rewrites history; merge conflicts can swallow work)
+- `git revert` (creates new commits that undo prior commits — semantically destructive)
+- `git merge --squash` / `git merge --abort` / `git merge -s ours` (collapses or discards merge state)
+- `git branch -D` / `git branch -d` / `git branch -m` (force-delete or rename branches)
+- `git tag -d` / `git push --delete` / `git push --force` / `git push --force-with-lease` (deletes or overwrites refs locally or on the remote)
+- `git update-ref -d` / `git symbolic-ref` / `git reflog expire` / `git gc --prune=now` / `git filter-branch` / `git filter-repo` (low-level history surgery)
+- `git worktree remove` / `git worktree prune` (deletes worktrees)
+- `git submodule deinit` / `git submodule update --force` (resets submodule state)
+- Any git command with `--force` / `-f`, `--hard`, or `--no-verify` (including `git commit --no-verify`, which bypasses hooks the human relies on)
+
+**Claude DOES freely run these read-only / introspective git commands:**
+- `git status` (without `-uall` flag on this repo — large status output causes memory issues)
+- `git diff` / `git diff --staged` / `git diff <ref>...<ref>`
+- `git log` / `git log --oneline` / `git show <ref>`
+- `git branch` / `git branch -a` / `git branch -vv` (list only)
+- `git remote -v` / `git config --get <key>` (read only)
+- `git rev-parse` / `git ls-files` / `git blame`
+- `git fetch` (does not modify working tree or local branches when used without `--prune`)
+
+**Claude MAY run these constructive git commands when the human has explicitly asked for a commit or PR:**
+- `git add <specific paths>` (never `git add -A` / `git add .` — risk of staging secrets or stray files)
+- `git commit -m "..."` (creating a new commit; never with `--amend` or `--no-verify`)
+- `git checkout <existing branch>` / `git switch <existing branch>` (branch switch only — refuse if the working tree is dirty; ask the human)
+- `git checkout -b <new branch>` / `git switch -c <new branch>` (creating a new branch off the current ref)
+
+If a hook or pre-commit check fails, **investigate and fix the root cause** — never bypass with `--no-verify` or amend over the failure. If a merge conflict appears, resolve it; never abort or discard changes to make it go away.
+
 ### 4. Claude does NOT install global system packages
 
 **Never run any of:**
@@ -249,7 +287,8 @@ Frontend talks to backend at `NEXT_PUBLIC_API_URL=http://localhost:3333`.
 7. Forgetting to log to `audit_logs` after consequential actions.
 8. Calling AI without PII redaction.
 9. Calling AI without a structured output schema.
-10. Running ANY dev server, ANY migration, or ANY deploy command (see Hard Rules above).
+10. Running ANY dev server, ANY migration, ANY deploy command, or ANY destructive/history-rewriting git command (see Hard Rules above).
+11. Reaching for `git stash`, `git reset --hard`, `git checkout -- .`, `git clean -fd`, or `--no-verify` to escape an obstacle. Stop, diagnose the root cause, and ask the human if a destructive step is genuinely required.
 
 ---
 

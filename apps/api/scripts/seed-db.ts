@@ -658,15 +658,14 @@ async function main(): Promise<void> {
     if (!companyRow) throw new Error("Company insert returned no row");
     process.stdout.write(`  ✓ company row ${companyRow.id} (${COMPANY.name})\n`);
 
-    // Recruiter profile (FK to companies + profiles)
+    // Recruiter profile (FK to profiles). Company link now lives in company_members.
     await sql`
       INSERT INTO recruiter_profiles (
-        id, company_id, job_title, department, roles_hiring_for,
+        id, job_title, department, roles_hiring_for,
         hiring_volume_per_quarter, profile_completed
       )
       VALUES (
         ${recruiterUser.id},
-        ${companyRow.id},
         ${RECRUITER_JOB_TITLE},
         ${RECRUITER_DEPARTMENT},
         ${sql.array([
@@ -683,6 +682,23 @@ async function main(): Promise<void> {
       )
     `;
     process.stdout.write(`  ✓ recruiter_profiles row\n`);
+
+    // Company membership (recruiter is the owner of TechCorp)
+    await sql`
+      INSERT INTO company_members (
+        company_id, user_id, email, role, status, invited_by, joined_at
+      )
+      VALUES (
+        ${companyRow.id},
+        ${recruiterUser.id},
+        ${RECRUITER_EMAIL},
+        ${"owner"},
+        ${"active"},
+        ${recruiterUser.id},
+        ${new Date()}
+      )
+    `;
+    process.stdout.write(`  ✓ company_members row (recruiter = owner)\n`);
 
     // Active scoring_config
     await sql`

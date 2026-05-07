@@ -1,9 +1,20 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import type { AuthUser } from "@aurahire/shared";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import type { AuthUser, ParsedResume } from "@aurahire/shared";
+import {
+  personalCompleteSchema,
+  preferencesCompleteSchema,
+  reviewCompleteSchema,
+} from "@aurahire/shared";
 import type { Profile, CandidateProfile } from "@aurahire/db";
 
 import { AuditService } from "../../audit";
 import { ProfilesRepository } from "../profiles/profiles.repository";
+import { ResumesRepository } from "../resumes/resumes.repository";
 
 import type { UpdateCandidatePersonalDto } from "./dto/personal.dto";
 import type { UpdateCandidatePreferencesDto } from "./dto/preferences.dto";
@@ -14,6 +25,7 @@ export class CandidateProfilesService {
   constructor(
     private readonly repo: ProfilesRepository,
     private readonly audit: AuditService,
+    private readonly resumesRepo: ResumesRepository,
   ) {}
 
   async getMe(user: AuthUser): Promise<CandidateProfileMeDto> {
@@ -129,6 +141,101 @@ export class CandidateProfilesService {
     });
 
     return this.toResponse(profile, candidateProfile);
+  }
+
+  /**
+   * Validates per-step onboarding minimums (personal → review → preferences),
+   * then sets `profileCompleted = true` and writes an audit log. Used by the
+   * wizard's Finish button — gives the backend defense-in-depth on top of
+   * frontend validation, plus a dedicated audit marker for "onboarding completed."
+   *
+   * Experience / education / skill counts are derived from the candidate's
+   * default resume's `parsedData` (mirrors `ScoringService.computeProfileScore`,
+   * which also reads experiences/educations/skills from the default resume).
+   */
+  async completeOnboarding(
+    user: AuthUser,
+    requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
+  ): Promise<CandidateProfileMeDto> {
+    this.assertCandidate(user);
+
+    const [profile, candidateProfile] = await Promise.all([
+      this.repo.findById(user.id),
+      this.repo.findCandidateProfile(user.id),
+    ]);
+    if (!profile) {
+      throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
+    }
+    if (!candidateProfile) {
+      throw new NotFoundException({
+        code: "CANDIDATE_PROFILE_NOT_FOUND",
+        message: "Candidate profile missing — re-register",
+      });
+    }
+
+    // Step 1 — personal: must have a non-empty fullName.
+    const personalParsed = personalCompleteSchema.safeParse({
+      fullName: profile.fullName ?? "",
+    });
+    if (!personalParsed.success) {
+      throw new BadRequestException({
+        code: "INCOMPLETE_PERSONAL",
+        message: "Add your full name before completing onboarding",
+      });
+    }
+
+    // Step 2 — review: derive experience/education/skill counts from the
+    // candidate's default resume's parsed data (resumes are the source of
+    // truth for these arrays; there is no separate `candidate_experiences`
+    // table). Mirrors the read pattern used in ScoringService.
+    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(user.id);
+    const parsed =
+      defaultResume?.parseStatus === "parsed" && defaultResume.parsedData
+        ? (defaultResume.parsedData as unknown as ParsedResume)
+        : null;
+    const experienceCount = parsed?.experience?.length ?? 0;
+    const educationCount = parsed?.education?.length ?? 0;
+    const skillsCount = parsed?.skills?.length ?? 0;
+
+    const reviewParsed = reviewCompleteSchema.safeParse({
+      experienceCount,
+      educationCount,
+      skillsCount,
+    });
+    if (!reviewParsed.success) {
+      throw new BadRequestException({
+        code: "INCOMPLETE_REVIEW",
+        message: "Add at least one experience, one school, or three skills",
+      });
+    }
+
+    // Step 3 — preferences: must have at least one desired role and one work mode.
+    const prefsParsed = preferencesCompleteSchema.safeParse({
+      desiredRoles: candidateProfile.desiredRoles ?? [],
+      openTo: candidateProfile.openTo ?? [],
+    });
+    if (!prefsParsed.success) {
+      throw new BadRequestException({
+        code: "INCOMPLETE_PREFERENCES",
+        message: prefsParsed.error.issues[0]?.message ?? "Preferences incomplete",
+      });
+    }
+
+    const updatedCandidateProfile = await this.repo.updateCandidateProfile(user.id, {
+      profileCompleted: true,
+    });
+
+    void this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: "user.onboarding.completed",
+      entityType: "candidate_profile",
+      entityId: user.id,
+      details: { role: "candidate", source: "complete-onboarding" },
+      ...requestMeta,
+    });
+
+    return this.toResponse(profile, updatedCandidateProfile);
   }
 
   private assertCandidate(user: AuthUser): void {

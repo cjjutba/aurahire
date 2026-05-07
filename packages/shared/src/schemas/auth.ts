@@ -4,7 +4,6 @@ import {
   phoneSchema,
   passwordSchema,
   fullNameSchema,
-  companyNameSchema,
 } from "./shared.ts";
 
 // ============================================================================
@@ -69,7 +68,6 @@ export const registerRecruiterSchema = z
     fullName: fullNameSchema,
     email: emailSchema,
     phone: phoneSchema,
-    companyName: companyNameSchema,
     password: passwordSchema,
     confirmPassword: z.string(),
     agreedToTerms: z.literal(true, {
@@ -87,16 +85,17 @@ export const signupRecruiterSchema = z.object({
   fullName: fullNameSchema,
   email: emailSchema,
   phone: phoneSchema,
-  companyName: companyNameSchema,
   password: passwordSchema,
 });
 
 export type SignupRecruiterInput = z.infer<typeof signupRecruiterSchema>;
 
+// Internal payload used by ProfilesService.initRecruiterProfile. Company
+// creation is now deferred to /onboarding/start (the create-vs-join fork),
+// so the recruiter row is created without a company on email verification.
 export const initRecruiterProfileSchema = z.object({
   fullName: fullNameSchema,
   phone: phoneSchema,
-  companyName: companyNameSchema,
 });
 
 export type InitRecruiterProfileInput = z.infer<typeof initRecruiterProfileSchema>;

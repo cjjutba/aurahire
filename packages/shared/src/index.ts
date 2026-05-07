@@ -15,6 +15,7 @@ export * from "./schemas/admin.ts";
 export * from "./schemas/interviews.ts";
 export * from "./schemas/offers.ts";
 export * from "./schemas/companies.ts";
+export * from "./onboarding/index.ts";
 
 // Enums
 export * from "./enums/index.ts";
@@ -23,6 +24,7 @@ export * from "./enums/index.ts";
 export * from "./constants/score-thresholds.ts";
 export * from "./constants/ai-limits.ts";
 export * from "./constants/pagination.ts";
+export * from "./skills-taxonomy.ts";
 
 // Types
 export * from "./types/auth-user.ts";

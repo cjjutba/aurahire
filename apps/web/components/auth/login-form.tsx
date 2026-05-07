@@ -10,6 +10,7 @@ import { toastSuccess, toastApiError } from "@/lib/toast";
 import { loginSchema, type LoginInput } from "@aurahire/shared";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { setSessionOnlyMarker } from "@/lib/auth/cookie-persistence.client";
+import { setActiveCompanyId } from "@/lib/active-company";
 import { AuthInput } from "@/components/auth/auth-input";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
@@ -79,6 +80,10 @@ export function LoginForm() {
         data: { role: "candidate" | "recruiter" | "admin"; profileCompleted: boolean };
       };
       const { role, profileCompleted } = profileBody.data;
+
+      // Clear any stale active-company id from a previous session — the
+      // portal will rehydrate it from `profile.lastActiveCompanyId` on first load.
+      setActiveCompanyId(null);
 
       const dest =
         redirectTo ??

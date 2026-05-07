@@ -12,6 +12,7 @@ import {
   offersTable,
   profileScoresTable,
   matchScoresTable,
+  matchScorePreviewsTable,
   evidenceExcerptsTable,
   biasFlagsTable,
   scoringConfigTable,
@@ -177,6 +178,24 @@ export const matchScoresRelations = relations(matchScoresTable, ({ one }) => ({
     references: [resumesTable.id],
   }),
 }));
+
+export const matchScorePreviewsRelations = relations(
+  matchScorePreviewsTable,
+  ({ one }) => ({
+    candidate: one(profilesTable, {
+      fields: [matchScorePreviewsTable.candidateId],
+      references: [profilesTable.id],
+    }),
+    job: one(jobsTable, {
+      fields: [matchScorePreviewsTable.jobId],
+      references: [jobsTable.id],
+    }),
+    resume: one(resumesTable, {
+      fields: [matchScorePreviewsTable.resumeId],
+      references: [resumesTable.id],
+    }),
+  }),
+);
 
 export const biasFlagsRelations = relations(biasFlagsTable, ({ one }) => ({
   job: one(jobsTable, {

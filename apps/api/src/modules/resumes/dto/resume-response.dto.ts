@@ -7,6 +7,7 @@ export class ResumeResponseDto {
   @ApiProperty() mimeType!: string;
   @ApiProperty() sizeBytes!: number;
   @ApiProperty() storagePath!: string;
+  @ApiPropertyOptional({ nullable: true }) canonicalPdfPath!: string | null;
   @ApiPropertyOptional({ nullable: true }) rawText!: string | null;
   @ApiProperty({ type: "object", additionalProperties: true })
   parsedData!: unknown;
@@ -30,6 +31,7 @@ export class ResumeListResponseDto {
 
 export class SignedUrlPayloadDto {
   @ApiProperty() signedUrl!: string;
+  @ApiProperty() signedPdfUrl!: string;
   @ApiProperty() expiresAt!: string;
 }
 

@@ -38,7 +38,6 @@ interface RecruiterSignupMetadata {
   role: "recruiter";
   fullName: string;
   phone: string;
-  companyName: string;
 }
 
 type SignupMetadata = CandidateSignupMetadata | RecruiterSignupMetadata;
@@ -102,7 +101,6 @@ export class AuthService {
       fullName: string;
       email: string;
       phone: string;
-      companyName: string;
       password: string;
     },
     meta: RequestMeta,
@@ -111,7 +109,6 @@ export class AuthService {
       role: "recruiter",
       full_name: input.fullName,
       phone: input.phone,
-      company_name: input.companyName,
     });
 
     await this.issueVerificationEmail(
@@ -122,7 +119,6 @@ export class AuthService {
         role: "recruiter",
         fullName: input.fullName,
         phone: input.phone,
-        companyName: input.companyName,
       },
       meta,
     );
@@ -168,7 +164,6 @@ export class AuthService {
           {
             fullName: metadata.fullName,
             phone: metadata.phone,
-            companyName: metadata.companyName,
           },
           meta,
         )
@@ -204,34 +199,54 @@ export class AuthService {
   // ==========================================================================
 
   async resendVerification(email: string, meta: RequestMeta): Promise<{ message: string }> {
-    const user = await this.supabaseAdmin.findUserByEmail(email).catch(() => null);
-    if (user && !user.emailConfirmedAt) {
-      // Reuse the metadata from the most recent verification token if present;
-      // otherwise we cannot rebuild the signup payload, so the user must redo
-      // the form. (Edge case — happens only if an op manually pruned tokens.)
-      const recent = await this.db
-        .select()
-        .from(authTokensTable)
-        .where(
-          and(
-            eq(authTokensTable.userId, user.id),
-            eq(authTokensTable.kind, "email_verification"),
-          ),
-        )
-        .orderBy(sql`${authTokensTable.createdAt} DESC`)
-        .limit(1);
-
-      if (recent.length > 0) {
-        const metadata = this.decodeSignupMetadata(recent[0]!.metadata);
-        await this.issueVerificationEmail(
-          user.id,
-          email,
-          metadata.fullName,
-          metadata,
-          meta,
-        );
-      }
+    const user = await this.supabaseAdmin.findUserByEmail(email).catch((err) => {
+      this.logger.warn(
+        `resend-verification: findUserByEmail threw for ${email}: ${(err as Error).message}`,
+      );
+      return null;
+    });
+    if (!user) {
+      this.logger.log(`resend-verification: no user found for ${email} — silent no-op`);
+      return { message: "If that account exists and isn't yet verified, a new link is on its way." };
     }
+    if (user.emailConfirmedAt) {
+      this.logger.log(
+        `resend-verification: ${email} already confirmed at ${user.emailConfirmedAt} — silent no-op`,
+      );
+      return { message: "If that account exists and isn't yet verified, a new link is on its way." };
+    }
+
+    // Reuse the metadata from the most recent verification token if present;
+    // otherwise we cannot rebuild the signup payload, so the user must redo
+    // the form. (Edge case — happens only if an op manually pruned tokens.)
+    const recent = await this.db
+      .select()
+      .from(authTokensTable)
+      .where(
+        and(
+          eq(authTokensTable.userId, user.id),
+          eq(authTokensTable.kind, "email_verification"),
+        ),
+      )
+      .orderBy(sql`${authTokensTable.createdAt} DESC`)
+      .limit(1);
+
+    if (recent.length === 0) {
+      this.logger.warn(
+        `resend-verification: no prior verification token for user ${user.id} (${email}) — cannot rebuild signup metadata`,
+      );
+      return { message: "If that account exists and isn't yet verified, a new link is on its way." };
+    }
+
+    const metadata = this.decodeSignupMetadata(recent[0]!.metadata);
+    await this.issueVerificationEmail(
+      user.id,
+      email,
+      metadata.fullName,
+      metadata,
+      meta,
+    );
+    this.logger.log(`resend-verification: dispatched to ${email}`);
 
     return { message: "If that account exists and isn't yet verified, a new link is on its way." };
   }
@@ -529,14 +544,15 @@ export class AuthService {
     if (
       obj.role === "recruiter" &&
       typeof obj.fullName === "string" &&
-      typeof obj.phone === "string" &&
-      typeof obj.companyName === "string"
+      typeof obj.phone === "string"
     ) {
+      // Older tokens (issued before company creation moved to /onboarding/start)
+      // may still carry a `companyName` field; we ignore it — the verify path
+      // no longer creates a company.
       return {
         role: "recruiter",
         fullName: obj.fullName,
         phone: obj.phone,
-        companyName: obj.companyName,
       };
     }
     throw new BadRequestException({

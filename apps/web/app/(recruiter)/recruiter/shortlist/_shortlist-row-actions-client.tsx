@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Loader2 } from "lucide-react";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { getActiveCompanyId } from "@/lib/active-company";
@@ -117,10 +117,15 @@ export function ShortlistRowActionsClient({
         type="button"
         disabled={busy}
         onClick={() => setOpen((v) => !v)}
-        aria-label="Row actions"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] disabled:opacity-50"
+        aria-label={busy ? "Working..." : "Row actions"}
+        aria-busy={busy}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <MoreHorizontal className="h-4 w-4" />
+        {busy ? (
+          <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+        ) : (
+          <MoreHorizontal className="h-4 w-4" />
+        )}
       </button>
 
       {open && (

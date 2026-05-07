@@ -67,7 +67,7 @@ export function RecruiterCompanyForm({ defaults }: CompanyFormProps) {
           name="companyName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company Name</FormLabel>
+              <FormLabel>Company Name *</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>

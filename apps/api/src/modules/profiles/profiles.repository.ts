@@ -73,6 +73,29 @@ export class ProfilesRepository {
     });
   }
 
+  /**
+   * Initialize a recruiter at email-verification time WITHOUT creating a
+   * company or membership. Company creation is deferred to the
+   * /onboarding/start fork (create-vs-join) so recruiters who are being
+   * invited to existing teams don't end up owning a stub company.
+   * `last_active_company_id` stays null until the user picks a path.
+   */
+  async insertRecruiterWithoutCompany(
+    profileData: NewProfile,
+    recruiterData: Omit<NewRecruiterProfile, "id">,
+  ): Promise<{ profile: Profile; recruiterProfile: RecruiterProfile }> {
+    return await this.db.transaction(async (tx) => {
+      const [profile] = await tx.insert(profilesTable).values(profileData).returning();
+      if (!profile) throw new Error("Failed to insert profile");
+      const [recruiterProfile] = await tx
+        .insert(recruiterProfilesTable)
+        .values({ ...recruiterData, id: profile.id })
+        .returning();
+      if (!recruiterProfile) throw new Error("Failed to insert recruiter profile");
+      return { profile, recruiterProfile };
+    });
+  }
+
   async insertRecruiter(
     profileData: NewProfile,
     companyData: NewCompany,

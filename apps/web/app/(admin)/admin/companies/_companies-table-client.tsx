@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
 
 import type { AdminCompanyRow } from "./page";
@@ -326,7 +327,8 @@ export function CompaniesTableClient({ rows }: Props) {
               }
               className="bg-[var(--color-status-danger)] text-white hover:bg-[var(--color-status-danger)]/90"
             >
-              {busy ? "Deleting…" : "Delete company"}
+              {busy && <ButtonSpinner />}
+              {busy ? "Deleting..." : "Delete company"}
             </Button>
           </DialogFooter>
         </DialogContent>

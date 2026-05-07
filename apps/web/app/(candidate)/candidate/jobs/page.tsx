@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { getCurrentSession } from "@/lib/auth/session";
 import { makeQueryClient, PrefetchedHydration, queryKeys } from "@/lib/query";
-import { serverQueries } from "@/lib/query/server";
+import { serverApiFetch, serverQueries } from "@/lib/query/server";
 
 import { CandidateJobsListClient } from "./_jobs-list-client";
 
@@ -13,6 +13,7 @@ interface PageProps {
     q?: string;
     mode?: string;
     experienceLevel?: string;
+    sort?: string;
     page?: string;
   }>;
 }
@@ -23,26 +24,36 @@ export default async function CandidateJobsPage({ searchParams }: PageProps) {
 
   const sp = await searchParams;
   const params = {
-    q: sp.q,
-    mode: sp.mode,
-    experienceLevel: sp.experienceLevel,
-    page: sp.page ? Number(sp.page) : undefined,
+    q: sp.q?.trim() || undefined,
+    mode: sp.mode && sp.mode !== "all" ? sp.mode : undefined,
+    experienceLevel:
+      sp.experienceLevel && sp.experienceLevel !== "all" ? sp.experienceLevel : undefined,
+    sort: sp.sort ?? "recent",
+    page: sp.page ? Math.max(1, Number(sp.page)) : 1,
+    limit: 12,
   };
 
   const queryClient = makeQueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: queryKeys.candidateJobs.list(params),
-    queryFn: () => serverQueries.candidateJobsList(params),
-  });
+  const [, appsResult] = await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.candidateJobs.list(params),
+      queryFn: () => serverQueries.candidateJobsList(params),
+    }),
+    serverApiFetch<{ data: Array<{ id: string; jobId: string }> }>(
+      "/api/v1/applications/mine",
+    ).catch(() => null),
+  ]);
+
+  const appliedJobMap: Record<string, string> = {};
+  if (appsResult) {
+    for (const a of appsResult.data) {
+      appliedJobMap[a.jobId] = a.id;
+    }
+  }
 
   return (
     <PrefetchedHydration queryClient={queryClient}>
-      <CandidateJobsListClient
-        q={params.q}
-        mode={params.mode}
-        experienceLevel={params.experienceLevel}
-        page={params.page}
-      />
+      <CandidateJobsListClient params={params} appliedJobMap={appliedJobMap} />
     </PrefetchedHydration>
   );
 }

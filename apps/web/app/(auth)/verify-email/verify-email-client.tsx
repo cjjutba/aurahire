@@ -9,6 +9,7 @@ import { fetcher } from "@aurahire/shared";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { setActiveCompanyId } from "@/lib/active-company";
 
 type Status = "verifying" | "signing-in" | "success" | "error";
 
@@ -59,6 +60,11 @@ export function VerifyEmailClient() {
           setTimeout(() => router.push(`/login?verified=1`), 1500);
           return;
         }
+
+        // Brand new account → drop any stale active-company id cached in this
+        // browser from a previous session. The recruiter onboarding fork (or
+        // the portal post-onboarding) will rehydrate it from the new profile.
+        setActiveCompanyId(null);
 
         toastSuccess("Email verified", "Redirecting to your dashboard.");
         setStatus("success");

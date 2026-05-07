@@ -37,6 +37,10 @@ export const queryKeys = {
   profileScore: {
     me: () => ["profile-score", "me"] as const,
   },
+  candidateResumes: {
+    list: () => ["candidate-resumes", "list"] as const,
+    download: (id: string) => ["candidate-resumes", "download", id] as const,
+  },
 } as const;
 
 export interface RecruiterJobsListParams {
@@ -68,7 +72,9 @@ export interface CandidateJobsListParams {
   q?: string;
   mode?: string;
   experienceLevel?: string;
+  sort?: string;
   page?: number;
+  limit?: number;
 }
 export interface CandidateApplicationsParams {
   status?: string;

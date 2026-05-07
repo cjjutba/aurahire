@@ -64,7 +64,7 @@ export function CandidateProfileForm({ defaults }: Props) {
           name="fullName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel>Full Name *</FormLabel>
               <FormControl>
                 <Input autoComplete="name" {...field} />
               </FormControl>
@@ -77,7 +77,7 @@ export function CandidateProfileForm({ defaults }: Props) {
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel>Phone *</FormLabel>
               <FormControl>
                 <Input type="tel" autoComplete="tel" {...field} />
               </FormControl>

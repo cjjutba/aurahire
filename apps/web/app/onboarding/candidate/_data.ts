@@ -1,34 +1,23 @@
+// Server-only data helpers. Never import from a Client Component.
+// Types and the ONBOARDING_STEPS constant live in `_steps.ts` (client-safe) and
+// are re-exported here for convenience to existing callers.
+
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth/session";
+import {
+  type CandidateProfileMe,
+  type LatestParsedResume,
+  type ParsedResumeV2,
+} from "./_steps";
 
-export const ONBOARDING_STEPS = [
-  { label: "Resume" },
-  { label: "Personal" },
-  { label: "Education" },
-  { label: "Experience" },
-  { label: "Skills" },
-  { label: "Preferences" },
-] as const;
-
-export interface CandidateProfileMe {
-  id: string;
-  email: string;
-  fullName: string;
-  phone: string | null;
-  headline: string | null;
-  summary: string | null;
-  locationCity: string | null;
-  locationRegion: string | null;
-  locationCountry: string | null;
-  desiredRoles: string[];
-  desiredSeniority: string | null;
-  openTo: string[];
-  desiredSalaryMin: number | null;
-  desiredSalaryMax: number | null;
-  desiredCurrency: string;
-  availableStartDate: string | null;
-  profileCompleted: boolean;
-}
+// Re-export for back-compat — callers that imported types from _data.ts keep working.
+export {
+  ONBOARDING_STEPS,
+  type OnboardingStepId,
+  type CandidateProfileMe,
+  type LatestParsedResume,
+  type ParsedResumeV2,
+} from "./_steps";
 
 export async function fetchCandidateProfileMe(): Promise<CandidateProfileMe> {
   const session = await getCurrentSession();
@@ -47,75 +36,49 @@ export async function fetchCandidateProfileMe(): Promise<CandidateProfileMe> {
   return body.data;
 }
 
-export interface LatestParsedResume {
-  id: string;
-  parseStatus: string;
-  parsed: {
-    contact?: {
-      full_name?: string | null;
-      phone?: string | null;
-      location_city?: string | null;
-      location_country?: string | null;
-    } | null;
-    summary?: string | null;
-    education?: Array<{
-      institution: string;
-      degree: string | null;
-      field_of_study: string | null;
-      start_year: number | null;
-      end_year: number | null;
-      gpa: string | null;
-    }> | null;
-    experience?: Array<{
-      title?: string | null;
-      company?: string | null;
-      start_date?: string | null;
-      end_date?: string | null;
-      is_current?: boolean | null;
-      responsibilities?: string[] | null;
-      technologies_used?: string[] | null;
-    }> | null;
-    skills?: string[] | null;
-    certifications?: Array<{
-      name: string;
-      issuing_organization: string | null;
-      issue_date: string | null;
-      expires: string | null;
-    }> | null;
-  } | null;
-}
-
 export async function fetchLatestParsedResume(): Promise<LatestParsedResume | null> {
   const session = await getCurrentSession();
   if (!session) return null;
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-  const res = await fetch(`${apiUrl}/api/v1/resumes/mine`, {
+  const listRes = await fetch(`${apiUrl}/api/v1/resumes/mine`, {
     headers: { Authorization: `Bearer ${session.access_token}` },
     cache: "no-store",
   });
+  if (!listRes.ok) return null;
 
-  if (!res.ok) return null;
-
-  const body = (await res.json()) as {
+  const listBody = (await listRes.json()) as {
     data: Array<{
       id: string;
-      parseStatus: string;
+      parseStatus: "pending" | "parsing" | "parsed" | "failed";
       parsedData: unknown;
+      rawText: string | null;
+      canonicalPdfPath: string | null;
       isDefault: boolean;
       createdAt: string;
     }>;
   };
+  if (listBody.data.length === 0) return null;
 
-  if (body.data.length === 0) return null;
+  const sorted = [...listBody.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const candidate = sorted.find((r) => r.isDefault) ?? sorted[0]!;
 
-  const sorted = [...body.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const defaultR = sorted.find((r) => r.isDefault);
-  const candidate = defaultR ?? sorted[0]!;
+  let signedPdfUrl: string | null = null;
+  const urlRes = await fetch(`${apiUrl}/api/v1/resumes/${candidate.id}/download-url`, {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+    cache: "no-store",
+  });
+  if (urlRes.ok) {
+    const urlBody = (await urlRes.json()) as { data: { signedUrl: string; signedPdfUrl: string } };
+    signedPdfUrl = urlBody.data.signedPdfUrl ?? null;
+  }
 
   return {
     id: candidate.id,
     parseStatus: candidate.parseStatus,
-    parsed: candidate.parsedData as LatestParsedResume["parsed"],
+    signedPdfUrl,
+    rawText: candidate.rawText,
+    canonicalPdfPath: candidate.canonicalPdfPath,
+    parsed: candidate.parsedData as ParsedResumeV2 | null,
   };
 }

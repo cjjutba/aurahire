@@ -89,9 +89,45 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
 
 function FormLabel({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof LabelPrimitive.Root>) {
   const { error, formItemId } = useFormField()
+
+  // Auto-style trailing markers on string-only labels:
+  //   "Foo *"          → red asterisk
+  //   "Foo (Optional)" → muted "(Optional)" suffix
+  // Centralized so every form across the app gets consistent treatment
+  // without per-label JSX.
+  const renderedChildren = (() => {
+    if (typeof children !== "string") return children
+    const requiredMatch = children.match(/^(.*\S)\s*\*\s*$/)
+    if (requiredMatch) {
+      return (
+        <>
+          {requiredMatch[1]}{" "}
+          <span
+            aria-hidden
+            className="text-[var(--color-status-danger)]"
+          >
+            *
+          </span>
+        </>
+      )
+    }
+    const optionalMatch = children.match(/^(.*\S)\s*\(Optional\)\s*$/i)
+    if (optionalMatch) {
+      return (
+        <>
+          {optionalMatch[1]}{" "}
+          <span className="font-normal text-[var(--color-muted)]">
+            (Optional)
+          </span>
+        </>
+      )
+    }
+    return children
+  })()
 
   return (
     <Label
@@ -100,7 +136,9 @@ function FormLabel({
       className={cn("data-[error=true]:text-destructive", className)}
       htmlFor={formItemId}
       {...props}
-    />
+    >
+      {renderedChildren}
+    </Label>
   )
 }
 

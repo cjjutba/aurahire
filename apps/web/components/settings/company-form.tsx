@@ -105,7 +105,7 @@ export function CompanyForm({ initial }: CompanyFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company name</FormLabel>
+              <FormLabel>Company name *</FormLabel>
               <FormControl>
                 <Input
                   autoComplete="organization"

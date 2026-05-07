@@ -99,6 +99,7 @@ export function PublicInviteActions({ token }: { token: string }) {
         disabled={pending !== null}
         className="h-12 w-full rounded-[var(--radius-pill)] border-[var(--color-hairline)] bg-[var(--color-canvas)] text-sm font-medium text-[var(--color-body)] hover:bg-[var(--color-surface-strong)]"
       >
+        {pending === "decline" && <ButtonSpinner />}
         {pending === "decline" ? "Declining..." : "Decline"}
       </Button>
     </div>

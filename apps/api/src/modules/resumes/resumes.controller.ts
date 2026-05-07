@@ -126,6 +126,20 @@ export class ResumesController {
     return { data };
   }
 
+  @Post(":id/reparse")
+  @Roles("candidate")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Re-run AI parsing against this resume's stored rawText" })
+  @ApiResponse({ status: 200, type: ResumeResponseEnvelopeDto })
+  async reparse(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+    @Req() req: FastifyRequest,
+  ): Promise<ResumeResponseEnvelopeDto> {
+    const data = await this.service.reparse(user, id, this.requestMeta(req));
+    return { data };
+  }
+
   @Delete(":id")
   @Roles("candidate")
   @HttpCode(HttpStatus.NO_CONTENT)

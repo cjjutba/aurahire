@@ -28,6 +28,11 @@ export const createJobSchema = z
     experienceLevel: z.enum(EXPERIENCE_LEVEL),
     educationRequirement: z.enum(EDUCATION_REQUIREMENT).nullable().optional(),
     applicationDeadline: z.string().date().nullable().optional(),
+    // When true, the backend transitions the new job to 'published' in the
+    // same call (after running the bias scan). On bias-flag failure the job
+    // remains as draft so the recruiter can resolve flags and retry from the
+    // job detail page. When false/omitted, the job is created as 'draft'.
+    publishImmediately: z.boolean().optional().default(false),
   })
   .refine(
     (data) =>

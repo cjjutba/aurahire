@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ChevronsUpDown, Plus, Mail, Check } from "lucide-react";
 
 import { useActiveCompany } from "@/contexts/active-company-context";
@@ -13,6 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CompanyCreateDialog } from "./company-create-dialog";
+import { AcceptInvitationDialog } from "./accept-invitation-dialog";
 import { toastApiError } from "@/lib/toast";
 
 /**
@@ -26,17 +27,21 @@ import { toastApiError } from "@/lib/toast";
  */
 export function CompanySwitcher() {
   const ctx = useActiveCompany();
-  const router = useRouter();
   const [switching, setSwitching] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [acceptOpen, setAcceptOpen] = useState(false);
 
   if (!ctx) return null;
 
-  const { activeMembership, memberships, switchCompany } = ctx;
+  const { activeMembership, memberships, isLoading, switchCompany } = ctx;
 
   const triggerInitials = activeMembership
     ? getInitials(activeMembership.companyName)
-    : "?";
-  const triggerLabel = activeMembership?.companyName ?? "Workspace";
+    : isLoading
+      ? ""
+      : "+";
+  const triggerLabel = activeMembership?.companyName
+    ?? (isLoading ? "Loading…" : "Add a company");
 
   async function handleSelect(companyId: string) {
     if (companyId === activeMembership?.companyId) return;
@@ -52,13 +57,14 @@ export function CompanySwitcher() {
   }
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
           <button
             type="button"
             disabled={switching}
-            aria-label="Switch workspace"
+            aria-label="Switch company"
             className="mt-4 flex w-full items-center gap-2 rounded-[var(--radius-md)] py-1 text-left transition hover:bg-[var(--color-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"
           />
         }
@@ -80,9 +86,13 @@ export function CompanySwitcher() {
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="bottom" className="w-64">
-        {memberships.length === 0 ? (
+        {isLoading ? (
           <div className="px-2 py-2 text-xs text-[var(--color-muted)]">
-            No workspaces yet
+            Loading companies…
+          </div>
+        ) : memberships.length === 0 ? (
+          <div className="px-2 py-2 text-xs text-[var(--color-muted)]">
+            No companies yet — create one or accept an invitation below.
           </div>
         ) : (
           memberships.map((m) => {
@@ -117,16 +127,14 @@ export function CompanySwitcher() {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() =>
-            router.push("/onboarding/recruiter/company-create?from=switcher")
-          }
+          onClick={() => setCreateOpen(true)}
           className="flex cursor-pointer items-center gap-2"
         >
           <Plus className="h-4 w-4" />
           <span>Create new company</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => router.push("/invite")}
+          onClick={() => setAcceptOpen(true)}
           className="flex cursor-pointer items-center gap-2"
         >
           <Mail className="h-4 w-4" />
@@ -134,6 +142,9 @@ export function CompanySwitcher() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <CompanyCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
+    <AcceptInvitationDialog open={acceptOpen} onOpenChange={setAcceptOpen} />
+    </>
   );
 }
 

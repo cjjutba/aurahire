@@ -115,3 +115,62 @@ body {
   animation: shimmer 1.5s ease-in-out infinite;
   background-size: 200% 100%;
 }
+
+@keyframes highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--color-primary);
+  }
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+/* Indeterminate progress sweep — used by parsing-progress-card.tsx */
+@keyframes indeterminate-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.animate-indeterminate-sweep {
+  animation: indeterminate-sweep 1.6s ease-in-out infinite;
+}
+
+/* Stage check pop — used when a parsing stage flips to done */
+@keyframes stage-check-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-stage-check-pop {
+  animation: stage-check-pop 240ms ease-out;
+}
+
+/* Stage row fade in (when a stage activates) */
+@keyframes stage-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-stage-fade-in {
+  animation: stage-fade-in 220ms ease-out;
+}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Eye, Pencil, Send, Archive } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Send, Archive, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,12 +116,17 @@ export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps)
           <button
             type="button"
             disabled={busy}
-            aria-label="Job actions"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-40"
+            aria-label={busy ? "Working..." : "Job actions"}
+            aria-busy={busy}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
           />
         }
       >
-        <MoreHorizontal className="h-4 w-4" aria-hidden />
+        {busy ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        ) : (
+          <MoreHorizontal className="h-4 w-4" aria-hidden />
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="bottom">
         <DropdownMenuItem
