@@ -120,7 +120,11 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
   if (submitting) {
     if (preview && selectedResumeMatchesPreview) {
       return (
-        <div className="flex items-center justify-center gap-3 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-sm text-[var(--color-body)]">
+        <div
+          role="status"
+          aria-busy={true}
+          className="flex items-center justify-center gap-3 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-sm text-[var(--color-body)]"
+        >
           <Loader2
             className="h-4 w-4 animate-spin text-[var(--color-primary)]"
             aria-hidden
