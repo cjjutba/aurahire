@@ -1,23 +1,16 @@
 "use client";
 
-import { useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useDebouncedRouterRefresh } from "@/hooks/use-debounced-router-refresh";
 import { RealtimeEvent } from "@/lib/realtime";
 
 /**
  * Headless component: subscribes to bias.flag_created events and triggers a
- * Server Component refresh so bias flag counts and breakdowns update within ~2s.
- * Renders nothing — mount once per bias-monitor page.
+ * debounced Server Component refresh. A scanJob that produces N flag rows
+ * back-to-back collapses into a single bias-monitor re-render.
  */
 export function BiasMonitorRealtimeClient() {
-  const router = useRouter();
-
-  const refresh = useCallback(() => {
-    router.refresh();
-  }, [router]);
-
+  const refresh = useDebouncedRouterRefresh();
   useRealtimeChannel(RealtimeEvent.BiasFlagCreated, refresh);
-
   return null;
 }
