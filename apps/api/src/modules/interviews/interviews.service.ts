@@ -210,6 +210,16 @@ export class InterviewsService {
         TAGS.interviewsCandidate(app.candidateId),
         TAGS.companyDashboard(companyId),
       ]);
+
+      this.events.emitInterviewStatusChanged({
+        interviewId,
+        applicationId: interview.applicationId,
+        recruiterId: user.id,
+        candidateId: app.candidateId,
+        previousStatus: interview.status,
+        status: dto.newStatus,
+        changedAt: new Date().toISOString(),
+      });
     }
 
     if (dto.newStatus === "cancelled") {

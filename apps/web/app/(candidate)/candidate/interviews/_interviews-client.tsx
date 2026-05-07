@@ -97,6 +97,10 @@ export function CandidateInterviewsClient({ params }: CandidateInterviewsClientP
     queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
   });
 
+  useRealtimeChannel(RealtimeEvent.InterviewStatusChanged, () => {
+    queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
+  });
+
   const all = useMemo(
     () => (data?.data ?? []) as InterviewRow[],
     [data?.data],

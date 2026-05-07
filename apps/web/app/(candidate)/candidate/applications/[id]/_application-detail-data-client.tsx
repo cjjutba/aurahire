@@ -78,6 +78,14 @@ export function ApplicationDetailDataClient({
     queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
   });
 
+  useRealtimeChannel(RealtimeEvent.InterviewStatusChanged, (payload) => {
+    if (payload.applicationId !== applicationId) return;
+    queryClient.invalidateQueries({
+      queryKey: ["candidate-applications", "interviews", applicationId],
+    });
+    queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
+  });
+
   useRealtimeChannel(RealtimeEvent.OfferSent, (payload) => {
     if (payload.applicationId !== applicationId) return;
     queryClient.invalidateQueries({

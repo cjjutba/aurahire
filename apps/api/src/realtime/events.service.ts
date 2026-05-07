@@ -6,6 +6,7 @@ import {
   type AuditEntryPayload,
   type BiasFlagCreatedPayload,
   type InterviewScheduledPayload,
+  type InterviewStatusChangedPayload,
   type OfferSentPayload,
 } from "@aurahire/shared";
 
@@ -53,6 +54,14 @@ export class EventsService {
   emitInterviewScheduled(payload: InterviewScheduledPayload): void {
     this.broadcast(
       RealtimeEvent.InterviewScheduled,
+      payload,
+      [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
+    );
+  }
+
+  emitInterviewStatusChanged(payload: InterviewStatusChangedPayload): void {
+    this.broadcast(
+      RealtimeEvent.InterviewStatusChanged,
       payload,
       [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
     );

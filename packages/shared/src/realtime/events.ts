@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { APPLICATION_STATUS, BIAS_CATEGORY, INTERVIEW_FORMAT } from "../enums";
+import {
+  APPLICATION_STATUS,
+  BIAS_CATEGORY,
+  INTERVIEW_FORMAT,
+  INTERVIEW_STATUS,
+} from "../enums";
 
 // Event names — the single source of truth used by both backend emitters and
 // frontend listeners. Past-tense, dotted-namespace.
@@ -8,6 +13,7 @@ export const RealtimeEvent = {
   ApplicationCreated: "application.created",
   ApplicationStatusChanged: "application.status_changed",
   InterviewScheduled: "interview.scheduled",
+  InterviewStatusChanged: "interview.status_changed",
   OfferSent: "offer.sent",
   AuditEntry: "audit.entry",
   BiasFlagCreated: "bias.flag_created",
@@ -51,6 +57,19 @@ export const interviewScheduledSchema = z.object({
 });
 export type InterviewScheduledPayload = z.infer<typeof interviewScheduledSchema>;
 
+export const interviewStatusChangedSchema = z.object({
+  interviewId: z.string().uuid(),
+  applicationId: z.string().uuid(),
+  recruiterId: z.string().uuid(),
+  candidateId: z.string().uuid(),
+  previousStatus: z.enum(INTERVIEW_STATUS),
+  status: z.enum(INTERVIEW_STATUS),
+  changedAt: isoDate,
+});
+export type InterviewStatusChangedPayload = z.infer<
+  typeof interviewStatusChangedSchema
+>;
+
 export const offerSentSchema = z.object({
   offerId: z.string().uuid(),
   applicationId: z.string().uuid(),
@@ -85,6 +104,7 @@ export interface RealtimeEventPayloadMap {
   [RealtimeEvent.ApplicationCreated]: ApplicationCreatedPayload;
   [RealtimeEvent.ApplicationStatusChanged]: ApplicationStatusChangedPayload;
   [RealtimeEvent.InterviewScheduled]: InterviewScheduledPayload;
+  [RealtimeEvent.InterviewStatusChanged]: InterviewStatusChangedPayload;
   [RealtimeEvent.OfferSent]: OfferSentPayload;
   [RealtimeEvent.AuditEntry]: AuditEntryPayload;
   [RealtimeEvent.BiasFlagCreated]: BiasFlagCreatedPayload;
