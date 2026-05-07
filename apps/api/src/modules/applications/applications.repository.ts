@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { and, count, desc, eq, isNotNull, sql, type SQL } from "drizzle-orm";
 import {
   applicationsTable,
+  companyMembersTable,
   jobsTable,
   matchScoresTable,
   profilesTable,
@@ -105,6 +106,36 @@ export class ApplicationsRepository {
       )
       .limit(1);
     return row?.application ?? null;
+  }
+
+  /**
+   * Returns a minimal context object if the given user is an active member
+   * of the company that owns the application's job, else null. Used for
+   * authorization on read paths (e.g. ICS download) that cannot require an
+   * active-company header because the endpoint must also serve candidates.
+   */
+  async findApplicationContextForCompanyByUser(
+    applicationId: string,
+    userId: string,
+  ): Promise<{ candidateId: string; jobId: string; companyId: string } | null> {
+    const [row] = await this.db
+      .select({
+        candidateId: applicationsTable.candidateId,
+        jobId: applicationsTable.jobId,
+        companyId: jobsTable.companyId,
+      })
+      .from(applicationsTable)
+      .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .innerJoin(
+        companyMembersTable,
+        and(
+          eq(companyMembersTable.companyId, jobsTable.companyId),
+          eq(companyMembersTable.userId, userId),
+        ),
+      )
+      .where(eq(applicationsTable.id, applicationId))
+      .limit(1);
+    return row ?? null;
   }
 
   async countByJobId(jobId: string): Promise<number> {

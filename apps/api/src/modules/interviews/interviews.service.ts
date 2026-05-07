@@ -421,12 +421,13 @@ export class InterviewsService {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
     }
     if (user.role === "recruiter") {
-      const job = await this.jobsRepo.findById(app.jobId);
-      if (!job) {
+      const ownership = await this.applicationsRepo.findApplicationContextForCompanyByUser(
+        interview.applicationId,
+        user.id,
+      );
+      if (!ownership) {
         throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
       }
-      // Company-membership enforcement is delegated to the @ActiveCompany() decorator
-      // on the controller endpoint — the companyId check lives there.
     }
 
     const candidate = await this.profilesRepo.findById(app.candidateId);
