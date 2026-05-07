@@ -49,7 +49,18 @@ export const AUDIT_ACTIONS = {
   // Interviews
   INTERVIEW_SCHEDULED: "interview.scheduled",
   INTERVIEW_FEEDBACK_UPDATED: "interview.feedback_updated",
+  INTERVIEW_FEEDBACK_SUBMITTED: "interview.feedback_submitted",
+  INTERVIEW_FEEDBACK_SHARED: "interview.feedback_shared",
+  INTERVIEW_RECOMMENDATION_SET: "interview.recommendation_set",
+  INTERVIEW_AUTO_COMPLETED: "interview.auto_completed",
+  INTERVIEW_NO_SHOW_MARKED: "interview.no_show_marked",
+  INTERVIEW_RESCHEDULED: "interview.rescheduled",
+  INTERVIEW_VENUE_CREATED: "interview_venue.created",
+  INTERVIEW_VENUE_UPDATED: "interview_venue.updated",
+  INTERVIEW_VENUE_DELETED: "interview_venue.deleted",
   INTERVIEW_STATUS_CHANGED: "interview.status_changed",
+  APPLICATION_WITHDRAWN_BY_CANDIDATE: "application.withdrawn_by_candidate",
+  INTERVIEW_AUTOCOMPLETE_RUN: "cron.interview_autocomplete.executed",
   // Offers
   OFFER_SENT: "offer.sent",
   OFFER_ACCEPTED: "offer.accepted",

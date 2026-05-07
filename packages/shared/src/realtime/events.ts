@@ -13,8 +13,13 @@ export const RealtimeEvent = {
   ApplicationCreated: "application.created",
   ApplicationStatusChanged: "application.status_changed",
   ApplicationScored: "application.scored",
+  ApplicationRecommendationSet: "application.recommendationSet",
+  ApplicationWithdrawn: "application.withdrawn",
   InterviewScheduled: "interview.scheduled",
   InterviewStatusChanged: "interview.status_changed",
+  InterviewCompleted: "interview.completed",
+  InterviewRescheduled: "interview.rescheduled",
+  InterviewFeedbackShared: "interview.feedbackShared",
   OfferSent: "offer.sent",
   AuditEntry: "audit.entry",
   BiasFlagCreated: "bias.flag_created",
@@ -118,13 +123,66 @@ export const biasFlagCreatedSchema = z.object({
 });
 export type BiasFlagCreatedPayload = z.infer<typeof biasFlagCreatedSchema>;
 
+export const interviewCompletedSchema = z.object({
+  interviewId: z.string().uuid(),
+  applicationId: z.string().uuid(),
+  candidateId: z.string().uuid(),
+  recruiterId: z.string().uuid(),
+  jobId: z.string().uuid(),
+  completedAt: isoDate,
+});
+export type InterviewCompletedPayload = z.infer<typeof interviewCompletedSchema>;
+
+export const interviewRescheduledSchema = z.object({
+  oldInterviewId: z.string().uuid(),
+  newInterviewId: z.string().uuid(),
+  applicationId: z.string().uuid(),
+  candidateId: z.string().uuid(),
+  recruiterId: z.string().uuid(),
+  scheduledFor: isoDate,
+});
+export type InterviewRescheduledPayload = z.infer<typeof interviewRescheduledSchema>;
+
+export const interviewFeedbackSharedSchema = z.object({
+  interviewId: z.string().uuid(),
+  applicationId: z.string().uuid(),
+  candidateId: z.string().uuid(),
+  recruiterId: z.string().uuid(),
+  sharedAt: isoDate,
+});
+export type InterviewFeedbackSharedPayload = z.infer<typeof interviewFeedbackSharedSchema>;
+
+export const applicationRecommendationSetSchema = z.object({
+  applicationId: z.string().uuid(),
+  interviewId: z.string().uuid(),
+  recruiterId: z.string().uuid(),
+  recommendation: z.enum(["proceed", "hold", "reject"]),
+});
+export type ApplicationRecommendationSetPayload = z.infer<
+  typeof applicationRecommendationSetSchema
+>;
+
+export const applicationWithdrawnSchema = z.object({
+  applicationId: z.string().uuid(),
+  candidateId: z.string().uuid(),
+  recruiterId: z.string().uuid().nullable(),
+  jobId: z.string().uuid(),
+  reason: z.string().nullable(),
+});
+export type ApplicationWithdrawnPayload = z.infer<typeof applicationWithdrawnSchema>;
+
 // A discriminated map of event-name → payload, useful for typing handlers.
 export interface RealtimeEventPayloadMap {
   [RealtimeEvent.ApplicationCreated]: ApplicationCreatedPayload;
   [RealtimeEvent.ApplicationStatusChanged]: ApplicationStatusChangedPayload;
   [RealtimeEvent.ApplicationScored]: ApplicationScoredPayload;
+  [RealtimeEvent.ApplicationRecommendationSet]: ApplicationRecommendationSetPayload;
+  [RealtimeEvent.ApplicationWithdrawn]: ApplicationWithdrawnPayload;
   [RealtimeEvent.InterviewScheduled]: InterviewScheduledPayload;
   [RealtimeEvent.InterviewStatusChanged]: InterviewStatusChangedPayload;
+  [RealtimeEvent.InterviewCompleted]: InterviewCompletedPayload;
+  [RealtimeEvent.InterviewRescheduled]: InterviewRescheduledPayload;
+  [RealtimeEvent.InterviewFeedbackShared]: InterviewFeedbackSharedPayload;
   [RealtimeEvent.OfferSent]: OfferSentPayload;
   [RealtimeEvent.AuditEntry]: AuditEntryPayload;
   [RealtimeEvent.BiasFlagCreated]: BiasFlagCreatedPayload;
