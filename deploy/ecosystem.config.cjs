@@ -11,8 +11,9 @@ module.exports = {
     {
       name: "aurahire-api",
       cwd: "/home/deploy/aurahire/apps/api",
-      script: "dist/main.js",
+      script: "src/main.ts",
       interpreter: "node",
+      interpreter_args: "--require @swc-node/register",
       instances: 1,
       exec_mode: "fork",
       autorestart: true,

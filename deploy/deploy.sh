@@ -15,8 +15,8 @@ git pull origin "${CURRENT_BRANCH}"
 echo "==> Install deps (frozen lockfile)"
 pnpm install --frozen-lockfile
 
-echo "==> Build packages + API"
-pnpm turbo build --filter=@aurahire/api
+echo "==> Type-check API (no emit; runtime uses swc-node)"
+pnpm --filter @aurahire/api type-check
 
 echo "==> Reload PM2"
 if pm2 describe aurahire-api >/dev/null 2>&1; then
