@@ -342,7 +342,7 @@ export class InterviewsService {
     const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     if (!candidate || !jobRow) return;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
     await this.email.send({
       to: candidate.email,
       subject: `Interview scheduled: ${jobRow.title}`,
@@ -369,7 +369,7 @@ export class InterviewsService {
     const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     if (!candidate || !jobRow) return;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
     await this.email.send({
       to: candidate.email,
       subject: `Interview cancelled: ${jobRow.title}`,
