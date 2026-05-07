@@ -634,6 +634,23 @@ export const notificationsTable = pgTable(
   }),
 );
 
+export const notificationPreferencesTable = pgTable(
+  "notification_preferences",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => profilesTable.id, { onDelete: "cascade" }),
+    eventType: text("event_type", { enum: NOTIFICATION_EVENT_TYPE }).notNull(),
+    mode: text("mode", { enum: NOTIFICATION_MODE }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userEventUniq: uniqueIndex("notification_prefs_user_event_uniq").on(t.userId, t.eventType),
+  }),
+);
+
 // ============================================================================
 // TYPE EXPORTS (for application-layer use)
 // ============================================================================
@@ -676,3 +693,5 @@ export type CompanyMember = typeof companyMembersTable.$inferSelect;
 export type NewCompanyMember = typeof companyMembersTable.$inferInsert;
 export type Notification = typeof notificationsTable.$inferSelect;
 export type NewNotification = typeof notificationsTable.$inferInsert;
+export type NotificationPreference = typeof notificationPreferencesTable.$inferSelect;
+export type NewNotificationPreference = typeof notificationPreferencesTable.$inferInsert;
