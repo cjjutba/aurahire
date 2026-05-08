@@ -3,6 +3,34 @@ import { MapPin, Briefcase, Building2, Check } from "lucide-react";
 import type { JobStatus } from "@aurahire/shared";
 import { JobStatusChip } from "./job-status-chip";
 
+/**
+ * Map a numeric match score (0–100) to the CSS variables used to render the
+ * progress bar fill + track. Mirrors the band thresholds the dashboard's
+ * RecommendedJobCard uses (>= 70 → high, >= 40 → mid, else low).
+ */
+export function matchScoreColors(overallScore: number): {
+  fill: string;
+  track: string;
+} {
+  const ratio = overallScore / 100;
+  if (ratio >= 0.7) {
+    return {
+      fill: "var(--color-score-high)",
+      track: "var(--color-score-high-soft)",
+    };
+  }
+  if (ratio >= 0.4) {
+    return {
+      fill: "var(--color-score-mid)",
+      track: "var(--color-score-mid-soft)",
+    };
+  }
+  return {
+    fill: "var(--color-score-low)",
+    track: "var(--color-score-low-soft)",
+  };
+}
+
 interface JobCardProps {
   job: {
     id: string;
