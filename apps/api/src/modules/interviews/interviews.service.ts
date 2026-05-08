@@ -511,6 +511,29 @@ export class InterviewsService {
         TAGS.companyInterviews(companyId),
         TAGS.interviewsCandidate(app.candidateId),
       ]);
+
+      // In-app notification to candidate.
+      // event-defaults.ts marks interview_rescheduled as `instant` so emit() also
+      // enqueues a notification email job — the dedicated rich email below carries
+      // the ICS attachment and full venue details that the generic queue email omits.
+      const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
+      void this.notifications
+        .emit({
+          userId: app.candidateId,
+          eventType: "interview_rescheduled",
+          entityType: "interview",
+          entityId: newInterview.id,
+          metadata: {
+            interviewId: newInterview.id,
+            applicationId: interview.applicationId,
+            jobTitle: jobRow?.title ?? "your role",
+            newStartTime: scheduledAt.toISOString(),
+          },
+        })
+        .catch((err) =>
+          this.logger.warn(`Notify candidate (rescheduled) failed: ${(err as Error).message}`),
+        );
+
       void this.notifyCandidateRescheduled(newInterview.id, interview.scheduledAt).catch((err) =>
         this.logger.warn(`Reschedule notify failed: ${(err as Error).message}`),
       );

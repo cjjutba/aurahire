@@ -113,9 +113,11 @@ describe("InterviewsService.reschedule", () => {
   let service: InterviewsService;
   let repo: jest.Mocked<InterviewsRepository>;
   let applicationsRepo: jest.Mocked<ApplicationsRepository>;
+  let jobsRepo: jest.Mocked<JobsRepository>;
   let audit: jest.Mocked<AuditService>;
   let events: jest.Mocked<EventsService>;
   let cache: jest.Mocked<CacheService>;
+  let notifications: jest.Mocked<NotificationsService>;
 
   beforeEach(async () => {
     repo = {
@@ -137,6 +139,11 @@ describe("InterviewsService.reschedule", () => {
       findApplicationContextForCompanyByUser: jest.fn(),
     } as any;
 
+    jobsRepo = {
+      findById: jest.fn(),
+      findByIdWithCompany: jest.fn(),
+    } as any;
+
     audit = { log: jest.fn().mockResolvedValue(undefined) } as any;
 
     events = {
@@ -153,24 +160,22 @@ describe("InterviewsService.reschedule", () => {
       getOrSet: jest.fn(),
     } as any;
 
+    notifications = {
+      emit: jest.fn().mockResolvedValue(undefined),
+    } as any;
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         InterviewsService,
         { provide: InterviewsRepository, useValue: repo },
         { provide: ApplicationsRepository, useValue: applicationsRepo },
-        {
-          provide: JobsRepository,
-          useValue: { findById: jest.fn(), findByIdWithCompany: jest.fn() },
-        },
+        { provide: JobsRepository, useValue: jobsRepo },
         { provide: ProfilesRepository, useValue: { findById: jest.fn() } },
         { provide: EmailService, useValue: { send: jest.fn() } },
         { provide: AuditService, useValue: audit },
         { provide: CacheService, useValue: cache },
         { provide: EventsService, useValue: events },
-        {
-          provide: NotificationsService,
-          useValue: { emit: jest.fn().mockResolvedValue(undefined) },
-        },
+        { provide: NotificationsService, useValue: notifications },
         { provide: InterviewVenuesService, useValue: { create: jest.fn() } },
       ],
     }).compile();
@@ -326,5 +331,58 @@ describe("InterviewsService.reschedule", () => {
     });
 
     expect(repo.markRescheduled).not.toHaveBeenCalled();
+  });
+
+  it("emits interview_rescheduled notification to candidate (instant mode -> queue picks up email)", async () => {
+    // Verifies that reschedule() fires NotificationsService.emit() so that:
+    //  (a) an in-app notification row is created for the candidate, and
+    //  (b) the instant-mode path enqueues an email job (queue.add is called by emit()
+    //      internally — we assert on the emit call here; the queue path is covered in
+    //      notifications.service.spec).
+    repo.findById.mockResolvedValue(makeInterview("scheduled"));
+    applicationsRepo.findApplicationContextForCompany.mockResolvedValue({
+      id: APPLICATION_ID,
+      candidateId: CANDIDATE_ID,
+      jobId: uuid(300),
+      companyId: COMPANY_ID,
+    } as any);
+    repo.markRescheduled.mockResolvedValue({ id: INTERVIEW_ID });
+    repo.insert.mockResolvedValue(makeNewInterview());
+    repo.setRescheduledTo.mockResolvedValue(undefined);
+    applicationsRepo.findById.mockResolvedValue({
+      id: APPLICATION_ID,
+      candidateId: CANDIDATE_ID,
+      jobId: uuid(300),
+    } as any);
+    jobsRepo.findByIdWithCompany.mockResolvedValue({
+      id: uuid(300),
+      title: "Senior Engineer",
+      company: { id: COMPANY_ID, name: "Acme", logoUrl: null },
+    } as any);
+
+    await service.reschedule(
+      recruiterUser,
+      COMPANY_ID,
+      INTERVIEW_ID,
+      makeRescheduleDto(),
+      {},
+    );
+
+    // Allow any pending microtasks (the emit is fire-and-forget via void).
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(notifications.emit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: CANDIDATE_ID,
+        eventType: "interview_rescheduled",
+        entityType: "interview",
+        entityId: NEW_INTERVIEW_ID,
+        metadata: expect.objectContaining({
+          interviewId: NEW_INTERVIEW_ID,
+          applicationId: APPLICATION_ID,
+          jobTitle: "Senior Engineer",
+        }),
+      }),
+    );
   });
 });
