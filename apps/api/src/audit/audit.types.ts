@@ -89,6 +89,8 @@ export const AUDIT_ACTIONS = {
   COMPANY_MEMBER_OWNERSHIP_TRANSFERRED: "company_member.ownership_transferred",
   // Notifications
   NOTIFICATIONS_MARKED_ALL_READ: "notifications.marked_all_read",
+  NOTIFICATION_ARCHIVED: "notification.archived",
+  NOTIFICATIONS_ARCHIVED_ALL: "notifications.archived_all",
   NOTIFICATION_PREFERENCE_UPDATED: "notification_preference.updated",
   NOTIFICATION_PREFERENCES_RESET: "notification_preferences.reset",
   DIGEST_EMAIL_BATCH_RUN: "notifications.digest_email_batch_run",

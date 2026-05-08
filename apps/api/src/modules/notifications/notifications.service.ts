@@ -113,7 +113,7 @@ export class NotificationsService {
 
   async listForUser(
     userId: string,
-    query: { tab: "unread" | "all"; limit: number; cursor?: string },
+    query: { tab: "inbox" | "archive"; limit: number; cursor?: string },
   ) {
     const result = await this.repo.listForUser(userId, query);
     return {

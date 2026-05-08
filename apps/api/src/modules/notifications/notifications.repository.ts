@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, desc, eq, isNull, lt, sql, inArray } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, lt, sql, inArray } from "drizzle-orm";
 import {
   notificationsTable,
   type NewNotification,
@@ -47,15 +47,20 @@ export class NotificationsRepository {
 
   async listForUser(
     userId: string,
-    params: { tab: "unread" | "all"; limit: number; cursor?: string },
+    params: { tab: "inbox" | "archive"; limit: number; cursor?: string },
   ): Promise<{ items: Notification[]; nextCursor: string | null }> {
+    // Tab semantics (popover-aligned):
+    //   - `inbox`   → rows where dismissed_at IS NULL  (active items)
+    //   - `archive` → rows where dismissed_at IS NOT NULL (archived items)
+    // The previous `unread | all` split has been retired in favor of the
+    // popover's two-tab vocabulary; "unread" is surfaced separately via
+    // `GET /notifications/unread-count`.
     const conditions = [
       eq(notificationsTable.userId, userId),
-      isNull(notificationsTable.dismissedAt),
+      params.tab === "archive"
+        ? isNotNull(notificationsTable.dismissedAt)
+        : isNull(notificationsTable.dismissedAt),
     ];
-    if (params.tab === "unread") {
-      conditions.push(isNull(notificationsTable.readAt));
-    }
     if (params.cursor) {
       const decoded = Buffer.from(params.cursor, "base64").toString("utf-8");
       const [createdAtIso, id] = decoded.split("|");

@@ -53,7 +53,7 @@ export const notificationItemSchema = z.object({
 export type NotificationItem = z.infer<typeof notificationItemSchema>;
 
 export const listNotificationsQuerySchema = z.object({
-  tab: z.enum(["unread", "all"]).default("unread"),
+  tab: z.enum(["inbox", "archive"]).default("inbox"),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   cursor: z.string().optional(),
 });

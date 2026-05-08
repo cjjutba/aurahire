@@ -30,6 +30,8 @@ describe("NotificationsController", () => {
       getUnreadCount: jest.fn(),
       markRead: jest.fn(),
       markAllRead: jest.fn(),
+      archive: jest.fn(),
+      archiveAll: jest.fn(),
       dismiss: jest.fn(),
     };
     audit = { log: jest.fn() };
@@ -52,8 +54,14 @@ describe("NotificationsController", () => {
 
   it("list passes user.id and query through to the service", async () => {
     service.listForUser.mockResolvedValue({ items: [], nextCursor: null });
-    await controller.list(buildUser() as any, { tab: "unread", limit: 20 } as any);
-    expect(service.listForUser).toHaveBeenCalledWith("u1", { tab: "unread", limit: 20 });
+    await controller.list(buildUser() as any, { tab: "inbox", limit: 20 } as any);
+    expect(service.listForUser).toHaveBeenCalledWith("u1", { tab: "inbox", limit: 20 });
+  });
+
+  it("list forwards tab=archive verbatim to the service", async () => {
+    service.listForUser.mockResolvedValue({ items: [], nextCursor: null });
+    await controller.list(buildUser() as any, { tab: "archive", limit: 20 } as any);
+    expect(service.listForUser).toHaveBeenCalledWith("u1", { tab: "archive", limit: 20 });
   });
 
   it("markRead delegates to service and does NOT audit-log per-row reads", async () => {
@@ -77,9 +85,48 @@ describe("NotificationsController", () => {
     );
   });
 
-  it("dismiss returns the capped displayCount when count exceeds 99", async () => {
+  it("archive delegates to the service and audit-logs NOTIFICATION_ARCHIVED", async () => {
+    service.archive.mockResolvedValue({ unreadCount: 4, count: 4, displayCount: "4" });
+    const result = await controller.archive(buildUser() as any, "n1");
+    expect(service.archive).toHaveBeenCalledWith("n1", "u1");
+    expect(result).toEqual({ unreadCount: 4, count: 4, displayCount: "4" });
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: "u1",
+        actorType: "user",
+        action: "notification.archived",
+        entityType: "notification",
+        entityId: "n1",
+      }),
+    );
+  });
+
+  it("archive returns the capped displayCount when count exceeds 99", async () => {
+    service.archive.mockResolvedValue({ unreadCount: 150, count: 150, displayCount: "99+" });
+    const result = await controller.archive(buildUser() as any, "n1");
+    expect(result.displayCount).toBe("99+");
+  });
+
+  it("archiveAll delegates to the service and audit-logs NOTIFICATIONS_ARCHIVED_ALL", async () => {
+    service.archiveAll.mockResolvedValue({ unreadCount: 0, count: 0, displayCount: "0" });
+    const result = await controller.archiveAll(buildUser({ role: "recruiter" }) as any);
+    expect(service.archiveAll).toHaveBeenCalledWith("u1");
+    expect(result).toEqual({ unreadCount: 0, count: 0, displayCount: "0" });
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: "u1",
+        actorType: "user",
+        action: "notifications.archived_all",
+        entityType: "notifications",
+        entityId: "u1",
+      }),
+    );
+  });
+
+  it("dismiss (deprecated DELETE :id) still delegates to service.dismiss for back-compat", async () => {
     service.dismiss.mockResolvedValue({ unreadCount: 150, count: 150, displayCount: "99+" });
     const result = await controller.dismiss(buildUser() as any, "n1");
+    expect(service.dismiss).toHaveBeenCalledWith("n1", "u1");
     expect(result.displayCount).toBe("99+");
     expect(audit.log).not.toHaveBeenCalled();
   });
