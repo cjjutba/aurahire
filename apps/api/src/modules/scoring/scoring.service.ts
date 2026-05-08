@@ -192,7 +192,7 @@ export type CalibrationWarningReason =
 /**
  * Surface known model-misbehavior patterns as advisory warnings.
  * Warnings do NOT auto-adjust the score — they're written to the audit
- * row's `details.calibration_warnings` array and aggregated in
+ * row's `details.calibrationWarnings` array and aggregated in
  * /admin/bias-monitor's "Scoring Quality" panel for human review.
  *
  * Two heuristics:
@@ -402,14 +402,14 @@ export class ScoringService {
     const scoreResiduals = reconciliations
       .filter((r) => r.residual !== 0)
       .map((r) => ({
-        component_name: r.component.name,
-        ai_score: r.component.score + r.residual,
-        derived_score: r.component.score,
+        componentName: r.component.name,
+        aiScore: r.component.score + r.residual,
+        derivedScore: r.component.score,
       }));
     const evidenceQuantizationResiduals = reconciliations.flatMap((r) =>
       r.quantizationDeltas.map((d) => ({
-        component_name: r.component.name,
-        evidence_index: d.evidenceIndex,
+        componentName: r.component.name,
+        evidenceIndex: d.evidenceIndex,
         original: d.original,
         quantized: d.quantized,
       })),
@@ -465,9 +465,9 @@ export class ScoringService {
         latencyMs: aiResult.latencyMs,
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
-        score_residuals: scoreResiduals,
-        evidence_quantization_residuals: evidenceQuantizationResiduals,
-        calibration_warnings: calibrationWarnings,
+        scoreResiduals,
+        evidenceQuantizationResiduals,
+        calibrationWarnings,
       },
       ...requestMeta,
     });

@@ -16,7 +16,7 @@
 
 **Modified — `packages/shared/src/schemas/score.ts`** (~80 lines): Adds `scoredEvidenceSchema` with `multipleOf(5)`. Profile component evidence switches from `evidenceSchema` → `scoredEvidenceSchema`. `matchEvidenceSchema` becomes a transitional alias. Component score fields gain `multipleOf(5)`.
 
-**Modified — `apps/api/src/modules/scoring/scoring.service.ts`** (~1130 lines): Adds two pure helpers `reconcileEvidenceContributions` and `detectCalibrationWarnings` near existing `normalizeComponentsToWeights`. Wires both into `computeProfileScore` (line 276 onward), `computeMatchScore` (line 534 onward), and `computeMatchPreviewInternal` (line 892 onward). Replaces hardcoded `contributionPoints: null` at line 289. Audit `details` payloads gain `score_residuals`, `evidence_quantization_residuals`, `calibration_warnings`. Helpers exported so the rescore-batch processor can import them.
+**Modified — `apps/api/src/modules/scoring/scoring.service.ts`** (~1130 lines): Adds two pure helpers `reconcileEvidenceContributions` and `detectCalibrationWarnings` near existing `normalizeComponentsToWeights`. Wires both into `computeProfileScore` (line 276 onward), `computeMatchScore` (line 534 onward), and `computeMatchPreviewInternal` (line 892 onward). Replaces hardcoded `contributionPoints: null` at line 289. Audit `details` payloads gain `scoreResiduals`, `evidenceQuantizationResiduals`, `calibrationWarnings` (camelCase, matching the rest of `audit_logs.details`). Helpers exported so the rescore-batch processor can import them.
 
 **Modified — `apps/api/src/modules/scoring/scoring.service.spec.ts`** (~600 lines today): New `describe("reconcileEvidenceContributions")` and `describe("detectCalibrationWarnings")` blocks with the unit tests from the spec.
 
@@ -28,7 +28,7 @@
 
 **Modified — `apps/web/components/score/evidence-callout.tsx`** (~75 lines): Replace `"Contributes ±N points"` footer with a signed-integer chip in score-band color, Unicode minus, monospace.
 
-**Modified — `apps/api/src/modules/admin/repositories/admin-bias-monitor.repository.ts`**: New aggregation query that counts `calibration_warnings` from `audit_logs.details` over the requested date range, optionally filtered by `prompt_version`.
+**Modified — `apps/api/src/modules/admin/repositories/admin-bias-monitor.repository.ts`**: New aggregation query that counts `calibrationWarnings` from `audit_logs.details` over the requested date range, optionally filtered by `prompt_version`.
 
 **Modified — `apps/api/src/modules/admin/services/admin-bias-monitor.service.ts`**: Calls the new repo method, folds the result into the existing bundle response.
 
@@ -575,7 +575,7 @@ In `apps/api/src/modules/scoring/scoring.service.ts`, immediately after `reconci
 /**
  * Surface known model-misbehavior patterns as advisory warnings.
  * Warnings do NOT auto-adjust the score — they're written to the audit
- * row's `details.calibration_warnings` array and aggregated in
+ * row's `details.calibrationWarnings` array and aggregated in
  * /admin/bias-monitor's "Scoring Quality" panel for human review.
  *
  * Two heuristics:
@@ -688,14 +688,14 @@ const reconciledProfileComponents = reconciliations.map((r) => r.component);
 const scoreResiduals = reconciliations
   .filter((r) => r.residual !== 0)
   .map((r) => ({
-    component_name: r.component.name,
-    ai_score: r.component.score + r.residual,
-    derived_score: r.component.score,
+    componentName: r.component.name,
+    aiScore: r.component.score + r.residual,
+    derivedScore: r.component.score,
   }));
 const evidenceQuantizationResiduals = reconciliations.flatMap((r) =>
   r.quantizationDeltas.map((d) => ({
-    component_name: r.component.name,
-    evidence_index: d.evidenceIndex,
+    componentName: r.component.name,
+    evidenceIndex: d.evidenceIndex,
     original: d.original,
     quantized: d.quantized,
   })),
@@ -829,9 +829,9 @@ await this.audit.log({
     latencyMs: aiResult.latencyMs,
     redactedFields: aiResult.redactedFields,
     weightsUsed: weights as unknown as Record<string, unknown>,
-    score_residuals: scoreResiduals,
-    evidence_quantization_residuals: evidenceQuantizationResiduals,
-    calibration_warnings: calibrationWarnings,
+    scoreResiduals,
+    evidenceQuantizationResiduals,
+    calibrationWarnings,
   },
   ...requestMeta,
 });
@@ -859,8 +859,8 @@ git commit -m "feat(scoring): wire reconciliation into computeProfileScore
 
 Profile evidence now carries contribution_points (was hardcoded null).
 Component scores derive from quantized contribution sums; AI's score is
-discarded. Audit row gains score_residuals, evidence_quantization_residuals,
-and calibration_warnings under details.
+discarded. Audit row gains scoreResiduals, evidenceQuantizationResiduals,
+and calibrationWarnings under details.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ```
@@ -906,14 +906,14 @@ const reconciledMatchComponents = matchReconciliations.map((r) => r.component);
 const matchScoreResiduals = matchReconciliations
   .filter((r) => r.residual !== 0)
   .map((r) => ({
-    component_name: r.component.name,
-    ai_score: r.component.score + r.residual,
-    derived_score: r.component.score,
+    componentName: r.component.name,
+    aiScore: r.component.score + r.residual,
+    derivedScore: r.component.score,
   }));
 const matchEvidenceQuantizationResiduals = matchReconciliations.flatMap((r) =>
   r.quantizationDeltas.map((d) => ({
-    component_name: r.component.name,
-    evidence_index: d.evidenceIndex,
+    componentName: r.component.name,
+    evidenceIndex: d.evidenceIndex,
     original: d.original,
     quantized: d.quantized,
   })),
@@ -970,9 +970,9 @@ Note the line range of the audit.log call that follows the `insertMatchScore`.
 In the audit.log call's `details` block, add:
 
 ```ts
-score_residuals: matchScoreResiduals,
-evidence_quantization_residuals: matchEvidenceQuantizationResiduals,
-calibration_warnings: matchCalibrationWarnings,
+scoreResiduals: matchScoreResiduals,
+evidenceQuantizationResiduals: matchEvidenceQuantizationResiduals,
+calibrationWarnings: matchCalibrationWarnings,
 ```
 
 - [ ] **Step 7: Update the matchScoreToDto call (or wherever the response is built)**
@@ -1046,14 +1046,14 @@ const reconciledPreviewComponents = previewReconciliations.map((r) => r.componen
 const previewScoreResiduals = previewReconciliations
   .filter((r) => r.residual !== 0)
   .map((r) => ({
-    component_name: r.component.name,
-    ai_score: r.component.score + r.residual,
-    derived_score: r.component.score,
+    componentName: r.component.name,
+    aiScore: r.component.score + r.residual,
+    derivedScore: r.component.score,
   }));
 const previewEvidenceQuantizationResiduals = previewReconciliations.flatMap((r) =>
   r.quantizationDeltas.map((d) => ({
-    component_name: r.component.name,
-    evidence_index: d.evidenceIndex,
+    componentName: r.component.name,
+    evidenceIndex: d.evidenceIndex,
     original: d.original,
     quantized: d.quantized,
   })),
@@ -1076,9 +1076,9 @@ Run: `grep -n "score.match-preview.computed\|match-preview\\..*audit\\|action: \
 Note the audit log call. Add the same three new fields:
 
 ```ts
-score_residuals: previewScoreResiduals,
-evidence_quantization_residuals: previewEvidenceQuantizationResiduals,
-calibration_warnings: previewCalibrationWarnings,
+scoreResiduals: previewScoreResiduals,
+evidenceQuantizationResiduals: previewEvidenceQuantizationResiduals,
+calibrationWarnings: previewCalibrationWarnings,
 ```
 
 If there is no audit.log call for previews, skip this step (and note in the commit that previews don't audit, which is the existing pattern).
@@ -1224,7 +1224,7 @@ const { matchScore } = await this.scoringRepo.insertMatchScore(
 - [ ] **Step 4: If the processor logs an audit row for each rescore, add the new fields**
 
 Run: `grep -n "audit\\.log" apps/api/src/modules/admin/processors/rescore-batch.processor.ts`
-If found, add `calibration_warnings: calibrationWarnings` to the `details` object. (Score and quantization residuals are optional here; the calibration warnings are the load-bearing signal.)
+If found, add `calibrationWarnings` (object shorthand) to the `details` object. (Score and quantization residuals are optional here; the calibration warnings are the load-bearing signal.)
 
 - [ ] **Step 5: Type-check + tests**
 
@@ -1591,7 +1591,7 @@ Phase 3 surfaces the calibration warnings collected by Phases 1–2 in `/admin/b
 
 ## Task 12: Backend — extend bias-monitor repository with calibration query
 
-**Goal:** Add a repository method that aggregates `audit_logs.details.calibration_warnings` over a date range, optionally filtered by `prompt_version`.
+**Goal:** Add a repository method that aggregates `audit_logs.details.calibrationWarnings` over a date range, optionally filtered by `prompt_version`.
 
 **Files:**
 - Modify: `apps/api/src/modules/admin/repositories/admin-bias-monitor.repository.ts`
@@ -1609,7 +1609,7 @@ Append to the existing class:
 
 ```ts
 /**
- * Aggregate calibration_warnings from audit_logs over a date range.
+ * Aggregate calibrationWarnings from audit_logs over a date range.
  * Optionally filtered by min prompt_version (e.g. ">=1.2.0" so legacy
  * pre-reconciliation rows don't pollute the count).
  */
@@ -1633,7 +1633,7 @@ async getCalibrationWarnings(opts: {
     ? sql`AND (details->>'promptVersion') >= ${opts.promptVersionMin}`
     : sql``;
 
-  // Unnest the details.calibration_warnings array, count per reason / component.
+  // Unnest the details.calibrationWarnings array, count per reason / component.
   const rows = await this.db.execute(sql`
     SELECT
       al.id AS audit_log_id,
@@ -1643,7 +1643,7 @@ async getCalibrationWarnings(opts: {
       warning->>'reason' AS reason
     FROM audit_logs al
     CROSS JOIN LATERAL jsonb_array_elements(
-      COALESCE(details->'calibration_warnings', '[]'::jsonb)
+      COALESCE(details->'calibrationWarnings', '[]'::jsonb)
     ) AS warning
     WHERE al.action IN ('score.profile.computed', 'score.match.computed', 'score.match-preview.computed')
       AND al.created_at >= ${opts.from}
@@ -1703,7 +1703,7 @@ git add apps/api/src/modules/admin/repositories/admin-bias-monitor.repository.ts
 git commit -m "feat(admin): add calibration warnings aggregation query
 
 Repository method for /admin/bias-monitor 'Scoring Quality' panel.
-Aggregates audit_logs.details.calibration_warnings over a date range
+Aggregates audit_logs.details.calibrationWarnings over a date range
 with optional prompt_version filter.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
@@ -1998,7 +1998,7 @@ Run: `pnpm --filter @aurahire/web tsc --noEmit && pnpm --filter @aurahire/web li
 git add apps/web/app/(admin)/admin/bias-monitor/page.tsx apps/web/app/(admin)/admin/bias-monitor/_scoring-quality-panel.tsx
 git commit -m "feat(admin): scoring quality panel on /admin/bias-monitor
 
-Renders calibration_warnings aggregations (by reason, by component,
+Renders calibrationWarnings aggregations (by reason, by component,
 and the 25 most recent) below existing KPI section. Empty state
 reads as confirmation the model is honoring v1.2.0 prompt rules.
 
@@ -2033,7 +2033,7 @@ Check:
 
 - [ ] **Step 4: Spot-check accuracy**
 
-Pick one warning row in "Recent" and click through to the corresponding audit log entry (or query the DB directly). Confirm the `details.calibration_warnings` array on that audit row contains a matching entry. This proves the aggregation query is reading correctly.
+Pick one warning row in "Recent" and click through to the corresponding audit log entry (or query the DB directly). Confirm the `details.calibrationWarnings` array on that audit row contains a matching entry. This proves the aggregation query is reading correctly.
 
 - [ ] **Step 5: Spot-check filter**
 
