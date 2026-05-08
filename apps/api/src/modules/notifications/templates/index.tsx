@@ -177,6 +177,21 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
     ),
     iconName: "UserMinus",
   },
+  interview_feedback_shared: {
+    buildTitle: () => `Interview feedback available`,
+    buildBody: (md) =>
+      `Your recruiter shared their feedback summary for the ${m(md, "jobTitle", "interview")} interview.`,
+    buildLink: (_role, md) => `/candidate/interviews/${m(md, "interviewId", "")}`,
+    emailSubject: () => `Interview feedback shared with you`,
+    EmailComponent: buildPersonalEmail(
+      () => `Interview feedback available`,
+      (md) =>
+        `Your recruiter shared feedback from your ${m(md, "jobTitle", "recent")} interview. View it in your candidate portal.`,
+      () => "View feedback",
+      (_role, md) => `/candidate/interviews/${m(md, "interviewId", "")}`,
+    ),
+    iconName: "MessageSquare",
+  },
   interview_feedback_due: {
     buildTitle: () => `Interview feedback due`,
     buildBody: (md) =>

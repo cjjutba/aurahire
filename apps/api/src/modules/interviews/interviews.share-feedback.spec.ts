@@ -1,14 +1,16 @@
 /**
- * Unit tests for InterviewsService.updateFeedback
+ * Unit tests for InterviewsService.shareFeedback
  *
  * Covers:
- *  1. Persists recommendation, audits FEEDBACK_SUBMITTED + RECOMMENDATION_SET, and emits
- *     the realtime event when the recommendation value changes.
- *  2. Does NOT emit or audit RECOMMENDATION_SET when the recommendation value is unchanged.
+ *  1. Sets candidateSummary + sharedWithCandidateAt, audits INTERVIEW_FEEDBACK_SHARED,
+ *     fires notifications.emit with interview_feedback_shared, emits realtime event.
+ *  2. isUpdate: true in audit details when re-sharing (sharedWithCandidateAt already set).
+ *  3. Throws ForbiddenException when user is not a recruiter.
  *
  * No database is hit — all dependencies are mocked.
  */
 
+import { ForbiddenException } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { InterviewsService } from "./interviews.service";
 import { InterviewsRepository } from "./interviews.repository";
@@ -29,11 +31,10 @@ function uuid(n: number): string {
 }
 
 const RECRUITER_ID = uuid(1);
+const CANDIDATE_ID = uuid(2);
 const COMPANY_ID = uuid(10);
 const INTERVIEW_ID = uuid(50);
 const APPLICATION_ID = uuid(100);
-const CANDIDATE_ID = uuid(200);
-const JOB_ID = uuid(300);
 
 const recruiterUser = {
   id: RECRUITER_ID,
@@ -44,41 +45,52 @@ const recruiterUser = {
   profileCompleted: true,
 } as any;
 
-function makeBaseInterview(recommendation: string | null = null) {
+const candidateUser = {
+  id: CANDIDATE_ID,
+  role: "candidate",
+  email: "candidate@example.com",
+  status: "active",
+  fullName: "Test Candidate",
+  profileCompleted: true,
+} as any;
+
+function makeBaseInterview(sharedWithCandidateAt: Date | null = null) {
   return {
     id: INTERVIEW_ID,
     applicationId: APPLICATION_ID,
     scheduledBy: RECRUITER_ID,
     status: "completed",
-    recommendation,
+    recommendation: "proceed",
     scheduledAt: new Date(),
     durationMinutes: 60,
     format: "in-person",
     locationOrLink: null,
-    feedback: null,
-    rating: null,
+    feedback: "Strong candidate",
+    rating: 5,
+    candidateSummary: null,
+    sharedWithCandidateAt,
     createdAt: new Date(),
     updatedAt: new Date(),
   } as any;
 }
 
-function makeUpdatedInterview(recommendation: string | null) {
+function makeUpdatedInterview(candidateSummary: string, sharedWithCandidateAt: Date) {
   return {
-    ...makeBaseInterview(recommendation),
-    feedback: "Strong candidate",
-    rating: 5,
+    ...makeBaseInterview(sharedWithCandidateAt),
+    candidateSummary,
   } as any;
 }
 
 // ── Test suite ────────────────────────────────────────────────────────────────
 
-describe("InterviewsService.updateFeedback", () => {
+describe("InterviewsService.shareFeedback", () => {
   let service: InterviewsService;
   let repo: jest.Mocked<InterviewsRepository>;
   let applicationsRepo: jest.Mocked<ApplicationsRepository>;
   let audit: jest.Mocked<AuditService>;
   let events: jest.Mocked<EventsService>;
   let cache: jest.Mocked<CacheService>;
+  let notifications: jest.Mocked<NotificationsService>;
 
   beforeEach(async () => {
     repo = {
@@ -105,11 +117,16 @@ describe("InterviewsService.updateFeedback", () => {
       emitApplicationStatusChanged: jest.fn(),
       emitInterviewScheduled: jest.fn(),
       emitInterviewStatusChanged: jest.fn(),
+      emitInterviewFeedbackShared: jest.fn(),
     } as any;
 
     cache = {
       bustTags: jest.fn().mockResolvedValue(undefined),
       getOrSet: jest.fn(),
+    } as any;
+
+    notifications = {
+      emit: jest.fn().mockResolvedValue(undefined),
     } as any;
 
     const moduleRef = await Test.createTestingModule({
@@ -126,91 +143,134 @@ describe("InterviewsService.updateFeedback", () => {
         { provide: AuditService, useValue: audit },
         { provide: CacheService, useValue: cache },
         { provide: EventsService, useValue: events },
-        { provide: NotificationsService, useValue: { emit: jest.fn().mockResolvedValue(undefined) } },
+        { provide: NotificationsService, useValue: notifications },
       ],
     }).compile();
 
     service = moduleRef.get(InterviewsService);
   });
 
-  it("persists recommendation, audits FEEDBACK_SUBMITTED + RECOMMENDATION_SET when changed, emits realtime", async () => {
-    // Interview currently has no recommendation (null).
-    repo.findById.mockResolvedValue(makeBaseInterview(null));
+  it("sets candidateSummary + sharedWithCandidateAt, audits FEEDBACK_SHARED, fires notification + realtime", async () => {
+    const summary = "You demonstrated excellent technical skills and cultural fit.";
+    const baseInterview = makeBaseInterview(null);
+    repo.findById.mockResolvedValue(baseInterview);
     applicationsRepo.findApplicationContextForCompany.mockResolvedValue({
       id: APPLICATION_ID,
       candidateId: CANDIDATE_ID,
-      jobId: JOB_ID,
+      jobId: uuid(300),
       companyId: COMPANY_ID,
     } as any);
-    repo.update.mockResolvedValue(makeUpdatedInterview("proceed"));
+    const sharedAt = new Date();
+    repo.update.mockResolvedValue(makeUpdatedInterview(summary, sharedAt));
     applicationsRepo.findById.mockResolvedValue({
       id: APPLICATION_ID,
       candidateId: CANDIDATE_ID,
     } as any);
 
-    await service.updateFeedback(
+    const result = await service.shareFeedback(
       recruiterUser,
       COMPANY_ID,
       INTERVIEW_ID,
-      { feedback: "Strong candidate", rating: 5, recommendation: "proceed" } as any,
+      { candidateSummary: summary } as any,
       {},
     );
 
-    // 1. Repository must receive recommendation in the patch.
+    // 1. Repository must receive candidateSummary + sharedWithCandidateAt in the patch.
     expect(repo.update).toHaveBeenCalledWith(
       INTERVIEW_ID,
-      expect.objectContaining({ feedback: "Strong candidate", rating: 5, recommendation: "proceed" }),
+      expect.objectContaining({
+        candidateSummary: summary,
+        sharedWithCandidateAt: expect.any(Date),
+      }),
     );
 
-    // 2. Both audit actions must be logged.
-    const auditActions = audit.log.mock.calls.map((c) => c[0].action);
-    expect(auditActions).toContain(AUDIT_ACTIONS.INTERVIEW_FEEDBACK_SUBMITTED);
-    expect(auditActions).toContain(AUDIT_ACTIONS.INTERVIEW_RECOMMENDATION_SET);
-
-    // 3. Realtime event must be emitted with correct payload.
-    expect(events.emitApplicationRecommendationSet).toHaveBeenCalledWith(
+    // 2. Audit must be logged with INTERVIEW_FEEDBACK_SHARED.
+    expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        applicationId: APPLICATION_ID,
+        action: AUDIT_ACTIONS.INTERVIEW_FEEDBACK_SHARED,
+        entityId: INTERVIEW_ID,
+        details: expect.objectContaining({
+          applicationId: APPLICATION_ID,
+          length: summary.length,
+          isUpdate: false,
+        }),
+      }),
+    );
+
+    // 3. In-app notification must fire for the candidate.
+    expect(notifications.emit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: CANDIDATE_ID,
+        eventType: "interview_feedback_shared",
+        entityType: "interview",
+        entityId: INTERVIEW_ID,
+      }),
+    );
+
+    // 4. Realtime event must be emitted.
+    expect(events.emitInterviewFeedbackShared).toHaveBeenCalledWith(
+      expect.objectContaining({
         interviewId: INTERVIEW_ID,
+        applicationId: APPLICATION_ID,
+        candidateId: CANDIDATE_ID,
         recruiterId: RECRUITER_ID,
-        recommendation: "proceed",
+      }),
+    );
+
+    // 5. Response DTO must include the new fields.
+    expect(result.candidateSummary).toBe(summary);
+    expect(result.sharedWithCandidateAt).toBeTruthy();
+  });
+
+  it("sets isUpdate: true in audit details when re-sharing (sharedWithCandidateAt already set)", async () => {
+    const previousSharedAt = new Date(Date.now() - 86_400_000); // 1 day ago
+    const baseInterview = makeBaseInterview(previousSharedAt);
+    repo.findById.mockResolvedValue(baseInterview);
+    applicationsRepo.findApplicationContextForCompany.mockResolvedValue({
+      id: APPLICATION_ID,
+      candidateId: CANDIDATE_ID,
+      jobId: uuid(300),
+      companyId: COMPANY_ID,
+    } as any);
+    const newSummary = "Updated: excellent fit for the senior role.";
+    const newSharedAt = new Date();
+    repo.update.mockResolvedValue(makeUpdatedInterview(newSummary, newSharedAt));
+    applicationsRepo.findById.mockResolvedValue({
+      id: APPLICATION_ID,
+      candidateId: CANDIDATE_ID,
+    } as any);
+
+    await service.shareFeedback(
+      recruiterUser,
+      COMPANY_ID,
+      INTERVIEW_ID,
+      { candidateSummary: newSummary } as any,
+      {},
+    );
+
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: AUDIT_ACTIONS.INTERVIEW_FEEDBACK_SHARED,
+        details: expect.objectContaining({
+          isUpdate: true,
+        }),
       }),
     );
   });
 
-  it("does NOT emit recommendationSet when recommendation is unchanged", async () => {
-    // Interview already has recommendation "proceed".
-    repo.findById.mockResolvedValue(makeBaseInterview("proceed"));
-    applicationsRepo.findApplicationContextForCompany.mockResolvedValue({
-      id: APPLICATION_ID,
-      candidateId: CANDIDATE_ID,
-      jobId: JOB_ID,
-      companyId: COMPANY_ID,
-    } as any);
-    repo.update.mockResolvedValue({
-      ...makeUpdatedInterview("proceed"),
-      feedback: "Updated notes",
-      rating: 4,
-    } as any);
-    applicationsRepo.findById.mockResolvedValue({
-      id: APPLICATION_ID,
-      candidateId: CANDIDATE_ID,
-    } as any);
+  it("throws ForbiddenException when user is not a recruiter", async () => {
+    await expect(
+      service.shareFeedback(
+        candidateUser,
+        COMPANY_ID,
+        INTERVIEW_ID,
+        { candidateSummary: "Some summary" } as any,
+        {},
+      ),
+    ).rejects.toThrow(ForbiddenException);
 
-    await service.updateFeedback(
-      recruiterUser,
-      COMPANY_ID,
-      INTERVIEW_ID,
-      { feedback: "Updated notes", rating: 4, recommendation: "proceed" } as any,
-      {},
-    );
-
-    // RECOMMENDATION_SET must NOT be audited.
-    const auditActions = audit.log.mock.calls.map((c) => c[0].action);
-    expect(auditActions).toContain(AUDIT_ACTIONS.INTERVIEW_FEEDBACK_SUBMITTED);
-    expect(auditActions).not.toContain(AUDIT_ACTIONS.INTERVIEW_RECOMMENDATION_SET);
-
-    // Realtime event must NOT be emitted.
-    expect(events.emitApplicationRecommendationSet).not.toHaveBeenCalled();
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(audit.log).not.toHaveBeenCalled();
+    expect(events.emitInterviewFeedbackShared).not.toHaveBeenCalled();
   });
 });

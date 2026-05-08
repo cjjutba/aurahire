@@ -11,6 +11,7 @@ import type {
   InterviewStatus,
   RecruiterInterviewsQuery,
   ScheduleInterviewInput,
+  ShareInterviewFeedbackInput,
   UpdateInterviewFeedbackInput,
   UpdateInterviewStatusInput,
 } from "@aurahire/shared";
@@ -23,6 +24,7 @@ import { EmailService } from "../../email/email.service";
 import { EventsService } from "../../realtime";
 import { ApplicationsRepository } from "../applications/applications.repository";
 import { JobsRepository } from "../jobs/jobs.repository";
+import { NotificationsService } from "../notifications/notifications.service";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import {
   InterviewsRepository,
@@ -52,6 +54,7 @@ export class InterviewsService {
     private readonly audit: AuditService,
     private readonly cacheService: CacheService,
     private readonly events: EventsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async schedule(
@@ -242,6 +245,78 @@ export class InterviewsService {
         TAGS.interviewsCandidate(app.candidateId),
         TAGS.companyDashboard(companyId),
       ]);
+    }
+
+    return this.toDto(updated);
+  }
+
+  async shareFeedback(
+    user: AuthUser,
+    companyId: string,
+    interviewId: string,
+    dto: ShareInterviewFeedbackInput,
+    requestMeta: RequestMeta = {},
+  ): Promise<InterviewDto> {
+    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
+    const sharedAt = new Date();
+
+    const updated = await this.repo.update(interviewId, {
+      candidateSummary: dto.candidateSummary,
+      sharedWithCandidateAt: sharedAt,
+    });
+
+    await this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: AUDIT_ACTIONS.INTERVIEW_FEEDBACK_SHARED,
+      entityType: "interview",
+      entityId: interviewId,
+      companyId,
+      details: {
+        applicationId: interview.applicationId,
+        length: dto.candidateSummary.length,
+        isUpdate: interview.sharedWithCandidateAt !== null,
+      },
+      ...requestMeta,
+    });
+
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (app) {
+      await this.cacheService.bustTags([
+        TAGS.companyInterviews(companyId),
+        TAGS.interviewsCandidate(app.candidateId),
+      ]);
+
+      // In-app notification to candidate
+      void this.notifications
+        .emit({
+          userId: app.candidateId,
+          eventType: "interview_feedback_shared",
+          entityType: "interview",
+          entityId: interviewId,
+          metadata: {
+            interviewId,
+            applicationId: interview.applicationId,
+          },
+        })
+        .catch((err) => {
+          this.logger.warn(
+            `Notify candidate (feedback shared) failed: ${(err as Error).message}`,
+          );
+        });
+
+      // Realtime event
+      this.events.emitInterviewFeedbackShared({
+        interviewId,
+        applicationId: interview.applicationId,
+        candidateId: app.candidateId,
+        recruiterId: user.id,
+        sharedAt: sharedAt.toISOString(),
+      });
+
+      // TODO(Task 28): send InterviewFeedbackSharedEmail with the candidateSummary.
+      // Email template doesn't exist yet; in-app notification covers the user
+      // for now. Wire email send when template lands.
     }
 
     return this.toDto(updated);
@@ -511,6 +586,8 @@ export class InterviewsService {
     feedback: string | null;
     rating: number | null;
     recommendation: string | null;
+    candidateSummary: string | null;
+    sharedWithCandidateAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
   }> {
@@ -594,6 +671,8 @@ export class InterviewsService {
     feedback: string | null;
     rating: number | null;
     recommendation?: string | null;
+    candidateSummary?: string | null;
+    sharedWithCandidateAt?: Date | null;
     createdAt: Date;
     updatedAt: Date;
   }): InterviewDto {
@@ -609,6 +688,8 @@ export class InterviewsService {
       feedback: i.feedback,
       rating: i.rating,
       recommendation: (i.recommendation ?? null) as "proceed" | "hold" | "reject" | null,
+      candidateSummary: i.candidateSummary ?? null,
+      sharedWithCandidateAt: i.sharedWithCandidateAt?.toISOString() ?? null,
       createdAt: i.createdAt.toISOString(),
       updatedAt: i.updatedAt.toISOString(),
     };

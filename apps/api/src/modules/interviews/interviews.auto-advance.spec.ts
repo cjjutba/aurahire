@@ -124,6 +124,8 @@ function makeService(applicationStatus: string) {
     emitApplicationStatusChanged: jest.fn(),
   };
 
+  const notifications = { emit: jest.fn().mockResolvedValue(undefined) };
+
   const svc = new InterviewsService(
     interviewsRepo as never,
     applicationsRepo as never,
@@ -133,6 +135,7 @@ function makeService(applicationStatus: string) {
     audit as never,
     cacheService as never,
     events as never,
+    notifications as never,
   );
 
   return { svc, applicationsRepo, interviewsRepo, audit, events };

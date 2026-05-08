@@ -25,6 +25,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { InterviewConflictsDto } from "./dto/interview-conflicts.dto";
 import { RecruiterInterviewsQueryDto } from "./dto/recruiter-interviews-query.dto";
 import { ScheduleInterviewDto } from "./dto/schedule-interview.dto";
+import { ShareInterviewFeedbackDto } from "./dto/share-interview-feedback.dto";
 import { UpdateInterviewFeedbackDto } from "./dto/update-interview-feedback.dto";
 import { UpdateInterviewStatusDto } from "./dto/update-interview-status.dto";
 import {
@@ -167,6 +168,28 @@ export class InterviewsController {
     @Req() req: FastifyRequest,
   ): Promise<InterviewEnvelopeDto> {
     const data = await this.service.updateFeedback(
+      user,
+      activeCompany.companyId,
+      id,
+      dto,
+      this.requestMeta(req),
+    );
+    return { data };
+  }
+
+  @Post("interviews/:id/share-feedback")
+  @Roles("recruiter")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Share interview feedback (candidateSummary) with the candidate" })
+  @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
+  async shareFeedback(
+    @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
+    @Param("id") id: string,
+    @Body() dto: ShareInterviewFeedbackDto,
+    @Req() req: FastifyRequest,
+  ): Promise<InterviewEnvelopeDto> {
+    const data = await this.service.shareFeedback(
       user,
       activeCompany.companyId,
       id,

@@ -36,6 +36,12 @@ export class InterviewDto {
     enum: ["proceed", "hold", "reject"],
   })
   recommendation!: "proceed" | "hold" | "reject" | null;
+  @ApiProperty({ type: String, nullable: true })
+  candidateSummary!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, description: "ISO timestamp of when feedback was shared with candidate" })
+  sharedWithCandidateAt!: string | null;
+
   @ApiProperty() createdAt!: string;
   @ApiProperty() updatedAt!: string;
   @ApiPropertyOptional({ type: () => InterviewCandidateRefDto, nullable: true })

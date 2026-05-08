@@ -8,6 +8,7 @@ import {
   type ApplicationWithdrawnPayload,
   type AuditEntryPayload,
   type BiasFlagCreatedPayload,
+  type InterviewFeedbackSharedPayload,
   type InterviewScheduledPayload,
   type InterviewStatusChangedPayload,
   type OfferSentPayload,
@@ -93,6 +94,16 @@ export class EventsService {
   emitInterviewStatusChanged(payload: InterviewStatusChangedPayload): void {
     this.broadcast(
       RealtimeEvent.InterviewStatusChanged,
+      payload,
+      [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
+    );
+  }
+
+  emitInterviewFeedbackShared(payload: InterviewFeedbackSharedPayload): void {
+    // Targets the candidate (in-app surfacing on candidate detail page)
+    // and the recruiter (so recruiter UI updates "shared at" timestamp).
+    this.broadcast(
+      RealtimeEvent.InterviewFeedbackShared,
       payload,
       [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
     );

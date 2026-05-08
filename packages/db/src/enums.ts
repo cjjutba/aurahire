@@ -146,6 +146,8 @@ export const NOTIFICATION_EVENT_TYPE = [
   "system_bias_flag_raised",
   "system_ai_scoring_failure",
   "system_moderation_queue_item",
+  // Interviews (candidate-facing)
+  "interview_feedback_shared",
   // Security (always-instant, not user-toggleable)
   "account_password_reset",
   "account_email_verified",
