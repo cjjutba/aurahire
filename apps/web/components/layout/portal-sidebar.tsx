@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Briefcase,
@@ -16,28 +16,12 @@ import {
   ShieldAlert,
   ScrollText,
   SlidersHorizontal,
-  BookOpen,
-  ChevronsUpDown,
-  LogOut,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { UserRole } from "@aurahire/shared";
-import { createSupabaseBrowserClient } from "@/lib/auth/client";
-import { setSessionOnlyMarker } from "@/lib/auth/cookie-persistence.client";
-import { setActiveCompanyId } from "@/lib/active-company";
-import { toastSuccess, toastApiError } from "@/lib/toast";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
+import { SidebarBottomRail } from "@/components/portal/sidebar-bottom-rail";
 
 interface NavItem {
   href: string;
@@ -53,12 +37,6 @@ interface NavSection {
   label: string;
   items: NavItem[];
 }
-
-const HELP_HREF: Record<UserRole, string> = {
-  candidate: "/candidate/help",
-  recruiter: "/recruiter/help",
-  admin: "/admin/help",
-};
 
 const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
   candidate: [
@@ -145,55 +123,57 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
 
 interface PortalSidebarProps {
   role: UserRole;
+  userId: string;
   fullName: string;
   email: string;
+  avatarUrl: string | null;
 }
 
-export function PortalSidebar({ role, fullName, email }: PortalSidebarProps) {
+export function PortalSidebar({
+  role,
+  userId,
+  fullName,
+  email,
+  avatarUrl,
+}: PortalSidebarProps) {
   return (
     <aside className="hidden w-64 shrink-0 bg-[var(--color-canvas)] lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:self-start">
-      <PortalSidebarContent role={role} fullName={fullName} email={email} />
+      <PortalSidebarContent
+        role={role}
+        userId={userId}
+        fullName={fullName}
+        email={email}
+        avatarUrl={avatarUrl}
+      />
     </aside>
   );
 }
 
 interface PortalSidebarContentProps {
   role: UserRole;
+  userId: string;
   fullName: string;
   email: string;
+  avatarUrl: string | null;
   onNavClick?: () => void;
 }
 
 export function PortalSidebarContent({
   role,
+  userId,
   fullName,
   email,
+  avatarUrl,
   onNavClick,
 }: PortalSidebarContentProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const sections = NAV_SECTIONS[role];
-  const initials = getInitials(fullName);
-  const activeHref = resolveActiveHref(pathname, [
-    ...sections.flatMap((s) =>
+  const activeHref = resolveActiveHref(
+    pathname,
+    sections.flatMap((s) =>
       s.items.map((i) => ({ href: i.href, prefix: i.matchPrefix ?? i.href }))
     ),
-    { href: HELP_HREF[role], prefix: HELP_HREF[role] },
-  ]);
-
-  async function handleSignOut() {
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toastApiError(error, "Sign out failed");
-      return;
-    }
-    setSessionOnlyMarker(false);
-    setActiveCompanyId(null);
-    toastSuccess("Signed out");
-    router.push("/");
-    router.refresh();
-  }
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -242,55 +222,18 @@ export function PortalSidebarContent({
         ))}
       </nav>
 
-      {/* Bottom block: Help + user chip */}
-      <div className="border-t border-[var(--color-hairline-soft)] p-3">
-        <Link
-          href={HELP_HREF[role]}
-          onClick={onNavClick}
-          className={[
-            "flex h-9 items-center gap-3 rounded-[var(--radius-md)] px-3 text-sm transition",
-            activeHref === HELP_HREF[role]
-              ? "bg-[var(--color-primary-soft)] font-semibold text-[var(--color-primary)]"
-              : "text-[var(--color-body)] hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]",
-          ].join(" ")}
-        >
-          <BookOpen className="h-[18px] w-[18px]" />
-          <span className="flex-1">Help &amp; Docs</span>
-        </Link>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <button
-                type="button"
-                className="mt-1 flex h-12 w-full items-center gap-2 rounded-[var(--radius-md)] px-3 text-left transition hover:bg-[var(--color-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
-              />
-            }
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-[var(--color-surface-strong)] text-xs font-semibold text-[var(--color-ink)]">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <span className="flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
-              {fullName}
-            </span>
-            <ChevronsUpDown className="h-4 w-4 text-[var(--color-muted)]" aria-hidden />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" side="top" className="w-56">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>
-                <div className="font-semibold text-[var(--color-ink)]">{fullName}</div>
-                <div className="text-xs font-normal text-[var(--color-muted)]">{email}</div>
-              </DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {/* Bottom rail: avatar + name + three-dot + bell. Replaces the legacy
+       * Help link + sign-out dropdown — Help, Settings, theme, and sign-out
+       * now live inside the profile popover surfaced by the rail. */}
+      <SidebarBottomRail
+        user={{
+          id: userId,
+          name: fullName,
+          email,
+          avatarUrl,
+          role,
+        }}
+      />
     </div>
   );
 }
@@ -309,15 +252,4 @@ function resolveActiveHref(
     }
   }
   return best?.href ?? null;
-}
-
-function getInitials(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? "")
-      .join("") || "?"
-  );
 }

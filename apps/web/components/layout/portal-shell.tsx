@@ -8,22 +8,32 @@ import { PortalSidebar, PortalSidebarContent } from "./portal-sidebar";
 
 interface PortalShellProps {
   role: UserRole;
+  userId: string;
   fullName: string;
   email: string;
+  avatarUrl: string | null;
   children: React.ReactNode;
 }
 
 export function PortalShell({
   role,
+  userId,
   fullName,
   email,
+  avatarUrl,
   children,
 }: PortalShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-[var(--color-canvas)]">
-      <PortalSidebar role={role} fullName={fullName} email={email} />
+      <PortalSidebar
+        role={role}
+        userId={userId}
+        fullName={fullName}
+        email={email}
+        avatarUrl={avatarUrl}
+      />
       <main className="relative flex-1 px-4 pb-6 pt-20 md:px-8 md:pb-8 lg:py-8">
         <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
           <SheetTrigger
@@ -35,8 +45,10 @@ export function PortalShell({
           <SheetContent side="left" className="w-72 bg-[var(--color-canvas)] p-0">
             <PortalSidebarContent
               role={role}
+              userId={userId}
               fullName={fullName}
               email={email}
+              avatarUrl={avatarUrl}
               onNavClick={() => setDrawerOpen(false)}
             />
           </SheetContent>

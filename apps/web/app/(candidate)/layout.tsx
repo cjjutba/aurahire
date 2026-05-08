@@ -13,6 +13,7 @@ export default async function CandidateLayout({
         role: string;
         fullName: string;
         email: string;
+        avatarUrl: string | null;
         profileCompleted: boolean;
       }
     | null;
@@ -29,8 +30,10 @@ export default async function CandidateLayout({
   return (
     <PortalShell
       role="candidate"
+      userId={profile.id}
       fullName={profile.fullName}
       email={profile.email}
+      avatarUrl={profile.avatarUrl ?? null}
     >
       {children}
     </PortalShell>

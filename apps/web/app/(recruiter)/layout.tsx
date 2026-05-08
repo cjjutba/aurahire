@@ -15,6 +15,7 @@ export default async function RecruiterLayout({
         role: string;
         fullName: string;
         email: string;
+        avatarUrl: string | null;
         profileCompleted: boolean;
         // Phase 3: surfaced in the API response so we can seed the active
         // company singleton with the server-known value before the
@@ -39,8 +40,10 @@ export default async function RecruiterLayout({
       <CompanySwitchOverlay />
       <PortalShell
         role="recruiter"
+        userId={profile.id}
         fullName={profile.fullName}
         email={profile.email}
+        avatarUrl={profile.avatarUrl ?? null}
       >
         {children}
       </PortalShell>
