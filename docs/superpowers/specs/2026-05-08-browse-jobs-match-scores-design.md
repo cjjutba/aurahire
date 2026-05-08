@@ -16,7 +16,7 @@ The user-visible bug: the dashboard knows that "Engineering Manager — Frontend
 
 Surface the precomputed match preview (band + score + progress bar) directly on each `JobCard` shown in the candidate Browse Jobs grid, mirroring the dashboard's visual language and reusing its color-band logic. No new AI spend, no backend changes, no new endpoints.
 
-This is presentation-only and additive — `JobCard` is also used by recruiter and admin surfaces, so the score region must be opt-in via prop, not unconditionally injected.
+This is presentation-only and additive — the score region is opt-in via prop. Today only the candidate Browse Jobs grid imports `JobCard`, but keeping the prop optional preserves headroom if recruiter or admin surfaces ever adopt the component.
 
 ## Scope
 
@@ -34,11 +34,10 @@ This is presentation-only and additive — `JobCard` is also used by recruiter a
 
 **Out of scope:**
 - Any backend change. The `match-previews` GET endpoint, the precompute queue, the per-job on-view recompute path, and the daily AI cap all stay exactly as they are.
-- Any change to recruiter or admin pages that consume `JobCard`. They simply don't pass `matchPreview`, and the card renders unchanged.
+- Any change to other pages. Today only the candidate Browse Jobs path imports `JobCard`; the dashboard's "Recommended for You" uses its own internal `RecommendedJobCard`.
 - "Best match" sort option. Adding it correctly would require backend support (the `match-previews` list is capped at 25 and is independent of the `jobs` list pagination) — sorting only the visible page client-side would lie about pagination ordering. Defer.
 - "Strong match only" filter. Same reason — needs backend.
 - The job detail page (`/candidate/jobs/[id]`) — its existing `_match-preview-client.tsx` already handles per-job preview rendering and on-view compute; not touched here.
-- The recruiter `JobCard` consumers and the admin job moderation page — they use the same card but never pass `matchPreview`, so they inherit no change.
 
 ## Design
 
@@ -128,30 +127,20 @@ Replace the stale subtitle at `_jobs-list-client.tsx:71` with three branches:
 
 We deliberately do **not** add a "no resume → upload your resume" upgrade nudge in this slice. Detecting "no resume" reliably from this component requires either a second query (profile score) or a backend signal on the previews response — both out of proportion for a copy nudge, and the dashboard's existing `FirstRunWelcomeCard` already covers that path.
 
-### `JobCard` consumers untouched
+### `JobCard` consumers
 
-`JobCard` is referenced in three places (per existing repo grep):
+Today only `apps/web/app/(candidate)/candidate/jobs/_jobs-list-client.tsx` imports `JobCard` (verified via `grep -n "JobCard" apps/web` at spec time). The dashboard's "Recommended for You" uses an in-file `RecommendedJobCard` and is not affected.
 
-1. `apps/web/app/(candidate)/candidate/jobs/_jobs-list-client.tsx` — receives `matchPreview` (this slice).
-2. `apps/web/app/(recruiter)/recruiter/jobs/...` — does not pass `matchPreview`; renders unchanged.
-3. `apps/web/app/(admin)/admin/jobs/...` — does not pass `matchPreview`; renders unchanged.
-
-Verify with a grep for `<JobCard` during implementation; if a fourth consumer exists, leave it alone.
+The new props are optional, so any future consumer that doesn't pass `matchPreview` gets identical behavior to today.
 
 ### Testing
 
-**Unit (Vitest, jsdom):**
-- `JobCard renders match score row when matchPreview is present` — assert `MatchBandChip` text "Strong Match" and `76` are in the DOM.
+**Unit (Vitest, jsdom — colocated next to `job-card.tsx`):**
+- `JobCard renders match score row when matchPreview is present` — assert `MatchBandChip` text "Strong Match" and `76` are in the DOM, and the inline `style.width` on the fill bar is `76%`.
 - `JobCard omits score row when matchPreview is absent and not loading` — assert no `MatchBandChip` and no `font-mono` score number.
-- `JobCard renders skeleton when matchPreviewLoading and no matchPreview` — assert a `.animate-pulse` element is present.
+- `JobCard renders skeleton when matchPreviewLoading and no matchPreview` — assert a `.animate-pulse` element is present in the score region.
 
-**E2E (Playwright, extending the existing candidate browse spec):**
-- Seed a candidate with a parsed resume + at least one precomputed `match_score_previews` row for an active job.
-- Navigate to `/candidate/jobs`.
-- Assert at least one `JobCard` shows a `MatchBandChip` with text matching `Strong Match | Partial Match | Limited Match`.
-- Assert the subtitle on the page header reads `"… · auto-scored against your resume"`.
-
-No new fixture; reuse the seed pattern from the existing dashboard "Recommended for You" e2e spec.
+E2E coverage for the candidate Browse Jobs grid does not exist today (only onboarding + proactive-system specs are wired). Adding one for this slice would require seeding `match_score_previews` fixtures from scratch — disproportionate for a presentation-only change. Defer to a future candidate-portal e2e pass.
 
 ### Performance
 
