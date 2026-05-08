@@ -26,6 +26,7 @@ export * from "./enums/index";
 export * from "./constants/score-thresholds";
 export * from "./constants/ai-limits";
 export * from "./constants/pagination";
+export * from "./constants/proactive-system";
 export * from "./skills-taxonomy";
 
 // Types
