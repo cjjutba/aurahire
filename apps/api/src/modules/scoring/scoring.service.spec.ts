@@ -1,0 +1,337 @@
+import type Redis from "ioredis";
+import type { MatchScorePreview, Resume, ScoringConfig, Job } from "@aurahire/db";
+import { ONVIEW_DAILY_CAP } from "@aurahire/shared";
+
+import { ScoringService } from "./scoring.service";
+import type { ScoringRepository } from "./scoring.repository";
+import type { ResumesRepository } from "../resumes/resumes.repository";
+import type { JobsRepository } from "../jobs/jobs.repository";
+import type { ProfilesRepository } from "../profiles/profiles.repository";
+import type { ScoreProfileService } from "../../ai/score-profile.service";
+import type { ScoreMatchService } from "../../ai/score-match.service";
+import type { AuditService } from "../../audit";
+import type { CacheService } from "../../cache";
+
+describe("ScoringService.computeMatchPreviewOnView", () => {
+  const candidateId = "11111111-1111-1111-1111-111111111111";
+  const jobId = "22222222-2222-2222-2222-222222222222";
+  const resumeId = "33333333-3333-3333-3333-333333333333";
+  const companyId = "44444444-4444-4444-4444-444444444444";
+
+  const today = () => new Date().toISOString().slice(0, 10);
+  const counterKey = () => `scoring:onview:${candidateId}:${today()}`;
+
+  function buildResume(): Resume {
+    return {
+      id: resumeId,
+      candidateId,
+      filename: "resume.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 1234,
+      storagePath: `${candidateId}/source.pdf`,
+      canonicalPdfPath: null,
+      rawText: "raw text",
+      parsedData: { parse_confidence: 0.9 } as Record<string, unknown>,
+      parseStatus: "parsed",
+      parseError: null,
+      isDefault: true,
+      createdAt: new Date("2026-05-08T00:00:00Z"),
+      updatedAt: new Date("2026-05-08T00:00:00Z"),
+    };
+  }
+
+  function buildJob(): Job {
+    return {
+      id: jobId,
+      companyId,
+      title: "Senior Software Engineer",
+      slug: "senior-software-engineer",
+      department: "Engineering",
+      employmentType: "full_time",
+      experienceLevel: "senior",
+      educationRequirement: "bachelors",
+      salaryMin: null,
+      salaryMax: null,
+      salaryCurrency: null,
+      salaryPeriod: null,
+      location: "Remote",
+      isRemote: true,
+      requiredSkills: ["TypeScript", "Node.js"],
+      preferredSkills: [],
+      descriptionMd: "Job description",
+      descriptionPlain: "Job description",
+      status: "published",
+      biasCheckStatus: "passed",
+      biasFlags: [],
+      publishedAt: new Date("2026-05-01T00:00:00Z"),
+      closedAt: null,
+      filledAt: null,
+      hiringManagerId: null,
+      ownerId: companyId,
+      viewCount: 0,
+      createdAt: new Date("2026-05-01T00:00:00Z"),
+      updatedAt: new Date("2026-05-01T00:00:00Z"),
+    } as unknown as Job;
+  }
+
+  function buildScoringConfig(): ScoringConfig {
+    return {
+      id: "55555555-5555-5555-5555-555555555555",
+      profileWeights: {
+        completeness: 25,
+        skill_depth: 25,
+        experience_clarity: 25,
+        education_quality: 25,
+      } as unknown as Record<string, unknown>,
+      matchWeights: {
+        skills: 40,
+        experience: 30,
+        education: 15,
+        cultural_fit: 15,
+      } as unknown as Record<string, unknown>,
+      bandThresholds: { strong: 70, partial: 40 } as unknown as Record<
+        string,
+        unknown
+      >,
+      isActive: true,
+      createdAt: new Date("2026-04-01T00:00:00Z"),
+      updatedAt: new Date("2026-04-01T00:00:00Z"),
+    } as unknown as ScoringConfig;
+  }
+
+  function buildAiResult() {
+    return {
+      score: {
+        overall_score: 78,
+        band: "strong" as const,
+        components: [
+          {
+            name: "skills",
+            score: 32,
+            max: 40,
+            weight: 40,
+            explanation: "Strong skill match",
+            evidence: [
+              {
+                excerpt: "TypeScript, Node.js",
+                source: "skills",
+                relevance: "high" as const,
+                contribution_points: 8,
+              },
+            ],
+          },
+          {
+            name: "experience",
+            score: 24,
+            max: 30,
+            weight: 30,
+            explanation: "Senior-level experience",
+            evidence: [],
+          },
+          {
+            name: "education",
+            score: 12,
+            max: 15,
+            weight: 15,
+            explanation: "Bachelor's degree",
+            evidence: [],
+          },
+          {
+            name: "cultural_fit",
+            score: 10,
+            max: 15,
+            weight: 15,
+            explanation: "Decent fit",
+            evidence: [],
+          },
+        ],
+        summary: "Strong match",
+        red_flags: null,
+        green_flags: null,
+      },
+      redactedFields: ["email", "phone"],
+      promptVersion: "score-match@v1",
+      model: "gpt-4o-mini",
+      latencyMs: 1234,
+    };
+  }
+
+  function buildPreviewRow(
+    overrides: Partial<MatchScorePreview> = {},
+  ): MatchScorePreview {
+    return {
+      id: "66666666-6666-6666-6666-666666666666",
+      candidateId,
+      jobId,
+      resumeId,
+      overallScore: 78,
+      band: "strong",
+      components: buildAiResult().score.components as unknown as Record<
+        string,
+        unknown
+      >,
+      redactedFields: ["email", "phone"],
+      weightsUsed: { skills: 40, experience: 30, education: 15, cultural_fit: 15 } as unknown as Record<string, unknown>,
+      promptVersion: "score-match@v1",
+      modelUsed: "gpt-4o-mini",
+      rawOutput: buildAiResult().score as unknown as Record<string, unknown>,
+      latencyMs: 1234,
+      source: "candidate_view",
+      createdAt: new Date("2026-05-08T12:00:00Z"),
+      ...overrides,
+    } as MatchScorePreview;
+  }
+
+  /**
+   * Tiny in-memory Redis stub that mimics the subset of ioredis methods the
+   * on-view path uses (`incr`, `expire`, `get`, `set`). We use a real-ish
+   * counter so tests can verify "did the counter advance?" without standing
+   * up a Redis container.
+   */
+  function buildRedisStub() {
+    const store = new Map<string, string>();
+    const expiries = new Map<string, number>();
+    const stub = {
+      incr: jest.fn(async (key: string) => {
+        const current = Number(store.get(key) ?? "0");
+        const next = current + 1;
+        store.set(key, String(next));
+        return next;
+      }),
+      expire: jest.fn(async (key: string, ttlSeconds: number) => {
+        expiries.set(key, ttlSeconds);
+        return 1;
+      }),
+      get: jest.fn(async (key: string) => store.get(key) ?? null),
+      set: jest.fn(async (key: string, value: string | number) => {
+        store.set(key, String(value));
+        return "OK";
+      }),
+    } as unknown as jest.Mocked<Redis> & {
+      _store: Map<string, string>;
+      _expiries: Map<string, number>;
+    };
+    Object.assign(stub, { _store: store, _expiries: expiries });
+    return stub;
+  }
+
+  function buildSvc(opts: { existingPreview?: MatchScorePreview | null } = {}) {
+    const redis = buildRedisStub();
+
+    const scoringRepo = {
+      findMatchPreview: jest.fn(async () => opts.existingPreview ?? null),
+      upsertMatchPreview: jest.fn(async (data: Record<string, unknown>) =>
+        buildPreviewRow({
+          overallScore: data.overallScore as number,
+          band: data.band as MatchScorePreview["band"],
+          source: data.source as MatchScorePreview["source"],
+        }),
+      ),
+      getActiveConfig: jest.fn(async () => buildScoringConfig()),
+    } as unknown as jest.Mocked<ScoringRepository>;
+
+    const resumesRepo = {
+      findDefaultByCandidateId: jest.fn(async () => buildResume()),
+    } as unknown as jest.Mocked<ResumesRepository>;
+
+    const jobsRepo = {
+      findById: jest.fn(async () => buildJob()),
+    } as unknown as jest.Mocked<JobsRepository>;
+
+    const profilesRepo = {} as unknown as jest.Mocked<ProfilesRepository>;
+    const scoreProfile = {} as unknown as jest.Mocked<ScoreProfileService>;
+    const scoreMatch = {
+      score: jest.fn(async () => buildAiResult()),
+    } as unknown as jest.Mocked<ScoreMatchService>;
+
+    const audit = {
+      log: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<AuditService>;
+
+    const cacheService = {
+      getOrSet: jest.fn(),
+      bustTag: jest.fn(),
+      bustTags: jest.fn(),
+      bustKey: jest.fn(),
+    } as unknown as jest.Mocked<CacheService>;
+
+    const svc = new ScoringService(
+      scoreProfile,
+      scoreMatch,
+      jobsRepo,
+      profilesRepo,
+      resumesRepo,
+      scoringRepo,
+      audit,
+      cacheService,
+      redis,
+    );
+    return { svc, redis, scoringRepo, resumesRepo, jobsRepo, scoreMatch, audit };
+  }
+
+  it("writes preview row with source = 'candidate_view' and increments redis counter", async () => {
+    const { svc, redis, scoringRepo, scoreMatch } = buildSvc();
+
+    const result = await svc.computeMatchPreviewOnView(candidateId, jobId);
+
+    // Source tag and clamped overall score
+    expect(result.source).toBe("candidate_view");
+    expect(result.overallScore).toBeGreaterThanOrEqual(0);
+    expect(result.overallScore).toBeLessThanOrEqual(100);
+
+    // Counter incremented exactly once with TTL set on first hit
+    expect(redis.incr).toHaveBeenCalledTimes(1);
+    expect(redis.incr).toHaveBeenCalledWith(counterKey());
+    expect(redis.expire).toHaveBeenCalledTimes(1);
+    expect(redis.expire).toHaveBeenCalledWith(counterKey(), 90_000);
+    const count = Number(await redis.get(counterKey()));
+    expect(count).toBe(1);
+
+    // AI compute happened, and the preview was upserted with the right source
+    expect(scoreMatch.score).toHaveBeenCalledTimes(1);
+    expect(scoringRepo.upsertMatchPreview).toHaveBeenCalledTimes(1);
+    const upsertArgs = (scoringRepo.upsertMatchPreview as jest.Mock).mock.calls[0][0];
+    expect(upsertArgs.source).toBe("candidate_view");
+    expect(upsertArgs.candidateId).toBe(candidateId);
+    expect(upsertArgs.jobId).toBe(jobId);
+    expect(upsertArgs.resumeId).toBe(resumeId);
+  });
+
+  it("returns cached preview without incrementing counter on cache hit", async () => {
+    const { svc, redis, scoringRepo, scoreMatch } = buildSvc({
+      existingPreview: buildPreviewRow(),
+    });
+
+    const result = await svc.computeMatchPreviewOnView(candidateId, jobId);
+
+    // Cache hit short-circuit: no Redis INCR, no AI call, no upsert
+    expect(redis.incr).not.toHaveBeenCalled();
+    expect(redis.expire).not.toHaveBeenCalled();
+    expect(scoreMatch.score).not.toHaveBeenCalled();
+    expect(scoringRepo.upsertMatchPreview).not.toHaveBeenCalled();
+
+    expect(result).toBeDefined();
+    expect(result.id).toBe("66666666-6666-6666-6666-666666666666");
+    // Counter is empty (never touched)
+    expect(await redis.get(counterKey())).toBeNull();
+  });
+
+  it("throws 429 with code DAILY_AI_LIMIT when cap exceeded", async () => {
+    const { svc, redis, scoringRepo, scoreMatch } = buildSvc();
+
+    // Pre-load the counter to exactly the cap; the next INCR pushes us over.
+    await redis.set(counterKey(), ONVIEW_DAILY_CAP);
+
+    await expect(
+      svc.computeMatchPreviewOnView(candidateId, jobId),
+    ).rejects.toMatchObject({
+      response: { code: "DAILY_AI_LIMIT", cap: ONVIEW_DAILY_CAP },
+    });
+
+    // The increment happened (so subsequent calls keep failing fast) but
+    // we never reached the AI call or the DB write.
+    expect(redis.incr).toHaveBeenCalledTimes(1);
+    expect(scoreMatch.score).not.toHaveBeenCalled();
+    expect(scoringRepo.upsertMatchPreview).not.toHaveBeenCalled();
+  });
+});
