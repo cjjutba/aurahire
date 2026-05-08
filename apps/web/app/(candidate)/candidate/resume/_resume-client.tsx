@@ -24,6 +24,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type {
   Certification,
   EducationEntry,
@@ -837,20 +838,39 @@ export function CandidateResumeClient() {
 
   async function setDefault(resume: ResumeRow) {
     if (resume.isDefault) return;
-    const ok = await confirm({
-      title: "Set as default resume?",
-      description: `${resume.filename} will be used the next time you apply to a job.`,
-      confirmLabel: "Set as default",
-      variant: "info",
-    });
-    if (!ok) return;
+    // Capture the previous default BEFORE the mutation so the undo toast can
+    // revert in one click. May be undefined if no resume was default before.
+    const previousDefault = resumes.find((r) => r.isDefault);
     setBusyAction({ id: resume.id, action: "default" });
     try {
       await apiCall(`/api/v1/resumes/${resume.id}/set-default`);
-      toastSuccess("Default resume updated");
       await invalidate();
+      toast.success(`Set ${resume.filename} as default`, {
+        duration: 6000,
+        action: previousDefault
+          ? {
+              label: "Undo",
+              onClick: () => {
+                void revertDefault(previousDefault);
+              },
+            }
+          : undefined,
+      });
     } catch (err) {
       toastApiError(err, "Couldn't set default");
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function revertDefault(resume: ResumeRow) {
+    setBusyAction({ id: resume.id, action: "default" });
+    try {
+      await apiCall(`/api/v1/resumes/${resume.id}/set-default`);
+      await invalidate();
+      toastSuccess("Default reverted", `${resume.filename} is the default again.`);
+    } catch (err) {
+      toastApiError(err, "Couldn't undo");
     } finally {
       setBusyAction(null);
     }
