@@ -50,3 +50,6 @@ Thumbs.db
 coverage/
 .superpowers/
 .vercel
+
+# Worktrees (created by superpowers:using-git-worktrees)
+.worktrees/
