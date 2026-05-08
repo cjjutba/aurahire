@@ -14,6 +14,7 @@ import { AUDIT_ACTIONS, AuditService } from "../audit";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../db/db.module";
 import { EmailService } from "../email/email.service";
 import { OfferExpiredEmail } from "../email/templates/offer-expired";
+import { NotificationsService } from "../modules/notifications/notifications.service";
 
 const CRON_NAME = "expire-offers";
 // audit_logs.entity_id is NOT NULL UUID; sentinel for cron-level entries.
@@ -28,6 +29,7 @@ export class ExpireOffersCron {
     private readonly audit: AuditService,
     private readonly email: EmailService,
     private readonly config: ConfigService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** Hourly at minute 0. */
@@ -48,7 +50,9 @@ export class ExpireOffersCron {
           candidateId: applicationsTable.candidateId,
           candidateEmail: profilesTable.email,
           candidateName: profilesTable.fullName,
+          jobId: jobsTable.id,
           jobTitle: jobsTable.title,
+          recruiterId: jobsTable.recruiterId,
           companyName: companiesTable.name,
           companyLogoUrl: companiesTable.logoUrl,
         })
@@ -90,7 +94,8 @@ export class ExpireOffersCron {
 
       const appUrl = this.config.get<string>("APP_URL") ?? "http://localhost:3000";
 
-      // Per-offer audit + email — best-effort; one failure doesn't fail the cron.
+      // Per-offer audit + email + in-app notify (both candidate and recruiter)
+      // — best-effort; one failure doesn't fail the cron.
       for (const c of candidates) {
         try {
           await this.audit.log({
@@ -102,6 +107,8 @@ export class ExpireOffersCron {
             details: {
               applicationId: c.applicationId,
               candidateId: c.candidateId,
+              recruiterId: c.recruiterId,
+              jobId: c.jobId,
               jobTitle: c.jobTitle,
             },
           });
@@ -116,6 +123,38 @@ export class ExpireOffersCron {
               applicationUrl: `${appUrl}/dashboard/applications/${c.applicationId}`,
               company: { name: c.companyName, logoUrl: c.companyLogoUrl },
             }),
+          });
+
+          // In-app notify: candidate.
+          await this.notifications.emit({
+            userId: c.candidateId,
+            eventType: "offer_expired",
+            entityType: "offer",
+            entityId: c.offerId,
+            metadata: {
+              offerId: c.offerId,
+              applicationId: c.applicationId,
+              jobId: c.jobId,
+              jobTitle: c.jobTitle,
+              companyName: c.companyName,
+            },
+          });
+
+          // In-app notify: owning recruiter.
+          await this.notifications.emit({
+            userId: c.recruiterId,
+            eventType: "offer_expired",
+            entityType: "offer",
+            entityId: c.offerId,
+            metadata: {
+              offerId: c.offerId,
+              applicationId: c.applicationId,
+              jobId: c.jobId,
+              jobTitle: c.jobTitle,
+              candidateId: c.candidateId,
+              candidateName: c.candidateName,
+              companyName: c.companyName,
+            },
           });
         } catch (innerErr) {
           this.logger.warn(
