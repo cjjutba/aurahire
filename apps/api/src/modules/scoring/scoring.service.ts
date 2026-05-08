@@ -3,11 +3,13 @@ import {
   ForbiddenException,
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import {
+  ONVIEW_DAILY_CAP,
   type AuthUser,
   type ParsedResume,
   type ProfileScore as ProfileScoreOutput,
@@ -17,9 +19,10 @@ import type {
   ProfileScore as DbProfileScore,
   MatchScorePreview as DbMatchScorePreview,
 } from "@aurahire/db";
+import type Redis from "ioredis";
 
 import { AuditService } from "../../audit";
-import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
+import { CACHE_REDIS, CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { ScoreProfileService } from "../../ai/score-profile.service";
 import { ScoreMatchService } from "../../ai/score-match.service";
 import { JobsRepository } from "../jobs/jobs.repository";
@@ -36,6 +39,19 @@ import type {
   MatchEvidenceDto,
 } from "../applications/dto/application-response.dto";
 import type { MatchScorePreviewDto } from "./dto/match-preview-response.dto";
+import { MatchPreviewRateLimitException } from "./dto/match-preview-rate-limit.exception";
+
+type MatchPreviewSource = "system" | "candidate" | "candidate_view";
+
+/**
+ * Redis TTL (seconds) for the on-view daily counter.
+ *
+ * 90,000s ≈ 25h — slightly more than a calendar day so the key safely
+ * outlives the UTC date boundary it's bucketed under. Date-bucketed keys
+ * expire on their own; this TTL is a belt-and-suspenders cleanup so a
+ * disconnected user's stale key doesn't accumulate indefinitely.
+ */
+const ONVIEW_COUNTER_TTL_SECONDS = 90_000;
 
 interface ProfileWeights {
   completeness: number;
@@ -95,6 +111,7 @@ export class ScoringService {
     private readonly scoringRepo: ScoringRepository,
     private readonly audit: AuditService,
     private readonly cacheService: CacheService,
+    @Inject(CACHE_REDIS) private readonly redis: Redis,
   ) {}
 
   async computeProfileScore(
@@ -585,7 +602,103 @@ export class ScoringService {
       });
     }
 
-    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(user.id);
+    return this.computeMatchPreviewInternal(user.id, jobId, options.source, {
+      force: options.force ?? false,
+    });
+  }
+
+  /**
+   * On-view auto-compute used by the buttonless candidate job-detail page.
+   *
+   * Behavior contract (Phase 1 proactive system):
+   *   1. If a preview row already exists for `(candidateId, jobId, current
+   *      default resume)`, return it immediately — no AI call, and no
+   *      increment to the daily counter (cache hit cost is zero).
+   *   2. Otherwise check the per-UTC-day counter
+   *      `scoring:onview:{candidateId}:{YYYY-MM-DD}`. Atomic INCR; first
+   *      hit sets EXPIRE to ~25h. If the resulting count exceeds
+   *      `ONVIEW_DAILY_CAP`, throw `MatchPreviewRateLimitException` (429
+   *      with `code: DAILY_AI_LIMIT`).
+   *   3. Otherwise compute the preview and persist with
+   *      `source = 'candidate_view'` so audit/analytics can distinguish
+   *      this path from the legacy "candidate" (manual button) and
+   *      "system" (top-N precompute) sources.
+   *
+   * The counter increment intentionally lives BEFORE the AI call so a
+   * misconfigured client cannot burn budget by issuing 1000 concurrent
+   * requests.
+   */
+  async computeMatchPreviewOnView(
+    candidateId: string,
+    jobId: string,
+  ): Promise<MatchScorePreviewDto> {
+    // 1. Resolve the candidate's current default resume.
+    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(candidateId);
+    if (!defaultResume) {
+      throw new BadRequestException({
+        code: "NO_DEFAULT_RESUME",
+        message: "Upload a resume first",
+      });
+    }
+    if (defaultResume.parseStatus !== "parsed" || !defaultResume.parsedData) {
+      throw new BadRequestException({
+        code: "RESUME_NOT_PARSED",
+        message: "Your resume hasn't been parsed yet. Try again in a moment.",
+      });
+    }
+
+    // 2. Cache-hit short-circuit — return without touching the daily counter.
+    const existing = await this.scoringRepo.findMatchPreview(
+      candidateId,
+      jobId,
+      defaultResume.id,
+    );
+    if (existing) {
+      return this.matchPreviewRowToDto(existing);
+    }
+
+    // 3. Daily rate-limit gate. UTC date bucket so all candidates roll over
+    // at the same wall-clock instant; cleaner audit story than per-user TZ.
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `scoring:onview:${candidateId}:${today}`;
+    const count = await this.redis.incr(key);
+    if (count === 1) {
+      // Best-effort TTL — if EXPIRE fails the key still gets a fresh INCR
+      // tomorrow under a different date-bucketed name, so we don't bail.
+      await this.redis.expire(key, ONVIEW_COUNTER_TTL_SECONDS);
+    }
+    if (count > ONVIEW_DAILY_CAP) {
+      throw new MatchPreviewRateLimitException(ONVIEW_DAILY_CAP);
+    }
+
+    // 4. Defer to the shared compute path with the on-view source tag.
+    return this.computeMatchPreviewInternal(
+      candidateId,
+      jobId,
+      "candidate_view",
+      { force: false, defaultResume },
+    );
+  }
+
+  private async computeMatchPreviewInternal(
+    candidateId: string,
+    jobId: string,
+    source: MatchPreviewSource,
+    options: {
+      force: boolean;
+      /**
+       * Already-loaded default resume. The on-view path resolves it earlier
+       * (so the cache-hit short-circuit can run before the rate-limit
+       * counter); pass it through to avoid a second round-trip.
+       */
+      defaultResume?: Awaited<
+        ReturnType<ResumesRepository["findDefaultByCandidateId"]>
+      >;
+    } = { force: false },
+  ): Promise<MatchScorePreviewDto> {
+    const defaultResume =
+      options.defaultResume ??
+      (await this.resumesRepo.findDefaultByCandidateId(candidateId));
     if (!defaultResume) {
       throw new BadRequestException({
         code: "NO_DEFAULT_RESUME",
@@ -618,7 +731,7 @@ export class ScoringService {
     // force:true to override.
     if (!options.force) {
       const existing = await this.scoringRepo.findMatchPreview(
-        user.id,
+        candidateId,
         jobId,
         defaultResume.id,
       );
@@ -648,14 +761,14 @@ export class ScoringService {
         descriptionPlain: job.descriptionPlain,
       },
       weights,
-      requestId: `match-preview:${user.id}:${jobId}`,
+      requestId: `match-preview:${candidateId}:${jobId}`,
     });
 
     const derivedOverall = deriveOverallScore(aiResult.score.components);
     const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
     const preview = await this.scoringRepo.upsertMatchPreview({
-      candidateId: user.id,
+      candidateId,
       jobId,
       resumeId: defaultResume.id,
       overallScore: derivedOverall,
@@ -667,12 +780,12 @@ export class ScoringService {
       modelUsed: aiResult.model,
       rawOutput: aiResult.score as unknown as Record<string, unknown>,
       latencyMs: aiResult.latencyMs,
-      source: options.source,
+      source,
     });
 
     await this.audit.log({
-      actorId: user.id,
-      actorType: options.source === "candidate" ? "user" : "system",
+      actorId: candidateId,
+      actorType: source === "candidate" ? "user" : "system",
       action: "score.match.preview.computed",
       entityType: "match_score_preview",
       entityId: preview.id,
@@ -685,12 +798,12 @@ export class ScoringService {
         model: aiResult.model,
         promptVersion: aiResult.promptVersion,
         latencyMs: aiResult.latencyMs,
-        source: options.source,
+        source,
       },
     });
 
     this.logger.log(
-      `Match preview computed for candidate ${user.id} × job ${jobId}: ${preview.overallScore}/100 (${preview.band}, source=${options.source})`,
+      `Match preview computed for candidate ${candidateId} × job ${jobId}: ${preview.overallScore}/100 (${preview.band}, source=${source})`,
     );
 
     return this.matchPreviewRowToDto(preview);
