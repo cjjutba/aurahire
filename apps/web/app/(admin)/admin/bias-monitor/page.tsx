@@ -8,6 +8,7 @@ import { TopTermsTable } from "./_top-terms-table";
 import { ScoreDistributionAuditClient } from "./_score-distribution-audit-client";
 import { RecentOverridesList } from "./_recent-overrides-list";
 import { BiasMonitorRealtimeClient } from "./_bias-monitor-realtime-client";
+import { ScoringQualityPanel } from "./_scoring-quality-panel";
 
 export const metadata = { title: "Bias & Fairness Monitor" };
 
@@ -46,6 +47,18 @@ interface BundleBody {
       overriddenAt: string;
     }>;
     sampleSize: { flags: number; scores: number; jobs: number };
+    scoringQuality: {
+      totalWarnings: number;
+      byReason: Array<{ reason: string; count: number }>;
+      byComponent: Array<{ componentName: string; count: number }>;
+      recent: Array<{
+        auditLogId: string;
+        componentName: string;
+        reason: string;
+        promptVersion: string;
+        createdAt: string;
+      }>;
+    };
   };
 }
 
@@ -142,6 +155,14 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
 
         {/* Recent overrides */}
         <RecentOverridesList overrides={d.recentOverrides} />
+
+        {/* Scoring quality (calibration warnings) */}
+        <ScoringQualityPanel
+          totalWarnings={d.scoringQuality.totalWarnings}
+          byReason={d.scoringQuality.byReason}
+          byComponent={d.scoringQuality.byComponent}
+          recent={d.scoringQuality.recent}
+        />
 
         {/* Honesty footer */}
         <p className="rounded-[var(--radius-lg)] bg-[var(--color-surface-soft)] p-4 text-xs text-[var(--color-muted)]">
