@@ -125,6 +125,61 @@ function normalizeComponentsToWeights<
   });
 }
 
+/**
+ * Strict-sum reconciliation: derive component.score from the sum of evidence
+ * contribution_points, quantizing each to the nearest 5 and clamping to
+ * [0, component.max]. Forces evidence.relevance to match the sign of the
+ * (quantized) contribution.
+ *
+ * Returns the reconciled component plus residuals for audit:
+ *   - residual = ai_score - derived_score (zero when AI was honest)
+ *   - quantizationDeltas: per-evidence deltas where the AI's number was rounded
+ *
+ * The AI's `score` field is discarded by the engine; only `derived` ships.
+ */
+export function reconcileEvidenceContributions<
+  C extends {
+    name: string;
+    score: number;
+    max: number;
+    evidence: Array<{
+      excerpt: string;
+      source: string;
+      relevance: "positive" | "negative" | "neutral";
+      contribution_points: number;
+    }>;
+  },
+>(
+  component: C,
+): {
+  component: C;
+  residual: number;
+  quantizationDeltas: Array<{ evidenceIndex: number; original: number; quantized: number }>;
+} {
+  const aiScore = component.score;
+  const quantizationDeltas: Array<{ evidenceIndex: number; original: number; quantized: number }> = [];
+
+  const reconciled = component.evidence.map((ev, evidenceIndex) => {
+    const original = Number(ev.contribution_points) || 0;
+    const quantized = Math.round(original / 5) * 5;
+    if (quantized !== original) {
+      quantizationDeltas.push({ evidenceIndex, original, quantized });
+    }
+    const relevance: "positive" | "negative" | "neutral" =
+      quantized > 0 ? "positive" : quantized < 0 ? "negative" : "neutral";
+    return { ...ev, contribution_points: quantized, relevance };
+  });
+
+  const derivedRaw = reconciled.reduce((sum, ev) => sum + ev.contribution_points, 0);
+  const derived = Math.max(0, Math.min(component.max, derivedRaw));
+
+  return {
+    component: { ...component, score: derived, evidence: reconciled },
+    residual: aiScore - derived,
+    quantizationDeltas,
+  };
+}
+
 function deriveBand(
   score: number,
   thresholds: BandThresholds,

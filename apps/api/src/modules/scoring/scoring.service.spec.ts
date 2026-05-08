@@ -3,7 +3,11 @@ import type { MatchScorePreview, Resume, ScoringConfig, Job } from "@aurahire/db
 import { ONVIEW_DAILY_CAP, type AuthUser } from "@aurahire/shared";
 import { ForbiddenException } from "@nestjs/common";
 
-import { ScoringService } from "./scoring.service";
+import {
+  ScoringService,
+  reconcileEvidenceContributions,
+  detectCalibrationWarnings,
+} from "./scoring.service";
 import type { ScoringRepository } from "./scoring.repository";
 import type { ResumesRepository } from "../resumes/resumes.repository";
 import type { JobsRepository } from "../jobs/jobs.repository";
@@ -13,6 +17,137 @@ import type { ScoreMatchService } from "../../ai/score-match.service";
 import type { AuditService } from "../../audit";
 import type { CacheService } from "../../cache";
 import type { EventsService } from "../../realtime";
+
+describe("reconcileEvidenceContributions", () => {
+  function buildComponent(overrides: Partial<{
+    name: string;
+    score: number;
+    max: number;
+    evidence: Array<{
+      excerpt: string;
+      source: string;
+      relevance: "positive" | "negative" | "neutral";
+      contribution_points: number;
+    }>;
+  }> = {}) {
+    return {
+      name: "skills",
+      score: 0,
+      max: 40,
+      weight: 40,
+      explanation: "test",
+      evidence: [],
+      ...overrides,
+    };
+  }
+
+  it("reconciles when AI got the math right (sum equals score)", () => {
+    const result = reconcileEvidenceContributions(
+      buildComponent({
+        score: 25,
+        evidence: [
+          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 10 },
+          { excerpt: "PG", source: "skills", relevance: "positive", contribution_points: 10 },
+          { excerpt: "Docker", source: "skills", relevance: "positive", contribution_points: 5 },
+        ],
+      }),
+    );
+    expect(result.component.score).toBe(25);
+    expect(result.residual).toBe(0);
+    expect(result.quantizationDeltas).toHaveLength(0);
+  });
+
+  it("overrides AI score when it disagrees with sum of contributions", () => {
+    const result = reconcileEvidenceContributions(
+      buildComponent({
+        score: 30, // AI claimed 30
+        evidence: [
+          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 10 },
+          { excerpt: "PG", source: "skills", relevance: "positive", contribution_points: 10 },
+          { excerpt: "Docker", source: "skills", relevance: "positive", contribution_points: 5 },
+        ],
+      }),
+    );
+    expect(result.component.score).toBe(25); // sum wins
+    expect(result.residual).toBe(5); // ai_score - derived
+  });
+
+  it("quantizes non-multiples of 5 to nearest 5", () => {
+    const result = reconcileEvidenceContributions(
+      buildComponent({
+        score: 15,
+        evidence: [
+          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 7 },
+          { excerpt: "b", source: "skills", relevance: "positive", contribution_points: 8 },
+        ],
+      }),
+    );
+    expect(result.component.evidence[0]!.contribution_points).toBe(5);
+    expect(result.component.evidence[1]!.contribution_points).toBe(10);
+    expect(result.component.score).toBe(15); // 5 + 10 = 15
+    expect(result.quantizationDeltas).toHaveLength(2);
+    expect(result.quantizationDeltas[0]).toEqual({
+      evidenceIndex: 0,
+      original: 7,
+      quantized: 5,
+    });
+  });
+
+  it("clamps below zero", () => {
+    const result = reconcileEvidenceContributions(
+      buildComponent({
+        score: 10,
+        evidence: [
+          { excerpt: "gap1", source: "req", relevance: "negative", contribution_points: -15 },
+          { excerpt: "gap2", source: "req", relevance: "negative", contribution_points: -15 },
+        ],
+      }),
+    );
+    expect(result.component.score).toBe(0); // clamped from -30
+    expect(result.residual).toBe(10); // ai_score 10 - derived 0
+  });
+
+  it("clamps above max", () => {
+    const result = reconcileEvidenceContributions(
+      buildComponent({
+        score: 20,
+        max: 15,
+        evidence: [
+          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 10 },
+          { excerpt: "b", source: "skills", relevance: "positive", contribution_points: 10 },
+        ],
+      }),
+    );
+    expect(result.component.score).toBe(15); // clamped from 20
+    expect(result.residual).toBe(5); // ai_score 20 - derived 15
+  });
+
+  it("forces relevance from sign even when AI lied", () => {
+    const result = reconcileEvidenceContributions(
+      buildComponent({
+        score: 0,
+        evidence: [
+          // AI mislabeled a -10 as positive — engine forces it back to negative.
+          { excerpt: "no Go", source: "req", relevance: "positive", contribution_points: -10 },
+        ],
+      }),
+    );
+    expect(result.component.evidence[0]!.relevance).toBe("negative");
+  });
+
+  it("preserves neutral relevance for zero contributions", () => {
+    const result = reconcileEvidenceContributions(
+      buildComponent({
+        score: 0,
+        evidence: [
+          { excerpt: "context", source: "summary", relevance: "neutral", contribution_points: 0 },
+        ],
+      }),
+    );
+    expect(result.component.evidence[0]!.relevance).toBe("neutral");
+    expect(result.component.score).toBe(0);
+  });
+});
 
 describe("ScoringService.computeMatchPreviewOnView", () => {
   const candidateId = "11111111-1111-1111-1111-111111111111";
