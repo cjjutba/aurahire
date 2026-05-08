@@ -52,6 +52,10 @@ function JobCardSkeleton() {
         <Skeleton className="h-6 w-16 rounded-[var(--radius-pill)]" />
       </div>
 
+      {/* Match score row slot — kept here so the route-level skeleton has
+          the same vertical rhythm as a hydrated card with a preview. */}
+      <Skeleton className="h-1.5 w-full rounded-[var(--radius-pill)]" />
+
       {/* Footer: location + salary */}
       <div className="mt-auto space-y-2 border-t border-[var(--color-hairline-soft)] pt-4">
         <Skeleton className="h-3 w-32" />
