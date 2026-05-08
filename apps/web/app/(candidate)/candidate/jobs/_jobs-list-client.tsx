@@ -85,10 +85,8 @@ export function CandidateJobsListClient({
 
             const base = `${meta.total} job${meta.total === 1 ? "" : "s"}`;
 
-            // Show the auto-scored nudge only once previews have loaded with
-            // at least one match. While previews are still loading, render
-            // just the count to avoid promising a feature that hasn't
-            // hydrated yet.
+            // Hold the suffix until previews actually land — otherwise the
+            // header advertises scoring before any chip renders below.
             const previewCount = previews.data?.data?.length ?? 0;
             if (!previews.isLoading && previewCount > 0) {
               return `${base} · auto-scored against your resume`;

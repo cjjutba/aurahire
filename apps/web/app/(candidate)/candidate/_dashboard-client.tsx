@@ -22,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { matchScoreColors } from "@/components/jobs/job-card";
 import { MatchBandChip } from "@/components/score/match-band-chip";
 import { useMyApplicationsQuery } from "@/hooks/use-applications";
 import { useMyInterviewsQuery } from "@/hooks/use-interviews";
@@ -814,22 +815,7 @@ function RecommendedJobCard({ preview: p }: { preview: MatchPreviewListItem }) {
   const job = p.job;
   const company = job?.company;
   const href = job?.id ? `/candidate/jobs/${job.id}` : "/candidate/jobs";
-  const ratio = p.overallScore / 100;
-  const colors =
-    ratio >= 0.7
-      ? {
-          fill: "var(--color-score-high)",
-          track: "var(--color-score-high-soft)",
-        }
-      : ratio >= 0.4
-        ? {
-            fill: "var(--color-score-mid)",
-            track: "var(--color-score-mid-soft)",
-          }
-        : {
-            fill: "var(--color-score-low)",
-            track: "var(--color-score-low-soft)",
-          };
+  const colors = matchScoreColors(p.overallScore);
 
   return (
     <li>

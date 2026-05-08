@@ -133,35 +133,10 @@ export function JobCard({
         </span>
       </div>
 
-      {/* Match score row — only on candidate-facing usage that passes matchPreview */}
-      {matchPreview ? (
-        <div className="flex items-center gap-3">
-          <MatchBandChip band={matchPreview.band} />
-          <div
-            className="h-1.5 flex-1 overflow-hidden rounded-[var(--radius-pill)]"
-            style={{ backgroundColor: matchScoreColors(matchPreview.overallScore).track }}
-          >
-            <div
-              data-testid="job-card-match-fill"
-              className="h-full rounded-[var(--radius-pill)]"
-              style={{
-                width: `${matchPreview.overallScore}%`,
-                backgroundColor: matchScoreColors(matchPreview.overallScore).fill,
-              }}
-            />
-          </div>
-          <span className="font-mono text-xs text-[var(--color-ink)]">
-            {matchPreview.overallScore}
-            <span className="text-[var(--color-muted)]"> / 100</span>
-          </span>
-        </div>
-      ) : matchPreviewLoading ? (
-        <div
-          data-testid="job-card-match-skeleton"
-          aria-hidden
-          className="h-1.5 w-full animate-pulse rounded-[var(--radius-pill)] bg-[var(--color-surface-soft)]"
-        />
-      ) : null}
+      <JobCardMatchRow
+        matchPreview={matchPreview}
+        matchPreviewLoading={matchPreviewLoading}
+      />
 
       {/* Footer: location + salary */}
       <div className="mt-auto space-y-1.5 border-t border-[var(--color-hairline-soft)] pt-4 text-xs">
@@ -182,4 +157,50 @@ export function JobCard({
       </div>
     </Link>
   );
+}
+
+function JobCardMatchRow({
+  matchPreview,
+  matchPreviewLoading,
+}: {
+  matchPreview?: { overallScore: number; band: "strong" | "partial" | "limited" };
+  matchPreviewLoading?: boolean;
+}) {
+  if (matchPreview) {
+    const colors = matchScoreColors(matchPreview.overallScore);
+    return (
+      <div className="flex items-center gap-3">
+        <MatchBandChip band={matchPreview.band} />
+        <div
+          className="h-1.5 flex-1 overflow-hidden rounded-[var(--radius-pill)]"
+          style={{ backgroundColor: colors.track }}
+        >
+          <div
+            data-testid="job-card-match-fill"
+            className="h-full rounded-[var(--radius-pill)]"
+            style={{
+              width: `${matchPreview.overallScore}%`,
+              backgroundColor: colors.fill,
+            }}
+          />
+        </div>
+        <span className="font-mono text-xs text-[var(--color-ink)]">
+          {matchPreview.overallScore}
+          <span className="text-[var(--color-muted)]"> / 100</span>
+        </span>
+      </div>
+    );
+  }
+
+  if (matchPreviewLoading) {
+    return (
+      <div
+        data-testid="job-card-match-skeleton"
+        aria-hidden
+        className="h-1.5 w-full animate-pulse rounded-[var(--radius-pill)] bg-[var(--color-surface-soft)]"
+      />
+    );
+  }
+
+  return null;
 }
