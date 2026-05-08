@@ -1,14 +1,22 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
+import { and, eq, isNull } from "drizzle-orm";
 import type { AuthUser, ParsedResume } from "@aurahire/shared";
 import { personalCompleteSchema, reviewCompleteSchema } from "@aurahire/shared";
-import type { Profile, CandidateProfile } from "@aurahire/db";
+import { profileScoresTable, type Profile, type CandidateProfile } from "@aurahire/db";
 
 import { AuditService } from "../../audit";
+import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
+import {
+  ProfileScoreQueueService,
+  type ProfileScoreRecomputeReason,
+} from "../../queue/profile-score-queue.service";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { ResumesRepository } from "../resumes/resumes.repository";
 
@@ -18,10 +26,14 @@ import type { CandidateProfileMeDto } from "./dto/candidate-profile-response.dto
 
 @Injectable()
 export class CandidateProfilesService {
+  private readonly logger = new Logger(CandidateProfilesService.name);
+
   constructor(
     private readonly repo: ProfilesRepository,
     private readonly audit: AuditService,
     private readonly resumesRepo: ResumesRepository,
+    private readonly profileScoreQueue: ProfileScoreQueueService,
+    @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
   ) {}
 
   async getMe(user: AuthUser): Promise<CandidateProfileMeDto> {
@@ -72,6 +84,11 @@ export class CandidateProfilesService {
       ...requestMeta,
     });
 
+    // Personal fields (headline, summary, location) feed into Profile Score
+    // signals — mark the current score stale + enqueue a recompute. No-op
+    // when the candidate has no default resume yet.
+    await this.markScoreStaleAndEnqueueRecompute(user.id, "profile_change");
+
     return this.toResponse(profile, candidateProfile);
   }
 
@@ -108,6 +125,10 @@ export class CandidateProfilesService {
       entityId: user.id,
       ...requestMeta,
     });
+
+    // Job preferences (desired roles, seniority, salary band, currency, start
+    // date) feed into Profile Score weighting — mark stale + recompute.
+    await this.markScoreStaleAndEnqueueRecompute(user.id, "preferences_change");
 
     return this.toResponse(profile, candidateProfile);
   }
@@ -220,6 +241,53 @@ export class CandidateProfilesService {
     });
 
     return this.toResponse(profile, updatedCandidateProfile);
+  }
+
+  /**
+   * Shared "Profile Score is stale" hook used by both `updatePersonal` and
+   * `updatePreferences`. Mirrors the stale + enqueue subset of
+   * `ResumesService.applyDefaultChange` (Task 6/7) — but we don't need the
+   * default-flag flip or match-preview cascade here, since the resume itself
+   * isn't changing.
+   *
+   * Short-circuits when the candidate has no default resume: there's nothing
+   * to score against, so emitting a job would just produce a worker no-op.
+   *
+   * The stale_at update only touches rows where stale_at IS NULL so a flurry
+   * of edits in the same UI flow doesn't keep resetting the timestamp on
+   * already-stale rows.
+   */
+  private async markScoreStaleAndEnqueueRecompute(
+    candidateId: string,
+    reason: ProfileScoreRecomputeReason,
+  ): Promise<void> {
+    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(candidateId);
+    if (!defaultResume) return;
+
+    try {
+      await this.db
+        .update(profileScoresTable)
+        .set({ staleAt: new Date() })
+        .where(
+          and(
+            eq(profileScoresTable.candidateId, candidateId),
+            isNull(profileScoresTable.staleAt),
+          ),
+        );
+    } catch (err) {
+      // Don't let a stale-marker write failure roll back the user's profile
+      // edit — the recompute job below will still produce a fresh row, and
+      // the worker treats UPSERT as the source of truth.
+      this.logger.warn(
+        `Failed to mark profile_scores stale for candidate=${candidateId}: ${(err as Error).message}`,
+      );
+    }
+
+    await this.profileScoreQueue.enqueueRecompute({
+      candidateId,
+      resumeId: defaultResume.id,
+      reason,
+    });
   }
 
   private assertCandidate(user: AuthUser): void {
