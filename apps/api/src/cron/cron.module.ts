@@ -9,6 +9,7 @@ import { NotificationsRetentionCron } from "./notifications-retention.cron";
 import { InterviewReminderCron } from "./interview-reminder.cron";
 import { OfferExpiryReminderCron } from "./offer-expiry-reminder.cron";
 import { InterviewFeedbackDueCron } from "./interview-feedback-due.cron";
+import { InterviewAutocompleteCron } from "./interview-autocomplete.cron";
 import { CronAdminController } from "./cron-admin.controller";
 import { NotificationsModule } from "../modules/notifications/notifications.module";
 
@@ -16,24 +17,26 @@ import { NotificationsModule } from "../modules/notifications/notifications.modu
   imports: [ScheduleModule.forRoot(), NotificationsModule],
   controllers: [CronAdminController],
   providers: [
-    ExpireOffersCron,
     ArchivePastDeadlineJobsCron,
     CleanupUnverifiedAccountsCron,
     DigestEmailCron,
-    NotificationsRetentionCron,
-    InterviewReminderCron,
-    OfferExpiryReminderCron,
+    ExpireOffersCron,
+    InterviewAutocompleteCron,
     InterviewFeedbackDueCron,
+    InterviewReminderCron,
+    NotificationsRetentionCron,
+    OfferExpiryReminderCron,
   ],
   exports: [
-    ExpireOffersCron,
     ArchivePastDeadlineJobsCron,
     CleanupUnverifiedAccountsCron,
     DigestEmailCron,
-    NotificationsRetentionCron,
-    InterviewReminderCron,
-    OfferExpiryReminderCron,
+    ExpireOffersCron,
+    InterviewAutocompleteCron,
     InterviewFeedbackDueCron,
+    InterviewReminderCron,
+    NotificationsRetentionCron,
+    OfferExpiryReminderCron,
   ],
 })
 export class CronModule {}
