@@ -50,7 +50,7 @@ export class ScoringController {
     @CurrentUser() user: AuthUser,
     @Req() req: FastifyRequest,
   ): Promise<ProfileScoreEnvelopeDto> {
-    const data = await this.service.computeProfileScore(user, this.requestMeta(req));
+    const data = await this.service.computeProfileScoreForUser(user, this.requestMeta(req));
     return { data };
   }
 

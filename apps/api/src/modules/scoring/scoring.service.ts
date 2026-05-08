@@ -29,6 +29,7 @@ import { JobsRepository } from "../jobs/jobs.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { ResumesRepository } from "../resumes/resumes.repository";
 import { ScoringRepository } from "./scoring.repository";
+import type { ProfileScoreRecomputeReason } from "../../queue/profile-score-queue.service";
 import type {
   ProfileScoreDto,
   ScoreEvidenceDto,
@@ -114,7 +115,17 @@ export class ScoringService {
     @Inject(CACHE_REDIS) private readonly redis: Redis,
   ) {}
 
-  async computeProfileScore(
+  /**
+   * User-facing entry point for `POST /scoring/profile/compute`. Enforces the
+   * candidate role + per-user rate limit, resolves the candidate's current
+   * default resume, and delegates the actual AI run to `computeProfileScore`.
+   *
+   * The queue-driven recompute path (Task 9 processor) calls
+   * `computeProfileScore` directly with an explicit `(candidateId, resumeId)`
+   * pair — system-driven recomputes don't need the user-keyed rate limit
+   * because BullMQ already collapses duplicate jobs by jobId at enqueue time.
+   */
+  async computeProfileScoreForUser(
     user: AuthUser,
     requestMeta: RequestMeta = {},
   ): Promise<ProfileScoreDto> {
@@ -151,14 +162,49 @@ export class ScoringService {
         message: "Upload a resume first",
       });
     }
-    if (defaultResume.parseStatus !== "parsed" || !defaultResume.parsedData) {
+
+    return this.computeProfileScore(user.id, defaultResume.id, {
+      reason: "manual_recompute",
+      requestMeta,
+    });
+  }
+
+  /**
+   * Core Profile Score compute — runs the AI, persists a fresh
+   * `profile_scores` row, writes the audit row, busts the candidate's
+   * profile-score cache. Used by both the user-facing wrapper above and the
+   * queue-driven recompute processor (Task 9).
+   *
+   * `options.reason` is folded into the audit row's `details` so analysts can
+   * distinguish a manual user click from a system-triggered recompute
+   * (resume change / preferences edit / profile edit).
+   */
+  async computeProfileScore(
+    candidateId: string,
+    resumeId: string,
+    options: {
+      reason?: ProfileScoreRecomputeReason;
+      requestMeta?: RequestMeta;
+    } = {},
+  ): Promise<ProfileScoreDto> {
+    const reason: ProfileScoreRecomputeReason = options.reason ?? "manual_recompute";
+    const requestMeta = options.requestMeta ?? {};
+
+    const resume = await this.resumesRepo.findById(resumeId);
+    if (!resume || resume.candidateId !== candidateId) {
+      throw new BadRequestException({
+        code: "RESUME_NOT_FOUND",
+        message: "Resume not found for this candidate",
+      });
+    }
+    if (resume.parseStatus !== "parsed" || !resume.parsedData) {
       throw new BadRequestException({
         code: "RESUME_NOT_PARSED",
         message: "Your resume hasn't been parsed yet. Try re-uploading.",
       });
     }
 
-    const candidateProfile = await this.profilesRepo.findCandidateProfile(user.id);
+    const candidateProfile = await this.profilesRepo.findCandidateProfile(candidateId);
     if (!candidateProfile) {
       throw new BadRequestException({
         code: "PROFILE_INCOMPLETE",
@@ -179,11 +225,11 @@ export class ScoringService {
     const bandThresholds = config.bandThresholds as BandThresholds;
 
     const aiResult = await this.scoreProfile.score({
-      parsedResume: defaultResume.parsedData as unknown as ParsedResume,
+      parsedResume: resume.parsedData as unknown as ParsedResume,
       desiredRole,
       desiredSeniority,
       weights,
-      requestId: `score-profile:${user.id}`,
+      requestId: `score-profile:${candidateId}`,
     });
 
     // Engine-enforced arithmetic: overall = Σ component.score; band derived
@@ -204,8 +250,8 @@ export class ScoringService {
 
     const { profileScore } = await this.scoringRepo.insertProfileScore(
       {
-        candidateId: user.id,
-        resumeId: defaultResume.id,
+        candidateId,
+        resumeId: resume.id,
         overallScore: derivedOverall,
         band: derivedBand,
         components: aiResult.score.components as unknown as Record<string, unknown>,
@@ -222,12 +268,13 @@ export class ScoringService {
     );
 
     await this.audit.log({
-      actorId: user.id,
+      actorId: candidateId,
       actorType: "ai",
       action: "score.profile.computed",
       entityType: "profile_score",
       entityId: profileScore.id,
       details: {
+        reason,
         overallScore: profileScore.overallScore,
         band: profileScore.band,
         model: aiResult.model,
@@ -239,10 +286,10 @@ export class ScoringService {
       ...requestMeta,
     });
 
-    await this.cacheService.bustTag(TAGS.profileScore(user.id));
+    await this.cacheService.bustTag(TAGS.profileScore(candidateId));
 
     this.logger.log(
-      `Profile score computed for ${user.id}: ${profileScore.overallScore}/100 (${profileScore.band})`,
+      `Profile score computed for ${candidateId} (reason=${reason}): ${profileScore.overallScore}/100 (${profileScore.band})`,
     );
 
     return this.toDto(

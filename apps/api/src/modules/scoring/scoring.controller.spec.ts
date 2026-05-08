@@ -32,6 +32,7 @@ describe("ScoringController.computeMatchPreview (POST match-preview/:jobId)", ()
       | "getMatchPreviewByJob"
       | "listMatchPreviewsForCandidate"
       | "computeProfileScore"
+      | "computeProfileScoreForUser"
       | "getProfileScoreMe"
     >
   >;
@@ -43,6 +44,7 @@ describe("ScoringController.computeMatchPreview (POST match-preview/:jobId)", ()
       getMatchPreviewByJob: jest.fn(),
       listMatchPreviewsForCandidate: jest.fn(),
       computeProfileScore: jest.fn(),
+      computeProfileScoreForUser: jest.fn(),
       getProfileScoreMe: jest.fn(),
     } as unknown as typeof service;
 
