@@ -22,6 +22,21 @@ const RECRUITER_EVENTS: NotificationEvent[] = [
     description: "1-hour and 24-hour before scheduled interviews.",
   },
   {
+    key: "interview_rescheduled",
+    label: "Interview rescheduled",
+    description: "Notify me when an interview I own is moved to a new time.",
+  },
+  {
+    key: "interview_record_feedback",
+    label: "Interview feedback required",
+    description: "Remind me to submit feedback after an interview completes.",
+  },
+  {
+    key: "application_withdrawn",
+    label: "Candidate withdrew application",
+    description: "Notify me when a candidate withdraws from a job I own.",
+  },
+  {
     key: "offer_events",
     label: "Offer events",
     description: "Sent, accepted, declined, and expired notifications.",
@@ -43,6 +58,16 @@ const CANDIDATE_EVENTS: NotificationEvent[] = [
     key: "interview_reminders",
     label: "Interview reminders",
     description: "1-hour and 24-hour before scheduled interviews.",
+  },
+  {
+    key: "interview_rescheduled",
+    label: "Interview rescheduled",
+    description: "Notify me when a recruiter moves my interview to a new time.",
+  },
+  {
+    key: "interview_completed",
+    label: "Interview completed",
+    description: "Notify me when an interview I participated in is marked completed.",
   },
   {
     key: "offer_received",
