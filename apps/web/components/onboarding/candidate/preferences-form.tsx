@@ -119,19 +119,14 @@ export function CandidatePreferencesForm({
     setFinishError(null);
     setFinishing(true);
     try {
-      // Flush any pending autosave first.
+      // Flush any pending preferences autosave so the analyzing screen sees a
+      // consistent profile when it calls complete-onboarding. The
+      // complete-onboarding call itself now lives on
+      // /onboarding/candidate/analyzing — that screen owns the inline Profile
+      // Score compute + match-preview streaming UX. Calling it from here
+      // would double-charge the AI.
       await retry();
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-      const res = await fetch(`${apiUrl}/api/v1/candidate-profiles/me/complete-onboarding`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { message?: string } | null;
-        setFinishError(body?.message ?? `Couldn't complete onboarding (${res.status})`);
-        return;
-      }
-      router.push("/candidate");
+      router.push("/onboarding/candidate/analyzing");
     } catch (err) {
       setFinishError((err as Error).message);
     } finally {
@@ -154,7 +149,7 @@ export function CandidatePreferencesForm({
     <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
       <div className="flex flex-col gap-1">
         <label htmlFor="desiredRoles" className="text-xs font-semibold text-[var(--color-ink)]">
-          Desired Roles <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+          Desired Roles
         </label>
         <textarea
           id="desiredRoles"
@@ -171,7 +166,7 @@ export function CandidatePreferencesForm({
           htmlFor="desiredSeniority"
           className="text-xs font-semibold text-[var(--color-ink)]"
         >
-          Seniority <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+          Seniority
         </label>
         <Select
           value={watch("desiredSeniority") || undefined}
@@ -195,7 +190,7 @@ export function CandidatePreferencesForm({
 
       <div>
         <div className="text-xs font-semibold text-[var(--color-ink)]">
-          Open To <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+          Open To
         </div>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {WORK_MODES.map((mode) => (
@@ -217,7 +212,7 @@ export function CandidatePreferencesForm({
             htmlFor="desiredSalaryMin"
             className="text-xs font-semibold text-[var(--color-ink)]"
           >
-            Salary Min <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+            Salary Min
           </label>
           <input
             id="desiredSalaryMin"
@@ -231,7 +226,7 @@ export function CandidatePreferencesForm({
             htmlFor="desiredSalaryMax"
             className="text-xs font-semibold text-[var(--color-ink)]"
           >
-            Salary Max <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+            Salary Max
           </label>
           <input
             id="desiredSalaryMax"
@@ -245,7 +240,7 @@ export function CandidatePreferencesForm({
             htmlFor="desiredCurrency"
             className="text-xs font-semibold text-[var(--color-ink)]"
           >
-            Currency <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+            Currency
           </label>
           <input
             id="desiredCurrency"
@@ -261,7 +256,7 @@ export function CandidatePreferencesForm({
           htmlFor="availableStartDate"
           className="text-xs font-semibold text-[var(--color-ink)]"
         >
-          Available Start Date <span className="font-normal text-[var(--color-muted)]">(Optional)</span>
+          Available Start Date
         </label>
         <input
           id="availableStartDate"

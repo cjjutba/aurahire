@@ -1,0 +1,292 @@
+"use client";
+
+import { useEffect, useReducer, useRef } from "react";
+import { useRouter } from "next/navigation";
+
+import { ANALYZING_SCREEN_WALLCLOCK_MS } from "@aurahire/shared";
+
+import { AiShimmer } from "@/components/ai/ai-shimmer";
+import { ScoreRing } from "@/components/score/score-ring";
+import { clientApiFetch } from "@/hooks/_client-fetch";
+import { useCandidateRealtime } from "@/lib/realtime/use-candidate-realtime";
+
+/**
+ * Score band the analyzing screen needs to render the Score Ring. Mirrors
+ * `ProfileScoreDtoBand` from the generated client; we pin it locally so this
+ * file does not need to plumb the full DTO through.
+ */
+type ScoreBand = "strong" | "partial" | "limited";
+
+/**
+ * Just-enough shape of the Profile Score for this screen — the full DTO
+ * (improvement suggestions, redacted fields, prompt version, …) is not used
+ * here. Capturing only what the UI renders keeps the reducer pure and the
+ * tests small.
+ */
+export interface AnalyzingProfileScore {
+  overallScore: number;
+  band: ScoreBand;
+}
+
+/**
+ * State machine driving the screen. Each `kind` maps 1:1 to a UI variant; the
+ * reducer is the only place transitions happen so they can be unit tested.
+ */
+export type AnalyzingState =
+  | { kind: "computingProfileScore" }
+  | { kind: "profileScoreReady"; score: AnalyzingProfileScore; readyAt: number }
+  | {
+      kind: "streamingPreviews";
+      score: AnalyzingProfileScore;
+      readyAt: number;
+      previewCount: number;
+    }
+  | { kind: "profileScoreDegraded" }
+  | { kind: "error"; message: string }
+  | { kind: "redirecting" };
+
+export type AnalyzingAction =
+  | { type: "PROFILE_SCORE_OK"; score: AnalyzingProfileScore; now: number }
+  | { type: "PROFILE_SCORE_DEGRADED" }
+  | { type: "PROFILE_SCORE_ERROR"; message: string }
+  | { type: "PREVIEW_TICK" }
+  | { type: "REDIRECT" };
+
+/**
+ * Reducer. Pure — receives `now` from the dispatcher rather than calling
+ * `Date.now()` inside, so the wall-clock cap is testable without faking time.
+ */
+export function analyzingReducer(
+  state: AnalyzingState,
+  action: AnalyzingAction,
+): AnalyzingState {
+  switch (action.type) {
+    case "PROFILE_SCORE_OK":
+      // Only honour the success transition from the initial "computing" state;
+      // late-arriving responses after a degraded/error fork would otherwise
+      // resurrect the happy path on top of an already-rendered failure UI.
+      if (state.kind !== "computingProfileScore") return state;
+      return { kind: "profileScoreReady", score: action.score, readyAt: action.now };
+    case "PROFILE_SCORE_DEGRADED":
+      if (state.kind !== "computingProfileScore") return state;
+      return { kind: "profileScoreDegraded" };
+    case "PROFILE_SCORE_ERROR":
+      if (state.kind !== "computingProfileScore") return state;
+      return { kind: "error", message: action.message };
+    case "PREVIEW_TICK":
+      if (state.kind === "profileScoreReady") {
+        return {
+          kind: "streamingPreviews",
+          score: state.score,
+          readyAt: state.readyAt,
+          previewCount: 1,
+        };
+      }
+      if (state.kind === "streamingPreviews") {
+        return { ...state, previewCount: state.previewCount + 1 };
+      }
+      // Match-preview events that arrive before the score is ready are
+      // silently dropped — the wall-clock cap will still fire when the
+      // score arrives.
+      return state;
+    case "REDIRECT":
+      return { kind: "redirecting" };
+    default:
+      return state;
+  }
+}
+
+/**
+ * Wire shape of `PATCH /candidate-profiles/me/complete-onboarding`. The
+ * backend returns the full Profile Score DTO; we keep our local view narrow
+ * to avoid coupling the screen to fields it does not display.
+ */
+interface CompleteOnboardingResponseData {
+  profileCompleted: boolean;
+  profileScore: { overallScore: number; band: ScoreBand } | null;
+  precomputeJobId: string;
+  errors?: { profileScore?: "transient" | "missing_resume" };
+}
+
+interface AnalyzingClientProps {
+  candidateId: string;
+}
+
+/**
+ * Client owner of the analyzing screen. Responsibilities:
+ *
+ *  1. Fire the inline-score API call exactly once on mount.
+ *  2. Subscribe to `match-preview.created` events for this candidate via
+ *     `useCandidateRealtime`, ticking the reducer for each new event.
+ *  3. Cap the streaming state at the lower of (5 previews | wall-clock) so
+ *     onboarding never blocks indefinitely.
+ *  4. Honour the degraded path (score is null) and the network-error path
+ *     with distinct UI affordances.
+ */
+export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
+  const [state, dispatch] = useReducer(analyzingReducer, {
+    kind: "computingProfileScore",
+  });
+  const router = useRouter();
+  const { matchPreviewCount } = useCandidateRealtime(candidateId);
+
+  // React 18+ Strict Mode double-invokes effects; the API call must only fire
+  // once. A ref outside React state survives the second mount cleanly.
+  const fired = useRef(false);
+  // Tracks how many match-preview events we've already counted into the
+  // reducer so a re-render doesn't double-tick.
+  const lastSeenCount = useRef(0);
+
+  // 1. Kick off the API call once on mount.
+  useEffect(() => {
+    if (fired.current) return;
+    fired.current = true;
+
+    void (async () => {
+      try {
+        const envelope = await clientApiFetch<{ data: CompleteOnboardingResponseData }>(
+          "/api/v1/candidate-profiles/me/complete-onboarding",
+          { method: "PATCH" },
+        );
+        const data = envelope.data;
+        if (data.profileScore) {
+          dispatch({
+            type: "PROFILE_SCORE_OK",
+            score: {
+              overallScore: data.profileScore.overallScore,
+              band: data.profileScore.band,
+            },
+            now: Date.now(),
+          });
+        } else {
+          dispatch({ type: "PROFILE_SCORE_DEGRADED" });
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Something went wrong";
+        dispatch({ type: "PROFILE_SCORE_ERROR", message });
+      }
+    })();
+  }, []);
+
+  // 2. Tick the reducer whenever a new match-preview event arrives.
+  useEffect(() => {
+    if (matchPreviewCount > lastSeenCount.current) {
+      lastSeenCount.current = matchPreviewCount;
+      dispatch({ type: "PREVIEW_TICK" });
+    }
+  }, [matchPreviewCount]);
+
+  // 3. Wall-clock cap on the streaming/ready states. We schedule a single
+  //    timer; the cleanup tears it down if the state changes (e.g. another
+  //    preview arrives) so we don't pile up redirect timers.
+  useEffect(() => {
+    if (state.kind !== "profileScoreReady" && state.kind !== "streamingPreviews") {
+      return;
+    }
+    if (state.kind === "streamingPreviews" && state.previewCount >= 5) {
+      dispatch({ type: "REDIRECT" });
+      return;
+    }
+    const remaining = ANALYZING_SCREEN_WALLCLOCK_MS - (Date.now() - state.readyAt);
+    if (remaining <= 0) {
+      dispatch({ type: "REDIRECT" });
+      return;
+    }
+    const t = setTimeout(() => dispatch({ type: "REDIRECT" }), remaining);
+    return () => clearTimeout(t);
+  }, [state]);
+
+  // 4. Degraded path — short pause so the candidate registers the message,
+  //    then redirect with a query param the dashboard can pick up to nudge
+  //    a retry.
+  useEffect(() => {
+    if (state.kind !== "profileScoreDegraded") return;
+    const t = setTimeout(() => router.push("/candidate?profileScoreRetry=1"), 2000);
+    return () => clearTimeout(t);
+  }, [state, router]);
+
+  // 5. Final redirect. Kept as a dedicated effect so the "redirecting" frame
+  //    is briefly visible — the transition feels intentional rather than
+  //    abrupt.
+  useEffect(() => {
+    if (state.kind === "redirecting") router.push("/candidate");
+  }, [state, router]);
+
+  return (
+    <section className="flex flex-1 items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md space-y-6 rounded-[var(--radius-xl)] border border-[var(--color-hairline-soft)] bg-[var(--color-canvas)] p-8 text-center">
+        {state.kind === "computingProfileScore" && (
+          <div aria-live="polite" className="space-y-4">
+            <AiShimmer
+              caption="Computing your Profile Score…"
+              height={120}
+            />
+          </div>
+        )}
+
+        {state.kind === "profileScoreReady" && (
+          <div aria-live="polite" className="flex flex-col items-center gap-4">
+            <ScoreRing
+              score={state.score.overallScore}
+              band={state.score.band}
+              size="md"
+            />
+            <p className="text-sm text-[var(--color-body)]">
+              <span aria-hidden="true">✓ </span>
+              Profile Score ready. Finding your top matches…
+            </p>
+          </div>
+        )}
+
+        {state.kind === "streamingPreviews" && (
+          <div aria-live="polite" className="flex flex-col items-center gap-4">
+            <ScoreRing
+              score={state.score.overallScore}
+              band={state.score.band}
+              size="md"
+            />
+            <p className="text-sm text-[var(--color-body)]">
+              <span style={{ fontFamily: "var(--font-mono)" }}>
+                {state.previewCount}
+              </span>{" "}
+              of <span style={{ fontFamily: "var(--font-mono)" }}>5</span> matches ready
+            </p>
+          </div>
+        )}
+
+        {state.kind === "profileScoreDegraded" && (
+          <p
+            aria-live="polite"
+            className="text-sm text-[var(--color-body)]"
+          >
+            We&rsquo;re still working on your score — taking you to your dashboard now.
+          </p>
+        )}
+
+        {state.kind === "redirecting" && (
+          <p
+            aria-live="polite"
+            className="text-sm text-[var(--color-muted)]"
+          >
+            Taking you to your dashboard…
+          </p>
+        )}
+
+        {state.kind === "error" && (
+          <div role="alert" className="space-y-4">
+            <p className="text-sm text-[var(--color-status-danger)]">{state.message}</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") window.location.reload();
+              }}
+              className="inline-flex items-center justify-center rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
