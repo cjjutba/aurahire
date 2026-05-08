@@ -1,11 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import type { JobStatus } from "@aurahire/shared";
 
 import { JobCard } from "@/components/jobs/job-card";
 import type { CandidateJobsListParams } from "@/lib/query";
 import { useCandidateJobsQuery } from "@/hooks/use-candidate-jobs";
+import { useMyMatchPreviewsQuery } from "@/hooks/use-match-previews";
 
 import { CandidateJobsToolbarClient } from "./_jobs-toolbar-client";
 import { CandidateJobsPagination } from "./_jobs-pagination";
@@ -36,6 +38,19 @@ export function CandidateJobsListClient({
   appliedJobMap = {},
 }: CandidateJobsListClientProps) {
   const { data, isLoading, isError } = useCandidateJobsQuery(params);
+
+  const previews = useMyMatchPreviewsQuery();
+
+  const previewsByJobId = useMemo(() => {
+    const map = new Map<
+      string,
+      { overallScore: number; band: "strong" | "partial" | "limited" }
+    >();
+    for (const p of previews.data?.data ?? []) {
+      map.set(p.jobId, { overallScore: p.overallScore, band: p.band });
+    }
+    return map;
+  }, [previews.data]);
 
   if (isError) {
     return (
@@ -92,6 +107,8 @@ export function CandidateJobsListClient({
                 job={job}
                 href={`/candidate/jobs/${job.id}`}
                 applied={!!appliedJobMap[job.id]}
+                matchPreview={previewsByJobId.get(job.id)}
+                matchPreviewLoading={previews.isLoading}
               />
             ))}
           </div>
