@@ -148,6 +148,12 @@ export const NOTIFICATION_EVENT_TYPE = [
   "system_moderation_queue_item",
   // Interviews (candidate-facing)
   "interview_feedback_shared",
+  "interview_rescheduled",
+  "interview_completed",
+  // Interviews (recruiter-facing)
+  "interview_record_feedback",
+  // Applications (recruiter-facing)
+  "application_withdrawn",
   // Security (always-instant, not user-toggleable)
   "account_password_reset",
   "account_email_verified",

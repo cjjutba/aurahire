@@ -192,6 +192,73 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
     ),
     iconName: "MessageSquare",
   },
+  interview_rescheduled: {
+    buildTitle: (md) => `Interview rescheduled — ${m(md, "jobTitle", "your role")}`,
+    buildBody: (md) =>
+      `Your interview has been rescheduled to ${m(md, "newStartTime", "a new time")}.`,
+    buildLink: (_role, md) => `/candidate/interviews/${m(md, "interviewId", "")}`,
+    emailSubject: (md) => `Interview rescheduled: ${m(md, "jobTitle", "your role")}`,
+    EmailComponent: buildPersonalEmail(
+      (md) => `Interview rescheduled`,
+      (md) =>
+        `Your ${m(md, "jobTitle", "upcoming")} interview has been rescheduled to ${m(md, "newStartTime", "a new time")}.`,
+      () => "View interview",
+      (_role, md) => `/candidate/interviews/${m(md, "interviewId", "")}`,
+    ),
+    iconName: "CalendarClock",
+  },
+  interview_completed: {
+    buildTitle: (md) => `Interview completed — ${m(md, "jobTitle", "your role")}`,
+    buildBody: (md) =>
+      `Your interview for ${m(md, "jobTitle", "this role")} at ${m(md, "companyName", "the company")} has been completed.`,
+    buildLink: (_role, md) => `/candidate/interviews/${m(md, "interviewId", "")}`,
+    // In-app only — email not sent for this event.
+    emailSubject: (md) => `Interview completed: ${m(md, "jobTitle", "your role")}`,
+    EmailComponent: buildPersonalEmail(
+      (md) => `Interview completed`,
+      (md) =>
+        `Your interview for ${m(md, "jobTitle", "this role")} has been marked as completed.`,
+      () => "View interview",
+      (_role, md) => `/candidate/interviews/${m(md, "interviewId", "")}`,
+    ),
+    iconName: "CheckCircle",
+  },
+  interview_record_feedback: {
+    buildTitle: (md) =>
+      `Record feedback — ${m(md, "candidateName", "candidate")}`,
+    buildBody: (md) =>
+      `Submit your feedback for ${m(md, "candidateName", "the candidate")} (${m(md, "jobTitle", "this role")}).`,
+    buildLink: (_role, md) => `/recruiter/interviews/${m(md, "interviewId", "")}`,
+    // In-app only — email not sent for this event.
+    emailSubject: (md) =>
+      `Feedback required: ${m(md, "candidateName", "candidate")} — ${m(md, "jobTitle", "this role")}`,
+    EmailComponent: buildPersonalEmail(
+      (md) => `Record interview feedback`,
+      (md) =>
+        `Please submit feedback for ${m(md, "candidateName", "the candidate")} — ${m(md, "jobTitle", "this role")}.`,
+      () => "Submit feedback",
+      (_role, md) => `/recruiter/interviews/${m(md, "interviewId", "")}`,
+    ),
+    iconName: "ClipboardEdit",
+  },
+  application_withdrawn: {
+    buildTitle: (md) => `${m(md, "candidateName", "A candidate")} withdrew`,
+    buildBody: (md) =>
+      `Withdrew from ${m(md, "jobTitle", "your role")}.`,
+    buildLink: (_role, md) =>
+      `/recruiter/applications/${m(md, "applicationId", "")}`,
+    // In-app only — email not sent for this event.
+    emailSubject: (md) =>
+      `${m(md, "candidateName", "A candidate")} withdrew — ${m(md, "jobTitle", "your role")}`,
+    EmailComponent: buildPersonalEmail(
+      (md) => `${m(md, "candidateName", "A candidate")} withdrew`,
+      (md) =>
+        `${m(md, "candidateName", "A candidate")} withdrew their application for ${m(md, "jobTitle", "your role")}.`,
+      () => "View application",
+      (_role, md) => `/recruiter/applications/${m(md, "applicationId", "")}`,
+    ),
+    iconName: "UserMinus",
+  },
   interview_feedback_due: {
     buildTitle: () => `Interview feedback due`,
     buildBody: (md) =>

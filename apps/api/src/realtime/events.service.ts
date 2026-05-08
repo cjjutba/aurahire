@@ -8,6 +8,7 @@ import {
   type ApplicationWithdrawnPayload,
   type AuditEntryPayload,
   type BiasFlagCreatedPayload,
+  type InterviewCompletedPayload,
   type InterviewFeedbackSharedPayload,
   type InterviewRescheduledPayload,
   type InterviewScheduledPayload,
@@ -105,6 +106,18 @@ export class EventsService {
       RealtimeEvent.InterviewRescheduled,
       payload,
       [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
+    );
+  }
+
+  emitInterviewCompleted(payload: InterviewCompletedPayload): void {
+    this.broadcast(
+      RealtimeEvent.InterviewCompleted,
+      payload,
+      [
+        Rooms.user(payload.candidateId),
+        Rooms.recruiter(payload.recruiterId),
+        Rooms.job(payload.jobId),
+      ],
     );
   }
 
