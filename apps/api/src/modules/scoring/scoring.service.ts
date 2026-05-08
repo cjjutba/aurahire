@@ -181,6 +181,15 @@ export function reconcileEvidenceContributions<
 }
 
 /**
+ * Closed set of audit-log identifiers for calibration warnings.
+ * Tasks 12-14 read this union exhaustively from the bias-monitor
+ * aggregator; widening here is a deliberate vocabulary change.
+ */
+export type CalibrationWarningReason =
+  | "ceiling_with_thin_evidence"
+  | "deduction_without_negative_evidence";
+
+/**
  * Surface known model-misbehavior patterns as advisory warnings.
  * Warnings do NOT auto-adjust the score — they're written to the audit
  * row's `details.calibration_warnings` array and aggregated in
@@ -204,8 +213,8 @@ export function detectCalibrationWarnings<C extends {
     relevance: "positive" | "negative" | "neutral";
     contribution_points: number;
   }>;
-}>(component: C): Array<{ componentName: string; reason: string }> {
-  const warnings: Array<{ componentName: string; reason: string }> = [];
+}>(component: C): Array<{ componentName: string; reason: CalibrationWarningReason }> {
+  const warnings: Array<{ componentName: string; reason: CalibrationWarningReason }> = [];
 
   if (component.score === component.max) {
     const positives = component.evidence.filter((e) => e.relevance === "positive");
