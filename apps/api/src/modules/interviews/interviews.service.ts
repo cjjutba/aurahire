@@ -322,6 +322,57 @@ export class InterviewsService {
     return this.toDto(updated);
   }
 
+  async markNoShow(
+    user: AuthUser,
+    companyId: string,
+    interviewId: string,
+    requestMeta: RequestMeta = {},
+  ): Promise<InterviewDto> {
+    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
+
+    if (!["scheduled", "completed"].includes(interview.status)) {
+      throw new BadRequestException({
+        code: "INVALID_STATUS_TRANSITION",
+        message: `Cannot mark no-show from ${interview.status}`,
+      });
+    }
+
+    const updated = await this.repo.update(interviewId, { status: "no-show" });
+
+    await this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: AUDIT_ACTIONS.INTERVIEW_NO_SHOW_MARKED,
+      entityType: "interview",
+      entityId: interviewId,
+      companyId,
+      details: {
+        from: interview.status,
+        applicationId: interview.applicationId,
+      },
+      ...requestMeta,
+    });
+
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (app) {
+      await this.cacheService.bustTags([
+        TAGS.companyInterviews(companyId),
+        TAGS.interviewsCandidate(app.candidateId),
+      ]);
+      this.events.emitInterviewStatusChanged({
+        interviewId,
+        applicationId: interview.applicationId,
+        recruiterId: user.id,
+        candidateId: app.candidateId,
+        previousStatus: interview.status as InterviewStatus,
+        status: "no-show",
+        changedAt: new Date().toISOString(),
+      });
+    }
+
+    return this.toDto(updated);
+  }
+
   async updateStatus(
     user: AuthUser,
     companyId: string,

@@ -199,6 +199,26 @@ export class InterviewsController {
     return { data };
   }
 
+  @Patch("interviews/:id/no-show")
+  @Roles("recruiter")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Mark interview as no-show (only valid from scheduled or completed)" })
+  @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
+  async markNoShow(
+    @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
+    @Param("id") id: string,
+    @Req() req: FastifyRequest,
+  ): Promise<InterviewEnvelopeDto> {
+    const data = await this.service.markNoShow(
+      user,
+      activeCompany.companyId,
+      id,
+      this.requestMeta(req),
+    );
+    return { data };
+  }
+
   @Patch("interviews/:id/status")
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
