@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MapPin, Briefcase, Building2, Check } from "lucide-react";
 import type { JobStatus } from "@aurahire/shared";
 import { JobStatusChip } from "./job-status-chip";
+import { MatchBandChip } from "@/components/score/match-band-chip";
 
 /**
  * Map a numeric match score (0–100) to the CSS variables used to render the
@@ -50,9 +51,26 @@ interface JobCardProps {
   href: string;
   showStatus?: boolean;
   applied?: boolean;
+  /** Precomputed match preview for this candidate against this job. */
+  matchPreview?: {
+    overallScore: number;
+    band: "strong" | "partial" | "limited";
+  };
+  /**
+   * When true and `matchPreview` is absent, the score row renders a thin
+   * skeleton bar so the card height stays stable while previews resolve.
+   */
+  matchPreviewLoading?: boolean;
 }
 
-export function JobCard({ job, href, showStatus, applied }: JobCardProps) {
+export function JobCard({
+  job,
+  href,
+  showStatus,
+  applied,
+  matchPreview,
+  matchPreviewLoading,
+}: JobCardProps) {
   const location = [job.locationCity, job.locationCountry].filter(Boolean).join(", ");
   const hasSalary = job.salaryMin !== null && job.salaryMax !== null;
 
@@ -114,6 +132,36 @@ export function JobCard({ job, href, showStatus, applied }: JobCardProps) {
           {job.workMode}
         </span>
       </div>
+
+      {/* Match score row — only on candidate-facing usage that passes matchPreview */}
+      {matchPreview ? (
+        <div className="flex items-center gap-3">
+          <MatchBandChip band={matchPreview.band} />
+          <div
+            className="h-1.5 flex-1 overflow-hidden rounded-[var(--radius-pill)]"
+            style={{ backgroundColor: matchScoreColors(matchPreview.overallScore).track }}
+          >
+            <div
+              data-testid="job-card-match-fill"
+              className="h-full rounded-[var(--radius-pill)]"
+              style={{
+                width: `${matchPreview.overallScore}%`,
+                backgroundColor: matchScoreColors(matchPreview.overallScore).fill,
+              }}
+            />
+          </div>
+          <span className="font-mono text-xs text-[var(--color-ink)]">
+            {matchPreview.overallScore}
+            <span className="text-[var(--color-muted)]"> / 100</span>
+          </span>
+        </div>
+      ) : matchPreviewLoading ? (
+        <div
+          data-testid="job-card-match-skeleton"
+          aria-hidden
+          className="h-1.5 w-full animate-pulse rounded-[var(--radius-pill)] bg-[var(--color-surface-soft)]"
+        />
+      ) : null}
 
       {/* Footer: location + salary */}
       <div className="mt-auto space-y-1.5 border-t border-[var(--color-hairline-soft)] pt-4 text-xs">
