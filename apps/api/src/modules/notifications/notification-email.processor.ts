@@ -50,7 +50,7 @@ export class NotificationEmailProcessor extends WorkerHost {
 
     const role = profile.role as "candidate" | "recruiter" | "admin";
     const tpl = TEMPLATES[row.eventType];
-    const appOrigin = this.config.get<string>("APP_ORIGIN") ?? "http://localhost:3000";
+    const appOrigin = this.config.get<string>("APP_URL") ?? "http://localhost:3000";
     const Component = tpl.EmailComponent;
     const element = React.createElement(Component, {
       metadata: row.metadata ?? {},
@@ -90,7 +90,7 @@ export class NotificationEmailProcessor extends WorkerHost {
     }
 
     const role = profile.role as "candidate" | "recruiter" | "admin";
-    const appOrigin = this.config.get<string>("APP_ORIGIN") ?? "http://localhost:3000";
+    const appOrigin = this.config.get<string>("APP_URL") ?? "http://localhost:3000";
     const element = React.createElement(DigestEmail, {
       rows: validRows,
       appOrigin,

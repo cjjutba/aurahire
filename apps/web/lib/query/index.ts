@@ -5,6 +5,7 @@ export type {
   RecruiterShortlistParams,
   RecruiterInterviewsParams,
   RecruiterApplicationsByJobParams,
+  RecruiterApplicationsListParams,
   CandidateJobsListParams,
   CandidateApplicationsParams,
   CandidateInterviewsParams,

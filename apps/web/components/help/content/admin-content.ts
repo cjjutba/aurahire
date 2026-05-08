@@ -488,7 +488,7 @@ export const adminHelp: HelpPageContent = {
                 {
                   label: "Backend",
                   description:
-                    "NestJS on Railway. Owns DB writes, AI calls, queue jobs, and cron.",
+                    "NestJS on a Digital Ocean Droplet (PM2). Owns DB writes, AI calls, queue jobs, and cron.",
                 },
                 {
                   label: "Database",
@@ -503,7 +503,7 @@ export const adminHelp: HelpPageContent = {
                 {
                   label: "Queue",
                   description:
-                    "BullMQ on Upstash / Railway Redis. Resume parsing, scoring, email sends, and exports run as jobs.",
+                    "BullMQ on the Droplet's Redis (Docker container, localhost-bound). Resume parsing, scoring, email sends, and exports run as jobs.",
                 },
                 {
                   label: "Cron",
@@ -713,8 +713,8 @@ export const adminHelp: HelpPageContent = {
   ],
   contact: {
     title: "Need to escalate?",
-    body: "Email the on-call line for incidents (24/7) or the standard support inbox for questions. Include workspace IDs and audit IDs whenever possible.",
-    email: "oncall@aurahire.app",
+    body: "Email the AuraHire team for incidents or platform-admin questions. Include workspace IDs and audit IDs whenever possible.",
+    email: "hello@aurahire.site",
     secondaryLink: { label: "Open the admin command center", href: "/admin" },
   },
 };

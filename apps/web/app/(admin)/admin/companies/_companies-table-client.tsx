@@ -111,39 +111,36 @@ export function CompaniesTableClient({ rows }: Props) {
   return (
     <>
       <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)]">
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-soft)]">
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                 Company
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                 Owner
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                 Members
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                 Jobs
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                 Created
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                 Status
               </th>
               <th className="w-10 px-2 py-3" />
             </tr>
           </thead>
-          <tbody>
-            {rows.map((row, idx) => {
-              const isLast = idx === rows.length - 1;
+          <tbody className="divide-y divide-[var(--color-hairline-soft)]">
+            {rows.map((row) => {
               return (
                 <tr
                   key={row.id}
-                  className={`border-b border-[var(--color-hairline-soft)] hover:bg-[var(--color-surface-soft)] ${
-                    isLast ? "border-b-0" : ""
-                  }`}
+                  className="transition hover:bg-[var(--color-surface-soft)]"
                 >
                   {/* Company */}
                   <td className="px-4 py-3">
@@ -212,13 +209,14 @@ export function CompaniesTableClient({ rows }: Props) {
                   {/* Status */}
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-hairline-soft)] bg-[var(--color-surface-soft)] px-2.5 py-1 text-xs font-medium ${
+                      className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${
                         row.status === "active"
                           ? "text-[var(--color-status-success)]"
                           : "text-[var(--color-status-warning)]"
                       }`}
                     >
                       <span
+                        aria-hidden
                         className={`h-1.5 w-1.5 rounded-full ${
                           row.status === "active"
                             ? "bg-[var(--color-status-success)]"

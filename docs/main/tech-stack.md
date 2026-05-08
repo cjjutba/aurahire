@@ -33,7 +33,7 @@ This document is the single source of truth for every dependency in AuraHire. Ve
 | **Database** | Supabase Postgres |
 | **Auth** | Supabase Auth (frontend SDK) |
 | **Object Storage** | Supabase Storage |
-| **Cache + Queue store** | Upstash Redis (or Railway Redis addon) |
+| **Cache + Queue store** | Redis 7 (Docker container on the production Droplet) |
 | **Email — dev** | Mailpit (SMTP catcher) + Nodemailer |
 | **Email — prod** | Resend |
 | **Email templates** | React Email (rendered to HTML, sent via either transport) |
@@ -44,7 +44,7 @@ This document is the single source of truth for every dependency in AuraHire. Ve
 | **Rich text editor** | Tiptap |
 | **Dates** | date-fns |
 | **Hosting — frontend** | Vercel |
-| **Hosting — backend** | Railway |
+| **Hosting — backend** | Digital Ocean Droplet (Ubuntu, PM2-managed Node + Docker for Redis/Mailpit, Caddy reverse proxy) |
 
 ---
 
@@ -174,7 +174,7 @@ Recommendation: **orval** for sprint speed. Generated to `packages/shared/api-cl
 
 ### `nestjs-pino` + Pino
 - **Role:** Structured logging.
-- **Why:** Fast, JSON-formatted, production-ready, integrates with Vercel/Railway log streams.
+- **Why:** Fast, JSON-formatted, production-ready. On the Droplet, Pino's stdout is captured by PM2's log files; Vercel ingests Pino lines from the frontend.
 
 ### `helmet`
 - **Role:** Security HTTP headers.
@@ -237,8 +237,7 @@ Backend imports query helpers AND types. Frontend imports types only (where shar
 - **Queue store** for BullMQ
 - **Rate limit store** for `@nestjs/throttler`
 - **Local dev:** Redis 7-alpine container managed via `docker-compose.dev.yml` (`localhost:6379`, persistent volume, 256MB LRU eviction). The human starts/stops via `docker compose`.
-- **Production:** Railway Redis addon — same network as `apps/api`, zero latency, auto-injected `REDIS_URL`.
-- **Alternative for prod:** Upstash Redis if backend moves off Railway. Free tier ~10K commands/day.
+- **Production:** Redis 7-alpine container on the Digital Ocean Droplet via `deploy/docker-compose.prod.yml` — bound to `127.0.0.1:6379` (never exposed to the public internet), password-protected via `REDIS_PASSWORD`, AOF persistence on, `noeviction` policy (BullMQ requires queued jobs not be silently dropped under memory pressure), 512MB max memory. NestJS API runs as a PM2 process on the same host and connects via `redis://:${REDIS_PASSWORD}@127.0.0.1:6379`.
 
 ### OpenAI
 - **Model:** `gpt-4o-mini`
@@ -265,12 +264,15 @@ Backend imports query helpers AND types. Frontend imports types only (where shar
 - **Preview URLs** per commit
 - **Env vars** managed in Vercel dashboard
 
-### Railway (Backend + Redis)
-- **Hobby tier** ($5 trial then pay-as-you-go; very low cost at thesis scale)
-- **Auto-deploy** from `main` branch
-- **Postgres addon** — not used (we use Supabase)
-- **Redis addon** — used for BullMQ + cache + rate limit
-- **Health checks** on `/api/health`
+### Digital Ocean Droplet (Backend + Redis + Mailpit)
+- **Tier:** Basic Droplet (Ubuntu 22.04 LTS), 2 vCPU / 2GB RAM tier is sufficient for thesis-scale traffic.
+- **NestJS API:** runs directly on the host as a Node 20 process under **PM2** (auto-restart, log files in `/home/deploy/.pm2/logs/`). Built from `apps/api/Dockerfile`'s same source via `pnpm --filter @aurahire/api build`; the human pulls + builds + `pm2 reload aurahire-api`.
+- **Redis + Mailpit:** Docker containers on the same host via `deploy/docker-compose.prod.yml`. Both bind to `127.0.0.1` only — never reachable from the public internet. The API connects via localhost.
+- **Reverse proxy:** **Caddy** terminates TLS on `0.0.0.0:80/443` (auto-renews Let's Encrypt) and proxies to `127.0.0.1:3333` (NestJS). Caddy is the only thing exposed publicly.
+- **DNS:** A-record points `api.<your-domain>` at the Droplet's public IPv4.
+- **Postgres:** not on the Droplet (we use Supabase Cloud).
+- **Health checks:** `/api/health` is monitored by Caddy / external uptime check; PM2 watches the Node process.
+- **Why this shape (not App Platform / Kubernetes):** explicit, demo-defensible infrastructure for a thesis — every moving part visible and editable; no PaaS magic to explain to a panel.
 
 ### Supabase Cloud
 - DB, Auth, Storage all managed by Supabase. No self-hosting.
@@ -419,7 +421,7 @@ Pin **major versions** in `package.json` (`^16.2.4`, `^10.4.0`). After sprint co
 ## Known Gaps
 
 - **No background AI scoring queue used during demo** — match scores compute inline (better demo UX). Queue exists for batch re-score and weekly digests only.
-- **No observability stack** (Sentry, Datadog) in sprint. Pino logs streamed to Vercel + Railway log views suffice.
-- **No CI/CD beyond Vercel + Railway auto-deploy** in sprint. Phase 2 adds GitHub Actions.
+- **No observability stack** (Sentry, Datadog) in sprint. Pino logs go to Vercel (frontend) and PM2 log files on the Droplet (backend); the human tails them via SSH.
+- **No CI/CD beyond Vercel auto-deploy + manual `git pull && pnpm build && pm2 reload` on the Droplet** in sprint. Phase 2 adds GitHub Actions to build the API container and deploy via `doctl`/SSH.
 - **No test framework** in sprint (Vitest + Playwright = Phase 2).
 - **No Storybook** — component documentation lives in `ui-patterns.md`.

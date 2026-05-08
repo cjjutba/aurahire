@@ -2121,10 +2121,11 @@ Read `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx`. Add the same im
 
   useRealtimeChannel(RealtimeEvent.ApplicationCreated, invalidateDashboard);
   useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, invalidateDashboard);
-  useRealtimeChannel(RealtimeEvent.BiasFlagCreated, invalidateDashboard);
 ```
 
 (The `["recruiter-dashboard"]` prefix invalidates `stats`, `analytics`, and `recent` together since all three keys share the prefix.)
+
+**Note:** an earlier draft of this plan also wired `RealtimeEvent.BiasFlagCreated` here. That was incorrect — `EventsService.emitBiasFlagCreated` broadcasts only to `Rooms.roleAdmin()` (see Phase 1 Task 5), so recruiters never receive that event. Subscribing to it on the recruiter dashboard would be dead code. If a future requirement is "recruiter sees their own jobs' bias flags live," the gateway-side change is to add `Rooms.recruiter(<owningRecruiter>)` as an additional target room in `emitBiasFlagCreated`, not to add the listener here.
 
 - [ ] **Step 4: Type-check**
 

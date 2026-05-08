@@ -1,7 +1,7 @@
 // apps/web/components/onboarding/candidate/resume-upload-card.tsx
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadCloud } from "lucide-react";
 import { ParsingProgressCard } from "./parsing-progress-card";
@@ -30,6 +30,11 @@ export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false 
     () => router.push("/onboarding/candidate/personal"),
     [router],
   );
+  // Warm the Step 2 route as soon as Step 1 mounts so the auto-advance after
+  // upload doesn't pay the JS-bundle cost on top of the server data fetch.
+  useEffect(() => {
+    router.prefetch("/onboarding/candidate/personal");
+  }, [router]);
   const [error, setError] = useState<string | null>(null);
 
   // Initial stage based on existing resume row, unless forceIdle overrides.

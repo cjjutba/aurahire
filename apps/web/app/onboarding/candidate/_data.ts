@@ -41,8 +41,10 @@ export async function fetchLatestParsedResume(): Promise<LatestParsedResume | nu
   if (!session) return null;
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+  const headers = { Authorization: `Bearer ${session.access_token}` };
+
   const listRes = await fetch(`${apiUrl}/api/v1/resumes/mine`, {
-    headers: { Authorization: `Bearer ${session.access_token}` },
+    headers,
     cache: "no-store",
   });
   if (!listRes.ok) return null;
@@ -60,25 +62,33 @@ export async function fetchLatestParsedResume(): Promise<LatestParsedResume | nu
   };
   if (listBody.data.length === 0) return null;
 
-  const sorted = [...listBody.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const candidate = sorted.find((r) => r.isDefault) ?? sorted[0]!;
+  // Onboarding always works against the most recently uploaded resume — the
+  // active context for the user. `isDefault` matters on the resume manager
+  // page, not here.
+  let newest = listBody.data[0]!;
+  for (let i = 1; i < listBody.data.length; i++) {
+    const r = listBody.data[i]!;
+    if (r.createdAt > newest.createdAt) newest = r;
+  }
 
   let signedPdfUrl: string | null = null;
-  const urlRes = await fetch(`${apiUrl}/api/v1/resumes/${candidate.id}/download-url`, {
-    headers: { Authorization: `Bearer ${session.access_token}` },
+  const urlRes = await fetch(`${apiUrl}/api/v1/resumes/${newest.id}/download`, {
+    headers,
     cache: "no-store",
   });
   if (urlRes.ok) {
-    const urlBody = (await urlRes.json()) as { data: { signedUrl: string; signedPdfUrl: string } };
-    signedPdfUrl = urlBody.data.signedPdfUrl ?? null;
+    const urlBody = (await urlRes.json()) as {
+      data: { signedUrl: string; signedPdfUrl: string };
+    };
+    signedPdfUrl = urlBody.data.signedPdfUrl ?? urlBody.data.signedUrl ?? null;
   }
 
   return {
-    id: candidate.id,
-    parseStatus: candidate.parseStatus,
+    id: newest.id,
+    parseStatus: newest.parseStatus,
     signedPdfUrl,
-    rawText: candidate.rawText,
-    canonicalPdfPath: candidate.canonicalPdfPath,
-    parsed: candidate.parsedData as ParsedResumeV2 | null,
+    rawText: newest.rawText,
+    canonicalPdfPath: newest.canonicalPdfPath,
+    parsed: newest.parsedData as ParsedResumeV2 | null,
   };
 }

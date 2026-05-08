@@ -6,9 +6,11 @@ import Redis from "ioredis";
 
 /**
  * Custom Socket.io adapter that wires the @socket.io/redis-adapter against
- * the existing REDIS_URL. Required for cross-instance broadcast when we run
- * more than one Railway instance — even with one instance today, wiring this
- * from day one means scaling out is a redeploy, not a refactor.
+ * the existing REDIS_URL. Required for cross-instance broadcast if we ever run
+ * more than one API process (e.g. multiple Droplets behind a load balancer, or
+ * scaling out via DOKS) — even with a single PM2-managed process on one
+ * Digital Ocean Droplet today, wiring this from day one means scaling out is
+ * a redeploy, not a refactor.
  *
  * Falls back to the default in-memory adapter if REDIS_URL is unset (matches
  * the cache-module fail-open posture).

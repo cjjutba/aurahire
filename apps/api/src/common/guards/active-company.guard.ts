@@ -16,6 +16,8 @@ import { SKIP_ACTIVE_COMPANY_KEY } from "../decorators/skip-active-company.decor
 import { REQUIRE_COMPANY_ROLE_KEY } from "../decorators/require-company-role.decorator";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 import { CompanyMembersRepository } from "../../modules/companies/company-members.repository";
+import { CacheService, TAGS, TTL_SECONDS } from "../../cache";
+import type { CompanyMember } from "@aurahire/db";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -51,6 +53,7 @@ export class ActiveCompanyGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly companyMembersRepo: CompanyMembersRepository,
     @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
+    private readonly cacheService: CacheService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -131,6 +134,8 @@ export class ActiveCompanyGuard implements CanActivate {
           .update(profilesTable)
           .set({ lastActiveCompanyId: companyId })
           .where(eq(profilesTable.id, user.id));
+        // Bust the cached profile-lookup so a fresh read sees the new pointer.
+        await this.cacheService.bustTags([TAGS.userMemberships(user.id)]);
       }
     }
 
@@ -144,10 +149,21 @@ export class ActiveCompanyGuard implements CanActivate {
 
     // 7. Membership verification. The repo method already filters
     // status='active' — invited / suspended / left rows return null here.
-    const membership = await this.companyMembersRepo.findActiveMembership(
-      user.id,
-      companyId,
-    );
+    // Cached against (companyMembership, userMemberships) tags; existing
+    // member-CRUD service paths bust both, so role/status changes propagate
+    // immediately. Negative answers (null) are also cached to prevent
+    // repeated DB hits from probes against companies the user doesn't belong to.
+    const membership = await this.cacheService.getOrSet<CompanyMember | null>({
+      key: `membership:${user.id}:${companyId}`,
+      ttlSeconds: TTL_SECONDS.warm,
+      tags: [
+        TAGS.companyMembership(companyId),
+        TAGS.userMemberships(user.id),
+      ],
+      telemetryName: "guard:membership",
+      load: () =>
+        this.companyMembersRepo.findActiveMembership(user.id, companyId),
+    });
     if (!membership) {
       throw new ForbiddenException({
         code: "NOT_A_MEMBER",
@@ -198,11 +214,19 @@ export class ActiveCompanyGuard implements CanActivate {
   private async lookupLastActiveCompanyId(
     userId: string,
   ): Promise<string | null> {
-    const [row] = await this.db
-      .select({ lastActiveCompanyId: profilesTable.lastActiveCompanyId })
-      .from(profilesTable)
-      .where(eq(profilesTable.id, userId))
-      .limit(1);
-    return row?.lastActiveCompanyId ?? null;
+    return this.cacheService.getOrSet<string | null>({
+      key: `last-active-company:${userId}`,
+      ttlSeconds: TTL_SECONDS.warm,
+      tags: [TAGS.userMemberships(userId)],
+      telemetryName: "guard:last-active-company",
+      load: async () => {
+        const [row] = await this.db
+          .select({ lastActiveCompanyId: profilesTable.lastActiveCompanyId })
+          .from(profilesTable)
+          .where(eq(profilesTable.id, userId))
+          .limit(1);
+        return row?.lastActiveCompanyId ?? null;
+      },
+    });
   }
 }

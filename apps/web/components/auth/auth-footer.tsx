@@ -8,7 +8,7 @@ export function AuthFooter() {
           href="/legal/terms"
           className="transition-colors hover:text-[var(--color-ink)] hover:underline"
         >
-          Terms of Use
+          Terms of Service
         </Link>
         <span aria-hidden className="text-[var(--color-muted-soft)]">
           |

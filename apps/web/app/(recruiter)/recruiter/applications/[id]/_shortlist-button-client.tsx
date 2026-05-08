@@ -7,6 +7,7 @@ import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { getActiveCompanyId } from "@/lib/active-company";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
+import { useConfirm } from "@/components/providers/confirm-provider";
 
 interface Props {
   applicationId: string;
@@ -15,6 +16,7 @@ interface Props {
 
 export function ShortlistButtonClient({ applicationId, initialShortlistedAt }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [shortlistedAt, setShortlistedAt] = useState<string | null>(initialShortlistedAt);
   const [busy, setBusy] = useState(false);
   const isShortlisted = shortlistedAt !== null;
@@ -39,8 +41,19 @@ export function ShortlistButtonClient({ applicationId, initialShortlistedAt }: P
 
   async function toggle() {
     if (busy) return;
-    setBusy(true);
     const wasShortlisted = isShortlisted;
+    const ok = await confirm({
+      title: wasShortlisted
+        ? "Remove from shortlist?"
+        : "Add to shortlist?",
+      description: wasShortlisted
+        ? "The candidate will no longer appear on your shortlist. You can re-add them anytime."
+        : "The candidate will be added to your shortlist for easier follow-up.",
+      confirmLabel: wasShortlisted ? "Remove from shortlist" : "Add to shortlist",
+      variant: wasShortlisted ? "destructive" : "info",
+    });
+    if (!ok) return;
+    setBusy(true);
     try {
       const res = await authedFetch(`/api/v1/applications/${applicationId}/shortlist`, {
         method: wasShortlisted ? "DELETE" : "POST",

@@ -6,6 +6,7 @@ import {
   queryKeys,
   type CandidateApplicationsParams,
   type RecruiterApplicationsByJobParams,
+  type RecruiterApplicationsListParams,
 } from "@/lib/query";
 import { clientApiFetch } from "./_client-fetch";
 
@@ -80,10 +81,42 @@ export function useRecruiterApplicationsByJobQuery(
   return useQuery({
     queryKey: queryKeys.recruiterApplications.byJob(jobId, params),
     queryFn: ({ signal }) =>
-      clientApiFetch<ApplicationsListResponse>("/api/v1/applications", {
-        query: { jobId, status: params.status, page: params.page },
-        signal,
-      }),
+      clientApiFetch<ApplicationsListResponse>(
+        `/api/v1/applications/by-job/${jobId}`,
+        {
+          query: { status: params.status, page: params.page },
+          signal,
+        },
+      ),
     enabled: Boolean(jobId),
+  });
+}
+
+interface RecruiterApplicationsListResponse {
+  data: unknown[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export function useRecruiterApplicationsListQuery(
+  params: RecruiterApplicationsListParams,
+) {
+  return useQuery({
+    queryKey: queryKeys.recruiterApplications.list(params),
+    queryFn: ({ signal }) =>
+      clientApiFetch<RecruiterApplicationsListResponse>(
+        "/api/v1/applications/recruiter-list",
+        {
+          query: {
+            q: params.q,
+            status: params.status,
+            jobId: params.jobId,
+            band: params.band,
+            sort: params.sort,
+            page: params.page,
+            limit: params.limit,
+          },
+          signal,
+        },
+      ),
   });
 }

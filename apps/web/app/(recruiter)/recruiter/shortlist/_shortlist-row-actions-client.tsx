@@ -1,12 +1,26 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { MoreHorizontal, Loader2 } from "lucide-react";
+import {
+  MoreHorizontal,
+  Loader2,
+  Eye,
+  UserCheck,
+  Send,
+  StarOff,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { getActiveCompanyId } from "@/lib/active-company";
+import { useConfirm } from "@/components/providers/confirm-provider";
 
 interface ShortlistRowActionsProps {
   applicationId: string;
@@ -36,25 +50,19 @@ export function ShortlistRowActionsClient({
   status,
 }: ShortlistRowActionsProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
 
   async function moveToInterview() {
+    const ok = await confirm({
+      title: "Move to Interview?",
+      description:
+        "Advance this application to the Interview stage. The candidate will be notified.",
+      confirmLabel: "Move to Interview",
+      variant: "info",
+    });
+    if (!ok) return;
     setBusy(true);
-    setOpen(false);
     try {
       const res = await authedFetch(`/api/v1/applications/${applicationId}/status`, {
         method: "PATCH",
@@ -72,8 +80,15 @@ export function ShortlistRowActionsClient({
   }
 
   async function sendOffer() {
+    const ok = await confirm({
+      title: "Send Offer?",
+      description:
+        "Move this application to the Offer stage. The candidate will be notified.",
+      confirmLabel: "Send Offer",
+      variant: "info",
+    });
+    if (!ok) return;
     setBusy(true);
-    setOpen(false);
     try {
       const res = await authedFetch(`/api/v1/applications/${applicationId}/status`, {
         method: "PATCH",
@@ -91,8 +106,15 @@ export function ShortlistRowActionsClient({
   }
 
   async function removeFromShortlist() {
+    const ok = await confirm({
+      title: "Remove from shortlist?",
+      description:
+        "The candidate will no longer appear on your shortlist. You can re-add them anytime.",
+      confirmLabel: "Remove from shortlist",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setBusy(true);
-    setOpen(false);
     try {
       const res = await authedFetch(`/api/v1/applications/${applicationId}/shortlist`, {
         method: "DELETE",
@@ -110,72 +132,72 @@ export function ShortlistRowActionsClient({
   const terminal = ["hired", "rejected", "withdrawn"].includes(status);
   const canMoveToInterview = !terminal && status !== "interview" && status !== "offer";
   const canSendOffer = status === "interview";
+  const showStatusActions = canMoveToInterview || canSendOffer;
 
   return (
-    <div ref={menuRef} className="relative">
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => setOpen((v) => !v)}
-        aria-label={busy ? "Working..." : "Row actions"}
-        aria-busy={busy}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {busy ? (
-          <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
-        ) : (
-          <MoreHorizontal className="h-4 w-4" />
-        )}
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-9 z-50 min-w-[180px] overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
-          {/* View */}
-          <Link
-            href={`/recruiter/applications/${applicationId}`}
-            onClick={() => setOpen(false)}
-            className="flex w-full items-center px-4 py-2.5 text-sm text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)]"
-          >
-            View
-          </Link>
-
-          {/* Move to Interview */}
-          {canMoveToInterview && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={moveToInterview}
-              className="flex w-full items-center px-4 py-2.5 text-sm text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)] disabled:opacity-50"
-            >
-              Move to Interview
-            </button>
-          )}
-
-          {/* Send Offer */}
-          {canSendOffer && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={sendOffer}
-              className="flex w-full items-center px-4 py-2.5 text-sm text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)] disabled:opacity-50"
-            >
-              Send Offer
-            </button>
-          )}
-
-          <div className="my-1 border-t border-[var(--color-hairline-soft)]" />
-
-          {/* Remove from Shortlist — destructive */}
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
           <button
             type="button"
             disabled={busy}
-            onClick={removeFromShortlist}
-            className="flex w-full items-center px-4 py-2.5 text-sm text-[var(--color-status-danger)] hover:bg-[var(--color-surface-soft)] disabled:opacity-50"
+            aria-label={busy ? "Working..." : "Row actions"}
+            aria-busy={busy}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+          />
+        }
+      >
+        {busy ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        ) : (
+          <MoreHorizontal className="h-4 w-4" aria-hidden />
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" side="bottom">
+        <DropdownMenuItem
+          onClick={() => router.push(`/recruiter/applications/${applicationId}`)}
+          className="flex cursor-pointer items-center gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          View
+        </DropdownMenuItem>
+
+        {showStatusActions && <DropdownMenuSeparator />}
+
+        {canMoveToInterview && (
+          <DropdownMenuItem
+            onClick={() => void moveToInterview()}
+            disabled={busy}
+            className="flex items-center gap-2"
           >
-            Remove from Shortlist
-          </button>
-        </div>
-      )}
-    </div>
+            <UserCheck className="h-4 w-4" />
+            Move to Interview
+          </DropdownMenuItem>
+        )}
+
+        {canSendOffer && (
+          <DropdownMenuItem
+            onClick={() => void sendOffer()}
+            disabled={busy}
+            className="flex items-center gap-2"
+          >
+            <Send className="h-4 w-4" />
+            Send Offer
+          </DropdownMenuItem>
+        )}
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          onClick={() => void removeFromShortlist()}
+          disabled={busy}
+          variant="destructive"
+          className="flex items-center gap-2"
+        >
+          <StarOff className="h-4 w-4" />
+          Remove from Shortlist
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

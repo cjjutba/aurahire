@@ -1,17 +1,15 @@
 "use client";
 
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
-import { Input } from "@/components/ui/input";
+import { ChevronDown, RotateCcw, Search } from "lucide-react";
+
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { ButtonSpinner } from "@/components/ui/button-spinner";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Props {
   initialFilters: {
@@ -25,180 +23,243 @@ interface Props {
   };
 }
 
-const STATUSES = [
-  "applied",
-  "screening",
-  "interview",
-  "offer",
-  "hired",
-  "rejected",
-  "withdrawn",
-] as const;
+const STATUS_OPTIONS = [
+  { value: "all", label: "All Statuses" },
+  { value: "applied", label: "Applied" },
+  { value: "screening", label: "Screening" },
+  { value: "interview", label: "Interview" },
+  { value: "offer", label: "Offer" },
+  { value: "hired", label: "Hired" },
+  { value: "rejected", label: "Rejected" },
+  { value: "withdrawn", label: "Withdrawn" },
+];
+
+function clampScore(raw: string): string {
+  if (!raw) return "";
+  const n = Number(raw);
+  if (Number.isNaN(n)) return "";
+  return String(Math.min(100, Math.max(0, Math.round(n))));
+}
 
 export function FiltersClient({ initialFilters }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
   const [isPending, startTransition] = useTransition();
+
+  const [q, setQ] = useState(initialFilters.q ?? "");
   const [status, setStatus] = useState(initialFilters.status ?? "all");
   const [minScore, setMinScore] = useState(initialFilters.minScore ?? "");
   const [maxScore, setMaxScore] = useState(initialFilters.maxScore ?? "");
   const [dateFrom, setDateFrom] = useState(
-    initialFilters.dateFrom
-      ? initialFilters.dateFrom.slice(0, 10)
-      : "",
+    initialFilters.dateFrom ? initialFilters.dateFrom.slice(0, 10) : "",
   );
   const [dateTo, setDateTo] = useState(
     initialFilters.dateTo ? initialFilters.dateTo.slice(0, 10) : "",
   );
-  const [q, setQ] = useState(initialFilters.q ?? "");
-  const [error, setError] = useState<string | null>(null);
 
-  function apply() {
-    setError(null);
-    const minN = minScore ? Number(minScore) : null;
-    const maxN = maxScore ? Number(maxScore) : null;
-    if (minN != null && (minN < 0 || minN > 100)) {
-      setError("Min must be 0-100");
-      return;
-    }
-    if (maxN != null && (maxN < 0 || maxN > 100)) {
-      setError("Max must be 0-100");
-      return;
-    }
-    if (minN != null && maxN != null && minN > maxN) {
-      setError("Min must be ≤ Max");
-      return;
-    }
+  const qDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const scoreDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-    const next = new URLSearchParams(sp.toString());
-    if (status && status !== "all") next.set("status", status);
-    else next.delete("status");
-    if (minScore) next.set("minScore", minScore);
-    else next.delete("minScore");
-    if (maxScore) next.set("maxScore", maxScore);
-    else next.delete("maxScore");
-    if (dateFrom) next.set("dateFrom", new Date(dateFrom).toISOString());
-    else next.delete("dateFrom");
-    if (dateTo) next.set("dateTo", new Date(dateTo).toISOString());
-    else next.delete("dateTo");
-    if (q) next.set("q", q);
-    else next.delete("q");
-    next.delete("page");
-    startTransition(() => router.push(`?${next.toString()}`));
+  useEffect(() => {
+    setQ(initialFilters.q ?? "");
+    setStatus(initialFilters.status ?? "all");
+    setMinScore(initialFilters.minScore ?? "");
+    setMaxScore(initialFilters.maxScore ?? "");
+    setDateFrom(
+      initialFilters.dateFrom ? initialFilters.dateFrom.slice(0, 10) : "",
+    );
+    setDateTo(
+      initialFilters.dateTo ? initialFilters.dateTo.slice(0, 10) : "",
+    );
+  }, [
+    initialFilters.q,
+    initialFilters.status,
+    initialFilters.minScore,
+    initialFilters.maxScore,
+    initialFilters.dateFrom,
+    initialFilters.dateTo,
+  ]);
+
+  // Debounce search query updates
+  useEffect(() => {
+    if (q === (initialFilters.q ?? "")) return;
+    clearTimeout(qDebounceRef.current);
+    qDebounceRef.current = setTimeout(() => {
+      pushParams({ q });
+    }, 300);
+    return () => clearTimeout(qDebounceRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
+
+  // Debounce score range updates
+  useEffect(() => {
+    const initialMin = initialFilters.minScore ?? "";
+    const initialMax = initialFilters.maxScore ?? "";
+    if (minScore === initialMin && maxScore === initialMax) return;
+    clearTimeout(scoreDebounceRef.current);
+    scoreDebounceRef.current = setTimeout(() => {
+      pushParams({ minScore, maxScore });
+    }, 400);
+    return () => clearTimeout(scoreDebounceRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minScore, maxScore]);
+
+  function pushParams(updates: Record<string, string | null>) {
+    const params = new URLSearchParams(sp.toString());
+    for (const [key, raw] of Object.entries(updates)) {
+      if (!raw || raw === "all") {
+        params.delete(key);
+      } else {
+        params.set(key, raw);
+      }
+    }
+    params.delete("page");
+    startTransition(() => {
+      router.push(`/admin/applications${params.toString() ? `?${params.toString()}` : ""}`);
+    });
+  }
+
+  function selectStatus(v: string) {
+    setStatus(v);
+    pushParams({ status: v });
+  }
+
+  function commitDateFrom(v: string) {
+    setDateFrom(v);
+    pushParams({ dateFrom: v ? new Date(v).toISOString() : null });
+  }
+
+  function commitDateTo(v: string) {
+    setDateTo(v);
+    pushParams({ dateTo: v ? new Date(v).toISOString() : null });
   }
 
   function reset() {
+    setQ("");
     setStatus("all");
     setMinScore("");
     setMaxScore("");
     setDateFrom("");
     setDateTo("");
-    setQ("");
-    setError(null);
-    startTransition(() => router.push("?"));
+    startTransition(() => router.push("/admin/applications"));
   }
 
+  const filtersActive = !!(
+    initialFilters.q ||
+    (initialFilters.status && initialFilters.status !== "all") ||
+    initialFilters.minScore ||
+    initialFilters.maxScore ||
+    initialFilters.dateFrom ||
+    initialFilters.dateTo
+  );
+
+  const currentStatus =
+    STATUS_OPTIONS.find((o) => o.value === status) ?? STATUS_OPTIONS[0]!;
+
   return (
-    <div className="space-y-3 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-4">
-      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
-        <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Status
-          </label>
-          <Select value={status} onValueChange={(v) => setStatus(v ?? "all")}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {STATUSES.map((s) => (
-                <SelectItem key={s} value={s} className="capitalize">
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Min Score
-          </label>
-          <Input
-            type="number"
-            min={0}
-            max={100}
-            placeholder="0"
-            value={minScore}
-            onChange={(e) => setMinScore(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Max Score
-          </label>
-          <Input
-            type="number"
-            min={0}
-            max={100}
-            placeholder="100"
-            value={maxScore}
-            onChange={(e) => setMaxScore(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            From
-          </label>
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            To
-          </label>
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Search candidate
-          </label>
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="name or email"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") apply();
-            }}
-          />
-        </div>
+    <div
+      className="flex flex-wrap items-center gap-2"
+      style={{ opacity: isPending ? 0.6 : 1, transition: "opacity 150ms" }}
+    >
+      {/* Search */}
+      <div className="relative flex min-w-48 flex-1 items-center">
+        <Search
+          className="pointer-events-none absolute left-3 h-4 w-4 text-[var(--color-muted)]"
+          aria-hidden
+        />
+        <input
+          type="text"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search candidate by name or email…"
+          className="h-10 w-full rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] pl-9 pr-4 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+        />
       </div>
-      {error && (
-        <p className="text-xs text-[var(--color-status-danger)]">{error}</p>
-      )}
-      <div className="flex justify-end gap-2">
-        <Button
+
+      {/* Status filter */}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <button
+              type="button"
+              className="inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-3 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-hairline-soft)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            />
+          }
+        >
+          <span>Status: {currentStatus.label}</span>
+          <ChevronDown className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="bottom">
+          {STATUS_OPTIONS.map((opt) => (
+            <DropdownMenuItem
+              key={opt.value}
+              onClick={() => selectStatus(opt.value)}
+            >
+              {opt.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Score range pill */}
+      <div className="inline-flex h-10 items-center gap-1 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-3 text-sm text-[var(--color-ink)]">
+        <span className="text-[var(--color-muted)]">Score</span>
+        <input
+          type="number"
+          min={0}
+          max={100}
+          value={minScore}
+          onChange={(e) => setMinScore(e.target.value)}
+          onBlur={(e) => setMinScore(clampScore(e.target.value))}
+          placeholder="0"
+          aria-label="Minimum score"
+          className="w-10 bg-transparent text-center font-mono text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none"
+        />
+        <span className="text-[var(--color-muted)]">–</span>
+        <input
+          type="number"
+          min={0}
+          max={100}
+          value={maxScore}
+          onChange={(e) => setMaxScore(e.target.value)}
+          onBlur={(e) => setMaxScore(clampScore(e.target.value))}
+          placeholder="100"
+          aria-label="Maximum score"
+          className="w-10 bg-transparent text-center font-mono text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none"
+        />
+      </div>
+
+      {/* Date range pill */}
+      <div className="inline-flex h-10 items-center gap-1 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-3 text-sm text-[var(--color-ink)]">
+        <span className="text-[var(--color-muted)]">Date</span>
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => commitDateFrom(e.target.value)}
+          aria-label="Date from"
+          className="bg-transparent text-sm text-[var(--color-ink)] focus:outline-none"
+        />
+        <span className="text-[var(--color-muted)]">–</span>
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => commitDateTo(e.target.value)}
+          aria-label="Date to"
+          className="bg-transparent text-sm text-[var(--color-ink)] focus:outline-none"
+        />
+      </div>
+
+      {/* Reset */}
+      {filtersActive && (
+        <button
+          type="button"
           onClick={reset}
-          variant="outline"
-          className="rounded-[var(--radius-pill)]"
+          className="inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-pill)] px-3 text-sm font-medium text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
         >
+          <RotateCcw className="h-3.5 w-3.5" aria-hidden />
           Reset
-        </Button>
-        <Button
-          onClick={apply}
-          disabled={isPending}
-          className="rounded-[var(--radius-pill)] bg-[var(--color-primary)]"
-        >
-          {isPending && <ButtonSpinner />}
-          {isPending ? "Applying..." : "Apply filters"}
-        </Button>
-      </div>
+        </button>
+      )}
     </div>
   );
 }

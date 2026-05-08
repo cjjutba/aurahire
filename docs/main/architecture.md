@@ -31,7 +31,7 @@ This document is the high-level technical blueprint of AuraHire's split frontend
                                  │ Authorization: Bearer <jwt>
                                  │
         ┌────────────────────────▼─────────────────────────┐
-        │   Backend — NestJS (Railway)                     │
+        │   Backend — NestJS (Digital Ocean Droplet, PM2)  │
         │   apps/api                                       │
         │   - REST API + Swagger UI at /api/docs           │
         │   - SupabaseAuthGuard (validates JWT)            │
@@ -50,10 +50,12 @@ This document is the high-level technical blueprint of AuraHire's split frontend
            │         │          │          │          │
    ┌───────▼──┐ ┌────▼────┐ ┌──▼─────┐ ┌──▼──────┐ ┌─▼──────┐
    │ Supabase │ │  Redis  │ │ OpenAI │ │ Email   │ │Supabase│
-   │ Postgres │ │(Railway)│ │  API   │ │ Mailpit │ │ Storage│
-   │  + RLS   │ │ Cache + │ │        │ │  (dev)  │ │        │
-   │          │ │ Queue + │ │        │ │ Resend  │ │        │
-   │          │ │ Throttle│ │        │ │ (prod)  │ │        │
+   │ Postgres │ │(Docker  │ │  API   │ │ Mailpit │ │ Storage│
+   │  + RLS   │ │ on DO   │ │        │ │  (dev)  │ │        │
+   │          │ │ Droplet)│ │        │ │ Resend  │ │        │
+   │          │ │ Cache + │ │        │ │ (prod)  │ │        │
+   │          │ │ Queue + │ │        │ │         │ │        │
+   │          │ │ Throttle│ │        │ │         │ │        │
    └──────────┘ └─────────┘ └────────┘ └─────────┘ └────────┘
 ```
 
@@ -334,7 +336,7 @@ NestJS exception filter normalizes all errors to this shape.
 
 ### Tech: BullMQ + Redis
 
-NestJS module: `@nestjs/bullmq`. Redis hosted on Railway (same cluster as backend = zero network latency).
+NestJS module: `@nestjs/bullmq`. Redis runs as a Docker container on the same Digital Ocean Droplet as the API process (localhost-bound, zero network latency).
 
 ### Worker pattern
 
@@ -509,34 +511,48 @@ Frontend downloads → Backend issues signed URL:
 ```
 GitHub repo (main branch)
     │
-    ├──► Vercel ─────────► aurahire.vercel.app (frontend)
-    │       env: NEXT_PUBLIC_API_URL=https://aurahire-api.up.railway.app
+    ├──► Vercel ──────────────► aurahire.vercel.app (frontend, auto-deploy)
+    │       env: NEXT_PUBLIC_API_URL=https://api.<your-domain>
     │             NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
     │
-    ├──► Railway ────────► aurahire-api.up.railway.app (backend)
-    │       env: DATABASE_URL (Supabase), SUPABASE_SERVICE_ROLE_KEY,
-    │             OPENAI_API_KEY, RESEND_API_KEY, REDIS_URL (Railway addon)
+    ├──► Digital Ocean Droplet ─► api.<your-domain> (backend, manual SSH deploy)
+    │       │
+    │       │  Caddy (0.0.0.0:80/443, auto Let's Encrypt)
+    │       │      └─► reverse-proxy to 127.0.0.1:3333
+    │       │
+    │       ├─ NestJS API (Node 20, PM2-managed, port 3333)
+    │       │     env (in deploy/.env): DATABASE_URL (Supabase),
+    │       │           SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY,
+    │       │           RESEND_API_KEY, REDIS_URL=redis://:<pw>@127.0.0.1:6379,
+    │       │           SMTP_HOST=127.0.0.1 SMTP_PORT=1025 (Mailpit fallback)
+    │       │
+    │       └─ Docker (deploy/docker-compose.prod.yml)
+    │             ├─ redis:7-alpine on 127.0.0.1:6379 (BullMQ + cache + throttle)
+    │             └─ axllent/mailpit on 127.0.0.1:1025 + 127.0.0.1:8025
+    │                  (web UI tunnelled via SSH for inspection only)
     │
-    └──► Supabase Cloud ─► Postgres + Auth + Storage (managed)
+    └──► Supabase Cloud ─────────► Postgres + Auth + Storage (managed)
 ```
+
+Both Redis and Mailpit bind to **`127.0.0.1` only** — never reachable from the public internet. Caddy is the only listener on `0.0.0.0`.
 
 For local dev:
 ```
-Mac (npm run dev at root)
+Mac (pnpm dev at root)
     ├──► apps/web on localhost:3000
     └──► apps/api on localhost:3333
             │
             ├──► Supabase Cloud (DB + Auth + Storage)
             ├──► localhost:1025 (Mailpit SMTP) → localhost:8025 (web UI)
             ├──► OpenAI API
-            └──► Local Redis (Docker) OR Railway Redis dev addon
+            └──► Local Redis (Docker via docker-compose.dev.yml)
 ```
 
 ---
 
 ## Observability (Sprint Stance)
 
-- **Logs:** Pino structured JSON → Vercel logs (frontend) + Railway logs (backend)
+- **Logs:** Pino structured JSON → Vercel logs (frontend) + PM2 log files on the Droplet (`pm2 logs aurahire-api`, files under `/home/deploy/.pm2/logs/`)
 - **Metrics:** none in sprint
 - **Traces:** none in sprint
 - **Alerting:** none
@@ -553,7 +569,7 @@ For Phase 2: Sentry for errors, PostHog for product analytics, OpenTelemetry for
 
 | Layer | Control |
 |---|---|
-| 1. Network | HTTPS via Vercel + Railway (auto TLS) |
+| 1. Network | HTTPS via Vercel (auto TLS) on frontend; Caddy + Let's Encrypt (auto-renew) on the DO Droplet for the API. Redis + Mailpit are localhost-only, never publicly reachable |
 | 2. Frontend middleware | Auth-required redirects, role-based URL gating |
 | 3. CORS | Backend allows only `${NEXT_PUBLIC_APP_URL}` origin |
 | 4. Backend Helmet | Security headers (X-Content-Type, CSP, HSTS) |
@@ -566,7 +582,7 @@ For Phase 2: Sentry for errors, PostHog for product analytics, OpenTelemetry for
 ### Secret management
 
 - All secrets in `.env.local` (gitignored) for dev
-- Vercel + Railway encrypted env vars for production
+- Vercel encrypted env vars for the frontend; backend secrets live in `deploy/.env` on the Droplet (`chmod 600`, owned by the deploy user, never committed)
 - `NEXT_PUBLIC_*` vars are bundled into client JS — only safe values (Supabase anon key, app URL, API URL) live there
 - OpenAI key, Resend key, Supabase service role key, DB password: backend-only, never `NEXT_PUBLIC_*`
 
@@ -651,7 +667,7 @@ Frontend: render Score Breakdown + Evidence + raw output drawer
 | Fastify adapter under NestJS | 2× perf vs Express baseline at no DX cost |
 | REST + Swagger over tRPC/GraphQL | Industry-standard, auto-documented, language-agnostic; thesis can hand examiner a Swagger URL |
 | Turborepo + pnpm workspaces | Shared `packages/shared` for Zod schemas; cached builds; industry default |
-| Railway for backend hosting | Fastest DX; Redis addon in same network; no cold-start lag for demo |
+| Digital Ocean Droplet for backend hosting | Explicit, demo-defensible infrastructure for a thesis: every moving part (Node + PM2 + Docker Redis + Caddy) is visible and editable. Redis runs on the same host (localhost = zero network latency). No PaaS magic to explain to a panel |
 | Vercel for frontend hosting | Native Next.js; preview URLs |
 | BullMQ for jobs | Mature; first-party NestJS support |
 | `@nestjs/schedule` for cron | Decorator-based; trivial to add scheduled tasks |

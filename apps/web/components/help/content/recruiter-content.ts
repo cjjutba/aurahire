@@ -741,7 +741,7 @@ export const recruiterHelp: HelpPageContent = {
   contact: {
     title: "Still stuck? We read every message.",
     body: "Email support — you'll typically hear back within one business day. Include your workspace name and the URL of the screen you're on for the fastest reply.",
-    email: "support@aurahire.app",
+    email: "hello@aurahire.site",
     secondaryLink: { label: "Back to the recruiter dashboard", href: "/recruiter" },
   },
 };

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { PortalShell } from "@/components/layout/portal-shell";
 import { ActiveCompanyProvider } from "@/contexts/active-company-context";
+import { CompanySwitchOverlay } from "@/components/layout/company-switch-overlay";
 
 export default async function RecruiterLayout({
   children,
@@ -35,6 +36,7 @@ export default async function RecruiterLayout({
     <ActiveCompanyProvider
       initialActiveCompanyId={profile.lastActiveCompanyId ?? null}
     >
+      <CompanySwitchOverlay />
       <PortalShell
         role="recruiter"
         fullName={profile.fullName}

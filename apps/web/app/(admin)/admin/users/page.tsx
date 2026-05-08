@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession, getCurrentProfile } from "@/lib/auth/session";
 import { UsersTableClient } from "./_users-table-client";
-import { FiltersClient } from "./_filters-client";
+import { UsersToolbarClient } from "./_users-toolbar-client";
 
 export const metadata = { title: "Users" };
 
@@ -55,42 +55,78 @@ export default async function UsersPage({ searchParams }: PageProps) {
 
   if (!res.ok) {
     return (
-      <div className="text-[var(--color-status-danger)]">
-        Failed to load users.
+      <div className="mx-auto max-w-[1280px]">
+        <p className="text-sm text-[var(--color-status-danger)]">
+          Failed to load users. Please refresh the page.
+        </p>
       </div>
     );
   }
   const body = (await res.json()) as ListBody;
 
+  const filtersActive = !!(sp.role || sp.status || sp.q);
+
   return (
     <div className="mx-auto max-w-[1280px] space-y-6">
       <header>
-        <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+        <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           Users
         </h1>
-        <p className="mt-1 text-sm text-[var(--color-body)]">
-          {body.meta.total} user{body.meta.total === 1 ? "" : "s"}
+        <p className="mt-2 text-sm text-[var(--color-body)]">
+          {body.meta.total === 0
+            ? "No users yet"
+            : `${body.meta.total} user${body.meta.total === 1 ? "" : "s"}`}
         </p>
       </header>
-      <FiltersClient
-        initialFilters={{ role: sp.role, status: sp.status, q: sp.q }}
+
+      <UsersToolbarClient
+        initialQuery={sp.q ?? ""}
+        role={sp.role ?? "all"}
+        status={sp.status ?? "all"}
       />
+
       {body.data.length === 0 ? (
-        <div className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] py-16 text-center">
-          <h3 className="text-lg font-semibold text-[var(--color-ink)]">
-            No users match these filters
-          </h3>
-          <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-body)]">
-            Try widening the filters or clearing the search.
-          </p>
-        </div>
+        filtersActive ? <EmptyFiltered /> : <EmptyUsers />
       ) : (
         <UsersTableClient
           rows={body.data}
           currentUserId={me?.id ?? null}
           meta={body.meta}
+          searchParams={{ role: sp.role, status: sp.status, q: sp.q }}
         />
       )}
+    </div>
+  );
+}
+
+function EmptyUsers() {
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
+        No users yet
+      </div>
+      <div className="mt-1 text-xs text-[var(--color-muted)]">
+        Once people register, they will appear here.
+      </div>
+    </div>
+  );
+}
+
+function EmptyFiltered() {
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
+        No users match your filters
+      </div>
+      <div className="mt-1 text-xs text-[var(--color-muted)]">
+        Try different search terms or clear the filters.
+      </div>
+      <a
+        href="/admin/users"
+        className="mt-4 inline-flex h-9 items-center rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-4 text-sm font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-soft)]"
+      >
+        Clear filters
+      </a>
     </div>
   );
 }

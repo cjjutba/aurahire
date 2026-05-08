@@ -656,7 +656,7 @@ export class CompaniesService {
     expiresAt: Date,
   ): Promise<void> {
     try {
-      const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+      const appUrl = process.env.APP_URL ?? "http://localhost:3000";
       const inviteUrl = `${appUrl}/invite/${token}`;
       await this.email.send({
         to: email,

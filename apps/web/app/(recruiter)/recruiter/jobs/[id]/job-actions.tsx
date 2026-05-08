@@ -22,15 +22,27 @@ interface JobActionsProps {
 export function JobActions({ id, status }: JobActionsProps) {
   const router = useRouter();
   const confirm = useConfirm();
-  const [working, setWorking] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [biasModalOpen, setBiasModalOpen] = useState(false);
   const [pendingFlags, setPendingFlags] = useState<BiasFlagChipFlag[]>([]);
 
   const inv = useInvalidate();
   const archiveMutation = useJobsControllerArchiveV1();
+  const busy = publishing || archiving;
 
-  async function publish() {
-    setWorking(true);
+  async function publish(skipConfirm = false) {
+    if (!skipConfirm) {
+      const ok = await confirm({
+        title: "Publish this job?",
+        description:
+          "Candidates will be able to see and apply to this job. You can archive it later if needed.",
+        confirmLabel: "Publish job",
+        variant: "info",
+      });
+      if (!ok) return;
+    }
+    setPublishing(true);
     try {
       const supabase = createSupabaseBrowserClient();
       const {
@@ -95,7 +107,7 @@ export function JobActions({ id, status }: JobActionsProps) {
       void inv.candidateJobs();
       router.refresh();
     } finally {
-      setWorking(false);
+      setPublishing(false);
     }
   }
 
@@ -107,7 +119,7 @@ export function JobActions({ id, status }: JobActionsProps) {
       variant: "destructive",
     });
     if (!ok) return;
-    setWorking(true);
+    setArchiving(true);
     try {
       await archiveMutation.mutateAsync({ id });
       toastSuccess("Job archived");
@@ -118,7 +130,7 @@ export function JobActions({ id, status }: JobActionsProps) {
     } catch (err) {
       toastApiError(err, "Couldn't archive job");
     } finally {
-      setWorking(false);
+      setArchiving(false);
     }
   }
 
@@ -128,11 +140,11 @@ export function JobActions({ id, status }: JobActionsProps) {
         {status === "draft" && (
           <button
             type="button"
-            onClick={publish}
-            disabled={working}
+            onClick={() => void publish()}
+            disabled={busy}
             className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-6 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
           >
-            {working ? (
+            {publishing ? (
               <>
                 <ButtonSpinner />
                 Publishing...
@@ -149,10 +161,10 @@ export function JobActions({ id, status }: JobActionsProps) {
           <button
             type="button"
             onClick={archive}
-            disabled={working}
+            disabled={busy}
             className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-5 text-sm font-medium text-[var(--color-status-danger)] transition hover:bg-[var(--color-score-low-soft)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {working ? (
+            {archiving ? (
               <>
                 <ButtonSpinner />
                 Archiving...
@@ -173,7 +185,7 @@ export function JobActions({ id, status }: JobActionsProps) {
         open={biasModalOpen}
         onOpenChange={setBiasModalOpen}
         onAllResolved={() => {
-          void publish();
+          void publish(true);
         }}
       />
     </>

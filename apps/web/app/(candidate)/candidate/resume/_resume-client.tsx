@@ -836,6 +836,14 @@ export function CandidateResumeClient() {
   }
 
   async function setDefault(resume: ResumeRow) {
+    if (resume.isDefault) return;
+    const ok = await confirm({
+      title: "Set as default resume?",
+      description: `${resume.filename} will be used the next time you apply to a job.`,
+      confirmLabel: "Set as default",
+      variant: "info",
+    });
+    if (!ok) return;
     setBusyAction({ id: resume.id, action: "default" });
     try {
       await apiCall(`/api/v1/resumes/${resume.id}/set-default`);
@@ -849,6 +857,14 @@ export function CandidateResumeClient() {
   }
 
   async function reparse(resume: ResumeRow) {
+    const ok = await confirm({
+      title: "Re-parse this resume?",
+      description:
+        "AI will re-extract skills, experience, and education from this resume. The current parsed data will be overwritten.",
+      confirmLabel: "Re-parse resume",
+      variant: "warning",
+    });
+    if (!ok) return;
     setBusyAction({ id: resume.id, action: "reparse" });
     try {
       await apiCall(`/api/v1/resumes/${resume.id}/reparse`);

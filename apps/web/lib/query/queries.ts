@@ -6,6 +6,7 @@ import type {
   RecruiterShortlistParams,
   RecruiterInterviewsParams,
   RecruiterApplicationsByJobParams,
+  RecruiterApplicationsListParams,
   CandidateJobsListParams,
   CandidateApplicationsParams,
   CandidateInterviewsParams,
@@ -106,6 +107,21 @@ export const serverQueries = {
       "/api/v1/applications",
       { query: { jobId, status: params.status, page: params.page } },
     ),
+  recruiterApplicationsList: (params: RecruiterApplicationsListParams) =>
+    serverApiFetch<{
+      data: unknown[];
+      meta: { page: number; limit: number; total: number; totalPages: number };
+    }>("/api/v1/applications/recruiter-list", {
+      query: {
+        q: params.q,
+        status: params.status,
+        jobId: params.jobId,
+        band: params.band,
+        sort: params.sort,
+        page: params.page,
+        limit: params.limit,
+      },
+    }),
   candidateJobsList: (params: CandidateJobsListParams) =>
     serverApiFetch<{
       data: unknown[];

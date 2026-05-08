@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 
 import { getCurrentSession } from "@/lib/auth/session";
 import { EmptyState } from "@/components/empty-state";
+import { ClickableRow } from "@/components/ui/clickable-row";
 
 import { ShortlistToolbarClient } from "./_shortlist-toolbar-client";
 import { ShortlistPagination } from "./_shortlist-pagination";
@@ -241,9 +242,11 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
                 const candidateName = row.candidate?.fullName ?? "Unknown";
                 const candidateInitials = initials(candidateName);
                 return (
-                  <tr
+                  <ClickableRow
                     key={row.id}
-                    className={`border-b border-[var(--color-hairline-soft)] hover:bg-[var(--color-surface-soft)] ${
+                    href={`/recruiter/applications/${row.id}`}
+                    ariaLabel={`Open shortlisted application from ${candidateName}`}
+                    className={`border-b border-[var(--color-hairline-soft)] ${
                       idx === rows.length - 1 ? "border-b-0" : ""
                     }`}
                   >
@@ -257,12 +260,9 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
                           {candidateInitials}
                         </div>
                         <div className="min-w-0">
-                          <Link
-                            href={`/recruiter/applications/${row.id}`}
-                            className="block truncate font-medium text-[var(--color-ink)] hover:text-[var(--color-primary)]"
-                          >
+                          <span className="block truncate font-medium text-[var(--color-ink)]">
                             {candidateName}
-                          </Link>
+                          </span>
                           {row.candidate?.email && (
                             <p className="truncate text-xs text-[var(--color-muted)]">
                               {row.candidate.email}
@@ -292,12 +292,11 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
                     {/* Score */}
                     <td className="px-4 py-3 text-right">
                       {row.matchScore ? (
-                        <Link
-                          href={`/recruiter/applications/${row.id}`}
-                          className={`font-mono text-sm font-medium hover:underline ${scoreBandColor(row.matchScore.band)}`}
+                        <span
+                          className={`font-mono text-sm font-medium ${scoreBandColor(row.matchScore.band)}`}
                         >
                           {row.matchScore.overallScore}/100
-                        </Link>
+                        </span>
                       ) : (
                         <span className="text-[var(--color-muted-soft)]">—</span>
                       )}
@@ -322,7 +321,7 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
                         status={row.status}
                       />
                     </td>
-                  </tr>
+                  </ClickableRow>
                 );
               })}
             </tbody>

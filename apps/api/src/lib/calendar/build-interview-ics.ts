@@ -56,7 +56,7 @@ export function buildInterviewIcs(input: BuildIcsInput): string {
 
   // Stable UID across reschedule chain — always anchored to the original interview id.
   const uidId = interview.rescheduledFromId ?? interview.id;
-  const uid = `interview-${uidId}@aurahire.app`;
+  const uid = `interview-${uidId}@aurahire.site`;
 
   // Build LOCATION: "Venue, Address (Room)" — commas come BEFORE escaping.
   const locationParts = [interview.venueName, interview.addressLine].filter(Boolean);

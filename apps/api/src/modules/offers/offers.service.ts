@@ -338,7 +338,7 @@ export class OffersService {
     const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     if (!candidate || !jobRow) return;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
     await this.email.send({
       to: candidate.email,
       subject: `Offer extended for ${offer.title}`,
@@ -372,7 +372,7 @@ export class OffersService {
     const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     if (!candidate || !recruiter || !jobRow) return;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
     await this.email.send({
       to: recruiter.email,
       subject: `Offer ${decision}: ${candidate.fullName} for ${offer.title}`,

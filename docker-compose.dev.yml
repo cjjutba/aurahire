@@ -9,7 +9,8 @@
 #   - Mailpit:  SMTP catcher for transactional email in dev
 #   - Redis:    cache + queue + throttle store for apps/api
 #
-# Production uses managed services instead (Resend for email, Railway Redis addon).
+# Production uses Resend for email and a Redis container on the Digital Ocean Droplet
+# (see deploy/docker-compose.prod.yml).
 # Docker Desktop must be running.
 
 name: aurahire-dev

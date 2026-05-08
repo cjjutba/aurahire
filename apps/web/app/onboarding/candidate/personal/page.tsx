@@ -9,13 +9,16 @@ import { getCurrentSession } from "@/lib/auth/session";
 export const metadata = { title: "Personal Info — Onboarding" };
 
 export default async function Step2Page() {
-  const me = await fetchCandidateProfileMe();
+  // Run the three independent fetches in parallel — sequential awaits added
+  // ~3s of server time to every navigation into Step 2.
+  const [me, session, latestResume] = await Promise.all([
+    fetchCandidateProfileMe(),
+    getCurrentSession(),
+    fetchLatestParsedResume(),
+  ]);
+
   if (me.profileCompleted) redirect("/candidate");
-
-  const session = await getCurrentSession();
   if (!session) redirect("/login");
-
-  const latestResume = await fetchLatestParsedResume();
   const parsed = latestResume?.parsed ?? null;
   const parsedContact = parsed?.contact ?? null;
   const parsedSummary = parsed?.summary ?? null;

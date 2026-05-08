@@ -15,7 +15,7 @@ This document is the per-feature implementation contract. For each feature, it s
 ### Base URL
 
 - **Local dev:** `http://localhost:3333/api/v1`
-- **Production:** `https://aurahire-api.up.railway.app/api/v1`
+- **Production:** `https://api.<your-domain>/api/v1` (Digital Ocean Droplet, fronted by Caddy with Let's Encrypt TLS)
 
 Frontend reads `NEXT_PUBLIC_API_URL` env var; the auto-generated client in `packages/shared/api-client/` prepends `/api/v1` automatically.
 
@@ -870,7 +870,7 @@ Returns: flag counts, breakdown by category, top flagged terms, override rate, s
 
 ## Health & Misc
 
-- `GET /api/health` — Railway health check; returns `{ status: "ok", uptime, version }` (Public, not under /api/v1)
+- `GET /api/health` — health check probed by Caddy + PM2 on the Digital Ocean Droplet; returns `{ status: "ok", uptime, version }` (Public, not under /api/v1)
 - `GET /api/v1/version` — `{ version, commitSha }`
 
 ---

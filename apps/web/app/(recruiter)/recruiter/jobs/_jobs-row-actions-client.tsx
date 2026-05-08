@@ -13,6 +13,7 @@ import {
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { getActiveCompanyId } from "@/lib/active-company";
+import { useConfirm } from "@/components/providers/confirm-provider";
 
 interface JobRowActionsClientProps {
   jobId: string;
@@ -21,6 +22,7 @@ interface JobRowActionsClientProps {
 
 export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
 
   async function getToken(): Promise<string | null> {
@@ -32,6 +34,14 @@ export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps)
   }
 
   async function handlePublish() {
+    const ok = await confirm({
+      title: "Publish this job?",
+      description:
+        "Candidates will be able to see and apply to this job. You can archive it later if needed.",
+      confirmLabel: "Publish job",
+      variant: "info",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const token = await getToken();
@@ -71,6 +81,14 @@ export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps)
   }
 
   async function handleArchive() {
+    const ok = await confirm({
+      title: "Archive this job?",
+      description:
+        "Candidates will no longer see it. You can unarchive it later from your job list.",
+      confirmLabel: "Archive job",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const token = await getToken();

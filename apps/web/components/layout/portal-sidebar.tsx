@@ -38,7 +38,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
-import { ConnectionStatusIndicator } from "@/components/admin/connection-status-indicator";
 
 interface NavItem {
   href: string;
@@ -100,6 +99,7 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
       label: "Pipeline",
       items: [
         { href: "/recruiter/jobs", label: "Jobs", icon: Briefcase },
+        { href: "/recruiter/applications", label: "Applications", icon: FileText },
         { href: "/recruiter/shortlist", label: "Shortlist", icon: Star },
         { href: "/recruiter/interviews", label: "Interviews", icon: Calendar },
       ],
@@ -244,11 +244,6 @@ export function PortalSidebarContent({
 
       {/* Bottom block: Help + user chip */}
       <div className="border-t border-[var(--color-hairline-soft)] p-3">
-        {role === "admin" ? (
-          <div className="mb-2 px-3">
-            <ConnectionStatusIndicator />
-          </div>
-        ) : null}
         <Link
           href={HELP_HREF[role]}
           onClick={onNavClick}

@@ -87,9 +87,9 @@ export function CandidatePersonalInfoForm({
       <div className="flex flex-col gap-1">
         <label
           htmlFor={name}
-          className="flex items-center gap-2 text-xs font-semibold text-[var(--color-ink)]"
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-[var(--color-ink)]"
         >
-          <span>
+          <span className="whitespace-nowrap">
             {label}
             {required ? (
               <span aria-hidden className="text-[var(--color-status-danger)]"> *</span>
@@ -98,12 +98,12 @@ export function CandidatePersonalInfoForm({
             )}
           </span>
           {wasAi && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-primary)]">
+            <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-primary)]">
               <Sparkles className="h-2.5 w-2.5" /> AI Suggested
             </span>
           )}
           {isDirty && aiSuggestedFields[name] && (
-            <span className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">
+            <span className="whitespace-nowrap text-[10px] uppercase tracking-wide text-[var(--color-muted)]">
               Edited
             </span>
           )}

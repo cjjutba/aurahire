@@ -8,17 +8,19 @@ interface Props {
   q: string;
 }
 
-export function CompaniesToolbarClient({ q }: Props) {
+export function CompaniesToolbarClient({ q: initialQuery }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
-  const [query, setQuery] = useState(q);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [q, setQ] = useState(initialQuery);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
-    setQuery(q);
-  }, [q]);
+    setQ(initialQuery);
+  }, [initialQuery]);
 
   const updateParam = useCallback(
     (key: string, value: string) => {
@@ -36,25 +38,31 @@ export function CompaniesToolbarClient({ q }: Props) {
   );
 
   useEffect(() => {
-    if (query === q) return;
+    if (q === initialQuery) return;
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      updateParam("q", query);
+      updateParam("q", q);
     }, 300);
     return () => clearTimeout(debounceRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [q]);
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+    <div
+      className="flex flex-wrap items-center gap-2"
+      style={{ opacity: isPending ? 0.6 : 1, transition: "opacity 150ms" }}
+    >
+      <div className="relative flex min-w-48 flex-1 items-center">
+        <Search
+          className="pointer-events-none absolute left-3 h-4 w-4 text-[var(--color-muted)]"
+          aria-hidden
+        />
         <input
-          type="search"
-          placeholder="Search by company name…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="h-10 w-full rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] pl-9 pr-4 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
+          type="text"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search companies by name…"
+          className="h-10 w-full rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] pl-9 pr-4 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
         />
       </div>
     </div>

@@ -15,7 +15,7 @@ This document defines the canonical folder layout for the AuraHire monorepo, fil
 aurahire/
 ├── apps/                         # Deployable applications
 │   ├── web/                      # Next.js 16 frontend (Vercel)
-│   └── api/                      # NestJS backend (Railway)
+│   └── api/                      # NestJS backend (Digital Ocean Droplet, PM2)
 ├── packages/                     # Shared libraries
 │   ├── shared/                   # Zod schemas, enums, constants, API client
 │   └── db/                       # Drizzle schema + types
@@ -336,7 +336,7 @@ apps/api/
 │   │   ├── db.provider.ts            # Drizzle client provider (DI)
 │   │   └── tx-decorator.ts           # Transaction helpers
 │   └── health/
-│       ├── health.controller.ts      # GET /api/health for Railway probes
+│       ├── health.controller.ts      # GET /api/health (Caddy + PM2 probes on the Droplet)
 │       └── health.module.ts
 ├── test/
 │   └── (deferred to Phase 2 — no tests in sprint)

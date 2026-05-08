@@ -133,11 +133,20 @@ export function OfferActionsClient({ offer }: Props) {
         </Button>
       </div>
 
-      <Dialog open={declineOpen} onOpenChange={setDeclineOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Decline this offer?</DialogTitle>
-            <DialogDescription>
+      <Dialog
+        open={declineOpen}
+        disablePointerDismissal={working}
+        onOpenChange={(next) => {
+          if (working && !next) return;
+          setDeclineOpen(next);
+        }}
+      >
+        <DialogContent className="max-w-md gap-0 p-6">
+          <DialogHeader className="gap-2">
+            <DialogTitle className="text-base font-semibold">
+              Decline this offer?
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed">
               Optional: tell the recruiter why (helps them improve).
             </DialogDescription>
           </DialogHeader>
@@ -146,23 +155,27 @@ export function OfferActionsClient({ offer }: Props) {
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             placeholder="e.g., accepted another offer, role wasn't the right fit..."
+            className="mt-4"
+            disabled={working}
           />
-          <DialogFooter>
+          <DialogFooter className="mt-6 pt-0">
             <Button
+              type="button"
               variant="outline"
               onClick={() => setDeclineOpen(false)}
-              className="rounded-[var(--radius-pill)]"
               disabled={working}
+              className="rounded-[var(--radius-pill)] px-5"
             >
               Cancel
             </Button>
             <Button
+              type="button"
               onClick={decline}
               disabled={working}
-              className="rounded-[var(--radius-pill)] bg-[var(--color-status-danger)] text-white hover:opacity-90"
+              className="rounded-[var(--radius-pill)] bg-[var(--color-status-danger)] px-5 text-[var(--color-on-primary)] hover:opacity-90 active:opacity-95"
             >
               {working && <ButtonSpinner />}
-              {working ? "Declining..." : "Confirm decline"}
+              {working ? "Working…" : "Decline offer"}
             </Button>
           </DialogFooter>
         </DialogContent>

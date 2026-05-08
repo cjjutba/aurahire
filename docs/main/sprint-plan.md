@@ -23,10 +23,10 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 ## Pre-Sprint (Day 0 — May 1, evening, already done)
 
 - [x] Sprint scope locked
-- [x] Architecture confirmed (NestJS + Next.js + Turborepo + Railway + Mailpit + Redis)
+- [x] Architecture confirmed (NestJS + Next.js + Turborepo + Digital Ocean Droplet + Mailpit + Redis)
 - [x] All 13 docs in `docs/main/` written + 3 root files (`CLAUDE.md`, `AGENTS.md`, `DESIGN.md`) + `docker-compose.dev.yml`
 - [x] Service accounts created (Supabase, Resend, OpenAI)
-- [ ] **Human action:** install pnpm 9 globally; create Railway account; ensure Docker Desktop is running
+- [ ] **Human action:** install pnpm 9 globally; create Digital Ocean account + provision the production Droplet; ensure Docker Desktop is running locally
 - [ ] **Human action:** start local services — `docker compose -f docker-compose.dev.yml up -d` (boots Mailpit + Redis)
 - [ ] **Human action:** populate `apps/web/.env.local` and `apps/api/.env`
 
@@ -429,17 +429,22 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ### Slice 4.1 — Frontend Deployment (60 min)
 
-- [ ] Connect repo to Vercel; configure env vars (NEXT_PUBLIC_SUPABASE_URL, ANON_KEY, NEXT_PUBLIC_API_URL pointing at Railway)
+- [ ] Connect repo to Vercel; configure env vars (NEXT_PUBLIC_SUPABASE_URL, ANON_KEY, NEXT_PUBLIC_API_URL pointing at the DO Droplet API URL — `https://api.<your-domain>`)
 - [ ] Push to main → auto-deploy → preview URL
 - [ ] Verify auth + portal loads work in preview
 
-### Slice 4.2 — Backend Deployment (60 min)
+### Slice 4.2 — Backend Deployment (Digital Ocean Droplet, 90 min)
 
-- [ ] Connect repo to Railway; configure env vars (DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY)
-- [ ] Add Railway Redis addon → REDIS_URL auto-injected
-- [ ] Push to main → auto-deploy
-- [ ] Verify `/api/health`, `/api/docs` reachable
-- [ ] Update Vercel `NEXT_PUBLIC_API_URL` to Railway URL
+- [ ] Provision Droplet (Ubuntu 22.04 LTS, 2 vCPU / 2GB), SSH key auth, UFW allowing only 22/80/443
+- [ ] DNS: A-record `api.<your-domain>` → Droplet IPv4
+- [ ] Install Node 20 + pnpm 9 + Docker Engine + Caddy + PM2; create `deploy` user
+- [ ] `git clone` repo to `/home/deploy/aurahire`; create `deploy/.env` with prod values (DATABASE_URL Supabase pooler, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY, REDIS_PASSWORD, REDIS_URL=`redis://:${REDIS_PASSWORD}@127.0.0.1:6379`, SMTP_HOST=127.0.0.1 SMTP_PORT=1025, NODE_ENV=production)
+- [ ] `docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d` → Redis + Mailpit running on 127.0.0.1
+- [ ] `pnpm install --frozen-lockfile && pnpm --filter @aurahire/api build`
+- [ ] `pm2 start apps/api/dist/main.js --name aurahire-api --time && pm2 save && pm2 startup`
+- [ ] Configure `/etc/caddy/Caddyfile` for `api.<your-domain>` → reverse_proxy 127.0.0.1:3333; `systemctl reload caddy`
+- [ ] Verify `https://api.<your-domain>/api/health` and `/api/docs` reachable; TLS green
+- [ ] Update Vercel `NEXT_PUBLIC_API_URL` to `https://api.<your-domain>` and redeploy
 
 ### Slice 4.3 — End-to-End Demo Path Verification (90 min)
 
@@ -539,7 +544,7 @@ The sprint succeeds if:
 6. ✅ Mobile responsive at 375px (graceful)
 7. ✅ TypeScript compiles in both apps
 8. ✅ `pnpm dev` from root runs both servers
-9. ✅ Deployed: Vercel (frontend) + Railway (backend)
+9. ✅ Deployed: Vercel (frontend) + Digital Ocean Droplet (backend, PM2 + Docker Compose Redis/Mailpit + Caddy)
 10. ✅ All 13 docs in `docs/main/` + 3 root files current
 
 ---

@@ -2,15 +2,17 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Building2, ChevronRight, FileText } from "lucide-react";
+import { Building2, FileText } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { ClickableRow } from "@/components/ui/clickable-row";
 import { useMyInterviewsQuery } from "@/hooks/use-interviews";
 import { RealtimeEvent } from "@/lib/realtime";
 import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 
 import { CandidateInterviewsToolbarClient } from "./_interviews-toolbar-client";
 import { CandidateInterviewsPagination } from "./_interviews-pagination";
+import { CandidateInterviewRowActionsClient } from "./_row-actions-client";
 
 interface InterviewRow {
   id: string;
@@ -259,12 +261,12 @@ function InterviewRowEl({ row }: { row: InterviewRow }) {
   const status = getStatusStyle(row.status);
   const when = formatDateLine(row.scheduledAt);
   return (
-    <tr className="group transition hover:bg-[var(--color-surface-soft)]">
+    <ClickableRow
+      href={`/candidate/applications/${row.applicationId}`}
+      ariaLabel={`Open interview for ${row.job?.title ?? "application"}`}
+    >
       <td className="px-4 py-3">
-        <Link
-          href={`/candidate/applications/${row.applicationId}`}
-          className="flex min-w-0 items-center gap-3"
-        >
+        <div className="flex min-w-0 items-center gap-3">
           {row.company?.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -281,14 +283,14 @@ function InterviewRowEl({ row }: { row: InterviewRow }) {
             </div>
           )}
           <div className="min-w-0">
-            <div className="truncate font-medium text-[var(--color-ink)] group-hover:underline">
+            <div className="truncate font-medium text-[var(--color-ink)]">
               {row.job?.title ?? "Interview"}
             </div>
             <div className="truncate text-xs text-[var(--color-muted)]">
               {row.company?.name ?? "—"}
             </div>
           </div>
-        </Link>
+        </div>
       </td>
       <td className="px-4 py-3">
         <div className="text-[var(--color-ink)]">{when.date}</div>
@@ -309,15 +311,12 @@ function InterviewRowEl({ row }: { row: InterviewRow }) {
         </span>
       </td>
       <td className="px-2 py-3 text-right">
-        <Link
-          href={`/candidate/applications/${row.applicationId}`}
-          aria-label="View application"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Link>
+        <CandidateInterviewRowActionsClient
+          applicationId={row.applicationId}
+          jobId={row.job?.id ?? null}
+        />
       </td>
-    </tr>
+    </ClickableRow>
   );
 }
 

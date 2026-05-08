@@ -7,9 +7,12 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
+  useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { getAccessToken } from "@aurahire/shared";
 
 import {
   useMembershipsQuery,
@@ -20,18 +23,54 @@ import {
   getActiveCompanyId,
   setActiveCompanyId,
 } from "@/lib/active-company";
+import { prefetchDashboardForCompany } from "@/lib/dashboard-prefetch";
 
-interface ActiveCompanyContextValue {
+/**
+ * AuthTokenProvider populates the module-level access token from a useEffect,
+ * so the very first render of any consumer sees `null`. Without this gate the
+ * memberships fetch races past the token write and 401s on cold loads.
+ */
+function useAuthTokenReady(): boolean {
+  const [ready, setReady] = useState(() =>
+    typeof window !== "undefined" ? getAccessToken() !== null : false,
+  );
+  useEffect(() => {
+    if (ready) return;
+    const interval = window.setInterval(() => {
+      if (getAccessToken() !== null) {
+        setReady(true);
+        window.clearInterval(interval);
+      }
+    }, 50);
+    return () => window.clearInterval(interval);
+  }, [ready]);
+  return ready;
+}
+
+export interface ActiveCompanyContextValue {
   activeCompanyId: string | null;
   activeMembership: Membership | null;
   memberships: Membership[];
   isLoading: boolean;
+  /** True from the moment switchCompany is called until the SSR transition settles. */
+  isSwitching: boolean;
+  /** Display name of the company being switched TO. Null when not switching. */
+  pendingCompanyName: string | null;
   switchCompany: (companyId: string) => Promise<void>;
+  /** Fire warming GETs to the recruiter dashboard endpoints for `companyId`. */
+  prefetchCompanyDashboard: (companyId: string) => void;
 }
 
 const ActiveCompanyContext = createContext<ActiveCompanyContextValue | null>(
   null,
 );
+
+/**
+ * Test-only export. Production consumers must use `useActiveCompany()`.
+ * The overlay's test harness needs a way to inject context values without
+ * spinning up the full provider's auth/membership fetch.
+ */
+export const ActiveCompanyContextForTesting = ActiveCompanyContext;
 
 /**
  * Holds the user's memberships + currently active company id and exposes
@@ -48,14 +87,19 @@ const ActiveCompanyContext = createContext<ActiveCompanyContextValue | null>(
  * Switch flow:
  *   1. Update the local singleton synchronously so subsequent fetches
  *      already carry the new X-Active-Company-Id header.
- *   2. PATCH /profiles/me { lastActiveCompanyId } so server-rendered pages
- *      (which don't see the header) and the ActiveCompanyGuard fallback
- *      see the new value before we trigger a refresh.
+ *   2. Kick off PATCH /profiles/me { lastActiveCompanyId } in parallel
+ *      with the SSR transition — the PATCH only matters for SSR pages
+ *      and the guard's profile-lookup fallback; client requests already
+ *      use the localStorage singleton via the header.
  *   3. Clear TanStack Query so cached previous-company data is dropped.
- *   4. If we're on a detail page (e.g. /recruiter/jobs/abc-123), redirect
- *      to the section index — the resource probably belongs to the previous
- *      company and would 404 against the new one.
- *   5. router.refresh() — server components re-render with the new tenant.
+ *   4. Inside React's useTransition, branch on pathname:
+ *      - Detail page (`/recruiter/<section>/<id>`): router.push to the
+ *        section index. The push triggers a fresh SSR pass; we skip the
+ *        explicit refresh because that would duplicate the render.
+ *      - Otherwise: router.refresh().
+ *   5. The transition's isPending stays true until the new tree renders;
+ *      the overlay reads isSwitching (driven by isPending) to know when
+ *      to unmount.
  */
 export function ActiveCompanyProvider({
   children,
@@ -78,10 +122,10 @@ export function ActiveCompanyProvider({
     }
   }
 
-  // Memberships query is gated on the resolver being installed — without a
-  // company id the API call would 403. We rely on the AuthTokenProvider
-  // running before us in the layout tree.
-  const { data, isLoading } = useMembershipsQuery();
+  // Memberships query is gated on the access token being set — without it the
+  // request races past AuthTokenProvider's useEffect and 401s on cold loads.
+  const tokenReady = useAuthTokenReady();
+  const { data, isLoading } = useMembershipsQuery(tokenReady);
   const memberships = useMemo(() => data?.data ?? [], [data?.data]);
 
   // The active company id, in priority order:
@@ -106,42 +150,73 @@ export function ActiveCompanyProvider({
   const activeMembership =
     memberships.find((m) => m.companyId === activeCompanyId) ?? null;
 
+  // ── Switch lifecycle: isSwitching gates the global overlay; pendingCompanyName
+  // labels it. isPending (from useTransition) tracks the SSR-render commit so
+  // we know when to lower the overlay.
+  const [isSwitching, setIsSwitching] = useState(false);
+  const [pendingCompanyName, setPendingCompanyName] = useState<string | null>(
+    null,
+  );
+  const [isPending, startTransition] = useTransition();
+
+  // When the SSR transition settles, take the overlay down. Only acts while
+  // a switch is in progress so unrelated transitions elsewhere in the tree
+  // don't accidentally toggle this state.
+  useEffect(() => {
+    if (!isPending && isSwitching) {
+      setIsSwitching(false);
+      setPendingCompanyName(null);
+    }
+  }, [isPending, isSwitching]);
+
   const switchCompany = useCallback(
     async (companyId: string) => {
-      // 1. Update client singleton first so subsequent fetches use new header.
+      if (companyId === activeCompanyId) return;
+
+      const target = memberships.find((m) => m.companyId === companyId);
+      setPendingCompanyName(target?.companyName ?? null);
+      setIsSwitching(true);
+
+      // 1. Synchronous singleton update — next outgoing fetch carries the new header.
+      const previousCompanyId = activeCompanyId;
       setActiveCompanyId(companyId);
 
-      // 2. Persist on the server so server-rendered pages + guard fallback
-      //    see the new value before we refresh.
-      try {
-        await setActiveCompanyOnServer(companyId);
-      } catch (err) {
-        // If the server rejects the switch, roll the client state back so the
-        // UI doesn't appear desynced from reality.
-        setActiveCompanyId(initialActiveCompanyId ?? null);
+      // 2. Start PATCH (don't await yet — let it race the SSR transition).
+      const patchPromise = setActiveCompanyOnServer(companyId).catch((err) => {
+        // Rollback path: restore client singleton, clear UI state, re-throw so
+        // CompanySwitcher.handleSelect surfaces the toast.
+        setActiveCompanyId(previousCompanyId ?? initialActiveCompanyId ?? null);
+        setIsSwitching(false);
+        setPendingCompanyName(null);
         throw err;
-      }
+      });
 
-      // 3. Drop all cached query data — the previous company's data is now
-      //    stale by definition.
+      // 3. Drop cached previous-tenant client data.
       queryClient.clear();
 
-      // 4. If we're on a detail page, jump to the section index. Resources
-      //    keyed by id (jobs/{id}, applications/{id}, etc.) will almost
-      //    certainly 404 against the new tenant.
-      if (typeof window !== "undefined") {
-        const path = window.location.pathname;
-        const detailPathMatch = path.match(/^(\/recruiter\/[^/]+)\/[^/]+/);
-        if (detailPathMatch?.[1]) {
-          router.push(detailPathMatch[1]);
+      // 4. Trigger SSR transition. On a detail page we push to the section
+      //    index (push triggers SSR; refresh would duplicate). Otherwise refresh.
+      startTransition(() => {
+        if (typeof window !== "undefined") {
+          const path = window.location.pathname;
+          const detailMatch = path.match(/^(\/recruiter\/[^/]+)\/[^/]+/);
+          if (detailMatch?.[1]) {
+            router.push(detailMatch[1]);
+            return;
+          }
         }
-      }
+        router.refresh();
+      });
 
-      // 5. Re-render server components with the new tenant context.
-      router.refresh();
+      // 5. Await PATCH for error surfacing. The transition runs in parallel.
+      await patchPromise;
     },
-    [initialActiveCompanyId, queryClient, router],
+    [activeCompanyId, memberships, initialActiveCompanyId, queryClient, router],
   );
+
+  const prefetchCompanyDashboard = useCallback((companyId: string) => {
+    prefetchDashboardForCompany(companyId);
+  }, []);
 
   const value = useMemo<ActiveCompanyContextValue>(
     () => ({
@@ -149,9 +224,21 @@ export function ActiveCompanyProvider({
       activeMembership,
       memberships,
       isLoading,
+      isSwitching,
+      pendingCompanyName,
       switchCompany,
+      prefetchCompanyDashboard,
     }),
-    [activeCompanyId, activeMembership, memberships, isLoading, switchCompany],
+    [
+      activeCompanyId,
+      activeMembership,
+      memberships,
+      isLoading,
+      isSwitching,
+      pendingCompanyName,
+      switchCompany,
+      prefetchCompanyDashboard,
+    ],
   );
 
   return (

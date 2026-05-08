@@ -6,6 +6,7 @@ import type { JobStatus } from "@aurahire/shared";
 
 import type { RecruiterJobsListParams } from "@/lib/query";
 import { useRecruiterJobsQuery } from "@/hooks/use-recruiter-jobs";
+import { ClickableRow } from "@/components/ui/clickable-row";
 
 import { JobsToolbarClient } from "./_jobs-toolbar-client";
 import { JobsPagination } from "./_jobs-pagination";
@@ -180,9 +181,15 @@ function JobRow({ job }: { job: JobWithStats }) {
   const status = getJobStatus(job.status);
   const apps = job.stats?.candidates ?? 0;
   return (
-    <tr className="transition hover:bg-[var(--color-surface-soft)]">
+    <ClickableRow
+      href={`/recruiter/jobs/${job.id}`}
+      ariaLabel={`Open ${job.title}`}
+    >
       <td className="px-4 py-3">
-        <Link href={`/recruiter/jobs/${job.id}`} className="font-medium text-[var(--color-ink)] hover:underline">
+        <Link
+          href={`/recruiter/jobs/${job.id}`}
+          className="font-medium text-[var(--color-ink)] hover:underline"
+        >
           {job.title}
         </Link>
       </td>
@@ -208,7 +215,7 @@ function JobRow({ job }: { job: JobWithStats }) {
       <td className="px-2 py-3 text-right">
         <JobRowActionsClient jobId={job.id} status={job.status} />
       </td>
-    </tr>
+    </ClickableRow>
   );
 }
 

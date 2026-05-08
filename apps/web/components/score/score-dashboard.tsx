@@ -32,6 +32,18 @@ export interface ScoreDashboardFairness {
 export interface ScoreDashboardProps {
   /** Top-of-page header (title + secondary actions). Rendered above the grid. */
   header: ReactNode;
+  /**
+   * Optional sticky action bar rendered between the header and the grid. When
+   * the parent passes a sticky element (e.g. a recruiter decision bar), set
+   * `stickyTopClass` so the left rail's sticky offset clears the bar.
+   */
+  topActions?: ReactNode;
+  /**
+   * Tailwind class controlling the left rail's sticky `top` offset. Defaults
+   * to `lg:top-6`. Pass a larger offset (e.g. `lg:top-28`) when `topActions`
+   * adds a sticky bar above so the rail doesn't slide behind it.
+   */
+  stickyTopClass?: string;
   /** Overall numeric score (0–100). */
   overallScore: number;
   band: "strong" | "partial" | "limited";
@@ -65,6 +77,8 @@ function trimQuotes(s: string): string {
 
 export function ScoreDashboard({
   header,
+  topActions,
+  stickyTopClass = "lg:top-6",
   overallScore,
   band,
   metaLines,
@@ -87,9 +101,11 @@ export function ScoreDashboard({
     <div className="mx-auto max-w-[1280px] space-y-8">
       {header}
 
+      {topActions}
+
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         {/* Left rail — sticky summary + component list */}
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        <aside className={`lg:sticky ${stickyTopClass} lg:self-start`}>
           <div className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5">
             <div className="flex items-center gap-4">
               <ScoreRing
@@ -228,6 +244,11 @@ function ActiveComponentPanel({
 }) {
   const ratio = c.max > 0 ? c.score / c.max : 0;
   const colors = bandColors(ratio);
+  const deficit = Math.max(0, c.max - c.score);
+
+  const positives = c.evidence.filter((ev) => ev.relevance !== "negative");
+  const negatives = c.evidence.filter((ev) => ev.relevance === "negative");
+  const grouped = negatives.length > 0;
 
   return (
     <div className="space-y-5">
@@ -237,7 +258,7 @@ function ActiveComponentPanel({
             {label}
           </h2>
           <p className="mt-1 text-xs text-[var(--color-muted)]">
-            Weight {Math.round(c.weight * 100)}% of overall score
+            Weight {c.weight}% of overall score
           </p>
         </div>
         <div className="text-right">
@@ -254,6 +275,14 @@ function ActiveComponentPanel({
               style={{ width: `${ratio * 100}%`, backgroundColor: colors.fill }}
             />
           </div>
+          {deficit > 0 && (
+            <p
+              className="mt-1.5 font-mono text-[11px]"
+              style={{ color: "var(--color-score-low)" }}
+            >
+              −{deficit} {deficit === 1 ? "pt" : "pts"} to perfect
+            </p>
+          )}
         </div>
       </header>
 
@@ -265,6 +294,25 @@ function ActiveComponentPanel({
         <p className="rounded-[var(--radius-md)] border border-dashed border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-4 text-center text-xs text-[var(--color-muted)]">
           No evidence cited for this component.
         </p>
+      ) : grouped ? (
+        <div className="space-y-5">
+          {negatives.length > 0 && (
+            <EvidenceGroup
+              tone="gap"
+              heading="Gaps — why this isn't a perfect score"
+              items={negatives}
+              componentName={c.name}
+            />
+          )}
+          {positives.length > 0 && (
+            <EvidenceGroup
+              tone="strength"
+              heading="Strengths"
+              items={positives}
+              componentName={c.name}
+            />
+          )}
+        </div>
       ) : (
         <div className="space-y-3">
           {c.evidence.map((ev, i) => (
@@ -279,6 +327,47 @@ function ActiveComponentPanel({
         </div>
       )}
     </div>
+  );
+}
+
+function EvidenceGroup({
+  tone,
+  heading,
+  items,
+  componentName,
+}: {
+  tone: "strength" | "gap";
+  heading: string;
+  items: ScoreDashboardEvidence[];
+  componentName: string;
+}) {
+  const dotColor =
+    tone === "gap" ? "var(--color-score-low)" : "var(--color-score-high)";
+  return (
+    <section className="space-y-3">
+      <h3
+        className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider"
+        style={{ color: dotColor }}
+      >
+        <span
+          className="inline-block h-2 w-2 rounded-full"
+          style={{ backgroundColor: dotColor }}
+          aria-hidden
+        />
+        {heading}
+      </h3>
+      <div className="space-y-3">
+        {items.map((ev, i) => (
+          <EvidenceCallout
+            key={`${componentName}-${tone}-${i}`}
+            excerpt={trimQuotes(ev.excerpt)}
+            source={ev.source}
+            relevance={ev.relevance}
+            contributionPoints={ev.contributionPoints ?? null}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 

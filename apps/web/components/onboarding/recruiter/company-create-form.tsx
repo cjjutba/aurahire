@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { z } from "zod";
 
 import {
   createCompanySchema,
@@ -36,6 +37,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+// The form holds the *raw* values the user types (input shape, with
+// possibly-empty strings); zod's transform converts them to the output
+// shape (`CreateCompanyInput`) on submit.
+type CreateCompanyFormValues = z.input<typeof createCompanySchema>;
+
 interface CreateCompanyResponse {
   data: {
     id: string;
@@ -66,7 +72,7 @@ export function CompanyCreateForm({
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const form = useForm<CreateCompanyInput>({
+  const form = useForm<CreateCompanyFormValues, unknown, CreateCompanyInput>({
     resolver: zodResolver(createCompanySchema),
     defaultValues: {
       name: "",
@@ -119,12 +125,12 @@ export function CompanyCreateForm({
   });
 
   async function onSubmit(values: CreateCompanyInput) {
-    // Normalise "" → null/undefined for nullable optional fields so Zod's
-    // `.url()` validator on `website` doesn't reject empty strings.
+    // Normalise "" → null on the remaining optional text fields so we don't
+    // persist empty strings. (`website` and `logoUrl` are already normalised
+    // by the schema's transform.)
     const payload: CreateCompanyInput = {
       ...values,
       industry: values.industry || null,
-      website: values.website || null,
       headquartersLocation: values.headquartersLocation || null,
       description: values.description || null,
     };

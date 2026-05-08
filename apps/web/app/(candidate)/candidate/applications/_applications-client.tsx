@@ -2,16 +2,18 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Building2, ChevronRight, Search } from "lucide-react";
+import { Building2, Search } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { MatchBandChip } from "@/components/score/match-band-chip";
+import { ClickableRow } from "@/components/ui/clickable-row";
 import { useMyApplicationsQuery } from "@/hooks/use-applications";
 import { RealtimeEvent } from "@/lib/realtime";
 import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 
 import { ApplicationsToolbarClient } from "./_applications-toolbar-client";
 import { ApplicationsPagination } from "./_applications-pagination";
+import { CandidateApplicationRowActionsClient } from "./_row-actions-client";
 
 interface AppRow {
   id: string;
@@ -223,12 +225,12 @@ function ApplicationRow({ app }: { app: AppRow }) {
   const status = getAppStatus(app.status);
   const company = app.job?.company;
   return (
-    <tr className="group transition hover:bg-[var(--color-surface-soft)]">
+    <ClickableRow
+      href={`/candidate/applications/${app.id}`}
+      ariaLabel={`Open application for ${app.job?.title ?? "job"}`}
+    >
       <td className="px-4 py-3">
-        <Link
-          href={`/candidate/applications/${app.id}`}
-          className="flex min-w-0 items-center gap-3"
-        >
+        <div className="flex min-w-0 items-center gap-3">
           {company?.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -245,14 +247,14 @@ function ApplicationRow({ app }: { app: AppRow }) {
             </div>
           )}
           <div className="min-w-0">
-            <div className="truncate font-medium text-[var(--color-ink)] group-hover:underline">
+            <div className="truncate font-medium text-[var(--color-ink)]">
               {app.job?.title ?? "Job"}
             </div>
             <div className="truncate text-xs text-[var(--color-muted)]">
               {company?.name ?? "—"}
             </div>
           </div>
-        </Link>
+        </div>
       </td>
       <td className="px-4 py-3">
         <span
@@ -283,15 +285,13 @@ function ApplicationRow({ app }: { app: AppRow }) {
         {formatDate(app.appliedAt)}
       </td>
       <td className="px-2 py-3 text-right">
-        <Link
-          href={`/candidate/applications/${app.id}`}
-          aria-label="View application"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Link>
+        <CandidateApplicationRowActionsClient
+          applicationId={app.id}
+          status={app.status}
+          jobTitle={app.job?.title ?? "this role"}
+        />
       </td>
-    </tr>
+    </ClickableRow>
   );
 }
 

@@ -478,6 +478,53 @@ export class ScoringService {
     );
   }
 
+  /**
+   * Synchronous preview-promotion fast-path used by ApplicationsService.apply().
+   *
+   * If a preview already exists for this exact (candidate, job, resume) triple,
+   * materialize it as a real `match_scores` row tied to the new application —
+   * no OpenAI call, no queue, no shimmer on the detail page. Returns null when
+   * no preview is available, in which case the caller should defer to the
+   * async worker.
+   *
+   * Internally this delegates to `computeMatchScore`, which takes the same
+   * promotion branch; the upfront preview lookup here is the gate that lets us
+   * stay in the request thread without risking a fresh AI call when the
+   * preview is missing.
+   */
+  async tryPromoteMatchPreview(
+    applicationId: string,
+    candidateId: string,
+    jobId: string,
+    resumeId: string,
+    job: {
+      title: string;
+      department: string | null;
+      experienceLevel: string;
+      educationRequirement: string | null;
+      requiredSkills: string[];
+      descriptionPlain: string;
+      companyId?: string | null;
+    },
+    requestMeta: RequestMeta = {},
+  ): Promise<MatchScoreDto | null> {
+    const preview = await this.scoringRepo.findMatchPreview(
+      candidateId,
+      jobId,
+      resumeId,
+    );
+    if (!preview) return null;
+
+    return this.computeMatchScore(
+      applicationId,
+      candidateId,
+      jobId,
+      resumeId,
+      job,
+      requestMeta,
+    );
+  }
+
   async getMatchScoreByApplicationId(
     applicationId: string,
   ): Promise<MatchScoreDto | null> {

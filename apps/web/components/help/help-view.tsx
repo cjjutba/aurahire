@@ -43,6 +43,8 @@ export function HelpView({ variant }: HelpViewProps) {
   const [tocOpen, setTocOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const tocScrollRef = useRef<HTMLDivElement | null>(null);
+  const [tocCanScrollUp, setTocCanScrollUp] = useState(false);
+  const [tocCanScrollDown, setTocCanScrollDown] = useState(false);
 
   // Cmd/Ctrl+K focuses search
   useEffect(() => {
@@ -131,6 +133,28 @@ export function HelpView({ variant }: HelpViewProps) {
       behavior: prefersReducedMotion() ? "auto" : "smooth",
     });
   }, [activeId]);
+
+  // Track whether the TOC has overflow above/below the viewport so we can render
+  // a visible scroll affordance — macOS auto-hides custom scrollbars, so we
+  // need our own indicator. Updates on scroll, on resize, and when content filters.
+  useEffect(() => {
+    const el = tocScrollRef.current;
+    if (!el) return;
+    const update = () => {
+      setTocCanScrollUp(el.scrollTop > 1);
+      setTocCanScrollDown(
+        el.scrollTop + el.clientHeight < el.scrollHeight - 1,
+      );
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, [filtered]);
 
   function handleTocClick(id: string) {
     const el = document.getElementById(id);
@@ -299,15 +323,17 @@ export function HelpView({ variant }: HelpViewProps) {
               On this page
             </div>
             <div className="relative min-h-0 flex-1">
-              {/* top edge fade — hides clipped content above the fold */}
-              <div
-                className="pointer-events-none absolute inset-x-0 top-0 z-10 h-3 bg-gradient-to-b from-[var(--color-canvas)] to-transparent"
-                aria-hidden
-              />
+              {/* top fade — only when content scrolled above is clipped */}
+              {tocCanScrollUp && (
+                <div
+                  className="pointer-events-none absolute inset-x-0 top-0 z-10 h-4 bg-gradient-to-b from-[var(--color-canvas)] to-transparent"
+                  aria-hidden
+                />
+              )}
               {/* scroll surface */}
               <div
                 ref={tocScrollRef}
-                className="h-full overflow-y-auto pb-3 pr-2 pt-1 [scrollbar-width:thin]"
+                className="h-full overflow-y-auto pb-8 pr-2 pt-1 [scrollbar-color:var(--color-hairline)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--color-hairline)] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5"
               >
                 <TocList
                   groups={filtered.groups}
@@ -320,11 +346,25 @@ export function HelpView({ variant }: HelpViewProps) {
                   }
                 />
               </div>
-              {/* bottom edge fade — hides clipped content below the fold */}
-              <div
-                className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-3 bg-gradient-to-t from-[var(--color-canvas)] to-transparent"
-                aria-hidden
-              />
+              {/* bottom — clickable chevron affordance when more topics exist below */}
+              {tocCanScrollDown && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = tocScrollRef.current;
+                    if (!el) return;
+                    el.scrollBy({
+                      top: el.clientHeight * 0.7,
+                      behavior: prefersReducedMotion() ? "auto" : "smooth",
+                    });
+                  }}
+                  aria-label="Scroll to see more topics"
+                  className="absolute inset-x-0 bottom-0 z-10 flex h-8 items-end justify-center gap-1 bg-gradient-to-t from-[var(--color-canvas)] via-[var(--color-canvas)] to-transparent pb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)] transition hover:text-[var(--color-primary)]"
+                >
+                  <ChevronDown className="h-3 w-3" aria-hidden />
+                  <span>More</span>
+                </button>
+              )}
             </div>
           </div>
         </aside>

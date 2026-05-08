@@ -302,19 +302,34 @@ function ActiveComponentPanel({
   label: string;
   className?: string;
 }) {
+  const deficit = Math.max(0, c.max - c.score);
+  const positives = c.evidence.filter((ev) => ev.relevance !== "negative");
+  const negatives = c.evidence.filter((ev) => ev.relevance === "negative");
+  const grouped = negatives.length > 0;
+
   return (
     <div className={`space-y-4 ${className ?? ""}`}>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <h3 className="text-base font-semibold text-[var(--color-ink)]">
           {label}
         </h3>
-        <span className="font-mono text-sm text-[var(--color-muted)]">
-          {c.score}
-          <span className="text-[var(--color-muted)]"> / {c.max}</span>
-          <span className="ml-2 text-[var(--color-muted)]">
-            (weight {Math.round(c.weight * 100)}%)
+        <div className="text-right">
+          <span className="font-mono text-sm text-[var(--color-muted)]">
+            {c.score}
+            <span className="text-[var(--color-muted)]"> / {c.max}</span>
+            <span className="ml-2 text-[var(--color-muted)]">
+              (weight {c.weight}%)
+            </span>
           </span>
-        </span>
+          {deficit > 0 && (
+            <p
+              className="mt-0.5 font-mono text-[11px]"
+              style={{ color: "var(--color-score-low)" }}
+            >
+              −{deficit} {deficit === 1 ? "pt" : "pts"} to perfect
+            </p>
+          )}
+        </div>
       </header>
       <p className="text-sm leading-relaxed text-[var(--color-body)]">
         {c.explanation}
@@ -323,6 +338,25 @@ function ActiveComponentPanel({
         <p className="rounded-[var(--radius-md)] border border-dashed border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-3 text-center text-xs text-[var(--color-muted)]">
           No evidence cited for this component.
         </p>
+      ) : grouped ? (
+        <div className="space-y-4">
+          {negatives.length > 0 && (
+            <ApplyEvidenceGroup
+              tone="gap"
+              heading="Gaps — why this isn't a perfect score"
+              items={negatives}
+              componentName={c.name}
+            />
+          )}
+          {positives.length > 0 && (
+            <ApplyEvidenceGroup
+              tone="strength"
+              heading="Strengths"
+              items={positives}
+              componentName={c.name}
+            />
+          )}
+        </div>
       ) : (
         <div className="space-y-2.5">
           {c.evidence.map((ev, i) => (
@@ -337,5 +371,46 @@ function ActiveComponentPanel({
         </div>
       )}
     </div>
+  );
+}
+
+function ApplyEvidenceGroup({
+  tone,
+  heading,
+  items,
+  componentName,
+}: {
+  tone: "strength" | "gap";
+  heading: string;
+  items: ApplyMatchPreviewEvidence[];
+  componentName: string;
+}) {
+  const dotColor =
+    tone === "gap" ? "var(--color-score-low)" : "var(--color-score-high)";
+  return (
+    <section className="space-y-2.5">
+      <h4
+        className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider"
+        style={{ color: dotColor }}
+      >
+        <span
+          className="inline-block h-2 w-2 rounded-full"
+          style={{ backgroundColor: dotColor }}
+          aria-hidden
+        />
+        {heading}
+      </h4>
+      <div className="space-y-2.5">
+        {items.map((ev, i) => (
+          <EvidenceCallout
+            key={`${componentName}-${tone}-${i}`}
+            excerpt={trimQuotes(ev.excerpt)}
+            source={ev.source}
+            relevance={ev.relevance}
+            contributionPoints={ev.contributionPoints}
+          />
+        ))}
+      </div>
+    </section>
   );
 }

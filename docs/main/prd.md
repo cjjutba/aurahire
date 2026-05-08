@@ -5,7 +5,7 @@
 **Status:** Locked
 **Supersedes:** PRD v2.0.0 (May 1) → v1.0.0 (November 16, 2025)
 
-> **Architectural note (v2.1.0 update):** The system is now built as a **Turborepo monorepo with split frontend/backend** — Next.js 16 on Vercel (`apps/web`) + NestJS on Railway (`apps/api`). All AI calls, DB access, queue/cron/cache live in the backend. See `architecture.md` and `tech-stack.md`. Sprint window updated to **May 2–4 active + May 5 polish/smoke buffer**.
+> **Architectural note (v2.1.0 update):** The system is now built as a **Turborepo monorepo with split frontend/backend** — Next.js 16 on Vercel (`apps/web`) + NestJS on a Digital Ocean Droplet (`apps/api`, run under PM2 with Redis + Mailpit as Docker containers on the same host and Caddy reverse-proxying TLS). All AI calls, DB access, queue/cron/cache live in the backend. See `architecture.md` and `tech-stack.md`. Sprint window updated to **May 2–4 active + May 5 polish/smoke buffer**.
 
 ---
 
@@ -325,7 +325,7 @@ This PRD is the contract; companion docs are the implementation guide.
 | `project-structure.md` | Monorepo layout (apps/web, apps/api, packages/shared, packages/db) |
 | `best-practices.md` | Engineering standards (NestJS + Next.js + monorepo discipline) |
 | `sprint-plan.md` | Day 1 / Day 2 / Day 3 / Day 4 hour-by-hour |
-| `env-setup.md` | Local dev + Supabase + Resend + OpenAI + Mailpit + Redis + Railway setup |
+| `env-setup.md` | Local dev + Supabase + Resend + OpenAI + Mailpit + Redis + Digital Ocean Droplet setup |
 
 ### Root-level reference docs
 

@@ -5,11 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { AuthUser, ParsedResume } from "@aurahire/shared";
-import {
-  personalCompleteSchema,
-  preferencesCompleteSchema,
-  reviewCompleteSchema,
-} from "@aurahire/shared";
+import { personalCompleteSchema, reviewCompleteSchema } from "@aurahire/shared";
 import type { Profile, CandidateProfile } from "@aurahire/db";
 
 import { AuditService } from "../../audit";
@@ -206,18 +202,6 @@ export class CandidateProfilesService {
       throw new BadRequestException({
         code: "INCOMPLETE_REVIEW",
         message: "Add at least one experience, one school, or three skills",
-      });
-    }
-
-    // Step 3 — preferences: must have at least one desired role and one work mode.
-    const prefsParsed = preferencesCompleteSchema.safeParse({
-      desiredRoles: candidateProfile.desiredRoles ?? [],
-      openTo: candidateProfile.openTo ?? [],
-    });
-    if (!prefsParsed.success) {
-      throw new BadRequestException({
-        code: "INCOMPLETE_PREFERENCES",
-        message: prefsParsed.error.issues[0]?.message ?? "Preferences incomplete",
       });
     }
 

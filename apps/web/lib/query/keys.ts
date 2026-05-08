@@ -20,6 +20,8 @@ export const queryKeys = {
   recruiterApplications: {
     byJob: (jobId: string, params: RecruiterApplicationsByJobParams) =>
       ["recruiter-applications", "by-job", jobId, params] as const,
+    list: (params: RecruiterApplicationsListParams) =>
+      ["recruiter-applications", "list", params] as const,
   },
   candidateJobs: {
     list: (params: CandidateJobsListParams) =>
@@ -67,6 +69,15 @@ export interface RecruiterInterviewsParams {
 export interface RecruiterApplicationsByJobParams {
   status?: string;
   page?: number;
+}
+export interface RecruiterApplicationsListParams {
+  q?: string;
+  status?: string;
+  jobId?: string;
+  band?: string;
+  sort?: string;
+  page?: number;
+  limit?: number;
 }
 export interface CandidateJobsListParams {
   q?: string;

@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { useConfirm } from "@/components/providers/confirm-provider";
 
 type InterviewFormat = "phone" | "video" | "in-person";
 
@@ -33,6 +34,7 @@ interface Props {
 
 export function ScheduleInterviewModalClient({ applicationId, open, onOpenChange }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [scheduledAt, setScheduledAt] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [format, setFormat] = useState<InterviewFormat>("video");
@@ -51,6 +53,14 @@ export function ScheduleInterviewModalClient({ applicationId, open, onOpenChange
       toastApiError(null, "Check your input", "Pick a date and time.");
       return;
     }
+    const ok = await confirm({
+      title: "Schedule this interview?",
+      description:
+        "The candidate will receive an email with the date, time, and details you entered.",
+      confirmLabel: "Schedule interview",
+      variant: "info",
+    });
+    if (!ok) return;
     setWorking(true);
     try {
       const supabase = createSupabaseBrowserClient();

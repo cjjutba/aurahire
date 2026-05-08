@@ -420,7 +420,7 @@ export const candidateHelp: HelpPageContent = {
                 {
                   label: "Where to send",
                   description:
-                    "fairness@aurahire.app — separate inbox from general support so it's triaged appropriately.",
+                    "hello@aurahire.site — please use the subject line “Fairness review” so we route it to the right reviewer.",
                 },
                 {
                   label: "What we'll do",
@@ -637,8 +637,8 @@ export const candidateHelp: HelpPageContent = {
   ],
   contact: {
     title: "Need a human?",
-    body: "Email support — we typically reply within one business day. For fairness or bias concerns, please email fairness@aurahire.app instead so it routes correctly.",
-    email: "support@aurahire.app",
+    body: "Email us — we typically reply within one business day. For fairness or bias concerns, use the subject line “Fairness review” so it routes correctly.",
+    email: "hello@aurahire.site",
     secondaryLink: { label: "Browse open jobs", href: "/candidate/jobs" },
   },
 };

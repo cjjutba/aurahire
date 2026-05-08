@@ -13,12 +13,12 @@
 
 The system has three roles (Candidate, Recruiter, Admin) and ships as a **Turborepo monorepo** with a **split frontend/backend architecture**:
 - **Frontend:** Next.js 16 (App Router) on Vercel
-- **Backend:** NestJS REST API on Railway
+- **Backend:** NestJS REST API on a Digital Ocean Droplet (managed by PM2; Redis + Mailpit run as Docker containers on the same host via `deploy/docker-compose.prod.yml`; Caddy reverse-proxies HTTPS)
 - **Database:** Supabase Postgres (with RLS)
 - **Auth:** Supabase Auth on frontend, JWT validation guard on backend
 - **AI:** OpenAI `gpt-4o-mini` (backend-only)
 - **Email:** Mailpit (dev) → Resend (prod)
-- **Cache + Queue:** Upstash/Railway Redis with BullMQ
+- **Cache + Queue:** Redis with BullMQ (Docker container on the production Droplet; localhost-bound)
 - **Cron:** `@nestjs/schedule`
 
 For full context, read these in order before editing code:
@@ -45,7 +45,7 @@ For full context, read these in order before editing code:
 aurahire/
 ├── apps/
 │   ├── web/              # Next.js 16 frontend (Vercel)
-│   └── api/              # NestJS backend (Railway)
+│   └── api/              # NestJS backend (Digital Ocean Droplet, PM2)
 ├── packages/
 │   ├── shared/           # Zod schemas, enums, constants used by both apps
 │   └── db/               # Drizzle schema (consumed by api; types exported to web)
@@ -103,10 +103,11 @@ You may **write** the migration SQL, the schema TypeScript, the seed script. The
 
 **Never run any of:**
 - `vercel deploy` / `vercel --prod`
-- `railway up` / Railway CLI deploy commands
+- `doctl apps create` / `doctl apps update` / `doctl droplet *` / any Digital Ocean CLI command that mutates infrastructure
+- `ssh deploy@<droplet> ...` to run remote deploy steps (PM2 reload, `docker compose up -d`, etc.) on the production Droplet
 - `git push` to remotes (the human manages the git remote workflow)
 
-You may write deployment configs (`vercel.json`, `railway.toml`, GitHub Actions workflows). The human triggers deploys.
+You may write deployment configs (`vercel.json`, `deploy/docker-compose.prod.yml`, `apps/api/Dockerfile`, GitHub Actions workflows, Caddyfile). The human triggers deploys and runs anything against the Droplet.
 
 ### 3a. Claude does NOT run destructive or history-rewriting git commands
 

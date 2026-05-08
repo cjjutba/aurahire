@@ -6,12 +6,22 @@ import { toastSuccess, toastApiError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { AiShimmer } from "@/components/ai/ai-shimmer";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { useConfirm } from "@/components/providers/confirm-provider";
 
 export function RecomputeButtonClient() {
   const router = useRouter();
+  const confirm = useConfirm();
   const [working, setWorking] = useState(false);
 
   async function recompute() {
+    const ok = await confirm({
+      title: "Recompute your profile score?",
+      description:
+        "AI will rescore your profile against the latest weights. This replaces your current score and may take a few seconds.",
+      confirmLabel: "Recompute score",
+      variant: "warning",
+    });
+    if (!ok) return;
     setWorking(true);
     try {
       const supabase = createSupabaseBrowserClient();

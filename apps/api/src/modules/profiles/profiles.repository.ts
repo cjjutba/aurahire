@@ -16,10 +16,14 @@ import {
   type NewCompany,
 } from "@aurahire/db";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
+import { CacheService, TAGS } from "../../cache";
 
 @Injectable()
 export class ProfilesRepository {
-  constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient) {}
+  constructor(
+    @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async findById(id: string): Promise<Profile | null> {
     const rows = await this.db
@@ -143,6 +147,14 @@ export class ProfilesRepository {
       profile.lastActiveCompanyId = company.id;
 
       return { profile, company, recruiterProfile };
+    }).then(async (result) => {
+      // Bust the cached profile-lookup tag so ActiveCompanyGuard's fallback
+      // path sees the new pointer on its next read. Runs outside the
+      // transaction so a Redis hiccup doesn't roll back the profile insert.
+      await this.cacheService.bustTags([
+        TAGS.userMemberships(result.profile.id),
+      ]);
+      return result;
     });
   }
 
@@ -158,6 +170,9 @@ export class ProfilesRepository {
       .update(profilesTable)
       .set({ lastActiveCompanyId: companyId, updatedAt: new Date() })
       .where(eq(profilesTable.id, userId));
+    // Bust the cached profile-lookup so ActiveCompanyGuard's fallback path
+    // returns the fresh pointer on the next request.
+    await this.cacheService.bustTags([TAGS.userMemberships(userId)]);
   }
 
   async updateProfile(

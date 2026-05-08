@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronsUpDown, Plus, Mail, Check } from "lucide-react";
 
 import { useActiveCompany } from "@/contexts/active-company-context";
@@ -19,21 +19,54 @@ import { toastApiError } from "@/lib/toast";
 /**
  * Recruiter sidebar combobox that replaces the static "TechCorp Inc." chip.
  * Lists every active membership; switching invokes the context's
- * `switchCompany` action which handles fetch headers, server PATCH, query
- * invalidation, and detail-page redirects.
+ * `switchCompany` action which handles the localStorage singleton, parallel
+ * server PATCH, query invalidation, SSR transition, and detail-page redirects.
+ *
+ * Switching state is owned by the provider so the global overlay can stay
+ * mounted until the SSR transition settles. Hovering a non-active row warms
+ * the API's Redis cache for that company's dashboard endpoints (~100ms
+ * debounce to avoid thrashing on a fast scroll past).
  *
  * Geometry mirrors the previous static chip (h-8 avatar, gap-2, chevron) so
- * the sidebar visually unchanged at rest.
+ * the sidebar is visually unchanged at rest.
  */
 export function CompanySwitcher() {
   const ctx = useActiveCompany();
-  const [switching, setSwitching] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [acceptOpen, setAcceptOpen] = useState(false);
+  const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const prefetchFn = ctx?.prefetchCompanyDashboard;
+
+  const schedulePrefetch = useCallback(
+    (companyId: string) => {
+      if (!prefetchFn) return;
+      if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+      prefetchTimerRef.current = setTimeout(() => {
+        prefetchFn(companyId);
+      }, 100);
+    },
+    [prefetchFn],
+  );
+
+  const cancelPrefetch = useCallback(() => {
+    if (prefetchTimerRef.current) {
+      clearTimeout(prefetchTimerRef.current);
+      prefetchTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => cancelPrefetch(), [cancelPrefetch]);
 
   if (!ctx) return null;
 
-  const { activeMembership, memberships, isLoading, switchCompany } = ctx;
+  const {
+    activeMembership,
+    memberships,
+    isLoading,
+    isSwitching,
+    switchCompany,
+  } = ctx;
 
   const triggerInitials = activeMembership
     ? getInitials(activeMembership.companyName)
@@ -45,14 +78,11 @@ export function CompanySwitcher() {
 
   async function handleSelect(companyId: string) {
     if (companyId === activeMembership?.companyId) return;
-    if (switching) return;
-    setSwitching(true);
+    if (isSwitching) return;
     try {
       await switchCompany(companyId);
     } catch (err) {
       toastApiError(err, "Failed to switch company");
-    } finally {
-      setSwitching(false);
     }
   }
 
@@ -63,7 +93,7 @@ export function CompanySwitcher() {
         render={
           <button
             type="button"
-            disabled={switching}
+            disabled={isSwitching}
             aria-label="Switch company"
             className="mt-4 flex w-full items-center gap-2 rounded-[var(--radius-md)] py-1 text-left transition hover:bg-[var(--color-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"
           />
@@ -101,6 +131,14 @@ export function CompanySwitcher() {
               <DropdownMenuItem
                 key={m.companyId}
                 onClick={() => void handleSelect(m.companyId)}
+                onMouseEnter={
+                  isActive ? undefined : () => schedulePrefetch(m.companyId)
+                }
+                onMouseLeave={isActive ? undefined : cancelPrefetch}
+                onFocus={
+                  isActive ? undefined : () => schedulePrefetch(m.companyId)
+                }
+                onBlur={isActive ? undefined : cancelPrefetch}
                 className="flex cursor-pointer items-center gap-2"
               >
                 <Avatar className="h-6 w-6">

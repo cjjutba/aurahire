@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { SumIndicator } from "./_sum-indicator-client";
 import { PreviewImpactModalClient } from "./_preview-impact-modal-client";
 
@@ -49,6 +50,7 @@ const REQUIRED_PII_FIELDS = ["name", "email", "phone", "address"];
 
 export function ConfigEditorClient({ initial }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [matchWeights, setMatchWeights] = useState(initial.matchWeights);
   const [profileWeights, setProfileWeights] = useState(initial.profileWeights);
   const [bandThresholds, setBandThresholds] = useState(initial.bandThresholds);
@@ -176,6 +178,14 @@ export function ConfigEditorClient({ initial }: Props) {
       toastApiError(null, "Couldn't save configuration", "No changes to save.");
       return;
     }
+    const ok = await confirm({
+      title: "Save scoring configuration?",
+      description:
+        "These weights, thresholds, and bias settings will apply to all future scoring across the platform. Existing scores stay unchanged.",
+      confirmLabel: "Save configuration",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setWorking(true);
     try {
       const res = await authedFetch("/api/v1/admin/scoring-config", {

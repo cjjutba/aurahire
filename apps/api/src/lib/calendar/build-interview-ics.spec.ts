@@ -23,7 +23,7 @@ describe("buildInterviewIcs", () => {
   it("contains stable UID and required RFC-5545 fields", () => {
     const ics = buildInterviewIcs(fixture);
     expect(ics).toContain("BEGIN:VCALENDAR");
-    expect(ics).toContain("UID:interview-11111111-1111-1111-1111-111111111111@aurahire.app");
+    expect(ics).toContain("UID:interview-11111111-1111-1111-1111-111111111111@aurahire.site");
     expect(ics).toContain("DTSTART:20260601T100000Z");
     expect(ics).toContain("DTEND:20260601T113000Z");
     expect(ics).toContain("SUMMARY:Interview: Software Engineer at Acme Corp");
@@ -60,7 +60,7 @@ describe("buildInterviewIcs", () => {
         rescheduledFromId: "11111111-1111-1111-1111-111111111111",
       },
     });
-    expect(aliased).toContain("UID:interview-11111111-1111-1111-1111-111111111111@aurahire.app");
+    expect(aliased).toContain("UID:interview-11111111-1111-1111-1111-111111111111@aurahire.site");
     expect(aliased).not.toContain("UID:interview-22222222-2222-2222-2222-222222222222");
   });
 });
