@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import {
   profileScoresTable,
   matchScoresTable,
@@ -71,6 +71,26 @@ export class ScoringRepository {
       .orderBy(desc(profileScoresTable.createdAt))
       .limit(1);
     return row ?? null;
+  }
+
+  /**
+   * True when the candidate has at least one profile_scores row that is
+   * still considered current (`stale_at IS NULL`). Used by the portal-entry
+   * backfill guard (Task 12) to short-circuit when a candidate already has
+   * a fresh score.
+   */
+  async hasCurrentProfileScore(candidateId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ id: profileScoresTable.id })
+      .from(profileScoresTable)
+      .where(
+        and(
+          eq(profileScoresTable.candidateId, candidateId),
+          isNull(profileScoresTable.staleAt),
+        ),
+      )
+      .limit(1);
+    return !!row;
   }
 
   async findEvidenceByScoreId(

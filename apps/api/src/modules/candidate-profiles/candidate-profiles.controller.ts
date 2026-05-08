@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Patch,
   Post,
   Req,
@@ -25,6 +26,8 @@ import { CandidateProfilesService } from "./candidate-profiles.service";
 @ApiBearerAuth()
 @Controller("candidate-profiles")
 export class CandidateProfilesController {
+  private readonly logger = new Logger(CandidateProfilesController.name);
+
   constructor(private readonly service: CandidateProfilesService) {}
 
   @Get("me")
@@ -33,6 +36,18 @@ export class CandidateProfilesController {
   @ApiResponse({ status: 200, type: CandidateProfileEnvelopeDto })
   async getMe(@CurrentUser() user: AuthUser): Promise<CandidateProfileEnvelopeDto> {
     const data = await this.service.getMe(user);
+
+    // Phase 1 Task 12 — backfill guard. Legacy candidates (completed
+    // onboarding before the proactive-system rollout) may have
+    // profile_completed=true but no profile_scores row. Fire and forget
+    // an idempotent backfill enqueue so their score eventually appears
+    // without trapping the dashboard response on a queue/db hiccup.
+    void this.service.enqueueProfileScoreIfMissing(user.id).catch((err) => {
+      this.logger.warn(
+        `enqueueProfileScoreIfMissing failed for ${user.id}: ${(err as Error).message}`,
+      );
+    });
+
     return { data };
   }
 

@@ -21,6 +21,16 @@ export interface ProfileScoreRecomputePayload {
   reason: ProfileScoreRecomputeReason;
 }
 
+export interface ProfileScoreEnqueueOptions {
+  /**
+   * Override the BullMQ jobId used for dedupe. Defaults to the
+   * `recompute:<candidate>:<resume>:<reason>` shape so duplicate enqueues
+   * within a UI flow collapse. Pass a stable value (e.g. backfill keyed
+   * on candidate+resume only) when you want a wider dedupe window.
+   */
+  jobId?: string;
+}
+
 /**
  * Thin enqueue facade for the profile-score-recompute worker. Lives in the
  * global QueueModule so any feature module can inject it without pulling
@@ -40,11 +50,21 @@ export class ProfileScoreQueueService {
    * Enqueue a profile-score recompute. Idempotent on (candidate, resume,
    * reason): a duplicate within a short window is collapsed by jobId so we
    * don't burn OpenAI calls when several inputs flip in the same UI flow.
+   *
+   * Pass `options.jobId` to override the dedupe key — used by the
+   * portal-entry backfill guard (Task 12) which wants a candidate+resume
+   * dedupe so repeat dashboard hits don't enqueue parallel backfills.
    */
-  async enqueueRecompute(payload: ProfileScoreRecomputePayload): Promise<void> {
+  async enqueueRecompute(
+    payload: ProfileScoreRecomputePayload,
+    options: ProfileScoreEnqueueOptions = {},
+  ): Promise<void> {
     try {
+      const jobId =
+        options.jobId ??
+        `recompute:${payload.candidateId}:${payload.resumeId}:${payload.reason}`;
       const job = await this.queue.add("recompute", payload, {
-        jobId: `recompute:${payload.candidateId}:${payload.resumeId}:${payload.reason}`,
+        jobId,
         attempts: 1,
         removeOnComplete: { age: 86400 },
         removeOnFail: { age: 7 * 86400 },

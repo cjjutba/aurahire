@@ -24,6 +24,7 @@ import {
 } from "../../queue/profile-score-queue.service";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { ResumesRepository } from "../resumes/resumes.repository";
+import { ScoringRepository } from "../scoring/scoring.repository";
 import { ScoringService } from "../scoring/scoring.service";
 import type { ProfileScoreDto } from "../scoring/dto/profile-score-response.dto";
 
@@ -46,6 +47,7 @@ export class CandidateProfilesService {
     private readonly profileScoreQueue: ProfileScoreQueueService,
     private readonly matchPreviewQueue: MatchPreviewQueueService,
     private readonly scoring: ScoringService,
+    private readonly scoringRepo: ScoringRepository,
     @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
   ) {}
 
@@ -67,6 +69,48 @@ export class CandidateProfilesService {
     }
 
     return this.toResponse(profile, candidateProfile);
+  }
+
+  /**
+   * Idempotent backfill guard fired on candidate-portal entry (GET
+   * /candidate-profiles/me). Candidates who completed onboarding before
+   * the proactive-system rollout have `profile_completed = true` but no
+   * `profile_scores` row. When such a candidate hits the portal we
+   * enqueue a single backfill job — transparent self-healing, the
+   * candidate sees nothing different except their score eventually
+   * appears.
+   *
+   * Idempotency comes from the BullMQ jobId override:
+   * `profile-score:<candidate>:<resume>`. If a backfill is already
+   * queued or running, the second `add` is a no-op. Repeat dashboard
+   * hits within the same session won't pile up duplicate work.
+   *
+   * Short-circuits when:
+   *   1. The candidate already has a non-stale `profile_scores` row.
+   *   2. The candidate has no default resume (nothing to score against;
+   *      enqueueing would produce a worker no-op).
+   */
+  async enqueueProfileScoreIfMissing(candidateId: string): Promise<void> {
+    const hasCurrent = await this.scoringRepo.hasCurrentProfileScore(candidateId);
+    if (hasCurrent) return;
+
+    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(candidateId);
+    if (!defaultResume) return;
+
+    await this.profileScoreQueue.enqueueRecompute(
+      {
+        candidateId,
+        resumeId: defaultResume.id,
+        reason: "manual_recompute",
+      },
+      {
+        // Backfill dedupe is keyed on candidate+resume only — we don't
+        // want a "manual_recompute" reason colliding with a parallel
+        // "profile_change" job, but we DO want repeat portal hits to
+        // collapse into a single backfill.
+        jobId: `profile-score-backfill:${candidateId}:${defaultResume.id}`,
+      },
+    );
   }
 
   async updatePersonal(

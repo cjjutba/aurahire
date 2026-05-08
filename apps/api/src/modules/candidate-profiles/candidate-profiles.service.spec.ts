@@ -7,6 +7,7 @@ import type { ResumesRepository } from "../resumes/resumes.repository";
 import type { AuditService } from "../../audit";
 import type { MatchPreviewQueueService } from "../../queue/match-preview-queue.service";
 import type { ProfileScoreQueueService } from "../../queue/profile-score-queue.service";
+import type { ScoringRepository } from "../scoring/scoring.repository";
 import type { ScoringService } from "../scoring/scoring.service";
 import type { ProfileScoreDto } from "../scoring/dto/profile-score-response.dto";
 import type { DrizzleClient } from "../../db/db.module";
@@ -97,6 +98,13 @@ function buildSvc(opts: {
    * `() => Promise.reject(...)` to exercise the AI-failure branch.
    */
   computeProfileScore?: jest.Mock;
+  /**
+   * Optional ScoringRepository.hasCurrentProfileScore stub for the
+   * backfill-guard tests. Defaults to `false` so most tests behave as
+   * if the candidate has no current score row — closer to the
+   * proactive-system happy path.
+   */
+  hasCurrentProfileScore?: jest.Mock;
 }) {
   // Track profile_scores stale_at writes triggered through the db client.
   const profileScoresStaleCalls: Array<{ staleAt: Date }> = [];
@@ -172,6 +180,11 @@ function buildSvc(opts: {
       opts.computeProfileScore ?? jest.fn().mockResolvedValue(defaultProfileScoreDto),
   } as unknown as jest.Mocked<ScoringService>;
 
+  const scoringRepo = {
+    hasCurrentProfileScore:
+      opts.hasCurrentProfileScore ?? jest.fn().mockResolvedValue(false),
+  } as unknown as jest.Mocked<ScoringRepository>;
+
   // Drizzle stub: chainable update().set().where(); records stale_at writes.
   const db = {
     update: jest.fn(() => ({
@@ -189,6 +202,7 @@ function buildSvc(opts: {
     profileScoreQueue,
     matchPreviewQueue,
     scoring,
+    scoringRepo,
     db,
   );
   return {
@@ -199,6 +213,7 @@ function buildSvc(opts: {
     profileScoreQueue,
     matchPreviewQueue,
     scoring,
+    scoringRepo,
     db,
     profileScoresStaleCalls,
     defaultProfileScoreDto,
@@ -621,5 +636,122 @@ describe("CandidateProfilesService — recompute on edit", () => {
     expect(db.update).not.toHaveBeenCalled();
     expect(profileScoresStaleCalls).toHaveLength(0);
     expect(profileScoreQueue.enqueueRecompute).not.toHaveBeenCalled();
+  });
+});
+
+describe("CandidateProfilesService.enqueueProfileScoreIfMissing", () => {
+  const RESUME_ID = "33333333-3333-3333-3333-333333333333";
+
+  function buildDefaultResume(): Resume {
+    return {
+      id: RESUME_ID,
+      candidateId: candidateUser.id,
+      filename: "resume.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 1024,
+      storagePath: `${candidateUser.id}/resume.pdf`,
+      canonicalPdfPath: null,
+      rawText: "raw resume text",
+      parsedData: null,
+      parseStatus: "parsed",
+      parseError: null,
+      isDefault: true,
+      createdAt: new Date("2026-05-05T00:00:00Z"),
+      updatedAt: new Date("2026-05-05T00:00:00Z"),
+    };
+  }
+
+  it("enqueues backfill job when no current profile score exists and a default resume is present", async () => {
+    const { svc, profileScoreQueue, scoringRepo, resumesRepo } = buildSvc({
+      profile: buildProfile({ fullName: "Jane Doe" }),
+      candidateProfile: buildCandidateProfile(),
+      defaultResume: buildDefaultResume(),
+      hasCurrentProfileScore: jest.fn().mockResolvedValue(false),
+    });
+
+    await svc.enqueueProfileScoreIfMissing(candidateUser.id);
+
+    expect(scoringRepo.hasCurrentProfileScore).toHaveBeenCalledWith(
+      candidateUser.id,
+    );
+    expect(resumesRepo.findDefaultByCandidateId).toHaveBeenCalledWith(
+      candidateUser.id,
+    );
+
+    expect(profileScoreQueue.enqueueRecompute).toHaveBeenCalledTimes(1);
+    expect(profileScoreQueue.enqueueRecompute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidateId: candidateUser.id,
+        resumeId: RESUME_ID,
+        reason: "manual_recompute",
+      }),
+      expect.objectContaining({
+        // jobId is the dedupe key — must include the candidate id so
+        // backfills are scoped per-candidate.
+        jobId: expect.stringContaining(candidateUser.id),
+      }),
+    );
+  });
+
+  it("no-op when a current (non-stale) profile score already exists", async () => {
+    const { svc, profileScoreQueue, scoringRepo, resumesRepo } = buildSvc({
+      profile: buildProfile({ fullName: "Jane Doe" }),
+      candidateProfile: buildCandidateProfile(),
+      defaultResume: buildDefaultResume(),
+      hasCurrentProfileScore: jest.fn().mockResolvedValue(true),
+    });
+
+    await svc.enqueueProfileScoreIfMissing(candidateUser.id);
+
+    expect(scoringRepo.hasCurrentProfileScore).toHaveBeenCalledWith(
+      candidateUser.id,
+    );
+    // Short-circuited before the resume lookup — no enqueue at all.
+    expect(resumesRepo.findDefaultByCandidateId).not.toHaveBeenCalled();
+    expect(profileScoreQueue.enqueueRecompute).not.toHaveBeenCalled();
+  });
+
+  it("no-op when the candidate has no default resume to score against", async () => {
+    const { svc, profileScoreQueue, scoringRepo, resumesRepo } = buildSvc({
+      profile: buildProfile({ fullName: "Jane Doe" }),
+      candidateProfile: buildCandidateProfile(),
+      defaultResume: null,
+      hasCurrentProfileScore: jest.fn().mockResolvedValue(false),
+    });
+
+    await svc.enqueueProfileScoreIfMissing(candidateUser.id);
+
+    expect(scoringRepo.hasCurrentProfileScore).toHaveBeenCalledWith(
+      candidateUser.id,
+    );
+    expect(resumesRepo.findDefaultByCandidateId).toHaveBeenCalledWith(
+      candidateUser.id,
+    );
+    // Nothing to score → nothing to enqueue.
+    expect(profileScoreQueue.enqueueRecompute).not.toHaveBeenCalled();
+  });
+
+  it("uses a stable jobId so repeat portal hits collapse into a single backfill", async () => {
+    const { svc, profileScoreQueue } = buildSvc({
+      profile: buildProfile({ fullName: "Jane Doe" }),
+      candidateProfile: buildCandidateProfile(),
+      defaultResume: buildDefaultResume(),
+      hasCurrentProfileScore: jest.fn().mockResolvedValue(false),
+    });
+
+    await svc.enqueueProfileScoreIfMissing(candidateUser.id);
+    await svc.enqueueProfileScoreIfMissing(candidateUser.id);
+
+    // The service calls enqueueRecompute twice; idempotency lives inside
+    // BullMQ via the jobId — assert both calls passed the SAME jobId so
+    // BullMQ can dedupe them.
+    expect(profileScoreQueue.enqueueRecompute).toHaveBeenCalledTimes(2);
+    const firstJobId = (profileScoreQueue.enqueueRecompute as jest.Mock).mock
+      .calls[0][1].jobId;
+    const secondJobId = (profileScoreQueue.enqueueRecompute as jest.Mock).mock
+      .calls[1][1].jobId;
+    expect(firstJobId).toBe(secondJobId);
+    expect(firstJobId).toContain(candidateUser.id);
+    expect(firstJobId).toContain(RESUME_ID);
   });
 });
