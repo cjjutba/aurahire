@@ -709,6 +709,15 @@ export class InterviewsService {
     });
   }
 
+  async getByIdForCompany(
+    user: AuthUser,
+    companyId: string,
+    interviewId: string,
+  ): Promise<InterviewDto> {
+    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
+    return this.toDto(interview);
+  }
+
   async getIcs(user: AuthUser, interviewId: string): Promise<string> {
     const interview = await this.repo.findById(interviewId);
     if (!interview) {
@@ -1002,6 +1011,17 @@ export class InterviewsService {
     recommendation?: string | null;
     candidateSummary?: string | null;
     sharedWithCandidateAt?: Date | null;
+    // Optional venue fields (present on full Interview rows)
+    venueName?: string | null;
+    addressLine?: string | null;
+    roomOrFloor?: string | null;
+    mapUrl?: string | null;
+    reportingInstructions?: string | null;
+    whatToBring?: string | null;
+    interviewerName?: string | null;
+    interviewerTitle?: string | null;
+    rescheduledFromId?: string | null;
+    rescheduledToId?: string | null;
     createdAt: Date;
     updatedAt: Date;
   }): InterviewDto {
@@ -1019,6 +1039,16 @@ export class InterviewsService {
       recommendation: (i.recommendation ?? null) as "proceed" | "hold" | "reject" | null,
       candidateSummary: i.candidateSummary ?? null,
       sharedWithCandidateAt: i.sharedWithCandidateAt?.toISOString() ?? null,
+      venueName: i.venueName ?? null,
+      addressLine: i.addressLine ?? null,
+      roomOrFloor: i.roomOrFloor ?? null,
+      mapUrl: i.mapUrl ?? null,
+      reportingInstructions: i.reportingInstructions ?? null,
+      whatToBring: i.whatToBring ?? null,
+      interviewerName: i.interviewerName ?? null,
+      interviewerTitle: i.interviewerTitle ?? null,
+      rescheduledFromId: i.rescheduledFromId ?? null,
+      rescheduledToId: i.rescheduledToId ?? null,
       createdAt: i.createdAt.toISOString(),
       updatedAt: i.updatedAt.toISOString(),
     };

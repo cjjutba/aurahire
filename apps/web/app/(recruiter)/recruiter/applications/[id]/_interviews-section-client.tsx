@@ -17,6 +17,7 @@ import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { getActiveCompanyId } from "@/lib/active-company";
 import { ScheduleInterviewModalClient } from "./_schedule-interview-modal-client";
+import { RescheduleModalClient } from "@/components/interview/reschedule-modal-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -158,13 +159,16 @@ function StatusPill({ status }: { status: string }) {
 
 interface InterviewCardProps {
   interview: InterviewRow;
+  /** The parent application ID — needed for reschedule conflict checks. */
+  applicationId: string;
   /** When true, action buttons are rendered. */
   showActions: boolean;
 }
 
-function InterviewCard({ interview: iv, showActions }: InterviewCardProps) {
+function InterviewCard({ interview: iv, applicationId, showActions }: InterviewCardProps) {
   const router = useRouter();
   const [pending, setPending] = useState<"no-show" | "cancel" | null>(null);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const isPending = pending !== null;
 
   const scheduledLabel = formatScheduledAt(iv.scheduledAt);
@@ -270,14 +274,14 @@ function InterviewCard({ interview: iv, showActions }: InterviewCardProps) {
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--color-hairline)] pt-3">
           {isScheduled && (
             <>
-              {/* Reschedule — TODO: Task 38 will build the reschedule modal.
-                  For now link to recruiter interview detail. */}
-              <Link
-                href={`/recruiter/interviews/${iv.id}`}
-                className="inline-flex h-8 items-center gap-1 rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 text-xs font-medium text-[var(--color-body)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]"
+              <button
+                type="button"
+                onClick={() => setRescheduleOpen(true)}
+                disabled={isPending}
+                className="inline-flex h-8 items-center gap-1 rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 text-xs font-medium text-[var(--color-body)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] disabled:opacity-60"
               >
                 Reschedule
-              </Link>
+              </button>
               <button
                 type="button"
                 onClick={patchNoShow}
@@ -300,7 +304,6 @@ function InterviewCard({ interview: iv, showActions }: InterviewCardProps) {
           )}
 
           {isCompleted && (
-            /* View / Add Feedback — TODO: Task 36 builds the interview detail page. */
             <Link
               href={`/recruiter/interviews/${iv.id}`}
               className="inline-flex h-8 items-center gap-1 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-3 text-xs font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
@@ -309,6 +312,25 @@ function InterviewCard({ interview: iv, showActions }: InterviewCardProps) {
             </Link>
           )}
         </div>
+      )}
+
+      {/* ── Reschedule modal ──────────────────────────────────────────────── */}
+      {showActions && isScheduled && (
+        <RescheduleModalClient
+          interviewId={iv.id}
+          applicationId={applicationId}
+          defaults={{
+            scheduledAt: iv.scheduledAt,
+            durationMinutes: iv.durationMinutes,
+            venueName: iv.venueName ?? undefined,
+            addressLine: iv.addressLine ?? undefined,
+            roomOrFloor: iv.roomOrFloor,
+            interviewerName: iv.interviewerName,
+            interviewerTitle: iv.interviewerTitle,
+          }}
+          open={rescheduleOpen}
+          onOpenChange={setRescheduleOpen}
+        />
       )}
     </div>
   );
@@ -360,7 +382,11 @@ export function RecruiterInterviewsSection({ applicationId, interviews }: Props)
 
       {/* ── Active interview card ─────────────────────────────────────── */}
       {active && (
-        <InterviewCard interview={active} showActions />
+        <InterviewCard
+          interview={active}
+          applicationId={applicationId}
+          showActions
+        />
       )}
 
       {/* ── Past interviews accordion ─────────────────────────────────── */}
@@ -382,7 +408,11 @@ export function RecruiterInterviewsSection({ applicationId, interviews }: Props)
             <ul className="space-y-2">
               {past.map((iv) => (
                 <li key={iv.id}>
-                  <InterviewCard interview={iv} showActions={false} />
+                  <InterviewCard
+                    interview={iv}
+                    applicationId={applicationId}
+                    showActions={false}
+                  />
                 </li>
               ))}
             </ul>

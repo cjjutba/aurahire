@@ -11,42 +11,21 @@ import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { getActiveCompanyId } from "@/lib/active-company";
 import { ShareFeedbackModalClient } from "@/components/interview/share-feedback-modal-client";
 
-import type { InterviewRow } from "./_interviews-section-client";
-
 // ---------------------------------------------------------------------------
-// Props
+// Types
 // ---------------------------------------------------------------------------
 
-interface Props {
-  interview: InterviewRow;
+export interface InterviewForFeedback {
+  id: string;
+  feedback: string | null;
+  rating: number | null;
+  recommendation: "proceed" | "hold" | "reject" | null;
+  candidateSummary: string | null;
+  sharedWithCandidateAt: string | null;
 }
 
-type Recommendation = "proceed" | "hold" | "reject";
-
-const RECOMMENDATION_OPTIONS: Array<{
-  value: Recommendation;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "proceed",
-    label: "Proceed → Offer",
-    description: "Recommend sending an offer to this candidate.",
-  },
-  {
-    value: "hold",
-    label: "Hold",
-    description: "Keep the candidate in consideration for now.",
-  },
-  {
-    value: "reject",
-    label: "Reject",
-    description: "Not a fit at this time.",
-  },
-];
-
 // ---------------------------------------------------------------------------
-// authedFetch helper
+// Helpers
 // ---------------------------------------------------------------------------
 
 function authedFetch(path: string, init: RequestInit): Promise<Response> {
@@ -83,11 +62,7 @@ function StarRating({
   const [hovered, setHovered] = useState<number | null>(null);
 
   return (
-    <div
-      className="flex items-center gap-0.5"
-      role="group"
-      aria-label="Rating"
-    >
+    <div className="flex items-center gap-0.5" role="group" aria-label="Rating">
       {[1, 2, 3, 4, 5].map((star) => {
         const filled = (hovered ?? value ?? 0) >= star;
         return (
@@ -125,18 +100,50 @@ function StarRating({
 }
 
 // ---------------------------------------------------------------------------
-// DecisionPanelClient
+// Recommendation options
 // ---------------------------------------------------------------------------
 
-export function DecisionPanelClient({ interview }: Props) {
+type Recommendation = "proceed" | "hold" | "reject";
+
+const RECOMMENDATION_OPTIONS: Array<{
+  value: Recommendation;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "proceed",
+    label: "Proceed → Offer",
+    description: "Recommend sending an offer to this candidate.",
+  },
+  {
+    value: "hold",
+    label: "Hold",
+    description: "Keep the candidate in consideration for now.",
+  },
+  {
+    value: "reject",
+    label: "Reject",
+    description: "Not a fit at this time.",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// FeedbackPanelClient
+// ---------------------------------------------------------------------------
+
+interface Props {
+  interview: InterviewForFeedback;
+}
+
+export function FeedbackPanelClient({ interview }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
-  const [feedback, setFeedback] = useState<string>(
-    interview.candidateSummary ?? "",
+  const [feedbackText, setFeedbackText] = useState<string>(
+    interview.feedback ?? "",
   );
-  const [rating, setRating] = useState<number | null>(null);
+  const [rating, setRating] = useState<number | null>(interview.rating ?? null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(
     interview.recommendation ?? null,
   );
@@ -149,7 +156,11 @@ export function DecisionPanelClient({ interview }: Props) {
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ feedback, rating, recommendation }),
+          body: JSON.stringify({
+            feedback: feedbackText,
+            rating,
+            recommendation,
+          }),
         },
       );
       if (!res.ok) {
@@ -176,34 +187,34 @@ export function DecisionPanelClient({ interview }: Props) {
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-          Interview Decision
+          Interview Feedback
         </h2>
         {sharedDate && (
           <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-score-high-soft)] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-score-high)]">
-            Shared {sharedDate}
+            Shared with candidate {sharedDate}
           </span>
         )}
       </div>
 
-      {/* ── Private feedback ──────────────────────────────────────────── */}
+      {/* ── Private feedback section ──────────────────────────────────── */}
       <div>
         <label
-          htmlFor="decision-panel-feedback"
+          htmlFor="fp-feedback"
           className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]"
         >
           Private feedback
         </label>
         <textarea
-          id="decision-panel-feedback"
-          value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
+          id="fp-feedback"
+          value={feedbackText}
+          onChange={(e) => setFeedbackText(e.target.value)}
           maxLength={5000}
-          rows={5}
+          rows={6}
           placeholder="Your private notes about this interview. Visible to recruiters only."
           className="w-full rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
         />
         <p className="mt-1 text-[11px] text-[var(--color-muted)]">
-          {feedback.length}/5000
+          {feedbackText.length}/5000
         </p>
       </div>
 
@@ -220,7 +231,11 @@ export function DecisionPanelClient({ interview }: Props) {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           Recommendation
         </p>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Recommendation">
+        <div
+          className="flex flex-wrap gap-2"
+          role="radiogroup"
+          aria-label="Recommendation"
+        >
           {RECOMMENDATION_OPTIONS.map((opt) => {
             const isSelected = recommendation === opt.value;
             const ringColor =
@@ -235,7 +250,6 @@ export function DecisionPanelClient({ interview }: Props) {
                 : opt.value === "reject"
                   ? "bg-[var(--color-score-low-soft)] text-[var(--color-score-low)]"
                   : "bg-[var(--color-score-mid-soft)] text-[var(--color-score-mid)]";
-
             return (
               <button
                 key={opt.value}
@@ -259,6 +273,23 @@ export function DecisionPanelClient({ interview }: Props) {
         </div>
       </div>
 
+      {/* ── Candidate-facing summary ──────────────────────────────────── */}
+      {interview.candidateSummary && (
+        <div className="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-4">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Candidate-facing summary
+          </p>
+          <p className="whitespace-pre-wrap text-sm text-[var(--color-body)]">
+            {interview.candidateSummary}
+          </p>
+          {sharedDate && (
+            <p className="mt-2 text-[11px] text-[var(--color-muted)]">
+              Shared {sharedDate}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* ── Actions ───────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-hairline)] pt-4">
         <Button
@@ -279,12 +310,12 @@ export function DecisionPanelClient({ interview }: Props) {
         </button>
       </div>
 
-      {/* ── Share feedback modal ─────────────────────────────────────────── */}
+      {/* ── Share modal ──────────────────────────────────────────────── */}
       <ShareFeedbackModalClient
         open={shareOpen}
         onOpenChange={setShareOpen}
         interviewId={interview.id}
-        defaultSummary={feedback}
+        defaultSummary={feedbackText}
         currentSummary={interview.candidateSummary}
         onShared={() => router.refresh()}
       />

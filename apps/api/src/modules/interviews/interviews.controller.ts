@@ -141,6 +141,19 @@ export class InterviewsController {
     return { data, meta };
   }
 
+  @Get("interviews/:id")
+  @Roles("recruiter", "admin")
+  @ApiOperation({ summary: "Get a single interview (recruiter must belong to the company)" })
+  @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
+  async getById(
+    @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
+    @Param("id") id: string,
+  ): Promise<InterviewEnvelopeDto> {
+    const data = await this.service.getByIdForCompany(user, activeCompany.companyId, id);
+    return { data };
+  }
+
   @Get("applications/:applicationId/interviews")
   @Roles("candidate", "recruiter", "admin")
   @ApiOperation({ summary: "List interviews for an application (auth-scoped)" })
