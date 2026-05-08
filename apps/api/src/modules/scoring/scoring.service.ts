@@ -391,16 +391,43 @@ export class ScoringService {
       aiResult.score.components,
       weights as unknown as Record<string, number>,
     );
-    const derivedOverall = deriveOverallScore(normalizedProfileComponents);
+
+    // Strict-sum reconciliation: component.score becomes the (quantized, clamped)
+    // sum of evidence contribution_points. The AI's score field is discarded;
+    // residuals + quantization deltas + calibration warnings flow into the audit row.
+    const reconciliations = normalizedProfileComponents.map((c) =>
+      reconcileEvidenceContributions(c),
+    );
+    const reconciledProfileComponents = reconciliations.map((r) => r.component);
+    const scoreResiduals = reconciliations
+      .filter((r) => r.residual !== 0)
+      .map((r) => ({
+        component_name: r.component.name,
+        ai_score: r.component.score + r.residual,
+        derived_score: r.component.score,
+      }));
+    const evidenceQuantizationResiduals = reconciliations.flatMap((r) =>
+      r.quantizationDeltas.map((d) => ({
+        component_name: r.component.name,
+        evidence_index: d.evidenceIndex,
+        original: d.original,
+        quantized: d.quantized,
+      })),
+    );
+    const calibrationWarnings = reconciledProfileComponents.flatMap((c) =>
+      detectCalibrationWarnings(c),
+    );
+
+    const derivedOverall = deriveOverallScore(reconciledProfileComponents);
     const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
-    const evidenceRows = normalizedProfileComponents.flatMap((comp) =>
+    const evidenceRows = reconciledProfileComponents.flatMap((comp) =>
       comp.evidence.map((ev) => ({
         componentName: comp.name,
         excerptText: ev.excerpt,
         excerptSource: ev.source,
         relevance: ev.relevance,
-        contributionPoints: null,
+        contributionPoints: ev.contribution_points,
       })),
     );
 
@@ -410,7 +437,7 @@ export class ScoringService {
         resumeId: resume.id,
         overallScore: derivedOverall,
         band: derivedBand,
-        components: normalizedProfileComponents as unknown as Record<string, unknown>,
+        components: reconciledProfileComponents as unknown as Record<string, unknown>,
         improvementSuggestions: aiResult.score
           .improvement_suggestions as unknown as Record<string, unknown>,
         redactedFields: aiResult.redactedFields,
@@ -438,6 +465,9 @@ export class ScoringService {
         latencyMs: aiResult.latencyMs,
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
+        score_residuals: scoreResiduals,
+        evidence_quantization_residuals: evidenceQuantizationResiduals,
+        calibration_warnings: calibrationWarnings,
       },
       ...requestMeta,
     });
@@ -465,7 +495,7 @@ export class ScoringService {
       profileScore.id,
       {
         ...aiResult.score,
-        components: normalizedProfileComponents,
+        components: reconciledProfileComponents,
       } as ProfileScoreOutput,
       aiResult,
       profileScore.createdAt,
