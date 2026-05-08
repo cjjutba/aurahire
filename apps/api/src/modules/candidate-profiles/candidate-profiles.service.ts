@@ -8,21 +8,32 @@ import {
 } from "@nestjs/common";
 import { and, eq, isNull } from "drizzle-orm";
 import type { AuthUser, ParsedResume } from "@aurahire/shared";
-import { personalCompleteSchema, reviewCompleteSchema } from "@aurahire/shared";
+import {
+  personalCompleteSchema,
+  preferencesCompleteSchema,
+  reviewCompleteSchema,
+} from "@aurahire/shared";
 import { profileScoresTable, type Profile, type CandidateProfile } from "@aurahire/db";
 
 import { AuditService } from "../../audit";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
+import { MatchPreviewQueueService } from "../../queue/match-preview-queue.service";
 import {
   ProfileScoreQueueService,
   type ProfileScoreRecomputeReason,
 } from "../../queue/profile-score-queue.service";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { ResumesRepository } from "../resumes/resumes.repository";
+import { ScoringService } from "../scoring/scoring.service";
+import type { ProfileScoreDto } from "../scoring/dto/profile-score-response.dto";
 
 import type { UpdateCandidatePersonalDto } from "./dto/personal.dto";
 import type { UpdateCandidatePreferencesDto } from "./dto/preferences.dto";
 import type { CandidateProfileMeDto } from "./dto/candidate-profile-response.dto";
+import type {
+  CompleteOnboardingDto,
+  ProfileScoreError,
+} from "./dto/complete-onboarding-response.dto";
 
 @Injectable()
 export class CandidateProfilesService {
@@ -33,6 +44,8 @@ export class CandidateProfilesService {
     private readonly audit: AuditService,
     private readonly resumesRepo: ResumesRepository,
     private readonly profileScoreQueue: ProfileScoreQueueService,
+    private readonly matchPreviewQueue: MatchPreviewQueueService,
+    private readonly scoring: ScoringService,
     @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
   ) {}
 
@@ -169,11 +182,27 @@ export class CandidateProfilesService {
    * Experience / education / skill counts are derived from the candidate's
    * default resume's `parsedData` (mirrors `ScoringService.computeProfileScore`,
    * which also reads experiences/educations/skills from the default resume).
+   *
+   * Phase 1 proactive system (Tasks 10 + 11): once validation passes and the
+   * profile is marked complete, this method also:
+   *   - Synchronously runs `ScoringService.computeProfileScore` so the
+   *     analyzing screen can land on the candidate dashboard with a real
+   *     Profile Score in hand instead of an empty shimmer.
+   *   - Enqueues the existing match-preview-precompute BullMQ job so the
+   *     "Recommended for you" feed populates while the candidate is still
+   *     in the analyzing screen.
+   *   - Falls back gracefully when the inline AI call throws
+   *     (`errors.profileScore = "transient"`) and enqueues a profile-score
+   *     recompute job so a fresh score lands on the dashboard once the
+   *     worker retries. The candidate is NEVER trapped in onboarding limbo
+   *     by an AI failure — `profile_completed` is flipped before the AI
+   *     call, and the AI call's failure is reported in the response body
+   *     rather than as an HTTP error.
    */
   async completeOnboarding(
     user: AuthUser,
     requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
-  ): Promise<CandidateProfileMeDto> {
+  ): Promise<CompleteOnboardingDto> {
     this.assertCandidate(user);
 
     const [profile, candidateProfile] = await Promise.all([
@@ -226,6 +255,23 @@ export class CandidateProfilesService {
       });
     }
 
+    // Step 3 — preferences: must have at least one desired role. Open-to /
+    // salary / start date stay optional; without a target role there's
+    // nothing to score the candidate against.
+    const preferencesParsed = preferencesCompleteSchema.safeParse({
+      desiredRoles: candidateProfile.desiredRoles,
+    });
+    if (!preferencesParsed.success) {
+      throw new BadRequestException({
+        code: "INCOMPLETE_PREFERENCES",
+        message: "Add at least one desired role before completing onboarding",
+      });
+    }
+
+    // Mark profile completed BEFORE the AI call. If the inline Profile
+    // Score compute below throws, the candidate must NOT be trapped in
+    // onboarding limbo — the AI failure is surfaced in the response body
+    // and a recompute job is enqueued for retry.
     const updatedCandidateProfile = await this.repo.updateCandidateProfile(user.id, {
       profileCompleted: true,
     });
@@ -240,7 +286,57 @@ export class CandidateProfilesService {
       ...requestMeta,
     });
 
-    return this.toResponse(profile, updatedCandidateProfile);
+    let profileScore: ProfileScoreDto | null = null;
+    let precomputeJobId = "";
+    let profileScoreError: ProfileScoreError | undefined;
+
+    if (!defaultResume) {
+      // Frontend validation should make this path unreachable (review-step
+      // gate already requires a parsed resume), but defense-in-depth: with
+      // no resume there's nothing for the AI to score, so skip the call
+      // entirely rather than enqueue a doomed retry.
+      profileScoreError = "missing_resume";
+    } else {
+      // Match-preview precompute fires regardless of Profile Score success
+      // — it's a separate AI surface (Recommended-for-you feed) that
+      // shouldn't be gated on Profile Score health. Soft-fail to "" when
+      // BullMQ declines to assign an id; the response shape stays valid
+      // and the worker still has the chance to run if enqueue did succeed.
+      precomputeJobId =
+        (await this.matchPreviewQueue.enqueuePrecompute({
+          candidateId: user.id,
+          resumeId: defaultResume.id,
+        })) ?? "";
+
+      try {
+        profileScore = await this.scoring.computeProfileScore(
+          user.id,
+          defaultResume.id,
+          { reason: "onboarding", requestMeta },
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Inline profile-score compute failed during onboarding for candidate ${user.id}: ${(err as Error).message}`,
+        );
+        profileScoreError = "transient";
+        // Enqueue a recompute so a fresh score lands on the dashboard once
+        // the worker retries; the candidate sees a "score will appear
+        // shortly" nudge rather than a dead stat.
+        await this.profileScoreQueue.enqueueRecompute({
+          candidateId: user.id,
+          resumeId: defaultResume.id,
+          reason: "onboarding",
+        });
+      }
+    }
+
+    return {
+      profile: this.toResponse(profile, updatedCandidateProfile),
+      profileCompleted: true,
+      profileScore,
+      precomputeJobId,
+      ...(profileScoreError ? { errors: { profileScore: profileScoreError } } : {}),
+    };
   }
 
   /**

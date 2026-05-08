@@ -18,6 +18,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { UpdateCandidatePersonalDto } from "./dto/personal.dto";
 import { UpdateCandidatePreferencesDto } from "./dto/preferences.dto";
 import { CandidateProfileEnvelopeDto } from "./dto/candidate-profile-response.dto";
+import { CompleteOnboardingEnvelopeDto } from "./dto/complete-onboarding-response.dto";
 import { CandidateProfilesService } from "./candidate-profiles.service";
 
 @ApiTags("candidate-profiles")
@@ -85,13 +86,13 @@ export class CandidateProfilesController {
   @ApiOperation({
     summary: "Complete onboarding (sets profile_completed = true)",
     description:
-      "Validates per-step onboarding minimums (personal name, at least one experience/education/3 skills, desired roles + open-to) then marks the profile complete. Used by the Finish button.",
+      "Validates per-step onboarding minimums (personal name, at least one experience/education/3 skills, desired roles), marks the profile complete, then synchronously runs the Profile Score compute and enqueues the match-preview precompute job. Returns the score + the precompute job id so the analyzing screen can hand off to the dashboard with a populated stat. AI failures are surfaced in `errors.profileScore` rather than as HTTP errors — the candidate is never trapped in onboarding limbo.",
   })
-  @ApiResponse({ status: 200, type: CandidateProfileEnvelopeDto })
+  @ApiResponse({ status: 200, type: CompleteOnboardingEnvelopeDto })
   async completeOnboarding(
     @CurrentUser() user: AuthUser,
     @Req() req: FastifyRequest,
-  ): Promise<CandidateProfileEnvelopeDto> {
+  ): Promise<CompleteOnboardingEnvelopeDto> {
     const data = await this.service.completeOnboarding(user, this.requestMeta(req));
     return { data };
   }

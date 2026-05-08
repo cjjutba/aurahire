@@ -12,7 +12,8 @@ export type ProfileScoreRecomputeReason =
   | "resume_change"
   | "preferences_change"
   | "profile_change"
-  | "manual_recompute";
+  | "manual_recompute"
+  | "onboarding";
 
 export interface ProfileScoreRecomputePayload {
   candidateId: string;

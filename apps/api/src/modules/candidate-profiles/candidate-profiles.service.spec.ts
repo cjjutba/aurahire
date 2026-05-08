@@ -5,7 +5,10 @@ import { CandidateProfilesService } from "./candidate-profiles.service";
 import type { ProfilesRepository } from "../profiles/profiles.repository";
 import type { ResumesRepository } from "../resumes/resumes.repository";
 import type { AuditService } from "../../audit";
+import type { MatchPreviewQueueService } from "../../queue/match-preview-queue.service";
 import type { ProfileScoreQueueService } from "../../queue/profile-score-queue.service";
+import type { ScoringService } from "../scoring/scoring.service";
+import type { ProfileScoreDto } from "../scoring/dto/profile-score-response.dto";
 import type { DrizzleClient } from "../../db/db.module";
 
 const candidateUser: AuthUser = {
@@ -82,6 +85,18 @@ function buildSvc(opts: {
   profile: Profile | null;
   candidateProfile: CandidateProfile | null;
   defaultResume: Resume | null;
+  /**
+   * Optional precompute job id stub — defaults to a deterministic value so
+   * happy-path tests can assert on it. Pass `null` to simulate enqueue
+   * failure (BullMQ swallows the error and returns null).
+   */
+  precomputeJobId?: string | null;
+  /**
+   * Optional ScoringService.computeProfileScore stub. Defaults to a
+   * resolved valid DTO so the happy path doesn't have to wire it. Pass
+   * `() => Promise.reject(...)` to exercise the AI-failure branch.
+   */
+  computeProfileScore?: jest.Mock;
 }) {
   // Track profile_scores stale_at writes triggered through the db client.
   const profileScoresStaleCalls: Array<{ staleAt: Date }> = [];
@@ -132,6 +147,31 @@ function buildSvc(opts: {
     enqueueRecompute: jest.fn().mockResolvedValue(undefined),
   } as unknown as jest.Mocked<ProfileScoreQueueService>;
 
+  const matchPreviewQueue = {
+    enqueuePrecompute: jest
+      .fn()
+      .mockResolvedValue(opts.precomputeJobId ?? "precompute:job:1"),
+  } as unknown as jest.Mocked<MatchPreviewQueueService>;
+
+  // ScoringService stub. Default: resolve a valid Profile Score DTO so the
+  // happy-path complete-onboarding test gets a non-null score back.
+  const defaultProfileScoreDto: ProfileScoreDto = {
+    id: "score-1",
+    overallScore: 78,
+    band: "strong",
+    components: [],
+    improvementSuggestions: [],
+    redactedFields: [],
+    promptVersion: "v1",
+    modelUsed: "gpt-4o-mini",
+    latencyMs: 1234,
+    createdAt: "2026-05-08T00:00:00.000Z",
+  };
+  const scoring = {
+    computeProfileScore:
+      opts.computeProfileScore ?? jest.fn().mockResolvedValue(defaultProfileScoreDto),
+  } as unknown as jest.Mocked<ScoringService>;
+
   // Drizzle stub: chainable update().set().where(); records stale_at writes.
   const db = {
     update: jest.fn(() => ({
@@ -147,6 +187,8 @@ function buildSvc(opts: {
     audit,
     resumesRepo,
     profileScoreQueue,
+    matchPreviewQueue,
+    scoring,
     db,
   );
   return {
@@ -155,8 +197,11 @@ function buildSvc(opts: {
     resumesRepo,
     audit,
     profileScoreQueue,
+    matchPreviewQueue,
+    scoring,
     db,
     profileScoresStaleCalls,
+    defaultProfileScoreDto,
   };
 }
 
@@ -214,7 +259,8 @@ describe("CandidateProfilesService.completeOnboarding", () => {
     expect(auditArgs.actorType).toBe("user");
 
     expect(result.profileCompleted).toBe(true);
-    expect(result.id).toBe(candidateUser.id);
+    expect(result.profile.id).toBe(candidateUser.id);
+    expect(result.profile.profileCompleted).toBe(true);
   });
 
   it("rejects with INCOMPLETE_PERSONAL when fullName empty", async () => {
@@ -272,6 +318,172 @@ describe("CandidateProfilesService.completeOnboarding", () => {
     });
     expect(profilesRepo.updateCandidateProfile).not.toHaveBeenCalled();
     expect(audit.log).not.toHaveBeenCalled();
+  });
+});
+
+describe("CandidateProfilesService.completeOnboarding (extended response)", () => {
+  // Mirrors the validParsedResume in the parent describe — kept local so the
+  // happy-path / AI-failure / missing-resume tests can stay self-contained.
+  const validParsedResume = {
+    contact: {},
+    summary: null,
+    education: [],
+    experience: [
+      {
+        company: "Acme",
+        company_source: "Acme Corp",
+        title: "Engineer",
+        title_source: "Software Engineer",
+        start_date: null,
+        end_date: null,
+        period_source: "2020 — Present",
+        is_current: true,
+        responsibilities: [],
+        responsibilities_source: [],
+        technologies_used: [],
+      },
+    ],
+    skills: [],
+    certifications: [],
+    languages: [],
+    parse_confidence: "high",
+  };
+
+  it("returns extended response with profileScore + precomputeJobId on happy path", async () => {
+    const fakeScore: ProfileScoreDto = {
+      id: "score-99",
+      overallScore: 78,
+      band: "strong",
+      components: [],
+      improvementSuggestions: [],
+      redactedFields: [],
+      promptVersion: "v1",
+      modelUsed: "gpt-4o-mini",
+      latencyMs: 1500,
+      createdAt: "2026-05-08T12:00:00.000Z",
+    };
+    const computeProfileScore = jest.fn().mockResolvedValue(fakeScore);
+
+    const {
+      svc,
+      profilesRepo,
+      matchPreviewQueue,
+      profileScoreQueue,
+      scoring,
+    } = buildSvc({
+      profile: buildProfile({ fullName: "Jane Doe" }),
+      candidateProfile: buildCandidateProfile({
+        desiredRoles: ["Software Engineer"],
+        openTo: ["remote"],
+      }),
+      defaultResume: buildResume(validParsedResume),
+      precomputeJobId: "precompute:job:happy",
+      computeProfileScore,
+    });
+
+    const result = await svc.completeOnboarding(candidateUser);
+
+    expect(result.profileCompleted).toBe(true);
+    expect(result.profileScore).toEqual(fakeScore);
+    expect(result.precomputeJobId).toBe("precompute:job:happy");
+    expect(result.errors).toBeUndefined();
+
+    // profile flipped before AI call
+    expect(profilesRepo.updateCandidateProfile).toHaveBeenCalledWith(
+      candidateUser.id,
+      { profileCompleted: true },
+    );
+
+    // AI compute called with the right candidate + resume + reason
+    expect(scoring.computeProfileScore).toHaveBeenCalledWith(
+      candidateUser.id,
+      "33333333-3333-3333-3333-333333333333",
+      expect.objectContaining({ reason: "onboarding" }),
+    );
+
+    // match-preview precompute kicked off
+    expect(matchPreviewQueue.enqueuePrecompute).toHaveBeenCalledWith({
+      candidateId: candidateUser.id,
+      resumeId: "33333333-3333-3333-3333-333333333333",
+    });
+
+    // happy path: no recompute fallback enqueued
+    expect(profileScoreQueue.enqueueRecompute).not.toHaveBeenCalled();
+  });
+
+  it("on AI failure: returns 200 with profileScore=null and errors.profileScore='transient'", async () => {
+    const computeProfileScore = jest
+      .fn()
+      .mockRejectedValueOnce(new Error("simulated AI failure"));
+
+    const { svc, profilesRepo, matchPreviewQueue, profileScoreQueue } =
+      buildSvc({
+        profile: buildProfile({ fullName: "Jane Doe" }),
+        candidateProfile: buildCandidateProfile({
+          desiredRoles: ["Software Engineer"],
+          openTo: ["remote"],
+        }),
+        defaultResume: buildResume(validParsedResume),
+        precomputeJobId: "precompute:job:transient",
+        computeProfileScore,
+      });
+
+    const result = await svc.completeOnboarding(candidateUser);
+
+    // Profile still flipped — candidate is NOT trapped by an AI failure.
+    expect(profilesRepo.updateCandidateProfile).toHaveBeenCalledWith(
+      candidateUser.id,
+      { profileCompleted: true },
+    );
+    expect(result.profileCompleted).toBe(true);
+
+    // No score, transient error, precompute still fired.
+    expect(result.profileScore).toBeNull();
+    expect(result.errors?.profileScore).toBe("transient");
+    expect(result.precomputeJobId).toBe("precompute:job:transient");
+    expect(matchPreviewQueue.enqueuePrecompute).toHaveBeenCalledTimes(1);
+
+    // Retry job enqueued so a fresh score lands once the worker retries.
+    expect(profileScoreQueue.enqueueRecompute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidateId: candidateUser.id,
+        resumeId: "33333333-3333-3333-3333-333333333333",
+        reason: "onboarding",
+      }),
+    );
+  });
+
+  it("rejects with INCOMPLETE_REVIEW when default resume is missing (review-step gate fires before missing_resume branch)", async () => {
+    // The `missing_resume` branch in completeOnboarding is defense-in-depth
+    // for the AI-gate stage. In normal flow the review-step gate runs first
+    // and rejects with INCOMPLETE_REVIEW because zero parsed counts can't
+    // satisfy `experience>=1 || education>=1 || skills>=3`. This test
+    // documents that ordering — a candidate without a default resume hits
+    // the review error first, never reaches the AI step, and never marks
+    // `profile_completed`. Frontend validation on the resume-upload step
+    // makes this scenario unreachable in practice.
+    const computeProfileScore = jest.fn();
+    const { svc, matchPreviewQueue, profileScoreQueue, profilesRepo, audit } =
+      buildSvc({
+        profile: buildProfile({ fullName: "Jane Doe" }),
+        candidateProfile: buildCandidateProfile({
+          desiredRoles: ["Software Engineer"],
+          openTo: ["remote"],
+        }),
+        defaultResume: null,
+        computeProfileScore,
+      });
+
+    await expect(svc.completeOnboarding(candidateUser)).rejects.toMatchObject({
+      response: expect.objectContaining({ code: "INCOMPLETE_REVIEW" }),
+    });
+
+    // Profile must NOT be flipped, no audit, no AI call, no queue side-effects.
+    expect(profilesRepo.updateCandidateProfile).not.toHaveBeenCalled();
+    expect(audit.log).not.toHaveBeenCalled();
+    expect(computeProfileScore).not.toHaveBeenCalled();
+    expect(matchPreviewQueue.enqueuePrecompute).not.toHaveBeenCalled();
+    expect(profileScoreQueue.enqueueRecompute).not.toHaveBeenCalled();
   });
 });
 

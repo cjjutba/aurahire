@@ -40,8 +40,12 @@ export class MatchPreviewQueueService {
    * duplicate enqueues at most cost a few cheap reads. Failures are
    * non-fatal: the candidate's resume parse already succeeded; the
    * auto-preview is best-effort.
+   *
+   * Returns the BullMQ job id (for callers that need to surface it in a
+   * synchronous response — e.g. the onboarding-completion handshake), or
+   * `null` when enqueue fails or the queue declines to assign an id.
    */
-  async enqueuePrecompute(payload: MatchPreviewPrecomputePayload): Promise<void> {
+  async enqueuePrecompute(payload: MatchPreviewPrecomputePayload): Promise<string | null> {
     try {
       const job = await this.queue.add("precompute", payload, {
         jobId: `precompute:${payload.candidateId}:${payload.resumeId}`,
@@ -52,10 +56,12 @@ export class MatchPreviewQueueService {
       this.logger.log(
         `Enqueued match-preview precompute job ${job.id} for candidate=${payload.candidateId} resume=${payload.resumeId}`,
       );
+      return job.id ?? null;
     } catch (err) {
       this.logger.warn(
         `Failed to enqueue match-preview precompute: ${(err as Error).message}`,
       );
+      return null;
     }
   }
 
