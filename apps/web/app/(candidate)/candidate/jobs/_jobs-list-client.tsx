@@ -79,11 +79,22 @@ export function CandidateJobsListClient({
           Browse Jobs
         </h1>
         <p className="mt-2 text-sm text-[var(--color-body)]">
-          {isLoading
-            ? "—"
-            : meta.total === 0
-              ? "No jobs available"
-              : `${meta.total} job${meta.total === 1 ? "" : "s"} · match scoring arrives in a future slice`}
+          {(() => {
+            if (isLoading) return "—";
+            if (meta.total === 0) return "No jobs available";
+
+            const base = `${meta.total} job${meta.total === 1 ? "" : "s"}`;
+
+            // Show the auto-scored nudge only once previews have loaded with
+            // at least one match. While previews are still loading, render
+            // just the count to avoid promising a feature that hasn't
+            // hydrated yet.
+            const previewCount = previews.data?.data?.length ?? 0;
+            if (!previews.isLoading && previewCount > 0) {
+              return `${base} · auto-scored against your resume`;
+            }
+            return base;
+          })()}
         </p>
       </header>
 
