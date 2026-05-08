@@ -78,18 +78,20 @@ export class ScoringController {
   @ApiOperation({
     summary: "Compute or fetch a match preview for the candidate against this job",
     description:
-      "Idempotent per (candidate, job, current default resume). Returns the cached preview if one already exists for this resume version. Rate-limited to 5/60s per IP. Cost: ~$0.001 per fresh compute.",
+      "Delegates to the on-view auto-compute path: idempotent per (candidate, job, current default resume), returns the cached preview if one already exists, and writes new rows with source = 'candidate_view'. Bounded by a per-UTC-day cap (returns 429 with code DAILY_AI_LIMIT when exhausted) in addition to the IP throttle (5/60s).",
   })
   @ApiResponse({ status: 201, type: MatchScorePreviewEnvelopeDto })
   @ApiResponse({ status: 400, description: "Missing prerequisite (resume, parse, or job)" })
-  @ApiResponse({ status: 429, description: "Rate-limited; try again in a minute" })
+  @ApiResponse({
+    status: 429,
+    description:
+      "Rate-limited (per-IP throttle) or daily AI cap reached (code: DAILY_AI_LIMIT)",
+  })
   async computeMatchPreview(
     @CurrentUser() user: AuthUser,
     @Param("jobId") jobId: string,
   ): Promise<MatchScorePreviewEnvelopeDto> {
-    const data = await this.service.computeMatchPreview(user, jobId, {
-      source: "candidate",
-    });
+    const data = await this.service.computeMatchPreviewOnView(user, jobId);
     return { data };
   }
 
