@@ -80,15 +80,49 @@ interface RequestMeta {
 }
 
 /**
- * Sum the AI's per-component scores into a deterministic overall.
- * The AI is asked to do this in the prompt but doesn't reliably maintain
- * the invariant — so the engine enforces it. Result is clamped to 0..100.
+ * Derive overall score from per-component scores.
+ *
+ * Returns the weighted sum normalized to 0..100 by component maxes. With
+ * configured weights summing to 100 (enforced by the Zod validator), this is
+ * just the score sum — but the normalization makes it robust to any AI
+ * deviation from the configured maxes and prevents silent clamping when
+ * sums overflow.
  */
 function deriveOverallScore(
-  components: ReadonlyArray<{ score: number }>,
+  components: ReadonlyArray<{ score: number; max: number }>,
 ): number {
-  const sum = components.reduce((acc, c) => acc + (Number(c.score) || 0), 0);
-  return Math.round(Math.max(0, Math.min(100, sum)));
+  const maxSum = components.reduce((acc, c) => acc + (Number(c.max) || 0), 0);
+  if (maxSum <= 0) return 0;
+  const scoreSum = components.reduce(
+    (acc, c) =>
+      acc + Math.max(0, Math.min(Number(c.max) || 0, Number(c.score) || 0)),
+    0,
+  );
+  return Math.round((scoreSum / maxSum) * 100);
+}
+
+/**
+ * Override AI-returned `max` / `weight` with the configured weights and clamp
+ * each `score` into `[0, configuredMax]`. The AI sometimes invents its own
+ * maxes when the prompt is ambiguous; this enforces the AI-output ↔
+ * configured-weights contract before persistence so the breakdown always
+ * reconciles with the headline.
+ */
+function normalizeComponentsToWeights<
+  C extends { name: string; score: number; max: number; weight: number },
+>(
+  components: ReadonlyArray<C>,
+  weights: Record<string, number>,
+): C[] {
+  return components.map((c) => {
+    const configuredMax = weights[c.name] ?? c.max;
+    return {
+      ...c,
+      max: configuredMax,
+      weight: configuredMax,
+      score: Math.max(0, Math.min(configuredMax, Number(c.score) || 0)),
+    };
+  });
 }
 
 function deriveBand(
@@ -234,13 +268,19 @@ export class ScoringService {
       requestId: `score-profile:${candidateId}`,
     });
 
-    // Engine-enforced arithmetic: overall = Σ component.score; band derived
-    // from thresholds. The AI's overall_score / band are kept in raw_output
-    // for audit but never surface to clients or downstream logic.
-    const derivedOverall = deriveOverallScore(aiResult.score.components);
+    // Engine-enforced arithmetic: components are normalized against the
+    // configured weights (so a model that fabricates its own maxes can't
+    // smuggle out-of-bounds scores), then overall = Σ component.score
+    // normalized to 0..100. The AI's overall_score / band are kept in
+    // raw_output for audit but never surface to clients or downstream logic.
+    const normalizedProfileComponents = normalizeComponentsToWeights(
+      aiResult.score.components,
+      weights as unknown as Record<string, number>,
+    );
+    const derivedOverall = deriveOverallScore(normalizedProfileComponents);
     const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
-    const evidenceRows = aiResult.score.components.flatMap((comp) =>
+    const evidenceRows = normalizedProfileComponents.flatMap((comp) =>
       comp.evidence.map((ev) => ({
         componentName: comp.name,
         excerptText: ev.excerpt,
@@ -256,7 +296,7 @@ export class ScoringService {
         resumeId: resume.id,
         overallScore: derivedOverall,
         band: derivedBand,
-        components: aiResult.score.components as unknown as Record<string, unknown>,
+        components: normalizedProfileComponents as unknown as Record<string, unknown>,
         improvementSuggestions: aiResult.score
           .improvement_suggestions as unknown as Record<string, unknown>,
         redactedFields: aiResult.redactedFields,
@@ -309,7 +349,10 @@ export class ScoringService {
 
     return this.toDto(
       profileScore.id,
-      aiResult.score,
+      {
+        ...aiResult.score,
+        components: normalizedProfileComponents,
+      } as ProfileScoreOutput,
       aiResult,
       profileScore.createdAt,
       derivedOverall,
@@ -488,10 +531,14 @@ export class ScoringService {
     }
 
     // Engine-enforced arithmetic — see deriveOverallScore note above.
-    const derivedOverall = deriveOverallScore(aiResult.score.components);
+    const normalizedMatchComponents = normalizeComponentsToWeights(
+      aiResult.score.components,
+      weights as unknown as Record<string, number>,
+    );
+    const derivedOverall = deriveOverallScore(normalizedMatchComponents);
     const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
-    const evidenceRows = aiResult.score.components.flatMap((comp) =>
+    const evidenceRows = normalizedMatchComponents.flatMap((comp) =>
       comp.evidence.map((ev) => ({
         componentName: comp.name,
         excerptText: ev.excerpt,
@@ -509,7 +556,7 @@ export class ScoringService {
         resumeId,
         overallScore: derivedOverall,
         band: derivedBand,
-        components: aiResult.score.components as unknown as Record<string, unknown>,
+        components: normalizedMatchComponents as unknown as Record<string, unknown>,
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
         promptVersion: aiResult.promptVersion,
@@ -549,7 +596,10 @@ export class ScoringService {
 
     return this.matchScoreToDto(
       matchScore.id,
-      aiResult.score,
+      {
+        ...aiResult.score,
+        components: normalizedMatchComponents,
+      } as MatchScoreOutput,
       aiResult,
       matchScore.createdAt,
       derivedOverall,
@@ -839,7 +889,11 @@ export class ScoringService {
       requestId: `match-preview:${candidateId}:${jobId}`,
     });
 
-    const derivedOverall = deriveOverallScore(aiResult.score.components);
+    const normalizedPreviewComponents = normalizeComponentsToWeights(
+      aiResult.score.components,
+      weights as unknown as Record<string, number>,
+    );
+    const derivedOverall = deriveOverallScore(normalizedPreviewComponents);
     const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
     const preview = await this.scoringRepo.upsertMatchPreview({
@@ -848,7 +902,7 @@ export class ScoringService {
       resumeId: defaultResume.id,
       overallScore: derivedOverall,
       band: derivedBand,
-      components: aiResult.score.components as unknown as Record<string, unknown>,
+      components: normalizedPreviewComponents as unknown as Record<string, unknown>,
       redactedFields: aiResult.redactedFields,
       weightsUsed: weights as unknown as Record<string, unknown>,
       promptVersion: aiResult.promptVersion,
