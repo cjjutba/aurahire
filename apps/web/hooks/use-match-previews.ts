@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { queryKeys } from "@/lib/query";
 import { clientApiFetch } from "./_client-fetch";
 
 interface MatchPreviewListItem {
@@ -25,7 +26,7 @@ interface MatchPreviewsResponse {
 
 export function useMyMatchPreviewsQuery() {
   return useQuery({
-    queryKey: ["candidate-match-previews", "list"] as const,
+    queryKey: queryKeys.matchPreviews.list(),
     queryFn: ({ signal }) =>
       clientApiFetch<MatchPreviewsResponse>("/api/v1/scoring/match-previews", {
         signal,

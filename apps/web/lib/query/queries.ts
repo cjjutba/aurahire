@@ -150,4 +150,21 @@ export const serverQueries = {
     ),
   profileScoreMe: () =>
     serverApiFetch<unknown>("/api/v1/scoring/profile/me"),
+  myMatchPreviews: () =>
+    serverApiFetch<{
+      data: Array<{
+        id: string;
+        jobId: string;
+        resumeId: string;
+        overallScore: number;
+        band: "strong" | "partial" | "limited";
+        source: "system" | "candidate";
+        createdAt: string;
+        job: {
+          id: string;
+          title: string;
+          company: { id: string; name: string; logoUrl: string | null } | null;
+        } | null;
+      }>;
+    }>("/api/v1/scoring/match-previews"),
 } as const;

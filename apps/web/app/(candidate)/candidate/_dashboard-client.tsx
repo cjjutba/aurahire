@@ -481,7 +481,7 @@ export function CandidateDashboardClient({
   useEffect(() => {
     if (!latestMatchPreview) return;
     void qc.invalidateQueries({
-      queryKey: ["candidate-match-previews", "list"],
+      queryKey: queryKeys.matchPreviews.list(),
     });
   }, [latestMatchPreview, qc]);
 
@@ -736,7 +736,7 @@ function RecommendedForYouSection({
   if (!loading && !hasResume && top.length === 0) return null;
 
   const refetch = (): void => {
-    void qc.invalidateQueries({ queryKey: ["candidate-match-previews", "list"] });
+    void qc.invalidateQueries({ queryKey: queryKeys.matchPreviews.list() });
   };
 
   // Empty state — precompute either failed or hasn't fired yet. Surfaces a

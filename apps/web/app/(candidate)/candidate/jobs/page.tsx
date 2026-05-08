@@ -34,10 +34,19 @@ export default async function CandidateJobsPage({ searchParams }: PageProps) {
   };
 
   const queryClient = makeQueryClient();
-  const [, appsResult] = await Promise.all([
+  // Prefetch match-previews server-side so the score chips render on first
+  // paint after a hard refresh. Without this, the client query would race
+  // AuthTokenProvider's useEffect: the bearer token is null on mount, the
+  // call returns 401, and the query's no-retry-on-401 policy locks it into
+  // the error state — leaving Browse Jobs scoreless until a manual refresh.
+  const [, , appsResult] = await Promise.all([
     queryClient.prefetchQuery({
       queryKey: queryKeys.candidateJobs.list(params),
       queryFn: () => serverQueries.candidateJobsList(params),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.matchPreviews.list(),
+      queryFn: () => serverQueries.myMatchPreviews(),
     }),
     serverApiFetch<{ data: Array<{ id: string; jobId: string }> }>(
       "/api/v1/applications/mine",
