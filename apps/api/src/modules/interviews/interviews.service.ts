@@ -812,6 +812,30 @@ export class InterviewsService {
     if (!candidate || !jobRow) return;
 
     const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+
+    const ics = buildInterviewIcs({
+      interview: {
+        id: interview.id,
+        rescheduledFromId: interview.rescheduledFromId ?? null,
+        scheduledAt: interview.scheduledAt,
+        durationMinutes: interview.durationMinutes,
+        venueName: interview.venueName ?? "",
+        addressLine: interview.addressLine ?? "",
+        roomOrFloor: interview.roomOrFloor ?? null,
+        reportingInstructions: interview.reportingInstructions ?? null,
+        whatToBring: interview.whatToBring ?? null,
+        interviewerName: interview.interviewerName ?? null,
+        interviewerTitle: interview.interviewerTitle ?? null,
+        mapUrl: interview.mapUrl ?? null,
+      },
+      candidate: { fullName: candidate.fullName, email: candidate.email },
+      job: { title: jobRow.title },
+      company: {
+        name: jobRow.company.name,
+        recruiterEmail: "no-reply@aurahire.site",
+      },
+    });
+
     await this.email.send({
       to: candidate.email,
       subject: `Interview scheduled: ${jobRow.title}`,
@@ -822,10 +846,25 @@ export class InterviewsService {
         scheduledAt: interview.scheduledAt.toISOString(),
         durationMinutes: interview.durationMinutes,
         format: interview.format,
-        locationOrLink: interview.locationOrLink,
+        locationOrLink: interview.locationOrLink ?? null,
+        venueName: interview.venueName ?? null,
+        addressLine: interview.addressLine ?? null,
+        roomOrFloor: interview.roomOrFloor ?? null,
+        reportingInstructions: interview.reportingInstructions ?? null,
+        whatToBring: interview.whatToBring ?? null,
+        interviewerName: interview.interviewerName ?? null,
+        interviewerTitle: interview.interviewerTitle ?? null,
+        mapUrl: interview.mapUrl ?? null,
         applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
         company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
+      attachments: [
+        {
+          filename: "interview.ics",
+          content: Buffer.from(ics).toString("base64"),
+          contentType: "text/calendar",
+        },
+      ],
     });
   }
 
