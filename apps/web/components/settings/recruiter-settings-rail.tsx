@@ -4,6 +4,7 @@ import {
   Bell,
   Building2,
   Lock,
+  MapPin,
   Plug,
   Scale,
   ShieldAlert,
@@ -92,6 +93,11 @@ export function RecruiterSettingsRail() {
           href: "/recruiter/settings/integrations",
           label: "Integrations",
           icon: Plug,
+        },
+        {
+          href: "/recruiter/settings/interview-venues",
+          label: "Interview Venues",
+          icon: MapPin,
         },
       );
     }
