@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
-import { Queue } from "bullmq";
+import { JobType, Queue } from "bullmq";
 
 import { MATCH_PREVIEW_PRECOMPUTE_QUEUE } from "./queue.constants";
 
@@ -8,6 +8,16 @@ export interface MatchPreviewPrecomputePayload {
   candidateId: string;
   resumeId: string;
 }
+
+/** States a precompute job can be in that we want to cancel on resume swap. */
+const CANCELLABLE_STATES: JobType[] = [
+  "waiting",
+  "active",
+  "delayed",
+  "paused",
+];
+
+const CANCEL_SCAN_BATCH = 200;
 
 /**
  * Thin enqueue facade for the match-preview-precompute worker. Lives in
@@ -47,5 +57,50 @@ export class MatchPreviewQueueService {
         `Failed to enqueue match-preview precompute: ${(err as Error).message}`,
       );
     }
+  }
+
+  /**
+   * Cancel any in-flight precompute jobs scoped to a specific resume id.
+   * Called when the candidate's default resume changes — work scheduled
+   * against the OLD resume is now wasted because the on-screen feed will
+   * be driven by previews against the NEW resume.
+   *
+   * BullMQ doesn't support querying by job-data fields, so we iterate the
+   * cancellable states and filter in-process. Each state is fetched in one
+   * batch (CANCEL_SCAN_BATCH); the queue should not realistically exceed
+   * this depth in normal operation, but we log if we hit the cap so an
+   * operator notices.
+   */
+  async cancelByResumeId(resumeId: string): Promise<number> {
+    let cancelled = 0;
+    for (const state of CANCELLABLE_STATES) {
+      const jobs = await this.queue.getJobs([state], 0, CANCEL_SCAN_BATCH - 1);
+      if (jobs.length === CANCEL_SCAN_BATCH) {
+        this.logger.warn(
+          `cancelByResumeId hit scan cap (${CANCEL_SCAN_BATCH}) in state=${state}; some jobs may not have been considered`,
+        );
+      }
+      for (const job of jobs) {
+        if (job.data?.resumeId === resumeId) {
+          try {
+            await job.remove();
+            cancelled++;
+          } catch (err) {
+            // BullMQ's remove() can race with the worker locking the job —
+            // failures here are non-fatal; the worker may have already
+            // started processing it.
+            this.logger.warn(
+              `Failed to cancel job ${job.id} for resume ${resumeId}: ${(err as Error).message}`,
+            );
+          }
+        }
+      }
+    }
+    if (cancelled > 0) {
+      this.logger.log(
+        `Cancelled ${cancelled} in-flight precompute job(s) for resume=${resumeId}`,
+      );
+    }
+    return cancelled;
   }
 }

@@ -1,20 +1,24 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import { extname } from "node:path";
+import { and, eq, isNull } from "drizzle-orm";
 import type { AuthUser } from "@aurahire/shared";
-import type { Resume } from "@aurahire/db";
+import { profileScoresTable, type Resume } from "@aurahire/db";
 
 import { AuditService } from "../../audit";
+import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 import { StorageService } from "../../storage/storage.service";
 import { DocxToPdfService } from "../../storage/docx-to-pdf.service";
 import { ParseResumeService } from "../../ai/parse-resume.service";
 import { MatchPreviewQueueService } from "../../queue/match-preview-queue.service";
+import { ProfileScoreQueueService } from "../../queue/profile-score-queue.service";
 import { ResumesRepository } from "./resumes.repository";
 import type { ResumeResponseDto } from "./dto/resume-response.dto";
 
@@ -41,6 +45,8 @@ export class ResumesService {
     private readonly audit: AuditService,
     private readonly docxToPdf: DocxToPdfService,
     private readonly matchPreviewQueue: MatchPreviewQueueService,
+    private readonly profileScoreQueue: ProfileScoreQueueService,
+    @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
   ) {}
 
   // -----------------------------------------------------------------
@@ -328,7 +334,54 @@ export class ResumesService {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
     }
 
-    await this.repo.setDefault(user.id, id);
+    // Wrap the DB writes (default-flag flip + profile_scores stale_at) in a
+    // single transaction so a failure on either side rolls the other back.
+    // BullMQ enqueues and queue cancellations are intentionally OUTSIDE the
+    // tx — Redis isn't transactional with Postgres, and we'd rather emit a
+    // duplicate enqueue (idempotent) than miss one if the tx commit happens
+    // and a queue op throws. Queue cancellation goes BEFORE the tx so an
+    // observer never sees a stale resume's job racing the new flag.
+    const previousDefault = await this.repo.findDefaultByCandidateId(user.id);
+
+    if (previousDefault && previousDefault.id !== id) {
+      try {
+        await this.matchPreviewQueue.cancelByResumeId(previousDefault.id);
+      } catch (err) {
+        // Cancellation is best-effort; the worker would still be guarded
+        // by the UPSERT on its own write path. Log and continue.
+        this.logger.warn(
+          `cancelByResumeId failed for ${previousDefault.id}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    await this.db.transaction(async (tx) => {
+      await this.repo.setDefault(user.id, id, tx);
+
+      // Mark only currently-current scores stale; if a user toggles the
+      // default several times in a row we don't want to keep resetting
+      // stale_at on already-stale rows.
+      await tx
+        .update(profileScoresTable)
+        .set({ staleAt: new Date() })
+        .where(
+          and(
+            eq(profileScoresTable.candidateId, user.id),
+            isNull(profileScoresTable.staleAt),
+          ),
+        );
+    });
+
+    // Best-effort enqueues — failures are logged inside the queue services.
+    await this.profileScoreQueue.enqueueRecompute({
+      candidateId: user.id,
+      resumeId: id,
+      reason: "resume_change",
+    });
+    await this.matchPreviewQueue.enqueuePrecompute({
+      candidateId: user.id,
+      resumeId: id,
+    });
 
     await this.audit.log({
       actorId: user.id,
@@ -336,6 +389,7 @@ export class ResumesService {
       action: "resume.set_default",
       entityType: "resume",
       entityId: id,
+      details: previousDefault ? { previousResumeId: previousDefault.id } : undefined,
       ...requestMeta,
     });
 

@@ -1,13 +1,25 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { and, eq } from "drizzle-orm";
+import type { ExtractTablesWithRelations } from "drizzle-orm";
+import type { PgTransaction } from "drizzle-orm/pg-core";
+import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import {
   resumesTable,
   candidateProfilesTable,
   type Resume,
   type NewResume,
 } from "@aurahire/db";
+import * as schema from "@aurahire/db";
 
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
+
+export type ResumesTx = PgTransaction<
+  PostgresJsQueryResultHKT,
+  typeof schema,
+  ExtractTablesWithRelations<typeof schema>
+>;
+
+type Executor = DrizzleClient | ResumesTx;
 
 @Injectable()
 export class ResumesRepository {
@@ -45,8 +57,11 @@ export class ResumesRepository {
       .where(eq(resumesTable.candidateId, candidateId));
   }
 
-  async findDefaultByCandidateId(candidateId: string): Promise<Resume | null> {
-    const [row] = await this.db
+  async findDefaultByCandidateId(
+    candidateId: string,
+    executor: Executor = this.db,
+  ): Promise<Resume | null> {
+    const [row] = await executor
       .select()
       .from(resumesTable)
       .where(
@@ -56,8 +71,14 @@ export class ResumesRepository {
     return row ?? null;
   }
 
-  async setDefault(candidateId: string, resumeId: string): Promise<void> {
-    await this.db.transaction(async (tx) => {
+  async setDefault(
+    candidateId: string,
+    resumeId: string,
+    executor: Executor = this.db,
+  ): Promise<void> {
+    // If the caller already has a transaction open we run inline so the
+    // flag flip + their other writes are atomic. Otherwise we open one.
+    const run = async (tx: Executor): Promise<void> => {
       await tx
         .update(resumesTable)
         .set({ isDefault: false, updatedAt: new Date() })
@@ -72,7 +93,13 @@ export class ResumesRepository {
         .update(candidateProfilesTable)
         .set({ defaultResumeId: resumeId, updatedAt: new Date() })
         .where(eq(candidateProfilesTable.id, candidateId));
-    });
+    };
+
+    if (executor === this.db) {
+      await this.db.transaction((tx) => run(tx));
+    } else {
+      await run(executor);
+    }
   }
 
   async delete(id: string): Promise<void> {

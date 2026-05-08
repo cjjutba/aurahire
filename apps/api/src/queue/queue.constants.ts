@@ -17,3 +17,12 @@ export const MATCH_PREVIEW_TOP_N = 5;
  * the existing realtime gateway when complete.
  */
 export const MATCH_SCORE_QUEUE = "match-score";
+
+/**
+ * Queue for recomputing a candidate's Profile Score after the inputs that
+ * feed it change (default resume swap, profile edit, preferences edit).
+ * One job per recompute; the worker writes a fresh profile_scores row and
+ * the previous row is left as-is with stale_at set by the caller. Task 9
+ * registers the processor against this same constant.
+ */
+export const PROFILE_SCORE_RECOMPUTE_QUEUE = "profile-score-recompute";

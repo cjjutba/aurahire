@@ -8,6 +8,8 @@ import type { ParseResumeService } from "../../ai/parse-resume.service";
 import type { AuditService } from "../../audit";
 import type { DocxToPdfService } from "../../storage/docx-to-pdf.service";
 import type { MatchPreviewQueueService } from "../../queue/match-preview-queue.service";
+import type { ProfileScoreQueueService } from "../../queue/profile-score-queue.service";
+import type { DrizzleClient } from "../../db/db.module";
 
 const DOCX_MIME =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -121,10 +123,48 @@ describe("ResumesService.upload", () => {
 
     const matchPreviewQueue = {
       enqueuePrecompute: jest.fn().mockResolvedValue(undefined),
+      cancelByResumeId: jest.fn().mockResolvedValue(0),
     } as unknown as jest.Mocked<MatchPreviewQueueService>;
 
-    const svc = new ResumesService(repo, storage, parser, audit, docxToPdf, matchPreviewQueue);
-    return { svc, repo, storage, parser, audit, docxToPdf, matchPreviewQueue };
+    const profileScoreQueue = {
+      enqueueRecompute: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<ProfileScoreQueueService>;
+
+    const db = {
+      transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
+        // Provide a tx stub whose .update().set().where() chain is a no-op.
+        const tx = {
+          update: () => ({
+            set: () => ({
+              where: () => Promise.resolve(undefined),
+            }),
+          }),
+        };
+        return fn(tx);
+      }),
+    } as unknown as jest.Mocked<DrizzleClient>;
+
+    const svc = new ResumesService(
+      repo,
+      storage,
+      parser,
+      audit,
+      docxToPdf,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+    );
+    return {
+      svc,
+      repo,
+      storage,
+      parser,
+      audit,
+      docxToPdf,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+    };
   }
 
   it("converts DOCX uploads to canonical PDF and stores both files", async () => {
@@ -267,9 +307,36 @@ describe("ResumesService.reparse", () => {
 
     const matchPreviewQueue = {
       enqueuePrecompute: jest.fn().mockResolvedValue(undefined),
+      cancelByResumeId: jest.fn().mockResolvedValue(0),
     } as unknown as jest.Mocked<MatchPreviewQueueService>;
 
-    const svc = new ResumesService(repo, storage, parser, audit, docxToPdf, matchPreviewQueue);
+    const profileScoreQueue = {
+      enqueueRecompute: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<ProfileScoreQueueService>;
+
+    const db = {
+      transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
+        const tx = {
+          update: () => ({
+            set: () => ({
+              where: () => Promise.resolve(undefined),
+            }),
+          }),
+        };
+        return fn(tx);
+      }),
+    } as unknown as jest.Mocked<DrizzleClient>;
+
+    const svc = new ResumesService(
+      repo,
+      storage,
+      parser,
+      audit,
+      docxToPdf,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+    );
     return { svc, repo, parser, audit };
   }
 
@@ -380,7 +447,23 @@ describe("ResumesService.getSignedDownloadUrl", () => {
     const matchPreviewQueue =
       {} as unknown as jest.Mocked<MatchPreviewQueueService>;
 
-    const svc = new ResumesService(repo, storage, parser, audit, docxToPdf, matchPreviewQueue);
+    const profileScoreQueue =
+      {} as unknown as jest.Mocked<ProfileScoreQueueService>;
+
+    const db = {
+      transaction: jest.fn(),
+    } as unknown as jest.Mocked<DrizzleClient>;
+
+    const svc = new ResumesService(
+      repo,
+      storage,
+      parser,
+      audit,
+      docxToPdf,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+    );
     return { svc, repo, storage };
   }
 
@@ -436,5 +519,199 @@ describe("ResumesService.getSignedDownloadUrl", () => {
     expect(result.signedUrl).toBe(`signed:${resume.storagePath}`);
     expect(result.signedPdfUrl).toBe(`signed:${resume.storagePath}`);
     expect(result.signedPdfUrl).toBe(result.signedUrl);
+  });
+});
+
+describe("ResumesService.setDefault — default change cascade", () => {
+  const candidateUser: AuthUser = {
+    id: "11111111-1111-1111-1111-111111111111",
+    email: "candidate@example.com",
+    role: "candidate",
+    status: "active",
+    fullName: "Test Candidate",
+    profileCompleted: true,
+  };
+
+  const R1_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+  const R2_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+
+  function buildResume(id: string, isDefault: boolean): Resume {
+    return {
+      id,
+      candidateId: candidateUser.id,
+      filename: `${id}.pdf`,
+      mimeType: "application/pdf",
+      sizeBytes: 100,
+      storagePath: `${candidateUser.id}/${id}.pdf`,
+      canonicalPdfPath: null,
+      rawText: null,
+      parsedData: null,
+      parseStatus: "parsed",
+      parseError: null,
+      isDefault,
+      createdAt: new Date("2026-05-05T00:00:00Z"),
+      updatedAt: new Date("2026-05-05T00:00:00Z"),
+    };
+  }
+
+  function buildSvc() {
+    // Track stale_at writes triggered through the tx stub so the test can
+    // assert the profile_scores update fired.
+    const profileScoresStaleCalls: Array<{ staleAt: Date }> = [];
+
+    const repo = {
+      findById: jest.fn(async (id: string) =>
+        id === R1_ID
+          ? buildResume(R1_ID, true)
+          : id === R2_ID
+            ? buildResume(R2_ID, false)
+            : null,
+      ),
+      findDefaultByCandidateId: jest
+        .fn()
+        .mockResolvedValue(buildResume(R1_ID, true)),
+      setDefault: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<ResumesRepository>;
+
+    const storage = {} as unknown as jest.Mocked<StorageService>;
+    const parser = {} as unknown as jest.Mocked<ParseResumeService>;
+
+    const audit = {
+      log: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<AuditService>;
+
+    const docxToPdf = {} as unknown as jest.Mocked<DocxToPdfService>;
+
+    const matchPreviewQueue = {
+      enqueuePrecompute: jest.fn().mockResolvedValue(undefined),
+      cancelByResumeId: jest.fn().mockResolvedValue(1),
+    } as unknown as jest.Mocked<MatchPreviewQueueService>;
+
+    const profileScoreQueue = {
+      enqueueRecompute: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<ProfileScoreQueueService>;
+
+    // Tx stub that records calls into update(profileScoresTable).set(...)
+    const tx = {
+      update: jest.fn(() => ({
+        set: jest.fn((patch: { staleAt: Date }) => {
+          profileScoresStaleCalls.push(patch);
+          return {
+            where: jest.fn().mockResolvedValue(undefined),
+          };
+        }),
+      })),
+    };
+
+    const db = {
+      transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn(tx);
+      }),
+    } as unknown as jest.Mocked<DrizzleClient>;
+
+    const svc = new ResumesService(
+      repo,
+      storage,
+      parser,
+      audit,
+      docxToPdf,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+    );
+    return {
+      svc,
+      repo,
+      audit,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+      profileScoresStaleCalls,
+    };
+  }
+
+  it("on default change: marks profile_scores stale, cancels old in-flight jobs, enqueues new recompute jobs", async () => {
+    const {
+      svc,
+      repo,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+      profileScoresStaleCalls,
+    } = buildSvc();
+
+    await svc.setDefault(candidateUser, R2_ID);
+
+    // Old default looked up
+    expect(repo.findDefaultByCandidateId).toHaveBeenCalledWith(candidateUser.id);
+
+    // Default flip happened (with tx forwarded so it's atomic with stale_at)
+    expect(repo.setDefault).toHaveBeenCalledTimes(1);
+    expect(repo.setDefault).toHaveBeenCalledWith(
+      candidateUser.id,
+      R2_ID,
+      expect.anything(),
+    );
+
+    // Old in-flight jobs cancelled by resume id
+    expect(matchPreviewQueue.cancelByResumeId).toHaveBeenCalledTimes(1);
+    expect(matchPreviewQueue.cancelByResumeId).toHaveBeenCalledWith(R1_ID);
+
+    // profile_scores stale_at write fired inside the transaction
+    expect(db.transaction).toHaveBeenCalledTimes(1);
+    expect(profileScoresStaleCalls).toHaveLength(1);
+    expect(profileScoresStaleCalls[0]?.staleAt).toBeInstanceOf(Date);
+
+    // New recompute jobs enqueued for the NEW resume
+    expect(profileScoreQueue.enqueueRecompute).toHaveBeenCalledWith({
+      candidateId: candidateUser.id,
+      resumeId: R2_ID,
+      reason: "resume_change",
+    });
+    expect(matchPreviewQueue.enqueuePrecompute).toHaveBeenCalledWith({
+      candidateId: candidateUser.id,
+      resumeId: R2_ID,
+    });
+  });
+
+  it("does not cancel old jobs when there is no previous default (first set-default)", async () => {
+    const { svc, repo, matchPreviewQueue, profileScoreQueue } = buildSvc();
+    (repo.findDefaultByCandidateId as jest.Mock).mockResolvedValue(null);
+
+    await svc.setDefault(candidateUser, R2_ID);
+
+    expect(matchPreviewQueue.cancelByResumeId).not.toHaveBeenCalled();
+    // Recompute still enqueued — first-time default still needs the score.
+    expect(profileScoreQueue.enqueueRecompute).toHaveBeenCalledTimes(1);
+    expect(matchPreviewQueue.enqueuePrecompute).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not cancel jobs when the same resume is re-set as default (no-op cascade still safe)", async () => {
+    const { svc, repo, matchPreviewQueue, profileScoreQueue } = buildSvc();
+    (repo.findDefaultByCandidateId as jest.Mock).mockResolvedValue(
+      buildResume(R2_ID, true),
+    );
+    // Make findById return R2 so the auth check passes.
+    (repo.findById as jest.Mock).mockResolvedValue(buildResume(R2_ID, true));
+
+    await svc.setDefault(candidateUser, R2_ID);
+
+    // No cancellation: previous == new, so cancelling would kill the job
+    // we're about to re-enqueue.
+    expect(matchPreviewQueue.cancelByResumeId).not.toHaveBeenCalled();
+    expect(profileScoreQueue.enqueueRecompute).toHaveBeenCalledTimes(1);
+    expect(matchPreviewQueue.enqueuePrecompute).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects when the target resume belongs to a different candidate", async () => {
+    const { svc, repo } = buildSvc();
+    (repo.findById as jest.Mock).mockResolvedValue({
+      ...buildResume(R2_ID, false),
+      candidateId: "99999999-9999-9999-9999-999999999999",
+    });
+
+    await expect(svc.setDefault(candidateUser, R2_ID)).rejects.toMatchObject({
+      response: expect.objectContaining({ code: "NOT_FOUND" }),
+    });
   });
 });
