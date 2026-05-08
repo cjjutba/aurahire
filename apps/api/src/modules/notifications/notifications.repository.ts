@@ -103,13 +103,58 @@ export class NotificationsRepository {
     return { unreadCount: 0 };
   }
 
-  async dismiss(id: string, userId: string): Promise<{ unreadCount: number }> {
+  /**
+   * Archive a single notification — sets `dismissed_at = NOW()` and, for
+   * unread rows, also sets `read_at = NOW()` so archived items are never
+   * left in an "unread but hidden" limbo. The popover's vocabulary calls
+   * this "archive"; `dismiss` remains as a thin alias for backward
+   * compatibility while existing callers migrate.
+   *
+   * Per Task 1's discovery the column is `dismissed_at` (not
+   * `archived_at`) — keep the DB column intact.
+   */
+  async archive(id: string, userId: string): Promise<{ unreadCount: number }> {
     await this.db
       .update(notificationsTable)
-      .set({ dismissedAt: new Date() })
+      .set({
+        dismissedAt: new Date(),
+        readAt: sql`COALESCE(${notificationsTable.readAt}, NOW())`,
+      })
       .where(and(eq(notificationsTable.id, id), eq(notificationsTable.userId, userId)));
     const unreadCount = await this.countUnread(userId);
     return { unreadCount };
+  }
+
+  /**
+   * Backward-compatible alias for {@link archive}. Existing callers (older
+   * controllers, queue consumers, tests) used `dismiss` before the popover
+   * settled on "archive" as user-visible vocabulary. Forward to keep the
+   * vocabulary single while not breaking call sites.
+   */
+  async dismiss(id: string, userId: string): Promise<{ unreadCount: number }> {
+    return this.archive(id, userId);
+  }
+
+  /**
+   * Archive every undismissed notification for the user. Mirrors
+   * {@link archive}'s "also mark unread rows as read" behavior so the
+   * unread count drops to zero in one trip and the inbox lands in a clean
+   * state.
+   */
+  async archiveAllForUser(userId: string): Promise<{ unreadCount: 0 }> {
+    await this.db
+      .update(notificationsTable)
+      .set({
+        dismissedAt: new Date(),
+        readAt: sql`COALESCE(${notificationsTable.readAt}, NOW())`,
+      })
+      .where(
+        and(
+          eq(notificationsTable.userId, userId),
+          isNull(notificationsTable.dismissedAt),
+        ),
+      );
+    return { unreadCount: 0 };
   }
 
   async setDigestPending(id: string, value: boolean): Promise<void> {

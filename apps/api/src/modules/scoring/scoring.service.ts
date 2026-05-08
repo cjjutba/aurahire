@@ -25,6 +25,7 @@ import { AuditService } from "../../audit";
 import { CACHE_REDIS, CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { ScoreProfileService } from "../../ai/score-profile.service";
 import { ScoreMatchService } from "../../ai/score-match.service";
+import { EventsService } from "../../realtime";
 import { JobsRepository } from "../jobs/jobs.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { ResumesRepository } from "../resumes/resumes.repository";
@@ -113,6 +114,7 @@ export class ScoringService {
     private readonly audit: AuditService,
     private readonly cacheService: CacheService,
     @Inject(CACHE_REDIS) private readonly redis: Redis,
+    private readonly events: EventsService,
   ) {}
 
   /**
@@ -287,6 +289,19 @@ export class ScoringService {
     });
 
     await this.cacheService.bustTag(TAGS.profileScore(candidateId));
+
+    // Realtime: notify the candidate's user room so dashboards / score-ring
+    // widgets refresh without a manual reload. Reason flows through so the
+    // UI can decide whether to surface "we recomputed because your resume
+    // changed" copy vs. the manual-button confirmation.
+    this.events.emitProfileScoreUpdated({
+      candidateId,
+      resumeId: resume.id,
+      overallScore: profileScore.overallScore,
+      band: profileScore.band,
+      reason,
+      updatedAt: profileScore.createdAt.toISOString(),
+    });
 
     this.logger.log(
       `Profile score computed for ${candidateId} (reason=${reason}): ${profileScore.overallScore}/100 (${profileScore.band})`,
@@ -880,6 +895,20 @@ export class ScoringService {
         latencyMs: aiResult.latencyMs,
         source,
       },
+    });
+
+    // Realtime: notify the candidate's user room so the recommended-jobs
+    // feed and any open job-detail page can render the new preview without
+    // a refresh. Source travels with the payload so the UI can distinguish
+    // an on-view auto-compute from a top-N precompute landing in the feed.
+    this.events.emitMatchPreviewCreated({
+      candidateId,
+      jobId,
+      resumeId: defaultResume.id,
+      source: preview.source,
+      overallScore: preview.overallScore,
+      band: preview.band,
+      createdAt: preview.createdAt.toISOString(),
     });
 
     this.logger.log(

@@ -12,6 +12,7 @@ import type { ScoreProfileService } from "../../ai/score-profile.service";
 import type { ScoreMatchService } from "../../ai/score-match.service";
 import type { AuditService } from "../../audit";
 import type { CacheService } from "../../cache";
+import type { EventsService } from "../../realtime";
 
 describe("ScoringService.computeMatchPreviewOnView", () => {
   const candidateId = "11111111-1111-1111-1111-111111111111";
@@ -268,6 +269,11 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
       bustKey: jest.fn(),
     } as unknown as jest.Mocked<CacheService>;
 
+    const events = {
+      emitMatchPreviewCreated: jest.fn(),
+      emitProfileScoreUpdated: jest.fn(),
+    } as unknown as jest.Mocked<EventsService>;
+
     const svc = new ScoringService(
       scoreProfile,
       scoreMatch,
@@ -278,8 +284,9 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
       audit,
       cacheService,
       redis,
+      events,
     );
-    return { svc, redis, scoringRepo, resumesRepo, jobsRepo, scoreMatch, audit };
+    return { svc, redis, scoringRepo, resumesRepo, jobsRepo, scoreMatch, audit, events };
   }
 
   it("writes preview row with source = 'candidate_view' and increments redis counter", async () => {
@@ -348,6 +355,33 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
     expect(scoringRepo.upsertMatchPreview).not.toHaveBeenCalled();
   });
 
+  it("emits match-preview.created with the candidate, job, resume, and source", async () => {
+    const { svc, events } = buildSvc();
+
+    await svc.computeMatchPreviewOnView(buildCandidateUser(), jobId);
+
+    expect(events.emitMatchPreviewCreated).toHaveBeenCalledTimes(1);
+    expect(events.emitMatchPreviewCreated).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidateId,
+        jobId,
+        resumeId,
+        source: "candidate_view",
+        band: expect.any(String),
+        overallScore: expect.any(Number),
+        createdAt: expect.any(String),
+      }),
+    );
+  });
+
+  it("does NOT emit match-preview.created on cache hit", async () => {
+    const { svc, events } = buildSvc({ existingPreview: buildPreviewRow() });
+
+    await svc.computeMatchPreviewOnView(buildCandidateUser(), jobId);
+
+    expect(events.emitMatchPreviewCreated).not.toHaveBeenCalled();
+  });
+
   it("throws ForbiddenException when caller is not a candidate", async () => {
     const { svc, redis, scoringRepo, scoreMatch, resumesRepo } = buildSvc();
 
@@ -363,5 +397,219 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
     expect(redis.incr).not.toHaveBeenCalled();
     expect(scoreMatch.score).not.toHaveBeenCalled();
     expect(scoringRepo.upsertMatchPreview).not.toHaveBeenCalled();
+  });
+});
+
+describe("ScoringService.computeProfileScore", () => {
+  const candidateId = "11111111-1111-1111-1111-111111111111";
+  const resumeId = "33333333-3333-3333-3333-333333333333";
+  const profileScoreId = "77777777-7777-7777-7777-777777777777";
+
+  function buildResume(): Resume {
+    return {
+      id: resumeId,
+      candidateId,
+      filename: "resume.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 1234,
+      storagePath: `${candidateId}/source.pdf`,
+      canonicalPdfPath: null,
+      rawText: "raw text",
+      parsedData: { parse_confidence: 0.9 } as Record<string, unknown>,
+      parseStatus: "parsed",
+      parseError: null,
+      isDefault: true,
+      createdAt: new Date("2026-05-08T00:00:00Z"),
+      updatedAt: new Date("2026-05-08T00:00:00Z"),
+    };
+  }
+
+  function buildScoringConfig(): ScoringConfig {
+    return {
+      id: "55555555-5555-5555-5555-555555555555",
+      profileWeights: {
+        completeness: 25,
+        skill_depth: 25,
+        experience_clarity: 25,
+        education_quality: 25,
+      } as unknown as Record<string, unknown>,
+      matchWeights: {
+        skills: 40,
+        experience: 30,
+        education: 15,
+        cultural_fit: 15,
+      } as unknown as Record<string, unknown>,
+      bandThresholds: { strong: 70, partial: 40 } as unknown as Record<
+        string,
+        unknown
+      >,
+      isActive: true,
+      createdAt: new Date("2026-04-01T00:00:00Z"),
+      updatedAt: new Date("2026-04-01T00:00:00Z"),
+    } as unknown as ScoringConfig;
+  }
+
+  function buildProfileAiResult() {
+    return {
+      score: {
+        overall_score: 85,
+        band: "strong" as const,
+        components: [
+          {
+            name: "completeness",
+            score: 22,
+            max: 25,
+            weight: 25,
+            explanation: "Most fields present",
+            evidence: [],
+          },
+          {
+            name: "skill_depth",
+            score: 21,
+            max: 25,
+            weight: 25,
+            explanation: "Strong skills",
+            evidence: [],
+          },
+          {
+            name: "experience_clarity",
+            score: 21,
+            max: 25,
+            weight: 25,
+            explanation: "Clear experience",
+            evidence: [],
+          },
+          {
+            name: "education_quality",
+            score: 21,
+            max: 25,
+            weight: 25,
+            explanation: "Solid education",
+            evidence: [],
+          },
+        ],
+        improvement_suggestions: [],
+      },
+      redactedFields: ["email", "phone"],
+      promptVersion: "score-profile@v1",
+      model: "gpt-4o-mini",
+      latencyMs: 1234,
+    };
+  }
+
+  function buildSvc() {
+    const scoringRepo = {
+      findMostRecentProfileScore: jest.fn(async () => null),
+      getActiveConfig: jest.fn(async () => buildScoringConfig()),
+      insertProfileScore: jest.fn(async (data: Record<string, unknown>) => ({
+        profileScore: {
+          id: profileScoreId,
+          candidateId: data.candidateId,
+          resumeId: data.resumeId,
+          overallScore: data.overallScore,
+          band: data.band,
+          createdAt: new Date("2026-05-08T12:00:00Z"),
+        },
+        evidence: [],
+      })),
+    } as unknown as jest.Mocked<ScoringRepository>;
+
+    const resumesRepo = {
+      findById: jest.fn(async () => buildResume()),
+      findDefaultByCandidateId: jest.fn(async () => buildResume()),
+    } as unknown as jest.Mocked<ResumesRepository>;
+
+    const jobsRepo = {} as unknown as jest.Mocked<JobsRepository>;
+
+    const profilesRepo = {
+      findCandidateProfile: jest.fn(async () => ({
+        id: candidateId,
+        desiredRoles: ["Senior Engineer"],
+        desiredSeniority: "Senior",
+      })),
+    } as unknown as jest.Mocked<ProfilesRepository>;
+
+    const scoreProfile = {
+      score: jest.fn(async () => buildProfileAiResult()),
+    } as unknown as jest.Mocked<ScoreProfileService>;
+
+    const scoreMatch = {} as unknown as jest.Mocked<ScoreMatchService>;
+
+    const audit = {
+      log: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<AuditService>;
+
+    const cacheService = {
+      getOrSet: jest.fn(),
+      bustTag: jest.fn().mockResolvedValue(undefined),
+      bustTags: jest.fn(),
+      bustKey: jest.fn(),
+    } as unknown as jest.Mocked<CacheService>;
+
+    const events = {
+      emitMatchPreviewCreated: jest.fn(),
+      emitProfileScoreUpdated: jest.fn(),
+    } as unknown as jest.Mocked<EventsService>;
+
+    const redis = {} as unknown as jest.Mocked<Redis>;
+
+    const svc = new ScoringService(
+      scoreProfile,
+      scoreMatch,
+      jobsRepo,
+      profilesRepo,
+      resumesRepo,
+      scoringRepo,
+      audit,
+      cacheService,
+      redis,
+      events,
+    );
+
+    return { svc, events, scoringRepo };
+  }
+
+  it("emits profile-score.updated with the reason when called manually", async () => {
+    const { svc, events } = buildSvc();
+
+    await svc.computeProfileScore(candidateId, resumeId, {
+      reason: "manual_recompute",
+    });
+
+    expect(events.emitProfileScoreUpdated).toHaveBeenCalledTimes(1);
+    expect(events.emitProfileScoreUpdated).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidateId,
+        resumeId,
+        reason: "manual_recompute",
+        band: expect.any(String),
+        overallScore: expect.any(Number),
+        updatedAt: expect.any(String),
+      }),
+    );
+  });
+
+  it("emits profile-score.updated with reason='onboarding' when caller passes that reason", async () => {
+    const { svc, events } = buildSvc();
+
+    await svc.computeProfileScore(candidateId, resumeId, {
+      reason: "onboarding",
+    });
+
+    expect(events.emitProfileScoreUpdated).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "onboarding" }),
+    );
+  });
+
+  it("emits profile-score.updated with reason='resume_change' when called by the recompute processor", async () => {
+    const { svc, events } = buildSvc();
+
+    await svc.computeProfileScore(candidateId, resumeId, {
+      reason: "resume_change",
+    });
+
+    expect(events.emitProfileScoreUpdated).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "resume_change" }),
+    );
   });
 });

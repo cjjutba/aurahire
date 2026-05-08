@@ -12,6 +12,7 @@ import { NOTIFICATION_EMAIL_QUEUE, type NotificationEmailJobData } from "./queue
 import { SECURITY_EVENTS } from "./event-defaults";
 import { buildTitle, buildBody, buildLink } from "./templates";
 import { ProfilesRepository } from "../profiles/profiles.repository";
+import { EventsService } from "../../realtime";
 
 export interface EmitParams {
   userId: string;
@@ -34,6 +35,7 @@ export class NotificationsService {
     @InjectQueue(NOTIFICATION_EMAIL_QUEUE)
     private readonly queue: Queue<NotificationEmailJobData>,
     private readonly profiles: ProfilesRepository,
+    private readonly events: EventsService,
   ) {}
 
   async emit(params: EmitParams): Promise<void> {
@@ -59,6 +61,22 @@ export class NotificationsService {
         entityId: params.entityId ?? null,
         actorId: params.actorId ?? null,
         metadata: params.metadata ?? null,
+      });
+
+      // Realtime: broadcast `notification.created` to the user's room so
+      // the navbar badge increments and the popover prepends the new row
+      // without polling. Compute unreadCount AFTER the insert so the bell
+      // count reflects this notification.
+      const unreadCount = await this.repo.countUnread(params.userId);
+      this.events.emitNotificationCreated({
+        id: row.id,
+        userId: row.userId,
+        kind: row.eventType,
+        title: row.title,
+        bodyExcerpt: (row.body ?? "").slice(0, 200),
+        linkUrl: row.link,
+        createdAt: row.createdAt.toISOString(),
+        unreadCount,
       });
 
       const mode = await this.resolveDeliveryMode(params.userId, params.eventType);
@@ -124,6 +142,9 @@ export class NotificationsService {
 
   async markRead(id: string, userId: string) {
     const { unreadCount } = await this.repo.markRead(id, userId);
+    // Realtime: notify other tabs/devices of this same user so all open
+    // surfaces collapse the unread state for `id` and refresh the bell.
+    this.events.emitNotificationRead(userId, { id, unreadCount });
     return {
       unreadCount,
       count: unreadCount,
@@ -136,12 +157,39 @@ export class NotificationsService {
     return { unreadCount: 0, count: 0, displayCount: "0" };
   }
 
-  async dismiss(id: string, userId: string) {
-    const { unreadCount } = await this.repo.dismiss(id, userId);
+  /**
+   * Archive a single notification — popover vocabulary. The DB column is
+   * `dismissed_at`; the realtime event is `notification.archived`. Also
+   * marks unread rows as read on archive (handled in the repository) so
+   * we never strand "unread but hidden" rows.
+   */
+  async archive(id: string, userId: string) {
+    const { unreadCount } = await this.repo.archive(id, userId);
+    this.events.emitNotificationArchived(userId, { id, unreadCount });
     return {
       unreadCount,
       count: unreadCount,
       displayCount: unreadCount > 99 ? "99+" : String(unreadCount),
     };
+  }
+
+  /**
+   * Backward-compatible alias for {@link archive}. The popover and the
+   * frontend client speak "archive"; older call sites speak "dismiss".
+   * Forward to keep one source of truth + one realtime event name.
+   */
+  async dismiss(id: string, userId: string) {
+    return this.archive(id, userId);
+  }
+
+  /**
+   * Archive every undismissed notification for the user. Drops unread
+   * count to zero and emits `notification.archive_all` so all open
+   * surfaces clear the inbox in one shot.
+   */
+  async archiveAll(userId: string) {
+    await this.repo.archiveAllForUser(userId);
+    this.events.emitNotificationArchiveAll(userId, { unreadCount: 0 });
+    return { unreadCount: 0, count: 0, displayCount: "0" };
   }
 }
