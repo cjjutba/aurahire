@@ -207,6 +207,13 @@ export const jobsTable = pgTable(
     status: text("status", { enum: JOB_STATUS }).notNull().default("draft"),
     viewCount: integer("view_count").notNull().default(0),
     publishedAt: timestamp("published_at", { withTimezone: true }),
+    /**
+     * Free-form reason captured when the job is archived. Lets audit logs
+     * distinguish manual archive ("manual") from automatic transitions
+     * driven by crons (e.g. "deadline_passed"). Nullable when status is
+     * not "archived".
+     */
+    archivedReason: text("archived_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -301,6 +308,13 @@ export const interviewsTable = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
     feedbackDueNotifiedAt: timestamp("feedback_due_notified_at", { withTimezone: true }),
+    /**
+     * Set when the post-interview feedback reminder notification has been
+     * dispatched to the recruiter. Distinct from `feedbackDueNotifiedAt`
+     * (the legacy initial nudge) — this one drives the periodic reminder
+     * cron added by the proactive-system slice.
+     */
+    feedbackReminderSentAt: timestamp("feedback_reminder_sent_at", { withTimezone: true }),
     venueName: text("venue_name").notNull().default(""),
     addressLine: text("address_line").notNull().default(""),
     roomOrFloor: text("room_or_floor"),
@@ -412,6 +426,12 @@ export const profileScoresTable = pgTable(
     rawOutput: jsonb("raw_output").notNull(),
     latencyMs: integer("latency_ms"),
     status: text("status", { enum: SCORE_STATUS }).notNull().default("completed"),
+    /**
+     * Set when this score is known to no longer reflect the candidate's
+     * current resume/profile state (e.g. profile edit, resume change).
+     * NULL = current. The recompute worker clears it on a fresh insert.
+     */
+    staleAt: timestamp("stale_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
@@ -496,8 +516,15 @@ export const matchScorePreviewsTable = pgTable(
     modelUsed: text("model_used").notNull(),
     rawOutput: jsonb("raw_output").notNull(),
     latencyMs: integer("latency_ms"),
-    /** "system" = auto-computed at resume-parse time, "candidate" = explicit "See my match" click. */
-    source: text("source", { enum: ["system", "candidate"] }).notNull().default("candidate"),
+    /**
+     * "system" = auto-computed at resume-parse time (top-N precompute).
+     * "candidate" = explicit "See my match" click (legacy buttoned flow).
+     * "candidate_view" = on-view auto-compute when the candidate opens a job
+     *   detail page without a cached preview, gated by a daily cap.
+     */
+    source: text("source", { enum: ["system", "candidate", "candidate_view"] })
+      .notNull()
+      .default("candidate"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
