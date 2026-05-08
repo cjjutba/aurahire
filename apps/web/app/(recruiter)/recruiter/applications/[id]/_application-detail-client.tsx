@@ -19,6 +19,7 @@ import {
   type OfferRow,
 } from "./_offers-section";
 import { NotesSectionClient } from "./_notes-section-client";
+import { DecisionPanelClient } from "./_decision-panel-client";
 
 const COMPONENT_LABELS: Record<string, string> = {
   skills: "Skills",
@@ -101,6 +102,26 @@ function getInitials(name: string): string {
   );
 }
 
+const STATUS_PRIORITY: Record<string, number> = {
+  scheduled: 0,
+  rescheduled: 1,
+  completed: 2,
+  cancelled: 3,
+  "no-show": 4,
+};
+
+function findLatestInterview(interviews: InterviewRow[]): InterviewRow | null {
+  if (!interviews.length) return null;
+  return [...interviews].sort((a, b) => {
+    const pa = STATUS_PRIORITY[a.status] ?? 99;
+    const pb = STATUS_PRIORITY[b.status] ?? 99;
+    if (pa !== pb) return pa - pb;
+    const ta = a.createdAt ?? a.scheduledAt;
+    const tb = b.createdAt ?? b.scheduledAt;
+    return new Date(tb).getTime() - new Date(ta).getTime();
+  })[0] ?? null;
+}
+
 export function RecruiterApplicationDetailClient({
   app,
   interviews,
@@ -110,6 +131,8 @@ export function RecruiterApplicationDetailClient({
   const status = APP_STATUS[app.status] ?? APP_STATUS["applied"]!;
   const candidateName = app.candidate?.fullName ?? "Unknown candidate";
   const initials = getInitials(candidateName);
+  const latestInterview = useMemo(() => findLatestInterview(interviews), [interviews]);
+  const latestInterviewRecommendation = latestInterview?.recommendation ?? null;
 
   const appliedAt = useMemo(
     () =>
@@ -215,6 +238,7 @@ export function RecruiterApplicationDetailClient({
       applicationId={app.id}
       currentStatus={app.status}
       shortlistedAt={app.shortlistedAt}
+      latestInterviewRecommendation={latestInterviewRecommendation}
     />
   );
 
@@ -235,6 +259,7 @@ export function RecruiterApplicationDetailClient({
           app={app}
           interviews={interviews}
           offers={offers}
+          latestInterview={latestInterview}
         />
       </div>
     );
@@ -267,7 +292,7 @@ export function RecruiterApplicationDetailClient({
         />
       }
       extraSections={
-        <ExtraSections app={app} interviews={interviews} offers={offers} />
+        <ExtraSections app={app} interviews={interviews} offers={offers} latestInterview={latestInterview} />
       }
       fairness={
         score.redactedFields && score.promptVersion && score.modelUsed
@@ -286,11 +311,16 @@ function ExtraSections({
   app,
   interviews,
   offers,
+  latestInterview,
 }: {
   app: AppDetail;
   interviews: InterviewRow[];
   offers: OfferRow[];
+  latestInterview: InterviewRow | null;
 }) {
+  const showDecisionPanel =
+    latestInterview !== null && latestInterview.status === "completed";
+
   return (
     <>
       {app.coverLetter && (
@@ -308,6 +338,10 @@ function ExtraSections({
         applicationId={app.id}
         interviews={interviews}
       />
+
+      {showDecisionPanel && latestInterview && (
+        <DecisionPanelClient interview={latestInterview} />
+      )}
 
       <RecruiterOffersSection applicationId={app.id} offers={offers} />
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Download, X } from "lucide-react";
 
@@ -12,6 +11,7 @@ import { toastSuccess, toastApiError } from "@/lib/toast";
 import { useConfirm } from "@/components/providers/confirm-provider";
 
 import { ShortlistButtonClient } from "./_shortlist-button-client";
+import { OfferConfirmModalClient } from "./_offer-confirm-modal-client";
 
 const PIPELINE_STAGES: Array<{ key: string; label: string }> = [
   { key: "applied", label: "Applied" },
@@ -73,6 +73,40 @@ export function DecisionBarClient({
   const confirm = useConfirm();
   const [pending, setPending] = useState<PendingAction | null>(null);
   const isPending = pending !== null;
+
+  // Soft-confirm modal state (Task 35)
+  const [softConfirmOpen, setSoftConfirmOpen] = useState(false);
+  const [softConfirmAction, setSoftConfirmAction] = useState<"offer" | "reject">("offer");
+  // Deferred callback to execute after soft-confirm is accepted
+  const [softConfirmCallback, setSoftConfirmCallback] = useState<(() => void) | null>(null);
+
+  /**
+   * Returns true when the soft-confirm gate should fire:
+   * - status is "interview"
+   * - no feedback recorded (recommendation is null)
+   * - session has not already been warned
+   */
+  function needsSoftConfirm(): boolean {
+    if (currentStatus !== "interview") return false;
+    if (latestInterviewRecommendation !== null && latestInterviewRecommendation !== undefined) return false;
+    const warnKey = `interview-feedback-warn:${applicationId}`;
+    if (typeof window !== "undefined" && sessionStorage.getItem(warnKey)) return false;
+    return true;
+  }
+
+  function openSoftConfirm(action: "offer" | "reject", callback: () => void) {
+    setSoftConfirmAction(action);
+    setSoftConfirmCallback(() => callback);
+    setSoftConfirmOpen(true);
+  }
+
+  function handleSoftConfirm() {
+    const warnKey = `interview-feedback-warn:${applicationId}`;
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(warnKey, "1");
+    }
+    softConfirmCallback?.();
+  }
 
   const nextActions = NEXT_POSITIVE[currentStatus] ?? null;
   const isTerminal = TERMINAL_STATUSES.has(currentStatus);
@@ -172,29 +206,46 @@ export function DecisionBarClient({
             const showOfferRing =
               isSendOffer && latestInterviewRecommendation === "proceed";
 
-            return action.href ? (
-              <Link
-                key={action.status}
-                href={action.href(applicationId)}
-                className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]${showOfferRing ? " ring-2 ring-offset-1 ring-[var(--color-score-high)]" : ""}`}
-              >
-                <Check className="h-4 w-4" aria-hidden />
-                <span>{action.label}</span>
-              </Link>
-            ) : (
+            if (action.href) {
+              const targetHref = action.href(applicationId);
+              const proceedOffer = () => router.push(targetHref);
+              return (
+                <button
+                  key={action.status}
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => {
+                    if (isSendOffer && needsSoftConfirm()) {
+                      openSoftConfirm("offer", proceedOffer);
+                    } else {
+                      proceedOffer();
+                    }
+                  }}
+                  className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60${showOfferRing ? " ring-2 ring-offset-1 ring-[var(--color-score-high)]" : ""}`}
+                >
+                  <Check className="h-4 w-4" aria-hidden />
+                  <span>{action.label}</span>
+                </button>
+              );
+            }
+
+            return (
               <button
                 key={action.status}
                 type="button"
                 onClick={async () => {
-                  const ok = await confirm({
-                    title: `${action.label}?`,
-                    description:
-                      "Confirm this status change. The candidate will be notified by email.",
-                    confirmLabel: action.label,
-                    variant: "info",
-                  });
-                  if (!ok) return;
-                  await changeStatus(action.status, actionKey);
+                  const proceed = async () => {
+                    const ok = await confirm({
+                      title: `${action.label}?`,
+                      description:
+                        "Confirm this status change. The candidate will be notified by email.",
+                      confirmLabel: action.label,
+                      variant: "info",
+                    });
+                    if (!ok) return;
+                    await changeStatus(action.status, actionKey);
+                  };
+                  await proceed();
                 }}
                 disabled={isPending}
                 className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60${showOfferRing ? " ring-2 ring-offset-1 ring-[var(--color-score-high)]" : ""}`}
@@ -213,15 +264,22 @@ export function DecisionBarClient({
             <button
               type="button"
               onClick={async () => {
-                const ok = await confirm({
-                  title: "Reject this application?",
-                  description:
-                    "The candidate will be marked as rejected. You can change this later if needed.",
-                  confirmLabel: "Reject candidate",
-                  variant: "destructive",
-                });
-                if (!ok) return;
-                await changeStatus("rejected", "reject");
+                const doReject = async () => {
+                  const ok = await confirm({
+                    title: "Reject this application?",
+                    description:
+                      "The candidate will be marked as rejected. You can change this later if needed.",
+                    confirmLabel: "Reject candidate",
+                    variant: "destructive",
+                  });
+                  if (!ok) return;
+                  await changeStatus("rejected", "reject");
+                };
+                if (needsSoftConfirm()) {
+                  openSoftConfirm("reject", () => { void doReject(); });
+                } else {
+                  await doReject();
+                }
               }}
               disabled={isPending}
               className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-status-danger)] bg-[var(--color-canvas)] px-3 text-sm font-medium text-[var(--color-status-danger)] transition hover:bg-[var(--color-status-danger)] hover:text-[var(--color-on-primary)] disabled:opacity-60${latestInterviewRecommendation === "reject" ? " ring-2 ring-offset-1 ring-[var(--color-status-danger)]" : ""}`}
@@ -236,6 +294,14 @@ export function DecisionBarClient({
           )}
         </div>
       </div>
+
+      {/* Soft-confirm modal — shown when recruiter acts without interview feedback */}
+      <OfferConfirmModalClient
+        open={softConfirmOpen}
+        onOpenChange={setSoftConfirmOpen}
+        action={softConfirmAction}
+        onConfirm={handleSoftConfirm}
+      />
     </div>
   );
 }
