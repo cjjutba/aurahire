@@ -88,7 +88,7 @@ interface RequestMeta {
  * deviation from the configured maxes and prevents silent clamping when
  * sums overflow.
  */
-function deriveOverallScore(
+export function deriveOverallScore(
   components: ReadonlyArray<{ score: number; max: number }>,
 ): number {
   const maxSum = components.reduce((acc, c) => acc + (Number(c.max) || 0), 0);
@@ -108,7 +108,7 @@ function deriveOverallScore(
  * configured-weights contract before persistence so the breakdown always
  * reconciles with the headline.
  */
-function normalizeComponentsToWeights<
+export function normalizeComponentsToWeights<
   C extends { name: string; score: number; max: number; weight: number },
 >(
   components: ReadonlyArray<C>,
@@ -239,7 +239,7 @@ export function detectCalibrationWarnings<C extends {
   return warnings;
 }
 
-function deriveBand(
+export function deriveBand(
   score: number,
   thresholds: BandThresholds,
 ): "strong" | "partial" | "limited" {
