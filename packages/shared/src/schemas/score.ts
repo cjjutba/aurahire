@@ -4,6 +4,10 @@ import { z } from "zod";
 // EVIDENCE (used by both profile + match score components)
 // ============================================================================
 
+/**
+ * Evidence with no quantified contribution. Reserved for future non-scoring
+ * surfaces; current profile + match scoring uses `scoredEvidenceSchema`.
+ */
 export const evidenceSchema = z.object({
   excerpt: z.string(),
   source: z.string(), // e.g. "Experience › Senior Engineer at Acme"
@@ -77,7 +81,7 @@ export const matchComponentSchema = z.object({
   max: z.number().int().multipleOf(5),
   weight: z.number().int().multipleOf(5),
   explanation: z.string(),
-  evidence: z.array(scoredEvidenceSchema).max(6), // bumped from 5 to 6 to allow more granular gap evidence
+  evidence: z.array(scoredEvidenceSchema).max(6), // schema catches up to prompt v1.1.0 which already states "do not exceed 6"
 });
 
 export const matchScoreSchema = z.object({
