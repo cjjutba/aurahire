@@ -19,6 +19,7 @@ import { EventsService } from "../../realtime";
 import { ApplicationsRepository } from "../applications/applications.repository";
 import { ApplicationsService } from "../applications/applications.service";
 import { JobsRepository } from "../jobs/jobs.repository";
+import { NotificationsService } from "../notifications/notifications.service";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { OffersRepository } from "./offers.repository";
 import type { OfferDto } from "./dto/offer-response.dto";
@@ -43,6 +44,7 @@ export class OffersService {
     private readonly email: EmailService,
     private readonly audit: AuditService,
     private readonly events: EventsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async create(
@@ -192,6 +194,36 @@ export class OffersService {
       this.logger.warn(`Notify recruiter failed: ${(err as Error).message}`);
     });
 
+    // In-app notification to the recruiter team (job owner + the recruiter
+    // who originally sent the offer, deduplicated). Single-recruiter today,
+    // multi-member when the data model expands.
+    const recruiterUserIds = Array.from(
+      new Set(
+        [job?.recruiterId, offer.sentBy].filter(
+          (id): id is string => Boolean(id),
+        ),
+      ),
+    );
+    void this.notifications
+      .emitMany(recruiterUserIds, {
+        eventType: "offer_accepted",
+        scope: "personal",
+        entityType: "offer",
+        entityId: offerId,
+        actorId: user.id,
+        metadata: {
+          offerId,
+          applicationId: offer.applicationId,
+          candidateId: application.candidateId,
+          occurredAt: new Date().toISOString(),
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `notifications.emitMany(offer_accepted) failed: ${(err as Error).message}`,
+        );
+      });
+
     return this.toDto(updated);
   }
 
@@ -245,6 +277,34 @@ export class OffersService {
     void this.notifyRecruiterDecision(offerId, "declined").catch((err) => {
       this.logger.warn(`Notify recruiter failed: ${(err as Error).message}`);
     });
+
+    // In-app notification to the recruiter team — same dedup logic as accept.
+    const recruiterUserIds = Array.from(
+      new Set(
+        [declinedJob?.recruiterId, offer.sentBy].filter(
+          (id): id is string => Boolean(id),
+        ),
+      ),
+    );
+    void this.notifications
+      .emitMany(recruiterUserIds, {
+        eventType: "offer_declined",
+        scope: "personal",
+        entityType: "offer",
+        entityId: offerId,
+        actorId: user.id,
+        metadata: {
+          offerId,
+          applicationId: offer.applicationId,
+          candidateId: application.candidateId,
+          occurredAt: new Date().toISOString(),
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `notifications.emitMany(offer_declined) failed: ${(err as Error).message}`,
+        );
+      });
 
     return this.toDto(updated);
   }

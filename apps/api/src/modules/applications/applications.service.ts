@@ -21,6 +21,7 @@ import { EventsService } from "../../realtime";
 import { EmailService } from "../../email/email.service";
 import { MatchScoreQueueService } from "../../queue/match-score-queue.service";
 import { JobsRepository } from "../jobs/jobs.repository";
+import { NotificationsService } from "../notifications/notifications.service";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { ResumesRepository } from "../resumes/resumes.repository";
 import { ScoringService } from "../scoring/scoring.service";
@@ -62,6 +63,7 @@ export class ApplicationsService {
     private readonly cacheService: CacheService,
     private readonly events: EventsService,
     private readonly matchScoreQueue: MatchScoreQueueService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // -----------------------------------------------------------------
@@ -223,6 +225,32 @@ export class ApplicationsService {
     void this.notifyRecruiterOfApplication(application.id).catch((err) => {
       this.logger.warn(`Recruiter notify failed: ${(err as Error).message}`);
     });
+
+    // In-app notification to the recruiter team (currently the single hiring
+    // recruiter who owns the job — the data model will expand to multi-member
+    // hiring teams later, at which point emitMany already supports it).
+    const recruiterUserIds = [job.recruiterId].filter(
+      (id): id is string => Boolean(id),
+    );
+    void this.notifications
+      .emitMany(recruiterUserIds, {
+        eventType: "new_application_received",
+        scope: "personal",
+        entityType: "application",
+        entityId: application.id,
+        actorId: user.id,
+        metadata: {
+          applicationId: application.id,
+          jobId: dto.jobId,
+          candidateId: user.id,
+          occurredAt: new Date().toISOString(),
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `notifications.emitMany(new_application_received) failed: ${(err as Error).message}`,
+        );
+      });
 
     return this.toDto(application.id);
   }
@@ -624,6 +652,28 @@ export class ApplicationsService {
       this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
     });
 
+    void this.notifications
+      .emit({
+        userId: app.candidateId,
+        eventType: "application_status_changed",
+        scope: "personal",
+        entityType: "application",
+        entityId: id,
+        actorId: user.id,
+        metadata: {
+          applicationId: id,
+          jobId: app.jobId,
+          fromStatus: app.status,
+          toStatus: dto.newStatus,
+          occurredAt: new Date().toISOString(),
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `notifications.emit(application_status_changed) failed: ${(err as Error).message}`,
+        );
+      });
+
     return this.toDto(id);
   }
 
@@ -740,6 +790,29 @@ export class ApplicationsService {
     void this.notifyCandidateOfStatusChange(id, app.status, newStatus).catch((err) => {
       this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
     });
+
+    void this.notifications
+      .emit({
+        userId: app.candidateId,
+        eventType: "application_status_changed",
+        scope: "personal",
+        entityType: "application",
+        entityId: id,
+        actorId: actor.id,
+        metadata: {
+          applicationId: id,
+          jobId: app.jobId,
+          fromStatus: app.status,
+          toStatus: newStatus,
+          occurredAt: new Date().toISOString(),
+          system: true,
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `notifications.emit(application_status_changed,system) failed: ${(err as Error).message}`,
+        );
+      });
 
     return this.toDto(id);
   }
