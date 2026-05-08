@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { PgTransaction } from "drizzle-orm/pg-core";
 import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
@@ -104,6 +104,33 @@ export class ResumesRepository {
 
   async delete(id: string): Promise<void> {
     await this.db.delete(resumesTable).where(eq(resumesTable.id, id));
+  }
+
+  /**
+   * Find the next-best replacement resume to auto-promote when the candidate
+   * deletes their current default. Excludes the resume being deleted.
+   *
+   * Order: most-recently-updated first; createdAt DESC as a tiebreak when
+   * two resumes share an updated_at (e.g. seeded fixtures); id ASC as a
+   * final deterministic tiebreak so callers always get a stable choice.
+   */
+  async findReplacementCandidate(
+    candidateId: string,
+    excludeResumeId: string,
+    executor: Executor = this.db,
+  ): Promise<Resume | null> {
+    const [row] = await executor
+      .select()
+      .from(resumesTable)
+      .where(
+        and(
+          eq(resumesTable.candidateId, candidateId),
+          ne(resumesTable.id, excludeResumeId),
+        ),
+      )
+      .orderBy(desc(resumesTable.updatedAt), desc(resumesTable.createdAt), resumesTable.id)
+      .limit(1);
+    return row ?? null;
   }
 
   async hasResumes(candidateId: string): Promise<boolean> {

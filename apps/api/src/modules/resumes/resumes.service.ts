@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -10,7 +11,7 @@ import { randomUUID } from "node:crypto";
 import { extname } from "node:path";
 import { and, eq, isNull } from "drizzle-orm";
 import type { AuthUser } from "@aurahire/shared";
-import { profileScoresTable, type Resume } from "@aurahire/db";
+import { profileScoresTable, resumesTable, type Resume } from "@aurahire/db";
 
 import { AuditService } from "../../audit";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
@@ -19,7 +20,7 @@ import { DocxToPdfService } from "../../storage/docx-to-pdf.service";
 import { ParseResumeService } from "../../ai/parse-resume.service";
 import { MatchPreviewQueueService } from "../../queue/match-preview-queue.service";
 import { ProfileScoreQueueService } from "../../queue/profile-score-queue.service";
-import { ResumesRepository } from "./resumes.repository";
+import { ResumesRepository, type ResumesTx } from "./resumes.repository";
 import type { ResumeResponseDto } from "./dto/resume-response.dto";
 
 const DOCX_MIME =
@@ -342,45 +343,16 @@ export class ResumesService {
     // and a queue op throws. Queue cancellation goes BEFORE the tx so an
     // observer never sees a stale resume's job racing the new flag.
     const previousDefault = await this.repo.findDefaultByCandidateId(user.id);
+    const previousDefaultId =
+      previousDefault && previousDefault.id !== id ? previousDefault.id : null;
 
-    if (previousDefault && previousDefault.id !== id) {
-      try {
-        await this.matchPreviewQueue.cancelByResumeId(previousDefault.id);
-      } catch (err) {
-        // Cancellation is best-effort; the worker would still be guarded
-        // by the UPSERT on its own write path. Log and continue.
-        this.logger.warn(
-          `cancelByResumeId failed for ${previousDefault.id}: ${(err as Error).message}`,
-        );
-      }
-    }
-
-    await this.db.transaction(async (tx) => {
-      await this.repo.setDefault(user.id, id, tx);
-
-      // Mark only currently-current scores stale; if a user toggles the
-      // default several times in a row we don't want to keep resetting
-      // stale_at on already-stale rows.
-      await tx
-        .update(profileScoresTable)
-        .set({ staleAt: new Date() })
-        .where(
-          and(
-            eq(profileScoresTable.candidateId, user.id),
-            isNull(profileScoresTable.staleAt),
-          ),
-        );
-    });
-
-    // Best-effort enqueues — failures are logged inside the queue services.
-    await this.profileScoreQueue.enqueueRecompute({
+    await this.applyDefaultChange({
       candidateId: user.id,
-      resumeId: id,
-      reason: "resume_change",
-    });
-    await this.matchPreviewQueue.enqueuePrecompute({
-      candidateId: user.id,
-      resumeId: id,
+      newResumeId: id,
+      previousResumeIdToCancel: previousDefaultId,
+      flipDefaultInTx: async (tx) => {
+        await this.repo.setDefault(user.id, id, tx);
+      },
     });
 
     await this.audit.log({
@@ -407,6 +379,50 @@ export class ResumesService {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
     }
 
+    if (resume.isDefault) {
+      // Auto-promote path: refuse if this is the last resume; otherwise pick
+      // the most-recently-updated remaining resume and run the same
+      // recompute cascade Task 6 wired for setDefault.
+      const replacement = await this.repo.findReplacementCandidate(user.id, id);
+      if (!replacement) {
+        throw new ConflictException({
+          code: "LAST_RESUME_PROTECTED",
+          message: "Cannot delete your last resume",
+        });
+      }
+
+      await this.storage.delete({ bucket: RESUMES_BUCKET, path: resume.storagePath });
+
+      await this.applyDefaultChange({
+        candidateId: user.id,
+        newResumeId: replacement.id,
+        previousResumeIdToCancel: id,
+        // Hard-delete the old default first so the inner setDefault flip
+        // can't race against it, then promote the replacement. Both writes
+        // run inside the same transaction.
+        flipDefaultInTx: async (tx) => {
+          await tx.delete(resumesTable).where(eq(resumesTable.id, id));
+          await this.repo.setDefault(user.id, replacement.id, tx);
+        },
+      });
+
+      await this.audit.log({
+        actorId: user.id,
+        actorType: "user",
+        action: "resume.deleted",
+        entityType: "resume",
+        entityId: id,
+        details: {
+          filename: resume.filename,
+          wasDefault: true,
+          autoPromotedResumeId: replacement.id,
+        },
+        ...requestMeta,
+      });
+      return;
+    }
+
+    // Non-default resume — straight delete, no cascade.
     await this.storage.delete({ bucket: RESUMES_BUCKET, path: resume.storagePath });
     await this.repo.delete(id);
 
@@ -416,7 +432,7 @@ export class ResumesService {
       action: "resume.deleted",
       entityType: "resume",
       entityId: id,
-      details: { filename: resume.filename },
+      details: { filename: resume.filename, wasDefault: false },
       ...requestMeta,
     });
   }
@@ -461,6 +477,69 @@ export class ResumesService {
   // -----------------------------------------------------------------
   // PRIVATE
   // -----------------------------------------------------------------
+
+  /**
+   * Shared cascade for any flow that changes which resume is the candidate's
+   * default — both `setDefault` (Task 6) and the delete-default auto-promote
+   * path (Task 7) call this. Steps:
+   *   1. Cancel any in-flight match-preview-precompute work for the resume
+   *      we're moving away from. Best-effort — the worker UPSERTs anyway.
+   *   2. Inside one Postgres transaction: run the caller's default-flag flip
+   *      (caller-supplied closure) AND mark non-stale profile_scores stale.
+   *   3. Enqueue a fresh profile-score recompute + match-preview precompute
+   *      against the new default.
+   *
+   * Queue cancellation runs OUTSIDE the tx because Redis isn't transactional
+   * with Postgres — we'd rather emit a duplicate (idempotent) than miss one.
+   */
+  private async applyDefaultChange(opts: {
+    candidateId: string;
+    newResumeId: string;
+    previousResumeIdToCancel: string | null;
+    flipDefaultInTx: (tx: ResumesTx) => Promise<void>;
+  }): Promise<void> {
+    const { candidateId, newResumeId, previousResumeIdToCancel, flipDefaultInTx } = opts;
+
+    if (previousResumeIdToCancel) {
+      try {
+        await this.matchPreviewQueue.cancelByResumeId(previousResumeIdToCancel);
+      } catch (err) {
+        // Cancellation is best-effort; the worker would still be guarded
+        // by the UPSERT on its own write path. Log and continue.
+        this.logger.warn(
+          `cancelByResumeId failed for ${previousResumeIdToCancel}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    await this.db.transaction(async (tx) => {
+      await flipDefaultInTx(tx as ResumesTx);
+
+      // Mark only currently-current scores stale; if a user toggles the
+      // default several times in a row we don't want to keep resetting
+      // stale_at on already-stale rows.
+      await tx
+        .update(profileScoresTable)
+        .set({ staleAt: new Date() })
+        .where(
+          and(
+            eq(profileScoresTable.candidateId, candidateId),
+            isNull(profileScoresTable.staleAt),
+          ),
+        );
+    });
+
+    // Best-effort enqueues — failures are logged inside the queue services.
+    await this.profileScoreQueue.enqueueRecompute({
+      candidateId,
+      resumeId: newResumeId,
+      reason: "resume_change",
+    });
+    await this.matchPreviewQueue.enqueuePrecompute({
+      candidateId,
+      resumeId: newResumeId,
+    });
+  }
 
   private toResponse(row: Resume): ResumeResponseDto {
     return {

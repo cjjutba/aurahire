@@ -715,3 +715,230 @@ describe("ResumesService.setDefault — default change cascade", () => {
     });
   });
 });
+
+describe("ResumesService.delete — default delete cascade", () => {
+  const candidateUser: AuthUser = {
+    id: "11111111-1111-1111-1111-111111111111",
+    email: "candidate@example.com",
+    role: "candidate",
+    status: "active",
+    fullName: "Test Candidate",
+    profileCompleted: true,
+  };
+
+  const R1_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1";
+  const R2_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2";
+  const R3_ID = "cccccccc-cccc-cccc-cccc-ccccccccccc3";
+
+  function buildResume(
+    id: string,
+    isDefault: boolean,
+    daysAgo: number,
+  ): Resume {
+    const ts = new Date(Date.now() - daysAgo * 86400_000);
+    return {
+      id,
+      candidateId: candidateUser.id,
+      filename: `${id}.pdf`,
+      mimeType: "application/pdf",
+      sizeBytes: 100,
+      storagePath: `${candidateUser.id}/${id}.pdf`,
+      canonicalPdfPath: null,
+      rawText: null,
+      parsedData: null,
+      parseStatus: "parsed",
+      parseError: null,
+      isDefault,
+      createdAt: ts,
+      updatedAt: ts,
+    };
+  }
+
+  function buildSvc(opts: {
+    targetResume: Resume;
+    replacement: Resume | null;
+  }) {
+    const profileScoresStaleCalls: Array<{ staleAt: Date }> = [];
+    const innerTxDeleteCalls: string[] = [];
+
+    const repo = {
+      findById: jest.fn(async (_id: string) => opts.targetResume),
+      findReplacementCandidate: jest.fn(async () => opts.replacement),
+      setDefault: jest.fn().mockResolvedValue(undefined),
+      delete: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<ResumesRepository>;
+
+    const storage = {
+      delete: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<StorageService>;
+
+    const parser = {} as unknown as jest.Mocked<ParseResumeService>;
+
+    const audit = {
+      log: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<AuditService>;
+
+    const docxToPdf = {} as unknown as jest.Mocked<DocxToPdfService>;
+
+    const matchPreviewQueue = {
+      enqueuePrecompute: jest.fn().mockResolvedValue(undefined),
+      cancelByResumeId: jest.fn().mockResolvedValue(0),
+    } as unknown as jest.Mocked<MatchPreviewQueueService>;
+
+    const profileScoreQueue = {
+      enqueueRecompute: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<ProfileScoreQueueService>;
+
+    // Tx stub records both the inner hard-delete (tx.delete().where()) and
+    // the profile_scores stale_at update.
+    const tx = {
+      update: jest.fn(() => ({
+        set: jest.fn((patch: { staleAt: Date }) => {
+          profileScoresStaleCalls.push(patch);
+          return { where: jest.fn().mockResolvedValue(undefined) };
+        }),
+      })),
+      delete: jest.fn(() => ({
+        where: jest.fn(async () => {
+          innerTxDeleteCalls.push("delete");
+          return undefined;
+        }),
+      })),
+    };
+
+    const db = {
+      transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn(tx);
+      }),
+    } as unknown as jest.Mocked<DrizzleClient>;
+
+    const svc = new ResumesService(
+      repo,
+      storage,
+      parser,
+      audit,
+      docxToPdf,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+    );
+    return {
+      svc,
+      repo,
+      storage,
+      audit,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+      profileScoresStaleCalls,
+      innerTxDeleteCalls,
+      tx,
+    };
+  }
+
+  it("delete-default with replacement: auto-promotes replacement and triggers recompute chain", async () => {
+    const target = buildResume(R3_ID, true, 0); // today, default
+    const replacement = buildResume(R2_ID, false, 1); // 1 day ago — most recent remaining
+    const {
+      svc,
+      repo,
+      storage,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+      profileScoresStaleCalls,
+      innerTxDeleteCalls,
+    } = buildSvc({ targetResume: target, replacement });
+
+    await svc.delete(candidateUser, R3_ID);
+
+    // Looked up the replacement, excluding the resume being deleted.
+    expect(repo.findReplacementCandidate).toHaveBeenCalledWith(
+      candidateUser.id,
+      R3_ID,
+    );
+
+    // Storage object removed for the deleted resume.
+    expect(storage.delete).toHaveBeenCalledWith({
+      bucket: "resumes",
+      path: target.storagePath,
+    });
+
+    // Inner tx hard-deletes the old default and then promotes the replacement.
+    expect(innerTxDeleteCalls).toHaveLength(1);
+    expect(repo.setDefault).toHaveBeenCalledWith(
+      candidateUser.id,
+      R2_ID,
+      expect.anything(),
+    );
+
+    // Cascade: cancelled old in-flight jobs, marked profile_scores stale,
+    // enqueued recompute jobs against the NEW default.
+    expect(matchPreviewQueue.cancelByResumeId).toHaveBeenCalledWith(R3_ID);
+    expect(db.transaction).toHaveBeenCalledTimes(1);
+    expect(profileScoresStaleCalls).toHaveLength(1);
+    expect(profileScoresStaleCalls[0]?.staleAt).toBeInstanceOf(Date);
+    expect(profileScoreQueue.enqueueRecompute).toHaveBeenCalledWith({
+      candidateId: candidateUser.id,
+      resumeId: R2_ID,
+      reason: "resume_change",
+    });
+    expect(matchPreviewQueue.enqueuePrecompute).toHaveBeenCalledWith({
+      candidateId: candidateUser.id,
+      resumeId: R2_ID,
+    });
+  });
+
+  it("delete-default with last resume: returns 409 LAST_RESUME_PROTECTED", async () => {
+    const target = buildResume(R1_ID, true, 0);
+    const {
+      svc,
+      storage,
+      repo,
+      matchPreviewQueue,
+      profileScoreQueue,
+    } = buildSvc({ targetResume: target, replacement: null });
+
+    await expect(svc.delete(candidateUser, R1_ID)).rejects.toMatchObject({
+      response: expect.objectContaining({ code: "LAST_RESUME_PROTECTED" }),
+      status: 409,
+    });
+
+    // No side effects — storage untouched, repo.setDefault never called,
+    // queues never enqueued.
+    expect(storage.delete).not.toHaveBeenCalled();
+    expect(repo.setDefault).not.toHaveBeenCalled();
+    expect(matchPreviewQueue.cancelByResumeId).not.toHaveBeenCalled();
+    expect(profileScoreQueue.enqueueRecompute).not.toHaveBeenCalled();
+    expect(matchPreviewQueue.enqueuePrecompute).not.toHaveBeenCalled();
+  });
+
+  it("delete-non-default: standard delete; no promotion, no recompute trigger", async () => {
+    const target = buildResume(R2_ID, false, 0);
+    const {
+      svc,
+      repo,
+      storage,
+      matchPreviewQueue,
+      profileScoreQueue,
+      db,
+    } = buildSvc({ targetResume: target, replacement: null });
+
+    await svc.delete(candidateUser, R2_ID);
+
+    // Standard delete path — repo.delete (hard-delete) called, storage cleaned.
+    expect(repo.delete).toHaveBeenCalledWith(R2_ID);
+    expect(storage.delete).toHaveBeenCalledWith({
+      bucket: "resumes",
+      path: target.storagePath,
+    });
+
+    // No replacement lookup, no setDefault, no cascade.
+    expect(repo.findReplacementCandidate).not.toHaveBeenCalled();
+    expect(repo.setDefault).not.toHaveBeenCalled();
+    expect(db.transaction).not.toHaveBeenCalled();
+    expect(matchPreviewQueue.cancelByResumeId).not.toHaveBeenCalled();
+    expect(profileScoreQueue.enqueueRecompute).not.toHaveBeenCalled();
+    expect(matchPreviewQueue.enqueuePrecompute).not.toHaveBeenCalled();
+  });
+});
