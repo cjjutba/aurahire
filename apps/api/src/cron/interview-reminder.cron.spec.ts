@@ -3,6 +3,7 @@ import { Test } from "@nestjs/testing";
 
 import { InterviewReminderCron } from "./interview-reminder.cron";
 import { DRIZZLE_CLIENT } from "../db/db.module";
+import { EmailService } from "../email/email.service";
 import { NotificationsService } from "../modules/notifications/notifications.service";
 import { AuditService } from "../audit";
 
@@ -12,10 +13,22 @@ interface DueRow {
   interviewId: string;
   applicationId: string;
   scheduledAt: Date;
+  durationMinutes: number;
   format: string;
+  venueName: string | null;
+  addressLine: string | null;
+  roomOrFloor: string | null;
+  reportingInstructions: string | null;
+  whatToBring: string | null;
+  interviewerName: string | null;
+  interviewerTitle: string | null;
+  mapUrl: string | null;
   candidateId: string;
+  candidateEmail: string;
+  candidateName: string;
   jobTitle: string;
   companyName: string;
+  companyLogoUrl: string | null;
 }
 
 function makeDb(dueRows: DueRow[]) {
@@ -38,11 +51,13 @@ describe("InterviewReminderCron", () => {
   let cron: InterviewReminderCron;
   let notifications: jest.Mocked<Pick<NotificationsService, "emit">>;
   let audit: jest.Mocked<Pick<AuditService, "log">>;
+  let emailSvc: jest.Mocked<Pick<EmailService, "send">>;
 
   async function setup(dueRows: DueRow[]) {
     const db = makeDb(dueRows);
     notifications = { emit: jest.fn() };
     audit = { log: jest.fn() };
+    emailSvc = { send: jest.fn().mockResolvedValue(undefined) };
     const moduleRef = await Test.createTestingModule({
       providers: [
         InterviewReminderCron,
@@ -50,32 +65,35 @@ describe("InterviewReminderCron", () => {
         { provide: NotificationsService, useValue: notifications },
         { provide: AuditService, useValue: audit },
         { provide: ConfigService, useValue: { get: () => undefined } },
+        { provide: EmailService, useValue: emailSvc },
       ],
     }).compile();
     cron = moduleRef.get(InterviewReminderCron);
     return { db };
   }
 
+  const makeRow = (overrides: Partial<DueRow> & Pick<DueRow, "interviewId" | "applicationId" | "candidateId" | "jobTitle" | "companyName">): DueRow => ({
+    scheduledAt: new Date(),
+    durationMinutes: 60,
+    format: "video",
+    venueName: null,
+    addressLine: null,
+    roomOrFloor: null,
+    reportingInstructions: null,
+    whatToBring: null,
+    interviewerName: null,
+    interviewerTitle: null,
+    mapUrl: null,
+    candidateEmail: `${overrides.candidateId ?? "c"}@example.com`,
+    candidateName: "Test Candidate",
+    companyLogoUrl: null,
+    ...overrides,
+  });
+
   it("emits a reminder and marks reminder_sent_at for each due row", async () => {
     const due: DueRow[] = [
-      {
-        interviewId: "i1",
-        applicationId: "a1",
-        scheduledAt: new Date(),
-        format: "video",
-        candidateId: "c1",
-        jobTitle: "Engineer",
-        companyName: "ACME",
-      },
-      {
-        interviewId: "i2",
-        applicationId: "a2",
-        scheduledAt: new Date(),
-        format: "phone",
-        candidateId: "c2",
-        jobTitle: "PM",
-        companyName: "ACME",
-      },
+      makeRow({ interviewId: "i1", applicationId: "a1", candidateId: "c1", jobTitle: "Engineer", companyName: "ACME", format: "video" }),
+      makeRow({ interviewId: "i2", applicationId: "a2", candidateId: "c2", jobTitle: "PM", companyName: "ACME", format: "phone" }),
     ];
     const { db } = await setup(due);
 
@@ -102,15 +120,7 @@ describe("InterviewReminderCron", () => {
 
   it("audit-logs the run with sent and scanned counts", async () => {
     await setup([
-      {
-        interviewId: "i1",
-        applicationId: "a1",
-        scheduledAt: new Date(),
-        format: "video",
-        candidateId: "c1",
-        jobTitle: "T",
-        companyName: "C",
-      },
+      makeRow({ interviewId: "i1", applicationId: "a1", candidateId: "c1", jobTitle: "T", companyName: "C" }),
     ]);
     await cron.execute();
     expect(audit.log).toHaveBeenCalledWith(
@@ -132,24 +142,8 @@ describe("InterviewReminderCron", () => {
 
   it("continues processing other rows when one notification.emit fails", async () => {
     const due: DueRow[] = [
-      {
-        interviewId: "i1",
-        applicationId: "a1",
-        scheduledAt: new Date(),
-        format: "video",
-        candidateId: "c1",
-        jobTitle: "T",
-        companyName: "C",
-      },
-      {
-        interviewId: "i2",
-        applicationId: "a2",
-        scheduledAt: new Date(),
-        format: "video",
-        candidateId: "c2",
-        jobTitle: "T",
-        companyName: "C",
-      },
+      makeRow({ interviewId: "i1", applicationId: "a1", candidateId: "c1", jobTitle: "T", companyName: "C" }),
+      makeRow({ interviewId: "i2", applicationId: "a2", candidateId: "c2", jobTitle: "T", companyName: "C" }),
     ];
     const { db } = await setup(due);
     (notifications.emit as jest.Mock)

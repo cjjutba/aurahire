@@ -7,10 +7,13 @@ import {
   applicationsTable,
   jobsTable,
   companiesTable,
+  profilesTable,
 } from "@aurahire/db";
 
 import { AUDIT_ACTIONS, AuditService } from "../audit";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../db/db.module";
+import { EmailService } from "../email/email.service";
+import { InterviewReminderEmail } from "../email/templates/interview-reminder";
 import { NotificationsService } from "../modules/notifications/notifications.service";
 
 const CRON_NAME = "interview-reminder";
@@ -27,6 +30,7 @@ export class InterviewReminderCron {
     private readonly notifications: NotificationsService,
     private readonly audit: AuditService,
     private readonly config: ConfigService,
+    private readonly email: EmailService,
   ) {}
 
   /** Hourly at minute 0. */
@@ -46,13 +50,26 @@ export class InterviewReminderCron {
         interviewId: interviewsTable.id,
         applicationId: interviewsTable.applicationId,
         scheduledAt: interviewsTable.scheduledAt,
+        durationMinutes: interviewsTable.durationMinutes,
         format: interviewsTable.format,
+        venueName: interviewsTable.venueName,
+        addressLine: interviewsTable.addressLine,
+        roomOrFloor: interviewsTable.roomOrFloor,
+        reportingInstructions: interviewsTable.reportingInstructions,
+        whatToBring: interviewsTable.whatToBring,
+        interviewerName: interviewsTable.interviewerName,
+        interviewerTitle: interviewsTable.interviewerTitle,
+        mapUrl: interviewsTable.mapUrl,
         candidateId: applicationsTable.candidateId,
+        candidateEmail: profilesTable.email,
+        candidateName: profilesTable.fullName,
         jobTitle: jobsTable.title,
         companyName: companiesTable.name,
+        companyLogoUrl: companiesTable.logoUrl,
       })
       .from(interviewsTable)
       .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+      .innerJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
       .innerJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
       .where(
@@ -64,6 +81,8 @@ export class InterviewReminderCron {
         ),
       )
       .limit(200);
+
+    const appUrl = this.config.get<string>("APP_URL") ?? "http://localhost:3000";
 
     let sent = 0;
     for (const row of due) {
@@ -80,8 +99,41 @@ export class InterviewReminderCron {
             companyName: row.companyName,
             startTime: row.scheduledAt.toISOString(),
             format: row.format,
+            venueName: row.venueName ?? null,
+            addressLine: row.addressLine ?? null,
+            roomOrFloor: row.roomOrFloor ?? null,
+            reportingInstructions: row.reportingInstructions ?? null,
+            whatToBring: row.whatToBring ?? null,
+            interviewerName: row.interviewerName ?? null,
+            interviewerTitle: row.interviewerTitle ?? null,
+            mapUrl: row.mapUrl ?? null,
           },
         });
+
+        // Rich email reminder with full venue details.
+        await this.email.send({
+          to: row.candidateEmail,
+          subject: `Reminder: your interview for ${row.jobTitle} is tomorrow`,
+          template: InterviewReminderEmail({
+            candidateName: row.candidateName,
+            jobTitle: row.jobTitle,
+            companyName: row.companyName,
+            scheduledAt: row.scheduledAt.toISOString(),
+            durationMinutes: row.durationMinutes,
+            format: row.format,
+            venueName: row.venueName ?? null,
+            addressLine: row.addressLine ?? null,
+            roomOrFloor: row.roomOrFloor ?? null,
+            reportingInstructions: row.reportingInstructions ?? null,
+            whatToBring: row.whatToBring ?? null,
+            interviewerName: row.interviewerName ?? null,
+            interviewerTitle: row.interviewerTitle ?? null,
+            mapUrl: row.mapUrl ?? null,
+            applicationUrl: `${appUrl}/candidate/applications/${row.applicationId}`,
+            company: { name: row.companyName, logoUrl: row.companyLogoUrl },
+          }),
+        });
+
         await this.db
           .update(interviewsTable)
           .set({ reminderSentAt: new Date() })

@@ -35,6 +35,8 @@ import {
 import type { InterviewDto } from "./dto/interview-response.dto";
 import { InterviewScheduledEmail } from "../../email/templates/interview-scheduled";
 import { InterviewCancelledEmail } from "../../email/templates/interview-cancelled";
+import { InterviewRescheduledEmail } from "../../email/templates/interview-rescheduled";
+import { InterviewFeedbackSharedEmail } from "../../email/templates/interview-feedback-shared";
 import { buildInterviewIcs } from "../../lib/calendar/build-interview-ics";
 import { InterviewVenuesService } from "../interview-venues/interview-venues.service";
 import { sanitizeMapUrl } from "./lib/sanitize-map-url";
@@ -362,9 +364,9 @@ export class InterviewsService {
         sharedAt: sharedAt.toISOString(),
       });
 
-      // TODO(Task 28): send InterviewFeedbackSharedEmail with the candidateSummary.
-      // Email template doesn't exist yet; in-app notification covers the user
-      // for now. Wire email send when template lands.
+      void this.notifyCandidateFeedbackShared(interviewId).catch((err) => {
+        this.logger.warn(`Feedback-shared email failed: ${(err as Error).message}`);
+      });
     }
 
     return this.toDto(updated);
@@ -509,8 +511,9 @@ export class InterviewsService {
         TAGS.companyInterviews(companyId),
         TAGS.interviewsCandidate(app.candidateId),
       ]);
-      // TODO(Task 26): send InterviewRescheduledEmail with refreshed ICS to the candidate.
-      // Email template doesn't exist yet; in-app realtime covers UI for now.
+      void this.notifyCandidateRescheduled(newInterview.id, interview.scheduledAt).catch((err) =>
+        this.logger.warn(`Reschedule notify failed: ${(err as Error).message}`),
+      );
     }
 
     return this.toDto(newInterview);
@@ -865,6 +868,99 @@ export class InterviewsService {
           contentType: "text/calendar",
         },
       ],
+    });
+  }
+
+  private async notifyCandidateRescheduled(
+    newInterviewId: string,
+    previousScheduledAt: Date,
+  ): Promise<void> {
+    const interview = await this.repo.findById(newInterviewId);
+    if (!interview) return;
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (!app) return;
+    const candidate = await this.profilesRepo.findById(app.candidateId);
+    const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
+    if (!candidate || !jobRow) return;
+
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+
+    const ics = buildInterviewIcs({
+      interview: {
+        id: interview.id,
+        rescheduledFromId: interview.rescheduledFromId ?? null,
+        scheduledAt: interview.scheduledAt,
+        durationMinutes: interview.durationMinutes,
+        venueName: interview.venueName ?? "",
+        addressLine: interview.addressLine ?? "",
+        roomOrFloor: interview.roomOrFloor ?? null,
+        reportingInstructions: interview.reportingInstructions ?? null,
+        whatToBring: interview.whatToBring ?? null,
+        interviewerName: interview.interviewerName ?? null,
+        interviewerTitle: interview.interviewerTitle ?? null,
+        mapUrl: interview.mapUrl ?? null,
+      },
+      candidate: { fullName: candidate.fullName, email: candidate.email },
+      job: { title: jobRow.title },
+      company: {
+        name: jobRow.company.name,
+        recruiterEmail: "no-reply@aurahire.site",
+      },
+    });
+
+    await this.email.send({
+      to: candidate.email,
+      subject: `Interview rescheduled: ${jobRow.title}`,
+      template: InterviewRescheduledEmail({
+        candidateName: candidate.fullName,
+        jobTitle: jobRow.title,
+        companyName: jobRow.company.name,
+        previousScheduledAt: previousScheduledAt.toISOString(),
+        newScheduledAt: interview.scheduledAt.toISOString(),
+        durationMinutes: interview.durationMinutes,
+        format: interview.format,
+        venueName: interview.venueName ?? null,
+        addressLine: interview.addressLine ?? null,
+        roomOrFloor: interview.roomOrFloor ?? null,
+        reportingInstructions: interview.reportingInstructions ?? null,
+        whatToBring: interview.whatToBring ?? null,
+        interviewerName: interview.interviewerName ?? null,
+        interviewerTitle: interview.interviewerTitle ?? null,
+        mapUrl: interview.mapUrl ?? null,
+        applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
+      }),
+      attachments: [
+        {
+          filename: "interview.ics",
+          content: Buffer.from(ics).toString("base64"),
+          contentType: "text/calendar",
+        },
+      ],
+    });
+  }
+
+  private async notifyCandidateFeedbackShared(interviewId: string): Promise<void> {
+    const interview = await this.repo.findById(interviewId);
+    if (!interview || !interview.candidateSummary) return;
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (!app) return;
+    const candidate = await this.profilesRepo.findById(app.candidateId);
+    const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
+    if (!candidate || !jobRow) return;
+
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+    await this.email.send({
+      to: candidate.email,
+      subject: `Feedback from your interview at ${jobRow.company.name}`,
+      template: InterviewFeedbackSharedEmail({
+        candidateName: candidate.fullName,
+        jobTitle: jobRow.title,
+        companyName: jobRow.company.name,
+        candidateSummary: interview.candidateSummary,
+        applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
+      }),
     });
   }
 
