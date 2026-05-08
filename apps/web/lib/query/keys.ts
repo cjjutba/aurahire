@@ -43,6 +43,10 @@ export const queryKeys = {
     list: () => ["candidate-resumes", "list"] as const,
     download: (id: string) => ["candidate-resumes", "download", id] as const,
   },
+  interviewVenues: {
+    byCompany: (companyId: string) =>
+      ["interview-venues", "by-company", companyId] as const,
+  },
 } as const;
 
 export interface RecruiterJobsListParams {

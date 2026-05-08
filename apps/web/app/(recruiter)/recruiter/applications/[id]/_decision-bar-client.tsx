@@ -28,15 +28,20 @@ interface AdvanceAction {
   href?: (applicationId: string) => string;
 }
 
-const NEXT_POSITIVE: Record<string, AdvanceAction | null> = {
-  applied: { status: "screening", label: "Move to Screening" },
-  screening: { status: "interview", label: "Move to Interview" },
-  interview: {
-    status: "offer",
-    label: "Send Offer",
-    href: (id) => `/recruiter/offers/new?applicationId=${id}`,
-  },
-  offer: { status: "hired", label: "Mark Hired" },
+const NEXT_POSITIVE: Record<string, AdvanceAction[] | null> = {
+  applied: [
+    { status: "screening", label: "Move to Screening" },
+    { status: "interview", label: "Move to Interview" },
+  ],
+  screening: [{ status: "interview", label: "Move to Interview" }],
+  interview: [
+    {
+      status: "offer",
+      label: "Send Offer",
+      href: (id) => `/recruiter/offers/new?applicationId=${id}`,
+    },
+  ],
+  offer: [{ status: "hired", label: "Mark Hired" }],
   hired: null,
   rejected: null,
   withdrawn: null,
@@ -48,21 +53,28 @@ interface DecisionBarProps {
   applicationId: string;
   currentStatus: string;
   shortlistedAt: string | null;
+  /**
+   * Recommendation from the most recent completed interview.
+   * Wired by the parent once interview data is available (Task 34).
+   * Drives highlight rings on advance / reject CTAs.
+   */
+  latestInterviewRecommendation?: "proceed" | "hold" | "reject" | null;
 }
 
-type PendingAction = "download" | "advance" | "reject";
+type PendingAction = "download" | `advance-${number}` | "reject";
 
 export function DecisionBarClient({
   applicationId,
   currentStatus,
   shortlistedAt,
+  latestInterviewRecommendation,
 }: DecisionBarProps) {
   const router = useRouter();
   const confirm = useConfirm();
   const [pending, setPending] = useState<PendingAction | null>(null);
   const isPending = pending !== null;
 
-  const next = NEXT_POSITIVE[currentStatus] ?? null;
+  const nextActions = NEXT_POSITIVE[currentStatus] ?? null;
   const isTerminal = TERMINAL_STATUSES.has(currentStatus);
 
   async function authedFetch(
@@ -88,7 +100,7 @@ export function DecisionBarClient({
 
   async function changeStatus(
     newStatus: string,
-    mode: "advance" | "reject",
+    mode: PendingAction,
   ) {
     setPending(mode);
     try {
@@ -154,40 +166,48 @@ export function DecisionBarClient({
             <span>Resume</span>
           </button>
 
-          {next &&
-            (next.href ? (
+          {nextActions?.map((action, idx) => {
+            const actionKey = `advance-${idx}` as const;
+            const isSendOffer = action.label === "Send Offer";
+            const showOfferRing =
+              isSendOffer && latestInterviewRecommendation === "proceed";
+
+            return action.href ? (
               <Link
-                href={next.href(applicationId)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
+                key={action.status}
+                href={action.href(applicationId)}
+                className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]${showOfferRing ? " ring-2 ring-offset-1 ring-[var(--color-score-high)]" : ""}`}
               >
                 <Check className="h-4 w-4" aria-hidden />
-                <span>{next.label}</span>
+                <span>{action.label}</span>
               </Link>
             ) : (
               <button
+                key={action.status}
                 type="button"
                 onClick={async () => {
                   const ok = await confirm({
-                    title: `${next.label}?`,
+                    title: `${action.label}?`,
                     description:
                       "Confirm this status change. The candidate will be notified by email.",
-                    confirmLabel: next.label,
+                    confirmLabel: action.label,
                     variant: "info",
                   });
                   if (!ok) return;
-                  await changeStatus(next.status, "advance");
+                  await changeStatus(action.status, actionKey);
                 }}
                 disabled={isPending}
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60"
+                className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60${showOfferRing ? " ring-2 ring-offset-1 ring-[var(--color-score-high)]" : ""}`}
               >
-                {pending === "advance" ? (
+                {pending === actionKey ? (
                   <ButtonSpinner />
                 ) : (
                   <Check className="h-4 w-4" aria-hidden />
                 )}
-                <span>{next.label}</span>
+                <span>{action.label}</span>
               </button>
-            ))}
+            );
+          })}
 
           {!isTerminal && (
             <button
@@ -204,7 +224,7 @@ export function DecisionBarClient({
                 await changeStatus("rejected", "reject");
               }}
               disabled={isPending}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-status-danger)] bg-[var(--color-canvas)] px-3 text-sm font-medium text-[var(--color-status-danger)] transition hover:bg-[var(--color-status-danger)] hover:text-[var(--color-on-primary)] disabled:opacity-60"
+              className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-status-danger)] bg-[var(--color-canvas)] px-3 text-sm font-medium text-[var(--color-status-danger)] transition hover:bg-[var(--color-status-danger)] hover:text-[var(--color-on-primary)] disabled:opacity-60${latestInterviewRecommendation === "reject" ? " ring-2 ring-offset-1 ring-[var(--color-status-danger)]" : ""}`}
             >
               {pending === "reject" ? (
                 <ButtonSpinner />
