@@ -10,6 +10,7 @@ import type {
   AuthUser,
   InterviewStatus,
   RecruiterInterviewsQuery,
+  RescheduleInterviewInput,
   ScheduleInterviewInput,
   ShareInterviewFeedbackInput,
   UpdateInterviewFeedbackInput,
@@ -35,6 +36,7 @@ import type { InterviewDto } from "./dto/interview-response.dto";
 import { InterviewScheduledEmail } from "../../email/templates/interview-scheduled";
 import { InterviewCancelledEmail } from "../../email/templates/interview-cancelled";
 import { buildInterviewIcs } from "../../lib/calendar/build-interview-ics";
+import { sanitizeMapUrl } from "./lib/sanitize-map-url";
 
 interface RequestMeta {
   ipAddress?: string | null;
@@ -371,6 +373,101 @@ export class InterviewsService {
     }
 
     return this.toDto(updated);
+  }
+
+  async reschedule(
+    user: AuthUser,
+    companyId: string,
+    interviewId: string,
+    dto: RescheduleInterviewInput,
+    requestMeta: RequestMeta = {},
+  ): Promise<InterviewDto> {
+    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
+
+    if (!["scheduled", "no-show"].includes(interview.status)) {
+      throw new BadRequestException({
+        code: "INVALID_STATUS_TRANSITION",
+        message: `Cannot reschedule from ${interview.status}`,
+      });
+    }
+
+    const scheduledAt = new Date(dto.scheduledAt);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      throw new BadRequestException({ code: "INVALID_DATE", message: "scheduledAt is not a valid date" });
+    }
+    if (scheduledAt < new Date()) {
+      throw new BadRequestException({ code: "PAST_DATE", message: "Reschedule cannot be in the past" });
+    }
+
+    const sanitizedMapUrl = dto.mapUrl ? sanitizeMapUrl(dto.mapUrl) : null;
+
+    // Mark original as rescheduled (guard prevents race with autocomplete cron).
+    const marked = await this.repo.markRescheduled(interview.id);
+    if (!marked) {
+      throw new BadRequestException({
+        code: "RACE_LOST",
+        message: "Interview status changed concurrently",
+      });
+    }
+
+    // Insert new linked interview.
+    const newInterview = await this.repo.insert({
+      applicationId: interview.applicationId,
+      scheduledBy: user.id,
+      scheduledAt,
+      durationMinutes: dto.durationMinutes,
+      format: "in-person",
+      venueName: dto.venueName,
+      addressLine: dto.addressLine,
+      roomOrFloor: dto.roomOrFloor ?? null,
+      mapUrl: sanitizedMapUrl,
+      reportingInstructions: dto.reportingInstructions ?? null,
+      whatToBring: dto.whatToBring ?? null,
+      interviewerName: dto.interviewerName ?? null,
+      interviewerTitle: dto.interviewerTitle ?? null,
+      status: "scheduled",
+      rescheduledFromId: interview.id,
+    });
+
+    // Wire forward link.
+    await this.repo.setRescheduledTo(interview.id, newInterview.id);
+
+    // Audit
+    await this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: AUDIT_ACTIONS.INTERVIEW_RESCHEDULED,
+      entityType: "interview",
+      entityId: newInterview.id,
+      companyId,
+      details: {
+        previousInterviewId: interview.id,
+        previousScheduledAt: interview.scheduledAt.toISOString(),
+        newScheduledAt: scheduledAt.toISOString(),
+        applicationId: interview.applicationId,
+      },
+      ...requestMeta,
+    });
+
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (app) {
+      this.events.emitInterviewRescheduled({
+        oldInterviewId: interview.id,
+        newInterviewId: newInterview.id,
+        applicationId: interview.applicationId,
+        candidateId: app.candidateId,
+        recruiterId: user.id,
+        scheduledFor: scheduledAt.toISOString(),
+      });
+      await this.cacheService.bustTags([
+        TAGS.companyInterviews(companyId),
+        TAGS.interviewsCandidate(app.candidateId),
+      ]);
+      // TODO(Task 26): send InterviewRescheduledEmail with refreshed ICS to the candidate.
+      // Email template doesn't exist yet; in-app realtime covers UI for now.
+    }
+
+    return this.toDto(newInterview);
   }
 
   async updateStatus(

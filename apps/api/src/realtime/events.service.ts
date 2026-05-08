@@ -9,6 +9,7 @@ import {
   type AuditEntryPayload,
   type BiasFlagCreatedPayload,
   type InterviewFeedbackSharedPayload,
+  type InterviewRescheduledPayload,
   type InterviewScheduledPayload,
   type InterviewStatusChangedPayload,
   type OfferSentPayload,
@@ -94,6 +95,14 @@ export class EventsService {
   emitInterviewStatusChanged(payload: InterviewStatusChangedPayload): void {
     this.broadcast(
       RealtimeEvent.InterviewStatusChanged,
+      payload,
+      [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
+    );
+  }
+
+  emitInterviewRescheduled(payload: InterviewRescheduledPayload): void {
+    this.broadcast(
+      RealtimeEvent.InterviewRescheduled,
       payload,
       [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
     );

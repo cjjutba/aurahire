@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, count, desc, eq, ne, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, inArray, ne, sql, type SQL } from "drizzle-orm";
 import {
   applicationsTable,
   companiesTable,
@@ -174,6 +174,29 @@ export class InterviewsRepository {
       .returning();
     if (!row) throw new Error("Interview update failed");
     return row;
+  }
+
+  async markRescheduled(id: string, tx?: DrizzleClient): Promise<{ id: string } | null> {
+    const client = tx ?? this.db;
+    const [row] = await client
+      .update(interviewsTable)
+      .set({ status: "rescheduled", updatedAt: new Date() })
+      .where(
+        and(
+          eq(interviewsTable.id, id),
+          inArray(interviewsTable.status, ["scheduled", "no-show"]),
+        ),
+      )
+      .returning({ id: interviewsTable.id });
+    return row ?? null;
+  }
+
+  async setRescheduledTo(originalId: string, newId: string, tx?: DrizzleClient): Promise<void> {
+    const client = tx ?? this.db;
+    await client
+      .update(interviewsTable)
+      .set({ rescheduledToId: newId, updatedAt: new Date() })
+      .where(eq(interviewsTable.id, originalId));
   }
 
   async findOverlapping(args: {

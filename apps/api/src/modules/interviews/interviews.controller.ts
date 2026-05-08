@@ -24,6 +24,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 
 import { InterviewConflictsDto } from "./dto/interview-conflicts.dto";
 import { RecruiterInterviewsQueryDto } from "./dto/recruiter-interviews-query.dto";
+import { RescheduleInterviewDto } from "./dto/reschedule-interview.dto";
 import { ScheduleInterviewDto } from "./dto/schedule-interview.dto";
 import { ShareInterviewFeedbackDto } from "./dto/share-interview-feedback.dto";
 import { UpdateInterviewFeedbackDto } from "./dto/update-interview-feedback.dto";
@@ -190,6 +191,31 @@ export class InterviewsController {
     @Req() req: FastifyRequest,
   ): Promise<InterviewEnvelopeDto> {
     const data = await this.service.shareFeedback(
+      user,
+      activeCompany.companyId,
+      id,
+      dto,
+      this.requestMeta(req),
+    );
+    return { data };
+  }
+
+  @Post("interviews/:id/reschedule")
+  @Roles("recruiter")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      "Reschedule an interview (atomic chain — marks original 'rescheduled', creates linked new row)",
+  })
+  @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
+  async reschedule(
+    @CurrentUser() user: AuthUser,
+    @ActiveCompany() activeCompany: ActiveCompanyContext,
+    @Param("id") id: string,
+    @Body() dto: RescheduleInterviewDto,
+    @Req() req: FastifyRequest,
+  ): Promise<InterviewEnvelopeDto> {
+    const data = await this.service.reschedule(
       user,
       activeCompany.companyId,
       id,
