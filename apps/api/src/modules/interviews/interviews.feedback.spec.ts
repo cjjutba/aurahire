@@ -21,6 +21,7 @@ import { AUDIT_ACTIONS } from "../../audit/audit.types";
 import { CacheService } from "../../cache";
 import { EventsService } from "../../realtime";
 import { NotificationsService } from "../notifications/notifications.service";
+import { InterviewVenuesService } from "../interview-venues/interview-venues.service";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -127,6 +128,7 @@ describe("InterviewsService.updateFeedback", () => {
         { provide: CacheService, useValue: cache },
         { provide: EventsService, useValue: events },
         { provide: NotificationsService, useValue: { emit: jest.fn().mockResolvedValue(undefined) } },
+        { provide: InterviewVenuesService, useValue: { create: jest.fn() } },
       ],
     }).compile();
 

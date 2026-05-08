@@ -36,6 +36,7 @@ import type { InterviewDto } from "./dto/interview-response.dto";
 import { InterviewScheduledEmail } from "../../email/templates/interview-scheduled";
 import { InterviewCancelledEmail } from "../../email/templates/interview-cancelled";
 import { buildInterviewIcs } from "../../lib/calendar/build-interview-ics";
+import { InterviewVenuesService } from "../interview-venues/interview-venues.service";
 import { sanitizeMapUrl } from "./lib/sanitize-map-url";
 
 interface RequestMeta {
@@ -57,6 +58,7 @@ export class InterviewsService {
     private readonly cacheService: CacheService,
     private readonly events: EventsService,
     private readonly notifications: NotificationsService,
+    private readonly venuesService: InterviewVenuesService,
   ) {}
 
   async schedule(
@@ -161,8 +163,31 @@ export class InterviewsService {
       status: "scheduled",
     });
 
-    // TODO(Task 21): if dto.saveAsTemplate && dto.templateLabel, call venuesService.create
-    // to persist the venue as a reusable template. Wire when InterviewVenuesModule lands.
+    if (dto.saveAsTemplate && dto.templateLabel) {
+      try {
+        await this.venuesService.create(
+          user,
+          companyId,
+          {
+            label: dto.templateLabel,
+            venueName: dto.venueName,
+            addressLine: dto.addressLine,
+            roomOrFloor: dto.roomOrFloor ?? null,
+            mapUrl: dto.mapUrl ?? null,
+            reportingInstructions: dto.reportingInstructions ?? null,
+            whatToBring: dto.whatToBring ?? null,
+            interviewerName: resolvedInterviewerName,
+            interviewerTitle: dto.interviewerTitle ?? null,
+            isDefault: false,
+          },
+          requestMeta,
+        );
+      } catch (err) {
+        this.logger.warn(
+          `saveAsTemplate failed for schedule of ${interview.id}: ${(err as Error).message}`,
+        );
+      }
+    }
 
     await this.audit.log({
       actorId: user.id,

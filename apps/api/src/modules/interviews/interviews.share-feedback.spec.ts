@@ -23,6 +23,7 @@ import { AUDIT_ACTIONS } from "../../audit/audit.types";
 import { CacheService } from "../../cache";
 import { EventsService } from "../../realtime";
 import { NotificationsService } from "../notifications/notifications.service";
+import { InterviewVenuesService } from "../interview-venues/interview-venues.service";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -144,6 +145,7 @@ describe("InterviewsService.shareFeedback", () => {
         { provide: CacheService, useValue: cache },
         { provide: EventsService, useValue: events },
         { provide: NotificationsService, useValue: notifications },
+        { provide: InterviewVenuesService, useValue: { create: jest.fn() } },
       ],
     }).compile();
 

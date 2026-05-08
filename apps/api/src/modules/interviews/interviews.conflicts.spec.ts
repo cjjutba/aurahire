@@ -131,6 +131,7 @@ function makeService(opts: MockRepoOptions = {}) {
     cacheService as never,
     events as never,
     notifications as never,
+    { create: jest.fn() } as never,
   );
 
   return { svc, interviewsRepo, applicationsRepo };

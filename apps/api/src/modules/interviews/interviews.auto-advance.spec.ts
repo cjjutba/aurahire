@@ -136,6 +136,7 @@ function makeService(applicationStatus: string) {
     cacheService as never,
     events as never,
     notifications as never,
+    { create: jest.fn() } as never,
   );
 
   return { svc, applicationsRepo, interviewsRepo, audit, events };

@@ -21,6 +21,7 @@ import { AuditService } from "../../audit";
 import { CacheService } from "../../cache";
 import { EventsService } from "../../realtime";
 import { NotificationsService } from "../notifications/notifications.service";
+import { InterviewVenuesService } from "../interview-venues/interview-venues.service";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -88,6 +89,7 @@ describe("InterviewsService.schedule() — v2 venue/guidance/interviewer fields"
   let audit: jest.Mocked<AuditService>;
   let events: jest.Mocked<EventsService>;
   let cache: jest.Mocked<CacheService>;
+  let venuesService: { create: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -144,6 +146,8 @@ describe("InterviewsService.schedule() — v2 venue/guidance/interviewer fields"
       getOrSet: jest.fn(),
     } as any;
 
+    venuesService = { create: jest.fn().mockResolvedValue({ id: "venue-1" }) };
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         InterviewsService,
@@ -162,6 +166,7 @@ describe("InterviewsService.schedule() — v2 venue/guidance/interviewer fields"
           provide: NotificationsService,
           useValue: { emit: jest.fn().mockResolvedValue(undefined) },
         },
+        { provide: InterviewVenuesService, useValue: venuesService },
       ],
     }).compile();
 
@@ -257,5 +262,72 @@ describe("InterviewsService.schedule() — v2 venue/guidance/interviewer fields"
 
     // repo.insert must NOT be called when mapUrl is invalid.
     expect(repo.insert).not.toHaveBeenCalled();
+  });
+
+  it("saves venue as template when saveAsTemplate=true and templateLabel is set", async () => {
+    await service.schedule(
+      recruiterUser,
+      COMPANY_ID,
+      APPLICATION_ID,
+      {
+        scheduledAt: future().toISOString(),
+        durationMinutes: 60,
+        venueName: "JRMSU Main",
+        addressLine: "Dapitan",
+        saveAsTemplate: true,
+        templateLabel: "JRMSU - ICT Building",
+      } as any,
+      {},
+    );
+
+    expect(venuesService.create).toHaveBeenCalledWith(
+      recruiterUser,
+      COMPANY_ID,
+      expect.objectContaining({
+        label: "JRMSU - ICT Building",
+        venueName: "JRMSU Main",
+        addressLine: "Dapitan",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("does not call venuesService when saveAsTemplate=false", async () => {
+    await service.schedule(
+      recruiterUser,
+      COMPANY_ID,
+      APPLICATION_ID,
+      {
+        scheduledAt: future().toISOString(),
+        durationMinutes: 60,
+        venueName: "X",
+        addressLine: "Y",
+        saveAsTemplate: false,
+      } as any,
+      {},
+    );
+
+    expect(venuesService.create).not.toHaveBeenCalled();
+  });
+
+  it("schedule succeeds even if template save throws", async () => {
+    venuesService.create.mockRejectedValueOnce(new Error("unique violation"));
+
+    const result = await service.schedule(
+      recruiterUser,
+      COMPANY_ID,
+      APPLICATION_ID,
+      {
+        scheduledAt: future().toISOString(),
+        durationMinutes: 60,
+        venueName: "X",
+        addressLine: "Y",
+        saveAsTemplate: true,
+        templateLabel: "Existing",
+      } as any,
+      {},
+    );
+
+    expect(result).toBeDefined();
   });
 });
