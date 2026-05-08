@@ -6,6 +6,16 @@ import {
   INTERVIEW_FORMAT,
   INTERVIEW_STATUS,
 } from "../enums";
+import type {
+  MatchPreviewCreatedPayload,
+  ProfileScoreUpdatedPayload,
+} from "./scoring-payloads";
+import type {
+  NotificationArchiveAllPayload,
+  NotificationArchivedPayload,
+  NotificationCreatedPayload,
+  NotificationReadPayload,
+} from "./notification-payloads";
 
 // Event names — the single source of truth used by both backend emitters and
 // frontend listeners. Past-tense, dotted-namespace.
@@ -23,6 +33,12 @@ export const RealtimeEvent = {
   OfferSent: "offer.sent",
   AuditEntry: "audit.entry",
   BiasFlagCreated: "bias.flag_created",
+  MatchPreviewCreated: "match-preview.created",
+  ProfileScoreUpdated: "profile-score.updated",
+  NotificationCreated: "notification.created",
+  NotificationRead: "notification.read",
+  NotificationArchived: "notification.archived",
+  NotificationArchiveAll: "notification.archive_all",
 } as const;
 
 export type RealtimeEventName = (typeof RealtimeEvent)[keyof typeof RealtimeEvent];
@@ -186,6 +202,12 @@ export interface RealtimeEventPayloadMap {
   [RealtimeEvent.OfferSent]: OfferSentPayload;
   [RealtimeEvent.AuditEntry]: AuditEntryPayload;
   [RealtimeEvent.BiasFlagCreated]: BiasFlagCreatedPayload;
+  [RealtimeEvent.MatchPreviewCreated]: MatchPreviewCreatedPayload;
+  [RealtimeEvent.ProfileScoreUpdated]: ProfileScoreUpdatedPayload;
+  [RealtimeEvent.NotificationCreated]: NotificationCreatedPayload;
+  [RealtimeEvent.NotificationRead]: NotificationReadPayload;
+  [RealtimeEvent.NotificationArchived]: NotificationArchivedPayload;
+  [RealtimeEvent.NotificationArchiveAll]: NotificationArchiveAllPayload;
 }
 
 // Subscription messages (client → server).

@@ -13,7 +13,13 @@ import {
   type InterviewRescheduledPayload,
   type InterviewScheduledPayload,
   type InterviewStatusChangedPayload,
+  type MatchPreviewCreatedPayload,
+  type NotificationArchiveAllPayload,
+  type NotificationArchivedPayload,
+  type NotificationCreatedPayload,
+  type NotificationReadPayload,
   type OfferSentPayload,
+  type ProfileScoreUpdatedPayload,
 } from "@aurahire/shared";
 
 import { Rooms } from "./room.constants";
@@ -145,6 +151,52 @@ export class EventsService {
 
   emitBiasFlagCreated(payload: BiasFlagCreatedPayload): void {
     this.broadcast(RealtimeEvent.BiasFlagCreated, payload, [Rooms.roleAdmin()]);
+  }
+
+  emitMatchPreviewCreated(payload: MatchPreviewCreatedPayload): void {
+    this.broadcast(
+      RealtimeEvent.MatchPreviewCreated,
+      payload,
+      [Rooms.user(payload.candidateId)],
+    );
+  }
+
+  emitProfileScoreUpdated(payload: ProfileScoreUpdatedPayload): void {
+    this.broadcast(
+      RealtimeEvent.ProfileScoreUpdated,
+      payload,
+      [Rooms.user(payload.candidateId)],
+    );
+  }
+
+  emitNotificationCreated(payload: NotificationCreatedPayload): void {
+    this.broadcast(
+      RealtimeEvent.NotificationCreated,
+      payload,
+      [Rooms.user(payload.userId)],
+    );
+  }
+
+  emitNotificationRead(userId: string, payload: NotificationReadPayload): void {
+    this.broadcast(RealtimeEvent.NotificationRead, payload, [Rooms.user(userId)]);
+  }
+
+  emitNotificationArchived(
+    userId: string,
+    payload: NotificationArchivedPayload,
+  ): void {
+    this.broadcast(RealtimeEvent.NotificationArchived, payload, [
+      Rooms.user(userId),
+    ]);
+  }
+
+  emitNotificationArchiveAll(
+    userId: string,
+    payload: NotificationArchiveAllPayload,
+  ): void {
+    this.broadcast(RealtimeEvent.NotificationArchiveAll, payload, [
+      Rooms.user(userId),
+    ]);
   }
 
   private broadcast(
