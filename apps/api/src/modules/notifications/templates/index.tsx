@@ -300,6 +300,44 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
     ),
     iconName: "X",
   },
+  offer_expired: {
+    buildTitle: () => `Offer expired`,
+    buildBody: (md) =>
+      `The pending offer for ${m(md, "jobTitle", "this role")} has expired.`,
+    buildLink: (role, md) =>
+      role === "recruiter"
+        ? `/recruiter/jobs/${m(md, "jobId", "")}`
+        : `/candidate/applications/${m(md, "applicationId", "")}`,
+    emailSubject: (md) => `Offer expired — ${m(md, "jobTitle", "your role")}`,
+    EmailComponent: buildPersonalEmail(
+      () => `Offer expired`,
+      (md) =>
+        `The pending offer for ${m(md, "jobTitle", "this role")} has expired without a response.`,
+      () => "View details",
+      (role, md) =>
+        role === "recruiter"
+          ? `/recruiter/jobs/${m(md, "jobId", "")}`
+          : `/candidate/applications/${m(md, "applicationId", "")}`,
+    ),
+    iconName: "Clock",
+  },
+  job_archived_by_deadline: {
+    buildTitle: (md) =>
+      `Job auto-archived: ${m(md, "title", "your job")}`,
+    buildBody: (md) =>
+      `Your published job "${m(md, "title", "this role")}" was archived because its application deadline passed.`,
+    buildLink: (_role, md) => `/recruiter/jobs/${m(md, "jobId", "")}`,
+    emailSubject: (md) =>
+      `Job archived — ${m(md, "title", "your role")}`,
+    EmailComponent: buildPersonalEmail(
+      (md) => `Job archived: ${m(md, "title", "your job")}`,
+      (md) =>
+        `Your job "${m(md, "title", "this role")}" was auto-archived because its application deadline passed. You can republish or extend the deadline from the recruiter portal.`,
+      () => "View job",
+      (_role, md) => `/recruiter/jobs/${m(md, "jobId", "")}`,
+    ),
+    iconName: "Archive",
+  },
   bias_flag_raised: {
     buildTitle: () => `Bias flag on your job description`,
     buildBody: (md) =>

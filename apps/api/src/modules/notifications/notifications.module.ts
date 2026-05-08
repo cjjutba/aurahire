@@ -5,6 +5,7 @@ import { NotificationsController } from "./notifications.controller";
 import { NotificationsService } from "./notifications.service";
 import { NotificationsRepository } from "./notifications.repository";
 import { NotificationEmailProcessor } from "./notification-email.processor";
+import { NotificationsScheduler } from "./notifications.scheduler";
 import { NOTIFICATION_EMAIL_QUEUE } from "./queues";
 import { NotificationPreferencesModule } from "../notification-preferences/notification-preferences.module";
 import { ProfilesModule } from "../profiles/profiles.module";
@@ -20,7 +21,12 @@ import { AuditModule } from "../../audit";
     AuditModule,
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService, NotificationsRepository, NotificationEmailProcessor],
-  exports: [BullModule, NotificationsService, NotificationsRepository],
+  providers: [
+    NotificationsService,
+    NotificationsRepository,
+    NotificationEmailProcessor,
+    NotificationsScheduler,
+  ],
+  exports: [BullModule, NotificationsService, NotificationsRepository, NotificationsScheduler],
 })
 export class NotificationsModule {}

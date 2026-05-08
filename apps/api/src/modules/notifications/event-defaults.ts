@@ -20,6 +20,8 @@ export const DEFAULT_MODES: Record<NotificationEventType, NotificationMode> = {
   application_withdrawn: "instant",
   offer_accepted: "instant",
   offer_declined: "instant",
+  offer_expired: "instant",
+  job_archived_by_deadline: "digest",
   bias_flag_raised: "instant",
   team_invite_accepted: "digest",
   team_invite_declined: "digest",
@@ -43,6 +45,7 @@ export type EventCategory =
   | "applications"
   | "interviews"
   | "offers"
+  | "jobs"
   | "bias"
   | "team"
   | "system";
@@ -64,6 +67,8 @@ export const EVENT_CATEGORIES: Record<NotificationEventType, EventCategory> = {
   offer_expiring_soon: "offers",
   offer_accepted: "offers",
   offer_declined: "offers",
+  offer_expired: "offers",
+  job_archived_by_deadline: "jobs",
   bias_flag_raised: "bias",
   team_invite_accepted: "team",
   team_invite_declined: "team",
@@ -89,6 +94,7 @@ export const ROLE_VISIBLE_EVENTS: Record<
     "interview_feedback_shared",
     "offer_received",
     "offer_expiring_soon",
+    "offer_expired",
     "account_password_reset",
     "account_email_verified",
     "account_login_new_device",
@@ -101,7 +107,9 @@ export const ROLE_VISIBLE_EVENTS: Record<
     "interview_record_feedback",
     "offer_accepted",
     "offer_declined",
+    "offer_expired",
     "bias_flag_raised",
+    "job_archived_by_deadline",
     "team_invite_accepted",
     "team_invite_declined",
     "account_password_reset",
@@ -137,6 +145,8 @@ export const EVENT_LABELS: Record<NotificationEventType, string> = {
   application_withdrawn: "Candidate withdrew application",
   offer_accepted: "Offer accepted by candidate",
   offer_declined: "Offer declined by candidate",
+  offer_expired: "Offer expired",
+  job_archived_by_deadline: "Job auto-archived past deadline",
   bias_flag_raised: "Bias flag on your job description",
   team_invite_accepted: "Team invite accepted",
   team_invite_declined: "Team invite declined",
@@ -168,6 +178,9 @@ export const EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
   application_withdrawn: "A candidate withdrew their application from a job you own.",
   offer_accepted: "A candidate accepted your offer.",
   offer_declined: "A candidate declined your offer.",
+  offer_expired: "A pending offer expired before it was responded to.",
+  job_archived_by_deadline:
+    "A published job was auto-archived because its application deadline passed.",
   bias_flag_raised:
     "Bias detection flagged language on a job description you published.",
   team_invite_accepted: "A team member you invited accepted.",

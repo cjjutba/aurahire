@@ -154,6 +154,10 @@ export const NOTIFICATION_EVENT_TYPE = [
   "interview_record_feedback",
   // Applications (recruiter-facing)
   "application_withdrawn",
+  // Offers (auto-transition; both candidate + recruiter)
+  "offer_expired",
+  // Jobs (recruiter-facing)
+  "job_archived_by_deadline",
   // Security (always-instant, not user-toggleable)
   "account_password_reset",
   "account_email_verified",
