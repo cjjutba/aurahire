@@ -149,6 +149,102 @@ describe("reconcileEvidenceContributions", () => {
   });
 });
 
+describe("detectCalibrationWarnings", () => {
+  function buildComponent(overrides: Partial<{
+    name: string;
+    score: number;
+    max: number;
+    evidence: Array<{
+      excerpt: string;
+      source: string;
+      relevance: "positive" | "negative" | "neutral";
+      contribution_points: number;
+    }>;
+  }> = {}) {
+    return {
+      name: "skills",
+      score: 0,
+      max: 40,
+      weight: 40,
+      explanation: "test",
+      evidence: [],
+      ...overrides,
+    };
+  }
+
+  it("flags ceiling with only one positive evidence item", () => {
+    const warnings = detectCalibrationWarnings(
+      buildComponent({
+        score: 40,
+        max: 40,
+        evidence: [
+          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 40 },
+        ],
+      }),
+    );
+    expect(warnings).toEqual([
+      { componentName: "skills", reason: "ceiling_with_thin_evidence" },
+    ]);
+  });
+
+  it("does not flag ceiling with two or more positive items", () => {
+    const warnings = detectCalibrationWarnings(
+      buildComponent({
+        score: 40,
+        max: 40,
+        evidence: [
+          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 20 },
+          { excerpt: "PG", source: "skills", relevance: "positive", contribution_points: 20 },
+        ],
+      }),
+    );
+    expect(warnings).toEqual([]);
+  });
+
+  it("flags below-max with no negative evidence", () => {
+    const warnings = detectCalibrationWarnings(
+      buildComponent({
+        score: 25,
+        max: 30,
+        evidence: [
+          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 15 },
+          { excerpt: "b", source: "skills", relevance: "positive", contribution_points: 10 },
+        ],
+      }),
+    );
+    expect(warnings).toEqual([
+      { componentName: "skills", reason: "deduction_without_negative_evidence" },
+    ]);
+  });
+
+  it("does not flag below-max when negative evidence is present", () => {
+    const warnings = detectCalibrationWarnings(
+      buildComponent({
+        score: 25,
+        max: 30,
+        evidence: [
+          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 30 },
+          { excerpt: "gap", source: "req", relevance: "negative", contribution_points: -5 },
+        ],
+      }),
+    );
+    expect(warnings).toEqual([]);
+  });
+
+  it("returns empty array for a healthy at-zero component", () => {
+    const warnings = detectCalibrationWarnings(
+      buildComponent({
+        score: 0,
+        max: 40,
+        evidence: [
+          { excerpt: "no match", source: "req", relevance: "negative", contribution_points: -40 },
+        ],
+      }),
+    );
+    expect(warnings).toEqual([]);
+  });
+});
+
 describe("ScoringService.computeMatchPreviewOnView", () => {
   const candidateId = "11111111-1111-1111-1111-111111111111";
   const jobId = "22222222-2222-2222-2222-222222222222";

@@ -180,6 +180,56 @@ export function reconcileEvidenceContributions<
   };
 }
 
+/**
+ * Surface known model-misbehavior patterns as advisory warnings.
+ * Warnings do NOT auto-adjust the score — they're written to the audit
+ * row's `details.calibration_warnings` array and aggregated in
+ * /admin/bias-monitor's "Scoring Quality" panel for human review.
+ *
+ * Two heuristics:
+ *   1. ceiling_with_thin_evidence — Component scored at max but the model
+ *      only cited one positive evidence item. The prompt v1.2.0 rule
+ *      requires at least two positives at ceiling.
+ *   2. deduction_without_negative_evidence — Component below max but no
+ *      evidence row carries a negative contribution. The deduction has no
+ *      visible justification.
+ */
+export function detectCalibrationWarnings<C extends {
+  name: string;
+  score: number;
+  max: number;
+  evidence: Array<{
+    excerpt: string;
+    source: string;
+    relevance: "positive" | "negative" | "neutral";
+    contribution_points: number;
+  }>;
+}>(component: C): Array<{ componentName: string; reason: string }> {
+  const warnings: Array<{ componentName: string; reason: string }> = [];
+
+  if (component.score === component.max) {
+    const positives = component.evidence.filter((e) => e.relevance === "positive");
+    if (positives.length < 2) {
+      warnings.push({
+        componentName: component.name,
+        reason: "ceiling_with_thin_evidence",
+      });
+    }
+  }
+
+  if (component.score < component.max) {
+    const negatives = component.evidence.filter((e) => e.relevance === "negative");
+    if (negatives.length === 0) {
+      warnings.push({
+        componentName: component.name,
+        reason: "deduction_without_negative_evidence",
+      });
+    }
+  }
+
+  return warnings;
+}
+
 function deriveBand(
   score: number,
   thresholds: BandThresholds,
