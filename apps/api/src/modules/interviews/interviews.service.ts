@@ -133,15 +133,36 @@ export class InterviewsService {
       });
     }
 
+    // mapUrl is optional — sanitizer throws if non-http/https scheme is supplied.
+    const sanitizedMapUrl = dto.mapUrl ? sanitizeMapUrl(dto.mapUrl) : null;
+
+    // Default interviewerName to the scheduling recruiter's full name when not provided.
+    let resolvedInterviewerName: string | null = dto.interviewerName ?? null;
+    if (!resolvedInterviewerName) {
+      const recruiter = await this.profilesRepo.findById(user.id);
+      resolvedInterviewerName = recruiter?.fullName ?? null;
+    }
+
     const interview = await this.repo.insert({
       applicationId,
       scheduledBy: user.id,
       scheduledAt,
       durationMinutes: dto.durationMinutes,
-      format: dto.format,
-      locationOrLink: dto.locationOrLink ?? null,
+      format: dto.format ?? "in-person",
+      locationOrLink: dto.locationOrLink ?? null, // legacy field, retained for back-compat reads
+      venueName: dto.venueName,
+      addressLine: dto.addressLine,
+      roomOrFloor: dto.roomOrFloor ?? null,
+      mapUrl: sanitizedMapUrl,
+      reportingInstructions: dto.reportingInstructions ?? null,
+      whatToBring: dto.whatToBring ?? null,
+      interviewerName: resolvedInterviewerName,
+      interviewerTitle: dto.interviewerTitle ?? null,
       status: "scheduled",
     });
+
+    // TODO(Task 21): if dto.saveAsTemplate && dto.templateLabel, call venuesService.create
+    // to persist the venue as a reusable template. Wire when InterviewVenuesModule lands.
 
     await this.audit.log({
       actorId: user.id,
