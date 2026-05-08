@@ -8,10 +8,10 @@ export class MatchWeightsDto {
 }
 
 export class ProfileWeightsDto {
-  @ApiProperty() resume_quality!: number;
-  @ApiProperty() skills_breadth!: number;
-  @ApiProperty() experience_depth!: number;
-  @ApiProperty() preferences_clarity!: number;
+  @ApiProperty() completeness!: number;
+  @ApiProperty() skill_depth!: number;
+  @ApiProperty() experience_clarity!: number;
+  @ApiProperty() education_quality!: number;
 }
 
 export class BandThresholdsDto {

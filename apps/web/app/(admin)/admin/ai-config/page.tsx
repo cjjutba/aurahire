@@ -15,10 +15,10 @@ interface ConfigBody {
       cultural_fit: number;
     };
     profileWeights: {
-      resume_quality: number;
-      skills_breadth: number;
-      experience_depth: number;
-      preferences_clarity: number;
+      completeness: number;
+      skill_depth: number;
+      experience_clarity: number;
+      education_quality: number;
     };
     bandThresholds: { strong: number; partial: number };
     biasCategoriesEnabled: string[];

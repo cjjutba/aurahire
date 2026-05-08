@@ -2071,10 +2071,10 @@ export interface MatchWeightsDto {
 }
 
 export interface ProfileWeightsDto {
-  resume_quality: number;
-  skills_breadth: number;
-  experience_depth: number;
-  preferences_clarity: number;
+  completeness: number;
+  skill_depth: number;
+  experience_clarity: number;
+  education_quality: number;
 }
 
 export interface BandThresholdsDto {
@@ -2133,22 +2133,22 @@ export type UpdateScoringConfigDtoProfileWeights = {
    * @minimum 0
    * @maximum 100
    */
-  resume_quality: number;
+  completeness: number;
   /**
    * @minimum 0
    * @maximum 100
    */
-  skills_breadth: number;
+  skill_depth: number;
   /**
    * @minimum 0
    * @maximum 100
    */
-  experience_depth: number;
+  experience_clarity: number;
   /**
    * @minimum 0
    * @maximum 100
    */
-  preferences_clarity: number;
+  education_quality: number;
 };
 
 export type UpdateScoringConfigDtoBandThresholds = {

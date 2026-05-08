@@ -87,10 +87,10 @@ export const matchWeightsSchema = z.object({
 export type MatchWeights = z.infer<typeof matchWeightsSchema>;
 
 export const profileWeightsSchema = z.object({
-  resume_quality: z.number().int().min(0).max(100),
-  skills_breadth: z.number().int().min(0).max(100),
-  experience_depth: z.number().int().min(0).max(100),
-  preferences_clarity: z.number().int().min(0).max(100),
+  completeness: z.number().int().min(0).max(100),
+  skill_depth: z.number().int().min(0).max(100),
+  experience_clarity: z.number().int().min(0).max(100),
+  education_quality: z.number().int().min(0).max(100),
 });
 export type ProfileWeights = z.infer<typeof profileWeightsSchema>;
 

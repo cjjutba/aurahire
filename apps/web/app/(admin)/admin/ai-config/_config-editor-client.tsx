@@ -23,10 +23,10 @@ interface InitialConfig {
     cultural_fit: number;
   };
   profileWeights: {
-    resume_quality: number;
-    skills_breadth: number;
-    experience_depth: number;
-    preferences_clarity: number;
+    completeness: number;
+    skill_depth: number;
+    experience_clarity: number;
+    education_quality: number;
   };
   bandThresholds: { strong: number; partial: number };
   biasCategoriesEnabled: string[];
@@ -73,10 +73,10 @@ export function ConfigEditorClient({ initial }: Props) {
   );
   const profileSum = useMemo(
     () =>
-      profileWeights.resume_quality +
-      profileWeights.skills_breadth +
-      profileWeights.experience_depth +
-      profileWeights.preferences_clarity,
+      profileWeights.completeness +
+      profileWeights.skill_depth +
+      profileWeights.experience_clarity +
+      profileWeights.education_quality,
     [profileWeights],
   );
   const bandValid =
@@ -268,10 +268,10 @@ export function ConfigEditorClient({ initial }: Props) {
         <div className="grid gap-4 sm:grid-cols-2">
           {(
             [
-              ["resume_quality", "Resume Quality"],
-              ["skills_breadth", "Skills Breadth"],
-              ["experience_depth", "Experience Depth"],
-              ["preferences_clarity", "Preferences Clarity"],
+              ["completeness", "Completeness"],
+              ["skill_depth", "Skill Depth"],
+              ["experience_clarity", "Experience Clarity"],
+              ["education_quality", "Education Quality"],
             ] as const
           ).map(([key, label]) => (
             <div key={key}>

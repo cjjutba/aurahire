@@ -7648,24 +7648,24 @@
       "ProfileWeightsDto": {
         "type": "object",
         "properties": {
-          "resume_quality": {
+          "completeness": {
             "type": "number"
           },
-          "skills_breadth": {
+          "skill_depth": {
             "type": "number"
           },
-          "experience_depth": {
+          "experience_clarity": {
             "type": "number"
           },
-          "preferences_clarity": {
+          "education_quality": {
             "type": "number"
           }
         },
         "required": [
-          "resume_quality",
-          "skills_breadth",
-          "experience_depth",
-          "preferences_clarity"
+          "completeness",
+          "skill_depth",
+          "experience_clarity",
+          "education_quality"
         ]
       },
       "BandThresholdsDto": {
@@ -7819,28 +7819,28 @@
           "profileWeights": {
             "type": "object",
             "properties": {
-              "resume_quality": {
+              "completeness": {
                 "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": false,
                 "maximum": 100,
                 "exclusiveMaximum": false
               },
-              "skills_breadth": {
+              "skill_depth": {
                 "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": false,
                 "maximum": 100,
                 "exclusiveMaximum": false
               },
-              "experience_depth": {
+              "experience_clarity": {
                 "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": false,
                 "maximum": 100,
                 "exclusiveMaximum": false
               },
-              "preferences_clarity": {
+              "education_quality": {
                 "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": false,
@@ -7849,10 +7849,10 @@
               }
             },
             "required": [
-              "resume_quality",
-              "skills_breadth",
-              "experience_depth",
-              "preferences_clarity"
+              "completeness",
+              "skill_depth",
+              "experience_clarity",
+              "education_quality"
             ],
             "x-nestjs_zod-self-required": false
           },

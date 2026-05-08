@@ -73,10 +73,10 @@ const COMPANY = {
 const SCORING_CONFIG = {
   matchWeights: { skills: 40, experience: 35, education: 15, cultural_fit: 10 },
   profileWeights: {
-    resume_quality: 25,
-    skills_breadth: 30,
-    experience_depth: 30,
-    preferences_clarity: 15,
+    completeness: 25,
+    skill_depth: 30,
+    experience_clarity: 30,
+    education_quality: 15,
   },
   bandThresholds: { strong: 70, partial: 40 },
   biasCategoriesEnabled: ["gendered", "age-coded", "ableist", "exclusionary"],
