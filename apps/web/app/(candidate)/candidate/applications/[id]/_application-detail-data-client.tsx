@@ -21,6 +21,11 @@ interface InterviewRow {
   format: string;
   status: string;
   locationOrLink: string | null;
+  venueName?: string | null;
+  addressLine?: string | null;
+  roomOrFloor?: string | null;
+  candidateSummary?: string | null;
+  sharedWithCandidateAt?: string | null;
 }
 
 interface OfferRow {

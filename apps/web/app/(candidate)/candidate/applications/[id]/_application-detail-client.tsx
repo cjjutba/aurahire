@@ -12,6 +12,8 @@ import {
 
 import { WithdrawButtonClient } from "./_withdraw-button-client";
 import { OfferActionsClient } from "./_offer-actions-client";
+import { UpcomingInterviewBannerClient } from "./_upcoming-interview-banner-client";
+import { InterviewFeedbackPanelClient } from "./_interview-feedback-panel-client";
 
 const COMPONENT_LABELS: Record<string, string> = {
   skills: "Skills",
@@ -68,6 +70,13 @@ interface InterviewRow {
   format: string;
   status: string;
   locationOrLink: string | null;
+  // Venue fields (available from full InterviewDto)
+  venueName?: string | null;
+  addressLine?: string | null;
+  roomOrFloor?: string | null;
+  // Feedback fields
+  candidateSummary?: string | null;
+  sharedWithCandidateAt?: string | null;
 }
 
 interface OfferRow {
@@ -105,6 +114,23 @@ export interface ApplicationDetailProps {
   pastOffers: OfferRow[];
 }
 
+const INTERVIEW_STATUS_PRIORITY: Record<string, number> = {
+  scheduled: 0,
+  rescheduled: 1,
+  completed: 2,
+  cancelled: 3,
+  "no-show": 4,
+};
+
+function sortInterviewsByPriority(rows: InterviewRow[]): InterviewRow[] {
+  return [...rows].sort((a, b) => {
+    const pa = INTERVIEW_STATUS_PRIORITY[a.status] ?? 99;
+    const pb = INTERVIEW_STATUS_PRIORITY[b.status] ?? 99;
+    if (pa !== pb) return pa - pb;
+    return new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime();
+  });
+}
+
 export function ApplicationDetailClient({
   app,
   interviews,
@@ -114,6 +140,19 @@ export function ApplicationDetailClient({
   const score = app.matchScore;
   const canWithdraw = !["hired", "rejected", "withdrawn"].includes(app.status);
   const status = APP_STATUS[app.status] ?? APP_STATUS["applied"]!;
+
+  // Derive upcoming interview (scheduled or rescheduled, earliest first)
+  const sorted = sortInterviewsByPriority(interviews);
+  const upcomingInterview =
+    sorted[0] &&
+    (sorted[0].status === "scheduled" || sorted[0].status === "rescheduled")
+      ? sorted[0]
+      : null;
+
+  // Derive interviews with shared feedback (candidateSummary + sharedWithCandidateAt set)
+  const feedbackInterviews = interviews.filter(
+    (i) => i.candidateSummary && i.sharedWithCandidateAt,
+  );
 
   const appliedAt = useMemo(
     () =>
@@ -189,11 +228,35 @@ export function ApplicationDetailClient({
     </div>
   );
 
+  const bannerAndFeedback = (
+    <>
+      {upcomingInterview && (
+        <UpcomingInterviewBannerClient
+          interview={upcomingInterview}
+          applicationId={app.id}
+          canWithdraw={canWithdraw}
+        />
+      )}
+      {feedbackInterviews.map((fi) => (
+        <InterviewFeedbackPanelClient
+          key={fi.id}
+          interview={{
+            id: fi.id,
+            scheduledAt: fi.scheduledAt,
+            candidateSummary: fi.candidateSummary!,
+            sharedWithCandidateAt: fi.sharedWithCandidateAt!,
+          }}
+        />
+      ))}
+    </>
+  );
+
   if (!score) {
     if (app.scoreStatus === "computing") {
       return (
         <div className="mx-auto max-w-[1280px] space-y-8">
           {header}
+          {bannerAndFeedback}
           <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
             <AiShimmer
               caption="Computing your match against this job — analyzing skills, experience, education, and cultural fit..."
@@ -208,6 +271,7 @@ export function ApplicationDetailClient({
       return (
         <div className="mx-auto max-w-[1280px] space-y-8">
           {header}
+          {bannerAndFeedback}
           <div className="rounded-[var(--radius-lg)] border border-[var(--color-status-danger)] bg-[var(--color-canvas)] p-8 text-center">
             <h2 className="text-lg font-semibold text-[var(--color-status-danger)]">
               Match score couldn&apos;t be computed
@@ -225,6 +289,7 @@ export function ApplicationDetailClient({
     return (
       <div className="mx-auto max-w-[1280px] space-y-8">
         {header}
+        {bannerAndFeedback}
         <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-8 text-center">
           <h2 className="text-lg font-semibold text-[var(--color-ink)]">
             Score pending
@@ -253,11 +318,14 @@ export function ApplicationDetailClient({
       components={score.components}
       componentLabels={COMPONENT_LABELS}
       beforeRightPane={
-        <SummaryDisclosure
-          summary={score.summary}
-          greenFlags={score.greenFlags}
-          redFlags={score.redFlags}
-        />
+        <>
+          {bannerAndFeedback}
+          <SummaryDisclosure
+            summary={score.summary}
+            greenFlags={score.greenFlags}
+            redFlags={score.redFlags}
+          />
+        </>
       }
       extraSections={
         <>

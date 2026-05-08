@@ -718,6 +718,21 @@ export class InterviewsService {
     return this.toDto(interview);
   }
 
+  async getByIdForCandidate(user: AuthUser, interviewId: string): Promise<InterviewDto> {
+    if (user.role !== "candidate") {
+      throw new ForbiddenException({ code: "FORBIDDEN", message: "Candidate role required" });
+    }
+    const interview = await this.repo.findById(interviewId);
+    if (!interview) {
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+    }
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (!app || app.candidateId !== user.id) {
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+    }
+    return this.toCandidateSingleDto(interview);
+  }
+
   async getIcs(user: AuthUser, interviewId: string): Promise<string> {
     const interview = await this.repo.findById(interviewId);
     if (!interview) {
@@ -1069,6 +1084,71 @@ export class InterviewsService {
               logoUrl: row.companyLogoUrl,
             }
           : null,
+    };
+  }
+
+  /**
+   * Returns a candidate-safe DTO for a single interview fetched by candidateId ownership.
+   * Internal fields (feedback, rating, recommendation) are omitted.
+   * candidateSummary is included only when sharedWithCandidateAt is set.
+   */
+  private toCandidateSingleDto(
+    i: {
+      id: string;
+      applicationId: string;
+      scheduledBy: string;
+      scheduledAt: Date;
+      durationMinutes: number;
+      format: string;
+      locationOrLink: string | null;
+      status: string;
+      venueName?: string | null;
+      addressLine?: string | null;
+      roomOrFloor?: string | null;
+      mapUrl?: string | null;
+      reportingInstructions?: string | null;
+      whatToBring?: string | null;
+      interviewerName?: string | null;
+      interviewerTitle?: string | null;
+      candidateSummary?: string | null;
+      sharedWithCandidateAt?: Date | null;
+      rescheduledFromId?: string | null;
+      rescheduledToId?: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    },
+  ): InterviewDto {
+    const hasSharedFeedback = !!i.sharedWithCandidateAt;
+    return {
+      id: i.id,
+      applicationId: i.applicationId,
+      scheduledBy: i.scheduledBy,
+      scheduledAt: i.scheduledAt.toISOString(),
+      durationMinutes: i.durationMinutes,
+      format: i.format,
+      locationOrLink: i.locationOrLink,
+      status: i.status,
+      // Internal fields omitted from candidate view
+      feedback: null,
+      rating: null,
+      recommendation: null,
+      // Feedback visible only when explicitly shared
+      candidateSummary: hasSharedFeedback ? (i.candidateSummary ?? null) : null,
+      sharedWithCandidateAt: hasSharedFeedback
+        ? (i.sharedWithCandidateAt?.toISOString() ?? null)
+        : null,
+      venueName: i.venueName ?? null,
+      addressLine: i.addressLine ?? null,
+      roomOrFloor: i.roomOrFloor ?? null,
+      mapUrl: i.mapUrl ?? null,
+      reportingInstructions: i.reportingInstructions ?? null,
+      whatToBring: i.whatToBring ?? null,
+      interviewerName: i.interviewerName ?? null,
+      interviewerTitle: i.interviewerTitle ?? null,
+      rescheduledFromId: i.rescheduledFromId ?? null,
+      rescheduledToId: i.rescheduledToId ?? null,
+      createdAt: i.createdAt.toISOString(),
+      updatedAt: i.updatedAt.toISOString(),
     };
   }
 

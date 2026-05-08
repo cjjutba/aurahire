@@ -99,6 +99,18 @@ export class InterviewsController {
     return { data };
   }
 
+  @Get("me/interviews/:id")
+  @Roles("candidate")
+  @ApiOperation({ summary: "Get a single interview for the authenticated candidate" })
+  @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
+  async getMineById(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+  ): Promise<InterviewEnvelopeDto> {
+    const data = await this.service.getByIdForCandidate(user, id);
+    return { data };
+  }
+
   @Get("interviews/:id/ics")
   @Roles("candidate", "recruiter", "admin")
   @ApiOperation({ summary: "Download interview as an ICS calendar file" })
