@@ -629,9 +629,22 @@ export class ScoringService {
    * requests.
    */
   async computeMatchPreviewOnView(
-    candidateId: string,
+    user: AuthUser,
     jobId: string,
   ): Promise<MatchScorePreviewDto> {
+    // Defense in depth: controller carries `@Roles('candidate')`, but the
+    // service layer also enforces the role contract so any future caller
+    // (queue worker, internal job, test harness) cannot skip the check.
+    // Mirrors the pattern used by `computeMatchPreview`, `computeProfileScore`,
+    // etc. above.
+    if (user.role !== "candidate") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
+    }
+    const candidateId = user.id;
+
     // 1. Resolve the candidate's current default resume.
     const defaultResume = await this.resumesRepo.findDefaultByCandidateId(candidateId);
     if (!defaultResume) {
@@ -783,9 +796,29 @@ export class ScoringService {
       source,
     });
 
+    // Three-way mapping:
+    //   - `candidate`      (legacy manual button click) → user
+    //   - `candidate_view` (AI compute on candidate's behalf at page-view) → ai
+    //   - `system`         (cron precompute) → system
+    // Aligns with `score.profile.computed` and `score.match.computed`, which
+    // both log `actorType: "ai"` for AI-driven writes regardless of whether a
+    // human triggered the request. The legacy "candidate" branch is kept for
+    // historical rows that flowed through that path before the buttonless
+    // redesign — no new writes should land on `source = "candidate"`.
+    const actorType = (() => {
+      switch (source) {
+        case "candidate":
+          return "user";
+        case "candidate_view":
+          return "ai";
+        case "system":
+          return "system";
+      }
+    })();
+
     await this.audit.log({
       actorId: candidateId,
-      actorType: source === "candidate" ? "user" : "system",
+      actorType,
       action: "score.match.preview.computed",
       entityType: "match_score_preview",
       entityId: preview.id,

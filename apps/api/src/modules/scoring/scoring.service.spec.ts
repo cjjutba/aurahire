@@ -1,6 +1,7 @@
 import type Redis from "ioredis";
 import type { MatchScorePreview, Resume, ScoringConfig, Job } from "@aurahire/db";
-import { ONVIEW_DAILY_CAP } from "@aurahire/shared";
+import { ONVIEW_DAILY_CAP, type AuthUser } from "@aurahire/shared";
+import { ForbiddenException } from "@nestjs/common";
 
 import { ScoringService } from "./scoring.service";
 import type { ScoringRepository } from "./scoring.repository";
@@ -20,6 +21,18 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
 
   const today = () => new Date().toISOString().slice(0, 10);
   const counterKey = () => `scoring:onview:${candidateId}:${today()}`;
+
+  function buildCandidateUser(overrides: Partial<AuthUser> = {}): AuthUser {
+    return {
+      id: candidateId,
+      email: "candidate@example.com",
+      role: "candidate",
+      status: "active",
+      fullName: "Test Candidate",
+      profileCompleted: true,
+      ...overrides,
+    };
+  }
 
   function buildResume(): Resume {
     return {
@@ -272,7 +285,7 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
   it("writes preview row with source = 'candidate_view' and increments redis counter", async () => {
     const { svc, redis, scoringRepo, scoreMatch } = buildSvc();
 
-    const result = await svc.computeMatchPreviewOnView(candidateId, jobId);
+    const result = await svc.computeMatchPreviewOnView(buildCandidateUser(), jobId);
 
     // Source tag and clamped overall score
     expect(result.source).toBe("candidate_view");
@@ -302,7 +315,7 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
       existingPreview: buildPreviewRow(),
     });
 
-    const result = await svc.computeMatchPreviewOnView(candidateId, jobId);
+    const result = await svc.computeMatchPreviewOnView(buildCandidateUser(), jobId);
 
     // Cache hit short-circuit: no Redis INCR, no AI call, no upsert
     expect(redis.incr).not.toHaveBeenCalled();
@@ -323,7 +336,7 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
     await redis.set(counterKey(), ONVIEW_DAILY_CAP);
 
     await expect(
-      svc.computeMatchPreviewOnView(candidateId, jobId),
+      svc.computeMatchPreviewOnView(buildCandidateUser(), jobId),
     ).rejects.toMatchObject({
       response: { code: "DAILY_AI_LIMIT", cap: ONVIEW_DAILY_CAP },
     });
@@ -331,6 +344,23 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
     // The increment happened (so subsequent calls keep failing fast) but
     // we never reached the AI call or the DB write.
     expect(redis.incr).toHaveBeenCalledTimes(1);
+    expect(scoreMatch.score).not.toHaveBeenCalled();
+    expect(scoringRepo.upsertMatchPreview).not.toHaveBeenCalled();
+  });
+
+  it("throws ForbiddenException when caller is not a candidate", async () => {
+    const { svc, redis, scoringRepo, scoreMatch, resumesRepo } = buildSvc();
+
+    await expect(
+      svc.computeMatchPreviewOnView(
+        buildCandidateUser({ role: "recruiter" }),
+        jobId,
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    // Role check fails fast — nothing downstream runs.
+    expect(resumesRepo.findDefaultByCandidateId).not.toHaveBeenCalled();
+    expect(redis.incr).not.toHaveBeenCalled();
     expect(scoreMatch.score).not.toHaveBeenCalled();
     expect(scoringRepo.upsertMatchPreview).not.toHaveBeenCalled();
   });
