@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Sparkles, ChevronRight, AlertCircle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
+import { Sparkles, ChevronRight, AlertCircle, RotateCw } from "lucide-react";
 
 import { ScoreRing } from "@/components/score/score-ring";
 import { MatchBandChip } from "@/components/score/match-band-chip";
 import { EvidenceCallout } from "@/components/score/evidence-callout";
 import { AiShimmer } from "@/components/ai/ai-shimmer";
 import { Button } from "@/components/ui/button";
-import { toastApiError } from "@/lib/toast";
-import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { ClientApiError, clientApiFetch } from "@/hooks/_client-fetch";
 import { useConfirm } from "@/components/providers/confirm-provider";
 
 const COMPONENT_LABELS: Record<string, string> = {
@@ -46,8 +47,12 @@ interface MatchPreviewData {
   promptVersion: string;
   modelUsed: string;
   latencyMs: number;
-  source: "system" | "candidate";
+  source: "system" | "candidate" | "candidate_view";
   createdAt: string;
+}
+
+interface MatchPreviewEnvelope {
+  data: MatchPreviewData | null;
 }
 
 function bandColors(ratio: number): { fill: string; track: string } {
@@ -64,6 +69,21 @@ function trimQuotes(s: string): string {
   return s.replace(/^["'`“”‘’]+|["'`“”‘’]+$/g, "").trim();
 }
 
+/**
+ * Reads the API error body shape thrown by `clientApiFetch`. Backend
+ * exceptions follow `{ code, message, ...details }`. We only need the code +
+ * message here.
+ */
+function readErrorBody(err: unknown): { status: number; code: string | null; message: string | null } | null {
+  if (!(err instanceof ClientApiError)) return null;
+  const body = err.body as { code?: string; message?: string } | null;
+  return {
+    status: err.status,
+    code: body?.code ?? null,
+    message: body?.message ?? null,
+  };
+}
+
 interface MatchPreviewClientProps {
   jobId: string;
   /** Hidden when the candidate has already applied — they should view their application instead. */
@@ -72,109 +92,78 @@ interface MatchPreviewClientProps {
 
 export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
   const confirm = useConfirm();
-  const [preview, setPreview] = useState<MatchPreviewData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [computing, setComputing] = useState(false);
-  const [activeName, setActiveName] = useState<string>("");
+  const qc = useQueryClient();
+  // `null` = derive from the preview (first component); a string = the user
+  // explicitly selected this component. Keeps the "follow the data" default
+  // working without a setState-in-effect pattern.
+  const [selectedName, setSelectedName] = useState<string | null>(null);
   const [showAllComponents, setShowAllComponents] = useState(false);
 
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+  // GET — surfaces the precomputed preview if one already exists. The
+  // backend's auto-precompute path normally fills this on first view; the
+  // POST below is the on-view fallback for jobs that fall outside the top-N
+  // precompute window.
+  const previewQuery = useQuery<MatchPreviewEnvelope>({
+    queryKey: ["candidate-match-preview", jobId] as const,
+    queryFn: ({ signal }) =>
+      clientApiFetch<MatchPreviewEnvelope>(
+        `/api/v1/scoring/match-preview/${jobId}`,
+        { signal },
+      ),
+    // Skip when the parent has hidden the card — the candidate has already
+    // applied and we shouldn't even hit the endpoint.
+    enabled: !hidden,
+    staleTime: 60_000,
+  });
 
-  // Initial fetch — surfaces auto-precomputed previews instantly without
-  // requiring the candidate to click anything.
+  const preview = previewQuery.data?.data ?? null;
+
+  // POST — computes a preview if none exists, or recomputes when the user
+  // explicitly clicks "Recompute" (passes force = true via cache busting).
+  const compute = useMutation<MatchPreviewEnvelope, unknown, void>({
+    mutationFn: () =>
+      clientApiFetch<MatchPreviewEnvelope>(
+        `/api/v1/scoring/match-preview/${jobId}`,
+        { method: "POST" },
+      ),
+    onSuccess: (envelope) => {
+      // Seed the cache directly so we don't need an extra GET round-trip.
+      qc.setQueryData(["candidate-match-preview", jobId], envelope);
+      // Reset to the derived default so the new preview's first component
+      // is highlighted.
+      setSelectedName(null);
+    },
+  });
+
+  // Effective active name: the user's explicit pick if any, otherwise the
+  // first component of the loaded preview. Pure derivation — no useEffect.
+  const activeName = selectedName ?? preview?.components[0]?.name ?? "";
+
+  // Auto-compute on mount when no cached preview is available — replaces the
+  // old "See my match" button. The ref guards against React 18+ Strict Mode
+  // double-invoking the effect.
+  const autoFired = useRef(false);
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (!session) {
-          if (!cancelled) setLoading(false);
-          return;
-        }
+    if (hidden) return;
+    if (previewQuery.isLoading) return;
+    if (preview) return;
+    if (compute.isPending) return;
+    if (compute.isError) return;
+    if (autoFired.current) return;
+    autoFired.current = true;
+    compute.mutate();
+  }, [hidden, previewQuery.isLoading, preview, compute]);
 
-        const res = await fetch(
-          `${apiUrl}/api/v1/scoring/match-preview/${jobId}`,
-          {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-            cache: "no-store",
-          },
-        );
-        if (cancelled) return;
-        if (res.ok) {
-          const body = (await res.json()) as { data: MatchPreviewData | null };
-          if (body.data) {
-            setPreview(body.data);
-            setActiveName(body.data.components[0]?.name ?? "");
-          }
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [jobId, apiUrl]);
-
-  async function compute(force = false) {
+  async function recompute() {
     const ok = await confirm({
-      title: force ? "Recompute your match?" : "See your match for this role?",
-      description: force
-        ? "AI will rescore your resume against this job. This replaces your current preview and may take a few seconds."
-        : "AI will redact your personal info, then score your resume against this job's requirements. This may take a few seconds.",
-      confirmLabel: force ? "Recompute match" : "Compute match",
-      variant: force ? "warning" : "info",
+      title: "Recompute your match?",
+      description:
+        "AI will rescore your resume against this job. This replaces your current preview and may take a few seconds.",
+      confirmLabel: "Recompute match",
+      variant: "warning",
     });
     if (!ok) return;
-    setComputing(true);
-    try {
-      const supabase = createSupabaseBrowserClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const res = await fetch(
-        `${apiUrl}/api/v1/scoring/match-preview/${jobId}`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        },
-      );
-      if (res.status === 429) {
-        toastApiError(
-          null,
-          "Couldn't compute match",
-          "Please wait a moment before trying again.",
-        );
-        return;
-      }
-      if (res.status === 400) {
-        const body = (await res.json().catch(() => null)) as {
-          message?: string;
-          code?: string;
-        } | null;
-        const message = body?.message ?? "Make sure you've uploaded a resume first.";
-        toastApiError(null, "Couldn't compute match", message);
-        return;
-      }
-      if (!res.ok) {
-        toastApiError(null, "Couldn't compute match");
-        return;
-      }
-      const body = (await res.json()) as { data: MatchPreviewData };
-      setPreview(body.data);
-      setActiveName(body.data.components[0]?.name ?? "");
-      setShowAllComponents(false);
-      // Suppress unused lint hint without changing behaviour
-      void force;
-    } finally {
-      setComputing(false);
-    }
+    compute.mutate();
   }
 
   const active = useMemo(
@@ -187,8 +176,9 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
 
   if (hidden) return null;
 
-  // Loading initial fetch — quietly skeleton the whole card.
-  if (loading) {
+  // Initial GET still resolving — quietly skeleton the whole card so we
+  // don't flash the "computing" shimmer for the common cache-hit path.
+  if (previewQuery.isLoading) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
@@ -200,8 +190,65 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
     );
   }
 
-  // Empty state — no preview yet, candidate can request one.
-  if (!preview) {
+  // No preview AND compute returned an error — translate to a focused error
+  // surface depending on the code.
+  if (!preview && compute.isError) {
+    const errBody = readErrorBody(compute.error);
+
+    // 429 DAILY_AI_LIMIT — daily on-view cap reached. No retry button: the
+    // candidate must apply to lock in a score.
+    if (errBody?.status === 429 && errBody.code === "DAILY_AI_LIMIT") {
+      return (
+        <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
+          <header className="mb-3 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+              Match Preview
+            </h2>
+          </header>
+          <div className="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-4">
+            <p className="text-sm text-[var(--color-body)]">
+              Daily AI compute limit reached. Apply to score this match as part
+              of your application.
+            </p>
+            <Link
+              href={`/candidate/jobs/${jobId}/apply`}
+              className="mt-3 inline-flex h-9 items-center gap-2 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+            >
+              Apply now
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    // 422 / 400 NO_DEFAULT_RESUME — candidate hasn't uploaded a resume yet.
+    // The actual backend code is `NO_DEFAULT_RESUME` (400), but defending
+    // against a future 422 variant is cheap.
+    if (errBody?.code === "NO_DEFAULT_RESUME") {
+      return (
+        <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
+          <header className="mb-3 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+              Match Preview
+            </h2>
+          </header>
+          <p className="text-sm text-[var(--color-body)]">
+            Upload a resume to see your match.
+          </p>
+          <Link
+            href="/candidate/profile/resumes"
+            className="mt-3 inline-flex h-9 items-center gap-2 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+          >
+            Upload resume
+          </Link>
+        </div>
+      );
+    }
+
+    // 5xx / generic error — the cap doesn't apply since no row landed, so a
+    // retry button is safe.
     return (
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
         <header className="mb-3 flex items-center gap-2">
@@ -210,27 +257,37 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
             Match Preview
           </h2>
         </header>
-        {computing ? (
-          <AiShimmer
-            caption="Scoring your resume against this job…"
-            height={120}
-          />
-        ) : (
-          <>
-            <p className="text-sm text-[var(--color-body)]">
-              See how your resume scores against this role <strong>before</strong>{" "}
-              you apply. We&apos;ll redact your personal information first and
-              show every component of the score.
-            </p>
-            <Button
-              onClick={() => compute(false)}
-              className="mt-4 inline-flex h-11 items-center gap-2 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-5 text-sm font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
-            >
-              <Sparkles className="h-4 w-4" />
-              See my match
-            </Button>
-          </>
-        )}
+        <p className="text-sm text-[var(--color-body)]">
+          Couldn&apos;t compute your match
+          {errBody?.message ? `: ${errBody.message}` : "."}
+        </p>
+        <Button
+          onClick={() => compute.mutate()}
+          disabled={compute.isPending}
+          className="mt-3 inline-flex h-9 items-center gap-2 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+        >
+          <RotateCw className="h-4 w-4" />
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
+  // Computing — either auto-compute is in flight or we have no preview yet
+  // and no error. Always paired with a caption per design rules.
+  if (!preview || compute.isPending) {
+    return (
+      <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
+        <header className="mb-3 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Match Preview
+          </h2>
+        </header>
+        <AiShimmer
+          caption="Computing your match for this role…"
+          height={120}
+        />
       </div>
     );
   }
@@ -254,15 +311,15 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
         </div>
         <Button
           variant="outline"
-          onClick={() => compute(true)}
-          disabled={computing}
+          onClick={recompute}
+          disabled={compute.isPending}
           className="h-8 rounded-[var(--radius-pill)] px-3 text-xs"
         >
-          {computing ? "Recomputing…" : "Recompute"}
+          {compute.isPending ? "Recomputing…" : "Recompute"}
         </Button>
       </header>
 
-      {computing ? (
+      {compute.isPending ? (
         <AiShimmer caption="Recomputing match score…" height={120} />
       ) : (
         <>
@@ -306,7 +363,7 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
                   label={COMPONENT_LABELS[c.name] ?? c.name}
                   selected={c.name === activeName}
                   onSelect={() => {
-                    setActiveName(c.name);
+                    setSelectedName(c.name);
                     setShowAllComponents(true);
                   }}
                 />

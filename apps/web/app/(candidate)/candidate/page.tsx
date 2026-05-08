@@ -9,6 +9,7 @@ import { CandidateDashboardClient } from "./_dashboard-client";
 export const metadata = { title: "Candidate Dashboard" };
 
 interface ProfileMe {
+  id: string;
   fullName: string;
 }
 
@@ -39,7 +40,10 @@ export default async function CandidateDashboard() {
 
   return (
     <PrefetchedHydration queryClient={queryClient}>
-      <CandidateDashboardClient fullName={profile?.fullName ?? null} />
+      <CandidateDashboardClient
+        fullName={profile?.fullName ?? null}
+        candidateId={profile?.id ?? null}
+      />
     </PrefetchedHydration>
   );
 }

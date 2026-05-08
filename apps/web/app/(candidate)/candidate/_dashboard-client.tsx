@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   Building2,
@@ -29,6 +30,8 @@ import {
   type MatchPreviewListItem,
 } from "@/hooks/use-match-previews";
 import { useProfileScoreQuery } from "@/hooks/use-profile-score";
+import { useCandidateRealtime } from "@/lib/realtime/use-candidate-realtime";
+import { queryKeys } from "@/lib/query";
 import { ProfileScoreCardClient } from "./_components/profile-score-card-client";
 
 type Range = "7d" | "30d" | "90d" | "all";
@@ -451,17 +454,40 @@ function EmptyAppsState({ hasResume }: { hasResume: boolean }) {
 
 interface CandidateDashboardClientProps {
   fullName: string | null;
+  candidateId: string | null;
 }
 
 export function CandidateDashboardClient({
   fullName,
+  candidateId,
 }: CandidateDashboardClientProps) {
   const [range, setRange] = useState<Range>("7d");
+  const qc = useQueryClient();
 
   const apps = useMyApplicationsQuery({});
   const interviews = useMyInterviewsQuery({});
   const profileScore = useProfileScoreQuery();
   const matchPreviews = useMyMatchPreviewsQuery();
+
+  // Subscribe to realtime events at the dashboard root: any time a fresh
+  // match-preview lands or the profile score recomputes, invalidate the
+  // relevant TanStack queries so cards refresh without a manual reload.
+  // The hook already filters payloads by candidateId.
+  const { latestMatchPreview, latestProfileScore } = useCandidateRealtime(
+    candidateId,
+  );
+
+  useEffect(() => {
+    if (!latestMatchPreview) return;
+    void qc.invalidateQueries({
+      queryKey: ["candidate-match-previews", "list"],
+    });
+  }, [latestMatchPreview, qc]);
+
+  useEffect(() => {
+    if (!latestProfileScore) return;
+    void qc.invalidateQueries({ queryKey: queryKeys.profileScore.me() });
+  }, [latestProfileScore, qc]);
 
   const allApps = (apps.data?.data ?? []) as AppRow[];
   const allInterviews = (interviews.data?.data ?? []) as InterviewRow[];
@@ -601,7 +627,7 @@ export function CandidateDashboardClient({
           </span>
         </div>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <ProfileScoreCardClient />
+          <ProfileScoreCardClient candidateId={candidateId} />
           <ApplicationsByStatusCard rows={allApps} />
           <UpcomingInterviewsCard interviews={allInterviews} />
         </div>
@@ -666,6 +692,22 @@ export function CandidateDashboardClient({
 // Recommended for You — top match-score previews surfaced after resume upload
 // ───────────────────────────────────────────────────────────────────────
 
+/**
+ * Target slot count. The dashboard always reserves room for this many
+ * previews; any unfilled slots render as shimmer cards so the section keeps
+ * a stable visual rhythm while the precompute queue catches up.
+ */
+const RECOMMENDED_TARGET = 5;
+
+function ShimmerCard() {
+  return (
+    <li
+      aria-hidden
+      className="h-28 animate-pulse rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)]"
+    />
+  );
+}
+
 function RecommendedForYouSection({
   previews,
   appliedJobIds,
@@ -677,15 +719,27 @@ function RecommendedForYouSection({
   loading: boolean;
   hasResume: boolean;
 }) {
+  const qc = useQueryClient();
+
   // Drop previews for jobs the candidate has already applied to — those
   // belong in Recent Applications, not in "Recommended for you".
   const filtered = previews.filter((p) => !appliedJobIds.has(p.jobId));
-  const top = filtered.slice(0, 5);
+  const top = filtered.slice(0, RECOMMENDED_TARGET);
 
-  // Only show the section when we have something to recommend OR when the
-  // candidate has uploaded a resume but the queue hasn't finished yet
-  // (shows the "we're scoring jobs for you" hint).
+  // Shimmer slots fill any gap between what we have and the target. Capped
+  // at zero to avoid negative counts when previews exceed the target.
+  const shimmerCount = Math.max(0, RECOMMENDED_TARGET - top.length);
+
+  // Hide the section entirely for first-run candidates with no resume — the
+  // welcome card already directs them to upload one.
   if (!loading && !hasResume && top.length === 0) return null;
+
+  const refetch = (): void => {
+    void qc.invalidateQueries({ queryKey: ["candidate-match-previews", "list"] });
+  };
+
+  // Empty state — precompute either failed or hasn't fired yet. Surfaces a
+  // Retry + Browse all jobs CTA so the candidate is never stuck.
   if (!loading && top.length === 0) {
     return (
       <section>
@@ -700,15 +754,23 @@ function RecommendedForYouSection({
         </div>
         <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6 text-center">
           <p className="text-sm text-[var(--color-body)]">
-            We&apos;re scoring open roles against your resume. Check back in a
-            minute or browse jobs to see your match.
+            We&apos;re still finding the right matches for you.
           </p>
-          <Link
-            href="/candidate/jobs"
-            className="mt-3 inline-flex h-9 items-center rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
-          >
-            Browse jobs
-          </Link>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={refetch}
+              className="inline-flex h-9 items-center rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+            >
+              Retry
+            </button>
+            <Link
+              href="/candidate/jobs"
+              className="inline-flex h-9 items-center rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-4 text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-hairline)]"
+            >
+              Browse all jobs
+            </Link>
+          </div>
         </div>
       </section>
     );
@@ -736,22 +798,14 @@ function RecommendedForYouSection({
           Browse all →
         </Link>
       </div>
-      {loading ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-28 animate-pulse rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)]"
-            />
-          ))}
-        </div>
-      ) : (
-        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {top.map((p) => (
-            <RecommendedJobCard key={p.id} preview={p} />
-          ))}
-        </ul>
-      )}
+      <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {top.map((p) => (
+          <RecommendedJobCard key={p.id} preview={p} />
+        ))}
+        {Array.from({ length: shimmerCount }).map((_, i) => (
+          <ShimmerCard key={`shim-${i}`} />
+        ))}
+      </ul>
     </section>
   );
 }
