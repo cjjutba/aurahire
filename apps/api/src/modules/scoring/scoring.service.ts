@@ -1068,7 +1068,34 @@ export class ScoringService {
       aiResult.score.components,
       weights as unknown as Record<string, number>,
     );
-    const derivedOverall = deriveOverallScore(normalizedPreviewComponents);
+
+    // Strict-sum reconciliation — same pattern as computeProfileScore /
+    // computeMatchScore. component.score becomes the (quantized, clamped)
+    // sum of evidence contribution_points; AI's score is discarded.
+    const previewReconciliations = normalizedPreviewComponents.map((c) =>
+      reconcileEvidenceContributions(c),
+    );
+    const reconciledPreviewComponents = previewReconciliations.map((r) => r.component);
+    const previewScoreResiduals = previewReconciliations
+      .filter((r) => r.residual !== 0)
+      .map((r) => ({
+        componentName: r.component.name,
+        aiScore: r.component.score + r.residual,
+        derivedScore: r.component.score,
+      }));
+    const previewEvidenceQuantizationResiduals = previewReconciliations.flatMap((r) =>
+      r.quantizationDeltas.map((d) => ({
+        componentName: r.component.name,
+        evidenceIndex: d.evidenceIndex,
+        original: d.original,
+        quantized: d.quantized,
+      })),
+    );
+    const previewCalibrationWarnings = reconciledPreviewComponents.flatMap((c) =>
+      detectCalibrationWarnings(c),
+    );
+
+    const derivedOverall = deriveOverallScore(reconciledPreviewComponents);
     const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
     const preview = await this.scoringRepo.upsertMatchPreview({
@@ -1077,7 +1104,7 @@ export class ScoringService {
       resumeId: defaultResume.id,
       overallScore: derivedOverall,
       band: derivedBand,
-      components: normalizedPreviewComponents as unknown as Record<string, unknown>,
+      components: reconciledPreviewComponents as unknown as Record<string, unknown>,
       redactedFields: aiResult.redactedFields,
       weightsUsed: weights as unknown as Record<string, unknown>,
       promptVersion: aiResult.promptVersion,
@@ -1123,6 +1150,9 @@ export class ScoringService {
         promptVersion: aiResult.promptVersion,
         latencyMs: aiResult.latencyMs,
         source,
+        scoreResiduals: previewScoreResiduals,
+        evidenceQuantizationResiduals: previewEvidenceQuantizationResiduals,
+        calibrationWarnings: previewCalibrationWarnings,
       },
     });
 
