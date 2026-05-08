@@ -679,10 +679,38 @@ export class ScoringService {
       aiResult.score.components,
       weights as unknown as Record<string, number>,
     );
-    const derivedOverall = deriveOverallScore(normalizedMatchComponents);
+
+    // Strict-sum reconciliation — mirrors the pattern in computeProfileScore.
+    // component.score becomes the (quantized, clamped) sum of evidence
+    // contribution_points; AI's score is discarded; residuals + warnings
+    // flow into the audit row.
+    const matchReconciliations = normalizedMatchComponents.map((c) =>
+      reconcileEvidenceContributions(c),
+    );
+    const reconciledMatchComponents = matchReconciliations.map((r) => r.component);
+    const matchScoreResiduals = matchReconciliations
+      .filter((r) => r.residual !== 0)
+      .map((r) => ({
+        componentName: r.component.name,
+        aiScore: r.component.score + r.residual,
+        derivedScore: r.component.score,
+      }));
+    const matchEvidenceQuantizationResiduals = matchReconciliations.flatMap((r) =>
+      r.quantizationDeltas.map((d) => ({
+        componentName: r.component.name,
+        evidenceIndex: d.evidenceIndex,
+        original: d.original,
+        quantized: d.quantized,
+      })),
+    );
+    const matchCalibrationWarnings = reconciledMatchComponents.flatMap((c) =>
+      detectCalibrationWarnings(c),
+    );
+
+    const derivedOverall = deriveOverallScore(reconciledMatchComponents);
     const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
-    const evidenceRows = normalizedMatchComponents.flatMap((comp) =>
+    const evidenceRows = reconciledMatchComponents.flatMap((comp) =>
       comp.evidence.map((ev) => ({
         componentName: comp.name,
         excerptText: ev.excerpt,
@@ -700,7 +728,7 @@ export class ScoringService {
         resumeId,
         overallScore: derivedOverall,
         band: derivedBand,
-        components: normalizedMatchComponents as unknown as Record<string, unknown>,
+        components: reconciledMatchComponents as unknown as Record<string, unknown>,
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
         promptVersion: aiResult.promptVersion,
@@ -730,6 +758,9 @@ export class ScoringService {
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
         promotedFromPreviewId,
+        scoreResiduals: matchScoreResiduals,
+        evidenceQuantizationResiduals: matchEvidenceQuantizationResiduals,
+        calibrationWarnings: matchCalibrationWarnings,
       },
       ...requestMeta,
     });
@@ -742,7 +773,7 @@ export class ScoringService {
       matchScore.id,
       {
         ...aiResult.score,
-        components: normalizedMatchComponents,
+        components: reconciledMatchComponents,
       } as MatchScoreOutput,
       aiResult,
       matchScore.createdAt,
