@@ -157,6 +157,9 @@ function NotificationRow({ notification, onClick }: NotificationRowProps) {
     <button
       type="button"
       onClick={onClick}
+      data-testid="notification-row"
+      data-notification-id={notification.id}
+      data-unread={isUnread ? "true" : "false"}
       className={cn(
         "flex w-full items-start gap-3 border-b border-[var(--color-hairline-soft)] px-4 py-3 text-left transition hover:bg-[var(--color-surface-soft)]",
         "last:border-b-0",

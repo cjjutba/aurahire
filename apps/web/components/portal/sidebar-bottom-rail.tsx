@@ -97,12 +97,15 @@ export function SidebarBottomRail({ user, onSignedOut }: SidebarBottomRailProps)
         <PopoverTrigger
           className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface-strong)] text-[var(--color-body)] transition hover:bg-[var(--color-hairline)] hover:text-[var(--color-ink)]"
           aria-label={bellLabel}
+          data-testid="bell-button"
+          data-unread-count={unreadCount}
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 ? (
             <span
               className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]"
               aria-hidden="true"
+              data-testid="bell-unread-dot"
             />
           ) : null}
         </PopoverTrigger>

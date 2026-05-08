@@ -44,3 +44,30 @@ The specs currently assume a manually logged-in candidate session. To make them 
 | `onboarding-skip.spec.ts` | Skip resume, manual fill |
 | `onboarding-reupload.spec.ts` | Re-upload mid-flow (partial — full "Replace resume" affordance pending) |
 | `onboarding-mobile.spec.ts` | Mobile drawer (iPhone 13 viewport) |
+| `proactive-system-onboarding.spec.ts` | Full onboarding → analyzing screen → dashboard with Score Ring + recommendations (Plan Task 41) |
+| `proactive-system-notification-roundtrip.spec.ts` | Recruiter advances status → candidate's bell auto-updates via realtime → click row → navigate (Plan Task 42) |
+
+### Proactive-system specs (env-gated)
+
+The two `proactive-system-*` specs require seeded test data and are gated
+behind env vars so CI without OPENAI / Redis can skip them cleanly.
+
+`proactive-system-onboarding.spec.ts` — set:
+
+- `TEST_EMAIL`, `TEST_PASSWORD`        — fresh candidate (onboarding incomplete)
+- `E2E_REQUIRE_RECOMMENDATIONS=true`   — strict mode (default off allows degraded recs)
+- `E2E_SKIP_AI=true`                   — skip when AI is unavailable
+
+`proactive-system-notification-roundtrip.spec.ts` — set:
+
+- `TEST_CANDIDATE_EMAIL`, `TEST_CANDIDATE_PASSWORD`
+- `TEST_RECRUITER_EMAIL`, `TEST_RECRUITER_PASSWORD`
+- `TEST_APPLICATION_ID` — uuid of an `applied`-status application owned by
+  the recruiter's company and submitted by the candidate.
+- `E2E_SKIP_NOTIFICATION_ROUNDTRIP=true` — skip when realtime is unavailable.
+
+Run only these specs:
+
+```bash
+pnpm -F @aurahire/web exec playwright test e2e/proactive-system-*.spec.ts
+```
