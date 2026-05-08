@@ -437,7 +437,7 @@ export function RecruiterDashboardClient({
     kpis.totalApps === 0;
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-[1280px] space-y-8">
       <header>
         <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           Recruiter Dashboard

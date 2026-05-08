@@ -522,7 +522,7 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Optional" />
+                        <SelectValue placeholder="Select education level" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

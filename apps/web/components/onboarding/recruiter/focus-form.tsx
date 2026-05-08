@@ -89,7 +89,7 @@ export function RecruiterFocusForm({ defaults }: FocusFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel className={labelCls}>
-                Roles you typically hire for (Optional)
+                Roles you typically hire for
               </FormLabel>
               <FormControl>
                 <Textarea
@@ -112,7 +112,7 @@ export function RecruiterFocusForm({ defaults }: FocusFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel className={labelCls}>
-                Hiring volume per quarter (Optional)
+                Hiring volume per quarter
               </FormLabel>
               <Select
                 onValueChange={(v) => field.onChange(v as HiringVolume)}

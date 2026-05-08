@@ -19,13 +19,31 @@ if (typeof window !== "undefined") {
 
 interface Props {
   url: string;
+  /**
+   * Width (px) the PDF should fit into. Measured by the parent because the
+   * renderer's own container can be `display:none` (warm-mounted while the
+   * Parsed Text tab is active), which would report `clientWidth=0`.
+   */
+  availableWidth: number | null;
   /** Called once after all pages render with the flat list of text items per page. */
   onTextLayer: (pages: TextLayerItem[][]) => void;
   onLoadError: (err: Error) => void;
   className?: string;
 }
 
-export function PdfRenderer({ url, onTextLayer, onLoadError, className }: Props) {
+// Upper bound on render scale so we don't waste pixels on very wide panels.
+// 1.5 matches the previous fixed scale and was tuned for legibility.
+const MAX_SCALE = 1.5;
+// Lower bound so a very narrow panel still produces readable text.
+const MIN_SCALE = 0.6;
+
+export function PdfRenderer({
+  url,
+  availableWidth,
+  onTextLayer,
+  onLoadError,
+  className,
+}: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
 
@@ -45,7 +63,7 @@ export function PdfRenderer({ url, onTextLayer, onLoadError, className }: Props)
   }, [url, onLoadError]);
 
   useEffect(() => {
-    if (!doc || !containerRef.current) return;
+    if (!doc || !containerRef.current || availableWidth === null) return;
     const container = containerRef.current;
     container.innerHTML = "";
     let cancelled = false;
@@ -55,7 +73,10 @@ export function PdfRenderer({ url, onTextLayer, onLoadError, className }: Props)
       for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
         if (cancelled) return;
         const page: PDFPageProxy = await doc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 1.5 });
+        const baseViewport = page.getViewport({ scale: 1 });
+        const fitScale = availableWidth / baseViewport.width;
+        const scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, fitScale));
+        const viewport = page.getViewport({ scale });
 
         const pageWrapper = document.createElement("div");
         pageWrapper.style.position = "relative";
@@ -130,7 +151,7 @@ export function PdfRenderer({ url, onTextLayer, onLoadError, className }: Props)
     return () => {
       cancelled = true;
     };
-  }, [doc, onTextLayer, onLoadError]);
+  }, [doc, availableWidth, onTextLayer, onLoadError]);
 
   return <div ref={containerRef} className={className} />;
 }

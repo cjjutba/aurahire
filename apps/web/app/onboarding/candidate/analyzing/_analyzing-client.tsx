@@ -3,12 +3,38 @@
 import { useEffect, useReducer, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-import { ANALYZING_SCREEN_WALLCLOCK_MS } from "@aurahire/shared";
+import { ANALYZING_SCREEN_WALLCLOCK_MS, setAccessToken } from "@aurahire/shared";
 
 import { AiShimmer } from "@/components/ai/ai-shimmer";
 import { ScoreRing } from "@/components/score/score-ring";
-import { clientApiFetch } from "@/hooks/_client-fetch";
+import { ClientApiError, clientApiFetch } from "@/hooks/_client-fetch";
+import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { useCandidateRealtime } from "@/lib/realtime/use-candidate-realtime";
+
+/**
+ * Backend codes that mean "the candidate hasn't completed enough of the
+ * wizard yet." Each one maps to a step the candidate can return to in
+ * order to fix the problem. We treat these as recoverable user errors
+ * rather than transient failures — a "Try again" reload doesn't help
+ * because the validation will keep failing.
+ */
+const ONBOARDING_VALIDATION_CODES: Record<
+  string,
+  { step: "/onboarding/candidate/personal" | "/onboarding/candidate/review" | "/onboarding/candidate/preferences"; label: string }
+> = {
+  INCOMPLETE_PERSONAL: {
+    step: "/onboarding/candidate/personal",
+    label: "Go back to Personal",
+  },
+  INCOMPLETE_REVIEW: {
+    step: "/onboarding/candidate/review",
+    label: "Go back to Review",
+  },
+  INCOMPLETE_PREFERENCES: {
+    step: "/onboarding/candidate/preferences",
+    label: "Go back to Preferences",
+  },
+};
 
 /**
  * Score band the analyzing screen needs to render the Score Ring. Mirrors
@@ -43,12 +69,24 @@ export type AnalyzingState =
     }
   | { kind: "profileScoreDegraded" }
   | { kind: "error"; message: string }
+  | {
+      kind: "validationError";
+      message: string;
+      backToStep: string;
+      backLabel: string;
+    }
   | { kind: "redirecting" };
 
 export type AnalyzingAction =
   | { type: "PROFILE_SCORE_OK"; score: AnalyzingProfileScore; now: number }
   | { type: "PROFILE_SCORE_DEGRADED" }
   | { type: "PROFILE_SCORE_ERROR"; message: string }
+  | {
+      type: "PROFILE_SCORE_VALIDATION";
+      message: string;
+      backToStep: string;
+      backLabel: string;
+    }
   | { type: "PREVIEW_TICK" }
   | { type: "REDIRECT" };
 
@@ -73,6 +111,14 @@ export function analyzingReducer(
     case "PROFILE_SCORE_ERROR":
       if (state.kind !== "computingProfileScore") return state;
       return { kind: "error", message: action.message };
+    case "PROFILE_SCORE_VALIDATION":
+      if (state.kind !== "computingProfileScore") return state;
+      return {
+        kind: "validationError",
+        message: action.message,
+        backToStep: action.backToStep,
+        backLabel: action.backLabel,
+      };
     case "PREVIEW_TICK":
       if (state.kind === "profileScoreReady") {
         return {
@@ -144,6 +190,20 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
 
     void (async () => {
       try {
+        // The root <AuthTokenProvider> hydrates the module-level access
+        // token asynchronously via supabase.auth.getSession() inside its
+        // own useEffect. This component's effect can fire BEFORE that
+        // hydration finishes — at which point clientApiFetch sees a null
+        // token and ships the request with no Authorization header,
+        // producing a 401. Read the session here directly so the call
+        // is always authenticated regardless of provider ordering, and
+        // backfill the global token cache so subsequent calls in this
+        // session are also covered.
+        const supabase = createSupabaseBrowserClient();
+        const sessionResult = await supabase.auth.getSession();
+        const token = sessionResult.data.session?.access_token ?? null;
+        if (token) setAccessToken(token);
+
         const envelope = await clientApiFetch<{ data: CompleteOnboardingResponseData }>(
           "/api/v1/candidate-profiles/me/complete-onboarding",
           { method: "PATCH" },
@@ -162,6 +222,23 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
           dispatch({ type: "PROFILE_SCORE_DEGRADED" });
         }
       } catch (err) {
+        // Recognise the wizard-validation 400s and route the candidate
+        // back to the failing step with an actionable message rather
+        // than the generic "API 400 — Try again" loop.
+        if (err instanceof ClientApiError && err.status === 400) {
+          const body = err.body as { code?: string; message?: string } | null;
+          const code = body?.code;
+          if (code && ONBOARDING_VALIDATION_CODES[code]) {
+            const target = ONBOARDING_VALIDATION_CODES[code];
+            dispatch({
+              type: "PROFILE_SCORE_VALIDATION",
+              message: body?.message ?? "Please complete the previous step.",
+              backToStep: target.step,
+              backLabel: target.label,
+            });
+            return;
+          }
+        }
         const message = err instanceof Error ? err.message : "Something went wrong";
         dispatch({ type: "PROFILE_SCORE_ERROR", message });
       }
@@ -283,6 +360,21 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
               className="inline-flex items-center justify-center rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
             >
               Try again
+            </button>
+          </div>
+        )}
+
+        {state.kind === "validationError" && (
+          <div role="alert" className="space-y-4">
+            <p className="text-sm text-[var(--color-status-danger)]">
+              {state.message}
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push(state.backToStep)}
+              className="inline-flex items-center justify-center rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
+            >
+              {state.backLabel}
             </button>
           </div>
         )}

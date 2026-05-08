@@ -90,19 +90,24 @@ export function CandidatePreferencesForm({
     availableStartDate: values.availableStartDate || null,
   });
 
-  const { schedule, status, retry } = useAutosave<PreferencesPayload>({
-    save: async (payload) => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-      const res = await fetch(`${apiUrl}/api/v1/candidate-profiles/preferences`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`PATCH failed: ${res.status}`);
-    },
+  // Single source of truth for the PATCH so handleFinish can call it
+  // directly (bypassing the autosave debounce / in-flight queue) and the
+  // useAutosave hook can call it on blur as before.
+  const savePreferences = async (payload: PreferencesPayload): Promise<void> => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+    const res = await fetch(`${apiUrl}/api/v1/candidate-profiles/preferences`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`PATCH failed: ${res.status}`);
+  };
+
+  const { schedule, status } = useAutosave<PreferencesPayload>({
+    save: savePreferences,
   });
 
   useEffect(() => {
@@ -117,15 +122,31 @@ export function CandidatePreferencesForm({
 
   const handleFinish = async () => {
     setFinishError(null);
+
+    // Frontend gate that mirrors the backend `INCOMPLETE_PREFERENCES`
+    // validation. Without at least one desired role there's nothing to
+    // score the candidate against — block here BEFORE we navigate away,
+    // instead of letting the analyzing screen call the API and surface
+    // the same message later.
+    const latest = buildPayload(getValues());
+    if (!latest.desiredRoles || latest.desiredRoles.length === 0) {
+      setFinishError("Add at least one desired role before finishing.");
+      return;
+    }
+
     setFinishing(true);
     try {
-      // Flush any pending preferences autosave so the analyzing screen sees a
-      // consistent profile when it calls complete-onboarding. The
-      // complete-onboarding call itself now lives on
-      // /onboarding/candidate/analyzing — that screen owns the inline Profile
-      // Score compute + match-preview streaming UX. Calling it from here
-      // would double-charge the AI.
-      await retry();
+      // Bypass the autosave queue and PATCH directly. The autosave hook
+      // is great for blur-driven background saves, but here we need
+      // synchronous-style guarantees: a blur-triggered save can be
+      // in-flight when Finish is clicked, in which case `flush()`
+      // early-returns (its `inFlight` guard) and the recursive flush in
+      // the `finally` block runs fire-and-forget — the await resolves
+      // before the new payload actually persists, the redirect wins the
+      // race, and the analyzing screen's complete-onboarding call sees
+      // empty desiredRoles and 400s with INCOMPLETE_PREFERENCES. A
+      // direct PATCH eliminates the race entirely.
+      await savePreferences(latest);
       router.push("/onboarding/candidate/analyzing");
     } catch (err) {
       setFinishError((err as Error).message);
@@ -149,16 +170,24 @@ export function CandidatePreferencesForm({
     <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
       <div className="flex flex-col gap-1">
         <label htmlFor="desiredRoles" className="text-xs font-semibold text-[var(--color-ink)]">
-          Desired Roles
+          Desired Roles{" "}
+          <span aria-hidden="true" className="text-[var(--color-status-danger)]">
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <textarea
           id="desiredRoles"
           rows={2}
+          required
+          aria-required="true"
           placeholder="Software Engineer, Product Designer"
           className="rounded-xl border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
           {...register("desiredRoles", { onBlur: handleBlur })}
         />
-        <p className="text-xs text-[var(--color-muted)]">Comma-separated.</p>
+        <p className="text-xs text-[var(--color-muted)]">
+          Comma-separated. At least one role is required.
+        </p>
       </div>
 
       <div className="flex flex-col gap-1">

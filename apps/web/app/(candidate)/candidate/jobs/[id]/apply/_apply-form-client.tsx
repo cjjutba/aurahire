@@ -188,7 +188,7 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
               Cover letter
             </h2>
             <p className="mt-1 text-xs text-[var(--color-muted)]">
-              Optional · 2–3 short paragraphs is plenty.
+              2–3 short paragraphs is plenty.
             </p>
           </div>
           <span

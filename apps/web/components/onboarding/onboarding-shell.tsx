@@ -97,11 +97,13 @@ export function OnboardingShell({
       {/* Content — no card wrapper, no background. Children render on canvas. */}
       {rightPane ? (
         <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 gap-0 lg:grid-cols-[1.3fr_1fr]">
-          <section className="px-4 pb-10 pt-2 sm:px-6 sm:pb-12 sm:pt-4">
+          <section className="min-w-0 px-4 pb-10 pt-2 sm:px-6 sm:pb-12 sm:pt-4">
             {headingBlock}
             {children}
           </section>
-          <aside className="hidden border-l border-[var(--color-hairline)] bg-[var(--color-surface-soft)] px-6 py-6 lg:block">
+          {/* min-w-0 + overflow-hidden so wide right-pane content (PDF canvas)
+              cannot blow out the fr-ratio and squash the form column. */}
+          <aside className="hidden min-w-0 overflow-hidden border-l border-[var(--color-hairline)] bg-[var(--color-surface-soft)] px-6 py-6 lg:block">
             {rightPane}
           </aside>
         </div>

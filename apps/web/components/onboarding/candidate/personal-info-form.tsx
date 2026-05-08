@@ -91,10 +91,8 @@ export function CandidatePersonalInfoForm({
         >
           <span className="whitespace-nowrap">
             {label}
-            {required ? (
+            {required && (
               <span aria-hidden className="text-[var(--color-status-danger)]"> *</span>
-            ) : (
-              <span className="font-normal text-[var(--color-muted)]"> (Optional)</span>
             )}
           </span>
           {wasAi && (

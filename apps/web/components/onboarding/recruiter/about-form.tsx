@@ -94,7 +94,7 @@ export function RecruiterAboutForm({ defaults }: AboutFormProps) {
           name="jobTitle"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={labelCls}>Job Title (Optional)</FormLabel>
+              <FormLabel className={labelCls}>Job Title</FormLabel>
               <FormControl>
                 <Input
                   className={inputCls}
@@ -112,7 +112,7 @@ export function RecruiterAboutForm({ defaults }: AboutFormProps) {
           name="department"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={labelCls}>Department (Optional)</FormLabel>
+              <FormLabel className={labelCls}>Department</FormLabel>
               <FormControl>
                 <Input
                   className={inputCls}

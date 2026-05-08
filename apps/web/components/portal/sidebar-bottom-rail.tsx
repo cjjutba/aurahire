@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Bell, MoreHorizontal } from "lucide-react";
 import type { UserRole } from "@aurahire/shared";
 
@@ -44,10 +45,17 @@ export function SidebarBottomRail({ user, onSignedOut }: SidebarBottomRailProps)
       ? `Notifications (${unreadCount} unread)`
       : "Notifications";
 
+  // Controlled open state for the profile popover so the three-dot button
+  // (rendered OUTSIDE the Popover root) can open the SAME popover that the
+  // avatar/name trigger anchors. Without this, the three-dot would have its
+  // own Popover and its content would float above the dot's position rather
+  // than originate from the profile area.
+  const [profileOpen, setProfileOpen] = useState(false);
+
   return (
     <div className="flex items-center gap-2 border-t border-[var(--color-hairline-soft)] px-3 py-3">
-      {/* Profile area: avatar + name (left) — opens profile popover */}
-      <Popover>
+      {/* Profile area: avatar + name (left) — owns the popover anchor */}
+      <Popover open={profileOpen} onOpenChange={setProfileOpen}>
         <PopoverTrigger
           className="flex min-w-0 flex-1 items-center gap-2 rounded-[var(--radius-md)] p-1 text-left transition hover:bg-[var(--color-surface-strong)]"
           aria-label="Open profile menu"
@@ -74,23 +82,18 @@ export function SidebarBottomRail({ user, onSignedOut }: SidebarBottomRailProps)
         </PopoverContent>
       </Popover>
 
-      {/* Three-dot button: alternate trigger for the SAME profile popover */}
-      <Popover>
-        <PopoverTrigger
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface-strong)] text-[var(--color-body)] transition hover:bg-[var(--color-hairline)] hover:text-[var(--color-ink)]"
-          aria-label="More options"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </PopoverTrigger>
-        <PopoverContent
-          side="top"
-          align="end"
-          sideOffset={8}
-          className="w-80 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6 shadow-md"
-        >
-          <SidebarProfilePopoverBody user={user} onSignedOut={onSignedOut} />
-        </PopoverContent>
-      </Popover>
+      {/* Three-dot button: alternate trigger that opens the SAME popover.
+          Lives outside the Popover root so it can't reposition the anchor. */}
+      <button
+        type="button"
+        onClick={() => setProfileOpen((open) => !open)}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface-strong)] text-[var(--color-body)] transition hover:bg-[var(--color-hairline)] hover:text-[var(--color-ink)]"
+        aria-label="More options"
+        aria-haspopup="menu"
+        aria-expanded={profileOpen}
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
 
       {/* Bell button: opens notifications popover */}
       <Popover>

@@ -4,9 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, FileText, FileType2, RotateCcw } from "lucide-react";
 import { PdfRenderer } from "./pdf-renderer";
-import { HighlightOverlay, type PositionedHighlight } from "./highlight-overlay";
 import { LinearizedResumeView } from "./linearized-resume-view";
-import { findTextSpans, type TextLayerItem } from "./find-text-spans";
+import type { TextLayerItem } from "./find-text-spans";
 import { deriveHighlights, type HighlightCategory } from "./derive-highlights";
 import type { ParsedResumeV2 } from "@/app/onboarding/candidate/_steps";
 
@@ -27,15 +26,18 @@ const IMAGE_ONLY_PDF_THRESHOLD = 50;
  * Right-pane resume preview shown on `/onboarding/candidate/personal` and
  * `/onboarding/candidate/review`. Two tabs:
  *
- *   • Original     — PDF.js-rendered canonical PDF with field-tied highlight
- *                    overlays. For DOCX uploads the backend exposes a canonical
- *                    PDF derivative, so DOCX renders here too.
- *   • Parsed Text  — linearized rawText with inline highlights.
+ *   • Parsed Text  — linearized rawText with inline highlights tied to
+ *                    parsed fields. This is the default tab; it's where
+ *                    candidates verify what we extracted.
+ *   • Original     — PDF.js-rendered canonical PDF with NO overlay
+ *                    rectangles. For DOCX uploads the backend exposes a
+ *                    canonical PDF derivative, so DOCX renders here too.
  *
  * The toggle is always visible when at least one source is available; each
  * tab handles its own empty state and offers a one-click jump to the other
- * tab when its content can't render. Highlight behavior (active categories,
- * hover pulse, click-to-focus-field) is identical on both tabs.
+ * tab when its content can't render. Highlights only appear on the Parsed
+ * Text view — text-layer matching against the PDF was unreliable, so the
+ * Original tab is intentionally clean.
  */
 export function ResumePreviewPane({
   signedPdfUrl,
@@ -44,9 +46,25 @@ export function ResumePreviewPane({
   activeCategories,
   className,
 }: Props) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [pageContainers, setPageContainers] = useState<HTMLElement[]>([]);
-  const [pages, setPages] = useState<TextLayerItem[][]>([]);
+  const [availableWidth, setAvailableWidth] = useState<number | null>(null);
+
+  // Measure the always-visible pane root so the (sometimes-hidden) PDF
+  // container has a width to size against — clientWidth on `display:none`
+  // descendants reports 0.
+  useEffect(() => {
+    const node = rootRef.current;
+    if (!node) return;
+    const measure = () => {
+      const w = node.clientWidth;
+      if (w > 0) setAvailableWidth((prev) => (prev !== w ? w : prev));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, []);
 
   const hasPdf = !!signedPdfUrl;
   const hasText = !!rawText && rawText.trim().length > 0;
@@ -61,7 +79,6 @@ export function ResumePreviewPane({
 
   const onTextLayer = useCallback((pgs: TextLayerItem[][]) => {
     const totalChars = pgs.flat().reduce((sum, it) => sum + it.str.length, 0);
-    setPages(pgs);
     setPdfStatus(
       totalChars < IMAGE_ONLY_PDF_THRESHOLD ? "image-only" : "rendered",
     );
@@ -83,17 +100,17 @@ export function ResumePreviewPane({
   const parsedTextAvailable = hasText;
   const anyAvailable = originalAvailable || parsedTextAvailable;
 
-  // Default tab when the user hasn't explicitly picked. Auto-flips as
-  // pdfStatus transitions (loading → rendered → image-only/failed). Once
-  // userMode is set, this whole block is bypassed.
+  // Default tab when the user hasn't explicitly picked: prefer Parsed Text
+  // whenever it's available, falling back to the Original PDF only when
+  // parsed text is missing. Once userMode is set, this whole block is
+  // bypassed. Parsed Text leads because it's the highlighted, structured
+  // view of what we extracted — that's the artifact the candidate cares
+  // about reviewing during onboarding.
   const displayedMode: ViewMode = useMemo(() => {
     if (userMode) return userMode;
-    if (pdfStatus === "rendered") return "pdf";
-    if (pdfStatus === "loading") return hasPdf ? "pdf" : "text";
-    if (pdfStatus === "image-only") return parsedTextAvailable ? "text" : "pdf";
-    // failed
-    return parsedTextAvailable ? "text" : "pdf";
-  }, [userMode, pdfStatus, hasPdf, parsedTextAvailable]);
+    if (parsedTextAvailable) return "text";
+    return "pdf";
+  }, [userMode, parsedTextAvailable]);
 
   // The PDF container shows only when we're on Original AND the PDF actually
   // rendered (or rendered as image-only). For loading/failed states we
@@ -102,33 +119,15 @@ export function ResumePreviewPane({
     displayedMode === "pdf" &&
     (pdfStatus === "rendered" || pdfStatus === "image-only");
 
-  // Compute highlight rects whenever Original is shown AND the PDF rendered.
-  const positioned: PositionedHighlight[] = useMemo(() => {
-    if (displayedMode !== "pdf" || pdfStatus !== "rendered" || pages.length === 0) {
-      return [];
-    }
-    const out: PositionedHighlight[] = [];
-    for (let p = 0; p < pages.length; p++) {
-      for (const h of highlights) {
-        const rects = findTextSpans(pages[p]!, h.source);
-        if (rects) out.push({ ...h, pageIndex: p, rects });
-      }
-    }
-    return out;
-  }, [displayedMode, pdfStatus, pages, highlights]);
-
-  // Re-collect page containers whenever Original becomes the rendered tab.
-  useEffect(() => {
-    if (!showPdfDocument) return;
-    if (!containerRef.current) return;
-    const nodes = Array.from(
-      containerRef.current.querySelectorAll<HTMLElement>(":scope > div"),
-    );
-    setPageContainers(nodes);
-  }, [showPdfDocument]);
+  // Original tab now renders the raw PDF only — no overlay rectangles.
+  // Highlights live exclusively on the Parsed Text view, where matching
+  // is done against the linearized text and is accurate. Attempting to
+  // map highlights onto PDF.js text-layer coordinates produced false
+  // positives (the wrong spans got boxed), so the Original is intentionally
+  // left clean.
 
   return (
-    <div className={className}>
+    <div ref={rootRef} className={className}>
       {/* Header: always-on toggle (when any source exists) + side actions. */}
       <div className="mb-3 flex items-center justify-between gap-3">
         {anyAvailable ? (
@@ -138,20 +137,20 @@ export function ResumePreviewPane({
             className="inline-flex rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-0.5"
           >
             <ViewToggleButton
-              icon={<FileType2 className="h-3.5 w-3.5" aria-hidden />}
-              label="Original"
-              selected={displayedMode === "pdf"}
-              disabled={!originalAvailable}
-              disabledReason="Original document couldn't be loaded."
-              onClick={() => setUserMode("pdf")}
-            />
-            <ViewToggleButton
               icon={<FileText className="h-3.5 w-3.5" aria-hidden />}
               label="Parsed Text"
               selected={displayedMode === "text"}
               disabled={!parsedTextAvailable}
               disabledReason="Parsed text isn't available for this resume."
               onClick={() => setUserMode("text")}
+            />
+            <ViewToggleButton
+              icon={<FileType2 className="h-3.5 w-3.5" aria-hidden />}
+              label="Original"
+              selected={displayedMode === "pdf"}
+              disabled={!originalAvailable}
+              disabledReason="Original document couldn't be loaded."
+              onClick={() => setUserMode("pdf")}
             />
           </div>
         ) : (
@@ -232,9 +231,8 @@ export function ResumePreviewPane({
       {/* Image-only banner (Original tab, image-only PDFs only). */}
       {displayedMode === "pdf" && pdfStatus === "image-only" && (
         <p className="mt-3 rounded-md border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-xs text-[var(--color-muted)]">
-          This PDF appears to be image-only — highlights aren&apos;t available
-          on the document. Switch to <strong>Parsed Text</strong> for the
-          highlighted content.
+          This PDF appears to be image-only. Switch to{" "}
+          <strong>Parsed Text</strong> for searchable, highlighted content.
         </p>
       )}
 
@@ -250,22 +248,13 @@ export function ResumePreviewPane({
         >
           <PdfRenderer
             url={signedPdfUrl!}
+            availableWidth={availableWidth}
             onTextLayer={onTextLayer}
             onLoadError={onLoadError}
           />
         </div>
       )}
 
-      {showPdfDocument &&
-        pdfStatus === "rendered" &&
-        pageContainers.length > 0 &&
-        positioned.length > 0 && (
-          <HighlightOverlay
-            highlights={positioned}
-            activeCategories={activeCategories}
-            pageContainers={pageContainers}
-          />
-        )}
     </div>
   );
 }

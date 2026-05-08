@@ -954,7 +954,7 @@ export function CandidateResumeClient() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-[1280px] space-y-6">
       <header>
         <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           Resume

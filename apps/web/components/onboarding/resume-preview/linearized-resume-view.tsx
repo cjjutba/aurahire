@@ -29,16 +29,21 @@ export function LinearizedResumeView({ rawText, highlights, activeCategories }: 
               data-field-ref={seg.highlight.fieldRef}
               onClick={() => focusField(seg.highlight!.fieldRef)}
               style={{
-                backgroundColor: "var(--color-primary-soft)",
+                // Stronger tint than --color-primary-soft so the highlight reads
+                // as a deliberate marker rather than a faint wash. Pairs with
+                // font-weight 600 + AuraHire-blue text for unmistakable emphasis.
+                backgroundColor: "rgba(37, 99, 235, 0.16)",
                 color: "var(--color-primary)",
-                opacity: activeCategories.includes(seg.highlight.category) ? 1 : 0.3,
+                fontWeight: 600,
+                opacity: activeCategories.includes(seg.highlight.category) ? 1 : 0.4,
                 outline:
                   hoveredFieldId === seg.highlight.fieldRef
                     ? "2px solid var(--color-primary)"
                     : undefined,
                 cursor: "pointer",
-                padding: "0 2px",
+                padding: "1px 4px",
                 borderRadius: "3px",
+                transition: "background-color 150ms ease",
               }}
             >
               {seg.text}

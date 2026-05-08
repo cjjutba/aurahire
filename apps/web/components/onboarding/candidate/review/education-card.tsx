@@ -32,10 +32,8 @@ function FieldInput({
     <div className="flex flex-col gap-1">
       <label className="text-[11px] font-semibold text-[var(--color-ink)]">
         {label}
-        {required ? (
+        {required && (
           <span aria-hidden className="text-[var(--color-status-danger)]"> *</span>
-        ) : (
-          <span className="font-normal text-[var(--color-muted)]"> (Optional)</span>
         )}
       </label>
       <input

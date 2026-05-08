@@ -171,7 +171,7 @@ export function CompanyCreateForm({
           name="industry"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={labelCls}>Industry (Optional)</FormLabel>
+              <FormLabel className={labelCls}>Industry</FormLabel>
               <FormControl>
                 <Input
                   className={inputCls}
@@ -189,7 +189,7 @@ export function CompanyCreateForm({
           name="size"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={labelCls}>Company Size (Optional)</FormLabel>
+              <FormLabel className={labelCls}>Company Size</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 value={field.value ?? null}
@@ -216,7 +216,7 @@ export function CompanyCreateForm({
           name="website"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={labelCls}>Website (Optional)</FormLabel>
+              <FormLabel className={labelCls}>Website</FormLabel>
               <FormControl>
                 <Input
                   className={inputCls}
@@ -235,7 +235,7 @@ export function CompanyCreateForm({
           name="headquartersLocation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={labelCls}>Headquarters Location (Optional)</FormLabel>
+              <FormLabel className={labelCls}>Headquarters Location</FormLabel>
               <FormControl>
                 <Input
                   className={inputCls}
@@ -253,7 +253,7 @@ export function CompanyCreateForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={labelCls}>Description (Optional)</FormLabel>
+              <FormLabel className={labelCls}>Description</FormLabel>
               <FormControl>
                 <Textarea
                   className={textareaCls}

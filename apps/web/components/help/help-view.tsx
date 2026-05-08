@@ -176,7 +176,7 @@ export function HelpView({ variant }: HelpViewProps) {
     filtered.faq.length === 0;
 
   return (
-    <div className="mx-auto max-w-[1080px]">
+    <div className="mx-auto max-w-[1280px]">
       {/* Hero */}
       <header className="mb-10">
         <div className="mb-3 flex items-center gap-2">

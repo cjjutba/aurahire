@@ -81,7 +81,7 @@ export function WithdrawApplicationModal({
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Optional reason (private to you)"
+          placeholder="Reason (private to you)"
           rows={4}
           maxLength={500}
           className="w-full rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-3 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:border-[var(--color-primary)] focus:outline-none"
