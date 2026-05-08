@@ -29,6 +29,7 @@ import { ScoringModule } from "./modules/scoring/scoring.module";
 import { ApplicationsModule } from "./modules/applications/applications.module";
 import { BiasModule } from "./modules/bias/bias.module";
 import { InterviewsModule } from "./modules/interviews/interviews.module";
+import { InterviewVenuesModule } from "./modules/interview-venues/interview-venues.module";
 import { NotificationPreferencesModule } from "./modules/notification-preferences/notification-preferences.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { OffersModule } from "./modules/offers/offers.module";
@@ -128,6 +129,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     ApplicationsModule,
     BiasModule,
     InterviewsModule,
+    InterviewVenuesModule,
     NotificationPreferencesModule,
     NotificationsModule,
     OffersModule,
