@@ -1,6 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import {
+  applicationsTable,
   profileScoresTable,
   matchScoresTable,
   matchScorePreviewsTable,
@@ -242,17 +243,35 @@ export class ScoringRepository {
   /**
    * List a candidate's previews ordered by score (descending). Used by the
    * "Recommended for you" feed.
+   *
+   * LEFT JOIN applications on (candidate_id, job_id) and exclude rows where
+   * the candidate already applied — recommending a job they applied to is
+   * wasted real estate. Withdrawn / rejected applications still suppress the
+   * recommendation (re-applying after rejection is awkward UX).
    */
   async listMatchPreviewsForCandidate(
     candidateId: string,
     limit = 25,
   ): Promise<MatchScorePreview[]> {
-    return this.db
-      .select()
+    const rows = await this.db
+      .select({ preview: matchScorePreviewsTable })
       .from(matchScorePreviewsTable)
-      .where(eq(matchScorePreviewsTable.candidateId, candidateId))
+      .leftJoin(
+        applicationsTable,
+        and(
+          eq(applicationsTable.jobId, matchScorePreviewsTable.jobId),
+          eq(applicationsTable.candidateId, candidateId),
+        ),
+      )
+      .where(
+        and(
+          eq(matchScorePreviewsTable.candidateId, candidateId),
+          sql`${applicationsTable.id} IS NULL`,
+        ),
+      )
       .orderBy(desc(matchScorePreviewsTable.overallScore))
       .limit(limit);
+    return rows.map((r) => r.preview);
   }
 
   /**
