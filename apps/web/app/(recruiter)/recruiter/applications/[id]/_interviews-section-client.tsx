@@ -16,7 +16,7 @@ import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { getActiveCompanyId } from "@/lib/active-company";
-import { ScheduleInterviewModalClient } from "./_schedule-interview-modal-client";
+import { ScheduleInterviewSheetClient } from "./_schedule-interview-sheet-client";
 import { RescheduleModalClient } from "@/components/interview/reschedule-modal-client";
 
 // ---------------------------------------------------------------------------
@@ -343,11 +343,17 @@ function InterviewCard({ interview: iv, applicationId, showActions }: InterviewC
 interface Props {
   applicationId: string;
   interviews: InterviewRow[];
+  applicationStatus: string;
 }
 
-export function RecruiterInterviewsSection({ applicationId, interviews }: Props) {
+export function RecruiterInterviewsSection({ applicationId, interviews, applicationStatus }: Props) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [pastOpen, setPastOpen] = useState(false);
+
+  const canScheduleAnother =
+    applicationStatus === "interview" ||
+    applicationStatus === "screening" ||
+    applicationStatus === "applied";
 
   const router = useRouter();
   const pathname = usePathname();
@@ -382,12 +388,14 @@ export function RecruiterInterviewsSection({ applicationId, interviews }: Props)
           </h2>
           {latestStatus && <StatusPill status={latestStatus} />}
         </div>
-        <Button
-          onClick={() => setScheduleOpen(true)}
-          className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
-        >
-          {isEmpty ? "Schedule interview" : "Schedule another interview"}
-        </Button>
+        {canScheduleAnother && (
+          <Button
+            onClick={() => setScheduleOpen(true)}
+            className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+          >
+            {isEmpty ? "Schedule interview" : "Schedule another interview"}
+          </Button>
+        )}
       </header>
 
       {/* ── No interviews state ────────────────────────────────────────── */}
@@ -449,8 +457,8 @@ export function RecruiterInterviewsSection({ applicationId, interviews }: Props)
         </div>
       )}
 
-      {/* ── Schedule interview modal ──────────────────────────────────── */}
-      <ScheduleInterviewModalClient
+      {/* ── Schedule interview sheet ──────────────────────────────────── */}
+      <ScheduleInterviewSheetClient
         applicationId={applicationId}
         open={scheduleOpen}
         onOpenChange={setScheduleOpen}

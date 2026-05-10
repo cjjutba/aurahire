@@ -19,6 +19,7 @@ const PIPELINE_STAGES: Array<{ key: string; label: string }> = [
   { key: "screening", label: "Screening" },
   { key: "interview", label: "Interview" },
   { key: "offer", label: "Offer" },
+  { key: "offer_accepted", label: "Offer Accepted" },
   { key: "offer_declined", label: "Offer Declined" },
   { key: "hired", label: "Hired" },
 ];
@@ -43,8 +44,9 @@ const NEXT_POSITIVE: Record<string, AdvanceAction[] | null> = {
       href: (id) => `/recruiter/offers/new?applicationId=${id}`,
     },
   ],
-  offer: [{ status: "hired", label: "Mark Hired" }],
-  offer_declined: null,
+  offer: null,                                  // wait for candidate response
+  offer_accepted: [{ status: "hired", label: "Mark Hired" }],
+  offer_declined: null,                         // handled by separate UI block
   hired: null,
   rejected: null,
   withdrawn: null,
@@ -306,20 +308,15 @@ export function DecisionBarClient({
               isSendOffer && latestInterviewRecommendation === "proceed";
 
             const isMarkHired = action.status === "hired";
-            const isHireBlocked = isMarkHired && latestOfferStatus !== "accepted";
 
             if (isMarkHired) {
               return (
                 <button
                   key={action.status}
                   type="button"
-                  disabled={isPending || isHireBlocked}
-                  title={isHireBlocked ? "Waiting for candidate to accept the offer." : undefined}
-                  onClick={() => {
-                    if (isHireBlocked) return;
-                    setHireConfirmOpen(true);
-                  }}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isPending}
+                  onClick={() => setHireConfirmOpen(true)}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60"
                 >
                   {pending === actionKey ? <ButtonSpinner /> : <Check className="h-4 w-4" aria-hidden />}
                   <span>{action.label}</span>
@@ -385,12 +382,17 @@ export function DecisionBarClient({
             <button
               type="button"
               onClick={async () => {
+                const rejectLabel = currentStatus === "offer_accepted" ? "Not Hired" : "Reject";
+                const rejectConfirmTitle = currentStatus === "offer_accepted" ? "Don't hire this candidate?" : "Reject this application?";
+                const rejectConfirmDesc =
+                  currentStatus === "offer_accepted"
+                    ? "The candidate accepted but you've decided not to hire. They'll be notified the offer is being rescinded."
+                    : "The candidate will be marked as rejected. You can change this later if needed.";
                 const doReject = async () => {
                   const ok = await confirm({
-                    title: "Reject this application?",
-                    description:
-                      "The candidate will be marked as rejected. You can change this later if needed.",
-                    confirmLabel: "Reject candidate",
+                    title: rejectConfirmTitle,
+                    description: rejectConfirmDesc,
+                    confirmLabel: rejectLabel,
                     variant: "destructive",
                   });
                   if (!ok) return;
@@ -410,7 +412,7 @@ export function DecisionBarClient({
               ) : (
                 <X className="h-4 w-4" aria-hidden />
               )}
-              <span>Reject</span>
+              <span>{currentStatus === "offer_accepted" ? "Not Hired" : "Reject"}</span>
             </button>
           )}
         </div>

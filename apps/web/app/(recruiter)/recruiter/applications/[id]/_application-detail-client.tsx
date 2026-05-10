@@ -35,13 +35,14 @@ const COMPONENT_LABELS: Record<string, string> = {
 };
 
 const APP_STATUS: Record<string, { label: string; dot: string; text: string }> = {
-  applied:    { label: "Applied",    dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  screening:  { label: "Screening",  dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  interview:  { label: "Interview",  dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  offer:      { label: "Offer",      dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
-  hired:      { label: "Hired",      dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  rejected:   { label: "Rejected",   dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
-  withdrawn:  { label: "Withdrawn",  dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
+  applied:        { label: "Applied",        dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
+  screening:      { label: "Screening",      dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
+  interview:      { label: "Interview",      dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
+  offer:          { label: "Offer",          dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
+  offer_accepted: { label: "Offer Accepted", dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
+  hired:          { label: "Hired",          dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
+  rejected:       { label: "Rejected",       dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
+  withdrawn:      { label: "Withdrawn",      dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
 };
 
 export interface MatchEvidence {
@@ -377,13 +378,14 @@ function ExtraSections({
       <RecruiterInterviewsSection
         applicationId={app.id}
         interviews={interviews}
+        applicationStatus={app.status}
       />
 
       {showDecisionPanel && latestInterview && (
         <DecisionPanelClient interview={latestInterview} />
       )}
 
-      <RecruiterOffersSection applicationId={app.id} offers={offers} />
+      <RecruiterOffersSection applicationId={app.id} offers={offers} applicationStatus={app.status} />
 
       <NotesSectionClient
         applicationId={app.id}
