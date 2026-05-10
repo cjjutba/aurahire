@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -14,9 +15,11 @@ import type {
 
 import { AuditService } from "../../audit";
 import { AUDIT_ACTIONS } from "../../audit/audit.types";
+import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 import { EmailService } from "../../email/email.service";
 import { EventsService } from "../../realtime";
 import { ApplicationsRepository } from "../applications/applications.repository";
+import type { ApplicationsTx } from "../applications/applications.repository";
 import { ApplicationsService } from "../applications/applications.service";
 import { JobsRepository } from "../jobs/jobs.repository";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -45,6 +48,7 @@ export class OffersService {
     private readonly audit: AuditService,
     private readonly events: EventsService,
     private readonly notifications: NotificationsService,
+    @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
   ) {}
 
   async create(
@@ -152,21 +156,50 @@ export class OffersService {
     if (!application || application.candidateId !== user.id) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
     }
-    if (offer.status !== "pending") {
-      throw new BadRequestException({
-        code: "OFFER_NOT_PENDING",
-        message: `Cannot accept offer in status '${offer.status}'`,
-      });
-    }
 
-    const updated = await this.repo.update(offerId, {
-      status: "accepted",
-      respondedAt: new Date(),
+    const job = await this.jobsRepo.findById(application.jobId);
+
+    const updated = await this.db.transaction(async (tx) => {
+      // Lock the application row so concurrent decline / Mark Hired serialise.
+      const lockedApp = await this.applicationsRepo.findByIdForUpdate(
+        tx as ApplicationsTx,
+        offer.applicationId,
+      );
+      if (!lockedApp) {
+        throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
+      }
+
+      // Re-read the offer inside the lock to defeat racing accept/decline.
+      const lockedOffer = await this.repo.findById(offerId);
+      if (!lockedOffer || lockedOffer.status !== "pending") {
+        throw new BadRequestException({
+          code: "OFFER_NOT_PENDING",
+          message: `Cannot accept offer in status '${lockedOffer?.status ?? "unknown"}'`,
+        });
+      }
+
+      const updatedOffer = await this.repo.update(
+        offerId,
+        { status: "accepted", respondedAt: new Date() },
+        tx as ApplicationsTx,
+      );
+
+      // Auto-advance app → hired (only if not already terminal). The state
+      // machine permits offer → hired.
+      if (lockedApp.status === "offer") {
+        await this.applicationsService.transitionFromSystem(
+          user,
+          offer.applicationId,
+          "hired",
+          "Offer accepted",
+          requestMeta,
+          tx as ApplicationsTx,
+        );
+      }
+
+      return updatedOffer;
     });
 
-    // Tag the audit row with the company that owns the underlying job
-    // so per-tenant audit queries see the candidate decision.
-    const job = await this.jobsRepo.findById(application.jobId);
     await this.audit.log({
       actorId: user.id,
       actorType: "user",
@@ -178,25 +211,10 @@ export class OffersService {
       ...requestMeta,
     });
 
-    try {
-      await this.applicationsService.transitionFromSystem(
-        user,
-        offer.applicationId,
-        "hired",
-        "Offer accepted",
-        requestMeta,
-      );
-    } catch (err) {
-      this.logger.warn(`App auto-advance to hired failed: ${(err as Error).message}`);
-    }
-
     void this.notifyRecruiterDecision(offerId, "accepted").catch((err) => {
       this.logger.warn(`Notify recruiter failed: ${(err as Error).message}`);
     });
 
-    // In-app notification to the recruiter team (job owner + the recruiter
-    // who originally sent the offer, deduplicated). Single-recruiter today,
-    // multi-member when the data model expands.
     const recruiterUserIds = Array.from(
       new Set(
         [job?.recruiterId, offer.sentBy].filter(
@@ -245,24 +263,56 @@ export class OffersService {
     if (!application || application.candidateId !== user.id) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
     }
-    if (offer.status !== "pending") {
-      throw new BadRequestException({
-        code: "OFFER_NOT_PENDING",
-        message: `Cannot decline offer in status '${offer.status}'`,
-      });
-    }
-
-    const updated = await this.repo.update(offerId, {
-      status: "declined",
-      respondedAt: new Date(),
-      ...(dto.reason
-        ? {
-            customMessage: `${offer.customMessage ?? ""}\n\n[Candidate declined: ${dto.reason}]`.trim(),
-          }
-        : {}),
-    });
 
     const declinedJob = await this.jobsRepo.findById(application.jobId);
+
+    const updated = await this.db.transaction(async (tx) => {
+      const lockedApp = await this.applicationsRepo.findByIdForUpdate(
+        tx as ApplicationsTx,
+        offer.applicationId,
+      );
+      if (!lockedApp) {
+        throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
+      }
+
+      const lockedOffer = await this.repo.findById(offerId);
+      if (!lockedOffer || lockedOffer.status !== "pending") {
+        throw new BadRequestException({
+          code: "OFFER_NOT_PENDING",
+          message: `Cannot decline offer in status '${lockedOffer?.status ?? "unknown"}'`,
+        });
+      }
+
+      const updatedOffer = await this.repo.update(
+        offerId,
+        {
+          status: "declined",
+          respondedAt: new Date(),
+          ...(dto.reason
+            ? {
+                customMessage: `${lockedOffer.customMessage ?? ""}\n\n[Candidate declined: ${dto.reason}]`.trim(),
+              }
+            : {}),
+        },
+        tx as ApplicationsTx,
+      );
+
+      // Auto-advance app → offer_declined when still at offer. Other terminal
+      // states are left alone (e.g., recruiter rejected during the same window).
+      if (lockedApp.status === "offer") {
+        await this.applicationsService.transitionFromSystem(
+          user,
+          offer.applicationId,
+          "offer_declined",
+          "Candidate declined offer",
+          requestMeta,
+          tx as ApplicationsTx,
+        );
+      }
+
+      return updatedOffer;
+    });
+
     await this.audit.log({
       actorId: user.id,
       actorType: "user",
@@ -278,7 +328,6 @@ export class OffersService {
       this.logger.warn(`Notify recruiter failed: ${(err as Error).message}`);
     });
 
-    // In-app notification to the recruiter team — same dedup logic as accept.
     const recruiterUserIds = Array.from(
       new Set(
         [declinedJob?.recruiterId, offer.sentBy].filter(

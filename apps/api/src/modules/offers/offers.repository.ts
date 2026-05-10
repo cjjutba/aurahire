@@ -8,6 +8,7 @@ import {
 } from "@aurahire/db";
 
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
+import type { ApplicationsTx } from "../applications/applications.repository";
 
 @Injectable()
 export class OffersRepository {
@@ -75,8 +76,13 @@ export class OffersRepository {
     return rows.map((r) => r.offer);
   }
 
-  async update(id: string, patch: Partial<NewOffer>): Promise<Offer> {
-    const [row] = await this.db
+  async update(
+    id: string,
+    patch: Partial<NewOffer>,
+    tx?: ApplicationsTx,
+  ): Promise<Offer> {
+    const exec = tx ?? this.db;
+    const [row] = await exec
       .update(offersTable)
       .set({ ...patch, updatedAt: new Date() })
       .where(eq(offersTable.id, id))

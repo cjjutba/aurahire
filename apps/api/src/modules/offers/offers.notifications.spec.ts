@@ -20,6 +20,7 @@ import { ProfilesRepository } from "../profiles/profiles.repository";
 import { EmailService } from "../../email/email.service";
 import { AuditService } from "../../audit";
 import { EventsService } from "../../realtime";
+import { DRIZZLE_CLIENT } from "../../db/db.module";
 
 // ── Test IDs ────────────────────────────────────────────────────────────────
 
@@ -89,6 +90,12 @@ function makeJob() {
   } as any;
 }
 
+function fakeDb() {
+  return {
+    transaction: jest.fn(async <T>(fn: (tx: unknown) => Promise<T>) => fn({})),
+  };
+}
+
 // ── Suite ───────────────────────────────────────────────────────────────────
 
 describe("OffersService — accept/decline notifications", () => {
@@ -116,6 +123,7 @@ describe("OffersService — accept/decline notifications", () => {
     applicationsRepo = {
       findById: jest.fn().mockResolvedValue(makeApplication()),
       findApplicationContextForCompany: jest.fn(),
+      findByIdForUpdate: jest.fn().mockResolvedValue(makeApplication()),
     } as any;
 
     applicationsService = {
@@ -165,6 +173,7 @@ describe("OffersService — accept/decline notifications", () => {
         { provide: AuditService, useValue: audit },
         { provide: EventsService, useValue: events },
         { provide: NotificationsService, useValue: notifications },
+        { provide: DRIZZLE_CLIENT, useValue: fakeDb() },
       ],
     }).compile();
 
