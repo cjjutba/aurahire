@@ -146,12 +146,23 @@ export function ApplicationDetailClient({
   const canWithdraw = !["hired", "rejected", "withdrawn"].includes(app.status);
   const status = APP_STATUS[app.status] ?? APP_STATUS["applied"]!;
 
-  // Derive upcoming interview (scheduled or rescheduled, earliest first)
+  // Derive upcoming interview (scheduled or rescheduled, earliest first).
+  // Hidden once the application has reached a terminal state (no further
+  // interviews will happen) or once the interview's full duration has elapsed
+  // — without this, a stale "scheduled" row keeps the banner alive even after
+  // the meeting time has passed.
   const sorted = sortInterviewsByPriority(interviews);
+  const TERMINAL_APP_STATUSES = new Set(["hired", "rejected", "withdrawn"]);
+  const candidateInterview = sorted[0];
   const upcomingInterview =
-    sorted[0] &&
-    (sorted[0].status === "scheduled" || sorted[0].status === "rescheduled")
-      ? sorted[0]
+    candidateInterview &&
+    !TERMINAL_APP_STATUSES.has(app.status) &&
+    (candidateInterview.status === "scheduled" ||
+      candidateInterview.status === "rescheduled") &&
+    new Date(candidateInterview.scheduledAt).getTime() +
+      candidateInterview.durationMinutes * 60_000 >
+      Date.now()
+      ? candidateInterview
       : null;
 
   // Derive interviews with shared feedback (candidateSummary + sharedWithCandidateAt set)
