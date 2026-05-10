@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
@@ -727,9 +727,38 @@ function RecommendedForYouSection({
   const filtered = previews.filter((p) => !appliedJobIds.has(p.jobId));
   const top = filtered.slice(0, RECOMMENDED_TARGET);
 
-  // Shimmer slots fill any gap between what we have and the target. Capped
-  // at zero to avoid negative counts when previews exceed the target.
-  const shimmerCount = Math.max(0, RECOMMENDED_TARGET - top.length);
+  const RECOMMENDED_STALL_TIMEOUT_MS = 30_000;
+  const [stalled, setStalled] = useState(false);
+  const lastSeenCountRef = useRef(0);
+
+  // Reset the stall window whenever a new preview lands. A no-op once we
+  // already hit the target — there's nothing left to wait for. Stall is a
+  // one-way transition for simplicity; if a late preview arrives after we
+  // stalled, it still renders (the `.slice(0, RECOMMENDED_TARGET)` above
+  // picks it up) but the caption stays at "some matches couldn't be loaded."
+  useEffect(() => {
+    if (top.length >= RECOMMENDED_TARGET) {
+      lastSeenCountRef.current = top.length;
+      if (stalled) setStalled(false);
+      return;
+    }
+    // Already stalled: don't spawn another timer. Once stalled, only a full
+    // refresh (e.g., navigating away and back) clears it.
+    if (stalled) return;
+    if (top.length > lastSeenCountRef.current) {
+      lastSeenCountRef.current = top.length;
+    }
+    const t = setTimeout(() => {
+      if (top.length < RECOMMENDED_TARGET) setStalled(true);
+    }, RECOMMENDED_STALL_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [top.length, stalled]);
+
+  // Once we've stalled (no new previews in the timeout window), drop the
+  // shimmer slots — the candidate isn't waiting on anything that's coming.
+  const shimmerCount = stalled
+    ? 0
+    : Math.max(0, RECOMMENDED_TARGET - top.length);
 
   // Hide the section entirely for first-run candidates with no resume — the
   // welcome card already directs them to upload one.
@@ -789,7 +818,11 @@ function RecommendedForYouSection({
             Recommended for You
           </span>
           <span className="text-[11px] text-[var(--color-muted)]">
-            · auto-scored against your resume
+            {top.length < RECOMMENDED_TARGET && !stalled
+              ? `· ${top.length} of ${RECOMMENDED_TARGET} ready`
+              : stalled && top.length < RECOMMENDED_TARGET
+              ? "· some matches couldn't be loaded"
+              : "· auto-scored against your resume"}
           </span>
         </div>
         <Link
