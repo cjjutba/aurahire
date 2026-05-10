@@ -306,11 +306,34 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
   //    is briefly visible — the transition feels intentional rather than
   //    abrupt.
   useEffect(() => {
-    if (state.kind === "redirecting") router.push("/candidate");
+    if (state.kind === "redirecting") router.replace("/candidate");
   }, [state, router]);
 
+  const onSkipClick = (): void => {
+    // Fire-and-forget telemetry. We deliberately do not await — a failing
+    // POST must never block the navigation. The endpoint returns 204 on
+    // success and is rate-unlimited; backend swallowing the row would
+    // simply mean one missing audit log.
+    const previewsReady =
+      state.kind === "streamingPreviews" ? state.previewCount : 0;
+    const scoreReady =
+      state.kind === "profileScoreReady" ||
+      state.kind === "streamingPreviews"; // both states imply score landed
+    void clientApiFetch(
+      "/api/v1/candidate-profiles/me/onboarding/skipped-analyzing",
+      {
+        method: "POST",
+        body: { scoreReady, previewsReady },
+      },
+    ).catch(() => {
+      // Intentional swallow — telemetry must not block UX.
+    });
+    dispatch({ type: "REDIRECT" });
+    router.replace("/candidate");
+  };
+
   return (
-    <section className="flex flex-1 items-center justify-center px-4 py-12">
+    <section className="flex flex-1 flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6 rounded-[var(--radius-xl)] border border-[var(--color-hairline-soft)] bg-[var(--color-canvas)] p-8 text-center">
         {state.kind === "computingProfileScore" && (
           <div aria-live="polite" className="space-y-4">
@@ -399,6 +422,17 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
           </div>
         )}
       </div>
+
+      {canSkip(state) && (
+        <button
+          type="button"
+          onClick={onSkipClick}
+          className="mt-6 inline-flex items-center gap-1 text-sm text-[var(--color-body)] transition hover:text-[var(--color-ink)]"
+        >
+          Skip to dashboard
+          <span aria-hidden="true">→</span>
+        </button>
+      )}
     </section>
   );
 }
