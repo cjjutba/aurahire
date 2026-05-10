@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 
@@ -44,6 +44,30 @@ export function ProfileScoreCardClient({ candidateId }: ProfileScoreCardClientPr
     void qc.invalidateQueries({ queryKey: queryKeys.profileScore.me() });
   }, [latestProfileScore, qc]);
 
+  // 30s timeout: if the score is still null this many ms after the card
+  // mounts, surface a calm error state with a manual retry. Realtime
+  // arrivals cancel the timer naturally because `score` becomes truthy.
+  const PROFILE_SCORE_PENDING_TIMEOUT_MS = 30_000;
+  const [pendingTimedOut, setPendingTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (score) {
+      // Score has landed — reset the timeout so a future stale-and-recompute
+      // cycle gets its own fresh 30s window.
+      if (pendingTimedOut) setPendingTimedOut(false);
+      return;
+    }
+    // Already timed out: don't spawn a second timer when the effect re-runs
+    // because `pendingTimedOut` is in the deps. The next `score` arrival will
+    // flip pendingTimedOut back to false and re-arm naturally.
+    if (pendingTimedOut) return;
+    const t = setTimeout(
+      () => setPendingTimedOut(true),
+      PROFILE_SCORE_PENDING_TIMEOUT_MS,
+    );
+    return () => clearTimeout(t);
+  }, [score, pendingTimedOut]);
+
   const recompute = useMutation({
     mutationFn: () =>
       clientApiFetch<{ data: ProfileScore }>("/api/v1/scoring/profile/compute", {
@@ -79,11 +103,36 @@ export function ProfileScoreCardClient({ candidateId }: ProfileScoreCardClientPr
 
   const isRecomputing = recompute.isPending;
 
-  // 1. No score yet — server-side guard has already enqueued a backfill (or
-  //    onboarding is finishing). Show the shimmer with a caption explaining
-  //    what AI is doing. No manual button — the score will arrive over
-  //    realtime.
+  // 1. No score yet — shimmer for the first PROFILE_SCORE_PENDING_TIMEOUT_MS,
+  //    then transition to a calm error card with manual retry. The backend
+  //    has already enqueued a recompute on the degraded path; this UI only
+  //    surfaces the failure if the recompute also doesn't land in time.
   if (!score) {
+    if (pendingTimedOut) {
+      return (
+        <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Profile Score
+          </h3>
+          <div className="mt-4 space-y-3">
+            <p className="text-sm text-[var(--color-ink)]">
+              We couldn&rsquo;t compute your score yet.
+            </p>
+            <p className="text-xs text-[var(--color-muted)]">
+              This usually self-resolves within a minute. You can also try again now.
+            </p>
+            <button
+              type="button"
+              onClick={() => recompute.mutate()}
+              disabled={isRecomputing}
+              className="inline-flex h-9 items-center rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60"
+            >
+              {isRecomputing ? "Trying…" : "Try again"}
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
