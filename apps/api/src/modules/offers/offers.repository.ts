@@ -54,10 +54,16 @@ export class OffersRepository {
   /**
    * Most recent offer (by sentAt DESC) for an application — or null if no
    * offer has ever been sent. Used by ApplicationsService to enforce that
-   * a "hired" transition requires an accepted offer.
+   * a "hired" transition requires an accepted offer. When invoked inside
+   * an application-row transaction (e.g., hire()), pass `tx` so the read
+   * sees the locked row's tx-scoped snapshot.
    */
-  async findLatestByApplicationId(applicationId: string): Promise<Offer | null> {
-    const [row] = await this.db
+  async findLatestByApplicationId(
+    applicationId: string,
+    tx?: ApplicationsTx,
+  ): Promise<Offer | null> {
+    const exec = tx ?? this.db;
+    const [row] = await exec
       .select()
       .from(offersTable)
       .where(eq(offersTable.applicationId, applicationId))

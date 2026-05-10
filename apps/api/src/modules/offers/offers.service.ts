@@ -308,6 +308,20 @@ export class OffersService {
           requestMeta,
           tx as ApplicationsTx,
         );
+
+        // Distinct audit row alongside the offer.declined log so reports
+        // can correlate the offer event with the application's transition.
+        // Mirrors the cron's APPLICATION_AUTO_TRANSITION_OFFER_EXPIRED row.
+        await this.audit.log({
+          actorId: user.id,
+          actorType: "user",
+          action: AUDIT_ACTIONS.APPLICATION_AUTO_TRANSITION_OFFER_DECLINED,
+          entityType: "application",
+          entityId: offer.applicationId,
+          companyId: declinedJob?.companyId ?? null,
+          details: { offerId, reasonLength: dto.reason?.length ?? 0 },
+          ...requestMeta,
+        });
       }
 
       return updatedOffer;

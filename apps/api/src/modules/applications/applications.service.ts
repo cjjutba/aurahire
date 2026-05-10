@@ -629,7 +629,10 @@ export class ApplicationsService {
         });
       }
 
-      const latestOffer = await this.offersRepo.findLatestByApplicationId(applicationId);
+      const latestOffer = await this.offersRepo.findLatestByApplicationId(
+        applicationId,
+        tx as ApplicationsTx,
+      );
       if (!latestOffer || latestOffer.status !== "accepted") {
         throw new BadRequestException({
           code: "OFFER_NOT_ACCEPTED",
@@ -707,13 +710,17 @@ export class ApplicationsService {
     });
 
     // 3) After-commit side effects (best-effort, fire-and-forget)
-    await this.cacheService.bustTags([
-      TAGS.companyDashboard(companyId),
-      TAGS.companyApplications(companyId),
-      TAGS.companyShortlist(companyId),
-      TAGS.applicationsCandidate(result.app.candidateId),
-      ...result.cascaded.map((c) => TAGS.applicationsCandidate(c.candidateId)),
-    ]);
+    void this.cacheService
+      .bustTags([
+        TAGS.companyDashboard(companyId),
+        TAGS.companyApplications(companyId),
+        TAGS.companyShortlist(companyId),
+        TAGS.applicationsCandidate(result.app.candidateId),
+        ...result.cascaded.map((c) => TAGS.applicationsCandidate(c.candidateId)),
+      ])
+      .catch((err) =>
+        this.logger.warn(`hire bustTags failed: ${(err as Error).message}`),
+      );
 
     this.events.emitApplicationStatusChanged({
       applicationId,

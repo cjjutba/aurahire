@@ -66,7 +66,7 @@ describe("ApplicationsService.hire()", () => {
         { provide: JobsRepository, useValue: jobs },
         { provide: OffersRepository, useValue: offers },
         { provide: AuditService, useValue: { log: jest.fn() } },
-        { provide: CacheService, useValue: { bustTags: jest.fn() } },
+        { provide: CacheService, useValue: { bustTags: jest.fn().mockResolvedValue(undefined) } },
         { provide: EventsService, useValue: { emitApplicationStatusChanged: jest.fn() } },
         { provide: EmailService, useValue: { send: jest.fn() } },
         { provide: MatchScoreQueueService, useValue: { enqueue: jest.fn() } },
