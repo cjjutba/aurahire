@@ -83,7 +83,13 @@ export const listJobsQuerySchema = paginationSchema.extend({
   // Candidate-only flag: when true, the for-candidate endpoint excludes jobs
   // the authenticated candidate has already applied to. Ignored on the public
   // list endpoint (no authenticated user to compare against).
-  excludeApplied: z.coerce.boolean().optional(),
+  //
+  // NOT z.coerce.boolean(): that follows JS Boolean() semantics, where the
+  // literal string "false" coerces to true. We accept only "1" / "true".
+  excludeApplied: z
+    .enum(["true", "1", "false", "0"])
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
 });
 
 export type ListJobsQuery = z.infer<typeof listJobsQuerySchema>;

@@ -134,7 +134,10 @@ export const serverQueries = {
         sort: params.sort,
         page: params.page,
         limit: params.limit,
-        excludeApplied: params.excludeApplied,
+        // Only emit when truthy — sending "false" would be coerced to true by
+        // any naive Boolean() parser on the receiver and the backend's Zod
+        // schema is hardened against this anyway.
+        excludeApplied: params.excludeApplied ? "1" : undefined,
       },
     }),
   candidateJobDetail: (id: string) =>
