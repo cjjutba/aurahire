@@ -44,15 +44,23 @@ export class BiasController {
   @Roles("recruiter", "admin")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Stateless bias scan — does NOT persist; used by debounced editor preview",
+    summary:
+      "Stateless bias scan — does NOT persist; used by debounced editor preview",
   })
   @ApiResponse({ status: 200, type: CheckBiasResponseDto })
-  @ApiResponse({ status: 429, description: "Rate-limited (max 10 calls/min/user)" })
+  @ApiResponse({
+    status: 429,
+    description: "Rate-limited (max 10 calls/min/user)",
+  })
   async check(
     @CurrentUser() user: AuthUser,
     @Body() dto: CheckBiasDto,
   ): Promise<CheckBiasResponseDto> {
-    const data = await this.service.check(user, dto.text, dto.customFlaggedTermsOverride);
+    const data = await this.service.check(
+      user,
+      dto.text,
+      dto.customFlaggedTermsOverride,
+    );
     return { data };
   }
 
@@ -60,10 +68,14 @@ export class BiasController {
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Run bias scan on a job's persisted description; replaces existing 'flagged' rows",
+    summary:
+      "Run bias scan on a job's persisted description; replaces existing 'flagged' rows",
   })
   @ApiResponse({ status: 200, type: ScanJobBiasEnvelopeDto })
-  @ApiResponse({ status: 404, description: "Job not found OR not owned by active company" })
+  @ApiResponse({
+    status: 404,
+    description: "Job not found OR not owned by active company",
+  })
   async scanJob(
     @CurrentUser() user: AuthUser,
     @ActiveCompany() activeCompany: ActiveCompanyContext,
@@ -101,11 +113,15 @@ export class BiasController {
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Override a bias flag with a written reason (≥10 chars); status → overridden",
+    summary:
+      "Override a bias flag with a written reason (≥10 chars); status → overridden",
   })
   @ApiResponse({ status: 200, type: BiasFlagEnvelopeDto })
   @ApiResponse({ status: 400, description: "Flag not in 'flagged' status" })
-  @ApiResponse({ status: 404, description: "Job/flag not found OR not owned by active company" })
+  @ApiResponse({
+    status: 404,
+    description: "Job/flag not found OR not owned by active company",
+  })
   async override(
     @CurrentUser() user: AuthUser,
     @ActiveCompany() activeCompany: ActiveCompanyContext,

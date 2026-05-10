@@ -23,10 +23,9 @@ export function useMembershipsQuery(enabled: boolean = true) {
   return useQuery({
     queryKey: MEMBERSHIPS_QUERY_KEY,
     queryFn: ({ signal }) =>
-      clientApiFetch<MembershipsResponse>(
-        "/api/v1/profiles/me/memberships",
-        { signal },
-      ),
+      clientApiFetch<MembershipsResponse>("/api/v1/profiles/me/memberships", {
+        signal,
+      }),
     enabled,
   });
 }

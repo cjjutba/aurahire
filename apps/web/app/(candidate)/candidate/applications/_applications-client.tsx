@@ -23,18 +23,50 @@ interface AppRow {
     title: string;
     company: { name: string; logoUrl: string | null };
   } | null;
-  matchScore: { band: "strong" | "partial" | "limited"; overallScore: number } | null;
+  matchScore: {
+    band: "strong" | "partial" | "limited";
+    overallScore: number;
+  } | null;
 }
 
-const APP_STATUS: Record<string, { label: string; dot: string; text: string }> = {
-  applied:    { label: "Applied",    dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  screening:  { label: "Screening",  dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  interview:  { label: "Interview",  dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  offer:      { label: "Offer",      dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
-  hired:      { label: "Hired",      dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  rejected:   { label: "Rejected",   dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
-  withdrawn:  { label: "Withdrawn",  dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
-};
+const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    applied: {
+      label: "Applied",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    screening: {
+      label: "Screening",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    interview: {
+      label: "Interview",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    offer: {
+      label: "Offer",
+      dot: "bg-[var(--color-status-warning)]",
+      text: "text-[var(--color-status-warning)]",
+    },
+    hired: {
+      label: "Hired",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    rejected: {
+      label: "Rejected",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    withdrawn: {
+      label: "Withdrawn",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
 const DEFAULT_APP_STATUS = APP_STATUS["applied"]!;
 
@@ -61,7 +93,9 @@ interface ApplicationsListClientProps {
   };
 }
 
-export function ApplicationsListClient({ params }: ApplicationsListClientProps) {
+export function ApplicationsListClient({
+  params,
+}: ApplicationsListClientProps) {
   const queryClient = useQueryClient();
   const { data, isError } = useMyApplicationsQuery({});
 
@@ -72,10 +106,7 @@ export function ApplicationsListClient({ params }: ApplicationsListClientProps) 
   useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, invalidateList);
   useRealtimeChannel(RealtimeEvent.OfferSent, invalidateList);
 
-  const all = useMemo(
-    () => (data?.data ?? []) as AppRow[],
-    [data?.data],
-  );
+  const all = useMemo(() => (data?.data ?? []) as AppRow[], [data?.data]);
 
   const filtered = useMemo(() => {
     let rows = [...all];
@@ -102,16 +133,22 @@ export function ApplicationsListClient({ params }: ApplicationsListClientProps) 
     rows.sort((a, b) => {
       switch (params.sort) {
         case "oldest":
-          return new Date(a.appliedAt).getTime() - new Date(b.appliedAt).getTime();
+          return (
+            new Date(a.appliedAt).getTime() - new Date(b.appliedAt).getTime()
+          );
         case "score-high": {
           const sa = a.matchScore?.overallScore ?? -1;
           const sb = b.matchScore?.overallScore ?? -1;
           if (sb !== sa) return sb - sa;
-          return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime();
+          return (
+            new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
+          );
         }
         case "recent":
         default:
-          return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime();
+          return (
+            new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
+          );
       }
     });
 
@@ -169,7 +206,11 @@ export function ApplicationsListClient({ params }: ApplicationsListClientProps) 
 
       {/* Table or empty state */}
       {rows.length === 0 ? (
-        filtersActive ? <EmptyFiltered /> : <EmptyApplications />
+        filtersActive ? (
+          <EmptyFiltered />
+        ) : (
+          <EmptyApplications />
+        )
       ) : (
         <>
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)]">
@@ -260,7 +301,10 @@ function ApplicationRow({ app }: { app: AppRow }) {
         <span
           className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
         >
-          <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+            aria-hidden
+          />
           {status.label}
         </span>
       </td>

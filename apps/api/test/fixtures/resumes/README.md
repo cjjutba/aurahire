@@ -1,27 +1,28 @@
 # AI Parse Golden Corpus
 
 Used by `pnpm --filter @aurahire/api test:ai-parse`. Each fixture is a pair:
+
 - `<id>-<slug>.pdf` (or `.docx`) — the binary
 - `<id>-<slug>.expected.json` — hand-annotated canonical extraction
 
 ## Per-fixture thresholds (assertions)
 
-| Metric | Threshold |
-| --- | --- |
-| Contact precision | >= 0.95 |
-| Contact recall | >= 0.95 |
-| Experience count match | exact |
-| Education count match | exact |
-| Skills Jaccard | >= 0.85 |
-| Source-field coverage | >= 0.90 |
+| Metric                       | Threshold     |
+| ---------------------------- | ------------- |
+| Contact precision            | >= 0.95       |
+| Contact recall               | >= 0.95       |
+| Experience count match       | exact         |
+| Education count match        | exact         |
+| Skills Jaccard               | >= 0.85       |
+| Source-field coverage        | >= 0.90       |
 | Source-string hallucinations | 0 (hard fail) |
 
 ## Corpus-wide thresholds
 
-| Metric | Threshold |
-| --- | --- |
+| Metric                    | Threshold           |
+| ------------------------- | ------------------- |
 | Avg source-field coverage | >= 0.90 (hard fail) |
-| Total hallucinations | 0 (hard fail) |
+| Total hallucinations      | 0 (hard fail)       |
 
 ## Running the corpus
 
@@ -80,14 +81,14 @@ The expected JSON shape:
 
 Aim for 15+ fixtures across:
 
-| Category | Goal | Notes |
-| --- | --- | --- |
-| PDF clean | 3 | Standard layouts, well-formatted |
-| PDF styled | 3 | Multi-column, designed templates |
-| DOCX modern | 2 | Recent Word exports |
-| DOCX legacy | 1 | Older `.doc`-style docx |
-| Multilingual | 1 | EN + Tagalog hybrid (representative of Philippine market) |
-| Image-only PDF | 1 | Negative-path: should fall back gracefully (still pass with low coverage) |
+| Category       | Goal | Notes                                                                     |
+| -------------- | ---- | ------------------------------------------------------------------------- |
+| PDF clean      | 3    | Standard layouts, well-formatted                                          |
+| PDF styled     | 3    | Multi-column, designed templates                                          |
+| DOCX modern    | 2    | Recent Word exports                                                       |
+| DOCX legacy    | 1    | Older `.doc`-style docx                                                   |
+| Multilingual   | 1    | EN + Tagalog hybrid (representative of Philippine market)                 |
+| Image-only PDF | 1    | Negative-path: should fall back gracefully (still pass with low coverage) |
 
 The corpus is a thesis-defensible artifact — its size and diversity are a
 quality signal in their own right.

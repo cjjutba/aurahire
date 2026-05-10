@@ -60,12 +60,8 @@ export function FiltersClient({ initialFilters, companies }: Props) {
     initialFilters.entityType ?? "all",
   );
   const [action, setAction] = useState(initialFilters.action ?? "");
-  const [actorType, setActorType] = useState(
-    initialFilters.actorType ?? "all",
-  );
-  const [companyId, setCompanyId] = useState(
-    initialFilters.companyId ?? "all",
-  );
+  const [actorType, setActorType] = useState(initialFilters.actorType ?? "all");
+  const [companyId, setCompanyId] = useState(initialFilters.companyId ?? "all");
   const [dateFrom, setDateFrom] = useState(
     initialFilters.dateFrom ? initialFilters.dateFrom.slice(0, 10) : "",
   );

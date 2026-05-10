@@ -66,13 +66,18 @@ export function ApplicationStatusChangedEmail({
           }}
         >
           <EmailBrandHeader company={company} />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             Application Update
           </Heading>
           <Section>
-            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>Hi {candidateName},</Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-              Your application for <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong> at{" "}
+              Hi {candidateName},
+            </Text>
+            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
+              Your application for{" "}
+              <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong> at{" "}
               {companyName} has moved from <strong>{fromLabel}</strong> to{" "}
               <strong style={{ color: "#2563eb" }}>{toLabel}</strong>.
             </Text>

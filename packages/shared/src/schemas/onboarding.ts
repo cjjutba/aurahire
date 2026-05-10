@@ -88,4 +88,6 @@ export const onboardingSkippedAnalyzingSchema = z.object({
   previewsReady: z.number().int().min(0).max(5),
 });
 
-export type OnboardingSkippedAnalyzing = z.infer<typeof onboardingSkippedAnalyzingSchema>;
+export type OnboardingSkippedAnalyzing = z.infer<
+  typeof onboardingSkippedAnalyzingSchema
+>;

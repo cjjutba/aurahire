@@ -16,12 +16,16 @@ interface TestEmailProps {
   recipientName: string;
 }
 
-export function TestEmail({ recipientName }: TestEmailProps): React.ReactElement {
+export function TestEmail({
+  recipientName,
+}: TestEmailProps): React.ReactElement {
   return (
     <Html>
       <Head />
       <Preview>AuraHire email module — test</Preview>
-      <Body style={{ fontFamily: "Inter, sans-serif", backgroundColor: "#f7f7f7" }}>
+      <Body
+        style={{ fontFamily: "Inter, sans-serif", backgroundColor: "#f7f7f7" }}
+      >
         <Container
           style={{
             backgroundColor: "#ffffff",
@@ -37,8 +41,9 @@ export function TestEmail({ recipientName }: TestEmailProps): React.ReactElement
           </Heading>
           <Section>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-              This is a test email from the AuraHire backend. If you're seeing this in
-              Mailpit (localhost:8025), the email module is wired correctly.
+              This is a test email from the AuraHire backend. If you're seeing
+              this in Mailpit (localhost:8025), the email module is wired
+              correctly.
             </Text>
           </Section>
         </Container>

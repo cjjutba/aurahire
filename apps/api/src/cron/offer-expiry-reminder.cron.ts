@@ -50,7 +50,10 @@ export class OfferExpiryReminderCron {
         companyName: companiesTable.name,
       })
       .from(offersTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, offersTable.applicationId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, offersTable.applicationId),
+      )
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
       .innerJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
       .where(
@@ -100,9 +103,15 @@ export class OfferExpiryReminderCron {
       action: AUDIT_ACTIONS.OFFER_EXPIRY_REMINDER_RUN,
       entityType: "cron",
       entityId: CRON_ENTITY_SENTINEL,
-      details: { remindersSent: sent, candidatesScanned: due.length, durationMs },
+      details: {
+        remindersSent: sent,
+        candidatesScanned: due.length,
+        durationMs,
+      },
     });
-    this.logger.log(`[${CRON_NAME}] sent ${sent}/${due.length} reminders in ${durationMs}ms`);
+    this.logger.log(
+      `[${CRON_NAME}] sent ${sent}/${due.length} reminders in ${durationMs}ms`,
+    );
     return { remindersSent: sent, durationMs };
   }
 }

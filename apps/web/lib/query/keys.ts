@@ -2,7 +2,8 @@ export const queryKeys = {
   recruiterDashboard: {
     stats: (range: string) => ["recruiter-dashboard", "stats", range] as const,
     analytics: () => ["recruiter-dashboard", "analytics"] as const,
-    recent: (limit: number) => ["recruiter-dashboard", "recent", limit] as const,
+    recent: (limit: number) =>
+      ["recruiter-dashboard", "recent", limit] as const,
   },
   recruiterJobs: {
     list: (params: RecruiterJobsListParams) =>

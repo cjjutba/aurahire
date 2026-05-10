@@ -26,13 +26,16 @@ interface PageProps {
  *
  * Query-param wins when both are present.
  */
-export default async function OnboardingInvitePage({ searchParams }: PageProps) {
+export default async function OnboardingInvitePage({
+  searchParams,
+}: PageProps) {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
-  const profile = (await getCurrentProfile()) as
-    | { id: string; role: string }
-    | null;
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+  } | null;
   if (!profile) redirect("/login");
   if (profile.role !== "recruiter" && profile.role !== "admin") {
     redirect("/login");

@@ -32,9 +32,7 @@ const REASON_TRUNCATE = 120;
 function ReasonBlock({ reason }: { reason: string }) {
   const [expanded, setExpanded] = useState(false);
   if (reason.length <= REASON_TRUNCATE) {
-    return (
-      <p className="mt-1 text-sm text-[var(--color-body)]">{reason}</p>
-    );
+    return <p className="mt-1 text-sm text-[var(--color-body)]">{reason}</p>;
   }
   return (
     <div className="mt-1 text-sm text-[var(--color-body)]">

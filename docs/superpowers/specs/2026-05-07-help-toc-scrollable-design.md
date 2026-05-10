@@ -8,15 +8,16 @@
 
 `apps/web/components/help/help-view.tsx` powers all three help pages (`/candidate/help`, `/recruiter/help`, `/admin/help`). The desktop right rail (`<aside>`, lines 270–286) renders an "On this page" TOC built from a flat `<TocList>` of every section across every group:
 
-| Variant | Sections | Groups |
-|---|---|---|
-| Candidate | 18 | 6 |
-| Recruiter | 17 | 6 |
-| Admin | 18 | 6 |
+| Variant   | Sections | Groups |
+| --------- | -------- | ------ |
+| Candidate | 18       | 6      |
+| Recruiter | 17       | 6      |
+| Admin     | 18       | 6      |
 
-The aside uses `sticky top-8` but is **not height-bounded**. Once the section list exceeds viewport height, the bottom of the TOC sits below the fold and the items there are unreachable until the user scrolls the *page*. On a 13" laptop (~720 px content height after browser chrome) the candidate TOC clips at "Tracking your applications" — the user cannot click "Notifications" or "Report a bias concern" without first scrolling the page far enough that the sticky aside re-anchors. That's the failure shown in the two screenshots.
+The aside uses `sticky top-8` but is **not height-bounded**. Once the section list exceeds viewport height, the bottom of the TOC sits below the fold and the items there are unreachable until the user scrolls the _page_. On a 13" laptop (~720 px content height after browser chrome) the candidate TOC clips at "Tracking your applications" — the user cannot click "Notifications" or "Report a bias concern" without first scrolling the page far enough that the sticky aside re-anchors. That's the failure shown in the two screenshots.
 
 Secondary issues:
+
 1. **Active item can scroll out of TOC view.** Even with bounding, on long lists the active item drifts off-screen as page-scroll moves through later sections.
 2. **Visual indicator is heavy.** The current active state is a full `bg-[var(--color-primary-soft)]` pill on the TOC item. Enterprise patterns (Vercel, Linear, Stripe, GitHub Docs) use a **2-px left rail bar** with text-color shift — quieter, scans faster on a long list.
 3. **Cut-off content is unsignaled.** When the TOC scrolls internally, there's no visual hint that more items exist above/below.
@@ -24,6 +25,7 @@ Secondary issues:
 ## Goal
 
 Replace the unbounded sticky aside with a height-bounded, internally-scrollable TOC that:
+
 - always fits within the viewport, regardless of section count,
 - keeps the active section's TOC item in view automatically as page-scroll progresses,
 - hints at clipped content with edge fade masks,
@@ -35,6 +37,7 @@ This is presentation-only — no content, route, schema, or backend change.
 ## Scope
 
 **In scope:**
+
 - Edit `apps/web/components/help/help-view.tsx`:
   - Convert the desktop `<aside>` into a height-bounded scroll container.
   - Add a `useEffect` that scrolls the active TOC item into the TOC viewport (`block: "nearest"`).
@@ -45,6 +48,7 @@ This is presentation-only — no content, route, schema, or backend change.
 - No new dependencies.
 
 **Out of scope:**
+
 - Restructuring help content or collapsing groups.
 - Mobile TOC layout changes.
 - Search behavior, FAQ, contact card, hero, scroll-spy threshold logic.
@@ -108,7 +112,7 @@ A new `useEffect` watches `activeId` and the TOC `scrollRef`:
 useEffect(() => {
   if (!activeId || !tocScrollRef.current) return;
   const btn = tocScrollRef.current.querySelector<HTMLButtonElement>(
-    `[data-toc-id="${activeId}"]`
+    `[data-toc-id="${activeId}"]`,
   );
   btn?.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }, [activeId]);
@@ -121,11 +125,13 @@ Each TOC `<button>` carries `data-toc-id={s.id}` so the lookup is stable. `block
 ### Active-state indicator (TOC item)
 
 Current:
+
 ```css
 bg-[var(--color-primary-soft)] font-medium text-[var(--color-primary)]
 ```
 
 New:
+
 ```jsx
 <button
   className={cn(
@@ -138,6 +144,7 @@ New:
 ```
 
 Rationale:
+
 - 2-px primary rail is quieter and scans faster than the filled pill — matches Vercel, Linear, Stripe, GitHub Docs.
 - Inactive items lose the hover background fill (`hover:bg-surface-strong`) — on a long list of 17–18 items, fills create visual noise. Hover becomes text-color shift only.
 - Group labels (`{group.label}`, e.g., "GETTING STARTED") keep their existing caption-strong style, unchanged.
@@ -162,15 +169,15 @@ The aside column width stays 240 px (line 218 grid template untouched).
 
 ## Behavior summary
 
-| State | Visual |
-|---|---|
-| TOC fits in viewport | No internal scroll. Identical to current rendering minus the active-pill fill (now left-rail bar). |
-| TOC exceeds viewport | Internal scroll engaged. Top + bottom fade masks visible. Header pinned. |
-| User scrolls page | Scroll-spy updates `activeId`. Effect scrolls active TOC item into view (`block: "nearest"`, smooth). |
-| User scrolls TOC manually | No fight — `block: "nearest"` is a no-op when target is already visible. |
-| User clicks TOC item | Existing `handleTocClick` (lines 112–121) runs unchanged: smooth-scroll to section + history.replaceState. |
-| Mobile (< 1024 px) | `<details>` disclosure unchanged. The scrollable bounded pattern is desktop-only. |
-| Search filters list | TOC re-renders against `filtered.groups` (existing). Bounded scroll still applies; auto-track fires on next active change. |
+| State                     | Visual                                                                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| TOC fits in viewport      | No internal scroll. Identical to current rendering minus the active-pill fill (now left-rail bar).                         |
+| TOC exceeds viewport      | Internal scroll engaged. Top + bottom fade masks visible. Header pinned.                                                   |
+| User scrolls page         | Scroll-spy updates `activeId`. Effect scrolls active TOC item into view (`block: "nearest"`, smooth).                      |
+| User scrolls TOC manually | No fight — `block: "nearest"` is a no-op when target is already visible.                                                   |
+| User clicks TOC item      | Existing `handleTocClick` (lines 112–121) runs unchanged: smooth-scroll to section + history.replaceState.                 |
+| Mobile (< 1024 px)        | `<details>` disclosure unchanged. The scrollable bounded pattern is desktop-only.                                          |
+| Search filters list       | TOC re-renders against `filtered.groups` (existing). Bounded scroll still applies; auto-track fires on next active change. |
 
 ## Accessibility
 
@@ -182,8 +189,8 @@ The aside column width stays 240 px (line 218 grid template untouched).
 
 ## Files touched
 
-| File | Change |
-|---|---|
+| File                                     | Change                                                                                                                                                          |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/web/components/help/help-view.tsx` | Bounded sticky aside, auto-track effect, restyled `<TocList>` active state, edge fade masks, `aria-current` on active item, `data-toc-id` attribute on buttons. |
 
 No other file touched. The mobile `<details>` block at lines 192–215 keeps using the same `<TocList>` and inherits the new active-state styling automatically — that's correct (a quieter active indicator works on mobile too).

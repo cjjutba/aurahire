@@ -52,9 +52,8 @@ export class AdminApplicationsService {
     query: ListAdminApplicationsQuery,
   ): Promise<AdminApplicationListEnvelopeDto> {
     const cacheKey = this.cacheKey(query);
-    const cached = await this.cache.get<AdminApplicationListEnvelopeDto>(
-      cacheKey,
-    );
+    const cached =
+      await this.cache.get<AdminApplicationListEnvelopeDto>(cacheKey);
     if (cached) return cached;
 
     const { rows, total } = await this.repo.list({

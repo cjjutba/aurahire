@@ -16,7 +16,11 @@ function parseCookieHeader(header: string): { name: string; value: string }[] {
   });
 }
 
-function serializeCookie(name: string, value: string, options: CookieOptions): string {
+function serializeCookie(
+  name: string,
+  value: string,
+  options: CookieOptions,
+): string {
   const parts: string[] = [`${name}=${encodeURIComponent(value)}`];
   if (options.path) parts.push(`Path=${options.path}`);
   else parts.push("Path=/");
@@ -42,7 +46,11 @@ export function getSessionOnlyMarkerFromDocument(): boolean {
   if (typeof document === "undefined") return false;
   return document.cookie
     .split("; ")
-    .some((c) => c === `${SESSION_ONLY_MARKER}=1` || c.startsWith(`${SESSION_ONLY_MARKER}=1;`));
+    .some(
+      (c) =>
+        c === `${SESSION_ONLY_MARKER}=1` ||
+        c.startsWith(`${SESSION_ONLY_MARKER}=1;`),
+    );
 }
 
 export function setSessionOnlyMarker(enabled: boolean): void {

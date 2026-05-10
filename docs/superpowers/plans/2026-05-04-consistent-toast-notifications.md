@@ -15,9 +15,11 @@
 ## File Structure
 
 ### New file
+
 - `apps/web/lib/toast.ts` — exports `toastSuccess` and `toastApiError`. Single source of truth for the convention.
 
 ### Modified files (32 confirmed)
+
 Grouped by area; full list with exact change per file lives in Tasks 3–8.
 
 - **Auth (7):** `login-form.tsx`, `register-candidate-form.tsx`, `register-recruiter-form.tsx`, `forgot-password-form.tsx`, `reset-password-form.tsx`, `verify-email-client.tsx`, `portal-topbar.tsx`.
@@ -28,11 +30,13 @@ Grouped by area; full list with exact change per file lives in Tasks 3–8.
 - **Other (2):** `bias-override-modal.tsx`, `raw-output-json-viewer.tsx`.
 
 ### Maybe-modified files (data-dependent, resolved in Task 1)
+
 - `apps/web/app/onboarding/candidate/education/page.tsx`
 - `apps/web/app/onboarding/candidate/experience/page.tsx`
 - `apps/web/app/onboarding/candidate/skills/page.tsx`
 
 ### Unchanged
+
 - `apps/web/components/ui/sonner.tsx` (Toaster component config)
 - `apps/web/app/layout.tsx` (Toaster mount point)
 - `package.json` (no dependency changes)
@@ -47,11 +51,13 @@ Every migration step follows this pattern. Apply it identically across files.
 ### 1. Replace the import
 
 **Find** (anywhere near the top of the file):
+
 ```ts
 import { toast } from "sonner";
 ```
 
 **Replace with**:
+
 ```ts
 import { toastSuccess, toastApiError } from "@/lib/toast";
 ```
@@ -60,21 +66,21 @@ If a file uses **only** `toast.success` calls, you can omit `toastApiError` from
 
 ### 2. Replace `toast.success(...)` calls
 
-| Old form | New form |
-|---|---|
-| `toast.success("Title")` | `toastSuccess("Title")` |
+| Old form                                           | New form                         |
+| -------------------------------------------------- | -------------------------------- |
+| `toast.success("Title")`                           | `toastSuccess("Title")`          |
 | `toast.success("Title", { description: "Desc." })` | `toastSuccess("Title", "Desc.")` |
 
 If the wording does not match the spec inventory, **rewrite it to match the spec**. Per-file mappings are listed inside each task.
 
 ### 3. Replace `toast.error(...)` calls
 
-| Old form | New form |
-|---|---|
-| `toast.error("Title", { description: (err as Error).message })` | `toastApiError(err, "Title")` |
+| Old form                                                           | New form                                                  |
+| ------------------------------------------------------------------ | --------------------------------------------------------- |
+| `toast.error("Title", { description: (err as Error).message })`    | `toastApiError(err, "Title")`                             |
 | `toast.error("Title", { description: "Some hardcoded message." })` | `toastApiError(null, "Title", "Some hardcoded message.")` |
-| `toast.error("Title")` | `toastApiError(null, "Title")` |
-| `toast.error("Validation failed", { description: zodMessages })` | `toastApiError(null, "Check your input", zodMessages)` |
+| `toast.error("Title")`                                             | `toastApiError(null, "Title")`                            |
+| `toast.error("Validation failed", { description: zodMessages })`   | `toastApiError(null, "Check your input", zodMessages)`    |
 
 Where `err` is the variable in scope (from `catch (err)` or `onError: (err) =>`). If the call site has access to a parsed JSON error body via manual fetch, prefer passing the raw error object (`err`) — `toastApiError` extracts `.body.message` automatically.
 
@@ -87,9 +93,11 @@ Only at the sites listed in Tasks 3–4 (auth + onboarding final steps). Never i
 ### 5. After every task, type-check
 
 Run from the repo root:
+
 ```bash
 pnpm --filter @aurahire/web run type-check
 ```
+
 Expected: no new errors. If type errors appear, fix them before committing.
 
 ### 6. Commit
@@ -101,6 +109,7 @@ Each task gets exactly one commit. Use the commit message in the task.
 ## Task 1: Audit onboarding pages (education, experience, skills)
 
 **Files:**
+
 - Read: `apps/web/app/onboarding/candidate/education/page.tsx`
 - Read: `apps/web/app/onboarding/candidate/experience/page.tsx`
 - Read: `apps/web/app/onboarding/candidate/skills/page.tsx`
@@ -109,6 +118,7 @@ Each task gets exactly one commit. Use the commit message in the task.
 - [ ] **Step 1: Read the three page files**
 
 For each of the three paths above, open the file. Look for:
+
 - A `"use client"` directive (means the file itself does mutations).
 - Imports of `useMutation`, `fetch(`, or any auto-generated controller method from `@aurahire/shared`.
 - Imports of a sibling client component (e.g. `import { EducationForm } from "@/components/onboarding/candidate/education-form";`).
@@ -120,11 +130,13 @@ If a page imports a client component, read that component too. Look for `toast.e
 - [ ] **Step 3: Record findings**
 
 Append the findings to this plan file as a new sub-section titled "Task 1 results" under the **Open log** section at the bottom of this document. For each of the three steps, record:
+
 - File path of the form-level component (page or client component).
 - Whether it has a mutation handler.
 - Whether it currently uses `toast.*`.
 
 Apply this rule per finding:
+
 - **Has mutation, has toast** → add to Task 4 file list. Migrate (error toast only — intermediate step, no success toast).
 - **Has mutation, no toast** → add to Task 4 file list. Add `toastApiError(err, "Couldn't save <step>")` only.
 - **No mutation** (server component or pure rendering) → no change needed.
@@ -132,10 +144,12 @@ Apply this rule per finding:
 - [ ] **Step 4: Commit findings**
 
 If Task 1 results require touching code in Task 4, commit only the appended notes here:
+
 ```bash
 git add docs/superpowers/plans/2026-05-04-consistent-toast-notifications.md
 git commit -m "docs: record onboarding page audit for toast plan"
 ```
+
 If no findings warrant a code change, skip the commit and proceed to Task 2.
 
 ---
@@ -143,6 +157,7 @@ If no findings warrant a code change, skip the commit and proceed to Task 2.
 ## Task 2: Create the toast helper module
 
 **Files:**
+
 - Create: `apps/web/lib/toast.ts`
 
 - [ ] **Step 1: Create the helper file**
@@ -189,7 +204,11 @@ function extractApiErrorMessage(err: unknown): string | null {
   }
   if (err && typeof err === "object" && "message" in err) {
     const msg = (err as { message?: unknown }).message;
-    if (typeof msg === "string" && msg.length > 0 && msg !== "Failed to fetch") {
+    if (
+      typeof msg === "string" &&
+      msg.length > 0 &&
+      msg !== "Failed to fetch"
+    ) {
       return msg;
     }
   }
@@ -202,6 +221,7 @@ function extractApiErrorMessage(err: unknown): string | null {
 ```bash
 pnpm --filter @aurahire/web run type-check
 ```
+
 Expected: no errors. The helper imports `ApiErrorResponse` from `@aurahire/shared`, which is already exported via `packages/shared/src/index.ts:export * from "./types/api-error.ts"`.
 
 - [ ] **Step 3: Commit**
@@ -222,6 +242,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 3: Migrate auth flows
 
 **Files:**
+
 - Modify: `apps/web/components/auth/login-form.tsx`
 - Modify: `apps/web/components/auth/register-candidate-form.tsx`
 - Modify: `apps/web/components/auth/register-recruiter-form.tsx`
@@ -236,16 +257,17 @@ Read `apps/web/components/auth/login-form.tsx`. Apply the import migration from 
 
 Rewrite the five existing `toast.error` calls and **add** a success toast just before `router.push(dest)` on the happy path:
 
-| Location | Before | After |
-|---|---|---|
+| Location                   | Before                                                                                                          | After                                                                                                                  |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Email-not-confirmed branch | `toast.error("Please verify your email first", { description: "Check your inbox for the verification link." })` | `toastApiError(null, "Sign in failed", "Please verify your email first. Check your inbox for the verification link.")` |
-| Generic auth fail | `toast.error("Sign in failed", { description: "Email or password incorrect." })` | `toastApiError(null, "Sign in failed", "Email or password incorrect.")` |
-| No session | `toast.error("Sign in failed", { description: "No session created." })` | `toastApiError(null, "Sign in failed", "No session created.")` |
-| Profile 404 | `toast.error("Profile not found", { description: "Please complete registration." })` | `toastApiError(null, "Profile not found", "Please complete registration.")` |
-| Profile load fail | `toast.error("Sign in failed", { description: "Could not load profile." })` | `toastApiError(null, "Sign in failed", "Could not load profile.")` |
-| Catch-all | `toast.error("Unexpected error", { description: (err as Error).message })` | `toastApiError(err, "Sign in failed")` |
+| Generic auth fail          | `toast.error("Sign in failed", { description: "Email or password incorrect." })`                                | `toastApiError(null, "Sign in failed", "Email or password incorrect.")`                                                |
+| No session                 | `toast.error("Sign in failed", { description: "No session created." })`                                         | `toastApiError(null, "Sign in failed", "No session created.")`                                                         |
+| Profile 404                | `toast.error("Profile not found", { description: "Please complete registration." })`                            | `toastApiError(null, "Profile not found", "Please complete registration.")`                                            |
+| Profile load fail          | `toast.error("Sign in failed", { description: "Could not load profile." })`                                     | `toastApiError(null, "Sign in failed", "Could not load profile.")`                                                     |
+| Catch-all                  | `toast.error("Unexpected error", { description: (err as Error).message })`                                      | `toastApiError(err, "Sign in failed")`                                                                                 |
 
 Add the success toast **before** the `router.push(dest)` line on the happy path:
+
 ```ts
 toastSuccess("Signed in");
 router.push(dest);
@@ -256,6 +278,7 @@ router.push(dest);
 Apply the import migration. Rewrite the existing error and add a success toast.
 
 Rewrite (find the existing `toast.error(...)` call):
+
 ```ts
 // Before:
 toast.error("Registration failed", { description: (err as Error).message });
@@ -264,6 +287,7 @@ toastApiError(err, "Couldn't create account");
 ```
 
 Add success toast on the happy path, immediately before the redirect to `/verify-email/sent`:
+
 ```ts
 toastSuccess("Account created", "Check your email to verify.");
 router.push("/verify-email/sent");
@@ -278,6 +302,7 @@ Same as Step 2 but in the recruiter registration form. Apply identical title/des
 Read the file. Replace the silent error swallow `.catch(() => {})` with proper error handling and add success + error toasts.
 
 Before (around lines 29–40):
+
 ```ts
 async function onSubmit(values: ForgotPasswordInput) {
   setIsSubmitting(true);
@@ -294,6 +319,7 @@ async function onSubmit(values: ForgotPasswordInput) {
 ```
 
 After:
+
 ```ts
 async function onSubmit(values: ForgotPasswordInput) {
   setIsSubmitting(true);
@@ -319,19 +345,25 @@ Apply the import migration. Note the security model from the spec edge cases: th
 Apply the import migration. Restandardize wording.
 
 Before (the existing success toast):
+
 ```ts
 toast.success("Password updated. Please sign in.");
 ```
+
 After:
+
 ```ts
 toastSuccess("Password updated", "Please sign in.");
 ```
 
 Before (the existing error toast):
+
 ```ts
 toast.error("Reset failed", { description: (err as Error).message });
 ```
+
 After:
+
 ```ts
 toastApiError(err, "Couldn't reset password");
 ```
@@ -343,12 +375,14 @@ Read `apps/web/app/(auth)/verify-email/verify-email-client.tsx`. The current beh
 Apply the import migration if `sonner` is not already imported. Otherwise add the helper import.
 
 When the verification call succeeds, just before or just after `setStatus("success")`:
+
 ```ts
 toastSuccess("Email verified", "Redirecting to your dashboard.");
 setStatus("success");
 ```
 
 When the verification call fails, just before or just after `setStatus("error")`:
+
 ```ts
 toastApiError(err, "Verification failed");
 setStatus("error");
@@ -361,6 +395,7 @@ If the file uses a switch on a returned status code rather than try/catch, fire 
 Apply the import migration. The existing `toast.error("Logout failed", ...)` becomes `toastApiError(err, "Sign out failed")`. Add a success toast immediately before the redirect.
 
 The relevant block:
+
 ```ts
 // Before (around the logout handler):
 async function handleLogout() {
@@ -374,6 +409,7 @@ async function handleLogout() {
 ```
 
 After:
+
 ```ts
 async function handleLogout() {
   try {
@@ -393,6 +429,7 @@ If the actual control flow differs (e.g. uses `await router.push` or has additio
 ```bash
 pnpm --filter @aurahire/web run type-check
 ```
+
 Expected: no errors.
 
 - [ ] **Step 9: Commit**
@@ -416,6 +453,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 4: Migrate onboarding flows
 
 **Files:**
+
 - Modify: `apps/web/components/onboarding/candidate/resume-upload.tsx`
 - Modify: `apps/web/components/onboarding/candidate/personal-info-form.tsx`
 - Modify: `apps/web/components/onboarding/candidate/preferences-form.tsx`
@@ -429,21 +467,32 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 Apply the import migration. Restandardize wording.
 
 Before:
+
 ```ts
 toast.success("Resume parsed successfully");
 // or:
-toast.success("Resume parsed", { description: "Review the prefilled fields below." });
+toast.success("Resume parsed", {
+  description: "Review the prefilled fields below.",
+});
 ```
+
 After:
+
 ```ts
-toastSuccess("Resume processed", "Review the prefilled fields before continuing.");
+toastSuccess(
+  "Resume processed",
+  "Review the prefilled fields before continuing.",
+);
 ```
 
 Before (error path):
+
 ```ts
 toast.error("Resume parse failed", { description: (err as Error).message });
 ```
+
 After:
+
 ```ts
 toastApiError(err, "Couldn't process resume");
 ```
@@ -453,10 +502,13 @@ toastApiError(err, "Couldn't process resume");
 Apply the import migration. **Do not add a success toast** (intermediate step). Restandardize the existing error.
 
 Before:
+
 ```ts
 toast.error("Save failed", { description: (err as Error).message });
 ```
+
 After:
+
 ```ts
 toastApiError(err, "Couldn't save personal info");
 ```
@@ -466,16 +518,23 @@ toastApiError(err, "Couldn't save personal info");
 Apply the import migration. Restandardize the two existing errors and **add** a success toast on the final-step completion.
 
 Error 1 (validation): `toast.error("Validation failed", { description: parsed.error.errors.map(e => e.message).join(", ") })` →
+
 ```ts
-toastApiError(null, "Check your input", parsed.error.errors.map((e) => e.message).join(", "));
+toastApiError(
+  null,
+  "Check your input",
+  parsed.error.errors.map((e) => e.message).join(", "),
+);
 ```
 
 Error 2 (save fail): `toast.error("Save failed", { description: (err as Error).message })` →
+
 ```ts
 toastApiError(err, "Couldn't save preferences");
 ```
 
 Add the success toast **immediately after** `completeOnboarding` resolves and before the redirect to `/candidate`:
+
 ```ts
 await completeOnboardingMutation.mutateAsync(...);
 toastSuccess("Onboarding complete", "Welcome to AuraHire.");
@@ -507,12 +566,14 @@ Success: `toastSuccess("Onboarding complete", "Welcome to AuraHire.");` before `
 - [ ] **Step 7: Apply Task 1 results (if any)**
 
 If Task 1 identified any of the education/experience/skills pages as needing a toast, apply error-only migration here. Pattern:
+
 ```ts
 // Before:
 toast.error("Save failed", { description: (err as Error).message });
 // After:
 toastApiError(err, "Couldn't save <step name>");
 ```
+
 No success toast on these intermediate steps.
 
 - [ ] **Step 8: Type-check**
@@ -520,6 +581,7 @@ No success toast on these intermediate steps.
 ```bash
 pnpm --filter @aurahire/web run type-check
 ```
+
 Expected: no errors.
 
 - [ ] **Step 9: Commit**
@@ -543,6 +605,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 5: Migrate recruiter portal
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/settings/_settings-form-client.tsx`
 - Modify: `apps/web/app/(recruiter)/recruiter/jobs/[id]/job-actions.tsx`
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_actions-client.tsx`
@@ -571,15 +634,19 @@ Archive error: `toast.error("Archive failed", { description: ... })` → `toastA
 Apply the import migration. Rewrite `"Moved to ${newStatus}"` to use the new convention with title and description split.
 
 Before:
+
 ```ts
 toast.success(`Moved to ${newStatus}`);
 ```
+
 After:
+
 ```ts
 toastSuccess("Status updated", `Now in ${newStatus}.`);
 ```
 
 Save notes:
+
 ```ts
 // Before:
 toast.success("Notes saved");
@@ -588,6 +655,7 @@ toastSuccess("Notes saved");
 ```
 
 Errors:
+
 - Status change error: `toastApiError(err, "Couldn't update status")`.
 - Save notes error: `toastApiError(err, "Couldn't save notes")`.
 - Download archive error (if present): `toastApiError(err, "Couldn't download")`.
@@ -599,6 +667,7 @@ Apply the import migration.
 Success: `toast.success("Interview scheduled — candidate notified")` → `toastSuccess("Interview scheduled", "Candidate notified.")`.
 
 Errors (3): wherever each error fires, use:
+
 - Validation: `toastApiError(null, "Check your input", joinedMessages)`.
 - Auth: `toastApiError(err, "Couldn't schedule interview")` or `toastApiError(null, "Couldn't schedule interview", "Please sign in again.")`.
 - API fail: `toastApiError(err, "Couldn't schedule interview")`.
@@ -610,6 +679,7 @@ Apply the import migration. Remove the em-dash from the success toast and split 
 Success: `toast.success("Offer sent — candidate notified")` → `toastSuccess("Offer sent", "Candidate notified.")`.
 
 Six errors. Map each by current title:
+
 - `toast.error("Validation failed", ...)` → `toastApiError(null, "Check your input", joinedMessages)`.
 - `toast.error("Authorization failed", ...)` → `toastApiError(err, "Couldn't send offer")`.
 - `toast.error("Duplicate offer", { description })` (where description is body.message about pending offer) → `toastApiError(err, "Couldn't send offer")` (the helper will surface the API description automatically since the error has a body).
@@ -623,10 +693,12 @@ If the existing code parses `body.message` itself for the duplicate-offer case, 
 Apply the import migration. **Distinguish create vs update** in the success title.
 
 Inspect the form's submit handler to find the create vs update branch (typically based on whether an `id` prop is present, or which mutation is called). Use:
+
 - Create success → `toastSuccess("Job created")`.
 - Update success → `toastSuccess("Job updated")`.
 
 Errors:
+
 - Validation: `toastApiError(null, "Check your input", joinedZodMessages)`.
 - Save fail: `toastApiError(err, "Couldn't save job")`.
 
@@ -635,6 +707,7 @@ Errors:
 ```bash
 pnpm --filter @aurahire/web run type-check
 ```
+
 Expected: no errors.
 
 - [ ] **Step 8: Commit**
@@ -657,6 +730,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 6: Migrate candidate portal
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/settings/_settings-form-client.tsx`
 - Modify: `apps/web/app/(candidate)/candidate/profile/_recompute-button-client.tsx`
 - Modify: `apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx`
@@ -677,6 +751,7 @@ Apply the import migration. Restandardize wording.
 Success (any current text like "Score recomputed" or "Profile rescored"): → `toastSuccess("Score recalculated")`.
 
 Errors (2). Map by intent:
+
 - Throttle: `toastApiError(err, "Couldn't recalculate")` (the helper surfaces the API throttle message automatically) or, if the existing code has a hardcoded throttle message, `toastApiError(null, "Couldn't recalculate", "Please wait a moment before recalculating.")`.
 - Generic fail: `toastApiError(err, "Couldn't recalculate")`.
 
@@ -687,6 +762,7 @@ Apply the import migration. This component has 4 errors and 1 success.
 Success (any "Score computed" wording): → `toastSuccess("Score recalculated")`.
 
 Errors (map by current title):
+
 - Auth missing: `toastApiError(null, "Couldn't recalculate", "Please sign in again.")`.
 - Throttle: `toastApiError(err, "Couldn't recalculate")` (helper surfaces API msg).
 - Not ready: `toastApiError(null, "Couldn't recalculate", "Complete your profile before recalculating.")` (or keep the existing literal description if more accurate).
@@ -716,6 +792,7 @@ Apply the import migration. Restandardize success wording.
 Success: `toast.success("Application submitted")` → `toastSuccess("Application sent", "We'll notify you when there's an update.")`.
 
 Errors (4). Map by intent:
+
 - Pick resume validation: `toastApiError(null, "Check your input", "Please pick a resume to apply with.")` or whatever the existing literal message is.
 - Auth missing: `toastApiError(null, "Couldn't apply", "Please sign in again.")`.
 - Duplicate: `toastApiError(err, "Couldn't apply")` (helper surfaces API msg about already applied).
@@ -726,6 +803,7 @@ Errors (4). Map by intent:
 ```bash
 pnpm --filter @aurahire/web run type-check
 ```
+
 Expected: no errors.
 
 - [ ] **Step 8: Commit**
@@ -748,6 +826,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 7: Migrate admin portal
 
 **Files:**
+
 - Modify: `apps/web/app/(admin)/admin/users/_action-modals-client.tsx`
 - Modify: `apps/web/app/(admin)/admin/ai-config/_apply-to-existing-client.tsx`
 - Modify: `apps/web/app/(admin)/admin/ai-config/_config-editor-client.tsx`
@@ -764,7 +843,7 @@ Suspend error: `toastApiError(err, "Couldn't suspend user")`.
 Reactivate success: `toastSuccess("User reactivated")`.
 Reactivate error: `toastApiError(err, "Couldn't reactivate user")`.
 
-Role change success: `toast.success(\`Role changed to ${newRole}\`)` → `toastSuccess("User role changed", \`Now ${newRole}.\`)`.
+Role change success: `toast.success(\`Role changed to ${newRole}\`)`→`toastSuccess("User role changed", \`Now ${newRole}.\`)`.
 Role change error: `toastApiError(err, "Couldn't change role")`.
 
 Delete success: `toastSuccess("User deleted")`.
@@ -773,12 +852,14 @@ Delete error: `toastApiError(err, "Couldn't delete user")`.
 Force password reset (this is the conditional one; the existing code branches based on whether a temporary password is returned):
 
 If the API response returns a temporary password (i.e., `tempPassword` field present) and the code copies it to clipboard:
+
 ```ts
 await navigator.clipboard.writeText(tempPassword);
 toastSuccess("Reset link sent", "Temporary credentials copied to clipboard.");
 ```
 
 If the API response does not return a temporary password (email-only mode):
+
 ```ts
 toastSuccess("Reset link sent");
 ```
@@ -789,9 +870,10 @@ Force password reset error: `toastApiError(err, "Couldn't send reset link")`.
 
 Apply the import migration. The success toast fires when polling completes.
 
-Success: `toast.success("Re-score complete", { description: \`${n} updated\` })` (or similar) → `toastSuccess("Rescore complete", \`${count} applications updated.\`)` where `count` is the count of updated applications already available in the polling response handler.
+Success: `toast.success("Re-score complete", { description: \`${n} updated\` })` (or similar) → `toastSuccess("Rescore complete", \`${count} applications updated.\`)`where`count` is the count of updated applications already available in the polling response handler.
 
 Errors (3). Map:
+
 - Status check fail: `toastApiError(err, "Couldn't start rescore")`.
 - Polling fail: `toastApiError(err, "Couldn't complete rescore")`.
 - Enqueue fail: `toastApiError(err, "Couldn't queue rescore")`.
@@ -803,6 +885,7 @@ Apply the import migration.
 Success: `toastSuccess("Configuration saved")`.
 
 Errors (3):
+
 - Validation: `toastApiError(null, "Check your input", joinedZodMessages)`.
 - Changes check: `toastApiError(err, "Couldn't save configuration")` (or whatever fits the existing branch).
 - Save fail: `toastApiError(err, "Couldn't save configuration")`.
@@ -814,6 +897,7 @@ Apply the import migration.
 Success: `toast.success("Audit log exported")` → `toastSuccess("Audit log exported", "Download started.")`.
 
 Errors (3):
+
 - Auth: `toastApiError(null, "Couldn't export audit log", "Please sign in again.")`.
 - Size: `toastApiError(null, "Couldn't export audit log", existingSizeMessage)` (preserve existing context message about size limits).
 - Export fail: `toastApiError(err, "Couldn't export audit log")`.
@@ -830,6 +914,7 @@ Archive error: `toastApiError(err, "Couldn't archive job")`.
 ```bash
 pnpm --filter @aurahire/web run type-check
 ```
+
 Expected: no errors.
 
 - [ ] **Step 7: Commit**
@@ -853,6 +938,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 8: Migrate misc + final verification
 
 **Files:**
+
 - Modify: `apps/web/components/bias/bias-override-modal.tsx`
 - Modify: `apps/web/components/admin/raw-output-json-viewer.tsx`
 
@@ -863,6 +949,7 @@ Apply the import migration.
 Success: `toast.success("Override saved")` → `toastSuccess("Override saved")`.
 
 Errors (2):
+
 - Validation: `toastApiError(null, "Check your input", "Please provide a justification before overriding.")` (preserve existing literal context if different).
 - Auth / API fail: `toastApiError(err, "Couldn't save override")`.
 
@@ -874,9 +961,11 @@ Success: `toast.success("Copied to clipboard")` → `toastSuccess("Copied to cli
 - [ ] **Step 3: Confirm no `toast` imports from `sonner` remain in app code**
 
 Run from repo root:
+
 ```bash
 grep -rn "from \"sonner\"" apps/web/components apps/web/app apps/web/lib --include="*.tsx" --include="*.ts" || echo "No matches"
 ```
+
 Expected: only one match — `apps/web/components/ui/sonner.tsx` (the Toaster component itself, which legitimately imports from sonner). No other file should import from `sonner` directly.
 
 If any other file appears in the grep output, it was missed. Re-read the spec's "Files affected" section and apply the migration to that file before continuing.
@@ -886,6 +975,7 @@ If any other file appears in the grep output, it was missed. Re-read the spec's 
 ```bash
 pnpm --filter @aurahire/web run type-check
 ```
+
 Expected: no errors.
 
 - [ ] **Step 5: Lint**
@@ -893,6 +983,7 @@ Expected: no errors.
 ```bash
 pnpm --filter @aurahire/web run lint
 ```
+
 Expected: no new errors. The script runs `next lint`.
 
 - [ ] **Step 6: Build**
@@ -900,6 +991,7 @@ Expected: no new errors. The script runs `next lint`.
 ```bash
 pnpm --filter @aurahire/web run build
 ```
+
 Expected: build succeeds. This is the strongest static check available without running the dev server (which Claude Code is forbidden from doing per CLAUDE.md hard rules).
 
 - [ ] **Step 7: Commit**
@@ -919,9 +1011,11 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 - [ ] **Step 8: Hand off to human for manual verification**
 
 Output a message like:
+
 > Implementation complete. Build passes. The toast helper, success-path additions, and wording standardization are committed across 8 commits.
 >
 > **Manual verification needed (Claude Code can't run the dev server):**
+>
 > 1. Start the app: `pnpm dev` (from repo root).
 > 2. Auth: sign in (candidate, recruiter, admin), sign out, register a new account, forgot password, verify email link, reset password.
 > 3. Onboarding: complete candidate flow end-to-end. Confirm only resume upload + final step toasts on success; intermediate steps are silent. Same for recruiter.
@@ -941,6 +1035,7 @@ Notes appended during implementation. Task 1 writes its audit results here.
 Audit of the three read-only review pages in the candidate onboarding wizard.
 
 **`apps/web/app/onboarding/candidate/education/page.tsx`**
+
 - Component type: async server component (no `"use client"` directive)
 - Mutation handler: none — page fetches parsed resume data server-side and renders a static list of education entries or an empty-state card
 - Toast usage: none
@@ -948,6 +1043,7 @@ Audit of the three read-only review pages in the candidate onboarding wizard.
 - Classification: **(c) no mutation** → no change needed
 
 **`apps/web/app/onboarding/candidate/experience/page.tsx`**
+
 - Component type: async server component (no `"use client"` directive)
 - Mutation handler: none — page fetches parsed resume data server-side and renders a static list of work experience entries or an empty-state card
 - Toast usage: none
@@ -955,6 +1051,7 @@ Audit of the three read-only review pages in the candidate onboarding wizard.
 - Classification: **(c) no mutation** → no change needed
 
 **`apps/web/app/onboarding/candidate/skills/page.tsx`**
+
 - Component type: async server component (no `"use client"` directive)
 - Mutation handler: none — page fetches parsed resume data server-side and renders skill chips and certification entries or an empty-state card
 - Toast usage: none

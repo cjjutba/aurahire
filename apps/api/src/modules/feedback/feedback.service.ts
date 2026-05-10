@@ -99,7 +99,9 @@ export class FeedbackService {
 
   // ─── Admin: list ───────────────────────────────────────────────────────
 
-  async listForAdmin(query: ListFeedbackQuery): Promise<FeedbackListEnvelopeDto> {
+  async listForAdmin(
+    query: ListFeedbackQuery,
+  ): Promise<FeedbackListEnvelopeDto> {
     const { rows, total } = await this.repo.list({
       status: query.status,
       type: query.type,

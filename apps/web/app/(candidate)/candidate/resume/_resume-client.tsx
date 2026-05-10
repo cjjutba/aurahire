@@ -133,10 +133,12 @@ async function uploadFile(file: File): Promise<ResumeRow> {
     credentials: "include",
   });
   if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as
-      | { message?: string }
-      | null;
-    const err = new Error(body?.message ?? `Upload failed (${res.status})`) as Error & {
+    const body = (await res.json().catch(() => null)) as {
+      message?: string;
+    } | null;
+    const err = new Error(
+      body?.message ?? `Upload failed (${res.status})`,
+    ) as Error & {
       body?: unknown;
     };
     err.body = body;
@@ -233,7 +235,9 @@ function UploadDropzone({ onUploaded }: UploadDropzoneProps) {
         />
       </label>
       {error && (
-        <p className="mt-2 text-xs text-[var(--color-status-danger)]">{error}</p>
+        <p className="mt-2 text-xs text-[var(--color-status-danger)]">
+          {error}
+        </p>
       )}
     </div>
   );
@@ -478,7 +482,9 @@ function ExperiencePanel({ items }: { items: ExperienceEntry[] }) {
 function EducationPanel({ items }: { items: EducationEntry[] }) {
   if (items.length === 0) {
     return (
-      <p className="text-sm text-[var(--color-muted)]">No education extracted.</p>
+      <p className="text-sm text-[var(--color-muted)]">
+        No education extracted.
+      </p>
     );
   }
   return (
@@ -553,7 +559,9 @@ function CertificationsPanel({ items }: { items: Certification[] }) {
           key={`${cert.name}-${idx}`}
           className="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-3"
         >
-          <p className="text-sm font-medium text-[var(--color-ink)]">{cert.name}</p>
+          <p className="text-sm font-medium text-[var(--color-ink)]">
+            {cert.name}
+          </p>
           {(cert.issuing_organization || cert.issue_date) && (
             <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
               {[cert.issuing_organization, cert.issue_date]
@@ -626,10 +634,11 @@ function ParsedFieldsView({ resume }: { resume: ResumeRow }) {
             <AiSuggestedBadge />
           </div>
           <p className="mt-1 text-xs text-[var(--color-muted)]">
-            Confidence: <span className="capitalize">{parsed.parse_confidence}</span>{" "}
-            · {parsed.experience.length} role
-            {parsed.experience.length === 1 ? "" : "s"} ·{" "}
-            {parsed.skills.length} skill{parsed.skills.length === 1 ? "" : "s"} ·{" "}
+            Confidence:{" "}
+            <span className="capitalize">{parsed.parse_confidence}</span> ·{" "}
+            {parsed.experience.length} role
+            {parsed.experience.length === 1 ? "" : "s"} · {parsed.skills.length}{" "}
+            skill{parsed.skills.length === 1 ? "" : "s"} ·{" "}
             {parsed.education.length} education entr
             {parsed.education.length === 1 ? "y" : "ies"}
           </p>
@@ -767,7 +776,9 @@ function PreviewPane({ resume }: PreviewPaneProps) {
                 ? "bg-[var(--color-canvas)] text-[var(--color-ink)] shadow-sm"
                 : "text-[var(--color-muted)]"
             }`}
-            title={isPdf ? "View original PDF" : "Preview only available for PDFs"}
+            title={
+              isPdf ? "View original PDF" : "Preview only available for PDFs"
+            }
           >
             <Eye className="h-3 w-3" />
             PDF View
@@ -786,7 +797,8 @@ function PreviewPane({ resume }: PreviewPaneProps) {
                 Preview not available for {resume.mimeType}.
               </p>
               <p className="mt-1 text-xs text-[var(--color-muted)]">
-                DOCX previews aren&apos;t supported in-browser. Download to view.
+                DOCX previews aren&apos;t supported in-browser. Download to
+                view.
               </p>
             </div>
           )
@@ -833,7 +845,9 @@ export function CandidateResumeClient() {
   const selected = resumes.find((r) => r.id === selectedId) ?? null;
 
   function invalidate() {
-    return qc.invalidateQueries({ queryKey: queryKeys.candidateResumes.list() });
+    return qc.invalidateQueries({
+      queryKey: queryKeys.candidateResumes.list(),
+    });
   }
 
   async function setDefault(resume: ResumeRow) {
@@ -868,7 +882,10 @@ export function CandidateResumeClient() {
     try {
       await apiCall(`/api/v1/resumes/${resume.id}/set-default`);
       await invalidate();
-      toastSuccess("Default reverted", `${resume.filename} is the default again.`);
+      toastSuccess(
+        "Default reverted",
+        `${resume.filename} is the default again.`,
+      );
     } catch (err) {
       toastApiError(err, "Couldn't undo");
     } finally {
@@ -902,10 +919,13 @@ export function CandidateResumeClient() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
       const token = getAccessToken();
-      const res = await fetch(`${apiUrl}/api/v1/resumes/${resume.id}/download`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${apiUrl}/api/v1/resumes/${resume.id}/download`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          credentials: "include",
+        },
+      );
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         const err = new Error(`Download failed (${res.status})`) as Error & {
@@ -1042,7 +1062,6 @@ export function CandidateResumeClient() {
           </section>
         </div>
       )}
-
     </div>
   );
 }

@@ -59,7 +59,9 @@ export function EvidenceCallout({
         </span>
       </header>
       {source && (
-        <p className="mb-2 text-xs italic text-[var(--color-muted)]">{source}</p>
+        <p className="mb-2 text-xs italic text-[var(--color-muted)]">
+          {source}
+        </p>
       )}
       <blockquote className="text-sm italic text-[var(--color-body)] break-words">
         &ldquo;{excerpt}&rdquo;

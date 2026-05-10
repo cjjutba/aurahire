@@ -100,9 +100,9 @@ describe("humanizeAuditAction", () => {
     });
 
     it("humanizes cron.interview_autocomplete.executed", () => {
-      expect(
-        humanizeAuditAction("cron.interview_autocomplete.executed"),
-      ).toBe("Interview auto-complete cron ran");
+      expect(humanizeAuditAction("cron.interview_autocomplete.executed")).toBe(
+        "Interview auto-complete cron ran",
+      );
     });
   });
 

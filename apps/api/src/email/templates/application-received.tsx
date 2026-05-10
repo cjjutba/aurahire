@@ -53,18 +53,28 @@ export function ApplicationReceivedEmail({
           }}
         >
           <EmailBrandHeader company={company} />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             New application
           </Heading>
           <Section>
-            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>Hi {recruiterName},</Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-              <strong style={{ color: "#0a0b0d" }}>{candidateName}</strong> applied to your job posting{" "}
-              <strong style={{ color: "#0a0b0d" }}>&ldquo;{jobTitle}&rdquo;</strong>.
+              Hi {recruiterName},
+            </Text>
+            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
+              <strong style={{ color: "#0a0b0d" }}>{candidateName}</strong>{" "}
+              applied to your job posting{" "}
+              <strong style={{ color: "#0a0b0d" }}>
+                &ldquo;{jobTitle}&rdquo;
+              </strong>
+              .
             </Text>
             {matchBand && matchScore !== null && (
               <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-                AI match: <strong style={{ color: "#2563eb" }}>{matchScore}/100</strong> ({matchBand})
+                AI match:{" "}
+                <strong style={{ color: "#2563eb" }}>{matchScore}/100</strong> (
+                {matchBand})
               </Text>
             )}
           </Section>

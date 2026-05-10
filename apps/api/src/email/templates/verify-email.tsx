@@ -61,9 +61,16 @@ export function VerifyEmailTemplate({
             Verify your email
           </Heading>
 
-          <Text style={{ color: "#5b616e", fontSize: "16px", lineHeight: 1.5, margin: "0 0 24px 0" }}>
-            Hi {recipientName}, thanks for signing up. Confirm your email so we can finish
-            setting up your account.
+          <Text
+            style={{
+              color: "#5b616e",
+              fontSize: "16px",
+              lineHeight: 1.5,
+              margin: "0 0 24px 0",
+            }}
+          >
+            Hi {recipientName}, thanks for signing up. Confirm your email so we
+            can finish setting up your account.
           </Text>
 
           <Section style={{ textAlign: "center", margin: "32px 0" }}>
@@ -84,7 +91,14 @@ export function VerifyEmailTemplate({
             </Button>
           </Section>
 
-          <Text style={{ color: "#5b616e", fontSize: "14px", lineHeight: 1.5, margin: "0 0 8px 0" }}>
+          <Text
+            style={{
+              color: "#5b616e",
+              fontSize: "14px",
+              lineHeight: 1.5,
+              margin: "0 0 8px 0",
+            }}
+          >
             Or copy and paste this link into your browser:
           </Text>
           <Text
@@ -102,9 +116,16 @@ export function VerifyEmailTemplate({
 
           <Hr style={{ borderColor: "#dee1e6", margin: "32px 0" }} />
 
-          <Text style={{ color: "#7c828a", fontSize: "13px", lineHeight: 1.5, margin: 0 }}>
-            This link expires in 24 hours. If you didn't create an AuraHire account, you can
-            safely ignore this email.
+          <Text
+            style={{
+              color: "#7c828a",
+              fontSize: "13px",
+              lineHeight: 1.5,
+              margin: 0,
+            }}
+          >
+            This link expires in 24 hours. If you didn't create an AuraHire
+            account, you can safely ignore this email.
           </Text>
         </Container>
       </Body>

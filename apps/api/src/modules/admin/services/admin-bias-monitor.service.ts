@@ -29,7 +29,8 @@ export class AdminBiasMonitorService {
       ? new Date(query.dateFrom)
       : new Date(to.getTime() - 30 * DAY_MS);
 
-    const promptVersionMin = query.promptVersionMin ?? DEFAULT_PROMPT_VERSION_MIN;
+    const promptVersionMin =
+      query.promptVersionMin ?? DEFAULT_PROMPT_VERSION_MIN;
 
     const cacheKey = `admin:bias-monitor:${from.toISOString()}|${to.toISOString()}|${promptVersionMin}`;
     const cached = await this.cache.get<BiasMonitorBundleDto>(cacheKey);
@@ -63,19 +64,18 @@ export class AdminBiasMonitorService {
     const kpis = {
       totalFlags: total,
       flagsPerJob:
-        publishedJobs > 0
-          ? Math.round((total / publishedJobs) * 100) / 100
-          : 0,
+        publishedJobs > 0 ? Math.round((total / publishedJobs) * 100) / 100 : 0,
       flagsResolvedPct: total > 0 ? Math.round((resolved / total) * 100) : 0,
-      overrideRate:
-        decided > 0 ? Math.round((overridden / decided) * 100) : 0,
+      overrideRate: decided > 0 ? Math.round((overridden / decided) * 100) : 0,
     };
 
-    const flagsByCategory: FlagsByCategoryDto[] = flagsByCategoryRaw.map((r) => ({
-      category: r.category,
-      count: r.count,
-      pct: total > 0 ? Math.round((r.count / total) * 100) : 0,
-    }));
+    const flagsByCategory: FlagsByCategoryDto[] = flagsByCategoryRaw.map(
+      (r) => ({
+        category: r.category,
+        count: r.count,
+        pct: total > 0 ? Math.round((r.count / total) * 100) : 0,
+      }),
+    );
 
     const scoreTotal = scoreDistRaw.reduce((s, r) => s + r.count, 0);
     const scoreMap = new Map(scoreDistRaw.map((r) => [r.band, r.count]));

@@ -1,4 +1,6 @@
-export function sanitizeMapUrl(value: string | null | undefined): string | null {
+export function sanitizeMapUrl(
+  value: string | null | undefined,
+): string | null {
   if (value === null || value === undefined) return null;
   const trimmed = value.trim();
   if (trimmed.length === 0) return null;

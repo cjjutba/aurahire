@@ -28,9 +28,7 @@ import {
  */
 const passwordChangeSchema = z
   .object({
-    currentPassword: z
-      .string()
-      .min(1, "Enter your current password"),
+    currentPassword: z.string().min(1, "Enter your current password"),
     newPassword: z
       .string()
       .min(8, "Use at least 8 characters")
@@ -65,11 +63,10 @@ export function SecurityPasswordForm({ email }: { email: string }) {
       // against the same email; if the credentials are wrong we surface
       // it before issuing the update — matches the UX of every banking
       // app's "current password" field.
-      const { error: reauthError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password: values.currentPassword,
-        });
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email,
+        password: values.currentPassword,
+      });
       if (reauthError) {
         toastApiError(reauthError, "Current password is incorrect");
         setPending(false);
@@ -123,11 +120,7 @@ export function SecurityPasswordForm({ email }: { email: string }) {
             <FormItem>
               <FormLabel>New password *</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  autoComplete="new-password"
-                  {...field}
-                />
+                <Input type="password" autoComplete="new-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -140,11 +133,7 @@ export function SecurityPasswordForm({ email }: { email: string }) {
             <FormItem>
               <FormLabel>Confirm new password *</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  autoComplete="new-password"
-                  {...field}
-                />
+                <Input type="password" autoComplete="new-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

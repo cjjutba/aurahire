@@ -8,7 +8,10 @@ interface Options<TPayload> {
   debounceMs?: number;
 }
 
-export function useAutosave<TPayload>({ save, debounceMs = 500 }: Options<TPayload>) {
+export function useAutosave<TPayload>({
+  save,
+  debounceMs = 500,
+}: Options<TPayload>) {
   const [status, setStatus] = useState<SaveStatus>("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<TPayload | null>(null);

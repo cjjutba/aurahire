@@ -106,8 +106,7 @@ export function CompanyCreateForm({
         queryClient.clear();
         await queryClient.fetchQuery({
           queryKey: MEMBERSHIPS_QUERY_KEY,
-          queryFn: () =>
-            clientApiFetch("/api/v1/profiles/me/memberships"),
+          queryFn: () => clientApiFetch("/api/v1/profiles/me/memberships"),
         });
         toastSuccess(`Company ${res.data.name} created`);
         router.refresh();
@@ -141,8 +140,7 @@ export function CompanyCreateForm({
     "h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-4 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus-visible:border-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/20";
   const textareaCls =
     "min-h-28 w-full rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-4 py-3 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus-visible:border-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/20";
-  const labelCls =
-    "text-sm font-semibold text-[var(--color-ink)]";
+  const labelCls = "text-sm font-semibold text-[var(--color-ink)]";
 
   return (
     <Form {...form}>

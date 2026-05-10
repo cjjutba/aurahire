@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Put, HttpCode, HttpStatus } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  HttpCode,
+  HttpStatus,
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import type { AuthUser } from "@aurahire/shared";
 
@@ -28,8 +36,14 @@ export class NotificationPreferencesController {
 
   @Put()
   @HttpCode(HttpStatus.OK)
-  async upsert(@CurrentUser() user: AuthUser, @Body() body: UpsertPreferenceDto) {
-    const previous = await this.service.getEffectiveMode(user.id, body.eventType);
+  async upsert(
+    @CurrentUser() user: AuthUser,
+    @Body() body: UpsertPreferenceDto,
+  ) {
+    const previous = await this.service.getEffectiveMode(
+      user.id,
+      body.eventType,
+    );
     const result = await this.service.upsert(user.id, body);
     await this.audit.log({
       actorId: user.id,
@@ -37,14 +51,21 @@ export class NotificationPreferencesController {
       action: AUDIT_ACTIONS.NOTIFICATION_PREFERENCE_UPDATED,
       entityType: "notification_preference",
       entityId: user.id,
-      details: { eventType: body.eventType, oldMode: previous, newMode: body.mode },
+      details: {
+        eventType: body.eventType,
+        oldMode: previous,
+        newMode: body.mode,
+      },
     });
     return { eventType: result.eventType, mode: result.mode, isDefault: false };
   }
 
   @Post("restore-defaults")
   @HttpCode(HttpStatus.OK)
-  async restoreDefaults(@CurrentUser() user: AuthUser, @Body() body: RestoreDefaultsDto) {
+  async restoreDefaults(
+    @CurrentUser() user: AuthUser,
+    @Body() body: RestoreDefaultsDto,
+  ) {
     const result = await this.service.restoreDefaults(user.id, body);
     await this.audit.log({
       actorId: user.id,

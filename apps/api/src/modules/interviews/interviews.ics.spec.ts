@@ -111,9 +111,11 @@ interface MockOptions {
 
 function makeService(opts: MockOptions = {}) {
   const interviewsRepo = {
-    findById: jest.fn().mockResolvedValue(
-      "interview" in opts ? opts.interview : makeInterview(),
-    ),
+    findById: jest
+      .fn()
+      .mockResolvedValue(
+        "interview" in opts ? opts.interview : makeInterview(),
+      ),
     insert: jest.fn(),
     update: jest.fn(),
     findByCandidateId: jest.fn(),
@@ -123,24 +125,28 @@ function makeService(opts: MockOptions = {}) {
   };
 
   const applicationsRepo = {
-    findById: jest.fn().mockResolvedValue(
-      "application" in opts ? opts.application : makeApplication(),
-    ),
+    findById: jest
+      .fn()
+      .mockResolvedValue(
+        "application" in opts ? opts.application : makeApplication(),
+      ),
     findApplicationContextForCompany: jest.fn(),
     update: jest.fn(),
   };
 
   const jobsRepo = {
     findById: jest.fn().mockResolvedValue(makeJobWithCompany()),
-    findByIdWithCompany: jest.fn().mockResolvedValue(
-      "jobWithCompany" in opts ? opts.jobWithCompany : makeJobWithCompany(),
-    ),
+    findByIdWithCompany: jest
+      .fn()
+      .mockResolvedValue(
+        "jobWithCompany" in opts ? opts.jobWithCompany : makeJobWithCompany(),
+      ),
   };
 
   const profilesRepo = {
-    findById: jest.fn().mockResolvedValue(
-      "profile" in opts ? opts.profile : makeProfile(),
-    ),
+    findById: jest
+      .fn()
+      .mockResolvedValue("profile" in opts ? opts.profile : makeProfile()),
   };
 
   const email = { send: jest.fn().mockResolvedValue(undefined) };
@@ -180,7 +186,9 @@ describe("InterviewsService — getIcs", () => {
     const { svc } = makeService({ interview: null });
     const user = makeCandidate();
 
-    await expect(svc.getIcs(user, INTERVIEW_ID)).rejects.toThrow(NotFoundException);
+    await expect(svc.getIcs(user, INTERVIEW_ID)).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it("throws NotFoundException when a candidate tries to access another candidate's interview", async () => {
@@ -191,7 +199,9 @@ describe("InterviewsService — getIcs", () => {
     });
     const otherUser = makeCandidate(OTHER_CANDIDATE_ID);
 
-    await expect(svc.getIcs(otherUser, INTERVIEW_ID)).rejects.toThrow(NotFoundException);
+    await expect(svc.getIcs(otherUser, INTERVIEW_ID)).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it("returns a string containing BEGIN:VCALENDAR for an authorized candidate", async () => {

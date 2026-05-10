@@ -12,7 +12,8 @@ export const reviewCompleteSchema = z
     skillsCount: z.number().int().nonnegative(),
   })
   .refine(
-    (v) => v.experienceCount >= 1 || v.educationCount >= 1 || v.skillsCount >= 3,
+    (v) =>
+      v.experienceCount >= 1 || v.educationCount >= 1 || v.skillsCount >= 3,
     {
       message: "Add at least one experience, one school, or three skills",
       path: ["root"],

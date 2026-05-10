@@ -1,4 +1,8 @@
-import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
@@ -40,7 +44,9 @@ export class StorageService {
   }
 
   async delete(opts: { bucket: string; path: string }): Promise<void> {
-    const { error } = await this.client.storage.from(opts.bucket).remove([opts.path]);
+    const { error } = await this.client.storage
+      .from(opts.bucket)
+      .remove([opts.path]);
     if (error) {
       this.logger.warn(`Delete failed: ${error.message}`);
       // Non-fatal
@@ -48,7 +54,9 @@ export class StorageService {
   }
 
   async download(opts: { bucket: string; path: string }): Promise<Buffer> {
-    const { data, error } = await this.client.storage.from(opts.bucket).download(opts.path);
+    const { data, error } = await this.client.storage
+      .from(opts.bucket)
+      .download(opts.path);
     if (error || !data) {
       this.logger.error(`Download failed: ${error?.message ?? "no data"}`);
       throw new ServiceUnavailableException({

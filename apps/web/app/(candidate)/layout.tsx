@@ -7,16 +7,14 @@ export default async function CandidateLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const profile = (await getCurrentProfile()) as
-    | {
-        id: string;
-        role: string;
-        fullName: string;
-        email: string;
-        avatarUrl: string | null;
-        profileCompleted: boolean;
-      }
-    | null;
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+    fullName: string;
+    email: string;
+    avatarUrl: string | null;
+    profileCompleted: boolean;
+  } | null;
 
   if (!profile) redirect("/login");
   if (profile.role !== "candidate" && profile.role !== "admin") {

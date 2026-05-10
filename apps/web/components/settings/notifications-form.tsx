@@ -52,7 +52,8 @@ const CANDIDATE_EVENTS: NotificationEvent[] = [
   {
     key: "application_status_changed",
     label: "Application status changes",
-    description: "When a recruiter moves your application forward or rejects it.",
+    description:
+      "When a recruiter moves your application forward or rejects it.",
   },
   {
     key: "interview_reminders",
@@ -67,7 +68,8 @@ const CANDIDATE_EVENTS: NotificationEvent[] = [
   {
     key: "interview_completed",
     label: "Interview completed",
-    description: "Notify me when an interview I participated in is marked completed.",
+    description:
+      "Notify me when an interview I participated in is marked completed.",
   },
   {
     key: "offer_received",

@@ -4,6 +4,7 @@
 **Owner:** Recruiter portal multi-tenant switch flow
 **Status:** approved (option: lift-state + useTransition for the UX fix; option: per-(user, company) Redis cache for membership; option: companyStats CTE consolidation; option: hover prefetch with 100ms debounce; option: parallelize PATCH with router.refresh + skip refresh on detail-page redirect)
 **Related:**
+
 - [Recruiter Portal Shell + Dashboard Redesign](./2026-05-04-recruiter-portal-shell-dashboard-redesign-design.md) — introduces the `CompanySwitcher` component this spec rewires.
 - [Redis Caching Strategy](../plans/2026-05-05-redis-caching-strategy.md) — defines the `TAGS.companyMembership` / `TAGS.userMemberships` infrastructure this spec leans on.
 
@@ -11,7 +12,7 @@
 
 Switching companies in the recruiter sidebar feels broken:
 
-1. **No loading feedback.** `CompanySwitcher` keeps its `switching` flag local, sets it to `true` before `setActiveCompanyOnServer`, and clears it as soon as the PATCH resolves. The dropdown closes; the page continues to show the *previous* company's dashboard for several hundred milliseconds while `router.refresh()` fan-outs to three backend endpoints under the hood. The recruiter sees a frozen-looking dashboard with no spinner. They cannot tell whether the click registered.
+1. **No loading feedback.** `CompanySwitcher` keeps its `switching` flag local, sets it to `true` before `setActiveCompanyOnServer`, and clears it as soon as the PATCH resolves. The dropdown closes; the page continues to show the _previous_ company's dashboard for several hundred milliseconds while `router.refresh()` fan-outs to three backend endpoints under the hood. The recruiter sees a frozen-looking dashboard with no spinner. They cannot tell whether the click registered.
 2. **The switch is sequential when it does not need to be.** The current flow runs (a) `await setActiveCompanyOnServer` then (b) `queryClient.clear()` then (c) `router.refresh()` strictly in series. The PATCH only matters for SSR / fallback paths — the client already has the new company id from `setActiveCompanyId(companyId)` in step (a-pre). One full round-trip is wasted.
 3. **`router.refresh()` is fire-and-forget.** It returns no promise, so even if we wanted to keep the spinner alive until the next paint, we have no completion signal. React's `useTransition` is the documented hook for this exact case (`startTransition(() => router.refresh())` exposes `isPending` until the SSR render lands).
 4. **Cold-company switches hit Postgres for every dashboard endpoint.** A switch into a never-visited company misses Redis on `dashboard:company:{id}:stats`, `:analytics`, `:recent`. Each of those three endpoints additionally fires `ActiveCompanyGuard`, which runs `findActiveMembership` against Postgres on every authenticated recruiter request — that lookup is **never** cached today, even though `TAGS.companyMembership(companyId)` and `TAGS.userMemberships(userId)` already exist and are busted on every member-mutation path.
@@ -22,16 +23,17 @@ The screenshots the user shared confirm multi-tenant scoping itself is correct: 
 
 ## Goal
 
-Make a company switch *feel* instant, then make it *be* fast:
+Make a company switch _feel_ instant, then make it _be_ fast:
 
 1. While a switch is in flight, render a centered, blurred-canvas overlay so the recruiter has unambiguous feedback that the click registered and the system is working. The overlay stays up until the new SSR render is committed.
 2. Eliminate the avoidable serial roundtrip in the switch flow.
 3. Eliminate the per-request Postgres hit in `ActiveCompanyGuard` by caching `findActiveMembership` against the existing `TAGS.companyMembership` / `TAGS.userMemberships` tag scaffolding.
-4. Warm Redis on the most likely *next* switch by prefetching dashboard endpoints when the user hovers a non-active row in the dropdown.
+4. Warm Redis on the most likely _next_ switch by prefetching dashboard endpoints when the user hovers a non-active row in the dropdown.
 5. Collapse `companyStats` from four roundtrips to one query.
 6. Skip the redundant `router.refresh()` when a detail-page redirect already triggered an SSR pass.
 
 This is a cross-cutting change in two halves:
+
 - **UX half** (frontend, `apps/web`): overlay component, lifted context state, `useTransition` rewire, hover prefetch.
 - **Backend half** (`apps/api`): membership cache, `companyStats` CTE consolidation.
 
@@ -42,6 +44,7 @@ No schema changes, no API contract changes, no AI prompt changes.
 ### In scope
 
 **Frontend (`apps/web`):**
+
 - New: `apps/web/components/layout/company-switch-overlay.tsx` — fixed-position overlay with backdrop blur, centered card, AuraHire-Blue ring spinner, target-company caption.
 - Modify: `apps/web/contexts/active-company-context.tsx` — lift `isSwitching` (and a transient `pendingCompanyName`) into the context. Wrap `router.refresh()` in `React.useTransition` so the overlay can stay up until SSR settles. Run `setActiveCompanyOnServer` and `router.refresh()` concurrently. Skip `router.refresh()` when a detail-page `router.push` was triggered.
 - Modify: `apps/web/components/layout/company-switcher.tsx` — drop the local `switching` state, read `isSwitching` from the context, add hover prefetch on dropdown rows.
@@ -49,6 +52,7 @@ No schema changes, no API contract changes, no AI prompt changes.
 - New: `apps/web/lib/dashboard-prefetch.ts` — small helper that issues parallel GETs to the three recruiter dashboard endpoints with a target `X-Active-Company-Id` header. Used by hover prefetch only; result is discarded — the only purpose is to populate Redis on the API side.
 
 **Backend (`apps/api`):**
+
 - Modify: `apps/api/src/common/guards/active-company.guard.ts` — wrap the `findActiveMembership` call in `cacheService.getOrSet` with TTL `TTL_SECONDS.warm` (5 min) and tags `[companyMembership(companyId), userMemberships(userId)]`. Existing mutation paths already bust those tags, so no audit-log changes are needed.
 - Modify: `apps/api/src/common/guards/active-company.guard.ts` — also wrap the `lookupLastActiveCompanyId` profile lookup in `cacheService.getOrSet` (TTL `TTL_SECONDS.warm`, tag `userMemberships(userId)`) so the fallback path doesn't add a second per-request Postgres hit on requests that omit the header (server-rendered pages on cold loads).
 - Modify: `apps/api/src/modules/profiles/profiles.repository.ts` — when `setActiveCompany` writes a new `lastActiveCompanyId`, bust `userMemberships(userId)` so the cached profile-lookup matches the new pointer.
@@ -56,6 +60,7 @@ No schema changes, no API contract changes, no AI prompt changes.
 - Modify: `apps/api/src/modules/applications/applications.repository.ts` — replace the four sequential SELECTs in `companyStats` with one query using PG `WITH` (CTEs): one CTE per scalar so the planner can parallelize. Behavior identical; one roundtrip instead of four.
 
 **Tests:**
+
 - New: `apps/web/components/layout/company-switch-overlay.test.tsx` — render with `isSwitching=false` returns null; with `isSwitching=true, pendingCompanyName="Foo"` renders the overlay with `role="status"` and the company name in the caption; spinner has `aria-label="Loading"`.
 - Modify: `apps/web/contexts/active-company-context.test.tsx` (create if absent) — test that `switchCompany` keeps `isSwitching=true` until the transition settles; that detail-page redirects skip the redundant refresh; that PATCH and refresh fire concurrently (mock both, assert both started before either resolved).
 - New: `apps/api/src/common/guards/active-company.guard.spec.ts` — extend (or add) coverage for: cache hit on `findActiveMembership` short-circuits the DB call; cache miss triggers DB then SET; `companyMembership` tag bust evicts the entry; profile-lookup cache hit short-circuits the DB call.
@@ -70,7 +75,7 @@ No schema changes, no API contract changes, no AI prompt changes.
 - Switching the "active range" on the dashboard (`Last 7 days` selector) — independent surface, has its own loading state via TanStack Query.
 - Scoring of `companyAnalytics` is already cached as a single Redis entry under `dashboard:company:{id}:analytics`; the per-roundtrip optimization there is "free" once `companyStats` consolidates because the analytics endpoint reuses `companyStats` for its `kpis` field.
 - Removing `queryClient.clear()` — keeping it as a safety net; it's instant and protects against subtle leaks of cached pages from the previous tenant.
-- "Switching back to a previously-visited company within TTL feels instant" is a *consequence* of the existing dashboard cache (`TTL_SECONDS.hot = 60s`), not a goal of this spec — we measure improvement against cold switches.
+- "Switching back to a previously-visited company within TTL feels instant" is a _consequence_ of the existing dashboard cache (`TTL_SECONDS.hot = 60s`), not a goal of this spec — we measure improvement against cold switches.
 - The `parsing` / `done` resume parsing card and any onboarding flow.
 - Analytics chart visualizations — the dashboard pipeline-snapshot section is unaffected.
 - Internationalization of the new caption — `Switching to {name}…` matches the codebase's English-only baseline.
@@ -80,6 +85,7 @@ No schema changes, no API contract changes, no AI prompt changes.
 ### Data flow (after the change)
 
 **User clicks a non-active company in the dropdown:**
+
 1. `CompanySwitcher` calls `ctx.switchCompany(targetCompanyId)`. The dropdown closes (DropdownMenu's default behavior on item click).
 2. `ActiveCompanyProvider`:
    - Sets `isSwitching = true` and `pendingCompanyName = "Test Company"` (looked up from `memberships` by id).
@@ -94,13 +100,15 @@ No schema changes, no API contract changes, no AI prompt changes.
 6. If `setActiveCompanyOnServer` rejected, the catch arm rolls `setActiveCompanyId` back to the prior value, sets `isSwitching = false` immediately, and the existing `toastApiError` path surfaces the error. The transition is canceled by the rollback render.
 
 **User hovers a non-active company row in the dropdown (no click):**
+
 1. `CompanySwitcher` schedules a `setTimeout(prefetch, 100)`.
 2. If the user moves off the row before 100 ms, the timer is cleared — no fetch.
-3. Otherwise, `prefetchDashboardForCompany(companyId)` issues three parallel `GET`s to `/api/v1/applications/recruiter-stats?range=7d`, `/api/v1/applications/recruiter-analytics`, `/api/v1/applications/recent?limit=6`, each carrying `X-Active-Company-Id: {companyId}`. Each request goes through `ActiveCompanyGuard`, which now consults the membership cache (cache hit on the second hover for the same target). On a cache miss for the *dashboard* keys, the loader runs and SETs Redis under tag `dashboard:company:{companyId}`.
+3. Otherwise, `prefetchDashboardForCompany(companyId)` issues three parallel `GET`s to `/api/v1/applications/recruiter-stats?range=7d`, `/api/v1/applications/recruiter-analytics`, `/api/v1/applications/recent?limit=6`, each carrying `X-Active-Company-Id: {companyId}`. Each request goes through `ActiveCompanyGuard`, which now consults the membership cache (cache hit on the second hover for the same target). On a cache miss for the _dashboard_ keys, the loader runs and SETs Redis under tag `dashboard:company:{companyId}`.
 4. The fetches' results are discarded (we don't hydrate TanStack Query — the actual click flow does that). The only purpose is Redis warming.
 5. AbortController is captured. If the dropdown closes before the prefetch completes, the in-flight requests are aborted (the API still gets the request and may complete the cache write — fine).
 
 **`ActiveCompanyGuard.canActivate` (after the change):**
+
 1. Public / no-user / admin / candidate / `@SkipActiveCompany()` short-circuits — unchanged.
 2. Resolve `companyId` from header → cached profile lookup → auto-heal sole-membership.
 3. Membership verification:
@@ -110,13 +118,15 @@ No schema changes, no API contract changes, no AI prompt changes.
      ttlSeconds: TTL_SECONDS.warm,
      tags: [TAGS.companyMembership(companyId), TAGS.userMemberships(user.id)],
      telemetryName: "guard:membership",
-     load: () => this.companyMembersRepo.findActiveMembership(user.id, companyId),
+     load: () =>
+       this.companyMembersRepo.findActiveMembership(user.id, companyId),
    });
    ```
    Cache key includes both `userId` and `companyId` so two users in the same company get separate entries (their roles can differ; we cache the full row including role).
 4. Existing 403/role checks run unchanged on the cached row.
 
 **`ApplicationsRepository.companyStats` (after the change):**
+
 ```sql
 WITH
   active_jobs AS (
@@ -159,7 +169,8 @@ SELECT
   bias_flags.c AS bias_flags
 FROM active_jobs, apps_stats, avg_score, bias_flags;
 ```
-Drizzle's `db.execute(sql\`...\`)` is the path; the result is a single row. The current four `db.select(...)` blocks become one `db.execute` + a typed cast. The same shape (`{ activeJobs, totalApplications, totalApps, pendingReviews, pendingReview, inInterview, offered, hired, avgMatchScore, biasFlags }`) is returned — no caller change.
+
+Drizzle's `db.execute(sql\`...\`)`is the path; the result is a single row. The current four`db.select(...)`blocks become one`db.execute` + a typed cast. The same shape (`{ activeJobs, totalApplications, totalApps, pendingReviews, pendingReview, inInterview, offered, hired, avgMatchScore, biasFlags }`) is returned — no caller change.
 
 ### Component contracts
 
@@ -185,7 +196,9 @@ The provider:
 
 ```ts
 const [isSwitching, setIsSwitching] = useState(false);
-const [pendingCompanyName, setPendingCompanyName] = useState<string | null>(null);
+const [pendingCompanyName, setPendingCompanyName] = useState<string | null>(
+  null,
+);
 const [isPending, startTransition] = useTransition();
 
 // Auto-clear when the SSR transition settles.
@@ -196,46 +209,49 @@ useEffect(() => {
   }
 }, [isPending, isSwitching]);
 
-const switchCompany = useCallback(async (companyId: string) => {
-  if (companyId === activeCompanyId) return;
-  const target = memberships.find((m) => m.companyId === companyId);
+const switchCompany = useCallback(
+  async (companyId: string) => {
+    if (companyId === activeCompanyId) return;
+    const target = memberships.find((m) => m.companyId === companyId);
 
-  setPendingCompanyName(target?.companyName ?? null);
-  setIsSwitching(true);
+    setPendingCompanyName(target?.companyName ?? null);
+    setIsSwitching(true);
 
-  // Synchronous singleton update — next fetch already carries the new header.
-  setActiveCompanyId(companyId);
+    // Synchronous singleton update — next fetch already carries the new header.
+    setActiveCompanyId(companyId);
 
-  // Concurrent: PATCH + UI transition. The PATCH only matters for SSR pages
-  // and the guard's profile-lookup fallback; client requests already use
-  // the localStorage singleton via the X-Active-Company-Id header.
-  const patchPromise = setActiveCompanyOnServer(companyId).catch((err) => {
-    // Roll back local state.
-    setActiveCompanyId(initialActiveCompanyId ?? null);
-    setIsSwitching(false);
-    setPendingCompanyName(null);
-    throw err;
-  });
+    // Concurrent: PATCH + UI transition. The PATCH only matters for SSR pages
+    // and the guard's profile-lookup fallback; client requests already use
+    // the localStorage singleton via the X-Active-Company-Id header.
+    const patchPromise = setActiveCompanyOnServer(companyId).catch((err) => {
+      // Roll back local state.
+      setActiveCompanyId(initialActiveCompanyId ?? null);
+      setIsSwitching(false);
+      setPendingCompanyName(null);
+      throw err;
+    });
 
-  // Drop cached previous-tenant data.
-  queryClient.clear();
+    // Drop cached previous-tenant data.
+    queryClient.clear();
 
-  startTransition(() => {
-    if (typeof window !== "undefined") {
-      const path = window.location.pathname;
-      const detailMatch = path.match(/^(\/recruiter\/[^/]+)\/[^/]+/);
-      if (detailMatch?.[1]) {
-        router.push(detailMatch[1]);   // push triggers SSR; refresh would duplicate
-        return;
+    startTransition(() => {
+      if (typeof window !== "undefined") {
+        const path = window.location.pathname;
+        const detailMatch = path.match(/^(\/recruiter\/[^/]+)\/[^/]+/);
+        if (detailMatch?.[1]) {
+          router.push(detailMatch[1]); // push triggers SSR; refresh would duplicate
+          return;
+        }
       }
-    }
-    router.refresh();
-  });
+      router.refresh();
+    });
 
-  // Surface PATCH errors AFTER the transition has been started so the
-  // overlay reflects the rollback.
-  await patchPromise;
-}, [activeCompanyId, memberships, initialActiveCompanyId, queryClient, router]);
+    // Surface PATCH errors AFTER the transition has been started so the
+    // overlay reflects the rollback.
+    await patchPromise;
+  },
+  [activeCompanyId, memberships, initialActiveCompanyId, queryClient, router],
+);
 
 const prefetchCompanyDashboard = useCallback((companyId: string) => {
   void prefetchDashboardForCompany(companyId);
@@ -268,7 +284,8 @@ export function CompanySwitchOverlay() {
       >
         <Spinner aria-label="Loading" />
         <p className="text-center text-[var(--color-body)]">
-          Switching to <span className="font-semibold text-[var(--color-ink)]">{name}</span>…
+          Switching to{" "}
+          <span className="font-semibold text-[var(--color-ink)]">{name}</span>…
         </p>
       </div>
     </div>
@@ -281,11 +298,7 @@ export function CompanySwitchOverlay() {
 ```tsx
 function Spinner({ "aria-label": label }: { "aria-label": string }) {
   return (
-    <div
-      aria-label={label}
-      role="img"
-      className="relative h-10 w-10"
-    >
+    <div aria-label={label} role="img" className="relative h-10 w-10">
       <div className="absolute inset-0 rounded-full border-[3px] border-[var(--color-primary-soft)]" />
       <div
         className="absolute inset-0 rounded-full border-[3px] border-transparent
@@ -357,12 +370,12 @@ We don't bother with TanStack Query's `prefetchQuery` here because (a) the data 
 ### Edge cases
 
 - **Switch to currently-active company:** `switchCompany` early-returns. Overlay never mounts.
-- **PATCH fails after singleton write:** caught arm rolls back `setActiveCompanyId` and clears `isSwitching`. Existing toast surfaces the error. No SSR refresh runs (the throw is awaited *after* `startTransition`, and the catch arm runs first).
+- **PATCH fails after singleton write:** caught arm rolls back `setActiveCompanyId` and clears `isSwitching`. Existing toast surfaces the error. No SSR refresh runs (the throw is awaited _after_ `startTransition`, and the catch arm runs first).
 - **Network is slow but not failed:** Overlay stays up. `useTransition` keeps `isPending = true` until SSR completes. There is no upper bound — that matches user expectation ("the page is loading; let it load").
-- **User clicks another company while one switch is in flight:** The first row's `disabled={isSwitching}` is on the *trigger button*, not on dropdown items. The dropdown is closed during a switch (DropdownMenu closes on item click), so a second click is structurally impossible until the first settles. If the user reopens the dropdown after `useTransition` flips back, normal flow resumes.
+- **User clicks another company while one switch is in flight:** The first row's `disabled={isSwitching}` is on the _trigger button_, not on dropdown items. The dropdown is closed during a switch (DropdownMenu closes on item click), so a second click is structurally impossible until the first settles. If the user reopens the dropdown after `useTransition` flips back, normal flow resumes.
 - **User hovers many rows quickly:** Each hover schedules its own 100 ms timer; previous timers are canceled by `onMouseLeave`. The fastest user can trigger at most one prefetch per ~100 ms, which the API rate-limit comfortably handles.
 - **Hover prefetch fires for a company the user then never switches to:** Wasted work, but bounded — three GETs per company hovered. Each populates Redis for `TTL_SECONDS.hot = 60s`. After 60s the entries expire. No staleness risk.
-- **Membership cache hit but row was deleted between SET and GET (race):** `findActiveMembership` filters `status='active'`. A delete bumps the row's status to `'left'` (or removes it) and the mutation calls `cacheService.bustTags([companyMembership(...)])`. The bust runs *after* the DB write (existing pattern in `companies.service.ts`); a request that lands between bust and the next read will repopulate. No correctness loss.
+- **Membership cache hit but row was deleted between SET and GET (race):** `findActiveMembership` filters `status='active'`. A delete bumps the row's status to `'left'` (or removes it) and the mutation calls `cacheService.bustTags([companyMembership(...)])`. The bust runs _after_ the DB write (existing pattern in `companies.service.ts`); a request that lands between bust and the next read will repopulate. No correctness loss.
 - **Membership row's role changes between SET and GET:** Same path — the `update` call in `CompanyMembersRepository` is followed by a `bustTags` in the calling service. Stale roles cannot leak past a bust.
 - **`companyStats` CTE returns no rows for a brand-new company with zero jobs:** All four CTEs return one row each (COUNT/AVG over empty sets is 0/null). The single SELECT joining all four still returns one row. Behavior identical to current four-query implementation.
 - **Detail-page redirect on switch but the old detail id happens to be valid in the new tenant:** Vanishingly rare (UUIDs), but: even if true, redirecting to the section index is still safer than silently showing a different company's resource at the same URL. The user can re-navigate.
@@ -381,12 +394,12 @@ We don't bother with TanStack Query's `prefetchQuery` here because (a) the data 
 
 Targets we're committing to (measured against the cold-switch path on a developer laptop, single user, no real Redis warmth):
 
-| Metric | Before | After (target) |
-|---|---|---|
-| Time-to-first-paint of new dashboard data | ~800–1200 ms perceived freeze | ~300–500 ms with overlay (perceived as deliberate) |
-| Postgres queries during a dashboard cold load | 4 (stats) + 3 (top jobs) + 1 (status breakdown) + 1 (recent) + 3 × guard membership = 12 | 1 (stats CTE) + 3 (top jobs) + 1 (status breakdown) + 1 (recent) + 0 (guard cache hit on 2nd+ call within 5min) = 6 |
-| Postgres queries during a warm switch (Redis hit on dashboard keys) | 3 × guard = 3 | 0 (guard cache hit on 2nd+ call) |
-| Round-trips on a switch click before `router.refresh()` returns control | 1 (PATCH) sequential | 0 sequential (PATCH parallelized with refresh) |
+| Metric                                                                  | Before                                                                                   | After (target)                                                                                                      |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Time-to-first-paint of new dashboard data                               | ~800–1200 ms perceived freeze                                                            | ~300–500 ms with overlay (perceived as deliberate)                                                                  |
+| Postgres queries during a dashboard cold load                           | 4 (stats) + 3 (top jobs) + 1 (status breakdown) + 1 (recent) + 3 × guard membership = 12 | 1 (stats CTE) + 3 (top jobs) + 1 (status breakdown) + 1 (recent) + 0 (guard cache hit on 2nd+ call within 5min) = 6 |
+| Postgres queries during a warm switch (Redis hit on dashboard keys)     | 3 × guard = 3                                                                            | 0 (guard cache hit on 2nd+ call)                                                                                    |
+| Round-trips on a switch click before `router.refresh()` returns control | 1 (PATCH) sequential                                                                     | 0 sequential (PATCH parallelized with refresh)                                                                      |
 
 The "perceived freeze becomes a deliberate transition" is the user-visible win even on the slow path. The query reductions are the measurable win on the backend side.
 
@@ -400,7 +413,7 @@ The "perceived freeze becomes a deliberate transition" is the user-visible win e
   - Spinner has `aria-label="Loading"`.
 - `active-company-context.test.tsx`:
   - `switchCompany(targetId)` sets `isSwitching = true` synchronously after the call.
-  - Mocks `setActiveCompanyOnServer` and a `router.refresh` spy; asserts both fire concurrently (the mock for PATCH is held open via a `Deferred`; assert refresh was called *before* PATCH resolves).
+  - Mocks `setActiveCompanyOnServer` and a `router.refresh` spy; asserts both fire concurrently (the mock for PATCH is held open via a `Deferred`; assert refresh was called _before_ PATCH resolves).
   - Detail-page pathname (`/recruiter/jobs/abc`) triggers `router.push("/recruiter/jobs")` and skips `router.refresh`.
   - PATCH rejection rolls back the singleton and clears `isSwitching` immediately.
   - Hovering a row (calling `prefetchCompanyDashboard`) fires three fetches with the correct `X-Active-Company-Id` header.

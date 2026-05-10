@@ -77,15 +77,28 @@ export function DigestEmail({ rows, appOrigin, role }: DigestEmailProps) {
                 borderBottom: "1px solid #eef0f3",
               }}
             >
-              <p style={{ fontSize: 16, fontWeight: 600, margin: "0 0 4px", color: "#0a0b0d" }}>
+              <p
+                style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  margin: "0 0 4px",
+                  color: "#0a0b0d",
+                }}
+              >
                 {row.title}
               </p>
-              <p style={{ fontSize: 14, color: "#5b616e", margin: 0 }}>{row.body}</p>
+              <p style={{ fontSize: 14, color: "#5b616e", margin: 0 }}>
+                {row.body}
+              </p>
               {row.link && (
                 <p style={{ marginTop: 8 }}>
                   <a
                     href={`${appOrigin}${row.link}`}
-                    style={{ color: "#2563eb", textDecoration: "none", fontSize: 14 }}
+                    style={{
+                      color: "#2563eb",
+                      textDecoration: "none",
+                      fontSize: 14,
+                    }}
                   >
                     View →
                   </a>

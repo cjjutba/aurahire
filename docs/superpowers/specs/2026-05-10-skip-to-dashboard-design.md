@@ -81,23 +81,26 @@ The existing reducer in `_analyzing-client.tsx` already has these `kind` values:
 
 Skip link visibility, by state:
 
-| State | Skip visible? | Reason |
-|---|---|---|
-| `computingProfileScore` | No | `complete-onboarding` not yet returned; skipping risks a navigation that beats the `profileCompleted=true` write |
-| `profileScoreReady` | Yes (200ms fade-in) | Score is in DB, all writes committed |
-| `streamingPreviews` | Yes | Typical state where users would skip |
-| `profileScoreDegraded` | Yes | Let the user escape the loading screen; degraded path on the dashboard handles missing score |
-| `error` | No | Has its own remediation surface |
-| `validationError` | No | User must fix onboarding step first |
-| `redirecting` | No | Already navigating |
+| State                   | Skip visible?       | Reason                                                                                                           |
+| ----------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `computingProfileScore` | No                  | `complete-onboarding` not yet returned; skipping risks a navigation that beats the `profileCompleted=true` write |
+| `profileScoreReady`     | Yes (200ms fade-in) | Score is in DB, all writes committed                                                                             |
+| `streamingPreviews`     | Yes                 | Typical state where users would skip                                                                             |
+| `profileScoreDegraded`  | Yes                 | Let the user escape the loading screen; degraded path on the dashboard handles missing score                     |
+| `error`                 | No                  | Has its own remediation surface                                                                                  |
+| `validationError`       | No                  | User must fix onboarding step first                                                                              |
+| `redirecting`           | No                  | Already navigating                                                                                               |
 
 ### Click handler
 
 ```ts
 function onSkipClick() {
   audit.fire("user.onboarding.skipped_analyzing", {
-    score_ready: state.kind !== "computingProfileScore" && state.kind !== "profileScoreDegraded",
-    previews_ready: state.kind === "streamingPreviews" ? state.previewsReady : 0,
+    score_ready:
+      state.kind !== "computingProfileScore" &&
+      state.kind !== "profileScoreDegraded",
+    previews_ready:
+      state.kind === "streamingPreviews" ? state.previewsReady : 0,
   });
   dispatch({ type: "REDIRECT" });
   router.replace("/candidate");
@@ -143,13 +146,13 @@ If the candidate skips to `/candidate`, then navigates to `/candidate/jobs` whil
 
 ### Failure mode reference
 
-| Failure | What user sees | What backend does |
-|---|---|---|
-| Profile Score AI errored during `complete-onboarding` | Dashboard shimmer for ≤30s → error card with `[Try again]` | Auto-enqueues recompute job (existing `ProfileScoreQueueService` behavior) |
-| Profile Score recompute also fails | Stays in error card; `[Try again]` button visible (rate-limited) | Logs to audit; no further auto-retry beyond the first enqueue |
-| < 5 match previews ever land | Top Matches widget freezes counter at N, shows `Some matches couldn't be loaded` caption with browse-all link | Logs partial completion; existing match-preview-on-view endpoint can still fill specific jobs |
-| Realtime channel drops while user on dashboard | TanStack Query refetches `profileScore.me()` and `matchPreviews()` on window focus and on a 30s polling fallback | No backend change; this is existing client config |
-| User skips during `computingProfileScore` | Cannot — link not visible during that state | n/a |
+| Failure                                               | What user sees                                                                                                   | What backend does                                                                             |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Profile Score AI errored during `complete-onboarding` | Dashboard shimmer for ≤30s → error card with `[Try again]`                                                       | Auto-enqueues recompute job (existing `ProfileScoreQueueService` behavior)                    |
+| Profile Score recompute also fails                    | Stays in error card; `[Try again]` button visible (rate-limited)                                                 | Logs to audit; no further auto-retry beyond the first enqueue                                 |
+| < 5 match previews ever land                          | Top Matches widget freezes counter at N, shows `Some matches couldn't be loaded` caption with browse-all link    | Logs partial completion; existing match-preview-on-view endpoint can still fill specific jobs |
+| Realtime channel drops while user on dashboard        | TanStack Query refetches `profileScore.me()` and `matchPreviews()` on window focus and on a 30s polling fallback | No backend change; this is existing client config                                             |
+| User skips during `computingProfileScore`             | Cannot — link not visible during that state                                                                      | n/a                                                                                           |
 
 ### Audit event payload
 
@@ -173,17 +176,17 @@ If the guard already exists in some form, this design simply confirms its presen
 
 ## Edge cases
 
-| Scenario | Behavior |
-|---|---|
-| User refreshes `/analyzing` mid-flow | Page re-mounts; `complete-onboarding` PATCH re-fires (the `useRef` guard resets on a fresh page load). Backend must be idempotent on the PATCH — already is, per the existing `profileCompleted=true` early-return + scoring `staleAt` semantics. Score card re-reads from DB; user proceeds normally. |
-| User clicks browser back from `/candidate` after skipping | `router.replace` removed `/analyzing` from history. Back goes to whatever preceded `/analyzing` (typically `/onboarding/candidate/preferences`). The new onboarding-tree layout guard catches that and redirects forward to `/candidate`. |
-| User skips, then closes the tab before previews finish | Backend queue continues server-side. Realtime events fire to no listener — no-op. On next session, dashboard reads current DB state. |
-| User has Profile Score from a prior session and somehow re-enters `/analyzing` | Layout guard catches it before render and redirects to `/candidate`. The analyzing page never mounts. |
-| User skips, then immediately tries to apply to a job | Applications don't depend on Profile Score. Apply works. The recruiter pipeline's per-application match score backfills when scoring lands; if it lands after the recruiter has already viewed the application, the existing match-on-view fallback computes it on demand. |
-| Two browser tabs open during onboarding | Each tab runs its own state machine; skipping in one doesn't affect the other. Backend `complete-onboarding` is idempotent. Realistically rare — onboarding is single-tab. |
-| Slow connection: score takes longer than 5s | Skip link stays hidden until `complete-onboarding` returns. The existing 10s wall-clock cap from "score ready" still fires the auto-redirect. Same safety net as today. |
-| Profile Score AI degrades AND user skips | Lands on dashboard, sees shimmer for ≤30s, transitions to error card with retry. Calm failure path. |
-| Realtime hook subscription scope | The hook is currently mounted on `/candidate` (verified). For `/candidate/profile` to share the score card's pending behavior, ensure the hook is also active on that route — either via the candidate-portal layout (preferred) or via the score card client component subscribing on its own. Verify during implementation; treat as a small fix-up if not already wired. |
+| Scenario                                                                       | Behavior                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| User refreshes `/analyzing` mid-flow                                           | Page re-mounts; `complete-onboarding` PATCH re-fires (the `useRef` guard resets on a fresh page load). Backend must be idempotent on the PATCH — already is, per the existing `profileCompleted=true` early-return + scoring `staleAt` semantics. Score card re-reads from DB; user proceeds normally.                                                                      |
+| User clicks browser back from `/candidate` after skipping                      | `router.replace` removed `/analyzing` from history. Back goes to whatever preceded `/analyzing` (typically `/onboarding/candidate/preferences`). The new onboarding-tree layout guard catches that and redirects forward to `/candidate`.                                                                                                                                   |
+| User skips, then closes the tab before previews finish                         | Backend queue continues server-side. Realtime events fire to no listener — no-op. On next session, dashboard reads current DB state.                                                                                                                                                                                                                                        |
+| User has Profile Score from a prior session and somehow re-enters `/analyzing` | Layout guard catches it before render and redirects to `/candidate`. The analyzing page never mounts.                                                                                                                                                                                                                                                                       |
+| User skips, then immediately tries to apply to a job                           | Applications don't depend on Profile Score. Apply works. The recruiter pipeline's per-application match score backfills when scoring lands; if it lands after the recruiter has already viewed the application, the existing match-on-view fallback computes it on demand.                                                                                                  |
+| Two browser tabs open during onboarding                                        | Each tab runs its own state machine; skipping in one doesn't affect the other. Backend `complete-onboarding` is idempotent. Realistically rare — onboarding is single-tab.                                                                                                                                                                                                  |
+| Slow connection: score takes longer than 5s                                    | Skip link stays hidden until `complete-onboarding` returns. The existing 10s wall-clock cap from "score ready" still fires the auto-redirect. Same safety net as today.                                                                                                                                                                                                     |
+| Profile Score AI degrades AND user skips                                       | Lands on dashboard, sees shimmer for ≤30s, transitions to error card with retry. Calm failure path.                                                                                                                                                                                                                                                                         |
+| Realtime hook subscription scope                                               | The hook is currently mounted on `/candidate` (verified). For `/candidate/profile` to share the score card's pending behavior, ensure the hook is also active on that route — either via the candidate-portal layout (preferred) or via the score card client component subscribing on its own. Verify during implementation; treat as a small fix-up if not already wired. |
 
 ## Use cases
 
@@ -195,15 +198,15 @@ If the guard already exists in some form, this design simply confirms its presen
 
 ## Components touched
 
-| File | Change |
-|---|---|
-| `apps/web/app/onboarding/candidate/analyzing/_analyzing-client.tsx` | Add skip link, click handler, audit event; add visibility gating per reducer state |
-| `apps/web/app/onboarding/candidate/layout.tsx` (or whichever guards onboarding) | Add `profileCompleted=true` redirect to `/candidate` (verify if already present) |
-| `apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx` | Add 30s shimmer-then-error transition; wire `[Try again]` to existing recompute endpoint |
-| `apps/web/app/(candidate)/candidate/_components/top-matches-widget-client.tsx` (or equivalent) | Add inline `N of 5 ready` counter, shimmer placeholders for empty slots, 30s stall detection + browse-all CTA |
-| `apps/web/app/(candidate)/candidate/profile/...` (the profile page's score card mirror) | Same shimmer-then-error behavior as the dashboard's score card |
-| `apps/api/src/audit/audit.types.ts` | Add `user.onboarding.skipped_analyzing` event type and payload shape |
-| Wherever the candidate-portal audit-fire client wrapper lives | Surface the new event helper if there's typed wrapper sugar; otherwise just call the existing fire-event endpoint |
+| File                                                                                           | Change                                                                                                            |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `apps/web/app/onboarding/candidate/analyzing/_analyzing-client.tsx`                            | Add skip link, click handler, audit event; add visibility gating per reducer state                                |
+| `apps/web/app/onboarding/candidate/layout.tsx` (or whichever guards onboarding)                | Add `profileCompleted=true` redirect to `/candidate` (verify if already present)                                  |
+| `apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx`                 | Add 30s shimmer-then-error transition; wire `[Try again]` to existing recompute endpoint                          |
+| `apps/web/app/(candidate)/candidate/_components/top-matches-widget-client.tsx` (or equivalent) | Add inline `N of 5 ready` counter, shimmer placeholders for empty slots, 30s stall detection + browse-all CTA     |
+| `apps/web/app/(candidate)/candidate/profile/...` (the profile page's score card mirror)        | Same shimmer-then-error behavior as the dashboard's score card                                                    |
+| `apps/api/src/audit/audit.types.ts`                                                            | Add `user.onboarding.skipped_analyzing` event type and payload shape                                              |
+| Wherever the candidate-portal audit-fire client wrapper lives                                  | Surface the new event helper if there's typed wrapper sugar; otherwise just call the existing fire-event endpoint |
 
 No backend service or schema changes.
 

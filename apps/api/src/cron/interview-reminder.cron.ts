@@ -68,8 +68,14 @@ export class InterviewReminderCron {
         companyLogoUrl: companiesTable.logoUrl,
       })
       .from(interviewsTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
-      .innerJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, interviewsTable.applicationId),
+      )
+      .innerJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
       .innerJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
       .where(
@@ -82,7 +88,8 @@ export class InterviewReminderCron {
       )
       .limit(200);
 
-    const appUrl = this.config.get<string>("APP_URL") ?? "http://localhost:3000";
+    const appUrl =
+      this.config.get<string>("APP_URL") ?? "http://localhost:3000";
 
     let sent = 0;
     for (const row of due) {
@@ -154,9 +161,15 @@ export class InterviewReminderCron {
       action: AUDIT_ACTIONS.INTERVIEW_REMINDER_RUN,
       entityType: "cron",
       entityId: CRON_ENTITY_SENTINEL,
-      details: { remindersSent: sent, candidatesScanned: due.length, durationMs },
+      details: {
+        remindersSent: sent,
+        candidatesScanned: due.length,
+        durationMs,
+      },
     });
-    this.logger.log(`[${CRON_NAME}] sent ${sent}/${due.length} reminders in ${durationMs}ms`);
+    this.logger.log(
+      `[${CRON_NAME}] sent ${sent}/${due.length} reminders in ${durationMs}ms`,
+    );
     return { remindersSent: sent, durationMs };
   }
 }

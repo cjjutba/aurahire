@@ -103,8 +103,8 @@ export default async function AuditPage({ searchParams }: PageProps) {
             Audit Log
           </h1>
           <p className="mt-1 text-sm text-[var(--color-body)]">
-            {body.meta.total} entr{body.meta.total === 1 ? "y" : "ies"}{" "}
-            matching filters · append-only
+            {body.meta.total} entr{body.meta.total === 1 ? "y" : "ies"} matching
+            filters · append-only
           </p>
         </div>
         <ExportButtonClient currentParams={params.toString()} />

@@ -1,4 +1,4 @@
-# Symmetric Evidence Reasoning — Every Credit *and* Every Deduction Shows Its Work
+# Symmetric Evidence Reasoning — Every Credit _and_ Every Deduction Shows Its Work
 
 **Date:** 2026-05-10
 **Owner:** Scoring engines (profile + match), thesis "Explainable AI" pillar
@@ -10,25 +10,25 @@ The 2026-05-08 explainable-scoring overhaul landed: engine reconciliation, 5-poi
 
 For a `Skills 20/40` (deficit −20) component, `gpt-4o-mini` produced:
 
-| # | excerpt | source | relevance | contribution_points |
-|---|---|---|---|---|
-| 1 | "TypeScript" | skills | positive | +10 |
-| 2 | "Kubernetes" | skills | positive | +10 |
-| 3 | "Go, Backstage, Bazel" | Job requirement › Required Skills | **neutral** | **0** |
-| 4 | "JavaScript, React, Node.js, AWS, Docker" | skills | **neutral** | **0** |
+| #   | excerpt                                   | source                            | relevance   | contribution_points |
+| --- | ----------------------------------------- | --------------------------------- | ----------- | ------------------- |
+| 1   | "TypeScript"                              | skills                            | positive    | +10                 |
+| 2   | "Kubernetes"                              | skills                            | positive    | +10                 |
+| 3   | "Go, Backstage, Bazel"                    | Job requirement › Required Skills | **neutral** | **0**               |
+| 4   | "JavaScript, React, Node.js, AWS, Docker" | skills                            | **neutral** | **0**               |
 
 Engine math reconciles (`+10 + +10 + 0 + 0 = 20 = derived score`). The component-level explanation correctly cites the gap ("lacks experience with Go, Backstage, and Bazel"). But the **−20 deficit has no per-row accounting**: rows 3–4 quote the gap subject without taking the deduction. The candidate sees two "HELPED +10" rows and two "NEUTRAL" rows, and is left to infer where the missing 20 went.
 
 Two compounding defects:
 
-1. **The AI deducts by *under-filling* positives.** Instead of `+10 +10 −10 −10 = 0` (clamped to component score 20 by the spec's required positives) or any balanced enumeration, the model picks two positives at +10 and uses neutrals to *describe* the gaps without taking them. The prompt's "EVIDENCE BALANCE — REQUIRED" rule (`apps/api/src/ai/prompts/score-match.ts:36–40`) is not consistently honored.
-2. **Per-row reasoning does not exist.** The current evidence schema is `{ excerpt, source, relevance, contribution_points }`. There is no field where the model says *why* this row helped or hurt. The component-level `explanation` summarizes all gaps in one paragraph, but individual rows can't independently answer "why?". Even when the model emits a correctly-tagged negative row, the candidate sees only a quote, a source, a HURT chip, and a `−N points` chip — no sentence-level justification.
+1. **The AI deducts by _under-filling_ positives.** Instead of `+10 +10 −10 −10 = 0` (clamped to component score 20 by the spec's required positives) or any balanced enumeration, the model picks two positives at +10 and uses neutrals to _describe_ the gaps without taking them. The prompt's "EVIDENCE BALANCE — REQUIRED" rule (`apps/api/src/ai/prompts/score-match.ts:36–40`) is not consistently honored.
+2. **Per-row reasoning does not exist.** The current evidence schema is `{ excerpt, source, relevance, contribution_points }`. There is no field where the model says _why_ this row helped or hurt. The component-level `explanation` summarizes all gaps in one paragraph, but individual rows can't independently answer "why?". Even when the model emits a correctly-tagged negative row, the candidate sees only a quote, a source, a HURT chip, and a `−N points` chip — no sentence-level justification.
 
-A side defect uncovered while diagnosing this: the profile DTO drops `contribution_points` entirely on the API boundary. `apps/api/src/modules/scoring/scoring.service.ts:541–562` maps `c.evidence` into `ScoreEvidenceDto` *without* the field, and `apps/api/src/modules/scoring/dto/profile-score-response.dto.ts:3–7` defines `ScoreEvidenceDto` with only `excerpt / source / relevance`. The 2026-05-08 spec phase 2 task ("update profile-score detail page consumer to pipe `contribution_points`") never reached the DTO. Profile evidence rows render with no ±N chip at all today.
+A side defect uncovered while diagnosing this: the profile DTO drops `contribution_points` entirely on the API boundary. `apps/api/src/modules/scoring/scoring.service.ts:541–562` maps `c.evidence` into `ScoreEvidenceDto` _without_ the field, and `apps/api/src/modules/scoring/dto/profile-score-response.dto.ts:3–7` defines `ScoreEvidenceDto` with only `excerpt / source / relevance`. The 2026-05-08 spec phase 2 task ("update profile-score detail page consumer to pipe `contribution_points`") never reached the DTO. Profile evidence rows render with no ±N chip at all today.
 
 ### Why this matters for the thesis
 
-The thesis defends *"Explainable and Fair AI-Powered Recruitment: A Transparent Resume Scoring Platform with Bias Mitigation."* A reviewer asking "why did this candidate score 65 not 85?" must be able to point at evidence rows and read both the quoted excerpt and a sentence-level reason for every helping AND every hurting contribution. Today the system delivers credits transparently and deductions opaquely — asymmetric explainability is incomplete explainability.
+The thesis defends _"Explainable and Fair AI-Powered Recruitment: A Transparent Resume Scoring Platform with Bias Mitigation."_ A reviewer asking "why did this candidate score 65 not 85?" must be able to point at evidence rows and read both the quoted excerpt and a sentence-level reason for every helping AND every hurting contribution. Today the system delivers credits transparently and deductions opaquely — asymmetric explainability is incomplete explainability.
 
 ## Goal
 
@@ -36,7 +36,7 @@ Every evidence row in profile + match scoring answers three questions independen
 
 1. **What is the evidence?** (`excerpt` + `source`) — already there.
 2. **Did it help or hurt, and by how much?** (relevance chip + `±N points`) — already there for match, missing on profile DTO.
-3. **Why did it help or hurt?** (`reasoning` — one sentence) — *new*.
+3. **Why did it help or hurt?** (`reasoning` — one sentence) — _new_.
 
 Plus: gap items always render as `negative` with negative `contribution_points` — never `neutral` — so the candidate's mental sum reconciles to the component score whether reading positives only, negatives only, or both.
 
@@ -123,7 +123,7 @@ EVIDENCE BALANCE — REQUIRED:
   score). Use sparingly; default to either positive or negative.
 ```
 
-The math constraint itself is unchanged from v1.2.0 — what changes is *enforcement*. Today the model satisfies the math by emitting `+10 +10 +0 +0 = 20` (two positives, two neutrals quoting the gap). Under v1.3.0/v1.4.0 the neutrals-quoting-gap path is forbidden, so a 20/40 score must surface as e.g. `+10 +10 +5 −5` or `+15 +15 −10` or any combination where the deduction is itself a `negative` row with a `reasoning` sentence.
+The math constraint itself is unchanged from v1.2.0 — what changes is _enforcement_. Today the model satisfies the math by emitting `+10 +10 +0 +0 = 20` (two positives, two neutrals quoting the gap). Under v1.3.0/v1.4.0 the neutrals-quoting-gap path is forbidden, so a 20/40 score must surface as e.g. `+10 +10 +5 −5` or `+15 +15 −10` or any combination where the deduction is itself a `negative` row with a `reasoning` sentence.
 
 Both prompts add a worked example block in the system prompt showing one positive and one negative row with `reasoning`, so the model has a concrete template.
 
@@ -137,11 +137,12 @@ Per `CLAUDE.md` § "When to ask vs proceed" — prompt-version bumps require use
 export class ScoreEvidenceDto {
   @ApiProperty() excerpt!: string;
   @ApiProperty() source!: string;
-  @ApiProperty({ enum: ["positive", "negative", "neutral"] }) relevance!: string;
+  @ApiProperty({ enum: ["positive", "negative", "neutral"] })
+  relevance!: string;
   @ApiPropertyOptional({ nullable: true, type: Number })
-  contributionPoints!: number | null;                 // ADDED — closes the 2026-05-08 wiring gap
+  contributionPoints!: number | null; // ADDED — closes the 2026-05-08 wiring gap
   @ApiPropertyOptional({ nullable: true, type: String })
-  reasoning!: string | null;                          // NEW
+  reasoning!: string | null; // NEW
 }
 ```
 
@@ -177,14 +178,19 @@ The mappers pull warnings from the persisted `audit_logs.details.calibrationWarn
 Accept `reasoning?: string | null` and render it between the blockquote and the points-footer:
 
 ```tsx
-{reasoning && (
-  <p
-    className="mt-2 text-sm text-[var(--color-body)]"
-    style={{ borderLeft: `2px solid ${variant.borderColor}`, paddingLeft: "0.5rem" }}
-  >
-    {reasoning}
-  </p>
-)}
+{
+  reasoning && (
+    <p
+      className="mt-2 text-sm text-[var(--color-body)]"
+      style={{
+        borderLeft: `2px solid ${variant.borderColor}`,
+        paddingLeft: "0.5rem",
+      }}
+    >
+      {reasoning}
+    </p>
+  );
+}
 ```
 
 Visual: a thin score-band-colored hairline on the left of the reasoning sentence ties it to the relevance chip and points chip. Leans on existing tokens — no new colors. Renders only when present, so legacy rows (pre-v1.4.0 profile / pre-v1.3.0 match) degrade to the current visual exactly.
@@ -244,13 +250,13 @@ Human runs `pnpm dev`, then:
 
 ## Risks & mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| `gpt-4o-mini` produces `reasoning` strings that violate the 10–280 char range | Zod schema rejects malformed payloads → service returns 502 from the AI layer's existing error path. The prompt's worked examples drive compliance; if 502s spike, narrow the prompt iteration loop on examples. |
-| Model still under-fills positives instead of using negatives, despite tightened prompt | `detectCalibrationWarnings` fires `deduction_without_negative_evidence`; the new candidate-facing notice surfaces the issue and Recompute reruns. Audit aggregates noncompliance for /admin/bias-monitor follow-up. |
-| Reasoning strings parrot the chip ("This helps" / "This hurts") and add no information | Prompt examples explicitly call this out as a failure pattern; `reasoning.toLowerCase() === relevance` is impossible by length floor. We accept residual noise — adding a content-quality check would couple the engine to NLU heuristics, which is out of scope. |
-| Pre-v1.3.0/v1.4.0 rows mix with new ones in the same recruiter view | `EvidenceCallout` guards on presence; mixed rows render with reasoning where available, blank where not. Visually consistent enough; the dichotomy fades after a recompute pass. |
-| Calibration-warning notice annoys candidates whose model outputs were genuinely incomplete | Notice is small, dismissible by clicking Recompute, and only renders when warnings exist. False positives are rare (the heuristic is "score < max with zero negative evidence"); real positives are exactly the case the user wants surfaced. |
+| Risk                                                                                       | Mitigation                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gpt-4o-mini` produces `reasoning` strings that violate the 10–280 char range              | Zod schema rejects malformed payloads → service returns 502 from the AI layer's existing error path. The prompt's worked examples drive compliance; if 502s spike, narrow the prompt iteration loop on examples.                                                  |
+| Model still under-fills positives instead of using negatives, despite tightened prompt     | `detectCalibrationWarnings` fires `deduction_without_negative_evidence`; the new candidate-facing notice surfaces the issue and Recompute reruns. Audit aggregates noncompliance for /admin/bias-monitor follow-up.                                               |
+| Reasoning strings parrot the chip ("This helps" / "This hurts") and add no information     | Prompt examples explicitly call this out as a failure pattern; `reasoning.toLowerCase() === relevance` is impossible by length floor. We accept residual noise — adding a content-quality check would couple the engine to NLU heuristics, which is out of scope. |
+| Pre-v1.3.0/v1.4.0 rows mix with new ones in the same recruiter view                        | `EvidenceCallout` guards on presence; mixed rows render with reasoning where available, blank where not. Visually consistent enough; the dichotomy fades after a recompute pass.                                                                                  |
+| Calibration-warning notice annoys candidates whose model outputs were genuinely incomplete | Notice is small, dismissible by clicking Recompute, and only renders when warnings exist. False positives are rare (the heuristic is "score < max with zero negative evidence"); real positives are exactly the case the user wants surfaced.                     |
 
 ## Open questions
 
@@ -258,6 +264,6 @@ None at design time. All decisions are resolved.
 
 ## Glossary
 
-- **Per-evidence reasoning** — A 10–280 character sentence on every `scoredEvidenceSchema` row explaining *why* this row helps or hurts. New in v1.3.0 (match) and v1.4.0 (profile).
+- **Per-evidence reasoning** — A 10–280 character sentence on every `scoredEvidenceSchema` row explaining _why_ this row helps or hurts. New in v1.3.0 (match) and v1.4.0 (profile).
 - **Symmetric evidence** — The property that positives and negatives are presented with equal informational completeness (excerpt + source + relevance + points + reasoning). The thesis claim of "explainable scoring" is met when this property holds.
 - **Calibration warning notice** — Candidate-facing inline message rendered when `detectCalibrationWarnings` flags noncompliance for the displayed score. Promotes audit-only signal to user-actionable affordance.

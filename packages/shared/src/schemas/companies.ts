@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  companyNameSchema,
-  emailSchema,
-  uuidSchema,
-} from "./shared";
+import { companyNameSchema, emailSchema, uuidSchema } from "./shared";
 import { COMPANY_MEMBER_ROLE, COMPANY_SIZE } from "../enums";
 
 // ============================================================================
@@ -15,19 +11,16 @@ import { COMPANY_MEMBER_ROLE, COMPANY_SIZE } from "../enums";
 const optionalUrlSchema = z
   .string()
   .nullish()
-  .refine(
-    (v) => {
-      if (v == null || v.trim() === "") return true;
-      if (v.length > 2048) return false;
-      try {
-        new URL(v);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    "Must be a valid URL",
-  )
+  .refine((v) => {
+    if (v == null || v.trim() === "") return true;
+    if (v.length > 2048) return false;
+    try {
+      new URL(v);
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Must be a valid URL")
   .transform((v) => (v == null || v.trim() === "" ? null : v));
 
 const optionalShortText = (max: number) =>
@@ -108,7 +101,9 @@ export const invitationPreviewQuerySchema = z.object({
   token: z.string().min(16).max(256),
 });
 
-export type InvitationPreviewQuery = z.infer<typeof invitationPreviewQuerySchema>;
+export type InvitationPreviewQuery = z.infer<
+  typeof invitationPreviewQuerySchema
+>;
 
 // ============================================================================
 // PROFILE — ACTIVE COMPANY SWITCH

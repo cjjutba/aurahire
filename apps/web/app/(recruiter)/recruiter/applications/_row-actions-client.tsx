@@ -55,14 +55,21 @@ export function RecruiterApplicationRowActionsClient({
   const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
 
-  async function patchStatus(newStatus: string, successMessage: string, errorMessage: string) {
+  async function patchStatus(
+    newStatus: string,
+    successMessage: string,
+    errorMessage: string,
+  ) {
     setBusy(true);
     try {
-      const res = await authedFetch(`/api/v1/applications/${applicationId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newStatus, note: null }),
-      });
+      const res = await authedFetch(
+        `/api/v1/applications/${applicationId}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newStatus, note: null }),
+        },
+      );
       if (!res.ok) throw new Error(errorMessage);
       toastSuccess(successMessage);
       router.refresh();
@@ -76,12 +83,17 @@ export function RecruiterApplicationRowActionsClient({
   async function reject() {
     const ok = await confirm({
       title: `Reject ${candidateName}?`,
-      description: "The candidate will be marked as rejected. You can change this later.",
+      description:
+        "The candidate will be marked as rejected. You can change this later.",
       confirmLabel: "Reject candidate",
       variant: "destructive",
     });
     if (!ok) return;
-    await patchStatus("rejected", "Application rejected", "Couldn't reject application");
+    await patchStatus(
+      "rejected",
+      "Application rejected",
+      "Couldn't reject application",
+    );
   }
 
   async function moveToInterview() {
@@ -93,7 +105,11 @@ export function RecruiterApplicationRowActionsClient({
       variant: "info",
     });
     if (!ok) return;
-    await patchStatus("interview", "Moved to Interview", "Couldn't move to interview");
+    await patchStatus(
+      "interview",
+      "Moved to Interview",
+      "Couldn't move to interview",
+    );
   }
 
   async function sendOffer() {
@@ -109,7 +125,8 @@ export function RecruiterApplicationRowActionsClient({
   }
 
   const terminal = ["hired", "rejected", "withdrawn"].includes(status);
-  const canMoveToInterview = !terminal && status !== "interview" && status !== "offer";
+  const canMoveToInterview =
+    !terminal && status !== "interview" && status !== "offer";
   const canSendOffer = status === "interview";
   const canReject = !terminal;
   const showStatusActions = canMoveToInterview || canSendOffer;
@@ -136,7 +153,9 @@ export function RecruiterApplicationRowActionsClient({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="bottom">
         <DropdownMenuItem
-          onClick={() => router.push(`/recruiter/applications/${applicationId}`)}
+          onClick={() =>
+            router.push(`/recruiter/applications/${applicationId}`)
+          }
           className="flex cursor-pointer items-center gap-2"
         >
           <Eye className="h-4 w-4" />

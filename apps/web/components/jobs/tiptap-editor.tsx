@@ -1,16 +1,17 @@
 "use client";
 
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-} from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
-import { Bold, Italic, List, ListOrdered, Link as LinkIcon } from "lucide-react";
+import {
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Link as LinkIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   BiasHighlightExtension,
@@ -32,10 +33,7 @@ export interface TiptapEditorHandle {
 }
 
 export const TiptapEditor = forwardRef<TiptapEditorHandle, TiptapEditorProps>(
-  function TiptapEditor(
-    { value, onChange, placeholder, biasFlags },
-    ref,
-  ) {
+  function TiptapEditor({ value, onChange, placeholder, biasFlags }, ref) {
     const editor = useEditor({
       extensions: [
         StarterKit,

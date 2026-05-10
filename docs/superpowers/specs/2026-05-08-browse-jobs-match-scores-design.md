@@ -21,6 +21,7 @@ This is presentation-only and additive — the score region is opt-in via prop. 
 ## Scope
 
 **In scope:**
+
 - Edit `apps/web/app/(candidate)/candidate/jobs/_jobs-list-client.tsx`:
   - Call `useMyMatchPreviewsQuery` alongside the existing `useCandidateJobsQuery`.
   - Build a `Map<jobId, MatchPreviewListItem>` once per render.
@@ -33,6 +34,7 @@ This is presentation-only and additive — the score region is opt-in via prop. 
 - Pass `previews.isLoading` through so cards can render a thin shimmer in the score region while the previews list resolves on first paint.
 
 **Out of scope:**
+
 - Any backend change. The `match-previews` GET endpoint, the precompute queue, the per-job on-view recompute path, and the daily AI cap all stay exactly as they are.
 - Any change to other pages. Today only the candidate Browse Jobs path imports `JobCard`; the dashboard's "Recommended for You" uses its own internal `RecommendedJobCard`.
 - "Best match" sort option. Adding it correctly would require backend support (the `match-previews` list is capped at 25 and is independent of the `jobs` list pagination) — sorting only the visible page client-side would lie about pagination ordering. Defer.
@@ -68,10 +70,10 @@ New optional prop:
 interface JobCardProps {
   // ...existing props...
   matchPreview?: {
-    overallScore: number;          // 0–100
+    overallScore: number; // 0–100
     band: "strong" | "partial" | "limited";
   };
-  matchPreviewLoading?: boolean;   // render shimmer in score row only
+  matchPreviewLoading?: boolean; // render shimmer in score row only
 }
 ```
 
@@ -80,27 +82,29 @@ Render position: a new compact row inserted **between the meta-chips row and the
 Score row markup mirrors `RecommendedJobCard` (`_dashboard-client.tsx:869–883`):
 
 ```tsx
-{matchPreview && (
-  <div className="flex items-center gap-3">
-    <MatchBandChip band={matchPreview.band} />
-    <div
-      className="h-1.5 flex-1 overflow-hidden rounded-[var(--radius-pill)]"
-      style={{ backgroundColor: trackColor(matchPreview.overallScore) }}
-    >
+{
+  matchPreview && (
+    <div className="flex items-center gap-3">
+      <MatchBandChip band={matchPreview.band} />
       <div
-        className="h-full rounded-[var(--radius-pill)]"
-        style={{
-          width: `${matchPreview.overallScore}%`,
-          backgroundColor: fillColor(matchPreview.overallScore),
-        }}
-      />
+        className="h-1.5 flex-1 overflow-hidden rounded-[var(--radius-pill)]"
+        style={{ backgroundColor: trackColor(matchPreview.overallScore) }}
+      >
+        <div
+          className="h-full rounded-[var(--radius-pill)]"
+          style={{
+            width: `${matchPreview.overallScore}%`,
+            backgroundColor: fillColor(matchPreview.overallScore),
+          }}
+        />
+      </div>
+      <span className="font-mono text-xs text-[var(--color-ink)]">
+        {matchPreview.overallScore}
+        <span className="text-[var(--color-muted)]"> / 100</span>
+      </span>
     </div>
-    <span className="font-mono text-xs text-[var(--color-ink)]">
-      {matchPreview.overallScore}
-      <span className="text-[var(--color-muted)]"> / 100</span>
-    </span>
-  </div>
-)}
+  );
+}
 ```
 
 The two `…Color` helpers are the same band-to-CSS-var mapping the dashboard uses (`>= 0.7` → score-high; `>= 0.4` → score-mid; else score-low). Extract them once at the top of `job-card.tsx`; do not import from `_dashboard-client.tsx` (that file is intentionally a client-only sibling).
@@ -108,9 +112,11 @@ The two `…Color` helpers are the same band-to-CSS-var mapping the dashboard us
 When `matchPreview` is absent and `matchPreviewLoading` is true, render a thin pill-shaped skeleton bar in place of the row so the card height doesn't shift when previews land:
 
 ```tsx
-{!matchPreview && matchPreviewLoading && (
-  <div className="h-1.5 w-full animate-pulse rounded-[var(--radius-pill)] bg-[var(--color-surface-soft)]" />
-)}
+{
+  !matchPreview && matchPreviewLoading && (
+    <div className="h-1.5 w-full animate-pulse rounded-[var(--radius-pill)] bg-[var(--color-surface-soft)]" />
+  );
+}
 ```
 
 When neither `matchPreview` nor `matchPreviewLoading` is true, the row is omitted entirely — same height as today.
@@ -119,11 +125,11 @@ When neither `matchPreview` nor `matchPreviewLoading` is true, the row is omitte
 
 Replace the stale subtitle at `_jobs-list-client.tsx:71` with three branches:
 
-| Condition                                                                  | Subtitle                                       |
-|----------------------------------------------------------------------------|------------------------------------------------|
-| `previews.isLoading` (first render)                                        | `"19 jobs"`                                    |
-| Has at least one preview (`previews.data?.data?.length > 0`)               | `"19 jobs · auto-scored against your resume"`  |
-| Otherwise (loaded with zero previews, or query error)                      | `"19 jobs"` (silent)                           |
+| Condition                                                    | Subtitle                                      |
+| ------------------------------------------------------------ | --------------------------------------------- |
+| `previews.isLoading` (first render)                          | `"19 jobs"`                                   |
+| Has at least one preview (`previews.data?.data?.length > 0`) | `"19 jobs · auto-scored against your resume"` |
+| Otherwise (loaded with zero previews, or query error)        | `"19 jobs"` (silent)                          |
 
 We deliberately do **not** add a "no resume → upload your resume" upgrade nudge in this slice. Detecting "no resume" reliably from this component requires either a second query (profile score) or a backend signal on the previews response — both out of proportion for a copy nudge, and the dashboard's existing `FirstRunWelcomeCard` already covers that path.
 
@@ -136,6 +142,7 @@ The new props are optional, so any future consumer that doesn't pass `matchPrevi
 ### Testing
 
 **Unit (Vitest, jsdom — colocated next to `job-card.tsx`):**
+
 - `JobCard renders match score row when matchPreview is present` — assert `MatchBandChip` text "Strong Match" and `76` are in the DOM, and the inline `style.width` on the fill bar is `76%`.
 - `JobCard omits score row when matchPreview is absent and not loading` — assert no `MatchBandChip` and no `font-mono` score number.
 - `JobCard renders skeleton when matchPreviewLoading and no matchPreview` — assert a `.animate-pulse` element is present in the score region.

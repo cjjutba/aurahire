@@ -243,7 +243,11 @@ const HAIRLINE = "#dee1e6";
 
 function drawHeader(doc: PDFKit.PDFDocument, resume: Resume) {
   const accent = resume.style === "polished" ? ACCENT : INK;
-  doc.fillColor(INK).font("Helvetica-Bold").fontSize(22).text(resume.name, { continued: false });
+  doc
+    .fillColor(INK)
+    .font("Helvetica-Bold")
+    .fontSize(22)
+    .text(resume.name, { continued: false });
   doc.moveDown(0.15);
   doc.fillColor(accent).font("Helvetica").fontSize(13).text(resume.headline);
   doc.moveDown(0.3);
@@ -296,7 +300,11 @@ function drawExperience(doc: PDFKit.PDFDocument, items: ExperienceEntry[]) {
       .font("Helvetica")
       .fontSize(11)
       .text(`  —  ${item.company}`);
-    doc.fillColor(MUTED).font("Helvetica-Oblique").fontSize(9.5).text(item.dates);
+    doc
+      .fillColor(MUTED)
+      .font("Helvetica-Oblique")
+      .fontSize(9.5)
+      .text(item.dates);
     doc.moveDown(0.15);
     doc.fillColor(BODY).font("Helvetica").fontSize(10);
     item.bullets.forEach((bullet) => {
@@ -320,7 +328,9 @@ function drawEducation(doc: PDFKit.PDFDocument, items: EducationEntry[]) {
       .font("Helvetica")
       .fontSize(11)
       .text(`  —  ${item.school}`);
-    const trailing = item.gpa ? `${item.dates}  ·  GPA ${item.gpa}` : item.dates;
+    const trailing = item.gpa
+      ? `${item.dates}  ·  GPA ${item.gpa}`
+      : item.dates;
     doc.fillColor(MUTED).font("Helvetica-Oblique").fontSize(9.5).text(trailing);
   });
 }
@@ -356,7 +366,9 @@ function drawCertifications(doc: PDFKit.PDFDocument, certs: string[]) {
   });
 }
 
-async function generate(resume: Resume): Promise<{ path: string; bytes: number }> {
+async function generate(
+  resume: Resume,
+): Promise<{ path: string; bytes: number }> {
   const outPath = resolve(OUTPUT_DIR, resume.filename);
   const doc = new PDFDocument({
     size: "LETTER",

@@ -44,7 +44,11 @@ describe("NotificationsService.emit", () => {
     profiles = mockProfiles();
     events = mockEvents();
 
-    profiles.findById.mockResolvedValue({ id: "u1", status: "active", role: "candidate" });
+    profiles.findById.mockResolvedValue({
+      id: "u1",
+      status: "active",
+      role: "candidate",
+    });
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -123,14 +127,24 @@ describe("NotificationsService.emit", () => {
   });
 
   it("does not insert a row for suspended users", async () => {
-    profiles.findById.mockResolvedValue({ id: "u1", status: "suspended", role: "candidate" });
-    await service.emit({ userId: "u1", eventType: "application_status_changed" });
+    profiles.findById.mockResolvedValue({
+      id: "u1",
+      status: "suspended",
+      role: "candidate",
+    });
+    await service.emit({
+      userId: "u1",
+      eventType: "application_status_changed",
+    });
     expect(repo.insertOne).not.toHaveBeenCalled();
   });
 
   it("does not insert a row when profile is null", async () => {
     profiles.findById.mockResolvedValue(null);
-    await service.emit({ userId: "u1", eventType: "application_status_changed" });
+    await service.emit({
+      userId: "u1",
+      eventType: "application_status_changed",
+    });
     expect(repo.insertOne).not.toHaveBeenCalled();
   });
 
@@ -143,7 +157,11 @@ describe("NotificationsService.emit", () => {
   });
 
   it("emitMany fans out to all user ids", async () => {
-    profiles.findById.mockResolvedValue({ id: "x", status: "active", role: "admin" });
+    profiles.findById.mockResolvedValue({
+      id: "x",
+      status: "active",
+      role: "admin",
+    });
     prefs.getEffectiveMode.mockResolvedValue("instant");
     await service.emitMany(["a", "b", "c"], {
       eventType: "system_bias_flag_raised",

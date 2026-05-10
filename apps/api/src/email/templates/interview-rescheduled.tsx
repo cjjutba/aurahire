@@ -85,17 +85,25 @@ export function InterviewRescheduledEmail({
           }}
         >
           <EmailBrandHeader
-            company={company ? { name: company.name, logoUrl: company.logoUrl ?? null } : null}
+            company={
+              company
+                ? { name: company.name, logoUrl: company.logoUrl ?? null }
+                : null
+            }
           />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             Interview rescheduled
           </Heading>
           <Section>
-            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>Hi {candidateName},</Text>
+            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
+              Hi {candidateName},
+            </Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
               Your interview for{" "}
-              <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong> at {companyName} has been
-              rescheduled.
+              <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong> at{" "}
+              {companyName} has been rescheduled.
             </Text>
 
             {/* Previous time */}
@@ -113,8 +121,8 @@ export function InterviewRescheduledEmail({
             {/* New time */}
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
               <strong style={{ color: "#0a0b0d" }}>New time:</strong>{" "}
-              <strong style={{ color: "#2563eb" }}>{newWhen}</strong>{" "}
-              ({durationMinutes} minutes, {formatLabel})
+              <strong style={{ color: "#2563eb" }}>{newWhen}</strong> (
+              {durationMinutes} minutes, {formatLabel})
             </Text>
 
             {/* Venue card */}
@@ -138,20 +146,41 @@ export function InterviewRescheduledEmail({
                 >
                   Interview location
                 </Text>
-                <Text style={{ color: "#0a0b0d", margin: "0 0 2px 0", fontSize: "15px" }}>
+                <Text
+                  style={{
+                    color: "#0a0b0d",
+                    margin: "0 0 2px 0",
+                    fontSize: "15px",
+                  }}
+                >
                   {venueName}
                 </Text>
-                <Text style={{ color: "#5b616e", margin: "0 0 2px 0", fontSize: "14px" }}>
+                <Text
+                  style={{
+                    color: "#5b616e",
+                    margin: "0 0 2px 0",
+                    fontSize: "14px",
+                  }}
+                >
                   {addressLine}
                 </Text>
                 {roomOrFloor && (
-                  <Text style={{ color: "#5b616e", margin: "0 0 2px 0", fontSize: "14px" }}>
+                  <Text
+                    style={{
+                      color: "#5b616e",
+                      margin: "0 0 2px 0",
+                      fontSize: "14px",
+                    }}
+                  >
                     {roomOrFloor}
                   </Text>
                 )}
                 {mapUrl && (
                   <Text style={{ margin: "8px 0 0 0", fontSize: "14px" }}>
-                    <a href={mapUrl} style={{ color: "#2563eb", textDecoration: "none" }}>
+                    <a
+                      href={mapUrl}
+                      style={{ color: "#2563eb", textDecoration: "none" }}
+                    >
                       View on map
                     </a>
                   </Text>
@@ -161,7 +190,9 @@ export function InterviewRescheduledEmail({
 
             {/* Interviewer info */}
             {interviewerName && (
-              <Text style={{ color: "#5b616e", lineHeight: 1.5, marginTop: "12px" }}>
+              <Text
+                style={{ color: "#5b616e", lineHeight: 1.5, marginTop: "12px" }}
+              >
                 <strong style={{ color: "#0a0b0d" }}>Your interviewer:</strong>{" "}
                 {interviewerName}
                 {interviewerTitle ? `, ${interviewerTitle}` : ""}
@@ -171,7 +202,9 @@ export function InterviewRescheduledEmail({
             {/* Reporting instructions */}
             {reportingInstructions && (
               <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-                <strong style={{ color: "#0a0b0d" }}>Reporting instructions:</strong>{" "}
+                <strong style={{ color: "#0a0b0d" }}>
+                  Reporting instructions:
+                </strong>{" "}
                 {reportingInstructions}
               </Text>
             )}
@@ -186,9 +219,11 @@ export function InterviewRescheduledEmail({
           </Section>
 
           <Section style={{ marginTop: "8px" }}>
-            <Text style={{ color: "#7c828a", fontSize: "13px", lineHeight: 1.5 }}>
-              An updated calendar invite (.ics) is attached — add it to replace the previous entry
-              in your calendar.
+            <Text
+              style={{ color: "#7c828a", fontSize: "13px", lineHeight: 1.5 }}
+            >
+              An updated calendar invite (.ics) is attached — add it to replace
+              the previous entry in your calendar.
             </Text>
           </Section>
 

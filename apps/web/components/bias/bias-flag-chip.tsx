@@ -101,7 +101,9 @@ export function BiasFlagChip({ flag, onOverride, onDismiss, onSelect }: Props) {
             )}
           </div>
           {flag.explanation && (
-            <p className="text-sm text-[var(--color-body)]">{flag.explanation}</p>
+            <p className="text-sm text-[var(--color-body)]">
+              {flag.explanation}
+            </p>
           )}
           {flag.suggestion && (
             <div className="rounded-[var(--radius-md)] bg-[var(--color-surface-soft)] p-3">

@@ -120,9 +120,7 @@ export class InvitationsService {
         message: "Complete your profile before accepting an invitation",
       });
     }
-    if (
-      callerProfile.email.toLowerCase() !== member.email.toLowerCase()
-    ) {
+    if (callerProfile.email.toLowerCase() !== member.email.toLowerCase()) {
       throw new ForbiddenException({
         code: "INVITATION_EMAIL_MISMATCH",
         message:
@@ -233,7 +231,9 @@ export class InvitationsService {
       ...requestMeta,
     });
 
-    await this.cacheService.bustTags([TAGS.companyMembership(member.companyId)]);
+    await this.cacheService.bustTags([
+      TAGS.companyMembership(member.companyId),
+    ]);
 
     return { declined: true };
   }

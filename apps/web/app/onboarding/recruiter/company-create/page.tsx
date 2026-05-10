@@ -28,9 +28,10 @@ export default async function RecruiterCompanyCreatePage({
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
-  const profile = (await getCurrentProfile()) as
-    | { id: string; role: string }
-    | null;
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+  } | null;
   if (!profile) redirect("/login");
   if (profile.role !== "recruiter" && profile.role !== "admin") {
     redirect("/login");

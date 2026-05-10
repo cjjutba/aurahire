@@ -47,7 +47,11 @@ export function LoginForm() {
 
       if (error) {
         if (error.message.toLowerCase().includes("email not confirmed")) {
-          toastApiError(null, "Sign in failed", "Please verify your email first. Check your inbox for the verification link.");
+          toastApiError(
+            null,
+            "Sign in failed",
+            "Please verify your email first. Check your inbox for the verification link.",
+          );
         } else {
           toastApiError(null, "Sign in failed", "Email or password incorrect.");
         }
@@ -66,7 +70,11 @@ export function LoginForm() {
       });
 
       if (profileRes.status === 404) {
-        toastApiError(null, "Profile not found", "Please complete registration.");
+        toastApiError(
+          null,
+          "Profile not found",
+          "Please complete registration.",
+        );
         router.push("/register");
         return;
       }
@@ -77,7 +85,10 @@ export function LoginForm() {
       }
 
       const profileBody = (await profileRes.json()) as {
-        data: { role: "candidate" | "recruiter" | "admin"; profileCompleted: boolean };
+        data: {
+          role: "candidate" | "recruiter" | "admin";
+          profileCompleted: boolean;
+        };
       };
       const { role, profileCompleted } = profileBody.data;
 
@@ -87,7 +98,9 @@ export function LoginForm() {
 
       const dest =
         redirectTo ??
-        (profileCompleted ? `/${role}` : `/onboarding/${role === "admin" ? "" : role}`);
+        (profileCompleted
+          ? `/${role}`
+          : `/onboarding/${role === "admin" ? "" : role}`);
       toastSuccess("Signed in");
       router.push(dest);
       router.refresh();

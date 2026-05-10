@@ -56,7 +56,7 @@ Every AI call has a visible affordance: shimmer with caption, "AI Suggested" bad
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitAny": true,
-    "noUnusedLocals": false,        // false during sprint to allow rapid iteration
+    "noUnusedLocals": false, // false during sprint to allow rapid iteration
     "noUnusedParameters": false
   }
 }
@@ -77,6 +77,7 @@ Every AI call has a visible affordance: shimmer with caption, "AI Suggested" bad
 ### Default: Server Components
 
 A component is a Server Component unless you explicitly mark it `"use client"`. Server Components:
+
 - Don't ship JS to the browser
 - Can call the backend API server-side (using `fetch()` with the user's JWT from cookies)
 - Can read environment variables safely (no leaking to client bundle)
@@ -86,6 +87,7 @@ A component is a Server Component unless you explicitly mark it `"use client"`. 
 ### When to use Client Components
 
 Mark a component `"use client"` if it:
+
 - Uses `useState`, `useEffect`, `useMemo`, `useRef`, or any other React hook
 - Listens to user events (`onClick`, `onChange`, etc.)
 - Uses browser APIs (`window`, `localStorage`, `fetch` with reactivity)
@@ -132,20 +134,20 @@ apps/api/src/modules/<feature>/
 ### Controller template
 
 ```ts
-@Controller('applications')
-@ApiTags('applications')
+@Controller("applications")
+@ApiTags("applications")
 @ApiBearerAuth()
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 export class ApplicationsController {
   constructor(private readonly applicationsService: ApplicationsService) {}
 
   @Post()
-  @Roles('candidate')
-  @ApiOperation({ summary: 'Apply to a job' })
+  @Roles("candidate")
+  @ApiOperation({ summary: "Apply to a job" })
   @ApiResponse({ status: 201, type: ApplicationResponseDto })
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
   async create(
-    @Body() dto: ApplyToJobDto,                    // Zod-validated via nestjs-zod
+    @Body() dto: ApplyToJobDto, // Zod-validated via nestjs-zod
     @CurrentUser() user: AuthUser,
   ): Promise<ApplicationResponseDto> {
     return this.applicationsService.apply(dto, user);
@@ -166,12 +168,18 @@ export class ApplicationsService {
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
-  async apply(dto: ApplyToJobDto, user: AuthUser): Promise<ApplicationResponseDto> {
+  async apply(
+    dto: ApplyToJobDto,
+    user: AuthUser,
+  ): Promise<ApplicationResponseDto> {
     // 1. Authorization (job published, no duplicate)
     await this.assertEligible(user.id, dto.jobId);
 
     // 2. Persist application
-    const application = await this.repo.create({ ...dto, candidateId: user.id });
+    const application = await this.repo.create({
+      ...dto,
+      candidateId: user.id,
+    });
 
     // 3. AI scoring (synchronous, awaited)
     const matchScore = await this.scoringService.score(application.id);
@@ -179,9 +187,11 @@ export class ApplicationsService {
     // 4. Side effects
     await this.emailService.sendApplicationReceived(application);
     await this.auditService.log({
-      actorId: user.id, actorType: 'user',
-      action: 'application.created',
-      entityType: 'application', entityId: application.id,
+      actorId: user.id,
+      actorType: "user",
+      action: "application.created",
+      entityType: "application",
+      entityId: application.id,
     });
 
     // 5. Cache invalidation
@@ -255,6 +265,7 @@ export function ApplyButton({ jobId, resumeId }: Props) {
 ### Single source of truth
 
 Every form has one Zod schema in `lib/validation/<feature>.ts`. The schema is imported by:
+
 1. The client form (RHF resolver)
 2. The Server Action (parse input)
 3. (Optionally) the Drizzle insert/select shape via `drizzle-zod`
@@ -307,16 +318,33 @@ export type RegisterCandidateInput = z.infer<typeof registerCandidateSchema>;
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { registerCandidateSchema, type RegisterCandidateInput } from "@/lib/validation/auth";
+import {
+  registerCandidateSchema,
+  type RegisterCandidateInput,
+} from "@/lib/validation/auth";
 import { registerCandidate } from "@/lib/server-actions/auth/register-candidate";
 
 export function RegisterCandidateForm() {
   const form = useForm<RegisterCandidateInput>({
     resolver: zodResolver(registerCandidateSchema),
-    defaultValues: { fullName: "", email: "", phone: "", password: "", confirmPassword: "", agreedToTerms: false },
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      agreedToTerms: false,
+    },
   });
 
   async function onSubmit(values: RegisterCandidateInput) {
@@ -335,14 +363,18 @@ export function RegisterCandidateForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Full Name</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         {/* ... */}
         <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? "Creating account..." : "Create Account"}
+          {form.formState.isSubmitting
+            ? "Creating account..."
+            : "Create Account"}
         </Button>
       </form>
     </Form>
@@ -429,7 +461,13 @@ Every route group has `error.tsx`:
 ```tsx
 "use client";
 
-export default function Error({ error, reset }: { error: Error; reset: () => void }) {
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}) {
   return (
     <div className="text-center py-16">
       <h2 className="text-title-md">Something went wrong</h2>
@@ -485,6 +523,7 @@ Well-named identifiers do the documentation work. If you're tempted to write a c
 ### When to write a comment
 
 Only the **WHY**, never the WHAT. A comment is justified for:
+
 - A non-obvious constraint (`// Supabase RLS requires this index for performance`)
 - A workaround (`// Tiptap stores empty state as <p></p>; treat as empty`)
 - A subtle invariant (`// audit_logs is append-only; never UPDATE this table`)
@@ -583,6 +622,7 @@ For sprint, ship the readable version. Profile if a real perf problem surfaces.
 Next.js 16 caching defaults differ from older versions. **Read `node_modules/next/dist/docs/01-app/01-getting-started/08-caching.md` before assuming behavior.**
 
 Sprint approach:
+
 - **Default `force-dynamic`** on portal pages (real-time-ish data)
 - **`revalidatePath` after every write**
 - **Public marketing pages cached** (default in Next 16)
@@ -623,36 +663,47 @@ Before considering a piece of code "done," answer yes to all:
 ## Common Pitfalls
 
 ### "I'll just call the DB from a Server Component"
+
 **Forbidden.** Frontend has no DB access. All data flows through the backend REST API.
 
 ### "I'll just call OpenAI from the frontend"
+
 **Forbidden.** OpenAI key is backend-only. Frontend triggers via `POST /api/v1/scoring/...`.
 
 ### "I'll inline this Zod schema in the form"
+
 No — schemas live in `packages/shared/`. The same schema is consumed by the frontend form AND the backend DTO.
 
 ### "I'll put this controller in the auth module since it touches users"
+
 No — features are modules. Auth handles login/register/session; user CRUD lives in the users module.
 
 ### "I'll add a feature flag for this"
+
 No. We don't have a feature flag system in sprint. Either ship or don't.
 
 ### "I'll wrap this in try/catch in case it fails"
+
 Only if you have a meaningful recovery path. Otherwise, let it bubble to the global exception filter.
 
 ### "I need a custom hook for this"
+
 Most "custom hooks" are over-abstraction. If used in 2+ places, OK. Once is just code.
 
 ### "I'll add a small ORM helper here"
+
 The repository layer (`apps/api/src/modules/<feature>/<feature>.repository.ts`) IS the helper. Don't add another layer.
 
 ### "I'll mock the AI call for now"
+
 Mock at the prompt level (return canned JSON) only if the OpenAI key isn't set. Production code path always wired up.
 
 ### "I'll handle that case later"
+
 Either handle now or write `// TODO: handle X` AND a task entry. Untracked TODOs rot.
 
 ### "I'll use Server Actions for this mutation"
+
 We do NOT use Server Actions for backend logic in this architecture. Server Actions are reserved for frontend-only concerns like Supabase Auth flows. All DB / AI / email mutations go through the NestJS backend.
 
 ---

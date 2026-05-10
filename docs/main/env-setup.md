@@ -69,6 +69,7 @@ pnpm list --depth -1
 ```
 
 ### Expected layout after install
+
 ```
 aurahire/
 ├── apps/
@@ -102,11 +103,13 @@ If the monorepo isn't yet scaffolded (this guide is read **before** Day 1's mono
 ### 2b. Collect Supabase credentials
 
 Project Settings → **API** → copy:
+
 - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
 - `anon public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` *(⚠ secret)*
+- `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` _(⚠ secret)_
 
 Project Settings → **Database** → **Connection string** (URI mode, pooler port 6543):
+
 - `Connection string` → `DATABASE_URL` (replace `[YOUR-PASSWORD]` with the password from 2a)
 
 Example: `postgresql://postgres.xxxxx:YourPassword@aws-0-region.pooler.supabase.com:6543/postgres`
@@ -114,10 +117,12 @@ Example: `postgresql://postgres.xxxxx:YourPassword@aws-0-region.pooler.supabase.
 ### 2c. Configure Auth settings
 
 Authentication → **Providers**:
+
 - **Email:** enabled (default)
 - **Confirm email:** enabled
 
 Authentication → **URL Configuration**:
+
 - **Site URL:** `http://localhost:3000` (frontend)
 - **Redirect URLs:** add `http://localhost:3000/**` and `http://localhost:3000/verify-email` and `http://localhost:3000/reset-password`
 
@@ -126,6 +131,7 @@ Authentication → **URL Configuration**:
 ### 2d. Create Storage buckets
 
 Storage → **New bucket**:
+
 - `resumes` — Public: OFF (private)
 - `avatars` — Public: ON
 - `company-logos` — Public: ON
@@ -168,6 +174,7 @@ docker compose -f docker-compose.dev.yml up -d
 ```
 
 This starts:
+
 - **Mailpit** — SMTP server on `localhost:1025`, web UI on http://localhost:8025
 - **Redis 7-alpine** — `localhost:6379`, with persistent volume + LRU eviction at 256MB
 
@@ -290,6 +297,7 @@ This pushes the schema to your Supabase Postgres dev project. Verify in Supabase
 ```
 
 Verify RLS:
+
 ```sql
 SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
 ```
@@ -325,6 +333,7 @@ apps/api:dev:   - Swagger UI:   http://localhost:3333/api/docs
 ```
 
 Open in browser:
+
 - **Frontend:** http://localhost:3000
 - **Backend API docs:** http://localhost:3333/api/docs
 - **Mailpit inbox:** http://localhost:8025
@@ -335,14 +344,14 @@ Open in browser:
 
 Manual end-to-end check after Day 1:
 
-| Test | Expected |
-|---|---|
-| Visit http://localhost:3000 | Marketing landing renders |
-| **Get Started** → register a candidate | Form submits |
-| Check Mailpit (http://localhost:8025) | Verification email present |
-| Click verify link from Mailpit | Redirected to onboarding |
-| Open backend Swagger: http://localhost:3333/api/docs | Endpoints listed |
-| Visit `/candidate` while logged out | Middleware redirects to `/login` |
+| Test                                                 | Expected                         |
+| ---------------------------------------------------- | -------------------------------- |
+| Visit http://localhost:3000                          | Marketing landing renders        |
+| **Get Started** → register a candidate               | Form submits                     |
+| Check Mailpit (http://localhost:8025)                | Verification email present       |
+| Click verify link from Mailpit                       | Redirected to onboarding         |
+| Open backend Swagger: http://localhost:3333/api/docs | Endpoints listed                 |
+| Visit `/candidate` while logged out                  | Middleware redirects to `/login` |
 
 If anything fails, see Troubleshooting.
 
@@ -398,10 +407,12 @@ For subsequent deploys: `git pull && pnpm install --frozen-lockfile && pnpm --fi
 ### Wire Frontend to Backend
 
 In Vercel project settings:
+
 - Update `NEXT_PUBLIC_API_URL` to your Droplet API URL: `https://api.<your-domain>`
 - Trigger redeploy
 
 In Supabase Auth:
+
 - Add Vercel URL to allowed redirect URLs
 
 ---
@@ -429,6 +440,7 @@ pnpm format
 ```
 
 Stop dev:
+
 - `Ctrl+C` in the `pnpm dev` terminal
 - Optional: `docker compose -f docker-compose.dev.yml down` to stop Mailpit + Redis (or leave them running across sessions — they persist data via volumes)
 
@@ -437,19 +449,23 @@ Stop dev:
 ## Troubleshooting
 
 ### `pnpm dev` only starts one app
+
 - Check `turbo.json` has `dev` task with `persistent: true`
 - Check both `apps/web/package.json` and `apps/api/package.json` have a `dev` script
 
 ### Backend can't connect to Postgres
+
 - Verify `DATABASE_URL` uses pooler port `6543` (transaction mode)
 - Verify `[YOUR-PASSWORD]` was replaced
 
 ### Frontend can't reach backend
+
 - Verify `NEXT_PUBLIC_API_URL=http://localhost:3333` in `apps/web/.env.local`
 - Verify backend is running (look for `[Nest]` log lines in `pnpm dev` output)
 - Verify CORS: backend `ALLOWED_ORIGINS` includes `http://localhost:3000`
 
 ### Mailpit not catching emails
+
 - Verify Docker Desktop is running
 - Verify container is up: `docker compose -f docker-compose.dev.yml ps`
 - Verify backend `.env` has `SMTP_HOST=localhost SMTP_PORT=1025`
@@ -457,6 +473,7 @@ Stop dev:
 - Try restarting: `docker compose -f docker-compose.dev.yml restart mailpit`
 
 ### Redis connection refused
+
 - Verify Docker Desktop is running
 - Verify Redis container: `docker compose -f docker-compose.dev.yml ps`
 - Test connection: `docker exec aurahire-redis redis-cli ping` should return `PONG`
@@ -464,22 +481,27 @@ Stop dev:
 - Try restarting: `docker compose -f docker-compose.dev.yml restart redis`
 
 ### Docker Compose: port already in use
+
 - Another process is bound to 1025/8025/6379 — find and stop it: `lsof -i :6379`
 - Or change the host port in `docker-compose.dev.yml` (e.g. `"6380:6379"`) and update `REDIS_URL` accordingly
 
 ### Backend `Row-level security policy violated`
+
 - Service role client should be used for system operations (audit log, admin queries) — verify the right Supabase client is used
 - Verify RLS policies match the operation being performed
 
 ### Resume parsing fails
+
 - Verify OpenAI API key has billing balance
 - Check backend logs: `apps/api:dev:` lines should show parse attempts
 
 ### `pnpm install` fails
+
 - Verify Node 20+ and pnpm 9+
 - Try `rm -rf node_modules pnpm-lock.yaml && pnpm install`
 
 ### Storage upload fails
+
 - Verify `resumes` bucket exists in Supabase
 - Verify backend uses service-role client for uploads (not anon)
 
@@ -488,6 +510,7 @@ Stop dev:
 ## Phase 2 / Production Hardening (Out of Sprint)
 
 For later:
+
 - Custom domain on Vercel; bare-domain (apex) DNS for `api.<your-domain>` already covered above
 - Verified Resend sender domain (`aurahire.site` — already DNS-verified on GoDaddy)
 - Sentry for error tracking
@@ -500,6 +523,7 @@ For later:
 ## Sanity-Save Routine
 
 End of every dev session:
+
 1. `Ctrl+C` to stop `pnpm dev`
 2. `git add . && git commit -m "WIP: <slice description>"`
 3. Push to remote

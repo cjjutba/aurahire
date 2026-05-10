@@ -41,7 +41,11 @@ export interface ProfileScoreData {
   calibrationWarnings?: ProfileCalibrationWarning[];
 }
 
-export function ProfileScoreDashboardClient({ data }: { data: ProfileScoreData }) {
+export function ProfileScoreDashboardClient({
+  data,
+}: {
+  data: ProfileScoreData;
+}) {
   const computedAt = useMemo(
     () =>
       new Date(data.createdAt).toLocaleString(undefined, {
@@ -85,7 +89,10 @@ export function ProfileScoreDashboardClient({ data }: { data: ProfileScoreData }
         data.improvementSuggestions.length > 0 ? (
           <section>
             <header className="mb-3 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[var(--color-primary)]" aria-hidden />
+              <Sparkles
+                className="h-4 w-4 text-[var(--color-primary)]"
+                aria-hidden
+              />
               <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                 How to Improve
               </h2>

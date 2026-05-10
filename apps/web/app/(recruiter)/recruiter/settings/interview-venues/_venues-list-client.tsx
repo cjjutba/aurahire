@@ -79,16 +79,13 @@ export function VenuesListClient() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(values),
         })
-      : await authedFetch(
-          `/api/v1/companies/${companyId}/interview-venues`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(values),
-          },
-        );
+      : await authedFetch(`/api/v1/companies/${companyId}/interview-venues`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
     if (!res.ok) {
-      const body = await res.json().catch(() => ({})) as { message?: string };
+      const body = (await res.json().catch(() => ({}))) as { message?: string };
       toastApiError(null, "Couldn't save venue", body.message);
       return;
     }

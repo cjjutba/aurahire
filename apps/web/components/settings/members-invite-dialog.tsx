@@ -77,8 +77,8 @@ export function MembersInviteDialog({
         <DialogHeader>
           <DialogTitle>Invite a team member</DialogTitle>
           <DialogDescription>
-            They'll get an email with a one-time link to accept the
-            invitation. Roles can be changed later.
+            They'll get an email with a one-time link to accept the invitation.
+            Roles can be changed later.
           </DialogDescription>
         </DialogHeader>
 

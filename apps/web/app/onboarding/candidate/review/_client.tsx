@@ -7,7 +7,10 @@ import { ResumePreviewPane } from "@/components/onboarding/resume-preview/resume
 import { ResumeSheet } from "@/components/onboarding/mobile/resume-sheet";
 import { ReviewStep } from "@/components/onboarding/candidate/review/review-step";
 import { LowConfidenceBanner } from "@/components/onboarding/candidate/low-confidence-banner";
-import { ONBOARDING_STEPS, type LatestParsedResume } from "@/app/onboarding/candidate/_steps";
+import {
+  ONBOARDING_STEPS,
+  type LatestParsedResume,
+} from "@/app/onboarding/candidate/_steps";
 import type { SaveStatus } from "@/components/onboarding/save-status-indicator";
 import type { HighlightCategory } from "@/components/onboarding/resume-preview/derive-highlights";
 import type { ExperienceEntry } from "@/components/onboarding/candidate/review/experience-card";
@@ -29,9 +32,9 @@ export function ReviewStepClient({
   accessToken: _accessToken,
 }: Props) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [activeCategories, setActiveCategories] = useState<HighlightCategory[]>([
-    "experience",
-  ]);
+  const [activeCategories, setActiveCategories] = useState<HighlightCategory[]>(
+    ["experience"],
+  );
 
   // For sprint scope: review-step edits are ephemeral client state.
   // Backend's PATCH /candidate-profiles/me does NOT currently accept
@@ -60,12 +63,16 @@ export function ReviewStepClient({
         saveStatus={saveStatus}
         rightPane={rightPaneContent}
         mobileRightPaneToggle={
-          <ResumeSheet triggerLabel="View resume">{rightPaneContent}</ResumeSheet>
+          <ResumeSheet triggerLabel="View resume">
+            {rightPaneContent}
+          </ResumeSheet>
         }
         title="Review what we found"
         subtitle="Double-check the AI's extraction. Edit anything that's off, add what's missing."
       >
-        <LowConfidenceBanner confidence={latestResume?.parsed?.parse_confidence ?? null} />
+        <LowConfidenceBanner
+          confidence={latestResume?.parsed?.parse_confidence ?? null}
+        />
         <ReviewStep
           initialExperience={initialExperience}
           initialEducation={initialEducation}

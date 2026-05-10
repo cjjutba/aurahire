@@ -66,7 +66,9 @@ export function ExperienceList({ initial, onSync }: Props) {
           key={e.id}
           entry={e}
           defaultExpanded={e.id.startsWith("tmp-exp-")}
-          onSave={(updated) => update(entries.map((x) => (x.id === e.id ? updated : x)))}
+          onSave={(updated) =>
+            update(entries.map((x) => (x.id === e.id ? updated : x)))
+          }
           onDelete={() => handleDelete(e.id)}
         />
       ))}

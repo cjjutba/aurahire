@@ -45,7 +45,10 @@ export class NotificationPreferencesRepository {
       .insert(notificationPreferencesTable)
       .values({ userId, eventType, mode })
       .onConflictDoUpdate({
-        target: [notificationPreferencesTable.userId, notificationPreferencesTable.eventType],
+        target: [
+          notificationPreferencesTable.userId,
+          notificationPreferencesTable.eventType,
+        ],
         set: { mode, updatedAt: new Date() },
       })
       .returning();
@@ -53,7 +56,10 @@ export class NotificationPreferencesRepository {
     return row;
   }
 
-  async deleteForCategory(userId: string, eventTypes: NotificationEventType[]): Promise<number> {
+  async deleteForCategory(
+    userId: string,
+    eventTypes: NotificationEventType[],
+  ): Promise<number> {
     if (eventTypes.length === 0) return 0;
     const result = await this.db
       .delete(notificationPreferencesTable)

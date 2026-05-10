@@ -127,7 +127,10 @@ describe("InterviewsService.updateFeedback", () => {
         { provide: AuditService, useValue: audit },
         { provide: CacheService, useValue: cache },
         { provide: EventsService, useValue: events },
-        { provide: NotificationsService, useValue: { emit: jest.fn().mockResolvedValue(undefined) } },
+        {
+          provide: NotificationsService,
+          useValue: { emit: jest.fn().mockResolvedValue(undefined) },
+        },
         { provide: InterviewVenuesService, useValue: { create: jest.fn() } },
       ],
     }).compile();
@@ -154,14 +157,22 @@ describe("InterviewsService.updateFeedback", () => {
       recruiterUser,
       COMPANY_ID,
       INTERVIEW_ID,
-      { feedback: "Strong candidate", rating: 5, recommendation: "proceed" } as any,
+      {
+        feedback: "Strong candidate",
+        rating: 5,
+        recommendation: "proceed",
+      } as any,
       {},
     );
 
     // 1. Repository must receive recommendation in the patch.
     expect(repo.update).toHaveBeenCalledWith(
       INTERVIEW_ID,
-      expect.objectContaining({ feedback: "Strong candidate", rating: 5, recommendation: "proceed" }),
+      expect.objectContaining({
+        feedback: "Strong candidate",
+        rating: 5,
+        recommendation: "proceed",
+      }),
     );
 
     // 2. Both audit actions must be logged.
@@ -203,14 +214,20 @@ describe("InterviewsService.updateFeedback", () => {
       recruiterUser,
       COMPANY_ID,
       INTERVIEW_ID,
-      { feedback: "Updated notes", rating: 4, recommendation: "proceed" } as any,
+      {
+        feedback: "Updated notes",
+        rating: 4,
+        recommendation: "proceed",
+      } as any,
       {},
     );
 
     // RECOMMENDATION_SET must NOT be audited.
     const auditActions = audit.log.mock.calls.map((c) => c[0].action);
     expect(auditActions).toContain(AUDIT_ACTIONS.INTERVIEW_FEEDBACK_SUBMITTED);
-    expect(auditActions).not.toContain(AUDIT_ACTIONS.INTERVIEW_RECOMMENDATION_SET);
+    expect(auditActions).not.toContain(
+      AUDIT_ACTIONS.INTERVIEW_RECOMMENDATION_SET,
+    );
 
     // Realtime event must NOT be emitted.
     expect(events.emitApplicationRecommendationSet).not.toHaveBeenCalled();

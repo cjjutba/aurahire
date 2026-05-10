@@ -20,104 +20,104 @@
 
 ### Create — Backend
 
-| Path | Responsibility |
-| --- | --- |
-| `apps/api/src/storage/docx-to-pdf.service.ts` | LibreOffice headless wrapper (spawn `soffice --headless --convert-to pdf`) with serialized mutex queue |
-| `apps/api/src/storage/docx-to-pdf.service.spec.ts` | Unit test: mock `child_process.spawn`, fixture-driven |
-| `apps/api/src/ai/prompts/parse-resume-v2.ts` | Prompt v2 system message + user prompt builder (adds `*_source` extraction rules) |
-| `apps/api/test/fixtures/resumes/README.md` | Golden corpus documentation |
-| `apps/api/test/fixtures/resumes/01-clean-pdf.pdf` *(human supplies binary)* | Sample fixture |
-| `apps/api/test/fixtures/resumes/01-clean-pdf.expected.json` | Expected extraction for fixture 01 |
-| `apps/api/scripts/run-ai-parse-corpus.ts` | `pnpm test:ai-parse` entrypoint — runs prompt against golden corpus, asserts thresholds |
+| Path                                                                        | Responsibility                                                                                         |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `apps/api/src/storage/docx-to-pdf.service.ts`                               | LibreOffice headless wrapper (spawn `soffice --headless --convert-to pdf`) with serialized mutex queue |
+| `apps/api/src/storage/docx-to-pdf.service.spec.ts`                          | Unit test: mock `child_process.spawn`, fixture-driven                                                  |
+| `apps/api/src/ai/prompts/parse-resume-v2.ts`                                | Prompt v2 system message + user prompt builder (adds `*_source` extraction rules)                      |
+| `apps/api/test/fixtures/resumes/README.md`                                  | Golden corpus documentation                                                                            |
+| `apps/api/test/fixtures/resumes/01-clean-pdf.pdf` _(human supplies binary)_ | Sample fixture                                                                                         |
+| `apps/api/test/fixtures/resumes/01-clean-pdf.expected.json`                 | Expected extraction for fixture 01                                                                     |
+| `apps/api/scripts/run-ai-parse-corpus.ts`                                   | `pnpm test:ai-parse` entrypoint — runs prompt against golden corpus, asserts thresholds                |
 
 ### Create — Shared
 
-| Path | Responsibility |
-| --- | --- |
-| `packages/shared/src/skills-taxonomy.ts` | Static array of ~500 common skill names for typeahead |
-| `packages/shared/src/onboarding/personal-complete.schema.ts` | Per-step "completion" Zod schema gating Continue button |
-| `packages/shared/src/onboarding/review-complete.schema.ts` | Per-step completion schema |
-| `packages/shared/src/onboarding/preferences-complete.schema.ts` | Per-step completion schema |
+| Path                                                            | Responsibility                                          |
+| --------------------------------------------------------------- | ------------------------------------------------------- |
+| `packages/shared/src/skills-taxonomy.ts`                        | Static array of ~500 common skill names for typeahead   |
+| `packages/shared/src/onboarding/personal-complete.schema.ts`    | Per-step "completion" Zod schema gating Continue button |
+| `packages/shared/src/onboarding/review-complete.schema.ts`      | Per-step completion schema                              |
+| `packages/shared/src/onboarding/preferences-complete.schema.ts` | Per-step completion schema                              |
 
 ### Create — Frontend (foundation)
 
-| Path | Responsibility |
-| --- | --- |
-| `apps/web/components/onboarding/onboarding-shell.tsx` | Top bar (wordmark + progress + save indicator) + two-pane body grid |
-| `apps/web/components/onboarding/onboarding-progress.tsx` | 4-segment horizontal progress (collapses to slim bar < 1024px) |
-| `apps/web/components/onboarding/save-status-indicator.tsx` | Top-bar autosave indicator (idle / saving / error) |
-| `apps/web/components/onboarding/use-autosave.ts` | Hook: debounced PATCH on form blur with status callback |
-| `apps/web/components/onboarding/use-tab-close-protection.ts` | Hook: `beforeunload` listener, only fires after dirty > 750ms |
+| Path                                                         | Responsibility                                                      |
+| ------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `apps/web/components/onboarding/onboarding-shell.tsx`        | Top bar (wordmark + progress + save indicator) + two-pane body grid |
+| `apps/web/components/onboarding/onboarding-progress.tsx`     | 4-segment horizontal progress (collapses to slim bar < 1024px)      |
+| `apps/web/components/onboarding/save-status-indicator.tsx`   | Top-bar autosave indicator (idle / saving / error)                  |
+| `apps/web/components/onboarding/use-autosave.ts`             | Hook: debounced PATCH on form blur with status callback             |
+| `apps/web/components/onboarding/use-tab-close-protection.ts` | Hook: `beforeunload` listener, only fires after dirty > 750ms       |
 
 ### Create — Frontend (resume preview)
 
-| Path | Responsibility |
-| --- | --- |
-| `apps/web/components/onboarding/resume-preview/highlight-context.tsx` | Provider exposing `{ hoveredFieldId, setHoveredFieldId, focusField }` |
-| `apps/web/components/onboarding/resume-preview/derive-highlights.ts` | Pure fn: parsed-resume JSON → `Highlight[]` |
-| `apps/web/components/onboarding/resume-preview/find-text-spans.ts` | Pure fn: text-layer items + source string → `Rect[]` (whitespace-tolerant, accent-insensitive) |
-| `apps/web/components/onboarding/resume-preview/find-text-spans.test.ts` | Vitest tests for matcher |
-| `apps/web/components/onboarding/resume-preview/pdf-renderer.tsx` | PDF.js wrapper — renders pages + text layer, exposes text items via callback |
-| `apps/web/components/onboarding/resume-preview/highlight-overlay.tsx` | Renders rect overlays on top of text layer with per-category opacity |
-| `apps/web/components/onboarding/resume-preview/linearized-resume-view.tsx` | Fallback for image-only PDFs / DOCX-conversion failures |
-| `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx` | Orchestrator: loads PDF, derives highlights, owns state machine |
+| Path                                                                       | Responsibility                                                                                 |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `apps/web/components/onboarding/resume-preview/highlight-context.tsx`      | Provider exposing `{ hoveredFieldId, setHoveredFieldId, focusField }`                          |
+| `apps/web/components/onboarding/resume-preview/derive-highlights.ts`       | Pure fn: parsed-resume JSON → `Highlight[]`                                                    |
+| `apps/web/components/onboarding/resume-preview/find-text-spans.ts`         | Pure fn: text-layer items + source string → `Rect[]` (whitespace-tolerant, accent-insensitive) |
+| `apps/web/components/onboarding/resume-preview/find-text-spans.test.ts`    | Vitest tests for matcher                                                                       |
+| `apps/web/components/onboarding/resume-preview/pdf-renderer.tsx`           | PDF.js wrapper — renders pages + text layer, exposes text items via callback                   |
+| `apps/web/components/onboarding/resume-preview/highlight-overlay.tsx`      | Renders rect overlays on top of text layer with per-category opacity                           |
+| `apps/web/components/onboarding/resume-preview/linearized-resume-view.tsx` | Fallback for image-only PDFs / DOCX-conversion failures                                        |
+| `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx`    | Orchestrator: loads PDF, derives highlights, owns state machine                                |
 
 ### Create — Frontend (steps)
 
-| Path | Responsibility |
-| --- | --- |
-| `apps/web/components/onboarding/candidate/resume-upload-card.tsx` | Step 1 dropzone + cycling-caption parsing state + recovery card |
-| `apps/web/components/onboarding/candidate/resume-stale-recovery-card.tsx` | Stale `parsing` row recovery UI |
-| `apps/web/components/onboarding/candidate/parsing-shimmer.tsx` | `ai-shimmer` band with cycling captions |
-| `apps/web/components/onboarding/candidate/parse-success-card.tsx` | Step 1 success state with "Found N items" chips |
-| `apps/web/components/onboarding/candidate/profile-preview-pane.tsx` | Step 4 right-pane swap (recruiter view) |
-| `apps/web/components/onboarding/candidate/review/review-step.tsx` | Step 3 orchestrator (3 sections + IntersectionObserver-driven `activeCategories`) |
-| `apps/web/components/onboarding/candidate/review/experience-card.tsx` | Collapsed/expanded states with inline edit |
-| `apps/web/components/onboarding/candidate/review/experience-list.tsx` | List wrapper with add/delete + optimistic toast-undo |
-| `apps/web/components/onboarding/candidate/review/education-card.tsx` | Same pattern as experience |
-| `apps/web/components/onboarding/candidate/review/education-list.tsx` | List wrapper |
-| `apps/web/components/onboarding/candidate/review/skills-cloud.tsx` | Chip cloud + typeahead |
-| `apps/web/components/onboarding/mobile/resume-sheet.tsx` | Radix Dialog drawer wrapper for < 1024px |
-| `apps/web/components/onboarding/mobile/sticky-step-dock.tsx` | Mobile sticky bottom Back/Continue dock |
-| `apps/web/app/onboarding/candidate/review/page.tsx` | Step 3 server component (NEW route) |
+| Path                                                                      | Responsibility                                                                    |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `apps/web/components/onboarding/candidate/resume-upload-card.tsx`         | Step 1 dropzone + cycling-caption parsing state + recovery card                   |
+| `apps/web/components/onboarding/candidate/resume-stale-recovery-card.tsx` | Stale `parsing` row recovery UI                                                   |
+| `apps/web/components/onboarding/candidate/parsing-shimmer.tsx`            | `ai-shimmer` band with cycling captions                                           |
+| `apps/web/components/onboarding/candidate/parse-success-card.tsx`         | Step 1 success state with "Found N items" chips                                   |
+| `apps/web/components/onboarding/candidate/profile-preview-pane.tsx`       | Step 4 right-pane swap (recruiter view)                                           |
+| `apps/web/components/onboarding/candidate/review/review-step.tsx`         | Step 3 orchestrator (3 sections + IntersectionObserver-driven `activeCategories`) |
+| `apps/web/components/onboarding/candidate/review/experience-card.tsx`     | Collapsed/expanded states with inline edit                                        |
+| `apps/web/components/onboarding/candidate/review/experience-list.tsx`     | List wrapper with add/delete + optimistic toast-undo                              |
+| `apps/web/components/onboarding/candidate/review/education-card.tsx`      | Same pattern as experience                                                        |
+| `apps/web/components/onboarding/candidate/review/education-list.tsx`      | List wrapper                                                                      |
+| `apps/web/components/onboarding/candidate/review/skills-cloud.tsx`        | Chip cloud + typeahead                                                            |
+| `apps/web/components/onboarding/mobile/resume-sheet.tsx`                  | Radix Dialog drawer wrapper for < 1024px                                          |
+| `apps/web/components/onboarding/mobile/sticky-step-dock.tsx`              | Mobile sticky bottom Back/Continue dock                                           |
+| `apps/web/app/onboarding/candidate/review/page.tsx`                       | Step 3 server component (NEW route)                                               |
 
 ### Modify
 
-| Path | Change |
-| --- | --- |
-| `packages/db/src/schema.ts` | Add `canonicalPdfPath` text column to `resumesTable` |
-| `packages/shared/src/schemas/parsed-resume.ts` | Add `*_source` fields to every entity schema; bump types |
-| `apps/api/src/ai/prompts/parse-resume.ts` | Bump `PARSE_RESUME_VERSION` to `2.0.0`, system prompt requires `*_source` strings |
-| `apps/api/src/ai/parse-resume.service.ts` | Add post-parse substring validation, compute `source_field_coverage`, return in `ParseResumeOutput` |
-| `apps/api/src/modules/resumes/resumes.service.ts` | Inject `DocxToPdfService`, run conversion in `upload()` for DOCX, store `canonicalPdfPath`; return both signed URLs in download endpoint; add `reparse()` method |
-| `apps/api/src/modules/resumes/resumes.controller.ts` | Add `POST /:id/reparse` route |
-| `apps/api/src/modules/resumes/resumes.module.ts` | Register `DocxToPdfService` in providers |
-| `apps/api/src/modules/resumes/dto/resume-response.dto.ts` | Add `canonicalPdfPath` to response |
-| `apps/api/src/modules/resumes/dto/download-url-response.dto.ts` (or current shape) | Add `signedPdfUrl` field |
-| `apps/api/src/modules/candidate-profiles/candidate-profiles.controller.ts` | Add `PATCH /me/complete-onboarding` route (validates final completion, sets `profileCompleted = true`) |
-| `apps/api/src/modules/candidate-profiles/candidate-profiles.service.ts` | Add `completeOnboarding()` method |
-| `apps/api/Dockerfile` | Install `libreoffice-core libreoffice-writer fonts-liberation` |
-| `apps/api/package.json` | (no new deps; LibreOffice spawned via child_process) |
-| `apps/web/package.json` | Add `pdfjs-dist`, `mammoth` (only for linearized DOCX fallback if needed — defer to Task 24) |
-| `apps/web/app/onboarding/candidate/_data.ts` | Update `ONBOARDING_STEPS` to 4 entries; widen `LatestParsedResume` type to include `*_source` fields |
-| `apps/web/app/onboarding/candidate/page.tsx` | Step 1 — replace current shell with `OnboardingShell`, use `ResumeUploadCard` |
-| `apps/web/app/onboarding/candidate/personal/page.tsx` | Step 2 — `OnboardingShell` + `ResumePreviewPane` with `activeCategories=["contact","summary"]` |
-| `apps/web/app/onboarding/candidate/preferences/page.tsx` | Step 4 — `OnboardingShell` + `ProfilePreviewPane` |
-| `apps/web/components/onboarding/candidate/personal-info-form.tsx` | Restyle to 2-col grid; integrate `HighlightContext` for hover linking; use `useAutosave` hook |
-| `apps/web/components/onboarding/candidate/preferences-form.tsx` | Restyle; use `useAutosave` |
-| `apps/web/middleware.ts` | Add onboarding-route guards per spec §G |
-| `apps/web/app/onboarding/layout.tsx` | Trim — `OnboardingShell` now owns the chrome; layout becomes minimal |
+| Path                                                                               | Change                                                                                                                                                           |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/db/src/schema.ts`                                                        | Add `canonicalPdfPath` text column to `resumesTable`                                                                                                             |
+| `packages/shared/src/schemas/parsed-resume.ts`                                     | Add `*_source` fields to every entity schema; bump types                                                                                                         |
+| `apps/api/src/ai/prompts/parse-resume.ts`                                          | Bump `PARSE_RESUME_VERSION` to `2.0.0`, system prompt requires `*_source` strings                                                                                |
+| `apps/api/src/ai/parse-resume.service.ts`                                          | Add post-parse substring validation, compute `source_field_coverage`, return in `ParseResumeOutput`                                                              |
+| `apps/api/src/modules/resumes/resumes.service.ts`                                  | Inject `DocxToPdfService`, run conversion in `upload()` for DOCX, store `canonicalPdfPath`; return both signed URLs in download endpoint; add `reparse()` method |
+| `apps/api/src/modules/resumes/resumes.controller.ts`                               | Add `POST /:id/reparse` route                                                                                                                                    |
+| `apps/api/src/modules/resumes/resumes.module.ts`                                   | Register `DocxToPdfService` in providers                                                                                                                         |
+| `apps/api/src/modules/resumes/dto/resume-response.dto.ts`                          | Add `canonicalPdfPath` to response                                                                                                                               |
+| `apps/api/src/modules/resumes/dto/download-url-response.dto.ts` (or current shape) | Add `signedPdfUrl` field                                                                                                                                         |
+| `apps/api/src/modules/candidate-profiles/candidate-profiles.controller.ts`         | Add `PATCH /me/complete-onboarding` route (validates final completion, sets `profileCompleted = true`)                                                           |
+| `apps/api/src/modules/candidate-profiles/candidate-profiles.service.ts`            | Add `completeOnboarding()` method                                                                                                                                |
+| `apps/api/Dockerfile`                                                              | Install `libreoffice-core libreoffice-writer fonts-liberation`                                                                                                   |
+| `apps/api/package.json`                                                            | (no new deps; LibreOffice spawned via child_process)                                                                                                             |
+| `apps/web/package.json`                                                            | Add `pdfjs-dist`, `mammoth` (only for linearized DOCX fallback if needed — defer to Task 24)                                                                     |
+| `apps/web/app/onboarding/candidate/_data.ts`                                       | Update `ONBOARDING_STEPS` to 4 entries; widen `LatestParsedResume` type to include `*_source` fields                                                             |
+| `apps/web/app/onboarding/candidate/page.tsx`                                       | Step 1 — replace current shell with `OnboardingShell`, use `ResumeUploadCard`                                                                                    |
+| `apps/web/app/onboarding/candidate/personal/page.tsx`                              | Step 2 — `OnboardingShell` + `ResumePreviewPane` with `activeCategories=["contact","summary"]`                                                                   |
+| `apps/web/app/onboarding/candidate/preferences/page.tsx`                           | Step 4 — `OnboardingShell` + `ProfilePreviewPane`                                                                                                                |
+| `apps/web/components/onboarding/candidate/personal-info-form.tsx`                  | Restyle to 2-col grid; integrate `HighlightContext` for hover linking; use `useAutosave` hook                                                                    |
+| `apps/web/components/onboarding/candidate/preferences-form.tsx`                    | Restyle; use `useAutosave`                                                                                                                                       |
+| `apps/web/middleware.ts`                                                           | Add onboarding-route guards per spec §G                                                                                                                          |
+| `apps/web/app/onboarding/layout.tsx`                                               | Trim — `OnboardingShell` now owns the chrome; layout becomes minimal                                                                                             |
 
 ### Delete
 
-| Path | Reason |
-| --- | --- |
-| `apps/web/app/onboarding/candidate/education/page.tsx` | Folded into `/review` |
-| `apps/web/app/onboarding/candidate/experience/page.tsx` | Folded into `/review` |
-| `apps/web/app/onboarding/candidate/skills/page.tsx` | Folded into `/review` |
-| `apps/web/components/onboarding/wizard-shell.tsx` | Superseded by `OnboardingShell` |
-| `apps/web/components/onboarding/wizard-progress.tsx` | Superseded by `OnboardingProgress` |
-| `apps/web/components/onboarding/candidate/resume-upload.tsx` | Folded into `ResumeUploadCard` |
+| Path                                                         | Reason                             |
+| ------------------------------------------------------------ | ---------------------------------- |
+| `apps/web/app/onboarding/candidate/education/page.tsx`       | Folded into `/review`              |
+| `apps/web/app/onboarding/candidate/experience/page.tsx`      | Folded into `/review`              |
+| `apps/web/app/onboarding/candidate/skills/page.tsx`          | Folded into `/review`              |
+| `apps/web/components/onboarding/wizard-shell.tsx`            | Superseded by `OnboardingShell`    |
+| `apps/web/components/onboarding/wizard-progress.tsx`         | Superseded by `OnboardingProgress` |
+| `apps/web/components/onboarding/candidate/resume-upload.tsx` | Folded into `ResumeUploadCard`     |
 
 ---
 
@@ -126,6 +126,7 @@
 **Goal:** Make `resumes.canonical_pdf_path` available in Drizzle schema and types. Human runs the migration.
 
 **Files:**
+
 - Modify: `packages/db/src/schema.ts:215-238`
 
 - [ ] **Step 1.1: Add column to `resumesTable`**
@@ -152,7 +153,7 @@ ALTER TABLE resumes ADD COLUMN canonical_pdf_path text;
 
 - [ ] **Step 1.4: Hand to human**
 
-Stop and tell the human: *"Schema column added. Please run `pnpm --filter @aurahire/db drizzle:generate` to produce the migration SQL, then `pnpm --filter @aurahire/db drizzle:push` (or your preferred apply command) to apply it. Confirm with `pnpm tsc --noEmit` from the repo root."*
+Stop and tell the human: _"Schema column added. Please run `pnpm --filter @aurahire/db drizzle:generate` to produce the migration SQL, then `pnpm --filter @aurahire/db drizzle:push` (or your preferred apply command) to apply it. Confirm with `pnpm tsc --noEmit` from the repo root."_
 
 ---
 
@@ -161,6 +162,7 @@ Stop and tell the human: *"Schema column added. Please run `pnpm --filter @aurah
 **Goal:** Convert DOCX → PDF via headless LibreOffice. Serialized via in-memory mutex (one conversion at a time per process).
 
 **Files:**
+
 - Create: `apps/api/src/storage/docx-to-pdf.service.ts`
 - Create: `apps/api/src/storage/docx-to-pdf.service.spec.ts`
 - Modify: `apps/api/src/storage/storage.module.ts` (or wherever the storage providers register — register the new service)
@@ -239,7 +241,10 @@ const TIMEOUT_MS = 30_000;
 const SOFFICE_BIN = process.env.SOFFICE_BIN ?? "soffice";
 
 export class DocxConversionError extends Error {
-  constructor(message: string, public readonly stderr?: string) {
+  constructor(
+    message: string,
+    public readonly stderr?: string,
+  ) {
     super(message);
     this.name = "DocxConversionError";
   }
@@ -262,14 +267,18 @@ export class DocxToPdfService {
 
   private acquire(): () => void {
     let release!: () => void;
-    const next = new Promise<void>((resolve) => { release = resolve; });
+    const next = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     const prev = this.mutex;
     this.mutex = prev.then(() => next);
     return release;
   }
 
   private async runConversion(docxBuffer: Buffer): Promise<Buffer> {
-    const workDir = await fs.mkdtemp(join(tmpdir(), `docx2pdf-${randomUUID()}-`));
+    const workDir = await fs.mkdtemp(
+      join(tmpdir(), `docx2pdf-${randomUUID()}-`),
+    );
     const inPath = join(workDir, "in.docx");
     const outPath = join(workDir, "in.pdf");
 
@@ -279,33 +288,49 @@ export class DocxToPdfService {
       await new Promise<void>((resolve, reject) => {
         const proc = spawn(SOFFICE_BIN, [
           "--headless",
-          "--convert-to", "pdf",
-          "--outdir", workDir,
+          "--convert-to",
+          "pdf",
+          "--outdir",
+          workDir,
           inPath,
         ]);
 
         let stderr = "";
-        proc.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
+        proc.stderr.on("data", (d: Buffer) => {
+          stderr += d.toString();
+        });
 
         const timer = setTimeout(() => {
           proc.kill("SIGKILL");
-          reject(new DocxConversionError("LibreOffice conversion timed out", stderr));
+          reject(
+            new DocxConversionError("LibreOffice conversion timed out", stderr),
+          );
         }, TIMEOUT_MS);
 
         proc.on("close", (code: number) => {
           clearTimeout(timer);
           if (code === 0) resolve();
-          else reject(new DocxConversionError(`soffice exited with code ${code}`, stderr));
+          else
+            reject(
+              new DocxConversionError(
+                `soffice exited with code ${code}`,
+                stderr,
+              ),
+            );
         });
 
         proc.on("error", (err: Error) => {
           clearTimeout(timer);
-          reject(new DocxConversionError(`Failed to spawn soffice: ${err.message}`));
+          reject(
+            new DocxConversionError(`Failed to spawn soffice: ${err.message}`),
+          );
         });
       });
 
       const pdfBuffer = await fs.readFile(outPath);
-      this.logger.log(`Converted DOCX (${docxBuffer.length}B) → PDF (${pdfBuffer.length}B)`);
+      this.logger.log(
+        `Converted DOCX (${docxBuffer.length}B) → PDF (${pdfBuffer.length}B)`,
+      );
       return pdfBuffer;
     } finally {
       await fs.rm(workDir, { recursive: true, force: true }).catch(() => {});
@@ -335,7 +360,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 - [ ] **Step 2.7: Hand to human**
 
-Tell the human: *"`DocxToPdfService` ready. The Dockerfile now installs LibreOffice. To test locally, install LibreOffice on your machine (`brew install --cask libreoffice` on macOS) and ensure `soffice` is on PATH. The next task wires this into the upload flow."*
+Tell the human: _"`DocxToPdfService` ready. The Dockerfile now installs LibreOffice. To test locally, install LibreOffice on your machine (`brew install --cask libreoffice` on macOS) and ensure `soffice` is on PATH. The next task wires this into the upload flow."_
 
 ---
 
@@ -344,6 +369,7 @@ Tell the human: *"`DocxToPdfService` ready. The Dockerfile now installs LibreOff
 **Goal:** When a candidate uploads a DOCX, the service converts it to PDF and stores both files; `canonicalPdfPath` records the converted path. PDF uploads remain unchanged.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/resumes/resumes.service.ts`
 - Modify: `apps/api/src/modules/resumes/dto/resume-response.dto.ts`
 - Modify: `apps/api/src/modules/resumes/resumes.repository.ts` (insert/update typing)
@@ -379,7 +405,10 @@ In `ResumesService.upload()`, after the `await this.storage.upload(...)` for the
 
 ```ts
 let canonicalPdfPath: string | null = null;
-if (file.mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+if (
+  file.mimeType ===
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+) {
   try {
     const pdfBuffer = await this.docxToPdf.convert(file.buffer);
     canonicalPdfPath = `${user.id}/${randomUUID()}.pdf`;
@@ -390,7 +419,9 @@ if (file.mimeType === "application/vnd.openxmlformats-officedocument.wordprocess
       contentType: "application/pdf",
     });
   } catch (err) {
-    this.logger.warn(`DOCX→PDF conversion failed for resume upload: ${(err as Error).message}`);
+    this.logger.warn(
+      `DOCX→PDF conversion failed for resume upload: ${(err as Error).message}`,
+    );
     // Continue without canonical PDF — frontend will fall back to LinearizedResumeView.
   }
 }
@@ -405,7 +436,7 @@ const resume = await this.repo.insert({
   mimeType: file.mimeType,
   sizeBytes: file.sizeBytes,
   storagePath,
-  canonicalPdfPath,  // NEW
+  canonicalPdfPath, // NEW
   parseStatus: "parsing",
   isDefault: isFirstResume,
 });
@@ -426,11 +457,18 @@ Create `apps/api/src/modules/resumes/resumes.service.spec.ts` (or extend existin
 
 ```ts
 it("converts DOCX uploads to canonical PDF", async () => {
-  const docxToPdf = { convert: jest.fn().mockResolvedValue(Buffer.from("%PDF-1.4")) };
-  const storage = { upload: jest.fn().mockResolvedValue(undefined), signedUrl: jest.fn(), delete: jest.fn(), download: jest.fn() };
+  const docxToPdf = {
+    convert: jest.fn().mockResolvedValue(Buffer.from("%PDF-1.4")),
+  };
+  const storage = {
+    upload: jest.fn().mockResolvedValue(undefined),
+    signedUrl: jest.fn(),
+    delete: jest.fn(),
+    download: jest.fn(),
+  };
   // ... wire up service with stubs, call upload() with docx mime, assert.
   expect(docxToPdf.convert).toHaveBeenCalledTimes(1);
-  expect(storage.upload).toHaveBeenCalledTimes(2);  // original + canonical
+  expect(storage.upload).toHaveBeenCalledTimes(2); // original + canonical
 });
 
 it("skips conversion for PDF uploads", async () => {
@@ -451,6 +489,7 @@ Expected: PASS.
 **Goal:** Frontend always renders `signedPdfUrl` — for PDF uploads it equals `signedUrl`; for DOCX uploads it points to the canonical PDF.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/resumes/resumes.service.ts` (`getSignedDownloadUrl`)
 - Modify: `apps/api/src/modules/resumes/resumes.controller.ts` (response type if explicitly typed)
 - Modify: `packages/shared/src/api-client/generated.ts` (regenerate after backend changes)
@@ -493,7 +532,7 @@ Expected: PASS.
 
 - [ ] **Step 4.3: Hand to human — regenerate API client**
 
-Tell the human: *"Backend response shape changed. Run `pnpm --filter @aurahire/api openapi:generate && pnpm --filter @aurahire/shared client:generate` (or whatever the repo's regen command is) to refresh `packages/shared/src/api-client/generated.ts`."*
+Tell the human: _"Backend response shape changed. Run `pnpm --filter @aurahire/api openapi:generate && pnpm --filter @aurahire/shared client:generate` (or whatever the repo's regen command is) to refresh `packages/shared/src/api-client/generated.ts`."_
 
 ---
 
@@ -502,6 +541,7 @@ Tell the human: *"Backend response shape changed. Run `pnpm --filter @aurahire/a
 **Goal:** Bump the parse-resume prompt to v2 so every extracted field carries a verbatim `*_source` string. The OpenAI structured-output schema enforces them as required.
 
 **Files:**
+
 - Modify: `packages/shared/src/schemas/parsed-resume.ts`
 - Create: `apps/api/src/ai/prompts/parse-resume-v2.ts`
 - Modify: `apps/api/src/ai/parse-resume.service.ts`
@@ -718,8 +758,8 @@ export interface ParseResumeOutput {
   latencyMs: number;
   model: string;
   promptVersion: string;
-  sourceFieldCoverage: number;       // NEW
-  sourceHallucinations: string[];    // NEW
+  sourceFieldCoverage: number; // NEW
+  sourceHallucinations: string[]; // NEW
 }
 
 // In parse() return:
@@ -753,8 +793,8 @@ await this.audit.log({
     promptVersion: parseResult.promptVersion,
     latencyMs: parseResult.latencyMs,
     parseConfidence: parseResult.parsed.parse_confidence,
-    sourceFieldCoverage: parseResult.sourceFieldCoverage,                    // NEW
-    sourceHallucinationCount: parseResult.sourceHallucinations.length,      // NEW
+    sourceFieldCoverage: parseResult.sourceFieldCoverage, // NEW
+    sourceHallucinationCount: parseResult.sourceHallucinations.length, // NEW
   },
   ...requestMeta,
 });
@@ -769,6 +809,7 @@ If `sourceHallucinations.length > 0`, also `this.logger.warn(...)` the field nam
 **Goal:** Re-runs the parser against the existing resume's `rawText` (or re-extracts if needed). Used by the Step 1 retry CTA and the mid-flow "Replace resume" affordance after a re-upload.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/resumes/resumes.service.ts`
 - Modify: `apps/api/src/modules/resumes/resumes.controller.ts`
 
@@ -862,6 +903,7 @@ Expected: PASS.
 **Goal:** Dedicated endpoint for the Finish button. Validates final completion against the per-step Zod completion schemas, sets `profileCompleted=true`, writes audit log.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/candidate-profiles/candidate-profiles.service.ts`
 - Modify: `apps/api/src/modules/candidate-profiles/candidate-profiles.controller.ts`
 - Create: `packages/shared/src/onboarding/personal-complete.schema.ts`
@@ -882,7 +924,7 @@ export const personalCompleteSchema = z.object({
 // packages/shared/src/onboarding/review-complete.schema.ts
 import { z } from "zod";
 export const reviewCompleteSchema = z.object({
-  hasMinimumProfile: z.literal(true),  // computed: experiences.length >= 1 OR education.length >= 1 OR skills.length >= 3
+  hasMinimumProfile: z.literal(true), // computed: experiences.length >= 1 OR education.length >= 1 OR skills.length >= 3
 });
 ```
 
@@ -964,7 +1006,7 @@ Expected: PASS.
 
 - [ ] **Step 7.5: Hand to human**
 
-*"Backend onboarding endpoints ready. Please regenerate the API client (`pnpm openapi:generate && pnpm client:generate`) so the frontend can consume `reparse` and `completeOnboarding`."*
+_"Backend onboarding endpoints ready. Please regenerate the API client (`pnpm openapi:generate && pnpm client:generate`) so the frontend can consume `reparse` and `completeOnboarding`."_
 
 ---
 
@@ -973,6 +1015,7 @@ Expected: PASS.
 **Goal:** Lock the parse-v2 prompt against regressions. `pnpm test:ai-parse` runs the new prompt against 15 fixture resumes, asserts thresholds, and **hard-fails on hallucination > 0%**.
 
 **Files:**
+
 - Create: `apps/api/test/fixtures/resumes/README.md`
 - Create: `apps/api/test/fixtures/resumes/01-clean-pdf.expected.json` (and 14 more — author at least 1 fully, leave others as TODO entries inside the README so the human can populate fixtures over time)
 - Create: `apps/api/scripts/run-ai-parse-corpus.ts`
@@ -993,18 +1036,30 @@ import { StorageService } from "../src/storage/storage.service";
 const FIXTURES_DIR = join(__dirname, "../test/fixtures/resumes");
 
 interface Expected {
-  contact: { full_name: string; phone?: string; email?: string; location_city?: string };
+  contact: {
+    full_name: string;
+    phone?: string;
+    email?: string;
+    location_city?: string;
+  };
   experienceCount: number;
   educationCount: number;
   skills: string[];
 }
 
 async function main() {
-  const files = (await readdir(FIXTURES_DIR)).filter((f) => f.endsWith(".pdf") || f.endsWith(".docx"));
+  const files = (await readdir(FIXTURES_DIR)).filter(
+    (f) => f.endsWith(".pdf") || f.endsWith(".docx"),
+  );
   let totalCoverage = 0;
   let totalHallucinations = 0;
   let allPassed = true;
-  const results: Array<{ fixture: string; coverage: number; hallucinations: number; ok: boolean }> = [];
+  const results: Array<{
+    fixture: string;
+    coverage: number;
+    hallucinations: number;
+    ok: boolean;
+  }> = [];
 
   // ... bootstrap the service (use the real OpenAIService against staging, or a stubbed one against pre-recorded responses)
   // For each fixture: load buffer → extract text → parse → compare to .expected.json → compute metrics
@@ -1012,7 +1067,10 @@ async function main() {
   for (const file of files) {
     const buffer = await readFile(join(FIXTURES_DIR, file));
     const expected: Expected = JSON.parse(
-      await readFile(join(FIXTURES_DIR, file.replace(/\.(pdf|docx)$/, ".expected.json")), "utf8"),
+      await readFile(
+        join(FIXTURES_DIR, file.replace(/\.(pdf|docx)$/, ".expected.json")),
+        "utf8",
+      ),
     );
     // ... call service.parse(...) — see ParseResumeService for the contract.
     // ... compare contact, experience.length, education.length, jaccard(skills, expected.skills).
@@ -1041,7 +1099,10 @@ async function main() {
   console.log("ALL PASSED");
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
 ```
 
 - [ ] **Step 8.2: Add npm script**
@@ -1068,7 +1129,16 @@ Author `01-clean-pdf.expected.json` based on whatever PDF the human supplies. Pa
   },
   "experienceCount": 3,
   "educationCount": 1,
-  "skills": ["TypeScript", "JavaScript", "React", "Node.js", "NestJS", "PostgreSQL", "AWS", "Docker"]
+  "skills": [
+    "TypeScript",
+    "JavaScript",
+    "React",
+    "Node.js",
+    "NestJS",
+    "PostgreSQL",
+    "AWS",
+    "Docker"
+  ]
 }
 ```
 
@@ -1076,21 +1146,23 @@ Author `01-clean-pdf.expected.json` based on whatever PDF the human supplies. Pa
 
 ```markdown
 <!-- apps/api/test/fixtures/resumes/README.md -->
+
 # AI Parse Golden Corpus
 
 Used by `pnpm test:ai-parse`. Each fixture has:
+
 - `<id>-<slug>.pdf` (or `.docx`) — the binary
 - `<id>-<slug>.expected.json` — hand-annotated canonical extraction
 
 ## Thresholds (assertions)
 
-| Metric | Threshold |
-| --- | --- |
-| Contact precision | ≥ 0.95 |
-| Experience count match | exact |
-| Education count match | exact |
-| Skills Jaccard | ≥ 0.85 |
-| Source-field coverage | ≥ 0.90 |
+| Metric                       | Threshold     |
+| ---------------------------- | ------------- |
+| Contact precision            | ≥ 0.95        |
+| Experience count match       | exact         |
+| Education count match        | exact         |
+| Skills Jaccard               | ≥ 0.85        |
+| Source-field coverage        | ≥ 0.90        |
 | Source-string hallucinations | 0 (hard fail) |
 
 ## Adding a new fixture
@@ -1103,6 +1175,7 @@ Used by `pnpm test:ai-parse`. Each fixture has:
 ## Contributing fixtures
 
 Aim for 15+ fixtures across:
+
 - PDF clean / styled / multi-column / image-only
 - DOCX modern / legacy
 - Multilingual (1 EN + Tagalog hybrid)
@@ -1111,7 +1184,7 @@ Aim for 15+ fixtures across:
 
 - [ ] **Step 8.5: Hand to human**
 
-*"AI corpus runner ready. Please drop 14 more resume fixtures (mix of PDF/DOCX, clean/styled/edge-case) into `apps/api/test/fixtures/resumes/` with matching `.expected.json` annotations. Use 01 as the template. Run `pnpm test:ai-parse` whenever you bump the prompt version."*
+_"AI corpus runner ready. Please drop 14 more resume fixtures (mix of PDF/DOCX, clean/styled/edge-case) into `apps/api/test/fixtures/resumes/` with matching `.expected.json` annotations. Use 01 as the template. Run `pnpm test:ai-parse` whenever you bump the prompt version."_
 
 ---
 
@@ -1120,6 +1193,7 @@ Aim for 15+ fixtures across:
 **Goal:** Static list of common skills used by the typeahead in the Review step's Skills section.
 
 **Files:**
+
 - Create: `packages/shared/src/skills-taxonomy.ts`
 - Modify: `packages/shared/src/index.ts`
 
@@ -1278,6 +1352,7 @@ Expected: PASS.
 **Goal:** Frontend's source of truth for step labels and parsed-resume shape catches up to the new backend contract.
 
 **Files:**
+
 - Modify: `apps/web/app/onboarding/candidate/_data.ts`
 
 - [ ] **Step 10.1: Update step list and parsed-resume types**
@@ -1292,7 +1367,11 @@ export const ONBOARDING_STEPS = [
   { id: "resume", label: "Resume", path: "/onboarding/candidate" },
   { id: "personal", label: "Personal", path: "/onboarding/candidate/personal" },
   { id: "review", label: "Review", path: "/onboarding/candidate/review" },
-  { id: "preferences", label: "Preferences", path: "/onboarding/candidate/preferences" },
+  {
+    id: "preferences",
+    label: "Preferences",
+    path: "/onboarding/candidate/preferences",
+  },
 ] as const;
 
 export type OnboardingStepId = (typeof ONBOARDING_STEPS)[number]["id"];
@@ -1326,7 +1405,8 @@ export async function fetchCandidateProfileMe(): Promise<CandidateProfileMe> {
     cache: "no-store",
   });
   if (res.status === 403) redirect("/login");
-  if (!res.ok) throw new Error(`Failed to load candidate profile: ${res.status}`);
+  if (!res.ok)
+    throw new Error(`Failed to load candidate profile: ${res.status}`);
   const body = (await res.json()) as { data: CandidateProfileMe };
   return body.data;
 }
@@ -1345,37 +1425,56 @@ export interface LatestParsedResume {
 
 export interface ParsedResumeV2 {
   contact: {
-    full_name: string | null; full_name_source: string | null;
-    email: string | null; email_source: string | null;
-    phone: string | null; phone_source: string | null;
-    location_city: string | null; location_city_source: string | null;
-    location_country: string | null; location_country_source: string | null;
-    linkedin_url: string | null; linkedin_url_source: string | null;
-    portfolio_url: string | null; portfolio_url_source: string | null;
+    full_name: string | null;
+    full_name_source: string | null;
+    email: string | null;
+    email_source: string | null;
+    phone: string | null;
+    phone_source: string | null;
+    location_city: string | null;
+    location_city_source: string | null;
+    location_country: string | null;
+    location_country_source: string | null;
+    linkedin_url: string | null;
+    linkedin_url_source: string | null;
+    portfolio_url: string | null;
+    portfolio_url_source: string | null;
   };
   summary: { text: string; text_source: string } | null;
   education: Array<{
-    institution: string; institution_source: string;
-    degree: string | null; degree_source: string | null;
-    field_of_study: string | null; field_of_study_source: string | null;
-    start_year: number | null; end_year: number | null;
+    institution: string;
+    institution_source: string;
+    degree: string | null;
+    degree_source: string | null;
+    field_of_study: string | null;
+    field_of_study_source: string | null;
+    start_year: number | null;
+    end_year: number | null;
     period_source: string | null;
-    gpa: string | null; gpa_source: string | null;
+    gpa: string | null;
+    gpa_source: string | null;
   }>;
   experience: Array<{
-    company: string; company_source: string;
-    title: string; title_source: string;
-    start_date: string | null; end_date: string | null;
+    company: string;
+    company_source: string;
+    title: string;
+    title_source: string;
+    start_date: string | null;
+    end_date: string | null;
     period_source: string;
     is_current: boolean;
-    responsibilities: string[]; responsibilities_source: string[];
+    responsibilities: string[];
+    responsibilities_source: string[];
     technologies_used: string[];
   }>;
   skills: Array<{ name: string; source: string }>;
   certifications: Array<{
-    name: string; name_source: string;
-    issuing_organization: string | null; issuing_organization_source: string | null;
-    issue_date: string | null; issue_date_source: string | null;
+    name: string;
+    name_source: string;
+    issuing_organization: string | null;
+    issuing_organization_source: string | null;
+    issue_date: string | null;
+    issue_date_source: string | null;
   }>;
   languages: string[];
   parse_confidence: "high" | "medium" | "low";
@@ -1405,17 +1504,24 @@ export async function fetchLatestParsedResume(): Promise<LatestParsedResume | nu
   };
   if (listBody.data.length === 0) return null;
 
-  const sorted = [...listBody.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const sorted = [...listBody.data].sort((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
+  );
   const candidate = sorted.find((r) => r.isDefault) ?? sorted[0]!;
 
   // Fetch signed URLs (cheap — 1 round trip).
-  const urlRes = await fetch(`${apiUrl}/api/v1/resumes/${candidate.id}/download-url`, {
-    headers: { Authorization: `Bearer ${session.access_token}` },
-    cache: "no-store",
-  });
+  const urlRes = await fetch(
+    `${apiUrl}/api/v1/resumes/${candidate.id}/download-url`,
+    {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      cache: "no-store",
+    },
+  );
   let signedPdfUrl: string | null = null;
   if (urlRes.ok) {
-    const urlBody = (await urlRes.json()) as { data: { signedUrl: string; signedPdfUrl: string } };
+    const urlBody = (await urlRes.json()) as {
+      data: { signedUrl: string; signedPdfUrl: string };
+    };
     signedPdfUrl = urlBody.data.signedPdfUrl;
   }
 
@@ -1441,6 +1547,7 @@ Expected: existing step pages will fail (`Step 1Page`, `Step 2Page` etc. import 
 **Goal:** 4-segment horizontal progress with three states (completed / current / upcoming). Collapses to a 4px progress bar < 1024px.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/onboarding-progress.tsx`
 - Create: `apps/web/components/onboarding/onboarding-progress.test.tsx`
 
@@ -1461,8 +1568,14 @@ const STEPS = [
 describe("OnboardingProgress", () => {
   it("renders 4 segments", () => {
     render(<OnboardingProgress steps={STEPS} currentStepId="personal" />);
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "2");
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuemax", "4");
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "2",
+    );
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuemax",
+      "4",
+    );
   });
 
   it("marks completed steps with checkmark", () => {
@@ -1471,8 +1584,12 @@ describe("OnboardingProgress", () => {
   });
 
   it("marks current step with primary ring style", () => {
-    const { container } = render(<OnboardingProgress steps={STEPS} currentStepId="review" />);
-    expect(container.querySelector('[data-step="review"][data-state="current"]')).not.toBeNull();
+    const { container } = render(
+      <OnboardingProgress steps={STEPS} currentStepId="review" />,
+    );
+    expect(
+      container.querySelector('[data-step="review"][data-state="current"]'),
+    ).not.toBeNull();
   });
 });
 ```
@@ -1514,10 +1631,20 @@ export function OnboardingProgress({ steps, currentStepId, className }: Props) {
         aria-label="Onboarding progress"
       >
         {steps.map((step, i) => {
-          const state = i < currentIndex ? "completed" : i === currentIndex ? "current" : "upcoming";
+          const state =
+            i < currentIndex
+              ? "completed"
+              : i === currentIndex
+                ? "current"
+                : "upcoming";
           const isLast = i === steps.length - 1;
           return (
-            <li key={step.id} className="flex flex-1 items-center" data-step={step.id} data-state={state}>
+            <li
+              key={step.id}
+              className="flex flex-1 items-center"
+              data-step={step.id}
+              data-state={state}
+            >
               <div className="flex flex-col items-center">
                 <div
                   className={[
@@ -1528,10 +1655,20 @@ export function OnboardingProgress({ steps, currentStepId, className }: Props) {
                       "border-2 border-[var(--color-primary)] bg-[var(--color-canvas)] text-[var(--color-primary)]",
                     state === "upcoming" &&
                       "bg-[var(--color-hairline)] text-[var(--color-muted)]",
-                  ].filter(Boolean).join(" ")}
-                  aria-label={state === "completed" ? `${step.label} completed` : undefined}
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-label={
+                    state === "completed"
+                      ? `${step.label} completed`
+                      : undefined
+                  }
                 >
-                  {state === "completed" ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                  {state === "completed" ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    i + 1
+                  )}
                 </div>
                 <span
                   className={[
@@ -1590,6 +1727,7 @@ Expected: PASS.
 **Goal:** Top-bar autosave indicator with three visual states.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/save-status-indicator.tsx`
 - Create: `apps/web/components/onboarding/save-status-indicator.test.tsx`
 
@@ -1640,23 +1778,39 @@ interface Props {
 export function SaveStatusIndicator({ status, onRetry, className }: Props) {
   const cls = [
     "flex items-center gap-1.5 text-xs",
-    status === "error" ? "text-[var(--color-status-danger)]" : "text-[var(--color-muted)]",
+    status === "error"
+      ? "text-[var(--color-status-danger)]"
+      : "text-[var(--color-muted)]",
     className,
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   if (status === "saving") {
-    return <span className={cls}><Loader2 className="h-3.5 w-3.5 animate-spin" />Saving…</span>;
+    return (
+      <span className={cls}>
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        Saving…
+      </span>
+    );
   }
   if (status === "error") {
     return (
       <span className={cls}>
         <AlertCircle className="h-3.5 w-3.5" />
         Couldn't save —{" "}
-        <button onClick={onRetry} className="font-semibold underline">Retry</button>
+        <button onClick={onRetry} className="font-semibold underline">
+          Retry
+        </button>
       </span>
     );
   }
-  return <span className={cls}><Check className="h-3.5 w-3.5" />All changes saved</span>;
+  return (
+    <span className={cls}>
+      <Check className="h-3.5 w-3.5" />
+      All changes saved
+    </span>
+  );
 }
 ```
 
@@ -1672,6 +1826,7 @@ Expected: PASS.
 **Goal:** Top bar (wordmark + progress + save indicator) + two-pane body grid. Right pane is a slot.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/onboarding-shell.tsx`
 
 - [ ] **Step 13.1: Implement**
@@ -1683,7 +1838,10 @@ import type { ReactNode } from "react";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { OnboardingProgress } from "./onboarding-progress";
 import { SaveStatusIndicator, type SaveStatus } from "./save-status-indicator";
-import { ONBOARDING_STEPS, type OnboardingStepId } from "@/app/onboarding/candidate/_data";
+import {
+  ONBOARDING_STEPS,
+  type OnboardingStepId,
+} from "@/app/onboarding/candidate/_data";
 
 interface Props {
   currentStepId: OnboardingStepId;
@@ -1704,7 +1862,9 @@ export function OnboardingShell({
   mobileRightPaneToggle,
   children,
 }: Props) {
-  const currentIndex = ONBOARDING_STEPS.findIndex((s) => s.id === currentStepId);
+  const currentIndex = ONBOARDING_STEPS.findIndex(
+    (s) => s.id === currentStepId,
+  );
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-canvas)]">
@@ -1714,19 +1874,27 @@ export function OnboardingShell({
             <BrandWordmark size="sm" />
           </Link>
           <div className="hidden flex-1 lg:block">
-            <OnboardingProgress steps={ONBOARDING_STEPS} currentStepId={currentStepId} />
+            <OnboardingProgress
+              steps={ONBOARDING_STEPS}
+              currentStepId={currentStepId}
+            />
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-3">
             <SaveStatusIndicator status={saveStatus} onRetry={onSaveRetry} />
             <span className="font-mono text-xs text-[var(--color-muted)]">
               {currentIndex + 1} / {ONBOARDING_STEPS.length}
             </span>
-            {mobileRightPaneToggle && <span className="lg:hidden">{mobileRightPaneToggle}</span>}
+            {mobileRightPaneToggle && (
+              <span className="lg:hidden">{mobileRightPaneToggle}</span>
+            )}
           </div>
         </div>
         {/* slim mobile progress bar */}
         <div className="lg:hidden">
-          <OnboardingProgress steps={ONBOARDING_STEPS} currentStepId={currentStepId} />
+          <OnboardingProgress
+            steps={ONBOARDING_STEPS}
+            currentStepId={currentStepId}
+          />
         </div>
       </header>
 
@@ -1757,6 +1925,7 @@ Expected: PASS.
 **Goal:** Debounced PATCH on form blur with `SaveStatus` callback.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/use-autosave.ts`
 
 - [ ] **Step 14.1: Implement**
@@ -1773,7 +1942,10 @@ interface Options<TPayload> {
   debounceMs?: number;
 }
 
-export function useAutosave<TPayload>({ save, debounceMs = 500 }: Options<TPayload>) {
+export function useAutosave<TPayload>({
+  save,
+  debounceMs = 500,
+}: Options<TPayload>) {
   const [status, setStatus] = useState<SaveStatus>("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<TPayload | null>(null);
@@ -1808,14 +1980,19 @@ export function useAutosave<TPayload>({ save, debounceMs = 500 }: Options<TPaylo
     }
   }, [save]);
 
-  const schedule = useCallback((payload: TPayload) => {
-    pending.current = payload;
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(flush, debounceMs);
-  }, [flush, debounceMs]);
+  const schedule = useCallback(
+    (payload: TPayload) => {
+      pending.current = payload;
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(flush, debounceMs);
+    },
+    [flush, debounceMs],
+  );
 
   useEffect(() => {
-    return () => { if (timer.current) clearTimeout(timer.current); };
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
   }, []);
 
   return { status, schedule, flushNow: flush, retry: flush };
@@ -1834,6 +2011,7 @@ Expected: PASS.
 **Goal:** `beforeunload` listener that only fires after the form has been dirty for > 750ms.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/use-tab-close-protection.ts`
 
 - [ ] **Step 15.1: Implement**
@@ -1851,7 +2029,9 @@ export function useTabCloseProtection(isDirty: boolean) {
   useEffect(() => {
     if (isDirty) {
       if (!dirtyTimer.current) {
-        dirtyTimer.current = setTimeout(() => { protectActive.current = true; }, 750);
+        dirtyTimer.current = setTimeout(() => {
+          protectActive.current = true;
+        }, 750);
       }
     } else {
       if (dirtyTimer.current) clearTimeout(dirtyTimer.current);
@@ -1884,6 +2064,7 @@ Expected: PASS.
 **Goal:** React context exposing `{ hoveredFieldId, setHoveredFieldId, focusField }` so form fields and resume highlights link bidirectionally without prop-drilling.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/resume-preview/highlight-context.tsx`
 
 - [ ] **Step 16.1: Implement**
@@ -1892,7 +2073,14 @@ Expected: PASS.
 // apps/web/components/onboarding/resume-preview/highlight-context.tsx
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 interface HighlightContextValue {
   hoveredFieldId: string | null;
@@ -1909,7 +2097,9 @@ export function HighlightProvider({ children }: { children: ReactNode }) {
 
   const registerField = useCallback((id: string, focus: () => void) => {
     fields.current.set(id, focus);
-    return () => { fields.current.delete(id); };
+    return () => {
+      fields.current.delete(id);
+    };
   }, []);
 
   const focusField = useCallback((id: string) => {
@@ -1917,7 +2107,9 @@ export function HighlightProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <HighlightContext.Provider value={{ hoveredFieldId, setHoveredFieldId, focusField, registerField }}>
+    <HighlightContext.Provider
+      value={{ hoveredFieldId, setHoveredFieldId, focusField, registerField }}
+    >
       {children}
     </HighlightContext.Provider>
   );
@@ -1925,7 +2117,8 @@ export function HighlightProvider({ children }: { children: ReactNode }) {
 
 export function useHighlightContext(): HighlightContextValue {
   const v = useContext(HighlightContext);
-  if (!v) throw new Error("useHighlightContext must be inside <HighlightProvider>");
+  if (!v)
+    throw new Error("useHighlightContext must be inside <HighlightProvider>");
   return v;
 }
 ```
@@ -1937,6 +2130,7 @@ export function useHighlightContext(): HighlightContextValue {
 **Goal:** Pure function: parsed-resume JSON → flat `Highlight[]`.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/resume-preview/derive-highlights.ts`
 - Create: `apps/web/components/onboarding/resume-preview/derive-highlights.test.ts`
 
@@ -1973,8 +2167,11 @@ describe("deriveHighlights", () => {
       parse_confidence: "high" as const,
     };
     const highlights = deriveHighlights(parsed);
-    expect(highlights).toHaveLength(3);  // contact.full_name + summary + skills.0
-    expect(highlights[0]).toMatchObject({ category: "contact", source: "Jane Doe" });
+    expect(highlights).toHaveLength(3); // contact.full_name + summary + skills.0
+    expect(highlights[0]).toMatchObject({
+      category: "contact",
+      source: "Jane Doe",
+    });
   });
 });
 ```
@@ -1990,7 +2187,12 @@ Expected: FAIL.
 // apps/web/components/onboarding/resume-preview/derive-highlights.ts
 import type { ParsedResumeV2 } from "@/app/onboarding/candidate/_data";
 
-export type HighlightCategory = "contact" | "summary" | "experience" | "education" | "skill";
+export type HighlightCategory =
+  | "contact"
+  | "summary"
+  | "experience"
+  | "education"
+  | "skill";
 
 export interface Highlight {
   id: string;
@@ -1999,40 +2201,103 @@ export interface Highlight {
   fieldRef: string;
 }
 
-export function deriveHighlights(parsed: ParsedResumeV2 | null | undefined): Highlight[] {
+export function deriveHighlights(
+  parsed: ParsedResumeV2 | null | undefined,
+): Highlight[] {
   if (!parsed) return [];
   const out: Highlight[] = [];
-  const push = (id: string, category: HighlightCategory, source: string | null | undefined, fieldRef: string) => {
-    if (source && source.trim().length > 0) out.push({ id, category, source, fieldRef });
+  const push = (
+    id: string,
+    category: HighlightCategory,
+    source: string | null | undefined,
+    fieldRef: string,
+  ) => {
+    if (source && source.trim().length > 0)
+      out.push({ id, category, source, fieldRef });
   };
 
   const c = parsed.contact;
   push("contact.full_name", "contact", c.full_name_source, "fullName");
   push("contact.email", "contact", c.email_source, "email");
   push("contact.phone", "contact", c.phone_source, "phone");
-  push("contact.location_city", "contact", c.location_city_source, "locationCity");
-  push("contact.location_country", "contact", c.location_country_source, "locationCountry");
+  push(
+    "contact.location_city",
+    "contact",
+    c.location_city_source,
+    "locationCity",
+  );
+  push(
+    "contact.location_country",
+    "contact",
+    c.location_country_source,
+    "locationCountry",
+  );
   push("contact.linkedin_url", "contact", c.linkedin_url_source, "linkedinUrl");
-  push("contact.portfolio_url", "contact", c.portfolio_url_source, "portfolioUrl");
+  push(
+    "contact.portfolio_url",
+    "contact",
+    c.portfolio_url_source,
+    "portfolioUrl",
+  );
 
   if (parsed.summary) {
     push("summary", "summary", parsed.summary.text_source, "summary");
   }
 
   parsed.experience.forEach((e, i) => {
-    push(`experience.${i}.title`, "experience", e.title_source, `experience.${i}.title`);
-    push(`experience.${i}.company`, "experience", e.company_source, `experience.${i}.company`);
-    push(`experience.${i}.period`, "experience", e.period_source, `experience.${i}.period`);
+    push(
+      `experience.${i}.title`,
+      "experience",
+      e.title_source,
+      `experience.${i}.title`,
+    );
+    push(
+      `experience.${i}.company`,
+      "experience",
+      e.company_source,
+      `experience.${i}.company`,
+    );
+    push(
+      `experience.${i}.period`,
+      "experience",
+      e.period_source,
+      `experience.${i}.period`,
+    );
     e.responsibilities_source.forEach((s, j) => {
-      push(`experience.${i}.responsibilities.${j}`, "experience", s, `experience.${i}.responsibilities.${j}`);
+      push(
+        `experience.${i}.responsibilities.${j}`,
+        "experience",
+        s,
+        `experience.${i}.responsibilities.${j}`,
+      );
     });
   });
 
   parsed.education.forEach((e, i) => {
-    push(`education.${i}.institution`, "education", e.institution_source, `education.${i}.institution`);
-    push(`education.${i}.degree`, "education", e.degree_source, `education.${i}.degree`);
-    push(`education.${i}.field_of_study`, "education", e.field_of_study_source, `education.${i}.field_of_study`);
-    push(`education.${i}.period`, "education", e.period_source, `education.${i}.period`);
+    push(
+      `education.${i}.institution`,
+      "education",
+      e.institution_source,
+      `education.${i}.institution`,
+    );
+    push(
+      `education.${i}.degree`,
+      "education",
+      e.degree_source,
+      `education.${i}.degree`,
+    );
+    push(
+      `education.${i}.field_of_study`,
+      "education",
+      e.field_of_study_source,
+      `education.${i}.field_of_study`,
+    );
+    push(
+      `education.${i}.period`,
+      "education",
+      e.period_source,
+      `education.${i}.period`,
+    );
     push(`education.${i}.gpa`, "education", e.gpa_source, `education.${i}.gpa`);
   });
 
@@ -2056,6 +2321,7 @@ Expected: PASS.
 **Goal:** Pure function: PDF.js text-layer items + a source string → array of bounding rects (whitespace-tolerant, accent-insensitive, case-insensitive). Returns `null` if not found.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/resume-preview/find-text-spans.ts`
 - Create: `apps/web/components/onboarding/resume-preview/find-text-spans.test.ts`
 
@@ -2111,21 +2377,38 @@ Expected: FAIL.
 // apps/web/components/onboarding/resume-preview/find-text-spans.ts
 export interface TextLayerItem {
   str: string;
-  x: number;       // page-space x
-  y: number;       // page-space y (PDF coordinates: y increases up, but we treat each item's y as top-of-box for simplicity)
+  x: number; // page-space x
+  y: number; // page-space y (PDF coordinates: y increases up, but we treat each item's y as top-of-box for simplicity)
   width: number;
   height: number;
 }
 
-export interface Rect { x: number; y: number; width: number; height: number; }
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 const normalize = (s: string): string =>
-  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w]+/g, " ").trim().toLowerCase();
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w]+/g, " ")
+    .trim()
+    .toLowerCase();
 
 const stripPunctuation = (s: string): string =>
-  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w]/g, "").toLowerCase();
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w]/g, "")
+    .toLowerCase();
 
-export function findTextSpans(items: TextLayerItem[], source: string): Rect[] | null {
+export function findTextSpans(
+  items: TextLayerItem[],
+  source: string,
+): Rect[] | null {
   if (!source.trim()) return null;
 
   // Strategy 1: whitespace-tolerant search across the joined buffer.
@@ -2147,7 +2430,13 @@ export function findTextSpans(items: TextLayerItem[], source: string): Rect[] | 
   const normSource = normalize(source);
   let idx = normBuffer.indexOf(normSource);
   if (idx >= 0) {
-    return spansFromCharRange(items, charToItem, buffer, idx, normSource.length);
+    return spansFromCharRange(
+      items,
+      charToItem,
+      buffer,
+      idx,
+      normSource.length,
+    );
   }
 
   // Strategy 2: punctuation-stripped match (handles phone numbers like "0976-455-6948" → "09764556948").
@@ -2196,7 +2485,9 @@ function spansFromCharRange(
   while (endIdx < buffer.length && collected < lengthInNormalized) {
     const c = buffer[endIdx]!;
     if (/\w/.test(c)) collected++;
-    else if (c === " " && collected > 0) { /* tolerate spaces */ }
+    else if (c === " " && collected > 0) {
+      /* tolerate spaces */
+    }
     endIdx++;
   }
 
@@ -2211,7 +2502,7 @@ function spansFromCharRange(
   const byRow = new Map<number, TextLayerItem[]>();
   for (const ii of itemIndices) {
     const it = items[ii]!;
-    const rowKey = Math.round(it.y / 4) * 4;  // bucket by y-position
+    const rowKey = Math.round(it.y / 4) * 4; // bucket by y-position
     if (!byRow.has(rowKey)) byRow.set(rowKey, []);
     byRow.get(rowKey)!.push(it);
   }
@@ -2241,6 +2532,7 @@ Expected: PASS.
 ## Task 19: Install `pdfjs-dist`
 
 **Files:**
+
 - Modify: `apps/web/package.json`
 
 - [ ] **Step 19.1: Install**
@@ -2251,6 +2543,7 @@ Expected: lockfile updated, `pdfjs-dist` in `apps/web/package.json` deps.
 - [ ] **Step 19.2: Verify worker URL approach**
 
 The PDF.js worker needs a URL. Two options:
+
 - (preferred) Use the `import.meta.url`-driven worker import: `import * as pdfjs from "pdfjs-dist"; pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();`
 - (fallback) Copy `pdf.worker.min.mjs` to `apps/web/public/` and reference as `/pdf.worker.min.mjs`.
 
@@ -2268,6 +2561,7 @@ Expected: PASS.
 **Goal:** Renders PDF pages to canvas + transparent text layer; emits text-layer items per page via callback.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/resume-preview/pdf-renderer.tsx`
 
 - [ ] **Step 20.1: Implement**
@@ -2278,7 +2572,11 @@ Expected: PASS.
 
 import { useEffect, useRef, useState } from "react";
 import * as pdfjs from "pdfjs-dist";
-import type { PDFDocumentProxy, PDFPageProxy, TextItem } from "pdfjs-dist/types/src/display/api";
+import type {
+  PDFDocumentProxy,
+  PDFPageProxy,
+  TextItem,
+} from "pdfjs-dist/types/src/display/api";
 import type { TextLayerItem } from "./find-text-spans";
 
 if (typeof window !== "undefined") {
@@ -2296,17 +2594,28 @@ interface Props {
   className?: string;
 }
 
-export function PdfRenderer({ url, onTextLayer, onLoadError, className }: Props) {
+export function PdfRenderer({
+  url,
+  onTextLayer,
+  onLoadError,
+  className,
+}: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     pdfjs.getDocument(url).promise.then(
-      (d) => { if (!cancelled) setDoc(d); },
-      (err) => { if (!cancelled) onLoadError(err as Error); },
+      (d) => {
+        if (!cancelled) setDoc(d);
+      },
+      (err) => {
+        if (!cancelled) onLoadError(err as Error);
+      },
     );
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [url, onLoadError]);
 
   useEffect(() => {
@@ -2367,7 +2676,10 @@ export function PdfRenderer({ url, onTextLayer, onLoadError, className }: Props)
         // Render text layer DOM (PDF.js's renderTextLayer is too heavy; we just position a single absolute span per item).
         for (const it of textContent.items) {
           if (!("str" in it)) continue;
-          const tx = pdfjs.Util.transform(viewport.transform, (it as TextItem).transform);
+          const tx = pdfjs.Util.transform(
+            viewport.transform,
+            (it as TextItem).transform,
+          );
           const span = document.createElement("span");
           span.textContent = it.str;
           span.style.position = "absolute";
@@ -2383,9 +2695,13 @@ export function PdfRenderer({ url, onTextLayer, onLoadError, className }: Props)
       }
 
       if (!cancelled) onTextLayer(allTextItems);
-    })().catch((err) => { if (!cancelled) onLoadError(err as Error); });
+    })().catch((err) => {
+      if (!cancelled) onLoadError(err as Error);
+    });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [doc, onTextLayer, onLoadError]);
 
   return <div ref={containerRef} className={className} />;
@@ -2404,6 +2720,7 @@ Expected: PASS. (You may need to install `@types/pdfjs-dist` if upstream doesn't
 **Goal:** Render colored rect divs on top of the text layer, one per highlight per matched span.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/resume-preview/highlight-overlay.tsx`
 
 - [ ] **Step 21.1: Implement**
@@ -2429,7 +2746,11 @@ interface Props {
   pageContainers: HTMLElement[];
 }
 
-export function HighlightOverlay({ highlights, activeCategories, pageContainers }: Props) {
+export function HighlightOverlay({
+  highlights,
+  activeCategories,
+  pageContainers,
+}: Props) {
   const { hoveredFieldId, focusField } = useHighlightContext();
 
   useEffect(() => {
@@ -2456,7 +2777,8 @@ export function HighlightOverlay({ highlights, activeCategories, pageContainers 
         div.style.borderRadius = "3px";
         div.style.pointerEvents = "auto";
         div.style.cursor = "pointer";
-        div.style.transition = "opacity 200ms ease, background-color 200ms ease";
+        div.style.transition =
+          "opacity 200ms ease, background-color 200ms ease";
         div.style.opacity = isActive ? "1" : "0.15";
         div.style.backgroundColor = "var(--color-primary-soft)";
         div.style.mixBlendMode = "multiply";
@@ -2468,7 +2790,13 @@ export function HighlightOverlay({ highlights, activeCategories, pageContainers 
         container.appendChild(div);
       }
     }
-  }, [highlights, activeCategories, hoveredFieldId, pageContainers, focusField]);
+  }, [
+    highlights,
+    activeCategories,
+    hoveredFieldId,
+    pageContainers,
+    focusField,
+  ]);
 
   return null;
 }
@@ -2478,8 +2806,12 @@ Add a CSS keyframe in `apps/web/app/globals.css`:
 
 ```css
 @keyframes highlight-pulse {
-  0% { box-shadow: 0 0 0 0 var(--color-primary); }
-  100% { box-shadow: 0 0 0 6px transparent; }
+  0% {
+    box-shadow: 0 0 0 0 var(--color-primary);
+  }
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
 }
 ```
 
@@ -2495,6 +2827,7 @@ Expected: PASS.
 **Goal:** Renders `rawText` as styled HTML with substring-based highlights when PDF rendering isn't viable.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/resume-preview/linearized-resume-view.tsx`
 
 - [ ] **Step 22.1: Implement**
@@ -2513,10 +2846,17 @@ interface Props {
   activeCategories: readonly HighlightCategory[];
 }
 
-export function LinearizedResumeView({ rawText, highlights, activeCategories }: Props) {
+export function LinearizedResumeView({
+  rawText,
+  highlights,
+  activeCategories,
+}: Props) {
   const { focusField, hoveredFieldId } = useHighlightContext();
 
-  const segments = useMemo(() => buildSegments(rawText, highlights), [rawText, highlights]);
+  const segments = useMemo(
+    () => buildSegments(rawText, highlights),
+    [rawText, highlights],
+  );
 
   return (
     <div className="rounded-lg border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 text-xs leading-6 text-[var(--color-body)]">
@@ -2533,7 +2873,9 @@ export function LinearizedResumeView({ rawText, highlights, activeCategories }: 
               style={{
                 backgroundColor: "var(--color-primary-soft)",
                 color: "var(--color-primary)",
-                opacity: activeCategories.includes(seg.highlight.category) ? 1 : 0.3,
+                opacity: activeCategories.includes(seg.highlight.category)
+                  ? 1
+                  : 0.3,
                 outline:
                   hoveredFieldId === seg.highlight.fieldRef
                     ? "2px solid var(--color-primary)"
@@ -2558,19 +2900,25 @@ function buildSegments(
   rawText: string,
   highlights: Highlight[],
 ): Array<{ text: string; highlight?: Highlight }> {
-  const matches: Array<{ start: number; end: number; highlight: Highlight }> = [];
+  const matches: Array<{ start: number; end: number; highlight: Highlight }> =
+    [];
   for (const h of highlights) {
     const idx = rawText.toLowerCase().indexOf(h.source.toLowerCase());
-    if (idx >= 0) matches.push({ start: idx, end: idx + h.source.length, highlight: h });
+    if (idx >= 0)
+      matches.push({ start: idx, end: idx + h.source.length, highlight: h });
   }
   matches.sort((a, b) => a.start - b.start);
 
   const segments: Array<{ text: string; highlight?: Highlight }> = [];
   let cursor = 0;
   for (const m of matches) {
-    if (m.start < cursor) continue;  // overlapping, skip
-    if (m.start > cursor) segments.push({ text: rawText.slice(cursor, m.start) });
-    segments.push({ text: rawText.slice(m.start, m.end), highlight: m.highlight });
+    if (m.start < cursor) continue; // overlapping, skip
+    if (m.start > cursor)
+      segments.push({ text: rawText.slice(cursor, m.start) });
+    segments.push({
+      text: rawText.slice(m.start, m.end),
+      highlight: m.highlight,
+    });
     cursor = m.end;
   }
   if (cursor < rawText.length) segments.push({ text: rawText.slice(cursor) });
@@ -2590,6 +2938,7 @@ Expected: PASS.
 **Goal:** Loads the PDF, derives highlights, runs the matcher, decides PDF vs linearized fallback, exposes per-step filtering via `activeCategories` prop.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx`
 
 - [ ] **Step 23.1: Implement**
@@ -2600,7 +2949,10 @@ Expected: PASS.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PdfRenderer } from "./pdf-renderer";
-import { HighlightOverlay, type PositionedHighlight } from "./highlight-overlay";
+import {
+  HighlightOverlay,
+  type PositionedHighlight,
+} from "./highlight-overlay";
 import { LinearizedResumeView } from "./linearized-resume-view";
 import { findTextSpans, type TextLayerItem } from "./find-text-spans";
 import { deriveHighlights, type HighlightCategory } from "./derive-highlights";
@@ -2620,7 +2972,13 @@ type PaneState =
   | { kind: "linearized" }
   | { kind: "error"; message: string };
 
-export function ResumePreviewPane({ signedPdfUrl, parsed, rawText, activeCategories, className }: Props) {
+export function ResumePreviewPane({
+  signedPdfUrl,
+  parsed,
+  rawText,
+  activeCategories,
+  className,
+}: Props) {
   const [state, setState] = useState<PaneState>({ kind: "loading" });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const highlights = useMemo(() => deriveHighlights(parsed), [parsed]);
@@ -2634,10 +2992,14 @@ export function ResumePreviewPane({ signedPdfUrl, parsed, rawText, activeCategor
     setState({ kind: "pdf", pages });
   }, []);
 
-  const onLoadError = useCallback((err: Error) => {
-    if (rawText && rawText.trim().length > 50) setState({ kind: "linearized" });
-    else setState({ kind: "error", message: err.message });
-  }, [rawText]);
+  const onLoadError = useCallback(
+    (err: Error) => {
+      if (rawText && rawText.trim().length > 50)
+        setState({ kind: "linearized" });
+      else setState({ kind: "error", message: err.message });
+    },
+    [rawText],
+  );
 
   // Compute positioned highlights once text layer is ready.
   const positioned: PositionedHighlight[] = useMemo(() => {
@@ -2657,14 +3019,22 @@ export function ResumePreviewPane({ signedPdfUrl, parsed, rawText, activeCategor
   useEffect(() => {
     if (state.kind !== "pdf") return;
     if (!containerRef.current) return;
-    setPageContainers(Array.from(containerRef.current.querySelectorAll<HTMLElement>(":scope > div")));
+    setPageContainers(
+      Array.from(
+        containerRef.current.querySelectorAll<HTMLElement>(":scope > div"),
+      ),
+    );
   }, [state]);
 
   if (!signedPdfUrl) {
     if (rawText && rawText.trim().length > 50 && parsed) {
       return (
         <div className={className}>
-          <LinearizedResumeView rawText={rawText} highlights={highlights} activeCategories={activeCategories} />
+          <LinearizedResumeView
+            rawText={rawText}
+            highlights={highlights}
+            activeCategories={activeCategories}
+          />
         </div>
       );
     }
@@ -2678,21 +3048,39 @@ export function ResumePreviewPane({ signedPdfUrl, parsed, rawText, activeCategor
   return (
     <div className={className}>
       {state.kind === "loading" && (
-        <div className="text-sm text-[var(--color-muted)]">Loading preview…</div>
+        <div className="text-sm text-[var(--color-muted)]">
+          Loading preview…
+        </div>
       )}
       {state.kind === "linearized" && rawText && (
-        <LinearizedResumeView rawText={rawText} highlights={highlights} activeCategories={activeCategories} />
+        <LinearizedResumeView
+          rawText={rawText}
+          highlights={highlights}
+          activeCategories={activeCategories}
+        />
       )}
       {state.kind === "error" && (
         <div className="rounded-lg border border-[var(--color-hairline)] p-4 text-sm text-[var(--color-muted)]">
           Couldn't load resume preview.
-          <a href={signedPdfUrl} target="_blank" rel="noreferrer" className="ml-2 underline text-[var(--color-primary)]">
+          <a
+            href={signedPdfUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="ml-2 underline text-[var(--color-primary)]"
+          >
             Download
           </a>
         </div>
       )}
-      <div ref={containerRef} className={state.kind === "pdf" ? "block" : "hidden"}>
-        <PdfRenderer url={signedPdfUrl} onTextLayer={onTextLayer} onLoadError={onLoadError} />
+      <div
+        ref={containerRef}
+        className={state.kind === "pdf" ? "block" : "hidden"}
+      >
+        <PdfRenderer
+          url={signedPdfUrl}
+          onTextLayer={onTextLayer}
+          onLoadError={onLoadError}
+        />
       </div>
       {state.kind === "pdf" && pageContainers.length > 0 && (
         <HighlightOverlay
@@ -2718,6 +3106,7 @@ Expected: PASS.
 **Goal:** Step 1's left-pane content. Three visual states: `idle` (dropzone), `parsing` (cycling captions), `done` (success card with item counts and Continue), `failed` (error + retry/skip).
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/candidate/resume-upload-card.tsx`
 - Create: `apps/web/components/onboarding/candidate/parsing-shimmer.tsx`
 - Create: `apps/web/components/onboarding/candidate/parse-success-card.tsx`
@@ -2761,7 +3150,9 @@ export function ParsingShimmer() {
 import Link from "next/link";
 import type { ParsedResumeV2 } from "@/app/onboarding/candidate/_data";
 
-interface Props { parsed: ParsedResumeV2 | null; }
+interface Props {
+  parsed: ParsedResumeV2 | null;
+}
 
 export function ParseSuccessCard({ parsed }: Props) {
   const expCount = parsed?.experience.length ?? 0;
@@ -2822,11 +3213,17 @@ interface Props {
   onUploadDifferent: () => void;
 }
 
-export function ResumeStaleRecoveryCard({ resumeId, onReparseTriggered, onUploadDifferent }: Props) {
+export function ResumeStaleRecoveryCard({
+  resumeId,
+  onReparseTriggered,
+  onUploadDifferent,
+}: Props) {
   const [pending, setPending] = useState(false);
   return (
     <div className="rounded-2xl border border-[var(--color-hairline)] p-6">
-      <h2 className="text-xl font-normal text-[var(--color-ink)]">A previous upload didn't complete</h2>
+      <h2 className="text-xl font-normal text-[var(--color-ink)]">
+        A previous upload didn't complete
+      </h2>
       <p className="mt-2 text-sm text-[var(--color-body)]">
         We can pick up where it left off, or you can upload a different resume.
       </p>
@@ -2836,10 +3233,11 @@ export function ResumeStaleRecoveryCard({ resumeId, onReparseTriggered, onUpload
           onClick={async () => {
             setPending(true);
             try {
-              const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+              const apiUrl =
+                process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
               await fetch(`${apiUrl}/api/v1/resumes/${resumeId}/reparse`, {
                 method: "POST",
-                credentials: "include",  // session cookie
+                credentials: "include", // session cookie
               });
               onReparseTriggered();
             } finally {
@@ -2878,7 +3276,8 @@ import { ParseSuccessCard } from "./parse-success-card";
 import { ResumeStaleRecoveryCard } from "./resume-stale-recovery-card";
 import type { LatestParsedResume } from "@/app/onboarding/candidate/_data";
 
-const ACCEPT = ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const ACCEPT =
+  ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const MAX_BYTES = 10 * 1024 * 1024;
 
 interface Props {
@@ -2891,9 +3290,11 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [uploading, startTransition] = useTransition();
   const [stage, setStage] = useState<"idle" | "uploading" | "done" | "failed">(
-    latestResume?.parseStatus === "parsed" ? "done" :
-    latestResume?.parseStatus === "failed" ? "failed" :
-    "idle",
+    latestResume?.parseStatus === "parsed"
+      ? "done"
+      : latestResume?.parseStatus === "failed"
+        ? "failed"
+        : "idle",
   );
   const [resume, setResume] = useState<LatestParsedResume | null>(latestResume);
 
@@ -2902,7 +3303,10 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
       <ResumeStaleRecoveryCard
         resumeId={latestResume.id}
         onReparseTriggered={() => router.refresh()}
-        onUploadDifferent={() => { setResume(null); setStage("idle"); }}
+        onUploadDifferent={() => {
+          setResume(null);
+          setStage("idle");
+        }}
       />
     );
   }
@@ -2930,10 +3334,12 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
           setStage("idle");
           return;
         }
-        const body = (await res.json()) as { data: { id: string; parseStatus: string } };
+        const body = (await res.json()) as {
+          data: { id: string; parseStatus: string };
+        };
         if (body.data.parseStatus === "parsed") {
           setStage("done");
-          router.refresh();  // re-fetches LatestParsedResume on layout
+          router.refresh(); // re-fetches LatestParsedResume on layout
         } else if (body.data.parseStatus === "failed") {
           setStage("failed");
           router.refresh();
@@ -2948,9 +3354,15 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
   if (stage === "uploading") {
     return (
       <div>
-        <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">Reading your resume</h1>
-        <p className="mt-2 text-sm text-[var(--color-body)]">This usually takes 5–15 seconds.</p>
-        <div className="mt-6"><ParsingShimmer /></div>
+        <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
+          Reading your resume
+        </h1>
+        <p className="mt-2 text-sm text-[var(--color-body)]">
+          This usually takes 5–15 seconds.
+        </p>
+        <div className="mt-6">
+          <ParsingShimmer />
+        </div>
       </div>
     );
   }
@@ -2962,8 +3374,12 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
   if (stage === "failed") {
     return (
       <div>
-        <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">We couldn't parse this resume</h1>
-        <p className="mt-2 text-sm text-[var(--color-body)]">Try again or continue without parsing.</p>
+        <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
+          We couldn't parse this resume
+        </h1>
+        <p className="mt-2 text-sm text-[var(--color-body)]">
+          Try again or continue without parsing.
+        </p>
         <div className="mt-6 flex gap-2">
           <button
             onClick={() => router.push("/onboarding/candidate/personal")}
@@ -2984,14 +3400,22 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
 
   return (
     <div>
-      <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">Upload your resume</h1>
+      <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
+        Upload your resume
+      </h1>
       <p className="mt-2 text-sm text-[var(--color-body)]">
-        We'll extract your contact info, experience, education, and skills automatically. The AI takes 5–15 seconds.
+        We'll extract your contact info, experience, education, and skills
+        automatically. The AI takes 5–15 seconds.
       </p>
       <label
         className="mt-6 flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-soft)]/30"
-        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-[var(--color-primary)]"); }}
-        onDragLeave={(e) => e.currentTarget.classList.remove("border-[var(--color-primary)]")}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.currentTarget.classList.add("border-[var(--color-primary)]");
+        }}
+        onDragLeave={(e) =>
+          e.currentTarget.classList.remove("border-[var(--color-primary)]")
+        }
         onDrop={(e) => {
           e.preventDefault();
           const f = e.dataTransfer.files[0];
@@ -2999,17 +3423,26 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
         }}
       >
         <UploadCloud className="h-10 w-10 text-[var(--color-muted)]" />
-        <p className="mt-3 text-sm font-semibold">Drop your resume here, or click to browse</p>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">PDF or DOCX · 10MB max</p>
+        <p className="mt-3 text-sm font-semibold">
+          Drop your resume here, or click to browse
+        </p>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          PDF or DOCX · 10MB max
+        </p>
         <input
           type="file"
           accept={ACCEPT}
           className="hidden"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+          }}
         />
       </label>
       {error && (
-        <p className="mt-3 text-sm text-[var(--color-status-danger)]">{error}</p>
+        <p className="mt-3 text-sm text-[var(--color-status-danger)]">
+          {error}
+        </p>
       )}
       <button
         onClick={() => router.push("/onboarding/candidate/personal")}
@@ -3032,6 +3465,7 @@ Expected: PASS.
 ## Task 25: Step 1 page rewrite
 
 **Files:**
+
 - Modify: `apps/web/app/onboarding/candidate/page.tsx`
 
 - [ ] **Step 25.1: Replace page content**
@@ -3055,7 +3489,10 @@ export default async function Step1Page() {
 
   return (
     <OnboardingShell currentStepId="resume" saveStatus="idle">
-      <ResumeUploadCard latestResume={latestResume} accessToken={session!.access_token} />
+      <ResumeUploadCard
+        latestResume={latestResume}
+        accessToken={session!.access_token}
+      />
     </OnboardingShell>
   );
 }
@@ -3073,6 +3510,7 @@ Expected: PASS.
 The new `OnboardingShell` owns the chrome, so the layout becomes a thin auth wrapper.
 
 **Files:**
+
 - Modify: `apps/web/app/onboarding/layout.tsx`
 
 - [ ] **Step 26.1: Replace**
@@ -3081,8 +3519,16 @@ The new `OnboardingShell` owns the chrome, so the layout becomes a thin auth wra
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
 
-export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {
-  const profile = (await getCurrentProfile()) as { id: string; role: string; profileCompleted: boolean } | null;
+export default async function OnboardingLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+    profileCompleted: boolean;
+  } | null;
   if (!profile) redirect("/login");
   return <>{children}</>;
 }
@@ -3098,6 +3544,7 @@ Expected: PASS.
 ## Task 27: Step 2 — restyle `personal-info-form.tsx` + integrate highlight context
 
 **Files:**
+
 - Modify: `apps/web/components/onboarding/candidate/personal-info-form.tsx`
 - Modify: `apps/web/app/onboarding/candidate/personal/page.tsx`
 
@@ -3132,16 +3579,24 @@ interface Props {
   onSaveStatusChange: (status: "idle" | "saving" | "error") => void;
 }
 
-export function CandidatePersonalInfoForm({ defaults, aiSuggestedFields, accessToken, onSaveStatusChange }: Props) {
-  const { register, formState, getValues, watch, setFocus } = useForm<FormValues>({ defaultValues: defaults });
+export function CandidatePersonalInfoForm({
+  defaults,
+  aiSuggestedFields,
+  accessToken,
+  onSaveStatusChange,
+}: Props) {
+  const { register, formState, getValues, watch, setFocus } =
+    useForm<FormValues>({ defaultValues: defaults });
   const { setHoveredFieldId, registerField } = useHighlightContext();
 
   // Wire each named field as a focusable target.
   useEffect(() => {
-    const unregisters = (Object.keys(defaults) as Array<keyof FormValues>).map((name) =>
-      registerField(name as string, () => setFocus(name)),
+    const unregisters = (Object.keys(defaults) as Array<keyof FormValues>).map(
+      (name) => registerField(name as string, () => setFocus(name)),
     );
-    return () => { unregisters.forEach((u) => u()); };
+    return () => {
+      unregisters.forEach((u) => u());
+    };
   }, [registerField, setFocus, defaults]);
 
   const { schedule, status } = useAutosave<Partial<FormValues>>({
@@ -3149,26 +3604,38 @@ export function CandidatePersonalInfoForm({ defaults, aiSuggestedFields, accessT
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
       const res = await fetch(`${apiUrl}/api/v1/candidate-profiles/me`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`PATCH failed: ${res.status}`);
     },
   });
 
-  useEffect(() => { onSaveStatusChange(status); }, [status, onSaveStatusChange]);
+  useEffect(() => {
+    onSaveStatusChange(status);
+  }, [status, onSaveStatusChange]);
   useTabCloseProtection(formState.isDirty);
 
   const handleBlur = (name: keyof FormValues) => () => {
     schedule({ [name]: getValues(name) } as Partial<FormValues>);
   };
 
-  const renderField = (name: keyof FormValues, label: string, type: "input" | "textarea" = "input") => {
+  const renderField = (
+    name: keyof FormValues,
+    label: string,
+    type: "input" | "textarea" = "input",
+  ) => {
     const isDirty = !!formState.dirtyFields[name];
     const wasAi = aiSuggestedFields[name] && !isDirty;
     return (
       <div className="flex flex-col gap-1">
-        <label htmlFor={name} className="flex items-center gap-2 text-xs font-semibold text-[var(--color-ink)]">
+        <label
+          htmlFor={name}
+          className="flex items-center gap-2 text-xs font-semibold text-[var(--color-ink)]"
+        >
           {label}
           {wasAi && (
             <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-primary)]">
@@ -3176,7 +3643,9 @@ export function CandidatePersonalInfoForm({ defaults, aiSuggestedFields, accessT
             </span>
           )}
           {isDirty && aiSuggestedFields[name] && (
-            <span className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">Edited</span>
+            <span className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">
+              Edited
+            </span>
           )}
         </label>
         {type === "textarea" ? (
@@ -3217,7 +3686,10 @@ export function CandidatePersonalInfoForm({ defaults, aiSuggestedFields, accessT
         {renderField("locationCountry", "Country")}
       </div>
       <div className="flex justify-between pt-3">
-        <a href="/onboarding/candidate" className="rounded-full bg-[var(--color-surface-strong)] px-5 py-2.5 text-sm font-semibold">
+        <a
+          href="/onboarding/candidate"
+          className="rounded-full bg-[var(--color-surface-strong)] px-5 py-2.5 text-sm font-semibold"
+        >
           Back
         </a>
         <a
@@ -3270,6 +3742,7 @@ export default async function Step2Page() {
 ```
 
 Author `_client.tsx` as a Client Component that:
+
 1. Wraps `<HighlightProvider>`.
 2. Owns `saveStatus` state.
 3. Renders `<OnboardingShell currentStepId="personal" saveStatus={saveStatus} rightPane={<ResumePreviewPane ... activeCategories={["contact","summary"]} />}>`.
@@ -3285,6 +3758,7 @@ Expected: PASS.
 ## Task 28: Review step — `experience-card.tsx` + `experience-list.tsx`
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/candidate/review/experience-card.tsx`
 - Create: `apps/web/components/onboarding/candidate/review/experience-list.tsx`
 
@@ -3315,23 +3789,44 @@ interface Props {
   defaultExpanded?: boolean;
 }
 
-export function ExperienceCard({ entry, onSave, onDelete, defaultExpanded = false }: Props) {
+export function ExperienceCard({
+  entry,
+  onSave,
+  onDelete,
+  defaultExpanded = false,
+}: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [draft, setDraft] = useState(entry);
 
   if (!expanded) {
     return (
-      <div className="group rounded-xl border border-[var(--color-hairline)] p-4 hover:border-[var(--color-primary-soft)]" onClick={() => setExpanded(true)}>
+      <div
+        className="group rounded-xl border border-[var(--color-hairline)] p-4 hover:border-[var(--color-primary-soft)]"
+        onClick={() => setExpanded(true)}
+      >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="font-semibold text-sm">{entry.title} · {entry.company}</div>
+            <div className="font-semibold text-sm">
+              {entry.title} · {entry.company}
+            </div>
             <div className="text-xs font-mono text-[var(--color-muted)]">
-              {entry.start_date ?? "?"} – {entry.is_current ? "Present" : entry.end_date ?? "?"}
+              {entry.start_date ?? "?"} –{" "}
+              {entry.is_current ? "Present" : (entry.end_date ?? "?")}
             </div>
           </div>
           <div className="flex gap-2 opacity-0 transition group-hover:opacity-100">
-            <button aria-label="Edit"><Pencil className="h-4 w-4" /></button>
-            <button aria-label="Delete" onClick={(e) => { e.stopPropagation(); onDelete(); }}><Trash2 className="h-4 w-4" /></button>
+            <button aria-label="Edit">
+              <Pencil className="h-4 w-4" />
+            </button>
+            <button
+              aria-label="Delete"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -3341,12 +3836,41 @@ export function ExperienceCard({ entry, onSave, onDelete, defaultExpanded = fals
   return (
     <div className="rounded-xl border-2 border-[var(--color-primary)] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <FieldInput label="Title" value={draft.title} onChange={(v) => setDraft({ ...draft, title: v })} />
-        <FieldInput label="Company" value={draft.company} onChange={(v) => setDraft({ ...draft, company: v })} />
-        <FieldInput label="Start (YYYY-MM)" value={draft.start_date ?? ""} onChange={(v) => setDraft({ ...draft, start_date: v })} />
-        <FieldInput label="End (YYYY-MM)" value={draft.is_current ? "" : (draft.end_date ?? "")} onChange={(v) => setDraft({ ...draft, end_date: v, is_current: false })} disabled={draft.is_current} />
+        <FieldInput
+          label="Title"
+          value={draft.title}
+          onChange={(v) => setDraft({ ...draft, title: v })}
+        />
+        <FieldInput
+          label="Company"
+          value={draft.company}
+          onChange={(v) => setDraft({ ...draft, company: v })}
+        />
+        <FieldInput
+          label="Start (YYYY-MM)"
+          value={draft.start_date ?? ""}
+          onChange={(v) => setDraft({ ...draft, start_date: v })}
+        />
+        <FieldInput
+          label="End (YYYY-MM)"
+          value={draft.is_current ? "" : (draft.end_date ?? "")}
+          onChange={(v) =>
+            setDraft({ ...draft, end_date: v, is_current: false })
+          }
+          disabled={draft.is_current}
+        />
         <label className="col-span-full flex items-center gap-2 text-xs">
-          <input type="checkbox" checked={draft.is_current} onChange={(e) => setDraft({ ...draft, is_current: e.target.checked, end_date: e.target.checked ? null : draft.end_date })} />
+          <input
+            type="checkbox"
+            checked={draft.is_current}
+            onChange={(e) =>
+              setDraft({
+                ...draft,
+                is_current: e.target.checked,
+                end_date: e.target.checked ? null : draft.end_date,
+              })
+            }
+          />
           Currently here
         </label>
       </div>
@@ -3364,22 +3888,48 @@ export function ExperienceCard({ entry, onSave, onDelete, defaultExpanded = fals
                 setDraft({ ...draft, responsibilities: copy });
               }}
             />
-            <button onClick={() => setDraft({ ...draft, responsibilities: draft.responsibilities.filter((_, j) => j !== i) })} aria-label="Remove">
+            <button
+              onClick={() =>
+                setDraft({
+                  ...draft,
+                  responsibilities: draft.responsibilities.filter(
+                    (_, j) => j !== i,
+                  ),
+                })
+              }
+              aria-label="Remove"
+            >
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ))}
         <button
           className="text-xs underline text-[var(--color-primary)]"
-          onClick={() => setDraft({ ...draft, responsibilities: [...draft.responsibilities, ""] })}
+          onClick={() =>
+            setDraft({
+              ...draft,
+              responsibilities: [...draft.responsibilities, ""],
+            })
+          }
         >
           + Add bullet
         </button>
       </div>
       <div className="mt-4 flex justify-end gap-2">
-        <button onClick={() => { setDraft(entry); setExpanded(false); }} className="rounded-full bg-[var(--color-surface-strong)] px-4 py-2 text-sm font-semibold">Cancel</button>
         <button
-          onClick={async () => { await onSave(draft); setExpanded(false); }}
+          onClick={() => {
+            setDraft(entry);
+            setExpanded(false);
+          }}
+          className="rounded-full bg-[var(--color-surface-strong)] px-4 py-2 text-sm font-semibold"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={async () => {
+            await onSave(draft);
+            setExpanded(false);
+          }}
           className="rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-on-primary)]"
         >
           Save
@@ -3389,7 +3939,17 @@ export function ExperienceCard({ entry, onSave, onDelete, defaultExpanded = fals
   );
 }
 
-function FieldInput({ label, value, onChange, disabled }: { label: string; value: string; onChange: (v: string) => void; disabled?: boolean }) {
+function FieldInput({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-[11px] font-semibold">{label}</label>
@@ -3437,9 +3997,17 @@ export function ExperienceList({ initial, onSync }: Props) {
     setEntries(next);
     let undone = false;
     toast("Experience removed", {
-      action: { label: "Undo", onClick: () => { undone = true; setEntries(entries); } },
+      action: {
+        label: "Undo",
+        onClick: () => {
+          undone = true;
+          setEntries(entries);
+        },
+      },
     });
-    setTimeout(() => { if (!undone) onSync(next).catch(() => toast.error("Couldn't save")); }, 5000);
+    setTimeout(() => {
+      if (!undone) onSync(next).catch(() => toast.error("Couldn't save"));
+    }, 5000);
   };
 
   return (
@@ -3448,13 +4016,17 @@ export function ExperienceList({ initial, onSync }: Props) {
         Experience <span className="font-mono text-xs">{entries.length}</span>
       </h3>
       {entries.length === 0 && (
-        <p className="text-sm text-[var(--color-muted)]">No work experience parsed from your resume.</p>
+        <p className="text-sm text-[var(--color-muted)]">
+          No work experience parsed from your resume.
+        </p>
       )}
       {entries.map((e) => (
         <ExperienceCard
           key={e.id}
           entry={e}
-          onSave={(updated) => update(entries.map((x) => x.id === e.id ? updated : x))}
+          onSave={(updated) =>
+            update(entries.map((x) => (x.id === e.id ? updated : x)))
+          }
           onDelete={() => handleDelete(e.id)}
         />
       ))}
@@ -3493,6 +4065,7 @@ Expected: PASS.
 Same pattern as Task 28, with fields: `institution`, `degree`, `field_of_study`, `start_year`, `end_year`, `gpa`. Mirror the structure exactly.
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/candidate/review/education-card.tsx`
 - Create: `apps/web/components/onboarding/candidate/review/education-list.tsx`
 
@@ -3505,6 +4078,7 @@ Same pattern as Task 28, with fields: `institution`, `degree`, `field_of_study`,
 ## Task 30: Review step — `skills-cloud.tsx`
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/candidate/review/skills-cloud.tsx`
 
 - [ ] **Step 30.1: Implement**
@@ -3538,13 +4112,17 @@ export function SkillsCloud({ initial, onSync }: Props) {
     const next = [...skills, skill];
     setSkills(next);
     setQuery("");
-    onSync(next).catch(() => { /* TODO toast */ });
+    onSync(next).catch(() => {
+      /* TODO toast */
+    });
   };
 
   const remove = (skill: string) => {
     const next = skills.filter((s) => s !== skill);
     setSkills(next);
-    onSync(next).catch(() => { /* TODO toast */ });
+    onSync(next).catch(() => {
+      /* TODO toast */
+    });
   };
 
   return (
@@ -3562,7 +4140,11 @@ export function SkillsCloud({ initial, onSync }: Props) {
             className="group flex items-center gap-1.5 rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-xs font-medium text-[var(--color-primary)]"
           >
             {s}
-            <button onClick={() => remove(s)} aria-label={`Remove ${s}`} className="opacity-60 hover:opacity-100">
+            <button
+              onClick={() => remove(s)}
+              aria-label={`Remove ${s}`}
+              className="opacity-60 hover:opacity-100"
+            >
               <X className="h-3 w-3" />
             </button>
           </span>
@@ -3607,6 +4189,7 @@ export function SkillsCloud({ initial, onSync }: Props) {
 ## Task 31: Review step — `review-step.tsx` orchestrator
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/candidate/review/review-step.tsx`
 
 - [ ] **Step 31.1: Implement**
@@ -3622,13 +4205,22 @@ import type { ExperienceEntry } from "./experience-card";
 
 interface Props {
   initialExperience: ExperienceEntry[];
-  initialEducation: any[];           // shape from EducationCard
+  initialEducation: any[]; // shape from EducationCard
   initialSkills: string[];
-  syncSection: (section: "experience" | "education" | "skills", payload: unknown) => Promise<void>;
+  syncSection: (
+    section: "experience" | "education" | "skills",
+    payload: unknown,
+  ) => Promise<void>;
   onCategoriesChange: (cats: HighlightCategory[]) => void;
 }
 
-export function ReviewStep({ initialExperience, initialEducation, initialSkills, syncSection, onCategoriesChange }: Props) {
+export function ReviewStep({
+  initialExperience,
+  initialEducation,
+  initialSkills,
+  syncSection,
+  onCategoriesChange,
+}: Props) {
   const expRef = useRef<HTMLDivElement>(null);
   const eduRef = useRef<HTMLDivElement>(null);
   const skillRef = useRef<HTMLDivElement>(null);
@@ -3644,38 +4236,56 @@ export function ReviewStep({ initialExperience, initialEducation, initialSkills,
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            const cat = (entry.target as HTMLElement).dataset.category as HighlightCategory;
+            const cat = (entry.target as HTMLElement).dataset
+              .category as HighlightCategory;
             setActive(cat);
           }
         }
       },
       { threshold: 0.5 },
     );
-    [expRef.current, eduRef.current, skillRef.current].forEach((el) => el && observer.observe(el));
+    [expRef.current, eduRef.current, skillRef.current].forEach(
+      (el) => el && observer.observe(el),
+    );
     return () => observer.disconnect();
   }, []);
 
   return (
     <div className="space-y-10">
-      <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">Review what we found</h1>
+      <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
+        Review what we found
+      </h1>
       <p className="text-sm text-[var(--color-body)]">
-        Double-check the AI's extraction. Edit anything that's off, add what's missing.
+        Double-check the AI's extraction. Edit anything that's off, add what's
+        missing.
       </p>
 
       <section ref={expRef} data-category="experience">
-        <ExperienceList initial={initialExperience} onSync={(v) => syncSection("experience", v)} />
+        <ExperienceList
+          initial={initialExperience}
+          onSync={(v) => syncSection("experience", v)}
+        />
       </section>
 
       <section ref={eduRef} data-category="education">
-        <EducationList initial={initialEducation} onSync={(v) => syncSection("education", v)} />
+        <EducationList
+          initial={initialEducation}
+          onSync={(v) => syncSection("education", v)}
+        />
       </section>
 
       <section ref={skillRef} data-category="skill">
-        <SkillsCloud initial={initialSkills} onSync={(v) => syncSection("skills", v)} />
+        <SkillsCloud
+          initial={initialSkills}
+          onSync={(v) => syncSection("skills", v)}
+        />
       </section>
 
       <div className="flex justify-between pt-4">
-        <a href="/onboarding/candidate/personal" className="rounded-full bg-[var(--color-surface-strong)] px-5 py-2.5 text-sm font-semibold">
+        <a
+          href="/onboarding/candidate/personal"
+          className="rounded-full bg-[var(--color-surface-strong)] px-5 py-2.5 text-sm font-semibold"
+        >
           Back
         </a>
         <a
@@ -3697,6 +4307,7 @@ export function ReviewStep({ initialExperience, initialEducation, initialSkills,
 ## Task 32: Step 3 — `/onboarding/candidate/review/page.tsx`
 
 **Files:**
+
 - Create: `apps/web/app/onboarding/candidate/review/page.tsx`
 
 - [ ] **Step 32.1: Implement**
@@ -3738,6 +4349,7 @@ export default async function Step3Page() {
 ## Task 33: `ProfilePreviewPane` (Step 4 right pane)
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/candidate/profile-preview-pane.tsx`
 
 - [ ] **Step 33.1: Implement**
@@ -3753,31 +4365,53 @@ interface Props {
 }
 
 export function ProfilePreviewPane({ me, experience, skills }: Props) {
-  const initials = (me.fullName ?? "?").split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
+  const initials = (me.fullName ?? "?")
+    .split(" ")
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
   return (
     <div className="rounded-2xl border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
-      <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">What recruiters see</p>
+      <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">
+        What recruiters see
+      </p>
       <div className="mt-4 flex items-center gap-4">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-base font-semibold text-[var(--color-primary)]">
           {initials}
         </div>
         <div>
           <div className="text-base font-semibold">{me.fullName}</div>
-          {me.headline && <div className="text-xs text-[var(--color-muted)]">{me.headline}</div>}
-          {me.locationCity && <div className="text-xs text-[var(--color-muted)]">{me.locationCity}, {me.locationCountry}</div>}
+          {me.headline && (
+            <div className="text-xs text-[var(--color-muted)]">
+              {me.headline}
+            </div>
+          )}
+          {me.locationCity && (
+            <div className="text-xs text-[var(--color-muted)]">
+              {me.locationCity}, {me.locationCountry}
+            </div>
+          )}
         </div>
       </div>
       {me.summary && (
-        <p className="mt-4 text-sm leading-6 text-[var(--color-body)] line-clamp-4">{me.summary}</p>
+        <p className="mt-4 text-sm leading-6 text-[var(--color-body)] line-clamp-4">
+          {me.summary}
+        </p>
       )}
       {experience.length > 0 && (
         <div className="mt-5">
-          <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">Recent experience</p>
+          <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">
+            Recent experience
+          </p>
           <ul className="mt-2 space-y-2">
             {experience.slice(0, 3).map((e) => (
               <li key={e.id}>
                 <div className="text-sm font-semibold">{e.title}</div>
-                <div className="text-xs text-[var(--color-muted)]">{e.company} · {e.start_date} – {e.is_current ? "Present" : e.end_date}</div>
+                <div className="text-xs text-[var(--color-muted)]">
+                  {e.company} · {e.start_date} –{" "}
+                  {e.is_current ? "Present" : e.end_date}
+                </div>
               </li>
             ))}
           </ul>
@@ -3785,10 +4419,17 @@ export function ProfilePreviewPane({ me, experience, skills }: Props) {
       )}
       {skills.length > 0 && (
         <div className="mt-5">
-          <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">Top skills</p>
+          <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">
+            Top skills
+          </p>
           <ul className="mt-2 flex flex-wrap gap-1.5">
             {skills.slice(0, 8).map((s) => (
-              <li key={s} className="rounded-full bg-[var(--color-surface-strong)] px-2.5 py-0.5 text-[11px]">{s}</li>
+              <li
+                key={s}
+                className="rounded-full bg-[var(--color-surface-strong)] px-2.5 py-0.5 text-[11px]"
+              >
+                {s}
+              </li>
             ))}
           </ul>
         </div>
@@ -3805,6 +4446,7 @@ export function ProfilePreviewPane({ me, experience, skills }: Props) {
 ## Task 34: Step 4 — restyle `preferences-form.tsx` + page rewrite
 
 **Files:**
+
 - Modify: `apps/web/components/onboarding/candidate/preferences-form.tsx`
 - Modify: `apps/web/app/onboarding/candidate/preferences/page.tsx`
 
@@ -3816,12 +4458,17 @@ Apply the same pattern as `personal-info-form.tsx` (`useAutosave`, design system
 // Sketch:
 const handleFinish = async () => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-  const res = await fetch(`${apiUrl}/api/v1/candidate-profiles/me/complete-onboarding`, {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const res = await fetch(
+    `${apiUrl}/api/v1/candidate-profiles/me/complete-onboarding`,
+    {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
   if (res.ok) router.push("/candidate");
-  else { /* show error toast */ }
+  else {
+    /* show error toast */
+  }
 };
 ```
 
@@ -3836,6 +4483,7 @@ Wraps with `<HighlightProvider>`, renders `<OnboardingShell rightPane={<ProfileP
 ## Task 35: Mobile drawer — `resume-sheet.tsx`
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/mobile/resume-sheet.tsx`
 
 - [ ] **Step 35.1: Implement**
@@ -3868,9 +4516,13 @@ export function ResumeSheet({ triggerLabel, children }: Props) {
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <div className="flex items-center justify-between border-b border-[var(--color-hairline)] px-4 py-3">
-            <Dialog.Title className="text-sm font-semibold">{triggerLabel.replace("View ", "")}</Dialog.Title>
+            <Dialog.Title className="text-sm font-semibold">
+              {triggerLabel.replace("View ", "")}
+            </Dialog.Title>
             <Dialog.Close asChild>
-              <button aria-label="Close"><X className="h-4 w-4" /></button>
+              <button aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
             </Dialog.Close>
           </div>
           <div className="flex-1 overflow-auto p-4">{children}</div>
@@ -3884,6 +4536,7 @@ export function ResumeSheet({ triggerLabel, children }: Props) {
 - [ ] **Step 35.2: Hook up `mobileRightPaneToggle` in pages**
 
 In `_client.tsx` for steps 2–4, pass:
+
 ```tsx
 mobileRightPaneToggle={<ResumeSheet triggerLabel="View resume">{rightPane}</ResumeSheet>}
 ```
@@ -3895,6 +4548,7 @@ mobileRightPaneToggle={<ResumeSheet triggerLabel="View resume">{rightPane}</Resu
 ## Task 36: Middleware route guards
 
 **Files:**
+
 - Modify: `apps/web/middleware.ts`
 
 - [ ] **Step 36.1: Add guards**
@@ -3922,6 +4576,7 @@ Expected: PASS.
 ## Task 37: Delete old routes + components
 
 **Files:**
+
 - Delete: `apps/web/app/onboarding/candidate/education/page.tsx`
 - Delete: `apps/web/app/onboarding/candidate/experience/page.tsx`
 - Delete: `apps/web/app/onboarding/candidate/skills/page.tsx`
@@ -3933,7 +4588,7 @@ Expected: PASS.
 
 Use `rm` via the human or git rm (instruct human to run `git rm` since direct git ops are theirs):
 
-Hand to human: *"Run `git rm apps/web/app/onboarding/candidate/{education,experience,skills}/page.tsx apps/web/components/onboarding/wizard-shell.tsx apps/web/components/onboarding/wizard-progress.tsx apps/web/components/onboarding/candidate/resume-upload.tsx`."*
+Hand to human: _"Run `git rm apps/web/app/onboarding/candidate/{education,experience,skills}/page.tsx apps/web/components/onboarding/wizard-shell.tsx apps/web/components/onboarding/wizard-progress.tsx apps/web/components/onboarding/candidate/resume-upload.tsx`."_
 
 - [ ] **Step 37.2: Verify build**
 
@@ -3945,6 +4600,7 @@ Expected: PASS.
 ## Task 38: E2E — Happy path PDF (Playwright)
 
 **Files:**
+
 - Create: `apps/web/e2e/onboarding-happy-pdf.spec.ts`
 
 - [ ] **Step 38.1: Author the test**
@@ -3952,10 +4608,16 @@ Expected: PASS.
 ```ts
 import { test, expect } from "@playwright/test";
 
-test("candidate completes onboarding via PDF resume upload", async ({ page }) => {
+test("candidate completes onboarding via PDF resume upload", async ({
+  page,
+}) => {
   await page.goto("/onboarding/candidate");
-  await page.locator('input[type="file"]').setInputFiles("e2e/fixtures/sample.pdf");
-  await expect(page.getByText(/We've read your resume/i)).toBeVisible({ timeout: 60_000 });
+  await page
+    .locator('input[type="file"]')
+    .setInputFiles("e2e/fixtures/sample.pdf");
+  await expect(page.getByText(/We've read your resume/i)).toBeVisible({
+    timeout: 60_000,
+  });
   await page.getByRole("link", { name: "Continue" }).click();
 
   // Personal
@@ -3979,13 +4641,14 @@ test("candidate completes onboarding via PDF resume upload", async ({ page }) =>
 
 - [ ] **Step 38.2: Hand to human**
 
-*"E2E test authored. Please run `pnpm --filter web e2e:onboarding-happy-pdf` against your dev stack to verify."*
+_"E2E test authored. Please run `pnpm --filter web e2e:onboarding-happy-pdf` against your dev stack to verify."_
 
 ---
 
 ## Task 39: E2E — Skip-resume + Re-upload mid-flow + Mobile
 
 **Files:**
+
 - Create: `apps/web/e2e/onboarding-skip.spec.ts`
 - Create: `apps/web/e2e/onboarding-reupload.spec.ts`
 - Create: `apps/web/e2e/onboarding-mobile.spec.ts`
@@ -3996,7 +4659,7 @@ Pattern-match against Task 38. Each test < 50 lines. Use realistic fixture PDFs 
 
 - [ ] **Step 39.2: Hand to human**
 
-*"E2E suite authored. Please run `pnpm --filter web e2e` against your dev stack."*
+_"E2E suite authored. Please run `pnpm --filter web e2e` against your dev stack."_
 
 ---
 
@@ -4005,11 +4668,13 @@ Pattern-match against Task 38. Each test < 50 lines. Use realistic fixture PDFs 
 - [ ] **Step 40.1: Type-check, lint, build**
 
 Run:
+
 ```bash
 pnpm tsc --noEmit
 pnpm lint
 turbo run build
 ```
+
 Expected: all green.
 
 - [ ] **Step 40.2: Run unit + integration tests**
@@ -4033,19 +4698,19 @@ Tell the human to walk through the manual checklist from the spec:
 
 If the human wants to commit the work in chunks rather than all at once:
 
-| Boundary | Files | Suggested message |
-| --- | --- | --- |
-| Backend foundation | Tasks 1–7 | `feat(api): add canonical PDF column + DOCX→PDF conversion + parse v2 with source spans + reparse + complete-onboarding` |
-| AI quality gates | Task 8 | `test(api): add golden-corpus AI parse runner` |
-| Shared package | Tasks 9–10 | `feat(shared): skills taxonomy + onboarding completion schemas + parsed-resume v2 types` |
+| Boundary            | Files       | Suggested message                                                                                                             |
+| ------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Backend foundation  | Tasks 1–7   | `feat(api): add canonical PDF column + DOCX→PDF conversion + parse v2 with source spans + reparse + complete-onboarding`      |
+| AI quality gates    | Task 8      | `test(api): add golden-corpus AI parse runner`                                                                                |
+| Shared package      | Tasks 9–10  | `feat(shared): skills taxonomy + onboarding completion schemas + parsed-resume v2 types`                                      |
 | Frontend foundation | Tasks 11–18 | `feat(web): onboarding shell, progress, save indicator, autosave hook, highlight context, derive-highlights, find-text-spans` |
-| Resume preview | Tasks 19–23 | `feat(web): ResumePreviewPane with PDF.js + highlight overlay + linearized fallback` |
-| Step 1 | Tasks 24–26 | `feat(web): redesign onboarding step 1 (resume upload)` |
-| Step 2 | Task 27 | `feat(web): redesign onboarding step 2 (personal)` |
-| Step 3 | Tasks 28–32 | `feat(web): new onboarding review step (consolidated experience/education/skills)` |
-| Step 4 | Tasks 33–34 | `feat(web): redesign onboarding step 4 (preferences) with profile preview` |
-| Mobile + cleanup | Tasks 35–37 | `feat(web): mobile resume sheet drawer + middleware guards + delete legacy routes` |
-| E2E | Tasks 38–39 | `test(web): e2e onboarding flows (happy / skip / reupload / mobile)` |
+| Resume preview      | Tasks 19–23 | `feat(web): ResumePreviewPane with PDF.js + highlight overlay + linearized fallback`                                          |
+| Step 1              | Tasks 24–26 | `feat(web): redesign onboarding step 1 (resume upload)`                                                                       |
+| Step 2              | Task 27     | `feat(web): redesign onboarding step 2 (personal)`                                                                            |
+| Step 3              | Tasks 28–32 | `feat(web): new onboarding review step (consolidated experience/education/skills)`                                            |
+| Step 4              | Tasks 33–34 | `feat(web): redesign onboarding step 4 (preferences) with profile preview`                                                    |
+| Mobile + cleanup    | Tasks 35–37 | `feat(web): mobile resume sheet drawer + middleware guards + delete legacy routes`                                            |
+| E2E                 | Tasks 38–39 | `test(web): e2e onboarding flows (happy / skip / reupload / mobile)`                                                          |
 
 ---
 

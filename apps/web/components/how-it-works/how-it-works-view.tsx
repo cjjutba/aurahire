@@ -133,9 +133,7 @@ export function HowItWorksView({ variant }: HowItWorksViewProps) {
     if (!el) return;
     const update = () => {
       setTocCanScrollUp(el.scrollTop > 1);
-      setTocCanScrollDown(
-        el.scrollTop + el.clientHeight < el.scrollHeight - 1,
-      );
+      setTocCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
     };
     update();
     el.addEventListener("scroll", update, { passive: true });
@@ -161,8 +159,7 @@ export function HowItWorksView({ variant }: HowItWorksViewProps) {
     }
   }
 
-  const noResults =
-    query.trim().length > 0 && filtered.groups.length === 0;
+  const noResults = query.trim().length > 0 && filtered.groups.length === 0;
 
   return (
     <div className="mx-auto max-w-[1280px]">
@@ -640,9 +637,7 @@ function blockMatches(block: HelpBlock, q: string): boolean {
         (block.cite?.toLowerCase().includes(q) ?? false)
       );
     case "kbd":
-      return block.entries.some((e) =>
-        e.description.toLowerCase().includes(q),
-      );
+      return block.entries.some((e) => e.description.toLowerCase().includes(q));
     case "matrix":
       return (
         block.head.some((h) => h.toLowerCase().includes(q)) ||

@@ -37,6 +37,8 @@ export function PrefetchedHydration({
   children,
 }: PrefetchedHydrationProps) {
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>{children}</HydrationBoundary>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      {children}
+    </HydrationBoundary>
   );
 }

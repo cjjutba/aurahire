@@ -17,13 +17,13 @@ This document is the authoritative source for the AuraHire database schema. Tabl
 
 The schema has **15 tables** organized into 6 functional groups:
 
-| Group | Tables |
-|---|---|
-| Identity | `profiles`, `candidate_profiles`, `recruiter_profiles`, `companies` |
-| Recruitment | `jobs`, `applications`, `interviews`, `offers` |
-| Candidate Data | `resumes` |
-| AI / Scoring | `profile_scores`, `match_scores`, `evidence_excerpts`, `bias_flags`, `scoring_config` |
-| Audit | `audit_logs` |
+| Group          | Tables                                                                                |
+| -------------- | ------------------------------------------------------------------------------------- |
+| Identity       | `profiles`, `candidate_profiles`, `recruiter_profiles`, `companies`                   |
+| Recruitment    | `jobs`, `applications`, `interviews`, `offers`                                        |
+| Candidate Data | `resumes`                                                                             |
+| AI / Scoring   | `profile_scores`, `match_scores`, `evidence_excerpts`, `bias_flags`, `scoring_config` |
+| Audit          | `audit_logs`                                                                          |
 
 All tables enable **Row-Level Security (RLS)**. Service-role queries (admin views, audits) bypass RLS via the Supabase service role key, used only on the server.
 
@@ -43,20 +43,21 @@ All tables enable **Row-Level Security (RLS)**. Service-role queries (admin view
 
 Extends Supabase `auth.users` (1:1). Stores role and shared profile metadata.
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK, FK → `auth.users.id` ON DELETE CASCADE | Same as auth.users.id |
-| `role` | text | NOT NULL, CHECK IN ('candidate', 'recruiter', 'admin') | RBAC anchor |
-| `full_name` | text | NOT NULL | |
-| `email` | text | NOT NULL, UNIQUE | Mirrored from auth.users for query convenience |
-| `phone` | text | | |
-| `avatar_url` | text | | Supabase Storage public URL |
-| `status` | text | NOT NULL DEFAULT 'active', CHECK IN ('active', 'suspended', 'deleted') | |
-| `last_login_at` | timestamptz | | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column          | Type        | Constraints                                                            | Notes                                          |
+| --------------- | ----------- | ---------------------------------------------------------------------- | ---------------------------------------------- |
+| `id`            | uuid        | PK, FK → `auth.users.id` ON DELETE CASCADE                             | Same as auth.users.id                          |
+| `role`          | text        | NOT NULL, CHECK IN ('candidate', 'recruiter', 'admin')                 | RBAC anchor                                    |
+| `full_name`     | text        | NOT NULL                                                               |                                                |
+| `email`         | text        | NOT NULL, UNIQUE                                                       | Mirrored from auth.users for query convenience |
+| `phone`         | text        |                                                                        |                                                |
+| `avatar_url`    | text        |                                                                        | Supabase Storage public URL                    |
+| `status`        | text        | NOT NULL DEFAULT 'active', CHECK IN ('active', 'suspended', 'deleted') |                                                |
+| `last_login_at` | timestamptz |                                                                        |                                                |
+| `created_at`    | timestamptz | NOT NULL DEFAULT now()                                                 |                                                |
+| `updated_at`    | timestamptz | NOT NULL DEFAULT now()                                                 |                                                |
 
 **Indexes:**
+
 - `profiles_email_idx` on `(email)`
 - `profiles_role_idx` on `(role)`
 - `profiles_status_idx` on `(status)`
@@ -106,27 +107,28 @@ CREATE POLICY "profiles_recruiter_view_applicants"
 
 Candidate-specific profile data, populated during onboarding.
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK, FK → `profiles.id` ON DELETE CASCADE | |
-| `headline` | text | | "Senior Software Engineer" |
-| `summary` | text | | Long-form professional summary |
-| `location_city` | text | | |
-| `location_region` | text | | State / province |
-| `location_country` | text | | |
-| `desired_roles` | text[] | DEFAULT '{}' | |
-| `desired_seniority` | text | | junior / mid / senior / lead / manager / director |
-| `open_to` | text[] | DEFAULT '{}' | full-time, part-time, contract, remote, hybrid, on-site |
-| `desired_salary_min` | numeric(12,2) | | |
-| `desired_salary_max` | numeric(12,2) | | |
-| `desired_currency` | text | DEFAULT 'USD' | |
-| `available_start_date` | date | | |
-| `default_resume_id` | uuid | FK → `resumes.id` ON DELETE SET NULL | |
-| `profile_completed` | boolean | NOT NULL DEFAULT false | Onboarding gate |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column                 | Type          | Constraints                              | Notes                                                   |
+| ---------------------- | ------------- | ---------------------------------------- | ------------------------------------------------------- |
+| `id`                   | uuid          | PK, FK → `profiles.id` ON DELETE CASCADE |                                                         |
+| `headline`             | text          |                                          | "Senior Software Engineer"                              |
+| `summary`              | text          |                                          | Long-form professional summary                          |
+| `location_city`        | text          |                                          |                                                         |
+| `location_region`      | text          |                                          | State / province                                        |
+| `location_country`     | text          |                                          |                                                         |
+| `desired_roles`        | text[]        | DEFAULT '{}'                             |                                                         |
+| `desired_seniority`    | text          |                                          | junior / mid / senior / lead / manager / director       |
+| `open_to`              | text[]        | DEFAULT '{}'                             | full-time, part-time, contract, remote, hybrid, on-site |
+| `desired_salary_min`   | numeric(12,2) |                                          |                                                         |
+| `desired_salary_max`   | numeric(12,2) |                                          |                                                         |
+| `desired_currency`     | text          | DEFAULT 'USD'                            |                                                         |
+| `available_start_date` | date          |                                          |                                                         |
+| `default_resume_id`    | uuid          | FK → `resumes.id` ON DELETE SET NULL     |                                                         |
+| `profile_completed`    | boolean       | NOT NULL DEFAULT false                   | Onboarding gate                                         |
+| `created_at`           | timestamptz   | NOT NULL DEFAULT now()                   |                                                         |
+| `updated_at`           | timestamptz   | NOT NULL DEFAULT now()                   |                                                         |
 
 **Indexes:**
+
 - `candidate_profiles_completed_idx` on `(profile_completed)` (sparse: WHERE profile_completed = false)
 
 **RLS Policies:**
@@ -159,21 +161,22 @@ CREATE POLICY "candidate_profiles_recruiter_view"
 
 Companies are managed by recruiters; each recruiter belongs to one company.
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `name` | text | NOT NULL | |
-| `industry` | text | | |
-| `size` | text | CHECK IN ('1-10', '11-50', '51-200', '201-500', '501-1000', '1000+') | |
-| `website` | text | | |
-| `logo_url` | text | | |
-| `headquarters_location` | text | | |
-| `description` | text | | |
-| `created_by` | uuid | NOT NULL, FK → `profiles.id` | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column                  | Type        | Constraints                                                          | Notes |
+| ----------------------- | ----------- | -------------------------------------------------------------------- | ----- |
+| `id`                    | uuid        | PK DEFAULT gen_random_uuid()                                         |       |
+| `name`                  | text        | NOT NULL                                                             |       |
+| `industry`              | text        |                                                                      |       |
+| `size`                  | text        | CHECK IN ('1-10', '11-50', '51-200', '201-500', '501-1000', '1000+') |       |
+| `website`               | text        |                                                                      |       |
+| `logo_url`              | text        |                                                                      |       |
+| `headquarters_location` | text        |                                                                      |       |
+| `description`           | text        |                                                                      |       |
+| `created_by`            | uuid        | NOT NULL, FK → `profiles.id`                                         |       |
+| `created_at`            | timestamptz | NOT NULL DEFAULT now()                                               |       |
+| `updated_at`            | timestamptz | NOT NULL DEFAULT now()                                               |       |
 
 **Indexes:**
+
 - `companies_created_by_idx` on `(created_by)`
 - `companies_name_idx` on `(name)`
 
@@ -200,19 +203,20 @@ CREATE POLICY "companies_admin_all"
 
 ### Table: `recruiter_profiles`
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK, FK → `profiles.id` ON DELETE CASCADE | |
-| `company_id` | uuid | NOT NULL, FK → `companies.id` ON DELETE RESTRICT | |
-| `job_title` | text | | |
-| `department` | text | | |
-| `roles_hiring_for` | text[] | DEFAULT '{}' | |
-| `hiring_volume_per_quarter` | text | | "1-5", "6-10", "11-25", "25+" |
-| `profile_completed` | boolean | NOT NULL DEFAULT false | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column                      | Type        | Constraints                                      | Notes                         |
+| --------------------------- | ----------- | ------------------------------------------------ | ----------------------------- |
+| `id`                        | uuid        | PK, FK → `profiles.id` ON DELETE CASCADE         |                               |
+| `company_id`                | uuid        | NOT NULL, FK → `companies.id` ON DELETE RESTRICT |                               |
+| `job_title`                 | text        |                                                  |                               |
+| `department`                | text        |                                                  |                               |
+| `roles_hiring_for`          | text[]      | DEFAULT '{}'                                     |                               |
+| `hiring_volume_per_quarter` | text        |                                                  | "1-5", "6-10", "11-25", "25+" |
+| `profile_completed`         | boolean     | NOT NULL DEFAULT false                           |                               |
+| `created_at`                | timestamptz | NOT NULL DEFAULT now()                           |                               |
+| `updated_at`                | timestamptz | NOT NULL DEFAULT now()                           |                               |
 
 **Indexes:**
+
 - `recruiter_profiles_company_idx` on `(company_id)`
 
 **RLS Policies:**
@@ -233,34 +237,35 @@ CREATE POLICY "recruiter_profiles_admin"
 
 ### Table: `jobs`
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `recruiter_id` | uuid | NOT NULL, FK → `profiles.id` ON DELETE CASCADE | |
-| `company_id` | uuid | NOT NULL, FK → `companies.id` ON DELETE RESTRICT | |
-| `title` | text | NOT NULL | |
-| `department` | text | | |
-| `employment_type` | text | NOT NULL, CHECK IN ('full-time', 'part-time', 'contract') | |
-| `work_mode` | text | NOT NULL, CHECK IN ('remote', 'hybrid', 'on-site') | |
-| `location_city` | text | | |
-| `location_region` | text | | |
-| `location_country` | text | | |
-| `salary_min` | numeric(12,2) | | |
-| `salary_max` | numeric(12,2) | | |
-| `salary_currency` | text | DEFAULT 'USD' | |
-| `description` | text | NOT NULL | Rich-text HTML; sanitized on render |
-| `description_plain` | text | NOT NULL | Plain-text mirror for AI scoring + search |
-| `required_skills` | text[] | NOT NULL DEFAULT '{}' | |
-| `experience_level` | text | NOT NULL, CHECK IN ('entry', 'junior', 'mid', 'senior', 'lead', 'principal', 'manager', 'director', 'vp+') | |
-| `education_requirement` | text | CHECK IN ('none', 'high-school', 'associate', 'bachelor', 'master', 'phd', 'other') | |
-| `application_deadline` | date | | |
-| `status` | text | NOT NULL DEFAULT 'draft', CHECK IN ('draft', 'published', 'archived', 'closed') | |
-| `view_count` | integer | NOT NULL DEFAULT 0 | |
-| `published_at` | timestamptz | | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column                  | Type          | Constraints                                                                                                | Notes                                     |
+| ----------------------- | ------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `id`                    | uuid          | PK DEFAULT gen_random_uuid()                                                                               |                                           |
+| `recruiter_id`          | uuid          | NOT NULL, FK → `profiles.id` ON DELETE CASCADE                                                             |                                           |
+| `company_id`            | uuid          | NOT NULL, FK → `companies.id` ON DELETE RESTRICT                                                           |                                           |
+| `title`                 | text          | NOT NULL                                                                                                   |                                           |
+| `department`            | text          |                                                                                                            |                                           |
+| `employment_type`       | text          | NOT NULL, CHECK IN ('full-time', 'part-time', 'contract')                                                  |                                           |
+| `work_mode`             | text          | NOT NULL, CHECK IN ('remote', 'hybrid', 'on-site')                                                         |                                           |
+| `location_city`         | text          |                                                                                                            |                                           |
+| `location_region`       | text          |                                                                                                            |                                           |
+| `location_country`      | text          |                                                                                                            |                                           |
+| `salary_min`            | numeric(12,2) |                                                                                                            |                                           |
+| `salary_max`            | numeric(12,2) |                                                                                                            |                                           |
+| `salary_currency`       | text          | DEFAULT 'USD'                                                                                              |                                           |
+| `description`           | text          | NOT NULL                                                                                                   | Rich-text HTML; sanitized on render       |
+| `description_plain`     | text          | NOT NULL                                                                                                   | Plain-text mirror for AI scoring + search |
+| `required_skills`       | text[]        | NOT NULL DEFAULT '{}'                                                                                      |                                           |
+| `experience_level`      | text          | NOT NULL, CHECK IN ('entry', 'junior', 'mid', 'senior', 'lead', 'principal', 'manager', 'director', 'vp+') |                                           |
+| `education_requirement` | text          | CHECK IN ('none', 'high-school', 'associate', 'bachelor', 'master', 'phd', 'other')                        |                                           |
+| `application_deadline`  | date          |                                                                                                            |                                           |
+| `status`                | text          | NOT NULL DEFAULT 'draft', CHECK IN ('draft', 'published', 'archived', 'closed')                            |                                           |
+| `view_count`            | integer       | NOT NULL DEFAULT 0                                                                                         |                                           |
+| `published_at`          | timestamptz   |                                                                                                            |                                           |
+| `created_at`            | timestamptz   | NOT NULL DEFAULT now()                                                                                     |                                           |
+| `updated_at`            | timestamptz   | NOT NULL DEFAULT now()                                                                                     |                                           |
 
 **Indexes:**
+
 - `jobs_recruiter_idx` on `(recruiter_id)`
 - `jobs_company_idx` on `(company_id)`
 - `jobs_status_idx` on `(status)`
@@ -290,24 +295,26 @@ CREATE POLICY "jobs_admin_all"
 
 ### Table: `applications`
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `job_id` | uuid | NOT NULL, FK → `jobs.id` ON DELETE CASCADE | |
-| `candidate_id` | uuid | NOT NULL, FK → `profiles.id` ON DELETE CASCADE | |
-| `resume_id` | uuid | NOT NULL, FK → `resumes.id` ON DELETE RESTRICT | The resume version submitted |
-| `cover_letter` | text | | |
-| `status` | text | NOT NULL DEFAULT 'applied', CHECK IN ('applied', 'screening', 'interview', 'offer', 'hired', 'rejected', 'withdrawn') | |
-| `recruiter_notes` | text | | |
-| `applied_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `status_updated_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column              | Type        | Constraints                                                                                                           | Notes                        |
+| ------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `id`                | uuid        | PK DEFAULT gen_random_uuid()                                                                                          |                              |
+| `job_id`            | uuid        | NOT NULL, FK → `jobs.id` ON DELETE CASCADE                                                                            |                              |
+| `candidate_id`      | uuid        | NOT NULL, FK → `profiles.id` ON DELETE CASCADE                                                                        |                              |
+| `resume_id`         | uuid        | NOT NULL, FK → `resumes.id` ON DELETE RESTRICT                                                                        | The resume version submitted |
+| `cover_letter`      | text        |                                                                                                                       |                              |
+| `status`            | text        | NOT NULL DEFAULT 'applied', CHECK IN ('applied', 'screening', 'interview', 'offer', 'hired', 'rejected', 'withdrawn') |                              |
+| `recruiter_notes`   | text        |                                                                                                                       |                              |
+| `applied_at`        | timestamptz | NOT NULL DEFAULT now()                                                                                                |                              |
+| `status_updated_at` | timestamptz | NOT NULL DEFAULT now()                                                                                                |                              |
+| `created_at`        | timestamptz | NOT NULL DEFAULT now()                                                                                                |                              |
+| `updated_at`        | timestamptz | NOT NULL DEFAULT now()                                                                                                |                              |
 
 **Constraints:**
+
 - `applications_unique_candidate_job` UNIQUE `(candidate_id, job_id)` — one application per pair
 
 **Indexes:**
+
 - `applications_job_idx` on `(job_id)`
 - `applications_candidate_idx` on `(candidate_id)`
 - `applications_status_idx` on `(status)`
@@ -356,22 +363,23 @@ CREATE POLICY "applications_admin_all"
 
 ### Table: `interviews`
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `application_id` | uuid | NOT NULL, FK → `applications.id` ON DELETE CASCADE | |
-| `scheduled_by` | uuid | NOT NULL, FK → `profiles.id` | The recruiter |
-| `scheduled_at` | timestamptz | NOT NULL | |
-| `duration_minutes` | integer | NOT NULL DEFAULT 60 | |
-| `format` | text | NOT NULL, CHECK IN ('phone', 'video', 'in-person') | |
-| `location_or_link` | text | | Meeting URL or address |
-| `status` | text | NOT NULL DEFAULT 'scheduled', CHECK IN ('scheduled', 'completed', 'cancelled', 'no-show') | |
-| `feedback` | text | | |
-| `rating` | integer | CHECK (rating BETWEEN 1 AND 5) | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column             | Type        | Constraints                                                                               | Notes                  |
+| ------------------ | ----------- | ----------------------------------------------------------------------------------------- | ---------------------- |
+| `id`               | uuid        | PK DEFAULT gen_random_uuid()                                                              |                        |
+| `application_id`   | uuid        | NOT NULL, FK → `applications.id` ON DELETE CASCADE                                        |                        |
+| `scheduled_by`     | uuid        | NOT NULL, FK → `profiles.id`                                                              | The recruiter          |
+| `scheduled_at`     | timestamptz | NOT NULL                                                                                  |                        |
+| `duration_minutes` | integer     | NOT NULL DEFAULT 60                                                                       |                        |
+| `format`           | text        | NOT NULL, CHECK IN ('phone', 'video', 'in-person')                                        |                        |
+| `location_or_link` | text        |                                                                                           | Meeting URL or address |
+| `status`           | text        | NOT NULL DEFAULT 'scheduled', CHECK IN ('scheduled', 'completed', 'cancelled', 'no-show') |                        |
+| `feedback`         | text        |                                                                                           |                        |
+| `rating`           | integer     | CHECK (rating BETWEEN 1 AND 5)                                                            |                        |
+| `created_at`       | timestamptz | NOT NULL DEFAULT now()                                                                    |                        |
+| `updated_at`       | timestamptz | NOT NULL DEFAULT now()                                                                    |                        |
 
 **Indexes:**
+
 - `interviews_application_idx` on `(application_id)`
 - `interviews_scheduled_at_idx` on `(scheduled_at)`
 
@@ -403,26 +411,27 @@ CREATE POLICY "interviews_admin_all"
 
 ### Table: `offers`
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `application_id` | uuid | NOT NULL, FK → `applications.id` ON DELETE CASCADE | |
-| `sent_by` | uuid | NOT NULL, FK → `profiles.id` | |
-| `title` | text | NOT NULL | |
-| `salary` | numeric(12,2) | NOT NULL | |
-| `salary_currency` | text | NOT NULL DEFAULT 'USD' | |
-| `start_date` | date | NOT NULL | |
-| `manager_name` | text | | |
-| `benefits_summary` | text | | |
-| `custom_message` | text | | |
-| `status` | text | NOT NULL DEFAULT 'pending', CHECK IN ('pending', 'accepted', 'declined', 'expired', 'withdrawn') | |
-| `sent_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `responded_at` | timestamptz | | |
-| `expires_at` | timestamptz | | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column             | Type          | Constraints                                                                                      | Notes |
+| ------------------ | ------------- | ------------------------------------------------------------------------------------------------ | ----- |
+| `id`               | uuid          | PK DEFAULT gen_random_uuid()                                                                     |       |
+| `application_id`   | uuid          | NOT NULL, FK → `applications.id` ON DELETE CASCADE                                               |       |
+| `sent_by`          | uuid          | NOT NULL, FK → `profiles.id`                                                                     |       |
+| `title`            | text          | NOT NULL                                                                                         |       |
+| `salary`           | numeric(12,2) | NOT NULL                                                                                         |       |
+| `salary_currency`  | text          | NOT NULL DEFAULT 'USD'                                                                           |       |
+| `start_date`       | date          | NOT NULL                                                                                         |       |
+| `manager_name`     | text          |                                                                                                  |       |
+| `benefits_summary` | text          |                                                                                                  |       |
+| `custom_message`   | text          |                                                                                                  |       |
+| `status`           | text          | NOT NULL DEFAULT 'pending', CHECK IN ('pending', 'accepted', 'declined', 'expired', 'withdrawn') |       |
+| `sent_at`          | timestamptz   | NOT NULL DEFAULT now()                                                                           |       |
+| `responded_at`     | timestamptz   |                                                                                                  |       |
+| `expires_at`       | timestamptz   |                                                                                                  |       |
+| `created_at`       | timestamptz   | NOT NULL DEFAULT now()                                                                           |       |
+| `updated_at`       | timestamptz   | NOT NULL DEFAULT now()                                                                           |       |
 
 **Indexes:**
+
 - `offers_application_idx` on `(application_id)` UNIQUE (one offer per application)
 - `offers_status_idx` on `(status)`
 
@@ -458,27 +467,29 @@ CREATE POLICY "offers_admin_all"
 
 ### Table: `resumes`
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `candidate_id` | uuid | NOT NULL, FK → `profiles.id` ON DELETE CASCADE | |
-| `filename` | text | NOT NULL | Original filename |
-| `mime_type` | text | NOT NULL | application/pdf or docx mime |
-| `size_bytes` | integer | NOT NULL | |
-| `storage_path` | text | NOT NULL | Path in Supabase Storage `resumes` bucket |
-| `raw_text` | text | | Plain text extracted (for full-text search + AI input) |
-| `parsed_data` | jsonb | | Structured: `{ contact, education[], experience[], skills[], certifications[] }` |
-| `parse_status` | text | NOT NULL DEFAULT 'pending', CHECK IN ('pending', 'parsing', 'parsed', 'failed') | |
-| `parse_error` | text | | If status = 'failed' |
-| `is_default` | boolean | NOT NULL DEFAULT false | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column         | Type        | Constraints                                                                     | Notes                                                                            |
+| -------------- | ----------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `id`           | uuid        | PK DEFAULT gen_random_uuid()                                                    |                                                                                  |
+| `candidate_id` | uuid        | NOT NULL, FK → `profiles.id` ON DELETE CASCADE                                  |                                                                                  |
+| `filename`     | text        | NOT NULL                                                                        | Original filename                                                                |
+| `mime_type`    | text        | NOT NULL                                                                        | application/pdf or docx mime                                                     |
+| `size_bytes`   | integer     | NOT NULL                                                                        |                                                                                  |
+| `storage_path` | text        | NOT NULL                                                                        | Path in Supabase Storage `resumes` bucket                                        |
+| `raw_text`     | text        |                                                                                 | Plain text extracted (for full-text search + AI input)                           |
+| `parsed_data`  | jsonb       |                                                                                 | Structured: `{ contact, education[], experience[], skills[], certifications[] }` |
+| `parse_status` | text        | NOT NULL DEFAULT 'pending', CHECK IN ('pending', 'parsing', 'parsed', 'failed') |                                                                                  |
+| `parse_error`  | text        |                                                                                 | If status = 'failed'                                                             |
+| `is_default`   | boolean     | NOT NULL DEFAULT false                                                          |                                                                                  |
+| `created_at`   | timestamptz | NOT NULL DEFAULT now()                                                          |                                                                                  |
+| `updated_at`   | timestamptz | NOT NULL DEFAULT now()                                                          |                                                                                  |
 
 **Indexes:**
+
 - `resumes_candidate_idx` on `(candidate_id)`
 - `resumes_default_idx` on `(candidate_id, is_default)` WHERE is_default = true
 
 **Constraints:**
+
 - One default per candidate (partial unique index)
 
 **RLS Policies:**
@@ -512,24 +523,25 @@ CREATE POLICY "resumes_admin_all"
 
 The candidate's overall Profile Score, computed from their resume + preferences.
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `candidate_id` | uuid | NOT NULL, FK → `profiles.id` ON DELETE CASCADE | |
-| `resume_id` | uuid | NOT NULL, FK → `resumes.id` | The resume version scored |
-| `overall_score` | integer | NOT NULL, CHECK (overall_score BETWEEN 0 AND 100) | |
-| `band` | text | NOT NULL, CHECK IN ('strong', 'partial', 'limited') | Computed from thresholds |
-| `components` | jsonb | NOT NULL | `[{name, score, weight, max, evidence_ids}]` |
-| `improvement_suggestions` | jsonb | NOT NULL DEFAULT '[]' | `[{title, description, estimated_impact}]` |
-| `redacted_fields` | text[] | NOT NULL DEFAULT '{}' | Fields that were stripped before scoring |
-| `prompt_version` | text | NOT NULL | e.g., 'v1.0' for prompt audit |
-| `model_used` | text | NOT NULL | e.g., 'gpt-4o-mini' |
-| `raw_output` | jsonb | NOT NULL | Full structured output from OpenAI |
-| `latency_ms` | integer | | |
-| `status` | text | NOT NULL DEFAULT 'completed', CHECK IN ('pending', 'completed', 'failed') | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column                    | Type        | Constraints                                                               | Notes                                        |
+| ------------------------- | ----------- | ------------------------------------------------------------------------- | -------------------------------------------- |
+| `id`                      | uuid        | PK DEFAULT gen_random_uuid()                                              |                                              |
+| `candidate_id`            | uuid        | NOT NULL, FK → `profiles.id` ON DELETE CASCADE                            |                                              |
+| `resume_id`               | uuid        | NOT NULL, FK → `resumes.id`                                               | The resume version scored                    |
+| `overall_score`           | integer     | NOT NULL, CHECK (overall_score BETWEEN 0 AND 100)                         |                                              |
+| `band`                    | text        | NOT NULL, CHECK IN ('strong', 'partial', 'limited')                       | Computed from thresholds                     |
+| `components`              | jsonb       | NOT NULL                                                                  | `[{name, score, weight, max, evidence_ids}]` |
+| `improvement_suggestions` | jsonb       | NOT NULL DEFAULT '[]'                                                     | `[{title, description, estimated_impact}]`   |
+| `redacted_fields`         | text[]      | NOT NULL DEFAULT '{}'                                                     | Fields that were stripped before scoring     |
+| `prompt_version`          | text        | NOT NULL                                                                  | e.g., 'v1.0' for prompt audit                |
+| `model_used`              | text        | NOT NULL                                                                  | e.g., 'gpt-4o-mini'                          |
+| `raw_output`              | jsonb       | NOT NULL                                                                  | Full structured output from OpenAI           |
+| `latency_ms`              | integer     |                                                                           |                                              |
+| `status`                  | text        | NOT NULL DEFAULT 'completed', CHECK IN ('pending', 'completed', 'failed') |                                              |
+| `created_at`              | timestamptz | NOT NULL DEFAULT now()                                                    |                                              |
 
 **Indexes:**
+
 - `profile_scores_candidate_idx` on `(candidate_id, created_at DESC)` — most recent first
 - `profile_scores_resume_idx` on `(resume_id)`
 
@@ -561,26 +573,27 @@ CREATE POLICY "profile_scores_admin_all"
 
 The score of a specific candidate against a specific job, computed at application time.
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `application_id` | uuid | NOT NULL, FK → `applications.id` ON DELETE CASCADE, UNIQUE | One score per application |
-| `candidate_id` | uuid | NOT NULL, FK → `profiles.id` | Denormalized for query efficiency |
-| `job_id` | uuid | NOT NULL, FK → `jobs.id` | Denormalized |
-| `resume_id` | uuid | NOT NULL, FK → `resumes.id` | The resume version used |
-| `overall_score` | integer | NOT NULL, CHECK (overall_score BETWEEN 0 AND 100) | |
-| `band` | text | NOT NULL, CHECK IN ('strong', 'partial', 'limited') | |
-| `components` | jsonb | NOT NULL | `[{name: "skills", score, weight, max, explanation, evidence_ids}]` |
-| `redacted_fields` | text[] | NOT NULL DEFAULT '{}' | |
-| `weights_used` | jsonb | NOT NULL | Snapshot of `scoring_config.match_weights` at compute time |
-| `prompt_version` | text | NOT NULL | |
-| `model_used` | text | NOT NULL | |
-| `raw_output` | jsonb | NOT NULL | |
-| `latency_ms` | integer | | |
-| `status` | text | NOT NULL DEFAULT 'completed', CHECK IN ('pending', 'completed', 'failed') | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column            | Type        | Constraints                                                               | Notes                                                               |
+| ----------------- | ----------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `id`              | uuid        | PK DEFAULT gen_random_uuid()                                              |                                                                     |
+| `application_id`  | uuid        | NOT NULL, FK → `applications.id` ON DELETE CASCADE, UNIQUE                | One score per application                                           |
+| `candidate_id`    | uuid        | NOT NULL, FK → `profiles.id`                                              | Denormalized for query efficiency                                   |
+| `job_id`          | uuid        | NOT NULL, FK → `jobs.id`                                                  | Denormalized                                                        |
+| `resume_id`       | uuid        | NOT NULL, FK → `resumes.id`                                               | The resume version used                                             |
+| `overall_score`   | integer     | NOT NULL, CHECK (overall_score BETWEEN 0 AND 100)                         |                                                                     |
+| `band`            | text        | NOT NULL, CHECK IN ('strong', 'partial', 'limited')                       |                                                                     |
+| `components`      | jsonb       | NOT NULL                                                                  | `[{name: "skills", score, weight, max, explanation, evidence_ids}]` |
+| `redacted_fields` | text[]      | NOT NULL DEFAULT '{}'                                                     |                                                                     |
+| `weights_used`    | jsonb       | NOT NULL                                                                  | Snapshot of `scoring_config.match_weights` at compute time          |
+| `prompt_version`  | text        | NOT NULL                                                                  |                                                                     |
+| `model_used`      | text        | NOT NULL                                                                  |                                                                     |
+| `raw_output`      | jsonb       | NOT NULL                                                                  |                                                                     |
+| `latency_ms`      | integer     |                                                                           |                                                                     |
+| `status`          | text        | NOT NULL DEFAULT 'completed', CHECK IN ('pending', 'completed', 'failed') |                                                                     |
+| `created_at`      | timestamptz | NOT NULL DEFAULT now()                                                    |                                                                     |
 
 **Indexes:**
+
 - `match_scores_application_idx` on `(application_id)` UNIQUE
 - `match_scores_candidate_idx` on `(candidate_id)`
 - `match_scores_job_idx` on `(job_id)`
@@ -610,19 +623,20 @@ CREATE POLICY "match_scores_admin_all"
 
 Resume excerpts that drove component scores. Critical for explainability.
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `score_type` | text | NOT NULL, CHECK IN ('profile', 'match') | |
-| `score_id` | uuid | NOT NULL | FK to either profile_scores or match_scores (polymorphic) |
-| `component_name` | text | NOT NULL | e.g., 'skills', 'experience' |
-| `excerpt_text` | text | NOT NULL | Quoted text from resume |
-| `excerpt_source` | text | | Section reference (e.g., "Experience › Acme Corp") |
-| `relevance` | text | NOT NULL, CHECK IN ('positive', 'negative', 'neutral') | Did this evidence help or hurt? |
-| `contribution_points` | integer | | Estimated points contributed (for "+ 6 to Skills score") |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column                | Type        | Constraints                                            | Notes                                                     |
+| --------------------- | ----------- | ------------------------------------------------------ | --------------------------------------------------------- |
+| `id`                  | uuid        | PK DEFAULT gen_random_uuid()                           |                                                           |
+| `score_type`          | text        | NOT NULL, CHECK IN ('profile', 'match')                |                                                           |
+| `score_id`            | uuid        | NOT NULL                                               | FK to either profile_scores or match_scores (polymorphic) |
+| `component_name`      | text        | NOT NULL                                               | e.g., 'skills', 'experience'                              |
+| `excerpt_text`        | text        | NOT NULL                                               | Quoted text from resume                                   |
+| `excerpt_source`      | text        |                                                        | Section reference (e.g., "Experience › Acme Corp")        |
+| `relevance`           | text        | NOT NULL, CHECK IN ('positive', 'negative', 'neutral') | Did this evidence help or hurt?                           |
+| `contribution_points` | integer     |                                                        | Estimated points contributed (for "+ 6 to Skills score")  |
+| `created_at`          | timestamptz | NOT NULL DEFAULT now()                                 |                                                           |
 
 **Indexes:**
+
 - `evidence_excerpts_score_idx` on `(score_type, score_id)` — fetch all evidence for a score
 
 **RLS Policies:**
@@ -658,24 +672,25 @@ CREATE POLICY "evidence_excerpts_admin_all"
 
 Flagged terms in job descriptions detected by AI bias check.
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `job_id` | uuid | NOT NULL, FK → `jobs.id` ON DELETE CASCADE | |
-| `term` | text | NOT NULL | The flagged word/phrase |
-| `category` | text | NOT NULL, CHECK IN ('gendered', 'age-coded', 'ableist', 'exclusionary', 'other') | |
-| `suggestion` | text | | Recommended replacement |
-| `position_start` | integer | | Char offset in description_plain |
-| `position_end` | integer | | |
-| `status` | text | NOT NULL DEFAULT 'flagged', CHECK IN ('flagged', 'overridden', 'resolved') | |
-| `override_reason` | text | | Required if status = 'overridden' |
-| `overridden_by` | uuid | FK → `profiles.id` | |
-| `overridden_at` | timestamptz | | |
-| `prompt_version` | text | NOT NULL | |
-| `model_used` | text | NOT NULL | |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column            | Type        | Constraints                                                                      | Notes                             |
+| ----------------- | ----------- | -------------------------------------------------------------------------------- | --------------------------------- |
+| `id`              | uuid        | PK DEFAULT gen_random_uuid()                                                     |                                   |
+| `job_id`          | uuid        | NOT NULL, FK → `jobs.id` ON DELETE CASCADE                                       |                                   |
+| `term`            | text        | NOT NULL                                                                         | The flagged word/phrase           |
+| `category`        | text        | NOT NULL, CHECK IN ('gendered', 'age-coded', 'ableist', 'exclusionary', 'other') |                                   |
+| `suggestion`      | text        |                                                                                  | Recommended replacement           |
+| `position_start`  | integer     |                                                                                  | Char offset in description_plain  |
+| `position_end`    | integer     |                                                                                  |                                   |
+| `status`          | text        | NOT NULL DEFAULT 'flagged', CHECK IN ('flagged', 'overridden', 'resolved')       |                                   |
+| `override_reason` | text        |                                                                                  | Required if status = 'overridden' |
+| `overridden_by`   | uuid        | FK → `profiles.id`                                                               |                                   |
+| `overridden_at`   | timestamptz |                                                                                  |                                   |
+| `prompt_version`  | text        | NOT NULL                                                                         |                                   |
+| `model_used`      | text        | NOT NULL                                                                         |                                   |
+| `created_at`      | timestamptz | NOT NULL DEFAULT now()                                                           |                                   |
 
 **Indexes:**
+
 - `bias_flags_job_idx` on `(job_id)`
 - `bias_flags_status_idx` on `(status)`
 - `bias_flags_category_idx` on `(category)`
@@ -703,25 +718,27 @@ CREATE POLICY "bias_flags_admin_all"
 
 System-wide AI scoring configuration. Single row table (or versioned rows).
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `is_active` | boolean | NOT NULL DEFAULT false | Only one active row at a time |
-| `match_weights` | jsonb | NOT NULL | `{ skills: 40, experience: 35, education: 15, cultural_fit: 10 }` (must sum to 100) |
-| `profile_weights` | jsonb | NOT NULL | `{ completeness: 25, skill_depth: 30, experience_clarity: 30, education_quality: 15 }` |
-| `band_thresholds` | jsonb | NOT NULL | `{ strong_min: 70, partial_min: 40 }` |
-| `bias_categories_enabled` | text[] | NOT NULL DEFAULT '{gendered,age-coded,ableist,exclusionary}' | |
-| `custom_flagged_terms` | text[] | NOT NULL DEFAULT '{}' | Admin-added terms |
-| `pii_redaction_enabled` | boolean | NOT NULL DEFAULT true | |
-| `pii_fields_redacted` | text[] | NOT NULL DEFAULT '{name,photo,age,gender,address,date_of_birth}' | |
-| `updated_by` | uuid | FK → `profiles.id` | Who last changed config |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column                    | Type        | Constraints                                                      | Notes                                                                                  |
+| ------------------------- | ----------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `id`                      | uuid        | PK DEFAULT gen_random_uuid()                                     |                                                                                        |
+| `is_active`               | boolean     | NOT NULL DEFAULT false                                           | Only one active row at a time                                                          |
+| `match_weights`           | jsonb       | NOT NULL                                                         | `{ skills: 40, experience: 35, education: 15, cultural_fit: 10 }` (must sum to 100)    |
+| `profile_weights`         | jsonb       | NOT NULL                                                         | `{ completeness: 25, skill_depth: 30, experience_clarity: 30, education_quality: 15 }` |
+| `band_thresholds`         | jsonb       | NOT NULL                                                         | `{ strong_min: 70, partial_min: 40 }`                                                  |
+| `bias_categories_enabled` | text[]      | NOT NULL DEFAULT '{gendered,age-coded,ableist,exclusionary}'     |                                                                                        |
+| `custom_flagged_terms`    | text[]      | NOT NULL DEFAULT '{}'                                            | Admin-added terms                                                                      |
+| `pii_redaction_enabled`   | boolean     | NOT NULL DEFAULT true                                            |                                                                                        |
+| `pii_fields_redacted`     | text[]      | NOT NULL DEFAULT '{name,photo,age,gender,address,date_of_birth}' |                                                                                        |
+| `updated_by`              | uuid        | FK → `profiles.id`                                               | Who last changed config                                                                |
+| `created_at`              | timestamptz | NOT NULL DEFAULT now()                                           |                                                                                        |
+| `updated_at`              | timestamptz | NOT NULL DEFAULT now()                                           |                                                                                        |
 
 **Constraints:**
+
 - Only one row with `is_active = true` (partial unique index on `is_active` WHERE is_active = true)
 
 **Indexes:**
+
 - `scoring_config_active_idx` on `(is_active)` WHERE is_active = true
 
 **RLS Policies:**
@@ -743,13 +760,35 @@ CREATE POLICY "scoring_config_admin_write"
 ```json
 {
   "is_active": true,
-  "match_weights": {"skills": 40, "experience": 35, "education": 15, "cultural_fit": 10},
-  "profile_weights": {"completeness": 25, "skill_depth": 30, "experience_clarity": 30, "education_quality": 15},
-  "band_thresholds": {"strong_min": 70, "partial_min": 40},
-  "bias_categories_enabled": ["gendered", "age-coded", "ableist", "exclusionary"],
+  "match_weights": {
+    "skills": 40,
+    "experience": 35,
+    "education": 15,
+    "cultural_fit": 10
+  },
+  "profile_weights": {
+    "completeness": 25,
+    "skill_depth": 30,
+    "experience_clarity": 30,
+    "education_quality": 15
+  },
+  "band_thresholds": { "strong_min": 70, "partial_min": 40 },
+  "bias_categories_enabled": [
+    "gendered",
+    "age-coded",
+    "ableist",
+    "exclusionary"
+  ],
   "custom_flagged_terms": [],
   "pii_redaction_enabled": true,
-  "pii_fields_redacted": ["name", "photo", "age", "gender", "address", "date_of_birth"]
+  "pii_fields_redacted": [
+    "name",
+    "photo",
+    "age",
+    "gender",
+    "address",
+    "date_of_birth"
+  ]
 }
 ```
 
@@ -761,20 +800,21 @@ CREATE POLICY "scoring_config_admin_write"
 
 Append-only log of all consequential actions. Immutable from app code (no UPDATE/DELETE policies).
 
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| `id` | uuid | PK DEFAULT gen_random_uuid() | |
-| `actor_id` | uuid | FK → `profiles.id` | Null for system/AI actions |
-| `actor_type` | text | NOT NULL, CHECK IN ('user', 'system', 'ai') | |
-| `action` | text | NOT NULL | e.g., 'application.created', 'score.computed', 'config.updated' |
-| `entity_type` | text | NOT NULL | e.g., 'application', 'job', 'score', 'config', 'bias_flag' |
-| `entity_id` | uuid | NOT NULL | |
-| `details` | jsonb | NOT NULL DEFAULT '{}' | Structured before/after for diffs |
-| `ip_address` | inet | | Where available |
-| `user_agent` | text | | Where available |
-| `created_at` | timestamptz | NOT NULL DEFAULT now() | |
+| Column        | Type        | Constraints                                 | Notes                                                           |
+| ------------- | ----------- | ------------------------------------------- | --------------------------------------------------------------- |
+| `id`          | uuid        | PK DEFAULT gen_random_uuid()                |                                                                 |
+| `actor_id`    | uuid        | FK → `profiles.id`                          | Null for system/AI actions                                      |
+| `actor_type`  | text        | NOT NULL, CHECK IN ('user', 'system', 'ai') |                                                                 |
+| `action`      | text        | NOT NULL                                    | e.g., 'application.created', 'score.computed', 'config.updated' |
+| `entity_type` | text        | NOT NULL                                    | e.g., 'application', 'job', 'score', 'config', 'bias_flag'      |
+| `entity_id`   | uuid        | NOT NULL                                    |                                                                 |
+| `details`     | jsonb       | NOT NULL DEFAULT '{}'                       | Structured before/after for diffs                               |
+| `ip_address`  | inet        |                                             | Where available                                                 |
+| `user_agent`  | text        |                                             | Where available                                                 |
+| `created_at`  | timestamptz | NOT NULL DEFAULT now()                      |                                                                 |
 
 **Indexes:**
+
 - `audit_logs_created_idx` on `(created_at DESC)`
 - `audit_logs_actor_idx` on `(actor_id, created_at DESC)`
 - `audit_logs_entity_idx` on `(entity_type, entity_id)`
@@ -801,18 +841,41 @@ For consistency across schema and code:
 
 ```ts
 // lib/constants/enums.ts
-export const USER_ROLES = ['candidate', 'recruiter', 'admin'] as const;
+export const USER_ROLES = ["candidate", "recruiter", "admin"] as const;
 export const APPLICATION_STATUS = [
-  'applied', 'screening', 'interview', 'offer', 'hired', 'rejected', 'withdrawn'
+  "applied",
+  "screening",
+  "interview",
+  "offer",
+  "hired",
+  "rejected",
+  "withdrawn",
 ] as const;
-export const OFFER_STATUS = ['pending', 'accepted', 'declined', 'expired', 'withdrawn'] as const;
-export const INTERVIEW_FORMAT = ['phone', 'video', 'in-person'] as const;
-export const INTERVIEW_STATUS = ['scheduled', 'completed', 'cancelled', 'no-show'] as const;
-export const JOB_STATUS = ['draft', 'published', 'archived', 'closed'] as const;
-export const EMPLOYMENT_TYPE = ['full-time', 'part-time', 'contract'] as const;
-export const WORK_MODE = ['remote', 'hybrid', 'on-site'] as const;
-export const SCORE_BAND = ['strong', 'partial', 'limited'] as const;
-export const BIAS_CATEGORY = ['gendered', 'age-coded', 'ableist', 'exclusionary', 'other'] as const;
+export const OFFER_STATUS = [
+  "pending",
+  "accepted",
+  "declined",
+  "expired",
+  "withdrawn",
+] as const;
+export const INTERVIEW_FORMAT = ["phone", "video", "in-person"] as const;
+export const INTERVIEW_STATUS = [
+  "scheduled",
+  "completed",
+  "cancelled",
+  "no-show",
+] as const;
+export const JOB_STATUS = ["draft", "published", "archived", "closed"] as const;
+export const EMPLOYMENT_TYPE = ["full-time", "part-time", "contract"] as const;
+export const WORK_MODE = ["remote", "hybrid", "on-site"] as const;
+export const SCORE_BAND = ["strong", "partial", "limited"] as const;
+export const BIAS_CATEGORY = [
+  "gendered",
+  "age-coded",
+  "ableist",
+  "exclusionary",
+  "other",
+] as const;
 ```
 
 ---
@@ -823,44 +886,98 @@ Single file: `packages/db/src/schema.ts`. Brief example for `profiles` and `appl
 
 ```ts
 // lib/db/schema.ts
-import { pgTable, uuid, text, timestamp, integer, boolean, jsonb, numeric, date, primaryKey, unique, index, check } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  integer,
+  boolean,
+  jsonb,
+  numeric,
+  date,
+  primaryKey,
+  unique,
+  index,
+  check,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-export const profilesTable = pgTable("profiles", {
-  id: uuid("id").primaryKey(),  // FK to auth.users.id, set in code
-  role: text("role", { enum: ["candidate", "recruiter", "admin"] }).notNull(),
-  fullName: text("full_name").notNull(),
-  email: text("email").notNull().unique(),
-  phone: text("phone"),
-  avatarUrl: text("avatar_url"),
-  status: text("status", { enum: ["active", "suspended", "deleted"] }).notNull().default("active"),
-  lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({
-  emailIdx: index("profiles_email_idx").on(t.email),
-  roleIdx: index("profiles_role_idx").on(t.role),
-}));
+export const profilesTable = pgTable(
+  "profiles",
+  {
+    id: uuid("id").primaryKey(), // FK to auth.users.id, set in code
+    role: text("role", { enum: ["candidate", "recruiter", "admin"] }).notNull(),
+    fullName: text("full_name").notNull(),
+    email: text("email").notNull().unique(),
+    phone: text("phone"),
+    avatarUrl: text("avatar_url"),
+    status: text("status", { enum: ["active", "suspended", "deleted"] })
+      .notNull()
+      .default("active"),
+    lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    emailIdx: index("profiles_email_idx").on(t.email),
+    roleIdx: index("profiles_role_idx").on(t.role),
+  }),
+);
 
-export const applicationsTable = pgTable("applications", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  jobId: uuid("job_id").notNull().references(() => jobsTable.id, { onDelete: "cascade" }),
-  candidateId: uuid("candidate_id").notNull().references(() => profilesTable.id, { onDelete: "cascade" }),
-  resumeId: uuid("resume_id").notNull().references(() => resumesTable.id),
-  coverLetter: text("cover_letter"),
-  status: text("status", { enum: ["applied", "screening", "interview", "offer", "hired", "rejected", "withdrawn"] }).notNull().default("applied"),
-  recruiterNotes: text("recruiter_notes"),
-  appliedAt: timestamp("applied_at", { withTimezone: true }).notNull().defaultNow(),
-  statusUpdatedAt: timestamp("status_updated_at", { withTimezone: true }).notNull().defaultNow(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({
-  uniqueCandidateJob: unique().on(t.candidateId, t.jobId),
-  jobIdx: index("applications_job_idx").on(t.jobId),
-  candidateIdx: index("applications_candidate_idx").on(t.candidateId),
-  statusIdx: index("applications_status_idx").on(t.status),
-  appliedIdx: index("applications_applied_idx").on(t.appliedAt),
-}));
+export const applicationsTable = pgTable(
+  "applications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    jobId: uuid("job_id")
+      .notNull()
+      .references(() => jobsTable.id, { onDelete: "cascade" }),
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => profilesTable.id, { onDelete: "cascade" }),
+    resumeId: uuid("resume_id")
+      .notNull()
+      .references(() => resumesTable.id),
+    coverLetter: text("cover_letter"),
+    status: text("status", {
+      enum: [
+        "applied",
+        "screening",
+        "interview",
+        "offer",
+        "hired",
+        "rejected",
+        "withdrawn",
+      ],
+    })
+      .notNull()
+      .default("applied"),
+    recruiterNotes: text("recruiter_notes"),
+    appliedAt: timestamp("applied_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    statusUpdatedAt: timestamp("status_updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    uniqueCandidateJob: unique().on(t.candidateId, t.jobId),
+    jobIdx: index("applications_job_idx").on(t.jobId),
+    candidateIdx: index("applications_candidate_idx").on(t.candidateId),
+    statusIdx: index("applications_status_idx").on(t.status),
+    appliedIdx: index("applications_applied_idx").on(t.appliedAt),
+  }),
+);
 
 // Pattern repeats for all 15 tables ...
 ```

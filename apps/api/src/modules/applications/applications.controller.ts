@@ -91,7 +91,11 @@ export class ApplicationsController {
   @ApiOperation({
     summary: "Dashboard summary for the active company (range-filterable)",
   })
-  @ApiQuery({ name: "range", required: false, enum: ["7d", "30d", "90d", "all"] })
+  @ApiQuery({
+    name: "range",
+    required: false,
+    enum: ["7d", "30d", "90d", "all"],
+  })
   @ApiResponse({ status: 200, type: RecruiterStatsEnvelopeDto })
   async recruiterStats(
     @CurrentUser() user: AuthUser,
@@ -117,7 +121,10 @@ export class ApplicationsController {
     @CurrentUser() user: AuthUser,
     @ActiveCompany() activeCompany: ActiveCompanyContext,
   ): Promise<RecruiterAnalyticsEnvelopeDto> {
-    const result = await this.service.recruiterAnalytics(user, activeCompany.companyId);
+    const result = await this.service.recruiterAnalytics(
+      user,
+      activeCompany.companyId,
+    );
     return {
       data: {
         kpis: {
@@ -154,7 +161,9 @@ export class ApplicationsController {
 
   @Get("shortlist")
   @Roles("recruiter")
-  @ApiOperation({ summary: "List the active company's shortlisted applications" })
+  @ApiOperation({
+    summary: "List the active company's shortlisted applications",
+  })
   @ApiResponse({ status: 200, type: ShortlistListEnvelopeDto })
   async listShortlist(
     @CurrentUser() user: AuthUser,
@@ -164,13 +173,18 @@ export class ApplicationsController {
     data: ApplicationDto[];
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
-    return this.service.listShortlistForRecruiter(user, activeCompany.companyId, query);
+    return this.service.listShortlistForRecruiter(
+      user,
+      activeCompany.companyId,
+      query,
+    );
   }
 
   @Get("recruiter-list")
   @Roles("recruiter")
   @ApiOperation({
-    summary: "List all applications across the active company's jobs (paginated, filterable)",
+    summary:
+      "List all applications across the active company's jobs (paginated, filterable)",
   })
   @ApiResponse({ status: 200, type: ShortlistListEnvelopeDto })
   async listAllForRecruiter(
@@ -181,19 +195,29 @@ export class ApplicationsController {
     data: ApplicationDto[];
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
-    return this.service.listAllForRecruiter(user, activeCompany.companyId, query);
+    return this.service.listAllForRecruiter(
+      user,
+      activeCompany.companyId,
+      query,
+    );
   }
 
   @Get("by-job/:jobId")
   @Roles("recruiter")
-  @ApiOperation({ summary: "List applications for a job owned by the active company" })
+  @ApiOperation({
+    summary: "List applications for a job owned by the active company",
+  })
   @ApiResponse({ status: 200, type: ApplicationListEnvelopeDto })
   async listForJob(
     @CurrentUser() user: AuthUser,
     @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("jobId") jobId: string,
   ): Promise<ApplicationListEnvelopeDto> {
-    const data = await this.service.listForJob(user, activeCompany.companyId, jobId);
+    const data = await this.service.listForJob(
+      user,
+      activeCompany.companyId,
+      jobId,
+    );
     return { data };
   }
 
@@ -227,17 +251,26 @@ export class ApplicationsController {
     @Param("id") id: string,
     @Body() dto: UpdateApplicationStatusDto,
     @Req() req: FastifyRequest,
-  ): Promise<ApplicationEnvelopeDto | { data: ApplicationDto; otherApplicationsRejected: number }> {
+  ): Promise<
+    | ApplicationEnvelopeDto
+    | { data: ApplicationDto; otherApplicationsRejected: number }
+  > {
     const meta = this.requestMeta(req);
     if (dto.newStatus === "hired") {
       const result = await this.service.hire(
         user,
         activeCompany.companyId,
         id,
-        { autoRejectOthers: dto.autoRejectOthers ?? false, note: dto.note ?? null },
+        {
+          autoRejectOthers: dto.autoRejectOthers ?? false,
+          note: dto.note ?? null,
+        },
         meta,
       );
-      return { data: result.application, otherApplicationsRejected: result.otherApplicationsRejected };
+      return {
+        data: result.application,
+        otherApplicationsRejected: result.otherApplicationsRejected,
+      };
     }
     const data = await this.service.updateStatus(
       user,
@@ -274,28 +307,40 @@ export class ApplicationsController {
   @Post(":id/shortlist")
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Add this application to the active company's shortlist" })
+  @ApiOperation({
+    summary: "Add this application to the active company's shortlist",
+  })
   @ApiResponse({ status: 200, type: ApplicationEnvelopeDto })
   async shortlist(
     @CurrentUser() user: AuthUser,
     @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("id") id: string,
   ): Promise<ApplicationEnvelopeDto> {
-    const data = await this.service.addToShortlist(user, activeCompany.companyId, id);
+    const data = await this.service.addToShortlist(
+      user,
+      activeCompany.companyId,
+      id,
+    );
     return { data };
   }
 
   @Delete(":id/shortlist")
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Remove this application from the active company's shortlist" })
+  @ApiOperation({
+    summary: "Remove this application from the active company's shortlist",
+  })
   @ApiResponse({ status: 200, type: ApplicationEnvelopeDto })
   async unshortlist(
     @CurrentUser() user: AuthUser,
     @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("id") id: string,
   ): Promise<ApplicationEnvelopeDto> {
-    const data = await this.service.removeFromShortlist(user, activeCompany.companyId, id);
+    const data = await this.service.removeFromShortlist(
+      user,
+      activeCompany.companyId,
+      id,
+    );
     return { data };
   }
 
@@ -310,14 +355,20 @@ export class ApplicationsController {
     @Body() dto: WithdrawApplicationDto,
     @Req() req: FastifyRequest,
   ): Promise<ApplicationEnvelopeDto> {
-    const data = await this.service.withdraw(user, id, dto, this.requestMeta(req));
+    const data = await this.service.withdraw(
+      user,
+      id,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
   @Get(":id/resume-download")
   @Roles("candidate", "recruiter", "admin")
   @ApiOperation({
-    summary: "1-hour signed URL for the candidate's resume in the context of this application",
+    summary:
+      "1-hour signed URL for the candidate's resume in the context of this application",
     description:
       "Recruiters whose active company owns the job can download; candidates can download own.",
   })

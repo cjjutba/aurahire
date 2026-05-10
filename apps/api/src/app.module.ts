@@ -103,7 +103,10 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
       pinoHttp: {
         transport:
           process.env.NODE_ENV !== "production"
-            ? { target: "pino-pretty", options: { singleLine: true, translateTime: "SYS:HH:MM:ss" } }
+            ? {
+                target: "pino-pretty",
+                options: { singleLine: true, translateTime: "SYS:HH:MM:ss" },
+              }
             : undefined,
         level: process.env.LOG_LEVEL ?? "info",
         autoLogging: true,

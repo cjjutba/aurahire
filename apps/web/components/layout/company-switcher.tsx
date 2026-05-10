@@ -73,8 +73,8 @@ export function CompanySwitcher() {
     : isLoading
       ? ""
       : "+";
-  const triggerLabel = activeMembership?.companyName
-    ?? (isLoading ? "Loading…" : "Add a company");
+  const triggerLabel =
+    activeMembership?.companyName ?? (isLoading ? "Loading…" : "Add a company");
 
   async function handleSelect(companyId: string) {
     if (companyId === activeMembership?.companyId) return;
@@ -88,100 +88,102 @@ export function CompanySwitcher() {
 
   return (
     <>
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <button
-            type="button"
-            disabled={isSwitching}
-            aria-label="Switch company"
-            className="mt-4 flex w-full items-center gap-2 rounded-[var(--radius-md)] py-1 text-left transition hover:bg-[var(--color-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <button
+              type="button"
+              disabled={isSwitching}
+              aria-label="Switch company"
+              className="mt-4 flex w-full items-center gap-2 rounded-[var(--radius-md)] py-1 text-left transition hover:bg-[var(--color-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"
+            />
+          }
+        >
+          <Avatar className="h-8 w-8">
+            {activeMembership?.companyLogoUrl ? (
+              <AvatarImage src={activeMembership.companyLogoUrl} alt="" />
+            ) : null}
+            <AvatarFallback className="bg-[var(--color-surface-strong)] text-xs font-semibold text-[var(--color-ink)]">
+              {triggerInitials}
+            </AvatarFallback>
+          </Avatar>
+          <span className="flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
+            {triggerLabel}
+          </span>
+          <ChevronsUpDown
+            className="h-4 w-4 text-[var(--color-muted)]"
+            aria-hidden
           />
-        }
-      >
-        <Avatar className="h-8 w-8">
-          {activeMembership?.companyLogoUrl ? (
-            <AvatarImage src={activeMembership.companyLogoUrl} alt="" />
-          ) : null}
-          <AvatarFallback className="bg-[var(--color-surface-strong)] text-xs font-semibold text-[var(--color-ink)]">
-            {triggerInitials}
-          </AvatarFallback>
-        </Avatar>
-        <span className="flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
-          {triggerLabel}
-        </span>
-        <ChevronsUpDown
-          className="h-4 w-4 text-[var(--color-muted)]"
-          aria-hidden
-        />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" side="bottom" className="w-64">
-        {isLoading ? (
-          <div className="px-2 py-2 text-xs text-[var(--color-muted)]">
-            Loading companies…
-          </div>
-        ) : memberships.length === 0 ? (
-          <div className="px-2 py-2 text-xs text-[var(--color-muted)]">
-            No companies yet — create one or accept an invitation below.
-          </div>
-        ) : (
-          memberships.map((m) => {
-            const isActive = m.companyId === activeMembership?.companyId;
-            return (
-              <DropdownMenuItem
-                key={m.companyId}
-                onClick={() => void handleSelect(m.companyId)}
-                onMouseEnter={
-                  isActive ? undefined : () => schedulePrefetch(m.companyId)
-                }
-                onMouseLeave={isActive ? undefined : cancelPrefetch}
-                onFocus={
-                  isActive ? undefined : () => schedulePrefetch(m.companyId)
-                }
-                onBlur={isActive ? undefined : cancelPrefetch}
-                className="flex cursor-pointer items-center gap-2"
-              >
-                <Avatar className="h-6 w-6">
-                  {m.companyLogoUrl ? (
-                    <AvatarImage src={m.companyLogoUrl} alt="" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="bottom" className="w-64">
+          {isLoading ? (
+            <div className="px-2 py-2 text-xs text-[var(--color-muted)]">
+              Loading companies…
+            </div>
+          ) : memberships.length === 0 ? (
+            <div className="px-2 py-2 text-xs text-[var(--color-muted)]">
+              No companies yet — create one or accept an invitation below.
+            </div>
+          ) : (
+            memberships.map((m) => {
+              const isActive = m.companyId === activeMembership?.companyId;
+              return (
+                <DropdownMenuItem
+                  key={m.companyId}
+                  onClick={() => void handleSelect(m.companyId)}
+                  onMouseEnter={
+                    isActive ? undefined : () => schedulePrefetch(m.companyId)
+                  }
+                  onMouseLeave={isActive ? undefined : cancelPrefetch}
+                  onFocus={
+                    isActive ? undefined : () => schedulePrefetch(m.companyId)
+                  }
+                  onBlur={isActive ? undefined : cancelPrefetch}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  <Avatar className="h-6 w-6">
+                    {m.companyLogoUrl ? (
+                      <AvatarImage src={m.companyLogoUrl} alt="" />
+                    ) : null}
+                    <AvatarFallback className="bg-[var(--color-surface-strong)] text-[10px] font-semibold text-[var(--color-ink)]">
+                      {getInitials(m.companyName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="flex-1 truncate text-sm">
+                    {m.companyName}
+                  </span>
+                  <span className="text-[11px] capitalize text-[var(--color-muted)]">
+                    {m.role}
+                  </span>
+                  {isActive ? (
+                    <Check
+                      className="h-4 w-4 text-[var(--color-primary)]"
+                      aria-hidden
+                    />
                   ) : null}
-                  <AvatarFallback className="bg-[var(--color-surface-strong)] text-[10px] font-semibold text-[var(--color-ink)]">
-                    {getInitials(m.companyName)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="flex-1 truncate text-sm">{m.companyName}</span>
-                <span className="text-[11px] capitalize text-[var(--color-muted)]">
-                  {m.role}
-                </span>
-                {isActive ? (
-                  <Check
-                    className="h-4 w-4 text-[var(--color-primary)]"
-                    aria-hidden
-                  />
-                ) : null}
-              </DropdownMenuItem>
-            );
-          })
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => setCreateOpen(true)}
-          className="flex cursor-pointer items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Create new company</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setAcceptOpen(true)}
-          className="flex cursor-pointer items-center gap-2"
-        >
-          <Mail className="h-4 w-4" />
-          <span>Accept invitation</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-    <CompanyCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
-    <AcceptInvitationDialog open={acceptOpen} onOpenChange={setAcceptOpen} />
+                </DropdownMenuItem>
+              );
+            })
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setCreateOpen(true)}
+            className="flex cursor-pointer items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create new company</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setAcceptOpen(true)}
+            className="flex cursor-pointer items-center gap-2"
+          >
+            <Mail className="h-4 w-4" />
+            <span>Accept invitation</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <CompanyCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <AcceptInvitationDialog open={acceptOpen} onOpenChange={setAcceptOpen} />
     </>
   );
 }

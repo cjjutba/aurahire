@@ -16,7 +16,7 @@ export interface SendEmailOptions {
   /** Optional file attachments (base64-encoded content). */
   attachments?: Array<{
     filename: string;
-    content: string;    // base64-encoded file contents
+    content: string; // base64-encoded file contents
     contentType: string; // e.g. "text/calendar"
   }>;
 }
@@ -41,7 +41,8 @@ export class EmailService implements OnModuleInit {
   private resendClient: Resend | null = null;
 
   constructor(private readonly config: ConfigService) {
-    this.fromEmail = config.get<string>("FROM_EMAIL") ?? "onboarding@resend.dev";
+    this.fromEmail =
+      config.get<string>("FROM_EMAIL") ?? "onboarding@resend.dev";
     this.useResend = config.get<string>("USE_RESEND") === "true";
   }
 
@@ -65,14 +66,17 @@ export class EmailService implements OnModuleInit {
         secure: false,
         ignoreTLS: true,
       });
-      this.logger.log(`Email transport: SMTP ${host}:${port} (Mailpit) from ${this.fromEmail}`);
+      this.logger.log(
+        `Email transport: SMTP ${host}:${port} (Mailpit) from ${this.fromEmail}`,
+      );
     }
   }
 
   async send(opts: SendEmailOptions): Promise<void> {
     try {
       const html = await render(opts.template);
-      const text = opts.text ?? (await render(opts.template, { plainText: true }));
+      const text =
+        opts.text ?? (await render(opts.template, { plainText: true }));
       const recipients = Array.isArray(opts.to) ? opts.to : [opts.to];
 
       if (this.resendClient) {
@@ -84,7 +88,12 @@ export class EmailService implements OnModuleInit {
           text,
           replyTo: opts.replyTo,
           ...(opts.attachments && opts.attachments.length > 0
-            ? { attachments: opts.attachments.map((a) => ({ filename: a.filename, content: a.content })) }
+            ? {
+                attachments: opts.attachments.map((a) => ({
+                  filename: a.filename,
+                  content: a.content,
+                })),
+              }
             : {}),
         });
         if (error) {

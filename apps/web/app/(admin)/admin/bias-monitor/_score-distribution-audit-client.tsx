@@ -51,9 +51,7 @@ export function ScoreDistributionAuditClient({ data, sampleSize }: Props) {
       {isEmpty ? (
         <div className="flex h-64 flex-col items-center justify-center gap-1 text-sm text-[var(--color-muted)]">
           <p>No match scores in this period.</p>
-          <p className="text-xs">
-            Apply to a job to populate score data.
-          </p>
+          <p className="text-xs">Apply to a job to populate score data.</p>
         </div>
       ) : (
         <div className="h-64">
@@ -86,7 +84,8 @@ export function ScoreDistributionAuditClient({ data, sampleSize }: Props) {
                   fontSize: 12,
                 }}
                 formatter={(value, _name, item) => {
-                  const pct = (item?.payload as { pct?: number } | undefined)?.pct ?? 0;
+                  const pct =
+                    (item?.payload as { pct?: number } | undefined)?.pct ?? 0;
                   return [`${value} (${pct}%)`, "Scores"];
                 }}
               />

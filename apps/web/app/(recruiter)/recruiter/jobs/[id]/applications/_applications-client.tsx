@@ -14,9 +14,15 @@ interface ApplicationsClientProps {
   jobTitle: string;
 }
 
-export function ApplicationsClient({ jobId, jobTitle }: ApplicationsClientProps) {
+export function ApplicationsClient({
+  jobId,
+  jobTitle,
+}: ApplicationsClientProps) {
   const queryClient = useQueryClient();
-  const { data, isLoading, isError } = useRecruiterApplicationsByJobQuery(jobId, {});
+  const { data, isLoading, isError } = useRecruiterApplicationsByJobQuery(
+    jobId,
+    {},
+  );
 
   // Subscribe to the job-scoped room so the gateway delivers job:{id} events.
   useRealtimeRoom("job", jobId);
@@ -39,8 +45,15 @@ export function ApplicationsClient({ jobId, jobTitle }: ApplicationsClientProps)
     id: string;
     status: string;
     appliedAt: string;
-    candidate: { fullName: string; email: string; headline: string | null } | null;
-    matchScore: { band: "strong" | "partial" | "limited"; overallScore: number } | null;
+    candidate: {
+      fullName: string;
+      email: string;
+      headline: string | null;
+    } | null;
+    matchScore: {
+      band: "strong" | "partial" | "limited";
+      overallScore: number;
+    } | null;
   }>;
 
   return (

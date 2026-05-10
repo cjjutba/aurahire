@@ -50,19 +50,19 @@ Replace the existing single-row 6-up grid (`grid md:grid-cols-3 lg:grid-cols-6`)
 
 **Row 1 — Footprint** (icon `BarChart3`, label `FOOTPRINT`)
 
-| Tile | Source field | Icon | Tone | Description |
-|---|---|---|---|---|
-| Total Users | `stats.totalUsers` | `Users` | neutral | All-time accounts |
-| Active Jobs | `stats.activeJobs` | `Briefcase` | neutral | Currently published |
+| Tile           | Source field                 | Icon         | Tone    | Description              |
+| -------------- | ---------------------------- | ------------ | ------- | ------------------------ |
+| Total Users    | `stats.totalUsers`           | `Users`      | neutral | All-time accounts        |
+| Active Jobs    | `stats.activeJobs`           | `Briefcase`  | neutral | Currently published      |
 | Apps This Week | `stats.applicationsThisWeek` | `TrendingUp` | neutral | Submitted in last 7 days |
 
 **Row 2 — Today & AI Quality** (icon `Sparkles`, label `TODAY & AI QUALITY`)
 
-| Tile | Source field | Icon | Tone | Description |
-|---|---|---|---|---|
-| Apps Today | `stats.applicationsToday` | `Inbox` | neutral | Submitted today |
-| Avg Profile Score | `stats.avgProfileScore` | `Sparkles` | **score** | Across all candidates |
-| Avg Match Score | `stats.avgMatchScore` | `BarChart3` | **score** | Last 30 days |
+| Tile              | Source field              | Icon        | Tone      | Description           |
+| ----------------- | ------------------------- | ----------- | --------- | --------------------- |
+| Apps Today        | `stats.applicationsToday` | `Inbox`     | neutral   | Submitted today       |
+| Avg Profile Score | `stats.avgProfileScore`   | `Sparkles`  | **score** | Across all candidates |
+| Avg Match Score   | `stats.avgMatchScore`     | `BarChart3` | **score** | Last 30 days          |
 
 The `KpiTile` shape is the canonical form already used by the candidate dashboard:
 
@@ -72,6 +72,7 @@ The `KpiTile` shape is the canonical form already used by the candidate dashboar
 - Description: `mt-1 text-xs text-[var(--color-muted)]`
 
 `tone="score"` applies the candidate dashboard color ladder:
+
 - `value === 0` → muted
 - `value < 40` → `score-low`
 - `value < 70` → `score-mid`
@@ -107,17 +108,22 @@ Today this is a plain row list (`category — count`). Upgrade to match the Scor
 Largest visual change in this redesign.
 
 **Today's row layout (problematic):**
+
 ```
 [ score.match.preview.computed ]   SYSTEM
 12m ago
 ```
+
 The action code dominates the row in a monospace pill; the raw string is what the user reads first.
 
 **New row layout:**
+
 ```
 [icon]  Job match preview computed             SYSTEM   12m ago
 ```
+
 Concretely:
+
 - Left: a tiny actor-type icon glyph inside a colored round plate (`h-7 w-7`) using the actor's existing `ACTOR_BG` color. Mapping: `user` → `User`, `ai` → `Sparkles`, `system` → `Cpu`. Unknown actor types fall back to `Activity`.
 - Center: the **plain-English label** from `humanizeAuditAction(e.action)`, in `text-sm text-[var(--color-ink)]`.
 - Right: actor-type pill (uppercase, existing styling) + relative timestamp (`12m ago`) in mono muted.
@@ -131,6 +137,7 @@ Empty state copy unchanged.
 ### 4.4 Loading skeleton (`apps/web/app/(admin)/admin/loading.tsx`)
 
 Adapt to the new structure:
+
 - Title block (`h-8 w-64` + `h-5 w-96`) — unchanged
 - 2 KPI rows: each renders a 3-up skeleton grid of `h-28` tiles
 - Snapshot row: 3-up `h-72` cards (slightly taller than today's `h-64` to match the richer content)
@@ -155,137 +162,137 @@ This list reflects every `action: "..."` literal in `apps/api/src/` plus the ful
 
 **Identity & accounts**
 
-| Code | Label |
-|---|---|
-| `user.registered.candidate` | Candidate joined |
-| `user.registered.recruiter` | Recruiter joined |
-| `user.login` | User signed in |
-| `user.logout` | User signed out |
-| `user.password_reset_requested` | Password reset requested |
-| `user.password_reset` | Password reset |
-| `user.password_reset_forced` | Password reset (forced by admin) |
-| `user.email_verified` | Email verified |
-| `user.suspended` | User suspended |
-| `user.reactivated` | User reactivated |
-| `user.deleted` | User deleted |
-| `user.deleted_unverified_cleanup` | Unverified account cleaned up |
-| `user.role_changed` | User role changed |
+| Code                              | Label                            |
+| --------------------------------- | -------------------------------- |
+| `user.registered.candidate`       | Candidate joined                 |
+| `user.registered.recruiter`       | Recruiter joined                 |
+| `user.login`                      | User signed in                   |
+| `user.logout`                     | User signed out                  |
+| `user.password_reset_requested`   | Password reset requested         |
+| `user.password_reset`             | Password reset                   |
+| `user.password_reset_forced`      | Password reset (forced by admin) |
+| `user.email_verified`             | Email verified                   |
+| `user.suspended`                  | User suspended                   |
+| `user.reactivated`                | User reactivated                 |
+| `user.deleted`                    | User deleted                     |
+| `user.deleted_unverified_cleanup` | Unverified account cleaned up    |
+| `user.role_changed`               | User role changed                |
 
 **Onboarding**
 
-| Code | Label |
-|---|---|
-| `user.onboarding.personal_updated` | Personal info updated |
-| `user.onboarding.preferences_updated` | Preferences updated |
-| `user.onboarding.about_updated` | About updated |
-| `user.onboarding.company_updated` | Company info updated |
-| `user.onboarding.completed` | Onboarding completed |
+| Code                                  | Label                 |
+| ------------------------------------- | --------------------- |
+| `user.onboarding.personal_updated`    | Personal info updated |
+| `user.onboarding.preferences_updated` | Preferences updated   |
+| `user.onboarding.about_updated`       | About updated         |
+| `user.onboarding.company_updated`     | Company info updated  |
+| `user.onboarding.completed`           | Onboarding completed  |
 
 **Resumes**
 
-| Code | Label |
-|---|---|
-| `resume.uploaded` | Resume uploaded |
-| `resume.parsed` | Resume parsed |
-| `resume.parse_failed` | Resume parsing failed |
-| `resume.reparsed` | Resume re-parsed |
+| Code                    | Label                    |
+| ----------------------- | ------------------------ |
+| `resume.uploaded`       | Resume uploaded          |
+| `resume.parsed`         | Resume parsed            |
+| `resume.parse_failed`   | Resume parsing failed    |
+| `resume.reparsed`       | Resume re-parsed         |
 | `resume.reparse_failed` | Resume re-parsing failed |
-| `resume.set_default` | Default resume changed |
-| `resume.deleted` | Resume deleted |
+| `resume.set_default`    | Default resume changed   |
+| `resume.deleted`        | Resume deleted           |
 
 **Jobs**
 
-| Code | Label |
-|---|---|
-| `job.created` | Job created |
-| `job.updated` | Job updated |
-| `job.published` | Job published |
-| `job.archived` | Job archived |
-| `job.archived_by_admin` | Job archived by admin |
-| `job.archived_by_cron` | Job archived (deadline passed) |
-| `job.bias_check_run` | Bias check run on job |
+| Code                    | Label                          |
+| ----------------------- | ------------------------------ |
+| `job.created`           | Job created                    |
+| `job.updated`           | Job updated                    |
+| `job.published`         | Job published                  |
+| `job.archived`          | Job archived                   |
+| `job.archived_by_admin` | Job archived by admin          |
+| `job.archived_by_cron`  | Job archived (deadline passed) |
+| `job.bias_check_run`    | Bias check run on job          |
 
 **Applications**
 
-| Code | Label |
-|---|---|
-| `application.created` | Application submitted |
-| `application.shortlisted` | Candidate shortlisted |
-| `application.unshortlisted` | Candidate removed from shortlist |
-| `application.status_changed` | Application status changed |
-| `application.notes_updated` | Application notes updated |
-| `application.withdrawn` | Application withdrawn |
-| `application.email_sent` | Candidate emailed |
+| Code                         | Label                            |
+| ---------------------------- | -------------------------------- |
+| `application.created`        | Application submitted            |
+| `application.shortlisted`    | Candidate shortlisted            |
+| `application.unshortlisted`  | Candidate removed from shortlist |
+| `application.status_changed` | Application status changed       |
+| `application.notes_updated`  | Application notes updated        |
+| `application.withdrawn`      | Application withdrawn            |
+| `application.email_sent`     | Candidate emailed                |
 
 **Interviews**
 
-| Code | Label |
-|---|---|
-| `interview.scheduled` | Interview scheduled |
+| Code                         | Label                      |
+| ---------------------------- | -------------------------- |
+| `interview.scheduled`        | Interview scheduled        |
 | `interview.feedback_updated` | Interview feedback updated |
-| `interview.status_changed` | Interview status changed |
+| `interview.status_changed`   | Interview status changed   |
 
 **Offers**
 
-| Code | Label |
-|---|---|
-| `offer.sent` | Offer sent |
-| `offer.accepted` | Offer accepted |
-| `offer.declined` | Offer declined |
+| Code              | Label           |
+| ----------------- | --------------- |
+| `offer.sent`      | Offer sent      |
+| `offer.accepted`  | Offer accepted  |
+| `offer.declined`  | Offer declined  |
 | `offer.withdrawn` | Offer withdrawn |
-| `offer.expired` | Offer expired |
+| `offer.expired`   | Offer expired   |
 
 **Scoring & AI**
 
-| Code | Label |
-|---|---|
-| `scoring_config.updated` | Scoring weights updated |
-| `score.profile.computed` | Profile score computed |
-| `score.match.computed` | Match score computed |
-| `score.match.recomputed` | Match score recomputed |
+| Code                           | Label                      |
+| ------------------------------ | -------------------------- |
+| `scoring_config.updated`       | Scoring weights updated    |
+| `score.profile.computed`       | Profile score computed     |
+| `score.match.computed`         | Match score computed       |
+| `score.match.recomputed`       | Match score recomputed     |
 | `score.match.preview.computed` | Job match preview computed |
-| `queue.rescore_batch.enqueued` | Rescore batch enqueued |
-| `bias_flag.overridden` | Bias flag overridden |
+| `queue.rescore_batch.enqueued` | Rescore batch enqueued     |
+| `bias_flag.overridden`         | Bias flag overridden       |
 
 **Companies & members**
 
-| Code | Label |
-|---|---|
-| `company.created` | Company created |
-| `company.updated` | Company updated |
-| `company.deleted` | Company deleted |
-| `company.active_switched` | Active company switched |
-| `company_member.invited` | Member invited |
-| `company_member.invitation_resent` | Member invitation resent |
-| `company_member.invitation_revoked` | Member invitation revoked |
-| `company_member.invitation_accepted` | Member invitation accepted |
-| `company_member.invitation_declined` | Member invitation declined |
-| `company_member.role_changed` | Member role changed |
-| `company_member.removed` | Member removed |
-| `company_member.left` | Member left |
-| `company_member.ownership_transferred` | Ownership transferred |
+| Code                                   | Label                      |
+| -------------------------------------- | -------------------------- |
+| `company.created`                      | Company created            |
+| `company.updated`                      | Company updated            |
+| `company.deleted`                      | Company deleted            |
+| `company.active_switched`              | Active company switched    |
+| `company_member.invited`               | Member invited             |
+| `company_member.invitation_resent`     | Member invitation resent   |
+| `company_member.invitation_revoked`    | Member invitation revoked  |
+| `company_member.invitation_accepted`   | Member invitation accepted |
+| `company_member.invitation_declined`   | Member invitation declined |
+| `company_member.role_changed`          | Member role changed        |
+| `company_member.removed`               | Member removed             |
+| `company_member.left`                  | Member left                |
+| `company_member.ownership_transferred` | Ownership transferred      |
 
 **Notifications**
 
-| Code | Label |
-|---|---|
-| `notifications.marked_all_read` | Notifications marked as read |
-| `notification_preference.updated` | Notification preference updated |
-| `notification_preferences.reset` | Notification preferences reset |
-| `notifications.digest_email_batch_run` | Notification digest sent |
-| `notifications.retention_run` | Notification cleanup ran |
+| Code                                   | Label                           |
+| -------------------------------------- | ------------------------------- |
+| `notifications.marked_all_read`        | Notifications marked as read    |
+| `notification_preference.updated`      | Notification preference updated |
+| `notification_preferences.reset`       | Notification preferences reset  |
+| `notifications.digest_email_batch_run` | Notification digest sent        |
+| `notifications.retention_run`          | Notification cleanup ran        |
 
 **Cron / system**
 
-| Code | Label |
-|---|---|
-| `cron.expire_offers.executed` | Offer expiry cron ran |
-| `cron.archive_past_deadline_jobs.executed` | Job archive cron ran |
-| `cron.cleanup_unverified_accounts.executed` | Unverified account cleanup ran |
-| `cron.interview_reminder.executed` | Interview reminder cron ran |
-| `cron.offer_expiry_reminder.executed` | Offer expiry reminder cron ran |
-| `cron.interview_feedback_due.executed` | Interview feedback reminder cron ran |
-| `system.ai_scoring_failure_notified` | AI scoring failure notified |
+| Code                                        | Label                                |
+| ------------------------------------------- | ------------------------------------ |
+| `cron.expire_offers.executed`               | Offer expiry cron ran                |
+| `cron.archive_past_deadline_jobs.executed`  | Job archive cron ran                 |
+| `cron.cleanup_unverified_accounts.executed` | Unverified account cleanup ran       |
+| `cron.interview_reminder.executed`          | Interview reminder cron ran          |
+| `cron.offer_expiry_reminder.executed`       | Offer expiry reminder cron ran       |
+| `cron.interview_feedback_due.executed`      | Interview feedback reminder cron ran |
+| `system.ai_scoring_failure_notified`        | AI scoring failure notified          |
 
 ### 5.4 Fallback for unknown codes
 
@@ -299,19 +306,20 @@ If an action code is not in the lookup map, render it as Title-Cased Words by sp
 
 ## 6. Affected files
 
-| File | Change |
-|---|---|
-| `apps/web/app/(admin)/admin/_dashboard-client.tsx` | Replace `DashboardClient` body, `KpiTile` (new), `ScoreDistributionWidget`, `BiasFlagsWidget`, `RecentAuditWidget`. The existing `relativeTime` helper is reused. |
-| `apps/web/app/(admin)/admin/loading.tsx` | Two 3-up KPI rows of `h-28`; one 3-up snapshot row of `h-72`. |
-| `apps/web/app/(admin)/admin/audit/_audit-table-client.tsx` | Replace the `<code>` action cell with `humanizeAuditAction(r.action)`; preserve the raw code as the cell's `title=`. |
-| `apps/web/app/(admin)/admin/audit/_audit-detail-sheet-client.tsx` | Show humanized label as the sheet title; raw action code as a muted monospace sub-line. |
-| **New** `apps/web/lib/audit/humanize-action.ts` | The lookup map + fallback. Pure function, no imports beyond TS. |
+| File                                                              | Change                                                                                                                                                            |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/app/(admin)/admin/_dashboard-client.tsx`                | Replace `DashboardClient` body, `KpiTile` (new), `ScoreDistributionWidget`, `BiasFlagsWidget`, `RecentAuditWidget`. The existing `relativeTime` helper is reused. |
+| `apps/web/app/(admin)/admin/loading.tsx`                          | Two 3-up KPI rows of `h-28`; one 3-up snapshot row of `h-72`.                                                                                                     |
+| `apps/web/app/(admin)/admin/audit/_audit-table-client.tsx`        | Replace the `<code>` action cell with `humanizeAuditAction(r.action)`; preserve the raw code as the cell's `title=`.                                              |
+| `apps/web/app/(admin)/admin/audit/_audit-detail-sheet-client.tsx` | Show humanized label as the sheet title; raw action code as a muted monospace sub-line.                                                                           |
+| **New** `apps/web/lib/audit/humanize-action.ts`                   | The lookup map + fallback. Pure function, no imports beyond TS.                                                                                                   |
 
 No backend changes. No `packages/shared` changes. No `packages/db` changes.
 
 ## 7. Realtime, caching, error handling
 
 All preserved as-is:
+
 - `useAdminStatsControllerOverviewV1({ query: { staleTime: 60_000, enabled: tokenReady } })` — same.
 - `useRealtimeChannel(RealtimeEvent.AuditEntry, ...)` invalidates the overview query — same.
 - `useRealtimeChannel(RealtimeEvent.BiasFlagCreated, ...)` invalidates the overview query — same.
@@ -337,12 +345,12 @@ No new error states are required — all humanization is a pure transformation o
 
 ## 10. Risks & mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Adding a new `humanizeAuditAction` fork point — if backend adds a new action, frontend label is missing. | Fallback Title-Casing renders cleanly even for unknown codes; new actions just appear as `Foo Bar Baz` until the map is updated. Acceptable tradeoff for not requiring API changes. |
-| Widget widths shift — Recent Audit Events widget today is the rightmost narrow column; new layout puts it in a 3-up grid alongside Score Distribution and Bias Flags. Need to verify Audit list rows don't overflow. | Use `min-w-0` + `truncate` on the label text; relative timestamp is right-aligned and shrink-0. Long action labels truncate with ellipsis; full label visible in detail sheet. |
-| Realtime invalidation behavior unchanged — but visual flash if rerender pattern changes. | No data-shape changes; React Query reuses existing keys; rerenders identical to today. |
-| `score` tone applied to absolute counts (Avg Profile Score, Avg Match Score) means an empty system shows muted `—` rather than red `0`. | Intentional — matches the candidate dashboard rule (`value === 0` → muted). Empty system shouldn't read "low" tone. |
+| Risk                                                                                                                                                                                                                 | Mitigation                                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Adding a new `humanizeAuditAction` fork point — if backend adds a new action, frontend label is missing.                                                                                                             | Fallback Title-Casing renders cleanly even for unknown codes; new actions just appear as `Foo Bar Baz` until the map is updated. Acceptable tradeoff for not requiring API changes. |
+| Widget widths shift — Recent Audit Events widget today is the rightmost narrow column; new layout puts it in a 3-up grid alongside Score Distribution and Bias Flags. Need to verify Audit list rows don't overflow. | Use `min-w-0` + `truncate` on the label text; relative timestamp is right-aligned and shrink-0. Long action labels truncate with ellipsis; full label visible in detail sheet.      |
+| Realtime invalidation behavior unchanged — but visual flash if rerender pattern changes.                                                                                                                             | No data-shape changes; React Query reuses existing keys; rerenders identical to today.                                                                                              |
+| `score` tone applied to absolute counts (Avg Profile Score, Avg Match Score) means an empty system shows muted `—` rather than red `0`.                                                                              | Intentional — matches the candidate dashboard rule (`value === 0` → muted). Empty system shouldn't read "low" tone.                                                                 |
 
 ## 11. Out of scope (re-stated for the implementer)
 

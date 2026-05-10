@@ -60,7 +60,10 @@ interface AppRow {
     title: string;
     company: { id?: string; name: string; logoUrl: string | null };
   } | null;
-  matchScore: { band: "strong" | "partial" | "limited"; overallScore: number } | null;
+  matchScore: {
+    band: "strong" | "partial" | "limited";
+    overallScore: number;
+  } | null;
 }
 
 interface InterviewRow {
@@ -79,46 +82,44 @@ interface ProfileScore {
   band: "strong" | "partial" | "limited";
 }
 
-const APP_STATUS: Record<
-  string,
-  { label: string; dot: string; text: string }
-> = {
-  applied: {
-    label: "Applied",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  screening: {
-    label: "Screening",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  interview: {
-    label: "Interview",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  offer: {
-    label: "Offer",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  hired: {
-    label: "Hired",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  rejected: {
-    label: "Rejected",
-    dot: "bg-[var(--color-status-danger)]",
-    text: "text-[var(--color-status-danger)]",
-  },
-  withdrawn: {
-    label: "Withdrawn",
-    dot: "bg-[var(--color-muted)]",
-    text: "text-[var(--color-muted)]",
-  },
-};
+const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    applied: {
+      label: "Applied",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    screening: {
+      label: "Screening",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    interview: {
+      label: "Interview",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    offer: {
+      label: "Offer",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    hired: {
+      label: "Hired",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    rejected: {
+      label: "Rejected",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    withdrawn: {
+      label: "Withdrawn",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
 const DEFAULT_APP_STATUS = APP_STATUS["applied"] as NonNullable<
   (typeof APP_STATUS)[string]
@@ -165,7 +166,11 @@ function inRange(iso: string, range: Range): boolean {
   return new Date(iso).getTime() >= cutoff;
 }
 
-function FirstRunWelcomeCard({ candidateName }: { candidateName: string | null }) {
+function FirstRunWelcomeCard({
+  candidateName,
+}: {
+  candidateName: string | null;
+}) {
   const greeting = candidateName
     ? `Welcome, ${candidateName.split(" ")[0]}.`
     : "Welcome to AuraHire.";
@@ -234,7 +239,9 @@ function KpiTile({
       >
         {loading ? "—" : value}
       </div>
-      <div className="mt-1 text-xs text-[var(--color-muted)]">{description}</div>
+      <div className="mt-1 text-xs text-[var(--color-muted)]">
+        {description}
+      </div>
     </div>
   );
 }
@@ -250,7 +257,10 @@ function ApplicationsByStatusCard({ rows }: { rows: AppRow[] }) {
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
       <div className="mb-4 flex items-center gap-2">
-        <PieChart className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+        <PieChart
+          className="h-3.5 w-3.5 text-[var(--color-muted)]"
+          aria-hidden
+        />
         <h2 className="text-base font-semibold text-[var(--color-ink)]">
           Applications by Status
         </h2>
@@ -289,10 +299,16 @@ function ApplicationsByStatusCard({ rows }: { rows: AppRow[] }) {
   );
 }
 
-function UpcomingInterviewsCard({ interviews }: { interviews: InterviewRow[] }) {
+function UpcomingInterviewsCard({
+  interviews,
+}: {
+  interviews: InterviewRow[];
+}) {
   const upcoming = interviews
     .filter(
-      (i) => i.status === "scheduled" && new Date(i.scheduledAt).getTime() >= Date.now(),
+      (i) =>
+        i.status === "scheduled" &&
+        new Date(i.scheduledAt).getTime() >= Date.now(),
     )
     .sort(
       (a, b) =>
@@ -344,7 +360,9 @@ function UpcomingInterviewsCard({ interviews }: { interviews: InterviewRow[] }) 
                       {interview.job?.title ?? "Interview"}
                     </div>
                     <div className="mt-0.5 truncate text-xs text-[var(--color-muted)]">
-                      {interview.company?.name ? `${interview.company.name} · ` : ""}
+                      {interview.company?.name
+                        ? `${interview.company.name} · `
+                        : ""}
                       {date.toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
@@ -377,7 +395,10 @@ function RecentAppRow({ app }: { app: AppRow }) {
         <span
           className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
         >
-          <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+            aria-hidden
+          />
           {status.label}
         </span>
         {app.job?.company.logoUrl ? (
@@ -403,7 +424,10 @@ function RecentAppRow({ app }: { app: AppRow }) {
         <div className="flex items-center gap-3">
           {app.matchScore && (
             <>
-              <MatchBandChip band={app.matchScore.band} className="hidden md:inline-flex" />
+              <MatchBandChip
+                band={app.matchScore.band}
+                className="hidden md:inline-flex"
+              />
               <span className="font-mono text-xs">
                 <span className={scoreBandColor(app.matchScore.overallScore)}>
                   {app.matchScore.overallScore}
@@ -424,7 +448,10 @@ function RecentAppRow({ app }: { app: AppRow }) {
 function EmptyAppsState({ hasResume }: { hasResume: boolean }) {
   return (
     <div className="px-4 py-12 text-center">
-      <Inbox className="mx-auto h-6 w-6 text-[var(--color-muted)]" aria-hidden />
+      <Inbox
+        className="mx-auto h-6 w-6 text-[var(--color-muted)]"
+        aria-hidden
+      />
       <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
         No applications yet
       </div>
@@ -474,9 +501,8 @@ export function CandidateDashboardClient({
   // match-preview lands or the profile score recomputes, invalidate the
   // relevant TanStack queries so cards refresh without a manual reload.
   // The hook already filters payloads by candidateId.
-  const { latestMatchPreview, latestProfileScore } = useCandidateRealtime(
-    candidateId,
-  );
+  const { latestMatchPreview, latestProfileScore } =
+    useCandidateRealtime(candidateId);
 
   useEffect(() => {
     if (!latestMatchPreview) return;
@@ -492,7 +518,7 @@ export function CandidateDashboardClient({
 
   const allApps = (apps.data?.data ?? []) as AppRow[];
   const allInterviews = (interviews.data?.data ?? []) as InterviewRow[];
-  const score = ((profileScore.data as { data?: ProfileScore })?.data) ?? null;
+  const score = (profileScore.data as { data?: ProfileScore })?.data ?? null;
 
   // Apply range filter to applications.
   const rangedApps = useMemo(
@@ -639,9 +665,7 @@ export function CandidateDashboardClient({
         previews={(matchPreviews.data?.data ?? []) as MatchPreviewListItem[]}
         appliedJobIds={
           new Set(
-            allApps
-              .map((a) => a.job?.id)
-              .filter((id): id is string => !!id),
+            allApps.map((a) => a.job?.id).filter((id): id is string => !!id),
           )
         }
         loading={matchPreviews.isLoading}
@@ -821,8 +845,8 @@ function RecommendedForYouSection({
             {top.length < RECOMMENDED_TARGET && !stalled
               ? `· ${top.length} of ${RECOMMENDED_TARGET} ready`
               : stalled && top.length < RECOMMENDED_TARGET
-              ? "· some matches couldn't be loaded"
-              : "· auto-scored against your resume"}
+                ? "· some matches couldn't be loaded"
+                : "· auto-scored against your resume"}
           </span>
         </div>
         <Link

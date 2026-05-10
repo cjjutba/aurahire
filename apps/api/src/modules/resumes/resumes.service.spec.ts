@@ -59,7 +59,8 @@ describe("ResumesService.upload", () => {
           storagePath: (last.storagePath as string) ?? "path",
           canonicalPdfPath:
             (patch.canonicalPdfPath as string | null | undefined) ??
-            ((last.canonicalPdfPath as string | null) ?? null),
+            (last.canonicalPdfPath as string | null) ??
+            null,
           rawText: (patch.rawText as string | null | undefined) ?? null,
           parsedData:
             (patch.parsedData as Record<string, unknown> | null | undefined) ??
@@ -250,10 +251,7 @@ describe("ResumesService.reparse", () => {
     };
   }
 
-  function buildSvc(opts: {
-    initialResume: Resume;
-    parserImpl?: jest.Mock;
-  }) {
+  function buildSvc(opts: { initialResume: Resume; parserImpl?: jest.Mock }) {
     let currentRow: Resume = opts.initialResume;
 
     const repo = {
@@ -383,8 +381,13 @@ describe("ResumesService.reparse", () => {
 
   it("marks resume failed and logs reparse_failed when parser throws", async () => {
     const initial = buildResume();
-    const parserImpl = jest.fn().mockRejectedValue(new Error("OpenAI rate limit"));
-    const { svc, repo, audit } = buildSvc({ initialResume: initial, parserImpl });
+    const parserImpl = jest
+      .fn()
+      .mockRejectedValue(new Error("OpenAI rate limit"));
+    const { svc, repo, audit } = buildSvc({
+      initialResume: initial,
+      parserImpl,
+    });
 
     const result = await svc.reparse(candidateUser, initial.id);
 
@@ -438,7 +441,9 @@ describe("ResumesService.getSignedDownloadUrl", () => {
     } as unknown as jest.Mocked<ResumesRepository>;
 
     const storage = {
-      signedUrl: jest.fn(async ({ path }: { path: string }) => `signed:${path}`),
+      signedUrl: jest.fn(
+        async ({ path }: { path: string }) => `signed:${path}`,
+      ),
     } as unknown as jest.Mocked<StorageService>;
 
     const parser = {} as unknown as jest.Mocked<ParseResumeService>;
@@ -643,7 +648,9 @@ describe("ResumesService.setDefault — default change cascade", () => {
     await svc.setDefault(candidateUser, R2_ID);
 
     // Old default looked up
-    expect(repo.findDefaultByCandidateId).toHaveBeenCalledWith(candidateUser.id);
+    expect(repo.findDefaultByCandidateId).toHaveBeenCalledWith(
+      candidateUser.id,
+    );
 
     // Default flip happened (with tx forwarded so it's atomic with stale_at)
     expect(repo.setDefault).toHaveBeenCalledTimes(1);
@@ -891,13 +898,8 @@ describe("ResumesService.delete — default delete cascade", () => {
 
   it("delete-default with last resume: returns 409 LAST_RESUME_PROTECTED", async () => {
     const target = buildResume(R1_ID, true, 0);
-    const {
-      svc,
-      storage,
-      repo,
-      matchPreviewQueue,
-      profileScoreQueue,
-    } = buildSvc({ targetResume: target, replacement: null });
+    const { svc, storage, repo, matchPreviewQueue, profileScoreQueue } =
+      buildSvc({ targetResume: target, replacement: null });
 
     await expect(svc.delete(candidateUser, R1_ID)).rejects.toMatchObject({
       response: expect.objectContaining({ code: "LAST_RESUME_PROTECTED" }),
@@ -915,14 +917,8 @@ describe("ResumesService.delete — default delete cascade", () => {
 
   it("delete-non-default: standard delete; no promotion, no recompute trigger", async () => {
     const target = buildResume(R2_ID, false, 0);
-    const {
-      svc,
-      repo,
-      storage,
-      matchPreviewQueue,
-      profileScoreQueue,
-      db,
-    } = buildSvc({ targetResume: target, replacement: null });
+    const { svc, repo, storage, matchPreviewQueue, profileScoreQueue, db } =
+      buildSvc({ targetResume: target, replacement: null });
 
     await svc.delete(candidateUser, R2_ID);
 

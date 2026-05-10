@@ -113,7 +113,10 @@ describe("OfferExpiryReminderCron", () => {
       expect.objectContaining({
         actorType: "system",
         action: expect.stringContaining("offer_expiry_reminder.executed"),
-        details: expect.objectContaining({ remindersSent: 1, candidatesScanned: 1 }),
+        details: expect.objectContaining({
+          remindersSent: 1,
+          candidatesScanned: 1,
+        }),
       }),
     );
   });

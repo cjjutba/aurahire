@@ -45,7 +45,9 @@ export class MatchPreviewQueueService {
    * synchronous response — e.g. the onboarding-completion handshake), or
    * `null` when enqueue fails or the queue declines to assign an id.
    */
-  async enqueuePrecompute(payload: MatchPreviewPrecomputePayload): Promise<string | null> {
+  async enqueuePrecompute(
+    payload: MatchPreviewPrecomputePayload,
+  ): Promise<string | null> {
     try {
       const job = await this.queue.add("precompute", payload, {
         jobId: `precompute:${payload.candidateId}:${payload.resumeId}`,

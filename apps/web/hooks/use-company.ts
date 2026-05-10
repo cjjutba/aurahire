@@ -2,10 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type {
-  DeleteCompanyInput,
-  UpdateCompanyInput,
-} from "@aurahire/shared";
+import type { DeleteCompanyInput, UpdateCompanyInput } from "@aurahire/shared";
 
 import { clientApiFetch } from "./_client-fetch";
 import { MEMBERSHIPS_QUERY_KEY } from "./use-membership";

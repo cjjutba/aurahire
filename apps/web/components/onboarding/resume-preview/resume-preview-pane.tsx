@@ -254,7 +254,6 @@ export function ResumePreviewPane({
           />
         </div>
       )}
-
     </div>
   );
 }

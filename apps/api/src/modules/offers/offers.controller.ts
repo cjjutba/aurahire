@@ -8,7 +8,12 @@ import {
   Post,
   Req,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import type { FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
@@ -79,14 +84,21 @@ export class OffersController {
   ): Promise<OfferListEnvelopeDto> {
     const reqWithCtx = req as FastifyRequest & { activeCompanyId?: string };
     const companyId = reqWithCtx.activeCompanyId ?? null;
-    const data = await this.service.listForApplication(user, companyId, applicationId);
+    const data = await this.service.listForApplication(
+      user,
+      companyId,
+      applicationId,
+    );
     return { data };
   }
 
   @Post("offers/:id/accept")
   @Roles("candidate")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Candidate accepts a pending offer (auto-advances application → hired)" })
+  @ApiOperation({
+    summary:
+      "Candidate accepts a pending offer (auto-advances application → hired)",
+  })
   @ApiResponse({ status: 200, type: OfferEnvelopeDto })
   async accept(
     @CurrentUser() user: AuthUser,
@@ -100,7 +112,9 @@ export class OffersController {
   @Post("offers/:id/decline")
   @Roles("candidate")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Candidate declines a pending offer (optional reason)" })
+  @ApiOperation({
+    summary: "Candidate declines a pending offer (optional reason)",
+  })
   @ApiResponse({ status: 200, type: OfferEnvelopeDto })
   async decline(
     @CurrentUser() user: AuthUser,
@@ -108,7 +122,12 @@ export class OffersController {
     @Body() dto: DeclineOfferDto,
     @Req() req: FastifyRequest,
   ): Promise<OfferEnvelopeDto> {
-    const data = await this.service.decline(user, id, dto, this.requestMeta(req));
+    const data = await this.service.decline(
+      user,
+      id,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 

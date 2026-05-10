@@ -60,10 +60,9 @@ export function useMembersQuery(enabled: boolean = true) {
   return useQuery({
     queryKey: MEMBERS_QUERY_KEY,
     queryFn: ({ signal }) =>
-      clientApiFetch<MembersListEnvelope>(
-        "/api/v1/companies/me/members",
-        { signal },
-      ),
+      clientApiFetch<MembersListEnvelope>("/api/v1/companies/me/members", {
+        signal,
+      }),
     enabled,
   });
 }

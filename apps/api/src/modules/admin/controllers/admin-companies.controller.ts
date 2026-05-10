@@ -49,7 +49,8 @@ export class AdminCompaniesController {
   @Get("options")
   @Roles("admin")
   @ApiOperation({
-    summary: "Lightweight company list for filter dropdowns (id + name + logoUrl)",
+    summary:
+      "Lightweight company list for filter dropdowns (id + name + logoUrl)",
   })
   @ApiResponse({ status: 200, type: AdminCompanyOptionsEnvelopeDto })
   async options(): Promise<AdminCompanyOptionsEnvelopeDto> {

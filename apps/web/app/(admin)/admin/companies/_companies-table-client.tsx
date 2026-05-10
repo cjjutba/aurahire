@@ -26,10 +26,7 @@ import { Input } from "@/components/ui/input";
 
 import type { AdminCompanyRow } from "./page";
 
-async function authedFetch(
-  path: string,
-  init: RequestInit,
-): Promise<Response> {
+async function authedFetch(path: string, init: RequestInit): Promise<Response> {
   const supabase = createSupabaseBrowserClient();
   const {
     data: { session },

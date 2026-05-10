@@ -53,19 +53,24 @@ export function InterviewCancelledEmail({
           }}
         >
           <EmailBrandHeader company={company} />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             Interview cancelled
           </Heading>
           <Section>
-            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>Hi {candidateName},</Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-              The interview previously scheduled for{" "}
-              <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong> at {companyName} on{" "}
-              <strong>{when}</strong> has been cancelled.
+              Hi {candidateName},
             </Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-              Your application is still active — the recruiter may reschedule or move you forward
-              another way. Check your application detail for updates.
+              The interview previously scheduled for{" "}
+              <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong> at{" "}
+              {companyName} on <strong>{when}</strong> has been cancelled.
+            </Text>
+            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
+              Your application is still active — the recruiter may reschedule or
+              move you forward another way. Check your application detail for
+              updates.
             </Text>
           </Section>
           <Section style={{ marginTop: "24px" }}>

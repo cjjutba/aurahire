@@ -43,8 +43,8 @@ services:
     container_name: aurahire-mailpit
     restart: unless-stopped
     ports:
-      - "127.0.0.1:1025:1025"   # SMTP — apps/api connects here as SMTP_HOST=127.0.0.1
-      - "127.0.0.1:8025:8025"   # Web UI — access via SSH tunnel only (see README)
+      - "127.0.0.1:1025:1025" # SMTP — apps/api connects here as SMTP_HOST=127.0.0.1
+      - "127.0.0.1:8025:8025" # Web UI — access via SSH tunnel only (see README)
     environment:
       MP_MAX_MESSAGES: "5000"
       MP_DATABASE: "/data/mailpit.db"
@@ -53,7 +53,15 @@ services:
     volumes:
       - mailpit-data:/data
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8025/api/v1/info"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8025/api/v1/info",
+        ]
       interval: 10s
       timeout: 3s
       retries: 3

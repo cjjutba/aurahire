@@ -81,7 +81,10 @@ export class CompanyMembersRepository {
         company: companiesTable,
       })
       .from(companyMembersTable)
-      .innerJoin(companiesTable, eq(companiesTable.id, companyMembersTable.companyId))
+      .innerJoin(
+        companiesTable,
+        eq(companiesTable.id, companyMembersTable.companyId),
+      )
       .where(eq(companyMembersTable.userId, userId))
       .orderBy(desc(companyMembersTable.joinedAt));
     return rows.map((r) => ({ ...r.member, company: r.company }));
@@ -97,7 +100,10 @@ export class CompanyMembersRepository {
         company: companiesTable,
       })
       .from(companyMembersTable)
-      .innerJoin(companiesTable, eq(companiesTable.id, companyMembersTable.companyId))
+      .innerJoin(
+        companiesTable,
+        eq(companiesTable.id, companyMembersTable.companyId),
+      )
       .where(
         and(
           eq(companyMembersTable.userId, userId),
@@ -129,7 +135,10 @@ export class CompanyMembersRepository {
       })
       .from(companyMembersTable)
       .leftJoin(profilesTable, eq(profilesTable.id, companyMembersTable.userId))
-      .leftJoin(inviterProfiles, eq(inviterProfiles.id, companyMembersTable.invitedBy))
+      .leftJoin(
+        inviterProfiles,
+        eq(inviterProfiles.id, companyMembersTable.invitedBy),
+      )
       .where(eq(companyMembersTable.companyId, companyId))
       .orderBy(
         sql`${companyMembersTable.joinedAt} DESC NULLS LAST`,
@@ -186,7 +195,10 @@ export class CompanyMembersRepository {
   // ─── Writes ───────────────────────────────────────────────────────────
 
   async insert(data: NewCompanyMember): Promise<CompanyMember> {
-    const [row] = await this.db.insert(companyMembersTable).values(data).returning();
+    const [row] = await this.db
+      .insert(companyMembersTable)
+      .values(data)
+      .returning();
     if (!row) throw new Error("Company member insert failed");
     return row;
   }

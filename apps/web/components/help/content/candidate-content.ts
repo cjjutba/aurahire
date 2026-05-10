@@ -210,12 +210,27 @@ export const candidateHelp: HelpPageContent = {
               kind: "matrix",
               head: ["Status", "What it means"],
               rows: [
-                ["Applied", "You've submitted; the recruiter hasn't taken action yet."],
-                ["Screening", "The recruiter is actively reviewing your application."],
-                ["Interview", "An interview has been scheduled or is in progress."],
-                ["Offer", "An offer has been extended — check your inbox and the application page."],
+                [
+                  "Applied",
+                  "You've submitted; the recruiter hasn't taken action yet.",
+                ],
+                [
+                  "Screening",
+                  "The recruiter is actively reviewing your application.",
+                ],
+                [
+                  "Interview",
+                  "An interview has been scheduled or is in progress.",
+                ],
+                [
+                  "Offer",
+                  "An offer has been extended — check your inbox and the application page.",
+                ],
                 ["Hired", "You accepted; congratulations!"],
-                ["Rejected", "Not moving forward for this role. The recruiter may have shared a reason."],
+                [
+                  "Rejected",
+                  "Not moving forward for this role. The recruiter may have shared a reason.",
+                ],
                 ["Withdrawn", "You chose to withdraw the application."],
               ],
             },

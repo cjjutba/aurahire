@@ -46,7 +46,8 @@ export function ReviewStep({
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            const cat = (entry.target as HTMLElement).dataset.category as HighlightCategory;
+            const cat = (entry.target as HTMLElement).dataset
+              .category as HighlightCategory;
             if (cat) setActive(cat);
           }
         }
@@ -76,13 +77,18 @@ export function ReviewStep({
       </section>
 
       <section ref={skillRef} data-category="skill">
-        <SkillsCloud initial={initialSkills} onSync={(v) => syncSection("skills", v)} />
+        <SkillsCloud
+          initial={initialSkills}
+          onSync={(v) => syncSection("skills", v)}
+        />
       </section>
 
       <div className="flex justify-between pt-4">
         <button
           type="button"
-          onClick={() => startBack(() => router.push("/onboarding/candidate/personal"))}
+          onClick={() =>
+            startBack(() => router.push("/onboarding/candidate/personal"))
+          }
           disabled={isContinuing || isGoingBack}
           className="rounded-full bg-[var(--color-surface-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--color-ink)] disabled:opacity-50"
         >
@@ -90,7 +96,11 @@ export function ReviewStep({
         </button>
         <button
           type="button"
-          onClick={() => startContinue(() => router.push("/onboarding/candidate/preferences"))}
+          onClick={() =>
+            startContinue(() =>
+              router.push("/onboarding/candidate/preferences"),
+            )
+          }
           disabled={isContinuing || isGoingBack}
           className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
         >

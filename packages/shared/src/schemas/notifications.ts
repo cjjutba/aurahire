@@ -57,13 +57,17 @@ export const listNotificationsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   cursor: z.string().optional(),
 });
-export type ListNotificationsQuery = z.infer<typeof listNotificationsQuerySchema>;
+export type ListNotificationsQuery = z.infer<
+  typeof listNotificationsQuerySchema
+>;
 
 export const listNotificationsResponseSchema = z.object({
   items: z.array(notificationItemSchema),
   nextCursor: z.string().nullable(),
 });
-export type ListNotificationsResponse = z.infer<typeof listNotificationsResponseSchema>;
+export type ListNotificationsResponse = z.infer<
+  typeof listNotificationsResponseSchema
+>;
 
 export const unreadCountResponseSchema = z.object({
   count: z.number().int().min(0),
@@ -95,7 +99,15 @@ export type PreferenceItem = z.infer<typeof preferenceItemSchema>;
 
 export const restoreDefaultsBodySchema = z.object({
   category: z
-    .enum(["applications", "interviews", "offers", "bias", "team", "system", "all"])
+    .enum([
+      "applications",
+      "interviews",
+      "offers",
+      "bias",
+      "team",
+      "system",
+      "all",
+    ])
     .default("all"),
 });
 export type RestoreDefaultsBody = z.infer<typeof restoreDefaultsBodySchema>;
@@ -103,4 +115,6 @@ export type RestoreDefaultsBody = z.infer<typeof restoreDefaultsBodySchema>;
 export const restoreDefaultsResponseSchema = z.object({
   deleted: z.number().int().min(0),
 });
-export type RestoreDefaultsResponse = z.infer<typeof restoreDefaultsResponseSchema>;
+export type RestoreDefaultsResponse = z.infer<
+  typeof restoreDefaultsResponseSchema
+>;

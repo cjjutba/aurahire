@@ -53,7 +53,10 @@ export interface CandidateInterviewDetail {
 // Status pill
 // ---------------------------------------------------------------------------
 
-const STATUS_STYLES: Record<string, { label: string; dot: string; text: string }> = {
+const STATUS_STYLES: Record<
+  string,
+  { label: string; dot: string; text: string }
+> = {
   scheduled: {
     label: "Scheduled",
     dot: "bg-[var(--color-status-info)]",
@@ -151,7 +154,9 @@ export function CandidateInterviewDetailClient({ interview: iv }: Props) {
               {jobTitle}
             </h1>
             {companyName && (
-              <p className="text-sm text-[var(--color-body)]">at {companyName}</p>
+              <p className="text-sm text-[var(--color-body)]">
+                at {companyName}
+              </p>
             )}
             <div className="flex items-center gap-2 pt-1">
               <CalendarClock
@@ -201,10 +206,12 @@ export function CandidateInterviewDetailClient({ interview: iv }: Props) {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
             Venue
           </h2>
-          {iv.venueName ?? iv.addressLine ? (
+          {(iv.venueName ?? iv.addressLine) ? (
             <div className="space-y-1.5">
               {iv.venueName && (
-                <p className="font-medium text-[var(--color-ink)]">{iv.venueName}</p>
+                <p className="font-medium text-[var(--color-ink)]">
+                  {iv.venueName}
+                </p>
               )}
               {iv.addressLine && (
                 <div className="flex items-start gap-1.5 text-sm">
@@ -291,7 +298,10 @@ export function CandidateInterviewDetailClient({ interview: iv }: Props) {
               </p>
               {iv.interviewerTitle && (
                 <div className="flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted)]" aria-hidden />
+                  <User
+                    className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted)]"
+                    aria-hidden
+                  />
                   <p className="text-sm text-[var(--color-body)]">
                     {iv.interviewerTitle}
                   </p>

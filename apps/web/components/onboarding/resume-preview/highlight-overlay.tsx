@@ -22,7 +22,11 @@ interface Props {
  * one per matched highlight rect. Out-of-set categories fade to opacity 0.15.
  * Hovered highlight gets a pulse animation.
  */
-export function HighlightOverlay({ highlights, activeCategories, pageContainers }: Props) {
+export function HighlightOverlay({
+  highlights,
+  activeCategories,
+  pageContainers,
+}: Props) {
   const { hoveredFieldId, focusField } = useHighlightContext();
 
   useEffect(() => {
@@ -51,7 +55,8 @@ export function HighlightOverlay({ highlights, activeCategories, pageContainers 
         div.style.borderRadius = "3px";
         div.style.pointerEvents = "auto";
         div.style.cursor = "pointer";
-        div.style.transition = "opacity 200ms ease, background-color 200ms ease";
+        div.style.transition =
+          "opacity 200ms ease, background-color 200ms ease";
         div.style.opacity = isActive ? "1" : "0.15";
         div.style.backgroundColor = "var(--color-primary-soft)";
         div.style.mixBlendMode = "multiply";
@@ -69,7 +74,13 @@ export function HighlightOverlay({ highlights, activeCategories, pageContainers 
     return () => {
       cleanup.forEach((fn) => fn());
     };
-  }, [highlights, activeCategories, hoveredFieldId, pageContainers, focusField]);
+  }, [
+    highlights,
+    activeCategories,
+    hoveredFieldId,
+    pageContainers,
+    focusField,
+  ]);
 
   return null;
 }

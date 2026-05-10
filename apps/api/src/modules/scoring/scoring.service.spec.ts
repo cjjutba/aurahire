@@ -1,5 +1,10 @@
 import type Redis from "ioredis";
-import type { MatchScorePreview, Resume, ScoringConfig, Job } from "@aurahire/db";
+import type {
+  MatchScorePreview,
+  Resume,
+  ScoringConfig,
+  Job,
+} from "@aurahire/db";
 import { ONVIEW_DAILY_CAP, type AuthUser } from "@aurahire/shared";
 import { ForbiddenException } from "@nestjs/common";
 
@@ -21,17 +26,19 @@ import type { CacheService } from "../../cache";
 import type { EventsService } from "../../realtime";
 
 describe("reconcileEvidenceContributions", () => {
-  function buildComponent(overrides: Partial<{
-    name: string;
-    score: number;
-    max: number;
-    evidence: Array<{
-      excerpt: string;
-      source: string;
-      relevance: "positive" | "negative" | "neutral";
-      contribution_points: number;
-    }>;
-  }> = {}) {
+  function buildComponent(
+    overrides: Partial<{
+      name: string;
+      score: number;
+      max: number;
+      evidence: Array<{
+        excerpt: string;
+        source: string;
+        relevance: "positive" | "negative" | "neutral";
+        contribution_points: number;
+      }>;
+    }> = {},
+  ) {
     return {
       name: "skills",
       score: 0,
@@ -48,9 +55,24 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 25,
         evidence: [
-          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "PG", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "Docker", source: "skills", relevance: "positive", contribution_points: 5 },
+          {
+            excerpt: "TS",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "PG",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "Docker",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 5,
+          },
         ],
       }),
     );
@@ -64,9 +86,24 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 30, // AI claimed 30
         evidence: [
-          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "PG", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "Docker", source: "skills", relevance: "positive", contribution_points: 5 },
+          {
+            excerpt: "TS",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "PG",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "Docker",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 5,
+          },
         ],
       }),
     );
@@ -79,8 +116,18 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 15,
         evidence: [
-          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 7 },
-          { excerpt: "b", source: "skills", relevance: "positive", contribution_points: 8 },
+          {
+            excerpt: "a",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 7,
+          },
+          {
+            excerpt: "b",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 8,
+          },
         ],
       }),
     );
@@ -100,8 +147,18 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 10,
         evidence: [
-          { excerpt: "gap1", source: "req", relevance: "negative", contribution_points: -15 },
-          { excerpt: "gap2", source: "req", relevance: "negative", contribution_points: -15 },
+          {
+            excerpt: "gap1",
+            source: "req",
+            relevance: "negative",
+            contribution_points: -15,
+          },
+          {
+            excerpt: "gap2",
+            source: "req",
+            relevance: "negative",
+            contribution_points: -15,
+          },
         ],
       }),
     );
@@ -115,8 +172,18 @@ describe("reconcileEvidenceContributions", () => {
         score: 20,
         max: 15,
         evidence: [
-          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "b", source: "skills", relevance: "positive", contribution_points: 10 },
+          {
+            excerpt: "a",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "b",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
         ],
       }),
     );
@@ -130,7 +197,12 @@ describe("reconcileEvidenceContributions", () => {
         score: 0,
         evidence: [
           // AI mislabeled a -10 as positive — engine forces it back to negative.
-          { excerpt: "no Go", source: "req", relevance: "positive", contribution_points: -10 },
+          {
+            excerpt: "no Go",
+            source: "req",
+            relevance: "positive",
+            contribution_points: -10,
+          },
         ],
       }),
     );
@@ -142,7 +214,12 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 0,
         evidence: [
-          { excerpt: "context", source: "summary", relevance: "neutral", contribution_points: 0 },
+          {
+            excerpt: "context",
+            source: "summary",
+            relevance: "neutral",
+            contribution_points: 0,
+          },
         ],
       }),
     );
@@ -170,7 +247,10 @@ describe("buildDeterministicCompletenessComponent", () => {
         portfolio_url: null,
         portfolio_url_source: null,
       },
-      summary: { text: "10+ years of platform engineering.", text_source: "src" },
+      summary: {
+        text: "10+ years of platform engineering.",
+        text_source: "src",
+      },
       education: [
         {
           institution: "State U",
@@ -227,7 +307,9 @@ describe("buildDeterministicCompletenessComponent", () => {
     const positives = c.evidence.filter((e) => e.relevance === "positive");
     expect(negatives).toHaveLength(2);
     expect(positives).toHaveLength(3);
-    expect(c.explanation).toMatch(/Missing:.*summary.*skills|Missing:.*skills.*summary/);
+    expect(c.explanation).toMatch(
+      /Missing:.*summary.*skills|Missing:.*skills.*summary/,
+    );
   });
 
   it("clamps to 0 when no canonical sections are present", () => {
@@ -285,17 +367,19 @@ describe("buildDeterministicCompletenessComponent", () => {
 });
 
 describe("detectCalibrationWarnings", () => {
-  function buildComponent(overrides: Partial<{
-    name: string;
-    score: number;
-    max: number;
-    evidence: Array<{
-      excerpt: string;
-      source: string;
-      relevance: "positive" | "negative" | "neutral";
-      contribution_points: number;
-    }>;
-  }> = {}) {
+  function buildComponent(
+    overrides: Partial<{
+      name: string;
+      score: number;
+      max: number;
+      evidence: Array<{
+        excerpt: string;
+        source: string;
+        relevance: "positive" | "negative" | "neutral";
+        contribution_points: number;
+      }>;
+    }> = {},
+  ) {
     return {
       name: "skills",
       score: 0,
@@ -313,7 +397,12 @@ describe("detectCalibrationWarnings", () => {
         score: 40,
         max: 40,
         evidence: [
-          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 40 },
+          {
+            excerpt: "TS",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 40,
+          },
         ],
       }),
     );
@@ -328,8 +417,18 @@ describe("detectCalibrationWarnings", () => {
         score: 40,
         max: 40,
         evidence: [
-          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 20 },
-          { excerpt: "PG", source: "skills", relevance: "positive", contribution_points: 20 },
+          {
+            excerpt: "TS",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 20,
+          },
+          {
+            excerpt: "PG",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 20,
+          },
         ],
       }),
     );
@@ -342,13 +441,26 @@ describe("detectCalibrationWarnings", () => {
         score: 25,
         max: 30,
         evidence: [
-          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 15 },
-          { excerpt: "b", source: "skills", relevance: "positive", contribution_points: 10 },
+          {
+            excerpt: "a",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 15,
+          },
+          {
+            excerpt: "b",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
         ],
       }),
     );
     expect(warnings).toEqual([
-      { componentName: "skills", reason: "deduction_without_negative_evidence" },
+      {
+        componentName: "skills",
+        reason: "deduction_without_negative_evidence",
+      },
     ]);
   });
 
@@ -358,8 +470,18 @@ describe("detectCalibrationWarnings", () => {
         score: 25,
         max: 30,
         evidence: [
-          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 30 },
-          { excerpt: "gap", source: "req", relevance: "negative", contribution_points: -5 },
+          {
+            excerpt: "a",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 30,
+          },
+          {
+            excerpt: "gap",
+            source: "req",
+            relevance: "negative",
+            contribution_points: -5,
+          },
         ],
       }),
     );
@@ -372,7 +494,12 @@ describe("detectCalibrationWarnings", () => {
         score: 0,
         max: 40,
         evidence: [
-          { excerpt: "no match", source: "req", relevance: "negative", contribution_points: -40 },
+          {
+            excerpt: "no match",
+            source: "req",
+            relevance: "negative",
+            contribution_points: -40,
+          },
         ],
       }),
     );
@@ -386,15 +513,38 @@ describe("detectCalibrationWarnings", () => {
         score: 20,
         max: 40,
         evidence: [
-          { excerpt: "TypeScript", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "Kubernetes", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "Go, Backstage, Bazel", source: "Job requirement › Required Skills", relevance: "neutral", contribution_points: 0 },
-          { excerpt: "JavaScript, React, Node.js, AWS, Docker", source: "skills", relevance: "neutral", contribution_points: 0 },
+          {
+            excerpt: "TypeScript",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "Kubernetes",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "Go, Backstage, Bazel",
+            source: "Job requirement › Required Skills",
+            relevance: "neutral",
+            contribution_points: 0,
+          },
+          {
+            excerpt: "JavaScript, React, Node.js, AWS, Docker",
+            source: "skills",
+            relevance: "neutral",
+            contribution_points: 0,
+          },
         ],
       }),
     );
     expect(warnings).toEqual([
-      { componentName: "skills", reason: "deduction_without_negative_evidence" },
+      {
+        componentName: "skills",
+        reason: "deduction_without_negative_evidence",
+      },
     ]);
   });
 });
@@ -570,7 +720,12 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
         unknown
       >,
       redactedFields: ["email", "phone"],
-      weightsUsed: { skills: 40, experience: 30, education: 15, cultural_fit: 15 } as unknown as Record<string, unknown>,
+      weightsUsed: {
+        skills: 40,
+        experience: 30,
+        education: 15,
+        cultural_fit: 15,
+      } as unknown as Record<string, unknown>,
       promptVersion: "score-match@v1",
       modelUsed: "gpt-4o-mini",
       rawOutput: buildAiResult().score as unknown as Record<string, unknown>,
@@ -671,13 +826,25 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
       redis,
       events,
     );
-    return { svc, redis, scoringRepo, resumesRepo, jobsRepo, scoreMatch, audit, events };
+    return {
+      svc,
+      redis,
+      scoringRepo,
+      resumesRepo,
+      jobsRepo,
+      scoreMatch,
+      audit,
+      events,
+    };
   }
 
   it("writes preview row with source = 'candidate_view' and increments redis counter", async () => {
     const { svc, redis, scoringRepo, scoreMatch } = buildSvc();
 
-    const result = await svc.computeMatchPreviewOnView(buildCandidateUser(), jobId);
+    const result = await svc.computeMatchPreviewOnView(
+      buildCandidateUser(),
+      jobId,
+    );
 
     // Source tag and clamped overall score
     expect(result.source).toBe("candidate_view");
@@ -695,7 +862,8 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
     // AI compute happened, and the preview was upserted with the right source
     expect(scoreMatch.score).toHaveBeenCalledTimes(1);
     expect(scoringRepo.upsertMatchPreview).toHaveBeenCalledTimes(1);
-    const upsertArgs = (scoringRepo.upsertMatchPreview as jest.Mock).mock.calls[0][0];
+    const upsertArgs = (scoringRepo.upsertMatchPreview as jest.Mock).mock
+      .calls[0][0];
     expect(upsertArgs.source).toBe("candidate_view");
     expect(upsertArgs.candidateId).toBe(candidateId);
     expect(upsertArgs.jobId).toBe(jobId);
@@ -707,7 +875,10 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
       existingPreview: buildPreviewRow(),
     });
 
-    const result = await svc.computeMatchPreviewOnView(buildCandidateUser(), jobId);
+    const result = await svc.computeMatchPreviewOnView(
+      buildCandidateUser(),
+      jobId,
+    );
 
     // Cache hit short-circuit: no Redis INCR, no AI call, no upsert
     expect(redis.incr).not.toHaveBeenCalled();

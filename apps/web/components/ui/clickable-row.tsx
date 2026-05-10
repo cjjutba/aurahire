@@ -23,7 +23,8 @@ export function ClickableRow({
 
   function handleClick(e: MouseEvent<HTMLTableRowElement>) {
     if (e.defaultPrevented) return;
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
+      return;
     const target = e.target as HTMLElement;
     if (target.closest(INTERACTIVE_SELECTOR)) return;
     router.push(href);

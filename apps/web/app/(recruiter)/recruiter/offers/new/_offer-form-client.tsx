@@ -31,7 +31,8 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
   const router = useRouter();
   const [title, setTitle] = useState(defaultTitle);
   const [salary, setSalary] = useState<string>("");
-  const [salaryCurrency, setSalaryCurrency] = useState<(typeof CURRENCY_OPTIONS)[number]>("USD");
+  const [salaryCurrency, setSalaryCurrency] =
+    useState<(typeof CURRENCY_OPTIONS)[number]>("USD");
   const [startDate, setStartDate] = useState(isoDatePlusDays(30));
   const [managerName, setManagerName] = useState("");
   const [benefitsSummary, setBenefitsSummary] = useState("");
@@ -47,7 +48,11 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
       return;
     }
     if (!Number.isFinite(salaryNum) || salaryNum <= 0) {
-      toastApiError(null, "Check your input", "Salary must be a positive number.");
+      toastApiError(
+        null,
+        "Check your input",
+        "Salary must be a positive number.",
+      );
       return;
     }
     if (!startDate) {
@@ -95,7 +100,12 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
           code?: string;
         };
         if (body.code === "OFFER_ALREADY_PENDING") {
-          toastApiError(null, "Couldn't send offer", body.message ?? "Withdraw the existing offer before sending another.");
+          toastApiError(
+            null,
+            "Couldn't send offer",
+            body.message ??
+              "Withdraw the existing offer before sending another.",
+          );
         } else {
           toastApiError(null, "Couldn't send offer", body.message);
         }
@@ -116,15 +126,25 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
     >
       <div>
         <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-          Job title <span aria-hidden className="text-[var(--color-status-danger)]">*</span>
+          Job title{" "}
+          <span aria-hidden className="text-[var(--color-status-danger)]">
+            *
+          </span>
         </label>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="sm:col-span-2">
           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Salary <span aria-hidden className="text-[var(--color-status-danger)]">*</span>
+            Salary{" "}
+            <span aria-hidden className="text-[var(--color-status-danger)]">
+              *
+            </span>
           </label>
           <Input
             type="number"
@@ -142,7 +162,9 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
           </label>
           <Select
             value={salaryCurrency}
-            onValueChange={(v) => setSalaryCurrency(v as (typeof CURRENCY_OPTIONS)[number])}
+            onValueChange={(v) =>
+              setSalaryCurrency(v as (typeof CURRENCY_OPTIONS)[number])
+            }
           >
             <SelectTrigger>
               <SelectValue />
@@ -161,7 +183,10 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Start date <span aria-hidden className="text-[var(--color-status-danger)]">*</span>
+            Start date{" "}
+            <span aria-hidden className="text-[var(--color-status-danger)]">
+              *
+            </span>
           </label>
           <Input
             type="date"

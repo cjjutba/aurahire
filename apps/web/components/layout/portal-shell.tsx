@@ -42,7 +42,10 @@ export function PortalShell({
           >
             <Menu className="h-5 w-5" />
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 bg-[var(--color-canvas)] p-0">
+          <SheetContent
+            side="left"
+            className="w-72 bg-[var(--color-canvas)] p-0"
+          >
             <PortalSidebarContent
               role={role}
               userId={userId}

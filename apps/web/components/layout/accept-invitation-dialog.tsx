@@ -123,8 +123,7 @@ export function AcceptInvitationDialog({
       queryClient.clear();
       await queryClient.fetchQuery({
         queryKey: MEMBERSHIPS_QUERY_KEY,
-        queryFn: () =>
-          clientApiFetch("/api/v1/profiles/me/memberships"),
+        queryFn: () => clientApiFetch("/api/v1/profiles/me/memberships"),
       });
       toastSuccess(
         `You joined ${res.data.companyName}`,
@@ -211,10 +210,7 @@ function PasteStep({
       <DialogHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-full)] bg-[var(--color-primary-soft)]">
-            <Mail
-              className="h-5 w-5 text-[var(--color-primary)]"
-              aria-hidden
-            />
+            <Mail className="h-5 w-5 text-[var(--color-primary)]" aria-hidden />
           </div>
           <div className="flex-1">
             <DialogTitle className="text-xl font-normal tracking-tight">

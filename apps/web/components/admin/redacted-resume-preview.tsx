@@ -68,10 +68,7 @@ function flattenForPreview(
   return rows;
 }
 
-export function RedactedResumePreview({
-  parsedResume,
-  redactedFields,
-}: Props) {
+export function RedactedResumePreview({ parsedResume, redactedFields }: Props) {
   if (!parsedResume) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-4 text-sm text-[var(--color-muted)]">
@@ -164,7 +161,9 @@ export function RedactedResumePreview({
           <p className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
             Education (visible)
           </p>
-          <p className="mt-1 text-[var(--color-ink)]">{educationCount} entries</p>
+          <p className="mt-1 text-[var(--color-ink)]">
+            {educationCount} entries
+          </p>
         </div>
       </div>
     </section>

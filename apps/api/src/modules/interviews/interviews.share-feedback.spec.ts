@@ -75,7 +75,10 @@ function makeBaseInterview(sharedWithCandidateAt: Date | null = null) {
   } as any;
 }
 
-function makeUpdatedInterview(candidateSummary: string, sharedWithCandidateAt: Date) {
+function makeUpdatedInterview(
+  candidateSummary: string,
+  sharedWithCandidateAt: Date,
+) {
   return {
     ...makeBaseInterview(sharedWithCandidateAt),
     candidateSummary,
@@ -153,7 +156,8 @@ describe("InterviewsService.shareFeedback", () => {
   });
 
   it("sets candidateSummary + sharedWithCandidateAt, audits FEEDBACK_SHARED, fires notification + realtime", async () => {
-    const summary = "You demonstrated excellent technical skills and cultural fit.";
+    const summary =
+      "You demonstrated excellent technical skills and cultural fit.";
     const baseInterview = makeBaseInterview(null);
     repo.findById.mockResolvedValue(baseInterview);
     applicationsRepo.findApplicationContextForCompany.mockResolvedValue({
@@ -236,7 +240,9 @@ describe("InterviewsService.shareFeedback", () => {
     } as any);
     const newSummary = "Updated: excellent fit for the senior role.";
     const newSharedAt = new Date();
-    repo.update.mockResolvedValue(makeUpdatedInterview(newSummary, newSharedAt));
+    repo.update.mockResolvedValue(
+      makeUpdatedInterview(newSummary, newSharedAt),
+    );
     applicationsRepo.findById.mockResolvedValue({
       id: APPLICATION_ID,
       candidateId: CANDIDATE_ID,

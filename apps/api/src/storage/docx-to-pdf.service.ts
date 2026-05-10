@@ -45,7 +45,9 @@ export class DocxToPdfService {
   }
 
   private async runConversion(docxBuffer: Buffer): Promise<Buffer> {
-    const workDir = await fs.mkdtemp(join(tmpdir(), `docx2pdf-${randomUUID()}-`));
+    const workDir = await fs.mkdtemp(
+      join(tmpdir(), `docx2pdf-${randomUUID()}-`),
+    );
     const inPath = join(workDir, "in.docx");
     const outPath = join(workDir, "in.pdf");
 
@@ -69,23 +71,35 @@ export class DocxToPdfService {
 
         const timer = setTimeout(() => {
           proc.kill("SIGKILL");
-          reject(new DocxConversionError("LibreOffice conversion timed out", stderr));
+          reject(
+            new DocxConversionError("LibreOffice conversion timed out", stderr),
+          );
         }, TIMEOUT_MS);
 
         proc.on("close", (code: number) => {
           clearTimeout(timer);
           if (code === 0) resolve();
-          else reject(new DocxConversionError(`soffice exited with code ${code}`, stderr));
+          else
+            reject(
+              new DocxConversionError(
+                `soffice exited with code ${code}`,
+                stderr,
+              ),
+            );
         });
 
         proc.on("error", (err: Error) => {
           clearTimeout(timer);
-          reject(new DocxConversionError(`Failed to spawn soffice: ${err.message}`));
+          reject(
+            new DocxConversionError(`Failed to spawn soffice: ${err.message}`),
+          );
         });
       });
 
       const pdfBuffer = await fs.readFile(outPath);
-      this.logger.log(`Converted DOCX (${docxBuffer.length}B) -> PDF (${pdfBuffer.length}B)`);
+      this.logger.log(
+        `Converted DOCX (${docxBuffer.length}B) -> PDF (${pdfBuffer.length}B)`,
+      );
       return pdfBuffer;
     } finally {
       await fs.rm(workDir, { recursive: true, force: true }).catch(() => {});

@@ -30,7 +30,8 @@ export async function fetchCandidateProfileMe(): Promise<CandidateProfileMe> {
   });
 
   if (res.status === 403) redirect("/login");
-  if (!res.ok) throw new Error(`Failed to load candidate profile: ${res.status}`);
+  if (!res.ok)
+    throw new Error(`Failed to load candidate profile: ${res.status}`);
 
   const body = (await res.json()) as { data: CandidateProfileMe };
   return body.data;

@@ -30,7 +30,10 @@ export default function Loading() {
           <div className="mt-5 space-y-2 border-t border-[var(--color-hairline-soft)] pt-4">
             <Skeleton className="h-4 w-32" />
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-[var(--radius-md)]" />
+              <Skeleton
+                key={i}
+                className="h-12 w-full rounded-[var(--radius-md)]"
+              />
             ))}
           </div>
         </div>

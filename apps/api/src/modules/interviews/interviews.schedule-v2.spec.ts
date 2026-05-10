@@ -220,7 +220,10 @@ describe("InterviewsService.schedule() — v2 venue/guidance/interviewer fields"
     } as any);
 
     repo.insert.mockResolvedValue(
-      makeInterviewRow({ interviewerName: "Recruiter R", interviewerTitle: null }),
+      makeInterviewRow({
+        interviewerName: "Recruiter R",
+        interviewerTitle: null,
+      }),
     );
 
     await service.schedule(

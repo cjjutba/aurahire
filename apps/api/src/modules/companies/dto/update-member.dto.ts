@@ -3,4 +3,6 @@ import { updateMemberSchema, transferOwnershipSchema } from "@aurahire/shared";
 
 export class UpdateMemberDto extends createZodDto(updateMemberSchema) {}
 
-export class TransferOwnershipDto extends createZodDto(transferOwnershipSchema) {}
+export class TransferOwnershipDto extends createZodDto(
+  transferOwnershipSchema,
+) {}

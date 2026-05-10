@@ -10,7 +10,13 @@ interface AuthShellProps {
   footer?: ReactNode;
 }
 
-export function AuthShell({ title, subtitle, topSlot, children, footer }: AuthShellProps) {
+export function AuthShell({
+  title,
+  subtitle,
+  topSlot,
+  children,
+  footer,
+}: AuthShellProps) {
   return (
     <div className="mx-auto w-full max-w-[360px] sm:max-w-[400px]">
       {topSlot && <div className="mb-3 flex justify-center">{topSlot}</div>}
@@ -26,7 +32,9 @@ export function AuthShell({ title, subtitle, topSlot, children, footer }: AuthSh
       )}
       {children}
       {footer && (
-        <div className="mt-5 text-center text-sm text-[var(--color-body)]">{footer}</div>
+        <div className="mt-5 text-center text-sm text-[var(--color-body)]">
+          {footer}
+        </div>
       )}
     </div>
   );

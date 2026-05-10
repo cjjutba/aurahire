@@ -4,7 +4,7 @@
 
 **Goal:** Make AuraHire proactive end-to-end — Profile Score auto-computes at the end of onboarding, match scores compute on-view, every lifecycle event fires a notification with realtime delivery, and every portal sidebar gains a Vercel-style bottom rail with profile dropdown + notifications popover.
 
-**Architecture:** One pattern repeated across every change: *event → handler → realtime emit + DB persistence + UI subscriber*. Backend uses NestJS + BullMQ + `@nestjs/schedule`. Realtime uses the existing Socket.IO `EventsService` with the existing `Rooms.user(id)` helper. Frontend uses Next.js 16 App Router, TanStack Query, Radix UI Popover, and a new `useUserNotifications()` hook for realtime subscription.
+**Architecture:** One pattern repeated across every change: _event → handler → realtime emit + DB persistence + UI subscriber_. Backend uses NestJS + BullMQ + `@nestjs/schedule`. Realtime uses the existing Socket.IO `EventsService` with the existing `Rooms.user(id)` helper. Frontend uses Next.js 16 App Router, TanStack Query, Radix UI Popover, and a new `useUserNotifications()` hook for realtime subscription.
 
 **Tech Stack:** TypeScript strict, NestJS, Drizzle ORM, BullMQ, Socket.IO, `@nestjs/schedule`, Next.js 16, React 19, Radix UI, TanStack Query, Zod, Vitest, Jest, Playwright.
 
@@ -82,6 +82,7 @@ This phase produces a backend that auto-computes Profile Score on onboarding com
 ### Task 1: DB migration — schema additions
 
 **Files:**
+
 - Modify: `packages/db/src/schema/scoring.ts`
 - Modify: `packages/db/src/schema/notifications.ts`
 - Modify: `packages/db/src/schema/interviews.ts`
@@ -103,7 +104,7 @@ Find the existing `matchPreviewSourceEnum` (likely `pgEnum("match_preview_source
 export const matchPreviewSourceEnum = pgEnum("match_preview_source", [
   "system",
   "candidate",
-  "candidate_view",   // NEW
+  "candidate_view", // NEW
 ]);
 ```
 
@@ -169,6 +170,7 @@ git commit -m "feat(db): add stale_at, archived_at, feedback_reminder_sent_at, a
 ### Task 2: scoring_config — new keys
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts` (or wherever the config defaults live — likely `apps/api/src/ai/config/` — verify)
 
 - [ ] **Step 1: Locate scoring_config defaults**
@@ -207,6 +209,7 @@ git commit -m "feat(scoring): add proactive-system config keys"
 ### Task 3: ScoringService.computeMatchPreviewOnView — failing test
 
 **Files:**
+
 - Test: `apps/api/src/modules/scoring/scoring.service.spec.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -235,15 +238,15 @@ describe("computeMatchPreviewOnView", () => {
   it("returns cached preview without incrementing counter on cache hit", async () => {
     const candidateId = "test-candidate-id";
     const jobId = "test-job-id";
-    await service.computeMatchPreviewOnView(candidateId, jobId);  // first call
+    await service.computeMatchPreviewOnView(candidateId, jobId); // first call
 
     const redisKeyBefore = `scoring:onview:${candidateId}:${new Date().toISOString().slice(0, 10)}`;
     const countBefore = Number(await redis.get(redisKeyBefore));
 
-    const second = await service.computeMatchPreviewOnView(candidateId, jobId);  // cache hit
+    const second = await service.computeMatchPreviewOnView(candidateId, jobId); // cache hit
 
     const countAfter = Number(await redis.get(redisKeyBefore));
-    expect(countAfter).toBe(countBefore);  // not incremented
+    expect(countAfter).toBe(countBefore); // not incremented
     expect(second).toBeDefined();
   });
 
@@ -252,7 +255,7 @@ describe("computeMatchPreviewOnView", () => {
     const jobId = "test-job-id";
     const cap = 100;
     const redisKey = `scoring:onview:${candidateId}:${new Date().toISOString().slice(0, 10)}`;
-    await redis.set(redisKey, cap);  // pre-set at cap
+    await redis.set(redisKey, cap); // pre-set at cap
 
     await expect(
       service.computeMatchPreviewOnView(candidateId, jobId),
@@ -280,6 +283,7 @@ git commit -m "test(scoring): failing test for computeMatchPreviewOnView"
 ### Task 4: ScoringService.computeMatchPreviewOnView — implementation
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts`
 - Create: `apps/api/src/modules/scoring/dto/match-preview-rate-limit.exception.ts`
 
@@ -344,6 +348,7 @@ git commit -m "feat(scoring): computeMatchPreviewOnView with daily rate limit"
 ### Task 5: ScoringController delegates to new method
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.controller.ts`
 - Test: `apps/api/src/modules/scoring/scoring.controller.spec.ts`
 
@@ -355,10 +360,7 @@ Append to `scoring.controller.spec.ts`:
 it("POST /scoring/match-preview/:jobId returns 429 with code DAILY_AI_LIMIT when cap reached", async () => {
   // arrange: pre-set redis to cap
   const cap = 100;
-  await redis.set(
-    `scoring:onview:${TEST_CANDIDATE_ID}:${todayUtc()}`,
-    cap,
-  );
+  await redis.set(`scoring:onview:${TEST_CANDIDATE_ID}:${todayUtc()}`, cap);
 
   const res = await request(app.getHttpServer())
     .post(`/scoring/match-preview/${TEST_JOB_ID}`)
@@ -395,6 +397,7 @@ git commit -m "feat(scoring): controller delegates POST match-preview to on-view
 ### Task 6: Default-resume-change handler — failing test
 
 **Files:**
+
 - Test: `apps/api/src/modules/resumes/resumes.service.spec.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -403,12 +406,18 @@ git commit -m "feat(scoring): controller delegates POST match-preview to on-view
 describe("ResumesService.setAsDefault", () => {
   it("on default change: marks profile_scores stale, enqueues recompute jobs, cancels old in-flight jobs", async () => {
     // arrange: candidate with two resumes, R1 currently default, R1 has match-preview precompute job in flight
-    const oldJob = await matchPreviewQueue.add("precompute", { candidateId, resumeId: R1 });
+    const oldJob = await matchPreviewQueue.add("precompute", {
+      candidateId,
+      resumeId: R1,
+    });
 
     await service.setAsDefault(candidateId, R2);
 
     // assert profile_scores marked stale
-    const score = await db.select().from(profileScoresTable).where(eq(profileScoresTable.candidateId, candidateId));
+    const score = await db
+      .select()
+      .from(profileScoresTable)
+      .where(eq(profileScoresTable.candidateId, candidateId));
     expect(score[0]?.staleAt).not.toBeNull();
 
     // assert old job removed
@@ -491,6 +500,7 @@ git commit -m "feat(resumes): default-change cascades to profile-score and match
 ### Task 7: Resume delete cascade with auto-promote (F3)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/resumes/resumes.service.ts`
 - Test: `apps/api/src/modules/resumes/resumes.service.spec.ts`
 
@@ -501,7 +511,10 @@ it("delete-default with multiple resumes: promotes most-recently-uploaded remain
   // arrange: candidate has R1 (default, uploaded 3 days ago), R2 (1 day ago), R3 (today, default)
   await service.delete(candidateId, R3);
 
-  const fresh = await db.select().from(resumesTable).where(eq(resumesTable.candidateId, candidateId));
+  const fresh = await db
+    .select()
+    .from(resumesTable)
+    .where(eq(resumesTable.candidateId, candidateId));
   expect(fresh.find((r) => r.isDefault)?.id).toBe(R2);
 });
 
@@ -569,6 +582,7 @@ git commit -m "feat(resumes): delete-default auto-promotes; last-resume protecte
 ### Task 8: Profile-personal edit triggers recompute (F1)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/candidate-profiles/candidate-profiles.service.ts`
 - Test: `apps/api/src/modules/candidate-profiles/candidate-profiles.service.spec.ts`
 
@@ -578,7 +592,10 @@ git commit -m "feat(resumes): delete-default auto-promotes; last-resume protecte
 it("updatePersonal: marks profile_scores stale and enqueues recompute job", async () => {
   await service.updatePersonal(candidateId, { headline: "Senior Engineer" });
 
-  const score = await db.select().from(profileScoresTable).where(eq(profileScoresTable.candidateId, candidateId));
+  const score = await db
+    .select()
+    .from(profileScoresTable)
+    .where(eq(profileScoresTable.candidateId, candidateId));
   expect(score[0]?.staleAt).not.toBeNull();
 
   const counts = await profileScoreQueue.getJobCounts();
@@ -642,6 +659,7 @@ git commit -m "feat(candidate-profiles): updatePersonal/updatePreferences mark s
 ### Task 9: Profile Score recompute processor
 
 **Files:**
+
 - Create: `apps/api/src/modules/scoring/processors/profile-score-recompute.processor.ts`
 - Modify: `apps/api/src/modules/scoring/scoring.module.ts` (register processor + queue)
 - Test: `apps/api/src/modules/scoring/processors/profile-score-recompute.processor.spec.ts`
@@ -651,15 +669,22 @@ git commit -m "feat(candidate-profiles): updatePersonal/updatePreferences mark s
 ```typescript
 describe("ProfileScoreRecomputeProcessor", () => {
   it("computes new profile score and writes row with the given reason", async () => {
-    const job = createJob({ candidateId, resumeId: defaultResumeId, reason: "profile_change" });
+    const job = createJob({
+      candidateId,
+      resumeId: defaultResumeId,
+      reason: "profile_change",
+    });
     await processor.process(job);
 
-    const score = await db.select().from(profileScoresTable).where(
-      and(
-        eq(profileScoresTable.candidateId, candidateId),
-        isNull(profileScoresTable.staleAt),
-      ),
-    );
+    const score = await db
+      .select()
+      .from(profileScoresTable)
+      .where(
+        and(
+          eq(profileScoresTable.candidateId, candidateId),
+          isNull(profileScoresTable.staleAt),
+        ),
+      );
     expect(score).toHaveLength(1);
     expect(score[0].overallScore).toBeGreaterThanOrEqual(0);
   });
@@ -686,7 +711,11 @@ export const PROFILE_SCORE_RECOMPUTE_QUEUE = "profile-score-recompute";
 export interface ProfileScoreRecomputeJobData {
   candidateId: string;
   resumeId: string;
-  reason: "resume_change" | "preferences_change" | "profile_change" | "manual_recompute";
+  reason:
+    | "resume_change"
+    | "preferences_change"
+    | "profile_change"
+    | "manual_recompute";
 }
 
 @Processor(PROFILE_SCORE_RECOMPUTE_QUEUE, { concurrency: 3 })
@@ -699,7 +728,9 @@ export class ProfileScoreRecomputeProcessor extends WorkerHost {
 
   async process(job: Job<ProfileScoreRecomputeJobData>): Promise<void> {
     const { candidateId, resumeId, reason } = job.data;
-    this.logger.log(`recompute: candidate=${candidateId} resume=${resumeId} reason=${reason}`);
+    this.logger.log(
+      `recompute: candidate=${candidateId} resume=${resumeId} reason=${reason}`,
+    );
     await this.scoring.computeProfileScore(candidateId, resumeId, { reason });
   }
 }
@@ -733,6 +764,7 @@ git commit -m "feat(scoring): profile-score-recompute processor"
 ### Task 10: Extend complete-onboarding response — happy path test
 
 **Files:**
+
 - Test: `apps/api/src/modules/candidate-profiles/candidate-profiles.controller.spec.ts`
 
 - [ ] **Step 1: Failing test**
@@ -792,6 +824,7 @@ git commit -m "test(candidate-profiles): failing test for extended complete-onbo
 ### Task 11: Extend complete-onboarding — implementation
 
 **Files:**
+
 - Modify: `apps/api/src/modules/candidate-profiles/candidate-profiles.service.ts`
 - Modify: `apps/api/src/modules/candidate-profiles/candidate-profiles.controller.ts`
 
@@ -869,6 +902,7 @@ git commit -m "feat(candidate-profiles): complete-onboarding returns profileScor
 ### Task 12: Server-side enqueueProfileScoreIfMissing guard
 
 **Files:**
+
 - Create: `apps/api/src/modules/candidate-profiles/guards/profile-score-backfill.guard.ts` (or interceptor — verify project pattern)
 - Modify: portal entry route handler (or the candidate dashboard data-fetch path)
 
@@ -916,6 +950,7 @@ git commit -m "feat(candidate-profiles): backfill missing profile-score on porta
 ### Task 13: Notification emission on application status change (F4)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.service.ts`
 - Test: `apps/api/src/modules/applications/applications.service.spec.ts`
 
@@ -926,15 +961,17 @@ it("application status change emits notification to candidate", async () => {
   const emitSpy = jest.spyOn(notifications, "emit");
   await service.updateStatus(applicationId, "screening", recruiterId);
 
-  expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({
-    userId: candidateId,
-    eventType: "application_status_changed",
-    metadata: expect.objectContaining({
-      fromStatus: "applied",
-      toStatus: "screening",
-      jobId: expect.any(String),
+  expect(emitSpy).toHaveBeenCalledWith(
+    expect.objectContaining({
+      userId: candidateId,
+      eventType: "application_status_changed",
+      metadata: expect.objectContaining({
+        fromStatus: "applied",
+        toStatus: "screening",
+        jobId: expect.any(String),
+      }),
     }),
-  }));
+  );
 });
 ```
 
@@ -980,6 +1017,7 @@ git commit -m "feat(applications): emit notification on status change"
 ### Task 14: Notification emission on application create (F6)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.service.ts`
 - Test: `apps/api/src/modules/applications/applications.service.spec.ts`
 
@@ -1034,6 +1072,7 @@ git commit -m "feat(applications): emit new-application notification to recruite
 ### Task 15: Notification emission on offer accept/decline (F5)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/offers/offers.service.ts`
 - Test: `apps/api/src/modules/offers/offers.service.spec.ts`
 
@@ -1097,6 +1136,7 @@ git commit -m "feat(offers): emit notification on accept/decline"
 ### Task 16: Plumb interview reschedule + share-feedback emails (F8)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 - Test: `apps/api/src/modules/interviews/interviews.service.spec.ts`
 
@@ -1105,7 +1145,9 @@ git commit -m "feat(offers): emit notification on accept/decline"
 ```typescript
 it("reschedule plumbs email send for the candidate", async () => {
   const queueAddSpy = jest.spyOn(emailQueue, "add");
-  await service.reschedule(interviewId, recruiterId, { newScheduledAt: tomorrow });
+  await service.reschedule(interviewId, recruiterId, {
+    newScheduledAt: tomorrow,
+  });
 
   expect(queueAddSpy).toHaveBeenCalledWith(
     expect.stringContaining("instant-email"),
@@ -1143,6 +1185,7 @@ git commit -m "feat(interviews): plumb reschedule and share-feedback emails (Tas
 ### Task 17: Cron — interview reminder 24h before (F9)
 
 **Files:**
+
 - Create: `apps/api/src/modules/notifications/notifications.scheduler.ts`
 - Modify: `apps/api/src/modules/notifications/notifications.module.ts`
 - Test: `apps/api/src/modules/notifications/notifications.scheduler.spec.ts`
@@ -1160,12 +1203,18 @@ describe("NotificationsScheduler.interviewReminder", () => {
     const emitSpy = jest.spyOn(notifications, "emit");
     await scheduler.runInterviewReminder();
 
-    expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({
-      eventType: "interview_reminder_24h",
-      entityId: inWindow.id,
-    }));
-    expect(emitSpy).not.toHaveBeenCalledWith(expect.objectContaining({ entityId: tooEarly.id }));
-    expect(emitSpy).not.toHaveBeenCalledWith(expect.objectContaining({ entityId: tooLate.id }));
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "interview_reminder_24h",
+        entityId: inWindow.id,
+      }),
+    );
+    expect(emitSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ entityId: tooEarly.id }),
+    );
+    expect(emitSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ entityId: tooLate.id }),
+    );
   });
 });
 ```
@@ -1196,16 +1245,18 @@ export class NotificationsScheduler {
     private readonly notifications: NotificationsService,
   ) {}
 
-  @Cron("0 5 * * *", { timeZone: "UTC" })  // 00:05 UTC daily
+  @Cron("0 5 * * *", { timeZone: "UTC" }) // 00:05 UTC daily
   async runInterviewReminder(): Promise<void> {
     try {
       const interviews = await this.db
         .select()
         .from(interviewsTable)
-        .where(sql`
+        .where(
+          sql`
           status = 'scheduled'
           AND scheduled_at BETWEEN NOW() + INTERVAL '23 hours' AND NOW() + INTERVAL '24 hours'
-        `)
+        `,
+        )
         .limit(500);
 
       this.logger.log(`interviewReminder: ${interviews.length} matching`);
@@ -1216,7 +1267,10 @@ export class NotificationsScheduler {
           scope: "personal",
           entityType: "interview",
           entityId: iv.id,
-          metadata: { jobId: iv.jobId, scheduledAt: iv.scheduledAt.toISOString() },
+          metadata: {
+            jobId: iv.jobId,
+            scheduledAt: iv.scheduledAt.toISOString(),
+          },
         });
       }
     } catch (err) {
@@ -1241,6 +1295,7 @@ git commit -m "feat(notifications): cron — interview reminder 24h before (F9)"
 ### Task 18: Cron — offer expiration (F10)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notifications/notifications.scheduler.ts`
 - Test: `apps/api/src/modules/notifications/notifications.scheduler.spec.ts`
 
@@ -1249,34 +1304,49 @@ git commit -m "feat(notifications): cron — interview reminder 24h before (F9)"
 ```typescript
 describe("NotificationsScheduler.offerExpiration", () => {
   it("emits offer_expiring_soon 24h before expiry", async () => {
-    const expiringSoon = await seedOffer({ expiresAt: addHours(now, 12), status: "pending" });
+    const expiringSoon = await seedOffer({
+      expiresAt: addHours(now, 12),
+      status: "pending",
+    });
     const emitSpy = jest.spyOn(notifications, "emit");
 
     await scheduler.runOfferExpiration();
 
-    expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({
-      eventType: "offer_expiring_soon",
-      entityId: expiringSoon.id,
-    }));
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "offer_expiring_soon",
+        entityId: expiringSoon.id,
+      }),
+    );
   });
 
   it("transitions expired offers and emits offer_expired to both parties", async () => {
-    const expired = await seedOffer({ expiresAt: addHours(now, -1), status: "pending" });
+    const expired = await seedOffer({
+      expiresAt: addHours(now, -1),
+      status: "pending",
+    });
     const emitSpy = jest.spyOn(notifications, "emit");
 
     await scheduler.runOfferExpiration();
 
-    const fresh = await db.select().from(offersTable).where(eq(offersTable.id, expired.id));
+    const fresh = await db
+      .select()
+      .from(offersTable)
+      .where(eq(offersTable.id, expired.id));
     expect(fresh[0].status).toBe("expired");
 
-    expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({
-      eventType: "offer_expired",
-      userId: candidateId,
-    }));
-    expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({
-      eventType: "offer_expired",
-      userId: recruiterId,
-    }));
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "offer_expired",
+        userId: candidateId,
+      }),
+    );
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "offer_expired",
+        userId: recruiterId,
+      }),
+    );
   });
 });
 ```
@@ -1360,6 +1430,7 @@ git commit -m "feat(notifications): cron — offer expiration warning + auto-tra
 ### Task 19: Cron — job deadline auto-archive (F11)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notifications/notifications.scheduler.ts`
 - Test: `apps/api/src/modules/notifications/notifications.scheduler.spec.ts`
 
@@ -1367,23 +1438,37 @@ git commit -m "feat(notifications): cron — offer expiration warning + auto-tra
 
 ```typescript
 it("auto-archives published jobs past application_deadline; emits notification to recruiter", async () => {
-  const past = await seedJob({ status: "published", applicationDeadline: addDays(now, -1) });
-  const future = await seedJob({ status: "published", applicationDeadline: addDays(now, 1) });
+  const past = await seedJob({
+    status: "published",
+    applicationDeadline: addDays(now, -1),
+  });
+  const future = await seedJob({
+    status: "published",
+    applicationDeadline: addDays(now, 1),
+  });
   const emitSpy = jest.spyOn(notifications, "emit");
 
   await scheduler.runJobDeadlineArchive();
 
-  const fresh = await db.select().from(jobsTable).where(eq(jobsTable.id, past.id));
+  const fresh = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.id, past.id));
   expect(fresh[0].status).toBe("archived");
   expect(fresh[0].archivedReason).toBe("deadline_passed");
 
-  const stillPublished = await db.select().from(jobsTable).where(eq(jobsTable.id, future.id));
+  const stillPublished = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.id, future.id));
   expect(stillPublished[0].status).toBe("published");
 
-  expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({
-    eventType: "job_archived_by_deadline",
-    entityId: past.id,
-  }));
+  expect(emitSpy).toHaveBeenCalledWith(
+    expect.objectContaining({
+      eventType: "job_archived_by_deadline",
+      entityId: past.id,
+    }),
+  );
 });
 ```
 
@@ -1434,6 +1519,7 @@ git commit -m "feat(notifications): cron — auto-archive jobs past application 
 ### Task 20: Cron — interview feedback due reminder (F12)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notifications/notifications.scheduler.ts`
 - Test: `apps/api/src/modules/notifications/notifications.scheduler.spec.ts`
 
@@ -1462,14 +1548,23 @@ it("emits interview_feedback_due for completed interviews missing feedback past 
   const emitSpy = jest.spyOn(notifications, "emit");
   await scheduler.runFeedbackDueReminder();
 
-  expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({
-    eventType: "interview_feedback_due",
-    entityId: stale.id,
-  }));
-  expect(emitSpy).not.toHaveBeenCalledWith(expect.objectContaining({ entityId: recent.id }));
-  expect(emitSpy).not.toHaveBeenCalledWith(expect.objectContaining({ entityId: recentlyReminded.id }));
+  expect(emitSpy).toHaveBeenCalledWith(
+    expect.objectContaining({
+      eventType: "interview_feedback_due",
+      entityId: stale.id,
+    }),
+  );
+  expect(emitSpy).not.toHaveBeenCalledWith(
+    expect.objectContaining({ entityId: recent.id }),
+  );
+  expect(emitSpy).not.toHaveBeenCalledWith(
+    expect.objectContaining({ entityId: recentlyReminded.id }),
+  );
 
-  const fresh = await db.select().from(interviewsTable).where(eq(interviewsTable.id, stale.id));
+  const fresh = await db
+    .select()
+    .from(interviewsTable)
+    .where(eq(interviewsTable.id, stale.id));
   expect(fresh[0].feedbackReminderSentAt).not.toBeNull();
 });
 ```
@@ -1525,6 +1620,7 @@ git commit -m "feat(notifications): cron — feedback-due reminder (F12)"
 ### Task 21: Cron — notification digest (F13)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notifications/notifications.scheduler.ts`
 - Test: `apps/api/src/modules/notifications/notifications.scheduler.spec.ts`
 
@@ -1626,6 +1722,7 @@ This phase adds realtime emissions for scoring + notification events, and the ne
 ### Task 23: Realtime event names + Zod payload schemas in shared
 
 **Files:**
+
 - Modify: `packages/shared/src/realtime/events.ts`
 - Modify: `packages/shared/src/realtime/index.ts`
 - Create: `packages/shared/src/realtime/scoring-payloads.ts`
@@ -1664,17 +1761,27 @@ export const matchPreviewCreatedPayloadSchema = z.object({
   band: z.enum(["strong", "partial", "limited"]),
   createdAt: z.string().datetime(),
 });
-export type MatchPreviewCreatedPayload = z.infer<typeof matchPreviewCreatedPayloadSchema>;
+export type MatchPreviewCreatedPayload = z.infer<
+  typeof matchPreviewCreatedPayloadSchema
+>;
 
 export const profileScoreUpdatedPayloadSchema = z.object({
   candidateId: z.string().uuid(),
   resumeId: z.string().uuid(),
   overallScore: z.number().min(0).max(100),
   band: z.enum(["strong", "partial", "limited"]),
-  reason: z.enum(["onboarding", "resume_change", "preferences_change", "profile_change", "manual_recompute"]),
+  reason: z.enum([
+    "onboarding",
+    "resume_change",
+    "preferences_change",
+    "profile_change",
+    "manual_recompute",
+  ]),
   updatedAt: z.string().datetime(),
 });
-export type ProfileScoreUpdatedPayload = z.infer<typeof profileScoreUpdatedPayloadSchema>;
+export type ProfileScoreUpdatedPayload = z.infer<
+  typeof profileScoreUpdatedPayloadSchema
+>;
 ```
 
 Create `packages/shared/src/realtime/notification-payloads.ts`:
@@ -1685,31 +1792,39 @@ import { z } from "zod";
 export const notificationCreatedPayloadSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
-  kind: z.string(),         // = NotificationEventType from db enum
+  kind: z.string(), // = NotificationEventType from db enum
   title: z.string(),
   bodyExcerpt: z.string(),
   linkUrl: z.string().nullable(),
   createdAt: z.string().datetime(),
   unreadCount: z.number().int().min(0),
 });
-export type NotificationCreatedPayload = z.infer<typeof notificationCreatedPayloadSchema>;
+export type NotificationCreatedPayload = z.infer<
+  typeof notificationCreatedPayloadSchema
+>;
 
 export const notificationReadPayloadSchema = z.object({
   id: z.string().uuid(),
   unreadCount: z.number().int().min(0),
 });
-export type NotificationReadPayload = z.infer<typeof notificationReadPayloadSchema>;
+export type NotificationReadPayload = z.infer<
+  typeof notificationReadPayloadSchema
+>;
 
 export const notificationArchivedPayloadSchema = z.object({
   id: z.string().uuid(),
   unreadCount: z.number().int().min(0),
 });
-export type NotificationArchivedPayload = z.infer<typeof notificationArchivedPayloadSchema>;
+export type NotificationArchivedPayload = z.infer<
+  typeof notificationArchivedPayloadSchema
+>;
 
 export const notificationArchiveAllPayloadSchema = z.object({
   unreadCount: z.literal(0),
 });
-export type NotificationArchiveAllPayload = z.infer<typeof notificationArchiveAllPayloadSchema>;
+export type NotificationArchiveAllPayload = z.infer<
+  typeof notificationArchiveAllPayloadSchema
+>;
 ```
 
 In `packages/shared/src/realtime/index.ts`, re-export everything from the two new files.
@@ -1726,6 +1841,7 @@ git commit -m "feat(shared): realtime event names + Zod payloads for scoring/not
 ### Task 24: EventsService — new emit methods
 
 **Files:**
+
 - Modify: `apps/api/src/realtime/events.service.ts`
 - Test: `apps/api/src/realtime/events.service.spec.ts`
 
@@ -1810,6 +1926,7 @@ git commit -m "feat(realtime): emit methods for scoring + notification events"
 ### Task 25: ScoringService emits realtime events on writes
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts`
 - Test: `apps/api/src/modules/scoring/scoring.service.spec.ts`
 
@@ -1820,18 +1937,28 @@ it("after computeMatchPreviewOnView, emits match-preview.created", async () => {
   const eventsSpy = jest.spyOn(events, "emitMatchPreviewCreated");
   await service.computeMatchPreviewOnView(candidateId, jobId);
 
-  expect(eventsSpy).toHaveBeenCalledWith(expect.objectContaining({
-    candidateId, jobId, source: "candidate_view",
-  }));
+  expect(eventsSpy).toHaveBeenCalledWith(
+    expect.objectContaining({
+      candidateId,
+      jobId,
+      source: "candidate_view",
+    }),
+  );
 });
 
 it("after computeProfileScore, emits profile-score.updated", async () => {
   const eventsSpy = jest.spyOn(events, "emitProfileScoreUpdated");
-  await service.computeProfileScore(candidateId, resumeId, { reason: "manual_recompute" });
+  await service.computeProfileScore(candidateId, resumeId, {
+    reason: "manual_recompute",
+  });
 
-  expect(eventsSpy).toHaveBeenCalledWith(expect.objectContaining({
-    candidateId, resumeId, reason: "manual_recompute",
-  }));
+  expect(eventsSpy).toHaveBeenCalledWith(
+    expect.objectContaining({
+      candidateId,
+      resumeId,
+      reason: "manual_recompute",
+    }),
+  );
 });
 ```
 
@@ -1852,6 +1979,7 @@ git commit -m "feat(scoring): emit realtime events on preview + profile-score wr
 ### Task 26: NotificationsService emits realtime on row insert + mutations
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notifications/notifications.service.ts`
 - Modify: `apps/api/src/modules/notifications/notifications.repository.ts`
 - Test: `apps/api/src/modules/notifications/notifications.service.spec.ts`
@@ -1868,11 +1996,13 @@ it("emit() broadcasts notification.created with unreadCount", async () => {
     metadata: { fromStatus: "applied", toStatus: "screening" },
   });
 
-  expect(eventsSpy).toHaveBeenCalledWith(expect.objectContaining({
-    userId: "u1",
-    kind: "application_status_changed",
-    unreadCount: expect.any(Number),
-  }));
+  expect(eventsSpy).toHaveBeenCalledWith(
+    expect.objectContaining({
+      userId: "u1",
+      kind: "application_status_changed",
+      unreadCount: expect.any(Number),
+    }),
+  );
 });
 
 it("markRead emits notification.read with new unreadCount", async () => {
@@ -1881,10 +2011,13 @@ it("markRead emits notification.read with new unreadCount", async () => {
 
   await service.markRead(id, "u1");
 
-  expect(eventsSpy).toHaveBeenCalledWith("u1", expect.objectContaining({
-    id,
-    unreadCount: expect.any(Number),
-  }));
+  expect(eventsSpy).toHaveBeenCalledWith(
+    "u1",
+    expect.objectContaining({
+      id,
+      unreadCount: expect.any(Number),
+    }),
+  );
 });
 
 it("archive emits notification.archived", async () => {
@@ -1973,6 +2106,7 @@ git commit -m "feat(notifications): emit realtime events on emit/read/archive/ar
 ### Task 27: Notifications controller — archive endpoints + tab parameter
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notifications/notifications.controller.ts`
 - Modify: `apps/api/src/modules/notifications/dto/list-notifications.dto.ts`
 - Test: `apps/api/src/modules/notifications/notifications.controller.spec.ts`
@@ -2085,6 +2219,7 @@ This phase produces all user-visible changes: the analyzing screen, buttonless s
 ### Task 29: useCandidateRealtime hook
 
 **Files:**
+
 - Create: `apps/web/lib/realtime/use-candidate-realtime.ts`
 - Test: `apps/web/lib/realtime/use-candidate-realtime.test.ts`
 
@@ -2099,7 +2234,13 @@ it("subscribes to match-preview.created and exposes the event stream", () => {
   expect(result.current.matchPreviewCount).toBe(0);
 
   act(() => {
-    mockSocket.emit("match-preview.created", { candidateId: "c1", jobId: "j1", overallScore: 80, band: "strong", createdAt: "..." });
+    mockSocket.emit("match-preview.created", {
+      candidateId: "c1",
+      jobId: "j1",
+      overallScore: 80,
+      band: "strong",
+      createdAt: "...",
+    });
   });
 
   expect(result.current.matchPreviewCount).toBe(1);
@@ -2112,14 +2253,19 @@ Create `apps/web/lib/realtime/use-candidate-realtime.ts`:
 
 ```typescript
 import { useEffect, useState } from "react";
-import { useSocket } from "./use-socket";  // existing hook — verify path
-import { matchPreviewCreatedPayloadSchema, profileScoreUpdatedPayloadSchema } from "@aurahire/shared";
+import { useSocket } from "./use-socket"; // existing hook — verify path
+import {
+  matchPreviewCreatedPayloadSchema,
+  profileScoreUpdatedPayloadSchema,
+} from "@aurahire/shared";
 
 export function useCandidateRealtime(candidateId: string) {
   const socket = useSocket();
   const [matchPreviewCount, setMatchPreviewCount] = useState(0);
-  const [latestMatchPreview, setLatestMatchPreview] = useState<MatchPreviewCreatedPayload | null>(null);
-  const [latestProfileScore, setLatestProfileScore] = useState<ProfileScoreUpdatedPayload | null>(null);
+  const [latestMatchPreview, setLatestMatchPreview] =
+    useState<MatchPreviewCreatedPayload | null>(null);
+  const [latestProfileScore, setLatestProfileScore] =
+    useState<ProfileScoreUpdatedPayload | null>(null);
 
   useEffect(() => {
     if (!socket || !candidateId) return;
@@ -2162,6 +2308,7 @@ git commit -m "feat(web): useCandidateRealtime hook"
 ### Task 30: useUserNotifications hook
 
 **Files:**
+
 - Create: `apps/web/lib/realtime/use-user-notifications.ts`
 - Test: `apps/web/lib/realtime/use-user-notifications.test.ts`
 
@@ -2173,8 +2320,14 @@ it("on notification.created event, increments unreadCount and prepends to inbox 
 
   act(() => {
     mockSocket.emit("notification.created", {
-      id: "n1", userId: "u1", kind: "application_status_changed",
-      title: "Status changed", bodyExcerpt: "...", linkUrl: "/x", createdAt: "...", unreadCount: 1,
+      id: "n1",
+      userId: "u1",
+      kind: "application_status_changed",
+      title: "Status changed",
+      bodyExcerpt: "...",
+      linkUrl: "/x",
+      createdAt: "...",
+      unreadCount: 1,
     });
   });
 
@@ -2195,7 +2348,11 @@ import { apiClient } from "@/lib/api-client";
 
 const INBOX_KEY = (userId: string) => ["notifications", "inbox", userId];
 const ARCHIVE_KEY = (userId: string) => ["notifications", "archive", userId];
-const UNREAD_KEY = (userId: string) => ["notifications", "unread-count", userId];
+const UNREAD_KEY = (userId: string) => [
+  "notifications",
+  "unread-count",
+  userId,
+];
 
 export function useUserNotifications(userId: string) {
   const socket = useSocket();
@@ -2209,9 +2366,10 @@ export function useUserNotifications(userId: string) {
 
   const archive = useQuery({
     queryKey: ARCHIVE_KEY(userId),
-    queryFn: () => apiClient.get("/notifications", { tab: "archive", limit: 50 }),
+    queryFn: () =>
+      apiClient.get("/notifications", { tab: "archive", limit: 50 }),
     staleTime: 30_000,
-    enabled: false,  // only fetched when archive tab is opened
+    enabled: false, // only fetched when archive tab is opened
   });
 
   const unreadCount = useQuery({
@@ -2236,7 +2394,9 @@ export function useUserNotifications(userId: string) {
     const onArchived = (raw: any) => {
       qc.setQueryData(INBOX_KEY(userId), (old: any) => ({
         ...(old ?? { items: [] }),
-        items: ((old?.items as any[]) ?? []).filter((n: any) => n.id !== raw.id),
+        items: ((old?.items as any[]) ?? []).filter(
+          (n: any) => n.id !== raw.id,
+        ),
       }));
       qc.setQueryData(UNREAD_KEY(userId), { count: raw.unreadCount });
     };
@@ -2270,7 +2430,11 @@ export function useUserNotifications(userId: string) {
     inbox: inbox.data?.items ?? [],
     archive: archive.data?.items ?? [],
     unreadCount: unreadCount.data?.count ?? 0,
-    fetchArchive: () => qc.fetchQuery({ queryKey: ARCHIVE_KEY(userId), queryFn: archive.refetch }),
+    fetchArchive: () =>
+      qc.fetchQuery({
+        queryKey: ARCHIVE_KEY(userId),
+        queryFn: archive.refetch,
+      }),
     markRead: markRead.mutate,
     archive: archiveOne.mutate,
     archiveAll: archiveAllMutation.mutate,
@@ -2291,6 +2455,7 @@ git commit -m "feat(web): useUserNotifications hook with realtime sync"
 ### Task 31: Analyzing page — server shell + state machine setup
 
 **Files:**
+
 - Create: `apps/web/app/onboarding/candidate/analyzing/page.tsx`
 - Create: `apps/web/app/onboarding/candidate/analyzing/_analyzing-client.tsx`
 
@@ -2327,7 +2492,12 @@ import { AiShimmer } from "@/components/ai/ai-shimmer";
 type State =
   | { kind: "computingProfileScore" }
   | { kind: "profileScoreReady"; score: ProfileScoreDto; readyAt: number }
-  | { kind: "streamingPreviews"; score: ProfileScoreDto; readyAt: number; previewCount: number }
+  | {
+      kind: "streamingPreviews";
+      score: ProfileScoreDto;
+      readyAt: number;
+      previewCount: number;
+    }
   | { kind: "profileScoreDegraded" }
   | { kind: "error"; message: string }
   | { kind: "redirecting" };
@@ -2342,18 +2512,26 @@ type Action =
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "PROFILE_SCORE_OK":
-      return { kind: "profileScoreReady", score: action.score, readyAt: Date.now() };
+      return {
+        kind: "profileScoreReady",
+        score: action.score,
+        readyAt: Date.now(),
+      };
     case "PROFILE_SCORE_DEGRADED":
       return { kind: "profileScoreDegraded" };
     case "PROFILE_SCORE_ERROR":
       return { kind: "error", message: action.message };
     case "PREVIEW_TICK":
-      if (state.kind === "profileScoreReady" || state.kind === "streamingPreviews") {
+      if (
+        state.kind === "profileScoreReady" ||
+        state.kind === "streamingPreviews"
+      ) {
         return {
           kind: "streamingPreviews",
           score: state.score,
           readyAt: state.readyAt,
-          previewCount: (state.kind === "streamingPreviews" ? state.previewCount : 0) + 1,
+          previewCount:
+            (state.kind === "streamingPreviews" ? state.previewCount : 0) + 1,
         };
       }
       return state;
@@ -2363,7 +2541,9 @@ function reducer(state: State, action: Action): State {
 }
 
 export function AnalyzingClient({ candidateId }: { candidateId: string }) {
-  const [state, dispatch] = useReducer(reducer, { kind: "computingProfileScore" });
+  const [state, dispatch] = useReducer(reducer, {
+    kind: "computingProfileScore",
+  });
   const router = useRouter();
   const { matchPreviewCount } = useCandidateRealtime(candidateId);
   const fired = useRef(false);
@@ -2393,10 +2573,17 @@ export function AnalyzingClient({ candidateId }: { candidateId: string }) {
 
   // 3. Wall-clock cap on streaming
   useEffect(() => {
-    if (state.kind !== "profileScoreReady" && state.kind !== "streamingPreviews") return;
+    if (
+      state.kind !== "profileScoreReady" &&
+      state.kind !== "streamingPreviews"
+    )
+      return;
     const elapsed = Date.now() - state.readyAt;
     const remaining = 10_000 - elapsed;
-    if (remaining <= 0 || (state.kind === "streamingPreviews" && state.previewCount >= 5)) {
+    if (
+      remaining <= 0 ||
+      (state.kind === "streamingPreviews" && state.previewCount >= 5)
+    ) {
       dispatch({ type: "REDIRECT" });
       return;
     }
@@ -2407,7 +2594,10 @@ export function AnalyzingClient({ candidateId }: { candidateId: string }) {
   // 4. Degraded path — short pause then redirect
   useEffect(() => {
     if (state.kind !== "profileScoreDegraded") return;
-    const t = setTimeout(() => router.push("/candidate?profileScoreRetry=1"), 2000);
+    const t = setTimeout(
+      () => router.push("/candidate?profileScoreRetry=1"),
+      2000,
+    );
     return () => clearTimeout(t);
   }, [state, router]);
 
@@ -2422,18 +2612,30 @@ export function AnalyzingClient({ candidateId }: { candidateId: string }) {
         {state.kind === "computingProfileScore" && (
           <>
             <AiShimmer />
-            <p className="text-body-md text-body">Computing your Profile Score…</p>
+            <p className="text-body-md text-body">
+              Computing your Profile Score…
+            </p>
           </>
         )}
         {state.kind === "profileScoreReady" && (
           <>
-            <ScoreRing score={state.score.overallScore} band={state.score.band} size="md" />
-            <p className="text-body-md text-body">✓ Profile Score ready. Finding your top matches…</p>
+            <ScoreRing
+              score={state.score.overallScore}
+              band={state.score.band}
+              size="md"
+            />
+            <p className="text-body-md text-body">
+              ✓ Profile Score ready. Finding your top matches…
+            </p>
           </>
         )}
         {state.kind === "streamingPreviews" && (
           <>
-            <ScoreRing score={state.score.overallScore} band={state.score.band} size="md" />
+            <ScoreRing
+              score={state.score.overallScore}
+              band={state.score.band}
+              size="md"
+            />
             <p className="text-body-md text-body">
               {state.previewCount} of 5 matches ready
             </p>
@@ -2441,13 +2643,16 @@ export function AnalyzingClient({ candidateId }: { candidateId: string }) {
         )}
         {state.kind === "profileScoreDegraded" && (
           <p className="text-body-md text-body">
-            We're still working on your score — taking you to your dashboard now.
+            We're still working on your score — taking you to your dashboard
+            now.
           </p>
         )}
         {state.kind === "error" && (
           <>
             <p className="text-body-md text-status-danger">{state.message}</p>
-            <button onClick={() => location.reload()} className="btn-primary">Try again</button>
+            <button onClick={() => location.reload()} className="btn-primary">
+              Try again
+            </button>
           </>
         )}
       </div>
@@ -2471,6 +2676,7 @@ git commit -m "feat(onboarding): analyzing screen state machine"
 ### Task 32: Preferences final step redirects to /analyzing
 
 **Files:**
+
 - Modify: `apps/web/app/onboarding/candidate/preferences/_preferences-client.tsx` (verify exact path)
 
 - [ ] **Step 1: Edit redirect target**
@@ -2491,6 +2697,7 @@ git commit -m "feat(onboarding): preferences redirects to /analyzing instead of 
 ### Task 33: Remove "Compute my score" button from dashboard card
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx`
 
 - [ ] **Step 1: Edit the card**
@@ -2498,6 +2705,7 @@ git commit -m "feat(onboarding): preferences redirects to /analyzing instead of 
 Replace the conditional render of the "Compute my score" button (lines 84-99) with direct render of the Score Ring + "Recompute" affordance only when `staleAt != null`. When recompute is in flight (mutation pending), overlay AiShimmer on the score number.
 
 Concrete diff:
+
 - Remove the existing button + caption block.
 - If `score == null && !staleAt && !isComputing`: render the empty state pointing to "set your default resume" (legacy backfill — guard handles this server-side; UI just waits).
 - Else: render `<ScoreRing>` with the value. Overlay `<AiShimmer>` if a recompute is in flight.
@@ -2517,6 +2725,7 @@ git commit -m "feat(candidate): remove 'Compute my score' button; render score d
 ### Task 34: Remove "See my match" button + auto-compute on mount
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/jobs/[id]/_match-preview-client.tsx`
 
 - [ ] **Step 1: Edit the component**
@@ -2524,6 +2733,7 @@ git commit -m "feat(candidate): remove 'Compute my score' button; render score d
 Replace the lines 225-231 button. Add a `useEffect` on mount that triggers compute if no cached preview exists. Render shimmer during the call. Render banner on 429.
 
 Pseudo-diff:
+
 ```tsx
 const hasCached = !!preview;
 const [autoComputeMutation, { isPending, error }] = useMutation(...);
@@ -2563,6 +2773,7 @@ git commit -m "feat(candidate): auto-compute match on view; remove 'See my match
 ### Task 35: Dashboard RecommendedForYouSection shimmer + realtime fill
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/_dashboard-client.tsx`
 
 - [ ] **Step 1: Edit the section**
@@ -2575,7 +2786,7 @@ const { data: previews, refetch } = useMyMatchPreviewsQuery();
 
 useEffect(() => {
   if (latestMatchPreview) {
-    refetch();  // OR optimistically prepend to the cached list
+    refetch(); // OR optimistically prepend to the cached list
   }
 }, [latestMatchPreview, refetch]);
 
@@ -2585,8 +2796,12 @@ const shimmerCount = Math.max(0, SLOTS - items.length);
 
 return (
   <Section>
-    {items.map((p) => <RecommendedJobCard key={p.id} preview={p} />)}
-    {Array.from({ length: shimmerCount }).map((_, i) => <ShimmerCard key={`shim-${i}`} />)}
+    {items.map((p) => (
+      <RecommendedJobCard key={p.id} preview={p} />
+    ))}
+    {Array.from({ length: shimmerCount }).map((_, i) => (
+      <ShimmerCard key={`shim-${i}`} />
+    ))}
     {items.length === 0 && shimmerCount === 0 && (
       <EmptyState>
         We're still finding the right matches for you.
@@ -2611,6 +2826,7 @@ git commit -m "feat(candidate): dashboard shimmer slots + realtime preview/score
 ### Task 36: Default-resume confirmation removed; undo toast added
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/resume/_resume-client.tsx`
 
 - [ ] **Step 1: Remove modal, add undo toast**
@@ -2623,10 +2839,12 @@ async function handleSetDefault(resumeId: string) {
   await setDefaultMutation.mutateAsync(resumeId);
   toast({
     title: `Set ${resumeName(resumeId)} as default`,
-    action: previousDefaultId ? {
-      label: "Undo",
-      onClick: () => setDefaultMutation.mutate(previousDefaultId),
-    } : undefined,
+    action: previousDefaultId
+      ? {
+          label: "Undo",
+          onClick: () => setDefaultMutation.mutate(previousDefaultId),
+        }
+      : undefined,
     duration: 6000,
   });
 }
@@ -2646,6 +2864,7 @@ git commit -m "feat(candidate): instant set-default with undo toast (remove conf
 ### Task 37: SidebarBottomRail component — visual layout
 
 **Files:**
+
 - Create: `apps/web/components/portal/sidebar-bottom-rail.tsx`
 
 - [ ] **Step 1: Implementation**
@@ -2660,7 +2879,13 @@ import { SidebarProfilePopover } from "./sidebar-profile-popover";
 import { SidebarNotificationsPopover } from "./sidebar-notifications-popover";
 
 export interface SidebarBottomRailProps {
-  user: { id: string; name: string; email: string; avatarUrl: string | null; role: "candidate" | "recruiter" | "admin" };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    role: "candidate" | "recruiter" | "admin";
+  };
 }
 
 export function SidebarBottomRail({ user }: SidebarBottomRailProps) {
@@ -2715,17 +2940,33 @@ git commit -m "feat(portal): sidebar bottom rail with avatar + 3-dot + bell"
 ### Task 38: SidebarProfilePopover
 
 **Files:**
+
 - Create: `apps/web/components/portal/sidebar-profile-popover.tsx`
 
 - [ ] **Step 1: Implementation**
 
 ```tsx
 import * as Popover from "@radix-ui/react-popover";
-import { Settings, Smile, Sun, Moon, Monitor, BookOpen, HelpCircle, LogOut } from "lucide-react";
+import {
+  Settings,
+  Smile,
+  Sun,
+  Moon,
+  Monitor,
+  BookOpen,
+  HelpCircle,
+  LogOut,
+} from "lucide-react";
 import Link from "next/link";
 
 export interface SidebarProfilePopoverProps {
-  user: { id: string; name: string; email: string; avatarUrl: string | null; role: "candidate" | "recruiter" | "admin" };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    role: "candidate" | "recruiter" | "admin";
+  };
 }
 
 const SETTINGS_PATH: Record<string, string> = {
@@ -2749,13 +2990,19 @@ export function SidebarProfilePopover({ user }: SidebarProfilePopoverProps) {
             <p className="title-md truncate">{user.name}</p>
             <p className="caption text-muted truncate">{user.email}</p>
           </div>
-          <Link href={SETTINGS_PATH[user.role]} className="text-muted hover:text-ink">
+          <Link
+            href={SETTINGS_PATH[user.role]}
+            className="text-muted hover:text-ink"
+          >
             <Settings className="h-4 w-4" />
           </Link>
         </div>
 
         <div className="space-y-1">
-          <a href={`mailto:cjjutbaofficial@gmail.com?subject=AuraHire feedback`} className="popover-item">
+          <a
+            href={`mailto:cjjutbaofficial@gmail.com?subject=AuraHire feedback`}
+            className="popover-item"
+          >
             <Smile className="h-4 w-4" />
             Send feedback
           </a>
@@ -2768,7 +3015,10 @@ export function SidebarProfilePopover({ user }: SidebarProfilePopoverProps) {
             <HelpCircle className="h-4 w-4" />
             Help
           </Link>
-          <button onClick={() => signOut()} className="popover-item w-full text-left">
+          <button
+            onClick={() => signOut()}
+            className="popover-item w-full text-left"
+          >
             <LogOut className="h-4 w-4" />
             Log out
           </button>
@@ -2788,21 +3038,43 @@ function ThemeRow() {
     <div className="popover-item flex items-center justify-between">
       <span>Theme</span>
       <div className="flex items-center gap-1">
-        <button onClick={() => setTheme("system")} aria-pressed={theme === "system"}><Monitor className="h-4 w-4" /></button>
-        <button onClick={() => setTheme("light")} aria-pressed={theme === "light"}><Sun className="h-4 w-4" /></button>
-        <button onClick={() => setTheme("dark")} aria-pressed={theme === "dark"}><Moon className="h-4 w-4" /></button>
+        <button
+          onClick={() => setTheme("system")}
+          aria-pressed={theme === "system"}
+        >
+          <Monitor className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => setTheme("light")}
+          aria-pressed={theme === "light"}
+        >
+          <Sun className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => setTheme("dark")}
+          aria-pressed={theme === "dark"}
+        >
+          <Moon className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );
 }
 
 function AiStatusPill() {
-  const { data } = useQuery({ queryKey: ["ai-status"], queryFn: () => apiClient.get("/health/ai") });
+  const { data } = useQuery({
+    queryKey: ["ai-status"],
+    queryFn: () => apiClient.get("/health/ai"),
+  });
   const status = data?.status ?? "ok";
   return (
     <div className="flex items-center justify-between text-sm text-muted">
-      <span>AI Status — {status === "ok" ? "All systems normal." : "Degraded."}</span>
-      <span className={`h-2 w-2 rounded-full ${status === "ok" ? "bg-score-high" : "bg-score-mid"}`} />
+      <span>
+        AI Status — {status === "ok" ? "All systems normal." : "Degraded."}
+      </span>
+      <span
+        className={`h-2 w-2 rounded-full ${status === "ok" ? "bg-score-high" : "bg-score-mid"}`}
+      />
     </div>
   );
 }
@@ -2822,6 +3094,7 @@ git commit -m "feat(portal): profile dropdown popover (Vercel-style)"
 ### Task 39: SidebarNotificationsPopover
 
 **Files:**
+
 - Create: `apps/web/components/portal/sidebar-notifications-popover.tsx`
 
 - [ ] **Step 1: Implementation**
@@ -2841,9 +3114,17 @@ export interface SidebarNotificationsPopoverProps {
   userId: string;
 }
 
-export function SidebarNotificationsPopover({ userId }: SidebarNotificationsPopoverProps) {
+export function SidebarNotificationsPopover({
+  userId,
+}: SidebarNotificationsPopoverProps) {
   const {
-    inbox, archive, unreadCount, fetchArchive, markRead, archive: archiveOne, archiveAll
+    inbox,
+    archive,
+    unreadCount,
+    fetchArchive,
+    markRead,
+    archive: archiveOne,
+    archiveAll,
   } = useUserNotifications(userId);
   const router = useRouter();
 
@@ -2860,38 +3141,74 @@ export function SidebarNotificationsPopover({ userId }: SidebarNotificationsPopo
         sideOffset={8}
         className="w-96 max-h-[80vh] overflow-hidden rounded-lg border border-hairline bg-canvas shadow-soft"
       >
-        <Tabs.Root defaultValue="inbox" onValueChange={(v) => v === "archive" && fetchArchive()}>
+        <Tabs.Root
+          defaultValue="inbox"
+          onValueChange={(v) => v === "archive" && fetchArchive()}
+        >
           <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
             <Tabs.List className="flex gap-4">
-              <Tabs.Trigger value="inbox" className="nav-link data-[state=active]:underline">
-                Inbox {unreadCount > 0 ? <span className="ml-1 rounded-full bg-surface-strong px-1.5 text-xs">{unreadCount}</span> : null}
+              <Tabs.Trigger
+                value="inbox"
+                className="nav-link data-[state=active]:underline"
+              >
+                Inbox{" "}
+                {unreadCount > 0 ? (
+                  <span className="ml-1 rounded-full bg-surface-strong px-1.5 text-xs">
+                    {unreadCount}
+                  </span>
+                ) : null}
               </Tabs.Trigger>
-              <Tabs.Trigger value="archive" className="nav-link data-[state=active]:underline">Archive</Tabs.Trigger>
+              <Tabs.Trigger
+                value="archive"
+                className="nav-link data-[state=active]:underline"
+              >
+                Archive
+              </Tabs.Trigger>
             </Tabs.List>
-            <Link href="/settings/notifications" className="text-muted hover:text-ink">
+            <Link
+              href="/settings/notifications"
+              className="text-muted hover:text-ink"
+            >
               <SettingsIcon className="h-4 w-4" />
             </Link>
           </div>
 
           <Tabs.Content value="inbox" className="max-h-[60vh] overflow-y-auto">
             {inbox.length === 0 ? (
-              <EmptyState>No new notifications. We'll let you know when something happens.</EmptyState>
+              <EmptyState>
+                No new notifications. We'll let you know when something happens.
+              </EmptyState>
             ) : (
-              inbox.map((n) => <Row key={n.id} n={n} onClick={() => handleRowClick(n)} onArchive={() => archiveOne(n.id)} />)
+              inbox.map((n) => (
+                <Row
+                  key={n.id}
+                  n={n}
+                  onClick={() => handleRowClick(n)}
+                  onArchive={() => archiveOne(n.id)}
+                />
+              ))
             )}
           </Tabs.Content>
 
-          <Tabs.Content value="archive" className="max-h-[60vh] overflow-y-auto">
+          <Tabs.Content
+            value="archive"
+            className="max-h-[60vh] overflow-y-auto"
+          >
             {archive.length === 0 ? (
               <EmptyState>No archived notifications yet.</EmptyState>
             ) : (
-              archive.map((n) => <Row key={n.id} n={n} onClick={() => handleRowClick(n)} />)
+              archive.map((n) => (
+                <Row key={n.id} n={n} onClick={() => handleRowClick(n)} />
+              ))
             )}
           </Tabs.Content>
 
           {inbox.length > 0 && (
             <div className="border-t border-hairline p-3">
-              <button onClick={() => archiveAll()} className="btn-secondary-light w-full">
+              <button
+                onClick={() => archiveAll()}
+                className="btn-secondary-light w-full"
+              >
                 Archive all
               </button>
             </div>
@@ -2902,15 +3219,28 @@ export function SidebarNotificationsPopover({ userId }: SidebarNotificationsPopo
   );
 }
 
-function Row({ n, onClick, onArchive }: { n: any; onClick: () => void; onArchive?: () => void }) {
+function Row({
+  n,
+  onClick,
+  onArchive,
+}: {
+  n: any;
+  onClick: () => void;
+  onArchive?: () => void;
+}) {
   const isUnread = !n.readAt;
   return (
-    <div className="flex items-start gap-3 border-b border-hairline-soft px-4 py-3 hover:bg-surface-soft cursor-pointer" onClick={onClick}>
+    <div
+      className="flex items-start gap-3 border-b border-hairline-soft px-4 py-3 hover:bg-surface-soft cursor-pointer"
+      onClick={onClick}
+    >
       <NotificationIcon kind={n.kind} />
       <div className="flex-1 min-w-0">
         <p className="body-sm font-semibold">{n.title}</p>
         <p className="body-sm text-muted">{n.bodyExcerpt}</p>
-        <p className="caption text-muted">{formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}</p>
+        <p className="caption text-muted">
+          {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+        </p>
       </div>
       {isUnread && <span className="mt-1 h-2 w-2 rounded-full bg-primary" />}
     </div>
@@ -2918,7 +3248,11 @@ function Row({ n, onClick, onArchive }: { n: any; onClick: () => void; onArchive
 }
 
 function EmptyState({ children }: { children: React.ReactNode }) {
-  return <div className="px-4 py-12 text-center text-body-sm text-muted">{children}</div>;
+  return (
+    <div className="px-4 py-12 text-center text-body-sm text-muted">
+      {children}
+    </div>
+  );
 }
 ```
 
@@ -2934,6 +3268,7 @@ git commit -m "feat(portal): notifications popover with Inbox/Archive tabs"
 ### Task 40: Wire bottom rail into all three portal sidebars
 
 **Files:**
+
 - Modify: candidate sidebar component
 - Modify: recruiter sidebar component
 - Modify: admin sidebar component
@@ -2943,6 +3278,7 @@ git commit -m "feat(portal): notifications popover with Inbox/Archive tabs"
 Run: `grep -rln "Sidebar\|Nav" apps/web/components apps/web/app | grep -i sidebar`
 
 Identify the three role-specific sidebar files. Likely paths:
+
 - `apps/web/components/portal/candidate-sidebar.tsx` (or similar)
 - `apps/web/components/portal/recruiter-sidebar.tsx`
 - `apps/web/components/portal/admin-sidebar.tsx`
@@ -2957,7 +3293,7 @@ In each sidebar's bottom anchor area, replace the current user info / logout but
 import { SidebarBottomRail } from "./sidebar-bottom-rail";
 
 // inside the JSX, at the bottom of the sidebar:
-<SidebarBottomRail user={user} />
+<SidebarBottomRail user={user} />;
 ```
 
 `user` comes from the existing session/auth context.
@@ -2974,6 +3310,7 @@ git commit -m "feat(portal): wire sidebar bottom rail into all 3 portals"
 ### Task 41: E2E — full onboarding flow
 
 **Files:**
+
 - Create: `apps/web/tests/e2e/onboarding-autoscore.spec.ts` (or existing e2e folder)
 
 - [ ] **Step 1: Test**
@@ -2981,7 +3318,9 @@ git commit -m "feat(portal): wire sidebar bottom rail into all 3 portals"
 ```typescript
 import { test, expect } from "@playwright/test";
 
-test("candidate onboarding lands on dashboard with score and recommendations", async ({ page }) => {
+test("candidate onboarding lands on dashboard with score and recommendations", async ({
+  page,
+}) => {
   await loginAsCandidate(page);
   // upload resume → fill personal → review → preferences (helper functions in e2e utils)
   await uploadResume(page, "fixtures/sample-cv.pdf");
@@ -2997,7 +3336,9 @@ test("candidate onboarding lands on dashboard with score and recommendations", a
   // dashboard
   await page.waitForURL("/candidate", { timeout: 30000 });
   await expect(page.locator("[data-testid=profile-score-ring]")).toBeVisible();
-  await expect(page.locator("[data-testid=recommended-job-card]").first()).toBeVisible({ timeout: 15000 });
+  await expect(
+    page.locator("[data-testid=recommended-job-card]").first(),
+  ).toBeVisible({ timeout: 15000 });
 });
 ```
 
@@ -3013,15 +3354,21 @@ git commit -m "test(e2e): full onboarding -> analyzing -> dashboard flow"
 ### Task 42: E2E — notification round-trip per role
 
 **Files:**
+
 - Create: `apps/web/tests/e2e/notification-roundtrip.spec.ts`
 
 - [ ] **Step 1: Test**
 
 ```typescript
-test("candidate sees new notification when application status changes", async ({ page, browser }) => {
+test("candidate sees new notification when application status changes", async ({
+  page,
+  browser,
+}) => {
   // candidate session
   await loginAsCandidate(page);
-  const initialUnread = await page.locator("[data-testid=bell-unread-count]").textContent();
+  const initialUnread = await page
+    .locator("[data-testid=bell-unread-count]")
+    .textContent();
 
   // recruiter session in second context — advances application status
   const recruiterCtx = await browser.newContext();
@@ -3031,7 +3378,10 @@ test("candidate sees new notification when application status changes", async ({
   await rPage.click("text=Move to Screening");
 
   // candidate page should auto-update
-  await expect(page.locator("[data-testid=bell-unread-count]")).not.toHaveText(initialUnread!, { timeout: 5000 });
+  await expect(page.locator("[data-testid=bell-unread-count]")).not.toHaveText(
+    initialUnread!,
+    { timeout: 5000 },
+  );
 
   // open popover and verify the notification
   await page.click("[data-testid=bell-button]");
@@ -3095,28 +3445,28 @@ Confirm the commit history for the three phases is clean and ordered.
 
 Mapping each spec area to a task or tasks:
 
-| Spec area | Tasks |
-|---|---|
-| A — Candidate scoring | 1 (migration), 3, 4, 5 (rate-limited on-view), 6 (resume-default change handler), 9 (recompute processor), 10, 11 (extended complete-onboarding), 12 (legacy backfill guard), 25 (realtime emit), 31 (analyzing screen), 32, 33, 34, 35 |
-| B — F1 Profile-edit recompute | 8 |
-| C — F2 Resume default UX | 36 |
-| C — F3 Resume delete cascade | 7 |
-| D — F4 Application status emit | 13 |
-| D — F5 Offer accept/decline emit | 15 |
-| D — F6 New application emit | 14 |
-| D — F7 Bell badge realtime | 26, 27, 30, 37 |
-| D — F8 Interview email plumbing | 16 |
-| E — F9 Interview reminder cron | 17 |
-| E — F10 Offer expiration cron | 18 |
-| E — F11 Job deadline auto-archive | 19 |
-| E — F12 Feedback-due cron | 20 |
-| E — F13 Digest cron | 21 |
-| F — Sidebar bottom rail | 37, 38, 39, 40 |
-| G — DB migration | 1, 2 |
-| H — Realtime contract | 23, 24 |
-| I — Error matrix | covered implicitly across all tasks |
-| J — Testing strategy | embedded in every task; E2E in 41, 42 |
-| K — Rollout plan | Phase boundaries 22, 28, 43 |
+| Spec area                         | Tasks                                                                                                                                                                                                                                   |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A — Candidate scoring             | 1 (migration), 3, 4, 5 (rate-limited on-view), 6 (resume-default change handler), 9 (recompute processor), 10, 11 (extended complete-onboarding), 12 (legacy backfill guard), 25 (realtime emit), 31 (analyzing screen), 32, 33, 34, 35 |
+| B — F1 Profile-edit recompute     | 8                                                                                                                                                                                                                                       |
+| C — F2 Resume default UX          | 36                                                                                                                                                                                                                                      |
+| C — F3 Resume delete cascade      | 7                                                                                                                                                                                                                                       |
+| D — F4 Application status emit    | 13                                                                                                                                                                                                                                      |
+| D — F5 Offer accept/decline emit  | 15                                                                                                                                                                                                                                      |
+| D — F6 New application emit       | 14                                                                                                                                                                                                                                      |
+| D — F7 Bell badge realtime        | 26, 27, 30, 37                                                                                                                                                                                                                          |
+| D — F8 Interview email plumbing   | 16                                                                                                                                                                                                                                      |
+| E — F9 Interview reminder cron    | 17                                                                                                                                                                                                                                      |
+| E — F10 Offer expiration cron     | 18                                                                                                                                                                                                                                      |
+| E — F11 Job deadline auto-archive | 19                                                                                                                                                                                                                                      |
+| E — F12 Feedback-due cron         | 20                                                                                                                                                                                                                                      |
+| E — F13 Digest cron               | 21                                                                                                                                                                                                                                      |
+| F — Sidebar bottom rail           | 37, 38, 39, 40                                                                                                                                                                                                                          |
+| G — DB migration                  | 1, 2                                                                                                                                                                                                                                    |
+| H — Realtime contract             | 23, 24                                                                                                                                                                                                                                  |
+| I — Error matrix                  | covered implicitly across all tasks                                                                                                                                                                                                     |
+| J — Testing strategy              | embedded in every task; E2E in 41, 42                                                                                                                                                                                                   |
+| K — Rollout plan                  | Phase boundaries 22, 28, 43                                                                                                                                                                                                             |
 
 No spec area is left without a task.
 

@@ -18,7 +18,9 @@ interface PageProps {
   }>;
 }
 
-export default async function CandidateInterviewsPage({ searchParams }: PageProps) {
+export default async function CandidateInterviewsPage({
+  searchParams,
+}: PageProps) {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 

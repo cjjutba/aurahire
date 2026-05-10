@@ -178,7 +178,8 @@ function buildSvc(opts: {
   };
   const scoring = {
     computeProfileScore:
-      opts.computeProfileScore ?? jest.fn().mockResolvedValue(defaultProfileScoreDto),
+      opts.computeProfileScore ??
+      jest.fn().mockResolvedValue(defaultProfileScoreDto),
   } as unknown as jest.Mocked<ScoringService>;
 
   const scoringRepo = {
@@ -381,22 +382,17 @@ describe("CandidateProfilesService.completeOnboarding (extended response)", () =
     };
     const computeProfileScore = jest.fn().mockResolvedValue(fakeScore);
 
-    const {
-      svc,
-      profilesRepo,
-      matchPreviewQueue,
-      profileScoreQueue,
-      scoring,
-    } = buildSvc({
-      profile: buildProfile({ fullName: "Jane Doe" }),
-      candidateProfile: buildCandidateProfile({
-        desiredRoles: ["Software Engineer"],
-        openTo: ["remote"],
-      }),
-      defaultResume: buildResume(validParsedResume),
-      precomputeJobId: "precompute:job:happy",
-      computeProfileScore,
-    });
+    const { svc, profilesRepo, matchPreviewQueue, profileScoreQueue, scoring } =
+      buildSvc({
+        profile: buildProfile({ fullName: "Jane Doe" }),
+        candidateProfile: buildCandidateProfile({
+          desiredRoles: ["Software Engineer"],
+          openTo: ["remote"],
+        }),
+        defaultResume: buildResume(validParsedResume),
+        precomputeJobId: "precompute:job:happy",
+        computeProfileScore,
+      });
 
     const result = await svc.completeOnboarding(candidateUser);
 

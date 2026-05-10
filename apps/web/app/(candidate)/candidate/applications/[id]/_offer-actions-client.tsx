@@ -73,11 +73,16 @@ export function OfferActionsClient({ offer }: Props) {
     try {
       const res = await authedPost(`/api/v1/offers/${offer.id}/accept`);
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        const body = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
         toastApiError(null, "Couldn't accept offer", body.message);
         return;
       }
-      toastSuccess("Offer accepted", "Your recruiter will be in touch shortly to confirm next steps.");
+      toastSuccess(
+        "Offer accepted",
+        "Your recruiter will be in touch shortly to confirm next steps.",
+      );
       router.refresh();
     } finally {
       setWorking(false);
@@ -91,7 +96,9 @@ export function OfferActionsClient({ offer }: Props) {
         reason: reason.trim() || null,
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        const body = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
         toastApiError(null, "Couldn't decline offer", body.message);
         return;
       }

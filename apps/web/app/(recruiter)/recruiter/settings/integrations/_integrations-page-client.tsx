@@ -67,8 +67,8 @@ export function IntegrationsPageClient() {
       />
 
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)]/30 p-4 text-sm text-[var(--color-ink)]">
-        Integrations are previews. Saving a value persists locally; the
-        delivery and export pipelines will land in a future release.
+        Integrations are previews. Saving a value persists locally; the delivery
+        and export pipelines will land in a future release.
       </div>
 
       <SettingsCard

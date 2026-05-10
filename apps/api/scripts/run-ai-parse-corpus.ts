@@ -119,12 +119,13 @@ async function evaluateFixture(
       requestId: `corpus:${fixtureName}`,
     });
   } finally {
-    await storage.delete({ bucket: RESUMES_BUCKET, path: tempPath }).catch(
-      (err: unknown) =>
+    await storage
+      .delete({ bucket: RESUMES_BUCKET, path: tempPath })
+      .catch((err: unknown) =>
         logger.warn(
           `failed to delete temp fixture ${tempPath}: ${(err as Error).message}`,
         ),
-    );
+      );
   }
 
   const parsed = result.parsed;
@@ -168,9 +169,7 @@ async function evaluateFixture(
     );
   }
   if (contactRecall < 0.95) {
-    failures.push(
-      `contact recall ${(contactRecall * 100).toFixed(0)}% < 95%`,
-    );
+    failures.push(`contact recall ${(contactRecall * 100).toFixed(0)}% < 95%`);
   }
   if (!experienceMatch) {
     failures.push(
@@ -186,9 +185,7 @@ async function evaluateFixture(
     failures.push(`skills jaccard ${skillsJaccard.toFixed(2)} < 0.85`);
   }
   if (sourceFieldCoverage < 0.9) {
-    failures.push(
-      `coverage ${(sourceFieldCoverage * 100).toFixed(0)}% < 90%`,
-    );
+    failures.push(`coverage ${(sourceFieldCoverage * 100).toFixed(0)}% < 90%`);
   }
   if (hallucinationCount > 0) {
     failures.push(`${hallucinationCount} hallucinations`);
@@ -262,7 +259,9 @@ async function main(): Promise<void> {
       );
       let expected: ExpectedFixture;
       try {
-        expected = JSON.parse(await readFile(expectedPath, "utf8")) as ExpectedFixture;
+        expected = JSON.parse(
+          await readFile(expectedPath, "utf8"),
+        ) as ExpectedFixture;
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(

@@ -64,7 +64,9 @@ export function JobsToolbarClient({
   const [isPending, startTransition] = useTransition();
 
   const [q, setQ] = useState(initialQuery);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
   // Sync input when URL changes (e.g. filter resets)
   useEffect(() => {
@@ -189,14 +191,14 @@ function FilterDropdown({
         <span>
           {label}: {current}
         </span>
-        <ChevronDown className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+        <ChevronDown
+          className="h-3.5 w-3.5 text-[var(--color-muted)]"
+          aria-hidden
+        />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="bottom">
         {options.map((opt) => (
-          <DropdownMenuItem
-            key={opt.value}
-            onClick={() => onSelect(opt.value)}
-          >
+          <DropdownMenuItem key={opt.value} onClick={() => onSelect(opt.value)}>
             {opt.label}
           </DropdownMenuItem>
         ))}

@@ -219,8 +219,18 @@ describe("ApplicationsService — notification emissions", () => {
         { provide: EventsService, useValue: events },
         { provide: MatchScoreQueueService, useValue: matchScoreQueue },
         { provide: NotificationsService, useValue: notifications },
-        { provide: OffersRepository, useValue: { findLatestByApplicationId: jest.fn() } },
-        { provide: DRIZZLE_CLIENT, useValue: { transaction: jest.fn(async <T>(fn: (tx: unknown) => Promise<T>) => fn({})) } },
+        {
+          provide: OffersRepository,
+          useValue: { findLatestByApplicationId: jest.fn() },
+        },
+        {
+          provide: DRIZZLE_CLIENT,
+          useValue: {
+            transaction: jest.fn(async <T>(fn: (tx: unknown) => Promise<T>) =>
+              fn({}),
+            ),
+          },
+        },
       ],
     }).compile();
 
@@ -234,7 +244,10 @@ describe("ApplicationsService — notification emissions", () => {
     repo.insert.mockResolvedValue(makeApplication());
     repo.findById.mockResolvedValue(makeApplication());
 
-    await service.apply(candidateUser, { jobId: JOB_ID, resumeId: RESUME_ID } as any);
+    await service.apply(candidateUser, {
+      jobId: JOB_ID,
+      resumeId: RESUME_ID,
+    } as any);
 
     // emitMany must be called with the recruiter team (single recruiter today)
     // and the new_application_received envelope.
@@ -271,12 +284,9 @@ describe("ApplicationsService — notification emissions", () => {
     repo.findById.mockResolvedValue(appBefore);
     jobsRepo.findById.mockResolvedValue(makeJob());
 
-    await service.updateStatus(
-      recruiterUser,
-      COMPANY_ID,
-      APPLICATION_ID,
-      { newStatus: "screening" } as any,
-    );
+    await service.updateStatus(recruiterUser, COMPANY_ID, APPLICATION_ID, {
+      newStatus: "screening",
+    } as any);
 
     expect(notifications.emit).toHaveBeenCalledWith(
       expect.objectContaining({

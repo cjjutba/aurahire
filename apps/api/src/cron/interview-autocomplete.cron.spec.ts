@@ -20,7 +20,9 @@ function makeDb(dueRows: DueRow[], updatedRow?: { id: string } | null) {
   // Default: returning() resolves with the first updated row (simulates success).
   const returningFn = jest
     .fn()
-    .mockResolvedValue(updatedRow === null ? [] : [updatedRow ?? { id: dueRows[0]?.id ?? "i1" }]);
+    .mockResolvedValue(
+      updatedRow === null ? [] : [updatedRow ?? { id: dueRows[0]?.id ?? "i1" }],
+    );
   const updateWhereFn = jest.fn().mockReturnValue({ returning: returningFn });
   const setFn = jest.fn().mockReturnValue({ where: updateWhereFn });
   const update = jest.fn().mockReturnValue({ set: setFn });
@@ -36,7 +38,9 @@ function makeDb(dueRows: DueRow[], updatedRow?: { id: string } | null) {
   joinChain.innerJoin = innerJoinFn;
   joinChain.leftJoin = leftJoinFn;
   joinChain.where = whereFn as unknown as jest.Mock;
-  const fromFn = jest.fn().mockReturnValue({ innerJoin: innerJoinFn, leftJoin: leftJoinFn });
+  const fromFn = jest
+    .fn()
+    .mockReturnValue({ innerJoin: innerJoinFn, leftJoin: leftJoinFn });
   const selectFn = jest.fn().mockReturnValue({ from: fromFn });
 
   return { select: selectFn, update, _returning: returningFn };
@@ -70,8 +74,20 @@ describe("InterviewAutocompleteCron", () => {
 
   it("flips qualifying rows to completed and emits notifications + realtime", async () => {
     const due: DueRow[] = [
-      { id: "i1", applicationId: "a1", scheduledBy: "r1", candidateId: "c1", jobId: "j1" },
-      { id: "i2", applicationId: "a2", scheduledBy: "r2", candidateId: "c2", jobId: "j2" },
+      {
+        id: "i1",
+        applicationId: "a1",
+        scheduledBy: "r1",
+        candidateId: "c1",
+        jobId: "j1",
+      },
+      {
+        id: "i2",
+        applicationId: "a2",
+        scheduledBy: "r2",
+        candidateId: "c2",
+        jobId: "j2",
+      },
     ];
     // Each update returns the row (UPDATE succeeds for both)
     const db = makeDb(due);
@@ -129,7 +145,13 @@ describe("InterviewAutocompleteCron", () => {
 
   it("is idempotent — returns completed: 0 when the UPDATE guard finds no row", async () => {
     const due: DueRow[] = [
-      { id: "i1", applicationId: "a1", scheduledBy: "r1", candidateId: "c1", jobId: "j1" },
+      {
+        id: "i1",
+        applicationId: "a1",
+        scheduledBy: "r1",
+        candidateId: "c1",
+        jobId: "j1",
+      },
     ];
     // Simulate race: DB returns empty from .returning() (already moved by another path)
     await setup(due, null);
@@ -168,8 +190,20 @@ describe("InterviewAutocompleteCron", () => {
 
   it("continues processing other rows when one row throws", async () => {
     const due: DueRow[] = [
-      { id: "i1", applicationId: "a1", scheduledBy: "r1", candidateId: "c1", jobId: "j1" },
-      { id: "i2", applicationId: "a2", scheduledBy: "r2", candidateId: "c2", jobId: "j2" },
+      {
+        id: "i1",
+        applicationId: "a1",
+        scheduledBy: "r1",
+        candidateId: "c1",
+        jobId: "j1",
+      },
+      {
+        id: "i2",
+        applicationId: "a2",
+        scheduledBy: "r2",
+        candidateId: "c2",
+        jobId: "j2",
+      },
     ];
     const db = makeDb(due);
     notifications = { emit: jest.fn().mockResolvedValue(undefined) };

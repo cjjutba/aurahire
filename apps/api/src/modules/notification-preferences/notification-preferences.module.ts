@@ -9,7 +9,10 @@ import { AuditModule } from "../../audit";
 @Module({
   imports: [forwardRef(() => NotificationsModule), AuditModule],
   controllers: [NotificationPreferencesController],
-  providers: [NotificationPreferencesService, NotificationPreferencesRepository],
+  providers: [
+    NotificationPreferencesService,
+    NotificationPreferencesRepository,
+  ],
   exports: [NotificationPreferencesService],
 })
 export class NotificationPreferencesModule {}

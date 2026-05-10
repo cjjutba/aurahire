@@ -28,7 +28,8 @@ export const recruiterHowItWorks: HowItWorksContent = {
     steps: [
       {
         label: "Draft",
-        description: "Write the role; the AI checks for biased language as you type.",
+        description:
+          "Write the role; the AI checks for biased language as you type.",
         icon: Edit3,
         targetId: "draft-and-bias-check",
       },
@@ -40,13 +41,15 @@ export const recruiterHowItWorks: HowItWorksContent = {
       },
       {
         label: "Receive",
-        description: "Applications arrive scored, redacted, and ready to triage.",
+        description:
+          "Applications arrive scored, redacted, and ready to triage.",
         icon: ClipboardList,
         targetId: "receiving-applications",
       },
       {
         label: "Triage",
-        description: "Pipeline view with scores, breakdowns, and evidence per row.",
+        description:
+          "Pipeline view with scores, breakdowns, and evidence per row.",
         icon: KanbanSquare,
         targetId: "pipeline-and-triage",
       },
@@ -217,10 +220,26 @@ export const recruiterHowItWorks: HowItWorksContent = {
               kind: "matrix",
               head: ["Surface", "What you see", "What's redacted"],
               rows: [
-                ["Pipeline row (collapsed)", "Score, match band, role-fit summary, applied date.", "Name, photo, contact info."],
-                ["Pipeline row (expanded)", "All of the above + breakdown bar + skills matched.", "Same — name still hidden until you click 'Reveal.'"],
-                ["Candidate detail page", "Full profile, contact info, evidence panel, history.", "Nothing — but the page records that you opened it."],
-                ["Bulk actions", "Operate on filtered sets without revealing identities.", "Names redacted in the action confirmation modal."],
+                [
+                  "Pipeline row (collapsed)",
+                  "Score, match band, role-fit summary, applied date.",
+                  "Name, photo, contact info.",
+                ],
+                [
+                  "Pipeline row (expanded)",
+                  "All of the above + breakdown bar + skills matched.",
+                  "Same — name still hidden until you click 'Reveal.'",
+                ],
+                [
+                  "Candidate detail page",
+                  "Full profile, contact info, evidence panel, history.",
+                  "Nothing — but the page records that you opened it.",
+                ],
+                [
+                  "Bulk actions",
+                  "Operate on filtered sets without revealing identities.",
+                  "Names redacted in the action confirmation modal.",
+                ],
               ],
             },
             {
@@ -520,27 +539,33 @@ export const recruiterHowItWorks: HowItWorksContent = {
               entries: [
                 {
                   term: "Match score",
-                  definition: "0–100 number representing alignment between an application and the role's criteria. Quantized to the nearest 5.",
+                  definition:
+                    "0–100 number representing alignment between an application and the role's criteria. Quantized to the nearest 5.",
                 },
                 {
                   term: "Match band",
-                  definition: "Plain-language label for a score: Limited Match (0–39), Partial Match (40–69), Strong Match (70–100).",
+                  definition:
+                    "Plain-language label for a score: Limited Match (0–39), Partial Match (40–69), Strong Match (70–100).",
                 },
                 {
                   term: "Bias flag",
-                  definition: "Inline chip in the job description editor warning about potentially biased language. Includes explanation and suggested replacement.",
+                  definition:
+                    "Inline chip in the job description editor warning about potentially biased language. Includes explanation and suggested replacement.",
                 },
                 {
                   term: "Calibration warning",
-                  definition: "A chip beside a score indicating the underlying inputs were unusually sparse or uncertain; the score should be weighted accordingly.",
+                  definition:
+                    "A chip beside a score indicating the underlying inputs were unusually sparse or uncertain; the score should be weighted accordingly.",
                 },
                 {
                   term: "Override log",
-                  definition: "The audit record of every time you advanced a low-scored candidate or declined a high-scored one. Visible per recruiter and per role.",
+                  definition:
+                    "The audit record of every time you advanced a low-scored candidate or declined a high-scored one. Visible per recruiter and per role.",
                 },
                 {
                   term: "Identity reveal",
-                  definition: "The deliberate action of unredacting a candidate's name and contact info on their application. Reveals are logged.",
+                  definition:
+                    "The deliberate action of unredacting a candidate's name and contact info on their application. Reveals are logged.",
                 },
               ],
             },
@@ -557,12 +582,36 @@ export const recruiterHowItWorks: HowItWorksContent = {
               kind: "matrix",
               head: ["Step", "AI does", "You do"],
               rows: [
-                ["Bias check on jobs", "Flag suspect language with explanation and suggestion.", "Accept, edit, or override the flag — with logged reason."],
-                ["Resume parsing", "Extract structured fields from candidate resumes.", "Trust the parse for triage; edit-by-recruiter is disabled (candidates own their data)."],
-                ["PII redaction", "Strip names and contact info before scoring.", "Choose when to reveal identity on a candidate detail."],
-                ["Score computation", "Run rule + AI components; sum to a final score with breakdown.", "Configure weights at role-level; override scores or stages with logged action."],
-                ["Pipeline sorting", "Default sort by score descending.", "Pick any sort or filter; your view is yours."],
-                ["Hiring decision", "Nothing.", "Owns offer, decline, hold — every outcome notification is yours to send."],
+                [
+                  "Bias check on jobs",
+                  "Flag suspect language with explanation and suggestion.",
+                  "Accept, edit, or override the flag — with logged reason.",
+                ],
+                [
+                  "Resume parsing",
+                  "Extract structured fields from candidate resumes.",
+                  "Trust the parse for triage; edit-by-recruiter is disabled (candidates own their data).",
+                ],
+                [
+                  "PII redaction",
+                  "Strip names and contact info before scoring.",
+                  "Choose when to reveal identity on a candidate detail.",
+                ],
+                [
+                  "Score computation",
+                  "Run rule + AI components; sum to a final score with breakdown.",
+                  "Configure weights at role-level; override scores or stages with logged action.",
+                ],
+                [
+                  "Pipeline sorting",
+                  "Default sort by score descending.",
+                  "Pick any sort or filter; your view is yours.",
+                ],
+                [
+                  "Hiring decision",
+                  "Nothing.",
+                  "Owns offer, decline, hold — every outcome notification is yours to send.",
+                ],
               ],
             },
             {
@@ -613,6 +662,9 @@ export const recruiterHowItWorks: HowItWorksContent = {
     title: "Have a workflow question we didn't cover?",
     body: "If something about the recruiter workflow isn't clear, write to us — a human reads and responds. Feedback informs the next iteration.",
     email: "cjjutbaofficial@gmail.com",
-    secondaryLink: { label: "Open the recruiter help center", href: "/recruiter/help" },
+    secondaryLink: {
+      label: "Open the recruiter help center",
+      href: "/recruiter/help",
+    },
   },
 };

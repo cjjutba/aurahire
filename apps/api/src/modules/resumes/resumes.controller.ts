@@ -62,7 +62,10 @@ export class ResumesController {
     },
   })
   @ApiResponse({ status: 201, type: ResumeResponseEnvelopeDto })
-  @ApiResponse({ status: 400, description: "Unsupported file type or too large" })
+  @ApiResponse({
+    status: 400,
+    description: "Unsupported file type or too large",
+  })
   async upload(
     @CurrentUser() user: AuthUser,
     @Req() req: FastifyRequest,
@@ -95,7 +98,9 @@ export class ResumesController {
   @Roles("candidate")
   @ApiOperation({ summary: "List my resumes" })
   @ApiResponse({ status: 200, type: ResumeListResponseDto })
-  async listMine(@CurrentUser() user: AuthUser): Promise<ResumeListResponseDto> {
+  async listMine(
+    @CurrentUser() user: AuthUser,
+  ): Promise<ResumeListResponseDto> {
     const data = await this.service.listMine(user);
     return { data };
   }
@@ -129,7 +134,9 @@ export class ResumesController {
   @Post(":id/reparse")
   @Roles("candidate")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Re-run AI parsing against this resume's stored rawText" })
+  @ApiOperation({
+    summary: "Re-run AI parsing against this resume's stored rawText",
+  })
   @ApiResponse({ status: 200, type: ResumeResponseEnvelopeDto })
   async reparse(
     @CurrentUser() user: AuthUser,
@@ -155,7 +162,9 @@ export class ResumesController {
 
   @Get(":id/download")
   @Roles("candidate", "admin")
-  @ApiOperation({ summary: "Get a 1-hour signed URL to download the resume PDF" })
+  @ApiOperation({
+    summary: "Get a 1-hour signed URL to download the resume PDF",
+  })
   @ApiResponse({ status: 200, type: SignedUrlResponseDto })
   async download(
     @CurrentUser() user: AuthUser,

@@ -25,7 +25,9 @@ const OTHER_CANDIDATE_ID = "22222222-2222-2222-2222-222222222222";
 const JOB_ID = "33333333-3333-3333-3333-333333333333";
 const RESUME_ID = "44444444-4444-4444-4444-444444444444";
 
-function makeMatchPreviewPayload(overrides: Partial<{ candidateId: string }> = {}) {
+function makeMatchPreviewPayload(
+  overrides: Partial<{ candidateId: string }> = {},
+) {
   return {
     candidateId: overrides.candidateId ?? CANDIDATE_ID,
     jobId: JOB_ID,
@@ -37,7 +39,9 @@ function makeMatchPreviewPayload(overrides: Partial<{ candidateId: string }> = {
   };
 }
 
-function makeProfileScorePayload(overrides: Partial<{ candidateId: string }> = {}) {
+function makeProfileScorePayload(
+  overrides: Partial<{ candidateId: string }> = {},
+) {
   return {
     candidateId: overrides.candidateId ?? CANDIDATE_ID,
     resumeId: RESUME_ID,
@@ -90,9 +94,18 @@ describe("useCandidateRealtime", () => {
     const { result } = renderHook(() => useCandidateRealtime(CANDIDATE_ID));
 
     act(() => {
-      fakeSocket.emit(RealtimeEvent.MatchPreviewCreated, makeMatchPreviewPayload());
-      fakeSocket.emit(RealtimeEvent.MatchPreviewCreated, makeMatchPreviewPayload());
-      fakeSocket.emit(RealtimeEvent.MatchPreviewCreated, makeMatchPreviewPayload());
+      fakeSocket.emit(
+        RealtimeEvent.MatchPreviewCreated,
+        makeMatchPreviewPayload(),
+      );
+      fakeSocket.emit(
+        RealtimeEvent.MatchPreviewCreated,
+        makeMatchPreviewPayload(),
+      );
+      fakeSocket.emit(
+        RealtimeEvent.MatchPreviewCreated,
+        makeMatchPreviewPayload(),
+      );
     });
 
     expect(result.current.matchPreviewCount).toBe(3);
@@ -126,7 +139,10 @@ describe("useCandidateRealtime", () => {
     const { result } = renderHook(() => useCandidateRealtime(null));
 
     act(() => {
-      fakeSocket.emit(RealtimeEvent.MatchPreviewCreated, makeMatchPreviewPayload());
+      fakeSocket.emit(
+        RealtimeEvent.MatchPreviewCreated,
+        makeMatchPreviewPayload(),
+      );
     });
 
     expect(result.current.matchPreviewCount).toBe(0);

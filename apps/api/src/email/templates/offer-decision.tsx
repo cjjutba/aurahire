@@ -56,25 +56,31 @@ export function OfferDecisionEmail({
           }}
         >
           <EmailBrandHeader company={company} />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             {headline}
           </Heading>
           <Section>
-            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>Hi {recruiterName},</Text>
+            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
+              Hi {recruiterName},
+            </Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
               <strong style={{ color: "#0a0b0d" }}>{candidateName}</strong> has{" "}
-              <strong style={{ color: accentColor }}>{previewVerb}</strong> the offer for{" "}
-              <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong>.
+              <strong style={{ color: accentColor }}>{previewVerb}</strong> the
+              offer for <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong>
+              .
             </Text>
             {accepted ? (
               <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-                The application status has been updated to <strong>Hired</strong>. Time to kick off
-                onboarding.
+                The application status has been updated to{" "}
+                <strong>Hired</strong>. Time to kick off onboarding.
               </Text>
             ) : (
               <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-                The application remains active — you can review the candidate&apos;s notes and
-                continue with other candidates for this role.
+                The application remains active — you can review the
+                candidate&apos;s notes and continue with other candidates for
+                this role.
               </Text>
             )}
           </Section>

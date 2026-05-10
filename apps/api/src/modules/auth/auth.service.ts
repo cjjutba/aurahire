@@ -71,11 +71,15 @@ export class AuthService {
     },
     meta: RequestMeta,
   ): Promise<{ message: string }> {
-    const userId = await this.upsertUnconfirmedUser(input.email, input.password, {
-      role: "candidate",
-      full_name: input.fullName,
-      phone: input.phone,
-    });
+    const userId = await this.upsertUnconfirmedUser(
+      input.email,
+      input.password,
+      {
+        role: "candidate",
+        full_name: input.fullName,
+        phone: input.phone,
+      },
+    );
 
     await this.issueVerificationEmail(
       userId,
@@ -105,11 +109,15 @@ export class AuthService {
     },
     meta: RequestMeta,
   ): Promise<{ message: string }> {
-    const userId = await this.upsertUnconfirmedUser(input.email, input.password, {
-      role: "recruiter",
-      full_name: input.fullName,
-      phone: input.phone,
-    });
+    const userId = await this.upsertUnconfirmedUser(
+      input.email,
+      input.password,
+      {
+        role: "recruiter",
+        full_name: input.fullName,
+        phone: input.phone,
+      },
+    );
 
     await this.issueVerificationEmail(
       userId,
@@ -133,14 +141,20 @@ export class AuthService {
   async verifyEmail(
     token: string,
     meta: RequestMeta,
-  ): Promise<{ role: "candidate" | "recruiter"; email: string; sessionTokenHash: string }> {
+  ): Promise<{
+    role: "candidate" | "recruiter";
+    email: string;
+    sessionTokenHash: string;
+  }> {
     const row = await this.consumeToken(token, "email_verification");
     const metadata = this.decodeSignupMetadata(row.metadata);
 
     try {
       await this.supabaseAdmin.confirmEmail(row.userId);
     } catch (err) {
-      this.logger.error(`confirmEmail failed for ${row.userId}: ${(err as Error).message}`);
+      this.logger.error(
+        `confirmEmail failed for ${row.userId}: ${(err as Error).message}`,
+      );
       throw new ServiceUnavailableException({
         code: "EMAIL_VERIFICATION_FAILED",
         message: "Could not finalize verification. Please try again.",
@@ -182,12 +196,17 @@ export class AuthService {
 
     let sessionTokenHash: string;
     try {
-      sessionTokenHash = await this.supabaseAdmin.generateMagicLinkTokenHash(row.email);
+      sessionTokenHash = await this.supabaseAdmin.generateMagicLinkTokenHash(
+        row.email,
+      );
     } catch (err) {
-      this.logger.error(`generateMagicLink failed for ${row.userId}: ${(err as Error).message}`);
+      this.logger.error(
+        `generateMagicLink failed for ${row.userId}: ${(err as Error).message}`,
+      );
       throw new ServiceUnavailableException({
         code: "SESSION_BOOTSTRAP_FAILED",
-        message: "Verification succeeded but auto sign-in failed. Please sign in manually.",
+        message:
+          "Verification succeeded but auto sign-in failed. Please sign in manually.",
       });
     }
 
@@ -198,22 +217,35 @@ export class AuthService {
   // RESEND VERIFICATION
   // ==========================================================================
 
-  async resendVerification(email: string, meta: RequestMeta): Promise<{ message: string }> {
-    const user = await this.supabaseAdmin.findUserByEmail(email).catch((err) => {
-      this.logger.warn(
-        `resend-verification: findUserByEmail threw for ${email}: ${(err as Error).message}`,
-      );
-      return null;
-    });
+  async resendVerification(
+    email: string,
+    meta: RequestMeta,
+  ): Promise<{ message: string }> {
+    const user = await this.supabaseAdmin
+      .findUserByEmail(email)
+      .catch((err) => {
+        this.logger.warn(
+          `resend-verification: findUserByEmail threw for ${email}: ${(err as Error).message}`,
+        );
+        return null;
+      });
     if (!user) {
-      this.logger.log(`resend-verification: no user found for ${email} — silent no-op`);
-      return { message: "If that account exists and isn't yet verified, a new link is on its way." };
+      this.logger.log(
+        `resend-verification: no user found for ${email} — silent no-op`,
+      );
+      return {
+        message:
+          "If that account exists and isn't yet verified, a new link is on its way.",
+      };
     }
     if (user.emailConfirmedAt) {
       this.logger.log(
         `resend-verification: ${email} already confirmed at ${user.emailConfirmedAt} — silent no-op`,
       );
-      return { message: "If that account exists and isn't yet verified, a new link is on its way." };
+      return {
+        message:
+          "If that account exists and isn't yet verified, a new link is on its way.",
+      };
     }
 
     // Reuse the metadata from the most recent verification token if present;
@@ -235,7 +267,10 @@ export class AuthService {
       this.logger.warn(
         `resend-verification: no prior verification token for user ${user.id} (${email}) — cannot rebuild signup metadata`,
       );
-      return { message: "If that account exists and isn't yet verified, a new link is on its way." };
+      return {
+        message:
+          "If that account exists and isn't yet verified, a new link is on its way.",
+      };
     }
 
     const metadata = this.decodeSignupMetadata(recent[0]!.metadata);
@@ -248,15 +283,23 @@ export class AuthService {
     );
     this.logger.log(`resend-verification: dispatched to ${email}`);
 
-    return { message: "If that account exists and isn't yet verified, a new link is on its way." };
+    return {
+      message:
+        "If that account exists and isn't yet verified, a new link is on its way.",
+    };
   }
 
   // ==========================================================================
   // FORGOT PASSWORD
   // ==========================================================================
 
-  async requestPasswordReset(email: string, meta: RequestMeta): Promise<{ message: string }> {
-    const user = await this.supabaseAdmin.findUserByEmail(email).catch(() => null);
+  async requestPasswordReset(
+    email: string,
+    meta: RequestMeta,
+  ): Promise<{ message: string }> {
+    const user = await this.supabaseAdmin
+      .findUserByEmail(email)
+      .catch(() => null);
     if (user) {
       const rawToken = this.generateRawToken();
       const tokenHash = this.hashToken(rawToken);
@@ -302,7 +345,10 @@ export class AuthService {
       });
     }
 
-    return { message: "If an account exists for that email, a reset link is on its way." };
+    return {
+      message:
+        "If an account exists for that email, a reset link is on its way.",
+    };
   }
 
   // ==========================================================================
@@ -364,7 +410,9 @@ export class AuthService {
     try {
       await this.supabaseAdmin.updatePassword(row.userId, newPassword);
     } catch (err) {
-      this.logger.error(`updatePassword failed for ${row.userId}: ${(err as Error).message}`);
+      this.logger.error(
+        `updatePassword failed for ${row.userId}: ${(err as Error).message}`,
+      );
       throw new ServiceUnavailableException({
         code: "PASSWORD_RESET_FAILED",
         message: "Could not update password. Please try again.",
@@ -398,7 +446,9 @@ export class AuthService {
     password: string,
     userMetadata: Record<string, unknown>,
   ): Promise<string> {
-    const existing = await this.supabaseAdmin.findUserByEmail(email).catch(() => null);
+    const existing = await this.supabaseAdmin
+      .findUserByEmail(email)
+      .catch(() => null);
     if (existing) {
       if (existing.emailConfirmedAt) {
         throw new ConflictException({
@@ -411,7 +461,11 @@ export class AuthService {
     }
 
     try {
-      const created = await this.supabaseAdmin.createUser({ email, password, userMetadata });
+      const created = await this.supabaseAdmin.createUser({
+        email,
+        password,
+        userMetadata,
+      });
       return created.id;
     } catch (err) {
       this.logger.error(`createUser failed: ${(err as Error).message}`);
@@ -512,10 +566,7 @@ export class AuthService {
       .update(authTokensTable)
       .set({ consumedAt: now })
       .where(
-        and(
-          eq(authTokensTable.id, row.id),
-          isNull(authTokensTable.consumedAt),
-        ),
+        and(eq(authTokensTable.id, row.id), isNull(authTokensTable.consumedAt)),
       )
       .returning({ id: authTokensTable.id });
 
@@ -538,7 +589,11 @@ export class AuthService {
       });
     }
     const obj = raw as Record<string, unknown>;
-    if (obj.role === "candidate" && typeof obj.fullName === "string" && typeof obj.phone === "string") {
+    if (
+      obj.role === "candidate" &&
+      typeof obj.fullName === "string" &&
+      typeof obj.phone === "string"
+    ) {
       return { role: "candidate", fullName: obj.fullName, phone: obj.phone };
     }
     if (
@@ -566,8 +621,9 @@ export class AuthService {
    * was created), don't fail the verification — the user is already onboarded.
    */
   private swallowProfileConflict(err: unknown, userId: string): void {
-    const isConflict = (err as { status?: number; getStatus?: () => number })?.status === 409
-      || (err as { getStatus?: () => number })?.getStatus?.() === 409;
+    const isConflict =
+      (err as { status?: number; getStatus?: () => number })?.status === 409 ||
+      (err as { getStatus?: () => number })?.getStatus?.() === 409;
     if (!isConflict) throw err;
     this.logger.log(`Profile already exists for ${userId} — verify reused.`);
   }

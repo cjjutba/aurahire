@@ -72,7 +72,17 @@ describe("InterviewReminderCron", () => {
     return { db };
   }
 
-  const makeRow = (overrides: Partial<DueRow> & Pick<DueRow, "interviewId" | "applicationId" | "candidateId" | "jobTitle" | "companyName">): DueRow => ({
+  const makeRow = (
+    overrides: Partial<DueRow> &
+      Pick<
+        DueRow,
+        | "interviewId"
+        | "applicationId"
+        | "candidateId"
+        | "jobTitle"
+        | "companyName"
+      >,
+  ): DueRow => ({
     scheduledAt: new Date(),
     durationMinutes: 60,
     format: "video",
@@ -92,8 +102,22 @@ describe("InterviewReminderCron", () => {
 
   it("emits a reminder and marks reminder_sent_at for each due row", async () => {
     const due: DueRow[] = [
-      makeRow({ interviewId: "i1", applicationId: "a1", candidateId: "c1", jobTitle: "Engineer", companyName: "ACME", format: "video" }),
-      makeRow({ interviewId: "i2", applicationId: "a2", candidateId: "c2", jobTitle: "PM", companyName: "ACME", format: "phone" }),
+      makeRow({
+        interviewId: "i1",
+        applicationId: "a1",
+        candidateId: "c1",
+        jobTitle: "Engineer",
+        companyName: "ACME",
+        format: "video",
+      }),
+      makeRow({
+        interviewId: "i2",
+        applicationId: "a2",
+        candidateId: "c2",
+        jobTitle: "PM",
+        companyName: "ACME",
+        format: "phone",
+      }),
     ];
     const { db } = await setup(due);
 
@@ -120,14 +144,23 @@ describe("InterviewReminderCron", () => {
 
   it("audit-logs the run with sent and scanned counts", async () => {
     await setup([
-      makeRow({ interviewId: "i1", applicationId: "a1", candidateId: "c1", jobTitle: "T", companyName: "C" }),
+      makeRow({
+        interviewId: "i1",
+        applicationId: "a1",
+        candidateId: "c1",
+        jobTitle: "T",
+        companyName: "C",
+      }),
     ]);
     await cron.execute();
     expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({
         actorType: "system",
         action: expect.stringContaining("interview_reminder.executed"),
-        details: expect.objectContaining({ remindersSent: 1, candidatesScanned: 1 }),
+        details: expect.objectContaining({
+          remindersSent: 1,
+          candidatesScanned: 1,
+        }),
       }),
     );
   });
@@ -142,8 +175,20 @@ describe("InterviewReminderCron", () => {
 
   it("continues processing other rows when one notification.emit fails", async () => {
     const due: DueRow[] = [
-      makeRow({ interviewId: "i1", applicationId: "a1", candidateId: "c1", jobTitle: "T", companyName: "C" }),
-      makeRow({ interviewId: "i2", applicationId: "a2", candidateId: "c2", jobTitle: "T", companyName: "C" }),
+      makeRow({
+        interviewId: "i1",
+        applicationId: "a1",
+        candidateId: "c1",
+        jobTitle: "T",
+        companyName: "C",
+      }),
+      makeRow({
+        interviewId: "i2",
+        applicationId: "a2",
+        candidateId: "c2",
+        jobTitle: "T",
+        companyName: "C",
+      }),
     ];
     const { db } = await setup(due);
     (notifications.emit as jest.Mock)

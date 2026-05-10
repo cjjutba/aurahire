@@ -32,6 +32,7 @@ This is presentation-only — no backend, no data-flow, no schema, no new depend
 ## Scope
 
 **In scope:**
+
 - Edit `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx`:
   - Drop the `canToggle` conditional; render the toggle whenever the pane has data to show.
   - Rename the tab labels (`PDF` → `Original`, `Text` → `Parsed Text`).
@@ -41,6 +42,7 @@ This is presentation-only — no backend, no data-flow, no schema, no new depend
   - Keep the existing header right-side actions (`Replace resume`, `Open` external link).
 
 **Out of scope:**
+
 - The `/candidate/resume` page (`_resume-client.tsx`). It stays as-is — its 2-tab Parsed Fields / PDF View pattern is correct for that surface.
 - Any change to `pdf-renderer.tsx`, `highlight-overlay.tsx`, `linearized-resume-view.tsx`, `derive-highlights.ts`, `find-text-spans.ts`, or `highlight-context.tsx`.
 - Any change to `personal/_client.tsx`, `review/_client.tsx`, `personal/_data.ts`, or `review/_data.ts` — the props passed to `ResumePreviewPane` are already correct.
@@ -70,9 +72,9 @@ No new props are required. All four are already produced by `_data.ts` for both 
 
 Two derived booleans drive both the tab disabled-states and the empty-state copy:
 
-| Source | Available when |
-|---|---|
-| `originalAvailable` | `hasPdf && pdfStatus !== "failed"` |
+| Source                | Available when                          |
+| --------------------- | --------------------------------------- |
+| `originalAvailable`   | `hasPdf && pdfStatus !== "failed"`      |
 | `parsedTextAvailable` | `hasText` (i.e. `rawText` is non-empty) |
 
 Both are computed alongside the existing `hasPdf` / `hasText`. `pdfStatus === "image-only"` still counts as `originalAvailable === true` — the document renders, even though highlights can't pin to specific spans on it. The image-only banner explains this.
@@ -81,25 +83,25 @@ Both are computed alongside the existing `hasPdf` / `hasText`. `pdfStatus === "i
 
 **Original tab:**
 
-| Condition | Render |
-|---|---|
-| `pdfStatus === "loading"` | "Loading preview…" — same loading box used today |
-| `pdfStatus === "rendered"` | PDF + `HighlightOverlay` (existing) |
-| `pdfStatus === "image-only"` | PDF + small banner: *"This PDF appears to be image-only — highlights aren't available on the document. Switch to **Parsed Text** for highlighted content."* (existing copy, retained) |
-| `pdfStatus === "failed"` or `!hasPdf` | Empty state: *"We couldn't render the original document."* + button "View Parsed Text" (sets `userMode = "text"`). Disabled if Parsed Text also unavailable. |
+| Condition                             | Render                                                                                                                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pdfStatus === "loading"`             | "Loading preview…" — same loading box used today                                                                                                                                      |
+| `pdfStatus === "rendered"`            | PDF + `HighlightOverlay` (existing)                                                                                                                                                   |
+| `pdfStatus === "image-only"`          | PDF + small banner: _"This PDF appears to be image-only — highlights aren't available on the document. Switch to **Parsed Text** for highlighted content."_ (existing copy, retained) |
+| `pdfStatus === "failed"` or `!hasPdf` | Empty state: _"We couldn't render the original document."_ + button "View Parsed Text" (sets `userMode = "text"`). Disabled if Parsed Text also unavailable.                          |
 
 **Parsed Text tab:**
 
-| Condition | Render |
-|---|---|
-| `hasText` | `LinearizedResumeView` (existing) |
-| `!hasText` | Empty state: *"Parsed text isn't available for this resume."* + button "View Original" (sets `userMode = "pdf"`). Disabled if Original also unavailable. |
+| Condition  | Render                                                                                                                                                   |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hasText`  | `LinearizedResumeView` (existing)                                                                                                                        |
+| `!hasText` | Empty state: _"Parsed text isn't available for this resume."_ + button "View Original" (sets `userMode = "pdf"`). Disabled if Original also unavailable. |
 
 **Both unavailable:** existing "No resume preview available." takes precedence — the pane never enters this state with neither source.
 
 ### Default tab on first render
 
-Existing `effectiveMode` auto-routing is preserved for the *initial* selected tab:
+Existing `effectiveMode` auto-routing is preserved for the _initial_ selected tab:
 
 1. `userMode` set → user's pick wins.
 2. Otherwise prefer `pdf` when `pdfStatus === "rendered"`.
@@ -139,7 +141,9 @@ function PreviewEmptyState({
   ctaLabel: string;
   onCta: () => void;
   ctaDisabled: boolean;
-}) { /* ... */ }
+}) {
+  /* ... */
+}
 ```
 
 Visual: same surface tokens as the loading box (`rounded-lg border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5`), centered icon + text + a small text-button styled with `{colors.primary}`. Disabled CTA renders the message without the button.
@@ -154,7 +158,7 @@ The `HighlightOverlay` mounts only when `effectiveMode === "pdf"` and pages are 
 
 The candidate may upload a `.docx`. Today, `_data.ts` already calls `/api/v1/resumes/{id}/download-url` which returns a `signedPdfUrl` referencing the **canonical PDF derivative** the backend generates from the DOCX. So:
 
-- The Original tab renders the *canonical PDF* (not the raw DOCX). PDF.js can read it, highlights work, identical UX to a PDF upload.
+- The Original tab renders the _canonical PDF_ (not the raw DOCX). PDF.js can read it, highlights work, identical UX to a PDF upload.
 - If the canonical-PDF derivative is missing for any reason, `signedPdfUrl` is null, `originalAvailable` is false, and the user sees the empty state with "View Parsed Text."
 
 No DOCX-specific code path is added — this is the same pipeline the pane uses today. The user's request "highlights on PDF/DOCX original" is satisfied by exposing the always-on toggle: when the underlying canonical PDF renders, highlights appear; when it doesn't, the empty state directs them to Parsed Text.
@@ -186,22 +190,24 @@ Empty state inside Original tab when PDF failed:
 
 ## Failure modes
 
-| Failure | User-visible result |
-|---|---|
-| PDF.js worker fails to load | Original tab shows empty state. Parsed Text tab works. Toggle still visible. |
-| PDF is image-only | Original tab renders PDF + image-only banner. Parsed Text tab shows highlights. |
-| Backend returns no `signedPdfUrl` | Original tab disabled with tooltip. Parsed Text tab default. |
-| Backend returns empty `rawText` | Parsed Text tab disabled. Original tab default. |
-| Both empty | Pane shows "No resume preview available." (unchanged) |
-| User on Original, then switches to Parsed Text, then back | Instant — PDF.js stays mounted under `display: none`. |
+| Failure                                                   | User-visible result                                                             |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| PDF.js worker fails to load                               | Original tab shows empty state. Parsed Text tab works. Toggle still visible.    |
+| PDF is image-only                                         | Original tab renders PDF + image-only banner. Parsed Text tab shows highlights. |
+| Backend returns no `signedPdfUrl`                         | Original tab disabled with tooltip. Parsed Text tab default.                    |
+| Backend returns empty `rawText`                           | Parsed Text tab disabled. Original tab default.                                 |
+| Both empty                                                | Pane shows "No resume preview available." (unchanged)                           |
+| User on Original, then switches to Parsed Text, then back | Instant — PDF.js stays mounted under `display: none`.                           |
 
 ## Testing
 
 **Existing automated tests stay green:**
+
 - `derive-highlights.test.ts` — highlight derivation logic (untouched).
 - `find-text-spans.test.ts` — text-layer span search (untouched).
 
 **Manual verification (the human runs):**
+
 1. Upload a normal text-PDF → toggle visible, Original is default, both tabs render highlights.
 2. Upload an image-only PDF → toggle visible, Original shows banner, Parsed Text is highlighted.
 3. Upload a DOCX → backend's canonical PDF appears in Original; both tabs work.

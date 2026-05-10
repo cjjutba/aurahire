@@ -55,7 +55,9 @@ export function CandidateJobsToolbarClient({
   const [isPending, startTransition] = useTransition();
 
   const [q, setQ] = useState(initialQuery);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     setQ(initialQuery);
@@ -133,7 +135,9 @@ export function CandidateJobsToolbarClient({
       {/* Hide applied toggle */}
       <button
         type="button"
-        onClick={() => updateParam("excludeApplied", excludeApplied ? null : "1")}
+        onClick={() =>
+          updateParam("excludeApplied", excludeApplied ? null : "1")
+        }
         className={`inline-flex h-10 items-center gap-2 rounded-[var(--radius-pill)] px-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
           excludeApplied
             ? "bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
@@ -150,8 +154,18 @@ export function CandidateJobsToolbarClient({
           }`}
         >
           {excludeApplied && (
-            <svg className="h-2.5 w-2.5 text-[var(--color-primary)]" viewBox="0 0 12 12" fill="none">
-              <path d="M2.5 6.5l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              className="h-2.5 w-2.5 text-[var(--color-primary)]"
+              viewBox="0 0 12 12"
+              fill="none"
+            >
+              <path
+                d="M2.5 6.5l2.5 2.5 4.5-5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           )}
         </span>
@@ -196,14 +210,14 @@ function FilterDropdown({
         <span>
           {label}: {current}
         </span>
-        <ChevronDown className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+        <ChevronDown
+          className="h-3.5 w-3.5 text-[var(--color-muted)]"
+          aria-hidden
+        />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="bottom">
         {options.map((opt) => (
-          <DropdownMenuItem
-            key={opt.value}
-            onClick={() => onSelect(opt.value)}
-          >
+          <DropdownMenuItem key={opt.value} onClick={() => onSelect(opt.value)}>
             {opt.label}
           </DropdownMenuItem>
         ))}

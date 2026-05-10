@@ -45,24 +45,21 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   } | null>(null);
   const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const finish = useCallback(
-    (resolveValue: boolean | { reject: unknown }) => {
-      const resolver = resolverRef.current;
-      resolverRef.current = null;
-      setOpen(false);
-      setLoading(false);
-      // Defer clearing options so the exit animation has content to render.
-      if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
-      clearTimerRef.current = setTimeout(() => {
-        setOptions(null);
-        clearTimerRef.current = null;
-      }, EXIT_ANIMATION_MS);
-      if (!resolver) return;
-      if (typeof resolveValue === "boolean") resolver.resolve(resolveValue);
-      else resolver.reject(resolveValue.reject);
-    },
-    [],
-  );
+  const finish = useCallback((resolveValue: boolean | { reject: unknown }) => {
+    const resolver = resolverRef.current;
+    resolverRef.current = null;
+    setOpen(false);
+    setLoading(false);
+    // Defer clearing options so the exit animation has content to render.
+    if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+    clearTimerRef.current = setTimeout(() => {
+      setOptions(null);
+      clearTimerRef.current = null;
+    }, EXIT_ANIMATION_MS);
+    if (!resolver) return;
+    if (typeof resolveValue === "boolean") resolver.resolve(resolveValue);
+    else resolver.reject(resolveValue.reject);
+  }, []);
 
   const confirm = useCallback<ConfirmFn>(
     (nextOptions) =>

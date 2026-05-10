@@ -13,20 +13,22 @@ export interface Rect {
   height: number;
 }
 
-const stripDiacritics = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const stripDiacritics = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const normalizeForCompare = (s: string) =>
   stripDiacritics(s).replace(/\s+/g, " ").trim().toLowerCase();
 const stripAllPunctuation = (s: string) =>
-  stripDiacritics(s)
-    .replace(/[^\w]/g, "")
-    .toLowerCase();
+  stripDiacritics(s).replace(/[^\w]/g, "").toLowerCase();
 
 /**
  * Find rect(s) in the rendered text layer that match the source string.
  * Whitespace-tolerant, accent-insensitive, case-insensitive.
  * Returns null if not found.
  */
-export function findTextSpans(items: TextLayerItem[], source: string): Rect[] | null {
+export function findTextSpans(
+  items: TextLayerItem[],
+  source: string,
+): Rect[] | null {
   if (!source.trim() || items.length === 0) return null;
 
   // Strategy 1: build a normalized buffer with index→item mapping and search.
@@ -47,7 +49,13 @@ export function findTextSpans(items: TextLayerItem[], source: string): Rect[] | 
   const normalizedSource = normalizeForCompare(source);
   const idx = normalizedBuffer.indexOf(normalizedSource);
   if (idx >= 0) {
-    return spansFromCharRange(items, charToItem, buffer, idx, normalizedSource.length);
+    return spansFromCharRange(
+      items,
+      charToItem,
+      buffer,
+      idx,
+      normalizedSource.length,
+    );
   }
 
   // Strategy 2: punctuation-stripped match (handles "0976-455-6948" → "09764556948").

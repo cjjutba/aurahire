@@ -3,13 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import {
-  ChevronDown,
-  CalendarClock,
-  MapPin,
-  User,
-  Clock,
-} from "lucide-react";
+import { ChevronDown, CalendarClock, MapPin, User, Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
@@ -57,7 +51,10 @@ const STATUS_PRIORITY: Record<string, number> = {
   "no-show": 4,
 };
 
-const STATUS_LABELS: Record<string, { label: string; dot: string; text: string }> = {
+const STATUS_LABELS: Record<
+  string,
+  { label: string; dot: string; text: string }
+> = {
   scheduled: {
     label: "Scheduled",
     dot: "bg-[var(--color-status-info)]",
@@ -165,7 +162,11 @@ interface InterviewCardProps {
   showActions: boolean;
 }
 
-function InterviewCard({ interview: iv, applicationId, showActions }: InterviewCardProps) {
+function InterviewCard({
+  interview: iv,
+  applicationId,
+  showActions,
+}: InterviewCardProps) {
   const router = useRouter();
   const [pending, setPending] = useState<"no-show" | "cancel" | null>(null);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
@@ -346,7 +347,11 @@ interface Props {
   applicationStatus: string;
 }
 
-export function RecruiterInterviewsSection({ applicationId, interviews, applicationStatus }: Props) {
+export function RecruiterInterviewsSection({
+  applicationId,
+  interviews,
+  applicationStatus,
+}: Props) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [pastOpen, setPastOpen] = useState(false);
 

@@ -4,7 +4,10 @@ import { Job } from "bullmq";
 import * as React from "react";
 import { ConfigService } from "@nestjs/config";
 
-import { NOTIFICATION_EMAIL_QUEUE, type NotificationEmailJobData } from "./queues";
+import {
+  NOTIFICATION_EMAIL_QUEUE,
+  type NotificationEmailJobData,
+} from "./queues";
 import { NotificationsRepository } from "./notifications.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { EmailService } from "../../email";
@@ -35,7 +38,9 @@ export class NotificationEmailProcessor extends WorkerHost {
   private async processInstant(notificationId: string): Promise<void> {
     const row = await this.repo.findById(notificationId);
     if (!row) {
-      this.logger.warn(`processInstant: notification not found: ${notificationId}`);
+      this.logger.warn(
+        `processInstant: notification not found: ${notificationId}`,
+      );
       return;
     }
     if (row.emailSentAt) {
@@ -44,13 +49,16 @@ export class NotificationEmailProcessor extends WorkerHost {
     }
     const profile = await this.profiles.findById(row.userId);
     if (!profile) {
-      this.logger.warn(`processInstant: profile not found for user ${row.userId}`);
+      this.logger.warn(
+        `processInstant: profile not found for user ${row.userId}`,
+      );
       return;
     }
 
     const role = profile.role as "candidate" | "recruiter" | "admin";
     const tpl = TEMPLATES[row.eventType];
-    const appOrigin = this.config.get<string>("APP_URL") ?? "http://localhost:3000";
+    const appOrigin =
+      this.config.get<string>("APP_URL") ?? "http://localhost:3000";
     const Component = tpl.EmailComponent;
     const element = React.createElement(Component, {
       metadata: row.metadata ?? {},
@@ -66,13 +74,18 @@ export class NotificationEmailProcessor extends WorkerHost {
     await this.repo.setEmailSent(notificationId);
   }
 
-  private async processDigest(userId: string, notificationIds: string[]): Promise<void> {
+  private async processDigest(
+    userId: string,
+    notificationIds: string[],
+  ): Promise<void> {
     const profile = await this.profiles.findById(userId);
     if (!profile) {
       this.logger.warn(`processDigest: profile not found for user ${userId}`);
       return;
     }
-    const rows = await Promise.all(notificationIds.map((id) => this.repo.findById(id)));
+    const rows = await Promise.all(
+      notificationIds.map((id) => this.repo.findById(id)),
+    );
     const validRows = rows
       .filter((r): r is NonNullable<typeof r> => r !== null)
       .map((r) => ({
@@ -90,7 +103,8 @@ export class NotificationEmailProcessor extends WorkerHost {
     }
 
     const role = profile.role as "candidate" | "recruiter" | "admin";
-    const appOrigin = this.config.get<string>("APP_URL") ?? "http://localhost:3000";
+    const appOrigin =
+      this.config.get<string>("APP_URL") ?? "http://localhost:3000";
     const element = React.createElement(DigestEmail, {
       rows: validRows,
       appOrigin,

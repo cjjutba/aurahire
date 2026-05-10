@@ -50,7 +50,11 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
 
   async function submit() {
     if (!resumeId) {
-      toastApiError(null, "Check your input", "Please pick a resume to apply with.");
+      toastApiError(
+        null,
+        "Check your input",
+        "Please pick a resume to apply with.",
+      );
       return;
     }
     if (overLimit) {
@@ -101,13 +105,22 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
       }
 
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { message?: string };
-        toastApiError(null, "Couldn't apply", body.message ?? "Please try again.");
+        const body = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
+        toastApiError(
+          null,
+          "Couldn't apply",
+          body.message ?? "Please try again.",
+        );
         return;
       }
 
       const body = (await res.json()) as { data: { id: string } };
-      toastSuccess("Application sent", "We'll notify you when there's an update.");
+      toastSuccess(
+        "Application sent",
+        "We'll notify you when there's an update.",
+      );
       router.push(`/candidate/applications/${body.data.id}`);
     } catch (err) {
       toastApiError(err, "Couldn't apply");
@@ -253,7 +266,9 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
           className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-5 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
         >
           <Sparkles className="h-4 w-4" />
-          {preview && selectedResumeMatchesPreview ? "Lock in & apply" : "Submit"}
+          {preview && selectedResumeMatchesPreview
+            ? "Lock in & apply"
+            : "Submit"}
         </button>
       </div>
     </>
@@ -428,10 +443,7 @@ function SubmittingState({ lockingInMatch }: { lockingInMatch: boolean }) {
 
   useEffect(() => {
     const timers = STAGE_TICK_MS.map((ms, i) =>
-      setTimeout(
-        () => setStageIdx((idx) => Math.max(idx, i + 1)),
-        ms,
-      ),
+      setTimeout(() => setStageIdx((idx) => Math.max(idx, i + 1)), ms),
     );
     return () => timers.forEach(clearTimeout);
   }, []);

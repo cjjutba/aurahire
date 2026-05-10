@@ -104,7 +104,11 @@ export default async function AdminCompaniesPage({ searchParams }: PageProps) {
       <CompaniesToolbarClient q={q} />
 
       {rows.length === 0 ? (
-        filtersActive ? <EmptyFiltered /> : <EmptyCompanies />
+        filtersActive ? (
+          <EmptyFiltered />
+        ) : (
+          <EmptyCompanies />
+        )
       ) : (
         <>
           <CompaniesTableClient rows={rows} />
@@ -114,7 +118,8 @@ export default async function AdminCompaniesPage({ searchParams }: PageProps) {
               limit: meta.limit,
               total: meta.total,
               totalPages:
-                meta.totalPages ?? Math.max(1, Math.ceil(meta.total / meta.limit)),
+                meta.totalPages ??
+                Math.max(1, Math.ceil(meta.total / meta.limit)),
             }}
             searchParams={{ q: q || undefined }}
           />
@@ -131,7 +136,8 @@ function EmptyCompanies() {
         No companies yet
       </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
-        When recruiters create companies via the onboarding flow, they show up here.
+        When recruiters create companies via the onboarding flow, they show up
+        here.
       </div>
     </div>
   );

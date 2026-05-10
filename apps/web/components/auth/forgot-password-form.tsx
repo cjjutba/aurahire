@@ -46,10 +46,12 @@ export function ForgotPasswordForm() {
   if (sent) {
     return (
       <div className="text-center text-sm text-[var(--color-body)]">
-        <p className="mb-2 font-semibold text-[var(--color-ink)]">Check your email</p>
+        <p className="mb-2 font-semibold text-[var(--color-ink)]">
+          Check your email
+        </p>
         <p>
-          If an account exists for that address, we&apos;ve sent a password reset link.
-          The link expires in 1 hour.
+          If an account exists for that address, we&apos;ve sent a password
+          reset link. The link expires in 1 hour.
         </p>
       </div>
     );

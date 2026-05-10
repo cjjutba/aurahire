@@ -90,9 +90,9 @@ export function PrivacySection({ email }: PrivacySectionProps) {
             Export your data
           </h3>
           <p className="mt-1 text-sm text-[var(--color-body)]">
-            We'll prepare a zip of your profile, applications, resumes, and
-            any AI-generated scoring rationales tied to your account, and
-            email you a download link.
+            We'll prepare a zip of your profile, applications, resumes, and any
+            AI-generated scoring rationales tied to your account, and email you
+            a download link.
           </p>
           <div className="mt-4">
             <Button
@@ -112,9 +112,9 @@ export function PrivacySection({ email }: PrivacySectionProps) {
             Delete account
           </h3>
           <p className="mt-1 text-sm text-[var(--color-body)]">
-            Permanently delete your AuraHire account and personal data.
-            Audit logs of past actions are retained in line with our
-            retention policy. This cannot be undone.
+            Permanently delete your AuraHire account and personal data. Audit
+            logs of past actions are retained in line with our retention policy.
+            This cannot be undone.
           </p>
           <div className="mt-4">
             <Button
@@ -133,8 +133,8 @@ export function PrivacySection({ email }: PrivacySectionProps) {
           <DialogHeader>
             <DialogTitle>Delete your account?</DialogTitle>
             <DialogDescription>
-              This will sign you out and queue your account for deletion.
-              Type your email <strong>{email}</strong> to confirm.
+              This will sign you out and queue your account for deletion. Type
+              your email <strong>{email}</strong> to confirm.
             </DialogDescription>
           </DialogHeader>
           <Input

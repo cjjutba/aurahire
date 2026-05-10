@@ -50,13 +50,41 @@ interface ShortlistEnvelope {
 type AppStatusEntry = { label: string; dot: string; text: string };
 
 const APP_STATUS: Record<string, AppStatusEntry> = {
-  applied:   { label: "Applied",   dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  screening: { label: "Screening", dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  interview: { label: "Interview", dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  offer:     { label: "Offer",     dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  hired:     { label: "Hired",     dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  rejected:  { label: "Rejected",  dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
-  withdrawn: { label: "Withdrawn", dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
+  applied: {
+    label: "Applied",
+    dot: "bg-[var(--color-status-info)]",
+    text: "text-[var(--color-status-info)]",
+  },
+  screening: {
+    label: "Screening",
+    dot: "bg-[var(--color-status-info)]",
+    text: "text-[var(--color-status-info)]",
+  },
+  interview: {
+    label: "Interview",
+    dot: "bg-[var(--color-status-info)]",
+    text: "text-[var(--color-status-info)]",
+  },
+  offer: {
+    label: "Offer",
+    dot: "bg-[var(--color-status-success)]",
+    text: "text-[var(--color-status-success)]",
+  },
+  hired: {
+    label: "Hired",
+    dot: "bg-[var(--color-status-success)]",
+    text: "text-[var(--color-status-success)]",
+  },
+  rejected: {
+    label: "Rejected",
+    dot: "bg-[var(--color-status-danger)]",
+    text: "text-[var(--color-status-danger)]",
+  },
+  withdrawn: {
+    label: "Withdrawn",
+    dot: "bg-[var(--color-muted)]",
+    text: "text-[var(--color-muted)]",
+  },
 };
 
 const DEFAULT_APP_STATUS: AppStatusEntry = {
@@ -105,7 +133,9 @@ interface PageProps {
   }>;
 }
 
-export default async function RecruiterShortlistPage({ searchParams }: PageProps) {
+export default async function RecruiterShortlistPage({
+  searchParams,
+}: PageProps) {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
@@ -298,7 +328,9 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
                           {row.matchScore.overallScore}/100
                         </span>
                       ) : (
-                        <span className="text-[var(--color-muted-soft)]">—</span>
+                        <span className="text-[var(--color-muted-soft)]">
+                          —
+                        </span>
                       )}
                     </td>
 

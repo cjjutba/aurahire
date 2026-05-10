@@ -1,10 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import {
-  companiesTable,
-  type Company,
-  type NewCompany,
-} from "@aurahire/db";
+import { companiesTable, type Company, type NewCompany } from "@aurahire/db";
 
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 

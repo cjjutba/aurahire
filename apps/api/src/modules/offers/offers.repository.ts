@@ -37,7 +37,9 @@ export class OffersRepository {
       .orderBy(desc(offersTable.sentAt));
   }
 
-  async findPendingByApplicationId(applicationId: string): Promise<Offer | null> {
+  async findPendingByApplicationId(
+    applicationId: string,
+  ): Promise<Offer | null> {
     const [row] = await this.db
       .select()
       .from(offersTable)
@@ -76,7 +78,10 @@ export class OffersRepository {
     const rows = await this.db
       .select({ offer: offersTable })
       .from(offersTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, offersTable.applicationId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, offersTable.applicationId),
+      )
       .where(eq(applicationsTable.candidateId, candidateId))
       .orderBy(desc(offersTable.sentAt));
     return rows.map((r) => r.offer);

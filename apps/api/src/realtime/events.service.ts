@@ -44,105 +44,86 @@ export class EventsService {
   constructor(private readonly gateway: RealtimeGateway) {}
 
   emitApplicationCreated(payload: ApplicationCreatedPayload): void {
-    this.broadcast(
-      RealtimeEvent.ApplicationCreated,
-      payload,
-      [Rooms.recruiter(payload.recruiterId), Rooms.job(payload.jobId)],
-    );
+    this.broadcast(RealtimeEvent.ApplicationCreated, payload, [
+      Rooms.recruiter(payload.recruiterId),
+      Rooms.job(payload.jobId),
+    ]);
   }
 
   emitApplicationStatusChanged(payload: ApplicationStatusChangedPayload): void {
-    this.broadcast(
-      RealtimeEvent.ApplicationStatusChanged,
-      payload,
-      [
-        Rooms.user(payload.candidateId),
-        Rooms.recruiter(payload.recruiterId),
-        Rooms.job(payload.jobId),
-      ],
-    );
+    this.broadcast(RealtimeEvent.ApplicationStatusChanged, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+      Rooms.job(payload.jobId),
+    ]);
   }
 
   emitApplicationScored(payload: ApplicationScoredPayload): void {
-    this.broadcast(
-      RealtimeEvent.ApplicationScored,
-      payload,
-      [
-        Rooms.user(payload.candidateId),
-        Rooms.recruiter(payload.recruiterId),
-        Rooms.job(payload.jobId),
-      ],
-    );
+    this.broadcast(RealtimeEvent.ApplicationScored, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+      Rooms.job(payload.jobId),
+    ]);
   }
 
   emitApplicationWithdrawn(payload: ApplicationWithdrawnPayload): void {
-    this.broadcast(
-      RealtimeEvent.ApplicationWithdrawn,
-      payload,
-      [Rooms.user(payload.candidateId), Rooms.job(payload.jobId)],
-    );
+    this.broadcast(RealtimeEvent.ApplicationWithdrawn, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.job(payload.jobId),
+    ]);
   }
 
-  emitApplicationRecommendationSet(payload: ApplicationRecommendationSetPayload): void {
-    this.broadcast(
-      RealtimeEvent.ApplicationRecommendationSet,
-      payload,
-      [Rooms.recruiter(payload.recruiterId)],
-    );
+  emitApplicationRecommendationSet(
+    payload: ApplicationRecommendationSetPayload,
+  ): void {
+    this.broadcast(RealtimeEvent.ApplicationRecommendationSet, payload, [
+      Rooms.recruiter(payload.recruiterId),
+    ]);
   }
 
   emitInterviewScheduled(payload: InterviewScheduledPayload): void {
-    this.broadcast(
-      RealtimeEvent.InterviewScheduled,
-      payload,
-      [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
-    );
+    this.broadcast(RealtimeEvent.InterviewScheduled, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+    ]);
   }
 
   emitInterviewStatusChanged(payload: InterviewStatusChangedPayload): void {
-    this.broadcast(
-      RealtimeEvent.InterviewStatusChanged,
-      payload,
-      [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
-    );
+    this.broadcast(RealtimeEvent.InterviewStatusChanged, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+    ]);
   }
 
   emitInterviewRescheduled(payload: InterviewRescheduledPayload): void {
-    this.broadcast(
-      RealtimeEvent.InterviewRescheduled,
-      payload,
-      [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
-    );
+    this.broadcast(RealtimeEvent.InterviewRescheduled, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+    ]);
   }
 
   emitInterviewCompleted(payload: InterviewCompletedPayload): void {
-    this.broadcast(
-      RealtimeEvent.InterviewCompleted,
-      payload,
-      [
-        Rooms.user(payload.candidateId),
-        Rooms.recruiter(payload.recruiterId),
-        Rooms.job(payload.jobId),
-      ],
-    );
+    this.broadcast(RealtimeEvent.InterviewCompleted, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+      Rooms.job(payload.jobId),
+    ]);
   }
 
   emitInterviewFeedbackShared(payload: InterviewFeedbackSharedPayload): void {
     // Targets the candidate (in-app surfacing on candidate detail page)
     // and the recruiter (so recruiter UI updates "shared at" timestamp).
-    this.broadcast(
-      RealtimeEvent.InterviewFeedbackShared,
-      payload,
-      [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
-    );
+    this.broadcast(RealtimeEvent.InterviewFeedbackShared, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+    ]);
   }
 
   emitOfferSent(payload: OfferSentPayload): void {
-    this.broadcast(
-      RealtimeEvent.OfferSent,
-      payload,
-      [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
-    );
+    this.broadcast(RealtimeEvent.OfferSent, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+    ]);
   }
 
   emitAuditEntry(payload: AuditEntryPayload): void {
@@ -154,31 +135,27 @@ export class EventsService {
   }
 
   emitMatchPreviewCreated(payload: MatchPreviewCreatedPayload): void {
-    this.broadcast(
-      RealtimeEvent.MatchPreviewCreated,
-      payload,
-      [Rooms.user(payload.candidateId)],
-    );
+    this.broadcast(RealtimeEvent.MatchPreviewCreated, payload, [
+      Rooms.user(payload.candidateId),
+    ]);
   }
 
   emitProfileScoreUpdated(payload: ProfileScoreUpdatedPayload): void {
-    this.broadcast(
-      RealtimeEvent.ProfileScoreUpdated,
-      payload,
-      [Rooms.user(payload.candidateId)],
-    );
+    this.broadcast(RealtimeEvent.ProfileScoreUpdated, payload, [
+      Rooms.user(payload.candidateId),
+    ]);
   }
 
   emitNotificationCreated(payload: NotificationCreatedPayload): void {
-    this.broadcast(
-      RealtimeEvent.NotificationCreated,
-      payload,
-      [Rooms.user(payload.userId)],
-    );
+    this.broadcast(RealtimeEvent.NotificationCreated, payload, [
+      Rooms.user(payload.userId),
+    ]);
   }
 
   emitNotificationRead(userId: string, payload: NotificationReadPayload): void {
-    this.broadcast(RealtimeEvent.NotificationRead, payload, [Rooms.user(userId)]);
+    this.broadcast(RealtimeEvent.NotificationRead, payload, [
+      Rooms.user(userId),
+    ]);
   }
 
   emitNotificationArchived(

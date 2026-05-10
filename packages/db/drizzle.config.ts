@@ -12,7 +12,9 @@ export default defineConfig({
   dbCredentials: {
     // For drizzle-kit generate, this is unused; for push/migrate it would be required.
     // We use Supabase MCP for application, so a placeholder is fine if env is missing.
-    url: process.env.DATABASE_URL ?? "postgresql://placeholder@localhost:5432/placeholder",
+    url:
+      process.env.DATABASE_URL ??
+      "postgresql://placeholder@localhost:5432/placeholder",
   },
   strict: true,
   verbose: true,

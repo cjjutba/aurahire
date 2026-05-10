@@ -9,11 +9,16 @@ export const recruiterInterviewsQuerySchema = z.object({
   q: z.string().max(200).optional(),
   status: z.enum(INTERVIEW_STATUS).optional(),
   format: z.enum(INTERVIEW_FORMAT).optional(),
-  sort: z.enum(["upcoming", "recent", "earliest"]).optional().default("upcoming"),
+  sort: z
+    .enum(["upcoming", "recent", "earliest"])
+    .optional()
+    .default("upcoming"),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(25),
 });
-export type RecruiterInterviewsQuery = z.infer<typeof recruiterInterviewsQuerySchema>;
+export type RecruiterInterviewsQuery = z.infer<
+  typeof recruiterInterviewsQuerySchema
+>;
 
 const httpOrHttpsUrl = z
   .string()
@@ -48,28 +53,38 @@ export const scheduleInterviewSchema = z.object({
 export type ScheduleInterviewInput = z.infer<typeof scheduleInterviewSchema>;
 
 export const rescheduleInterviewSchema = scheduleInterviewSchema;
-export type RescheduleInterviewInput = z.infer<typeof rescheduleInterviewSchema>;
+export type RescheduleInterviewInput = z.infer<
+  typeof rescheduleInterviewSchema
+>;
 
 export const updateInterviewFeedbackSchema = z.object({
   feedback: z.string().min(1).max(5000),
   rating: z.number().int().min(1).max(5).nullable().optional(),
   recommendation: z.enum(INTERVIEW_RECOMMENDATION).nullable().optional(),
 });
-export type UpdateInterviewFeedbackInput = z.infer<typeof updateInterviewFeedbackSchema>;
+export type UpdateInterviewFeedbackInput = z.infer<
+  typeof updateInterviewFeedbackSchema
+>;
 
 export const shareInterviewFeedbackSchema = z.object({
   candidateSummary: z.string().trim().min(1).max(4000),
 });
-export type ShareInterviewFeedbackInput = z.infer<typeof shareInterviewFeedbackSchema>;
+export type ShareInterviewFeedbackInput = z.infer<
+  typeof shareInterviewFeedbackSchema
+>;
 
 export const updateInterviewStatusSchema = z.object({
   newStatus: z.enum(INTERVIEW_STATUS),
 });
-export type UpdateInterviewStatusInput = z.infer<typeof updateInterviewStatusSchema>;
+export type UpdateInterviewStatusInput = z.infer<
+  typeof updateInterviewStatusSchema
+>;
 
 export const interviewConflictsQuerySchema = z.object({
   scheduledAt: z.string().datetime(),
   durationMinutes: z.number().int().min(15).max(240),
   candidateId: z.string().uuid(),
 });
-export type InterviewConflictsQuery = z.infer<typeof interviewConflictsQuerySchema>;
+export type InterviewConflictsQuery = z.infer<
+  typeof interviewConflictsQuerySchema
+>;

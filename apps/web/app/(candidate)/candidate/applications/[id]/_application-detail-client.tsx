@@ -25,17 +25,54 @@ const COMPONENT_LABELS: Record<string, string> = {
   cultural_fit: "Cultural Fit",
 };
 
-const APP_STATUS: Record<string, { label: string; dot: string; text: string }> = {
-  applied:        { label: "Applied",        dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  screening:      { label: "Screening",      dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  interview:      { label: "Interview",      dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  offer:          { label: "Offer",          dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
-  offer_accepted: { label: "Offer Accepted", dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  offer_declined: { label: "Offer Closed",   dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
-  hired:          { label: "Hired",          dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  rejected:       { label: "Rejected",       dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
-  withdrawn:      { label: "Withdrawn",      dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
-};
+const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    applied: {
+      label: "Applied",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    screening: {
+      label: "Screening",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    interview: {
+      label: "Interview",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    offer: {
+      label: "Offer",
+      dot: "bg-[var(--color-status-warning)]",
+      text: "text-[var(--color-status-warning)]",
+    },
+    offer_accepted: {
+      label: "Offer Accepted",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    offer_declined: {
+      label: "Offer Closed",
+      dot: "bg-[var(--color-status-warning)]",
+      text: "text-[var(--color-status-warning)]",
+    },
+    hired: {
+      label: "Hired",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    rejected: {
+      label: "Rejected",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    withdrawn: {
+      label: "Withdrawn",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
 const INTERVIEW_FORMAT_LABELS: Record<string, string> = {
   phone: "Phone",
@@ -132,7 +169,9 @@ function sortInterviewsByPriority(rows: InterviewRow[]): InterviewRow[] {
     const pa = INTERVIEW_STATUS_PRIORITY[a.status] ?? 99;
     const pb = INTERVIEW_STATUS_PRIORITY[b.status] ?? 99;
     if (pa !== pb) return pa - pb;
-    return new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime();
+    return (
+      new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+    );
   });
 }
 
@@ -232,10 +271,15 @@ export function ApplicationDetailClient({
               <span
                 className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
               >
-                <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+                  aria-hidden
+                />
                 {status.label}
               </span>
-              <span className="text-[var(--color-muted)]">Applied {appliedAt}</span>
+              <span className="text-[var(--color-muted)]">
+                Applied {appliedAt}
+              </span>
             </div>
           </div>
         </div>
@@ -343,16 +387,31 @@ export function ApplicationDetailClient({
       extraSections={
         <>
           {pendingOffer && <PendingOfferCard offer={pendingOffer} />}
-          {!pendingOffer && app.status === "offer_accepted" && (() => {
-            const sorted = [...pastOffers].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
-            const latest = sorted[0];
-            return latest ? <AcceptedOfferCard offer={latest} /> : null;
-          })()}
-          {!pendingOffer && app.status === "offer_declined" && (() => {
-            const sorted = [...pastOffers].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
-            const latest = sorted[0];
-            return latest ? <ClosedOfferCard offer={latest} applicationStatus={app.status} /> : null;
-          })()}
+          {!pendingOffer &&
+            app.status === "offer_accepted" &&
+            (() => {
+              const sorted = [...pastOffers].sort(
+                (a, b) =>
+                  new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime(),
+              );
+              const latest = sorted[0];
+              return latest ? <AcceptedOfferCard offer={latest} /> : null;
+            })()}
+          {!pendingOffer &&
+            app.status === "offer_declined" &&
+            (() => {
+              const sorted = [...pastOffers].sort(
+                (a, b) =>
+                  new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime(),
+              );
+              const latest = sorted[0];
+              return latest ? (
+                <ClosedOfferCard
+                  offer={latest}
+                  applicationStatus={app.status}
+                />
+              ) : null;
+            })()}
           {pastOffers.length > 0 && (
             <section>
               <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
@@ -365,7 +424,9 @@ export function ApplicationDetailClient({
                     className="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-3 text-sm"
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <strong className="text-[var(--color-ink)]">{o.title}</strong>
+                      <strong className="text-[var(--color-ink)]">
+                        {o.title}
+                      </strong>
                       <span className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
                         {o.status}
                       </span>
@@ -501,25 +562,42 @@ function AcceptedOfferCard({ offer }: { offer: OfferRow }) {
       </header>
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <div>
-          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Salary</dt>
+          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+            Salary
+          </dt>
           <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">
             {formatSalary(offer.salary, offer.salaryCurrency)}
           </dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Start date</dt>
-          <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">{offer.startDate}</dd>
+          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+            Start date
+          </dt>
+          <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">
+            {offer.startDate}
+          </dd>
         </div>
       </dl>
       <p className="text-sm text-[var(--color-body)]">
-        You accepted this offer{offer.respondedAt ? ` on ${new Date(offer.respondedAt).toLocaleDateString()}` : ""}. Your recruiter will reach out shortly to confirm next steps.
+        You accepted this offer
+        {offer.respondedAt
+          ? ` on ${new Date(offer.respondedAt).toLocaleDateString()}`
+          : ""}
+        . Your recruiter will reach out shortly to confirm next steps.
       </p>
     </section>
   );
 }
 
-function ClosedOfferCard({ offer, applicationStatus }: { offer: OfferRow; applicationStatus: string }) {
-  const isDeclined = offer.status === "declined" || applicationStatus === "offer_declined";
+function ClosedOfferCard({
+  offer,
+  applicationStatus,
+}: {
+  offer: OfferRow;
+  applicationStatus: string;
+}) {
+  const isDeclined =
+    offer.status === "declined" || applicationStatus === "offer_declined";
   const isExpired = offer.status === "expired";
 
   let footerLine: string | null = null;
@@ -545,14 +623,20 @@ function ClosedOfferCard({ offer, applicationStatus }: { offer: OfferRow; applic
       </header>
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <div>
-          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Salary</dt>
+          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+            Salary
+          </dt>
           <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">
             {formatSalary(offer.salary, offer.salaryCurrency)}
           </dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Start date</dt>
-          <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">{offer.startDate}</dd>
+          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+            Start date
+          </dt>
+          <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">
+            {offer.startDate}
+          </dd>
         </div>
       </dl>
       {footerLine && (

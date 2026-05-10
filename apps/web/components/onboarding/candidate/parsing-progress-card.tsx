@@ -27,7 +27,11 @@ const STAGES: Stage[] = [
   { id: "upload", label: "Uploading file", duration: 800 },
   { id: "extract", label: "Extracting text", duration: 3500 },
   { id: "identify", label: "Identifying experience & skills", duration: 4500 },
-  { id: "polish", label: "Polishing the details", duration: Number.POSITIVE_INFINITY },
+  {
+    id: "polish",
+    label: "Polishing the details",
+    duration: Number.POSITIVE_INFINITY,
+  },
 ];
 
 const AUTO_ADVANCE_MS = 1500;
@@ -62,7 +66,11 @@ function buildSummary(parsed: ParsedResumeV2): {
 } {
   // Order matches the legacy ParseSuccessCard chip order so terminology stays consistent.
   const parts: SummaryPart[] = [
-    { count: parsed.experience.length, singular: "experience", plural: "experiences" },
+    {
+      count: parsed.experience.length,
+      singular: "experience",
+      plural: "experiences",
+    },
     { count: parsed.education.length, singular: "school", plural: "schools" },
     { count: parsed.skills.length, singular: "skill", plural: "skills" },
     { count: parsed.certifications.length, singular: "cert", plural: "certs" },
@@ -74,7 +82,10 @@ function buildSummary(parsed: ParsedResumeV2): {
   const segments = nonzero.map(
     (p) => `${p.count} ${p.count === 1 ? p.singular : p.plural}`,
   );
-  return { countsLine: `Done · ${segments.join(", ")} extracted`, showLine: true };
+  return {
+    countsLine: `Done · ${segments.join(", ")} extracted`,
+    showLine: true,
+  };
 }
 
 export function ParsingProgressCard({
@@ -176,7 +187,9 @@ export function ParsingProgressCard({
           {STAGES.map((stage, i) => {
             const state: "done" | "active" | "pending" =
               i < activeIdx ? "done" : i === activeIdx ? "active" : "pending";
-            return <StageRow key={stage.id} label={stage.label} state={state} />;
+            return (
+              <StageRow key={stage.id} label={stage.label} state={state} />
+            );
           })}
         </ul>
 

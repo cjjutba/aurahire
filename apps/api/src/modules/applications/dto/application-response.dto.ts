@@ -3,7 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 export class MatchEvidenceDto {
   @ApiProperty() excerpt!: string;
   @ApiProperty() source!: string;
-  @ApiProperty({ enum: ["positive", "negative", "neutral"] }) relevance!: string;
+  @ApiProperty({ enum: ["positive", "negative", "neutral"] })
+  relevance!: string;
   @ApiPropertyOptional({ nullable: true, type: Number })
   contributionPoints!: number | null;
   @ApiPropertyOptional({ nullable: true, type: String })
@@ -66,7 +67,8 @@ export class ApplicationJobDto {
   @ApiPropertyOptional({ nullable: true }) department!: string | null;
   @ApiProperty() employmentType!: string;
   @ApiProperty() workMode!: string;
-  @ApiProperty({ type: () => ApplicationCompanyDto }) company!: ApplicationCompanyDto;
+  @ApiProperty({ type: () => ApplicationCompanyDto })
+  company!: ApplicationCompanyDto;
 }
 
 export class ApplicationDto {
@@ -76,7 +78,15 @@ export class ApplicationDto {
   @ApiProperty() resumeId!: string;
   @ApiPropertyOptional({ nullable: true }) coverLetter!: string | null;
   @ApiProperty({
-    enum: ["applied", "screening", "interview", "offer", "hired", "rejected", "withdrawn"],
+    enum: [
+      "applied",
+      "screening",
+      "interview",
+      "offer",
+      "hired",
+      "rejected",
+      "withdrawn",
+    ],
   })
   status!: string;
   @ApiProperty({
@@ -128,10 +138,16 @@ export class ShortlistListEnvelopeDto {
 
 export class RecruiterStatsResultDto {
   @ApiProperty() activeJobs!: number;
-  @ApiProperty({ description: "Deprecated alias for totalApps. Will be removed in a future release." })
+  @ApiProperty({
+    description:
+      "Deprecated alias for totalApps. Will be removed in a future release.",
+  })
   totalApplications!: number;
   @ApiProperty() totalApps!: number;
-  @ApiProperty({ description: "Deprecated alias for pendingReview. Will be removed in a future release." })
+  @ApiProperty({
+    description:
+      "Deprecated alias for pendingReview. Will be removed in a future release.",
+  })
   pendingReviews!: number;
   @ApiProperty() pendingReview!: number;
   @ApiProperty() inInterview!: number;
@@ -169,9 +185,12 @@ export class RecruiterAnalyticsKpisDto {
 }
 
 export class RecruiterAnalyticsResultDto {
-  @ApiProperty({ type: () => RecruiterAnalyticsKpisDto }) kpis!: RecruiterAnalyticsKpisDto;
-  @ApiProperty({ type: [RecruiterAnalyticsTopJobDto] }) topJobs!: RecruiterAnalyticsTopJobDto[];
-  @ApiProperty({ type: [RecruiterAnalyticsStatusBreakdownDto] }) applicationsByStatus!: RecruiterAnalyticsStatusBreakdownDto[];
+  @ApiProperty({ type: () => RecruiterAnalyticsKpisDto })
+  kpis!: RecruiterAnalyticsKpisDto;
+  @ApiProperty({ type: [RecruiterAnalyticsTopJobDto] })
+  topJobs!: RecruiterAnalyticsTopJobDto[];
+  @ApiProperty({ type: [RecruiterAnalyticsStatusBreakdownDto] })
+  applicationsByStatus!: RecruiterAnalyticsStatusBreakdownDto[];
 }
 
 export class RecruiterAnalyticsEnvelopeDto {

@@ -104,8 +104,9 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
 
   // eslint-disable-next-line react-hooks/incompatible-library -- RHF watch() drives bias-debounce; structural integration
   const descriptionPlainValue = form.watch("descriptionPlain") ?? "";
-  const { flags: biasFlags, scanning: biasScanning } =
-    useDebouncedBiasCheck(descriptionPlainValue);
+  const { flags: biasFlags, scanning: biasScanning } = useDebouncedBiasCheck(
+    descriptionPlainValue,
+  );
 
   // The Tiptap editor exposes a scrollToTerm() method via this ref so the
   // bias-flag chips can drive the editor (open the popover AND surface the
@@ -153,7 +154,11 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
 
       const parsed = createJobSchema.safeParse(payload);
       if (!parsed.success) {
-        toastApiError(null, "Check your input", parsed.error.errors.map((e) => e.message).join(", "));
+        toastApiError(
+          null,
+          "Check your input",
+          parsed.error.errors.map((e) => e.message).join(", "),
+        );
         return;
       }
 
@@ -196,8 +201,16 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
       // 422 = bias-flag failure. The job was created but stayed as draft;
       // surface a warning, route to the job page where the recruiter can
       // resolve flags and republish via the existing modal flow.
-      const e = err as { status?: number; body?: { code?: string; message?: string }; jobId?: string };
-      if (mode === "publish" && e?.status === 422 && e?.body?.code === "BIAS_CHECK_REQUIRED") {
+      const e = err as {
+        status?: number;
+        body?: { code?: string; message?: string };
+        jobId?: string;
+      };
+      if (
+        mode === "publish" &&
+        e?.status === 422 &&
+        e?.body?.code === "BIAS_CHECK_REQUIRED"
+      ) {
         toast.warning("Saved as draft — bias check required", {
           description:
             e.body?.message ??
@@ -456,7 +469,9 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
                 suggestion: f.suggestion,
               }))}
               scanning={biasScanning}
-              onFlagSelect={(flag) => editorRef.current?.scrollToTerm(flag.term)}
+              onFlagSelect={(flag) =>
+                editorRef.current?.scrollToTerm(flag.term)
+              }
             />
           )}
         </section>
@@ -545,11 +560,7 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
               <FormItem>
                 <FormLabel>Application Deadline</FormLabel>
                 <FormControl>
-                  <Input
-                    type="date"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
+                  <Input type="date" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -566,7 +577,9 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
           )}
           {!isEdit && hasGatingFlags && !biasScanning && (
             <p className="text-xs text-[var(--color-muted)]">
-              Publishing is gated until {gatingCount === 1 ? "1 flag is" : `${gatingCount} flags are`} resolved or overridden.
+              Publishing is gated until{" "}
+              {gatingCount === 1 ? "1 flag is" : `${gatingCount} flags are`}{" "}
+              resolved or overridden.
             </p>
           )}
           {!isEdit && hasOnlyLowFlags && !biasScanning && (

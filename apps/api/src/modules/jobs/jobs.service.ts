@@ -13,7 +13,12 @@ import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { AuditService } from "../../audit";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { BiasService } from "../bias/bias.service";
-import { JobsRepository, type JobWithCompany, type ListJobsFilters, type JobStats } from "./jobs.repository";
+import {
+  JobsRepository,
+  type JobWithCompany,
+  type ListJobsFilters,
+  type JobStats,
+} from "./jobs.repository";
 import type { CreateJobDto } from "./dto/create-job.dto";
 import type { UpdateJobDto } from "./dto/update-job.dto";
 import type { ListJobsQueryDto } from "./dto/list-jobs-query.dto";
@@ -39,10 +44,15 @@ export class JobsService {
     requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
   ): Promise<JobResponseDto> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
 
-    const recruiterProfile = await this.profilesRepo.findRecruiterProfile(user.id);
+    const recruiterProfile = await this.profilesRepo.findRecruiterProfile(
+      user.id,
+    );
     if (!recruiterProfile) {
       throw new BadRequestException({
         code: "RECRUITER_PROFILE_MISSING",
@@ -119,20 +129,28 @@ export class JobsService {
     const patch: Partial<Parameters<JobsRepository["update"]>[1]> = {};
     if (dto.title !== undefined) patch.title = dto.title;
     if (dto.department !== undefined) patch.department = dto.department ?? null;
-    if (dto.employmentType !== undefined) patch.employmentType = dto.employmentType;
+    if (dto.employmentType !== undefined)
+      patch.employmentType = dto.employmentType;
     if (dto.workMode !== undefined) patch.workMode = dto.workMode;
-    if (dto.locationCity !== undefined) patch.locationCity = dto.locationCity ?? null;
-    if (dto.locationRegion !== undefined) patch.locationRegion = dto.locationRegion ?? null;
-    if (dto.locationCountry !== undefined) patch.locationCountry = dto.locationCountry ?? null;
+    if (dto.locationCity !== undefined)
+      patch.locationCity = dto.locationCity ?? null;
+    if (dto.locationRegion !== undefined)
+      patch.locationRegion = dto.locationRegion ?? null;
+    if (dto.locationCountry !== undefined)
+      patch.locationCountry = dto.locationCountry ?? null;
     if (dto.salaryMin !== undefined)
       patch.salaryMin = dto.salaryMin != null ? String(dto.salaryMin) : null;
     if (dto.salaryMax !== undefined)
       patch.salaryMax = dto.salaryMax != null ? String(dto.salaryMax) : null;
-    if (dto.salaryCurrency !== undefined) patch.salaryCurrency = dto.salaryCurrency;
+    if (dto.salaryCurrency !== undefined)
+      patch.salaryCurrency = dto.salaryCurrency;
     if (dto.description !== undefined) patch.description = dto.description;
-    if (dto.descriptionPlain !== undefined) patch.descriptionPlain = dto.descriptionPlain;
-    if (dto.requiredSkills !== undefined) patch.requiredSkills = dto.requiredSkills;
-    if (dto.experienceLevel !== undefined) patch.experienceLevel = dto.experienceLevel;
+    if (dto.descriptionPlain !== undefined)
+      patch.descriptionPlain = dto.descriptionPlain;
+    if (dto.requiredSkills !== undefined)
+      patch.requiredSkills = dto.requiredSkills;
+    if (dto.experienceLevel !== undefined)
+      patch.experienceLevel = dto.experienceLevel;
     if (dto.educationRequirement !== undefined)
       patch.educationRequirement = dto.educationRequirement ?? null;
     if (dto.applicationDeadline !== undefined)
@@ -194,7 +212,10 @@ export class JobsService {
       });
     }
 
-    await this.repo.update(id, { status: "published", publishedAt: new Date() });
+    await this.repo.update(id, {
+      status: "published",
+      publishedAt: new Date(),
+    });
 
     await this.audit.log({
       actorId: user.id,
@@ -282,7 +303,10 @@ export class JobsService {
       load: async () => {
         const row = await this.repo.findByIdWithCompany(id);
         if (!row || row.status !== "published") {
-          throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+          throw new NotFoundException({
+            code: "NOT_FOUND",
+            message: "Job not found",
+          });
         }
         return this.toResponse(row);
       },
@@ -300,7 +324,10 @@ export class JobsService {
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
 
     const cacheKey = `jobs:company:${companyId}:list:${this.serializeQuery(query)}:inc=${query.include ?? "none"}`;
@@ -314,12 +341,15 @@ export class JobsService {
         if (query.include === "stats") {
           const sort: "recent" | "recent-activity" =
             query.sort === "recent-activity" ? "recent-activity" : "recent";
-          const { rows, total } = await this.repo.listForCompanyWithStats(companyId, {
-            page: query.page,
-            limit: query.limit,
-            status: query.status,
-            sort,
-          });
+          const { rows, total } = await this.repo.listForCompanyWithStats(
+            companyId,
+            {
+              page: query.page,
+              limit: query.limit,
+              status: query.status,
+              sort,
+            },
+          );
           return {
             data: rows.map((r) => ({ ...this.toResponse(r), stats: r.stats })),
             meta: {
@@ -361,12 +391,18 @@ export class JobsService {
     id: string,
   ): Promise<JobResponseDto> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
     const row = await this.assertCompanyOwnership(companyId, id);
     const withCompany = await this.repo.findByIdWithCompany(row.id);
     if (!withCompany) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
     return this.toResponse(withCompany);
   }
@@ -437,7 +473,10 @@ export class JobsService {
   private async assertCompanyOwnership(companyId: string, id: string) {
     const job = await this.repo.findById(id);
     if (!job || job.companyId !== companyId) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
     return job;
   }
@@ -445,13 +484,22 @@ export class JobsService {
   private async requireJobWithCompany(id: string): Promise<JobWithCompany> {
     const row = await this.repo.findByIdWithCompany(id);
     if (!row) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
     return row;
   }
 
-  private async invalidateAfterWrite(opts: { companyId: string; jobId?: string }): Promise<void> {
-    const tags: string[] = [TAGS.jobsPublic(), TAGS.companyJobs(opts.companyId)];
+  private async invalidateAfterWrite(opts: {
+    companyId: string;
+    jobId?: string;
+  }): Promise<void> {
+    const tags: string[] = [
+      TAGS.jobsPublic(),
+      TAGS.companyJobs(opts.companyId),
+    ];
     if (opts.jobId) tags.push(TAGS.jobDetail(opts.jobId));
     await this.cacheService.bustTags(tags);
   }
@@ -487,7 +535,9 @@ export class JobsService {
       requiredSkills: row.requiredSkills,
       experienceLevel: row.experienceLevel,
       educationRequirement: row.educationRequirement,
-      applicationDeadline: row.applicationDeadline ? row.applicationDeadline.toString() : null,
+      applicationDeadline: row.applicationDeadline
+        ? row.applicationDeadline.toString()
+        : null,
       status: row.status,
       viewCount: row.viewCount,
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,

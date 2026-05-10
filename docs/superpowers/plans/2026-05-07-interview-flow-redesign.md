@@ -129,6 +129,7 @@
 ### Task 1: Extend interview enums + add recommendation tuple
 
 **Files:**
+
 - Modify: `packages/db/src/enums.ts`
 - Modify: `packages/shared/src/enums.ts`
 
@@ -182,6 +183,7 @@ git commit -m "feat(enums): extend INTERVIEW_STATUS with rescheduled, add INTERV
 ### Task 2: Drizzle schema additions — `interviews` columns + `interview_venues` table + indexes
 
 **Files:**
+
 - Modify: `packages/db/src/schema.ts`
 
 - [ ] **Step 1: Add 13 columns to `interviewsTable`**
@@ -238,11 +240,18 @@ export const interviewVenuesTable = pgTable(
     interviewerName: text("interviewer_name"),
     interviewerTitle: text("interviewer_title"),
     isDefault: boolean("is_default").notNull().default(false),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    companyLabelUnique: unique("interview_venues_company_label_unique").on(t.companyId, t.label),
+    companyLabelUnique: unique("interview_venues_company_label_unique").on(
+      t.companyId,
+      t.label,
+    ),
     companyDefaultIdx: index("interview_venues_company_default_idx")
       .on(t.companyId)
       .where(sql`is_default = true`),
@@ -267,6 +276,7 @@ git commit -m "feat(db): add interviews venue columns + interview_venues table"
 ### Task 3: Drizzle relations + RLS
 
 **Files:**
+
 - Modify: `packages/db/src/relations.ts`
 - Modify: `packages/db/src/rls/all-policies.sql`
 
@@ -275,16 +285,19 @@ git commit -m "feat(db): add interviews venue columns + interview_venues table"
 In `relations.ts`, import `interviewVenuesTable` alongside the other table imports. After the `interviewsRelations` block, add:
 
 ```ts
-export const interviewVenuesRelations = relations(interviewVenuesTable, ({ one }) => ({
-  company: one(companiesTable, {
-    fields: [interviewVenuesTable.companyId],
-    references: [companiesTable.id],
+export const interviewVenuesRelations = relations(
+  interviewVenuesTable,
+  ({ one }) => ({
+    company: one(companiesTable, {
+      fields: [interviewVenuesTable.companyId],
+      references: [companiesTable.id],
+    }),
+    creator: one(profilesTable, {
+      fields: [interviewVenuesTable.createdBy],
+      references: [profilesTable.id],
+    }),
   }),
-  creator: one(profilesTable, {
-    fields: [interviewVenuesTable.createdBy],
-    references: [profilesTable.id],
-  }),
-}));
+);
 ```
 
 - [ ] **Step 2: Append RLS policies to `all-policies.sql`**
@@ -337,6 +350,7 @@ git commit -m "feat(db): relations + RLS for interview_venues"
 ### Task 4: Migration SQL `0009_interview_flow_v2.sql`
 
 **Files:**
+
 - Create: `packages/db/drizzle/0009_interview_flow_v2.sql`
 
 - [ ] **Step 1: Write the migration**
@@ -431,6 +445,7 @@ git commit -m "feat(db): migration 0009 — interview flow v2"
 ### Task 5: Shared Zod schemas
 
 **Files:**
+
 - Modify: `packages/shared/src/schemas/interviews.ts`
 - Modify: `packages/shared/src/schemas/applications.ts`
 - Create: `packages/shared/src/schemas/interview-venues.ts`
@@ -452,11 +467,16 @@ export const recruiterInterviewsQuerySchema = z.object({
   q: z.string().max(200).optional(),
   status: z.enum(INTERVIEW_STATUS).optional(),
   format: z.enum(INTERVIEW_FORMAT).optional(),
-  sort: z.enum(["upcoming", "recent", "earliest"]).optional().default("upcoming"),
+  sort: z
+    .enum(["upcoming", "recent", "earliest"])
+    .optional()
+    .default("upcoming"),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(25),
 });
-export type RecruiterInterviewsQuery = z.infer<typeof recruiterInterviewsQuerySchema>;
+export type RecruiterInterviewsQuery = z.infer<
+  typeof recruiterInterviewsQuerySchema
+>;
 
 const httpOrHttpsUrl = z
   .string()
@@ -491,31 +511,41 @@ export const scheduleInterviewSchema = z.object({
 export type ScheduleInterviewInput = z.infer<typeof scheduleInterviewSchema>;
 
 export const rescheduleInterviewSchema = scheduleInterviewSchema;
-export type RescheduleInterviewInput = z.infer<typeof rescheduleInterviewSchema>;
+export type RescheduleInterviewInput = z.infer<
+  typeof rescheduleInterviewSchema
+>;
 
 export const updateInterviewFeedbackSchema = z.object({
   feedback: z.string().min(1).max(5000),
   rating: z.number().int().min(1).max(5).nullable().optional(),
   recommendation: z.enum(INTERVIEW_RECOMMENDATION).nullable().optional(),
 });
-export type UpdateInterviewFeedbackInput = z.infer<typeof updateInterviewFeedbackSchema>;
+export type UpdateInterviewFeedbackInput = z.infer<
+  typeof updateInterviewFeedbackSchema
+>;
 
 export const shareInterviewFeedbackSchema = z.object({
   candidateSummary: z.string().trim().min(1).max(4000),
 });
-export type ShareInterviewFeedbackInput = z.infer<typeof shareInterviewFeedbackSchema>;
+export type ShareInterviewFeedbackInput = z.infer<
+  typeof shareInterviewFeedbackSchema
+>;
 
 export const updateInterviewStatusSchema = z.object({
   newStatus: z.enum(INTERVIEW_STATUS),
 });
-export type UpdateInterviewStatusInput = z.infer<typeof updateInterviewStatusSchema>;
+export type UpdateInterviewStatusInput = z.infer<
+  typeof updateInterviewStatusSchema
+>;
 
 export const interviewConflictsQuerySchema = z.object({
   scheduledAt: z.string().datetime(),
   durationMinutes: z.number().int().min(15).max(240),
   candidateId: z.string().uuid(),
 });
-export type InterviewConflictsQuery = z.infer<typeof interviewConflictsQuerySchema>;
+export type InterviewConflictsQuery = z.infer<
+  typeof interviewConflictsQuerySchema
+>;
 ```
 
 - [ ] **Step 2: Add `withdrawApplicationSchema` to `packages/shared/src/schemas/applications.ts`**
@@ -526,7 +556,9 @@ Append:
 export const withdrawApplicationSchema = z.object({
   reason: z.string().trim().max(500).nullable().optional(),
 });
-export type WithdrawApplicationInput = z.infer<typeof withdrawApplicationSchema>;
+export type WithdrawApplicationInput = z.infer<
+  typeof withdrawApplicationSchema
+>;
 ```
 
 - [ ] **Step 3: Create `packages/shared/src/schemas/interview-venues.ts`**
@@ -557,7 +589,9 @@ export const interviewVenueInputSchema = z.object({
 export type InterviewVenueInput = z.infer<typeof interviewVenueInputSchema>;
 
 export const interviewVenuePartialSchema = interviewVenueInputSchema.partial();
-export type InterviewVenuePartialInput = z.infer<typeof interviewVenuePartialSchema>;
+export type InterviewVenuePartialInput = z.infer<
+  typeof interviewVenuePartialSchema
+>;
 ```
 
 - [ ] **Step 4: Re-export from `packages/shared/src/index.ts`**
@@ -581,6 +615,7 @@ git commit -m "feat(shared): zod schemas for interview v2 + venues + withdraw"
 ### Task 6: Audit action constants + realtime event types
 
 **Files:**
+
 - Modify: `apps/api/src/audit/audit.types.ts`
 - Modify: `packages/shared/src/realtime/events.ts`
 
@@ -672,6 +707,7 @@ git commit -m "feat(audit/realtime): add interview-flow v2 actions + events"
 ### Task 7: Update state machine + spec
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/state-machine.ts`
 - Create: `apps/api/src/modules/applications/state-machine.spec.ts`
 
@@ -729,13 +765,16 @@ Expected: at least the `applied → interview` and `applied → withdrawn` cases
 ```ts
 import type { ApplicationStatus } from "@aurahire/shared";
 
-const VALID_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
-  applied:   ["screening", "interview", "rejected", "withdrawn"],
-  screening: ["interview",              "rejected", "withdrawn"],
-  interview: ["offer",                  "rejected", "withdrawn"],
-  offer:     ["hired",                  "rejected", "withdrawn"],
-  hired:     [],
-  rejected:  [],
+const VALID_TRANSITIONS: Record<
+  ApplicationStatus,
+  readonly ApplicationStatus[]
+> = {
+  applied: ["screening", "interview", "rejected", "withdrawn"],
+  screening: ["interview", "rejected", "withdrawn"],
+  interview: ["offer", "rejected", "withdrawn"],
+  offer: ["hired", "rejected", "withdrawn"],
+  hired: [],
+  rejected: [],
   withdrawn: [],
 };
 
@@ -770,6 +809,7 @@ git commit -m "feat(state-machine): allow applied→interview and *→withdrawn"
 ### Task 8: `POST /applications/:id/withdraw` (candidate-only)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.controller.ts`
 - Modify: `apps/api/src/modules/applications/applications.service.ts`
 
@@ -891,7 +931,9 @@ Create `apps/api/src/modules/applications/dto/withdraw-application.dto.ts`:
 import { createZodDto } from "nestjs-zod";
 import { withdrawApplicationSchema } from "@aurahire/shared";
 
-export class WithdrawApplicationDto extends createZodDto(withdrawApplicationSchema) {}
+export class WithdrawApplicationDto extends createZodDto(
+  withdrawApplicationSchema,
+) {}
 ```
 
 - [ ] **Step 5: Run tests**
@@ -911,6 +953,7 @@ git commit -m "feat(applications): POST /applications/:id/withdraw (candidate)"
 ### Task 9: Auto-advance application status when scheduling from `applied`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 - Modify: `apps/api/src/modules/applications/applications.repository.ts` (if needed for transactional helper)
 
@@ -934,14 +977,26 @@ it("schedule from applied auto-advances application status to interview", async 
 
 it("schedule from screening auto-advances to interview", async () => {
   const app = await fixtures.createApplication({ status: "screening" });
-  await service.schedule(recruiterUser, app.companyId, app.id, fixtures.scheduleInput({}), {});
+  await service.schedule(
+    recruiterUser,
+    app.companyId,
+    app.id,
+    fixtures.scheduleInput({}),
+    {},
+  );
   const reloaded = await applicationsRepo.findById(app.id);
   expect(reloaded?.status).toBe("interview");
 });
 
 it("schedule from interview leaves status unchanged (multi-round)", async () => {
   const app = await fixtures.createApplication({ status: "interview" });
-  await service.schedule(recruiterUser, app.companyId, app.id, fixtures.scheduleInput({}), {});
+  await service.schedule(
+    recruiterUser,
+    app.companyId,
+    app.id,
+    fixtures.scheduleInput({}),
+    {},
+  );
   const reloaded = await applicationsRepo.findById(app.id);
   expect(reloaded?.status).toBe("interview");
 });
@@ -977,7 +1032,12 @@ if (currentStatus === "applied" || currentStatus === "screening") {
     entityType: "application",
     entityId: applicationId,
     companyId,
-    details: { from: currentStatus, to: "interview", system: false, viaSchedule: true },
+    details: {
+      from: currentStatus,
+      to: "interview",
+      system: false,
+      viaSchedule: true,
+    },
     ...requestMeta,
   });
   this.events.emitApplicationStatusChanged({
@@ -1014,6 +1074,7 @@ git commit -m "feat(interviews): auto-advance application status on schedule fro
 ### Task 10: Map URL sanitizer
 
 **Files:**
+
 - Create: `apps/api/src/modules/interviews/lib/sanitize-map-url.ts`
 - Create: `apps/api/src/modules/interviews/lib/sanitize-map-url.spec.ts`
 
@@ -1025,8 +1086,12 @@ import { sanitizeMapUrl } from "./sanitize-map-url";
 
 describe("sanitizeMapUrl", () => {
   it("accepts http and https URLs", () => {
-    expect(sanitizeMapUrl("http://maps.google.com/?q=foo")).toBe("http://maps.google.com/?q=foo");
-    expect(sanitizeMapUrl("https://maps.google.com/?q=foo")).toBe("https://maps.google.com/?q=foo");
+    expect(sanitizeMapUrl("http://maps.google.com/?q=foo")).toBe(
+      "http://maps.google.com/?q=foo",
+    );
+    expect(sanitizeMapUrl("https://maps.google.com/?q=foo")).toBe(
+      "https://maps.google.com/?q=foo",
+    );
   });
   it("rejects javascript:, data:, file:, mailto:, ftp:", () => {
     for (const bad of [
@@ -1060,7 +1125,9 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement**
 
 ```ts
-export function sanitizeMapUrl(value: string | null | undefined): string | null {
+export function sanitizeMapUrl(
+  value: string | null | undefined,
+): string | null {
   if (value === null || value === undefined) return null;
   const trimmed = value.trim();
   if (trimmed.length === 0) return null;
@@ -1091,6 +1158,7 @@ git commit -m "feat(interviews): map URL sanitizer (http/https only, 2048-char c
 ### Task 11: Conflict detection helper + endpoint
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.repository.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.controller.ts`
@@ -1107,8 +1175,10 @@ it("returns recruiter and candidate overlapping interviews", async () => {
   const recruiter = await fx.makeRecruiter();
   const candidate = await fx.makeCandidate();
   const existing = await fx.scheduleInterview({
-    recruiterId: recruiter.id, candidateId: candidate.id,
-    scheduledAt: "2026-06-01T10:00:00Z", durationMinutes: 60,
+    recruiterId: recruiter.id,
+    candidateId: candidate.id,
+    scheduledAt: "2026-06-01T10:00:00Z",
+    durationMinutes: 60,
   });
   const result = await service.checkConflicts({
     scheduledAt: new Date("2026-06-01T10:30:00Z"),
@@ -1124,8 +1194,10 @@ it("returns no conflicts when windows do not overlap", async () => {
   const recruiter = await fx.makeRecruiter();
   const candidate = await fx.makeCandidate();
   await fx.scheduleInterview({
-    recruiterId: recruiter.id, candidateId: candidate.id,
-    scheduledAt: "2026-06-01T10:00:00Z", durationMinutes: 60,
+    recruiterId: recruiter.id,
+    candidateId: candidate.id,
+    scheduledAt: "2026-06-01T10:00:00Z",
+    durationMinutes: 60,
   });
   const result = await service.checkConflicts({
     scheduledAt: new Date("2026-06-01T11:00:00Z"),
@@ -1254,7 +1326,9 @@ Add `interview-conflicts.dto.ts`:
 import { createZodDto } from "nestjs-zod";
 import { interviewConflictsQuerySchema } from "@aurahire/shared";
 
-export class InterviewConflictsDto extends createZodDto(interviewConflictsQuerySchema) {}
+export class InterviewConflictsDto extends createZodDto(
+  interviewConflictsQuerySchema,
+) {}
 ```
 
 Add a thin wrapper `checkConflictsForApplication` on the service that resolves the candidate from the application id, validates company ownership, then calls `checkConflicts`.
@@ -1276,6 +1350,7 @@ git commit -m "feat(interviews): conflict detection (recruiter + candidate overl
 ### Task 12: ICS builder
 
 **Files:**
+
 - Create: `apps/api/src/lib/calendar/build-interview-ics.ts`
 - Create: `apps/api/src/lib/calendar/build-interview-ics.spec.ts`
 
@@ -1308,20 +1383,33 @@ describe("buildInterviewIcs", () => {
   it("contains the stable UID and required RFC-5545 fields", () => {
     const ics = buildInterviewIcs(fixture);
     expect(ics).toContain("BEGIN:VCALENDAR");
-    expect(ics).toContain("UID:interview-11111111-1111-1111-1111-111111111111@aurahire.app");
+    expect(ics).toContain(
+      "UID:interview-11111111-1111-1111-1111-111111111111@aurahire.app",
+    );
     expect(ics).toContain("DTSTART:20260601T100000Z");
     expect(ics).toContain("DTEND:20260601T113000Z");
     expect(ics).toContain("SUMMARY:Interview: Software Engineer at Acme Corp");
-    expect(ics).toContain("LOCATION:JRMSU Main Campus, Dapitan City, Zamboanga del Norte, PH (ICT Building, Room 305)");
-    expect(ics).toContain("ORGANIZER;CN=Acme Corp:mailto:recruiter@acme.example");
-    expect(ics).toContain("ATTENDEE;CN=Juan Dela Cruz;RSVP=TRUE:mailto:juan@example.com");
+    expect(ics).toContain(
+      "LOCATION:JRMSU Main Campus, Dapitan City, Zamboanga del Norte, PH (ICT Building, Room 305)",
+    );
+    expect(ics).toContain(
+      "ORGANIZER;CN=Acme Corp:mailto:recruiter@acme.example",
+    );
+    expect(ics).toContain(
+      "ATTENDEE;CN=Juan Dela Cruz;RSVP=TRUE:mailto:juan@example.com",
+    );
     expect(ics).toContain("END:VCALENDAR");
   });
   it("folds long DESCRIPTION lines per RFC-5545", () => {
-    const longInterview = { ...fixture.interview, reportingInstructions: "x".repeat(200) };
+    const longInterview = {
+      ...fixture.interview,
+      reportingInstructions: "x".repeat(200),
+    };
     const ics = buildInterviewIcs({ ...fixture, interview: longInterview });
     // Each folded continuation line begins with a single space.
-    const descLineCount = ics.split("\n").filter((l) => l.startsWith("DESCRIPTION:") || l.startsWith(" ")).length;
+    const descLineCount = ics
+      .split("\n")
+      .filter((l) => l.startsWith("DESCRIPTION:") || l.startsWith(" ")).length;
     expect(descLineCount).toBeGreaterThan(1);
   });
 });
@@ -1355,10 +1443,17 @@ interface BuildIcsInput {
 }
 
 const formatIcsDate = (d: Date): string =>
-  d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  d
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
 
 const escapeText = (s: string): string =>
-  s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  s
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\n/g, "\\n");
 
 const foldLine = (line: string): string => {
   if (line.length <= 75) return line;
@@ -1376,18 +1471,27 @@ const foldLine = (line: string): string => {
 export function buildInterviewIcs(input: BuildIcsInput): string {
   const { interview, candidate, job, company } = input;
   const start = formatIcsDate(interview.scheduledAt);
-  const end = formatIcsDate(new Date(interview.scheduledAt.getTime() + interview.durationMinutes * 60_000));
+  const end = formatIcsDate(
+    new Date(
+      interview.scheduledAt.getTime() + interview.durationMinutes * 60_000,
+    ),
+  );
   const dtstamp = formatIcsDate(new Date());
 
-  const locationParts = [interview.venueName, interview.addressLine].filter(Boolean);
+  const locationParts = [interview.venueName, interview.addressLine].filter(
+    Boolean,
+  );
   let location = locationParts.join(", ");
   if (interview.roomOrFloor) location += ` (${interview.roomOrFloor})`;
 
   const descLines: string[] = [];
   if (interview.interviewerName) {
-    descLines.push(`Interviewer: ${interview.interviewerName}${interview.interviewerTitle ? ` (${interview.interviewerTitle})` : ""}`);
+    descLines.push(
+      `Interviewer: ${interview.interviewerName}${interview.interviewerTitle ? ` (${interview.interviewerTitle})` : ""}`,
+    );
   }
-  if (interview.reportingInstructions) descLines.push(`Reporting: ${interview.reportingInstructions}`);
+  if (interview.reportingInstructions)
+    descLines.push(`Reporting: ${interview.reportingInstructions}`);
   if (interview.whatToBring) descLines.push(`Bring: ${interview.whatToBring}`);
   if (interview.mapUrl) descLines.push(`Map: ${interview.mapUrl}`);
   const description = escapeText(descLines.join("\\n"));
@@ -1433,6 +1537,7 @@ git commit -m "feat(calendar): RFC-5545 ICS builder for interviews"
 ### Task 13: ICS download endpoint
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.controller.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 
@@ -1516,6 +1621,7 @@ git commit -m "feat(interviews): GET /interviews/:id/ics calendar download"
 ### Task 14: Update feedback endpoint to accept `recommendation`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/dto/update-interview-feedback.dto.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.repository.ts`
@@ -1525,13 +1631,25 @@ git commit -m "feat(interviews): GET /interviews/:id/ics calendar download"
 ```ts
 it("updateFeedback persists recommendation and audits both events when recommendation changes", async () => {
   const interview = await fx.scheduleInterview({});
-  await service.updateStatus(recruiterUser, companyId, interview.id, { newStatus: "completed" }, {});
+  await service.updateStatus(
+    recruiterUser,
+    companyId,
+    interview.id,
+    { newStatus: "completed" },
+    {},
+  );
 
-  await service.updateFeedback(recruiterUser, companyId, interview.id, {
-    feedback: "Strong candidate, communicates clearly.",
-    rating: 5,
-    recommendation: "proceed",
-  }, {});
+  await service.updateFeedback(
+    recruiterUser,
+    companyId,
+    interview.id,
+    {
+      feedback: "Strong candidate, communicates clearly.",
+      rating: 5,
+      recommendation: "proceed",
+    },
+    {},
+  );
 
   const reloaded = await repo.findById(interview.id);
   expect(reloaded?.feedback).toContain("Strong candidate");
@@ -1540,7 +1658,10 @@ it("updateFeedback persists recommendation and audits both events when recommend
 
   const audits = await fx.listAudits({ entityId: interview.id });
   expect(audits.map((a) => a.action)).toEqual(
-    expect.arrayContaining(["interview.feedback_submitted", "interview.recommendation_set"]),
+    expect.arrayContaining([
+      "interview.feedback_submitted",
+      "interview.recommendation_set",
+    ]),
   );
 });
 ```
@@ -1622,6 +1743,7 @@ git commit -m "feat(interviews): feedback endpoint persists recommendation, audi
 ### Task 15: `POST /interviews/:id/share-feedback`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.controller.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 - Create: `apps/api/src/modules/interviews/dto/share-interview-feedback.dto.ts`
@@ -1631,20 +1753,42 @@ git commit -m "feat(interviews): feedback endpoint persists recommendation, audi
 ```ts
 it("share-feedback sets candidateSummary, sharedAt, sends email + in-app", async () => {
   const interview = await fx.scheduleInterview({});
-  await service.updateStatus(recruiterUser, companyId, interview.id, { newStatus: "completed" }, {});
-  await service.updateFeedback(recruiterUser, companyId, interview.id, { feedback: "internal", rating: 4, recommendation: "proceed" }, {});
+  await service.updateStatus(
+    recruiterUser,
+    companyId,
+    interview.id,
+    { newStatus: "completed" },
+    {},
+  );
+  await service.updateFeedback(
+    recruiterUser,
+    companyId,
+    interview.id,
+    { feedback: "internal", rating: 4, recommendation: "proceed" },
+    {},
+  );
 
-  await service.shareFeedback(recruiterUser, companyId, interview.id, { candidateSummary: "Thank you for the strong interview." }, {});
+  await service.shareFeedback(
+    recruiterUser,
+    companyId,
+    interview.id,
+    { candidateSummary: "Thank you for the strong interview." },
+    {},
+  );
 
   const reloaded = await repo.findById(interview.id);
   expect(reloaded?.candidateSummary).toContain("strong interview");
   expect(reloaded?.sharedWithCandidateAt).toBeInstanceOf(Date);
 
-  expect(notifications.emit).toHaveBeenCalledWith(expect.objectContaining({
-    eventType: "interview_feedback_shared",
-    userId: candidateUser.id,
-  }));
-  expect(email.send).toHaveBeenCalledWith(expect.objectContaining({ subject: expect.stringContaining("Feedback") }));
+  expect(notifications.emit).toHaveBeenCalledWith(
+    expect.objectContaining({
+      eventType: "interview_feedback_shared",
+      userId: candidateUser.id,
+    }),
+  );
+  expect(email.send).toHaveBeenCalledWith(
+    expect.objectContaining({ subject: expect.stringContaining("Feedback") }),
+  );
 });
 ```
 
@@ -1658,7 +1802,9 @@ Expected: FAIL — `service.shareFeedback is not a function`.
 ```ts
 import { createZodDto } from "nestjs-zod";
 import { shareInterviewFeedbackSchema } from "@aurahire/shared";
-export class ShareInterviewFeedbackDto extends createZodDto(shareInterviewFeedbackSchema) {}
+export class ShareInterviewFeedbackDto extends createZodDto(
+  shareInterviewFeedbackSchema,
+) {}
 ```
 
 - [ ] **Step 4: Add `shareFeedback` service method**
@@ -1736,6 +1882,7 @@ git commit -m "feat(interviews): POST /interviews/:id/share-feedback (email + in
 ### Task 16: `PATCH /interviews/:id/no-show`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.controller.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 
@@ -1744,18 +1891,33 @@ git commit -m "feat(interviews): POST /interviews/:id/share-feedback (email + in
 ```ts
 it("markNoShow flips scheduled or completed → no-show; rejects from cancelled", async () => {
   const interview = await fx.scheduleInterview({});
-  await expect(service.markNoShow(recruiterUser, companyId, interview.id, {}))
-    .resolves.toMatchObject({ status: "no-show" });
+  await expect(
+    service.markNoShow(recruiterUser, companyId, interview.id, {}),
+  ).resolves.toMatchObject({ status: "no-show" });
 
   const finished = await fx.scheduleInterview({});
-  await service.updateStatus(recruiterUser, companyId, finished.id, { newStatus: "completed" }, {});
-  await expect(service.markNoShow(recruiterUser, companyId, finished.id, {}))
-    .resolves.toMatchObject({ status: "no-show" });
+  await service.updateStatus(
+    recruiterUser,
+    companyId,
+    finished.id,
+    { newStatus: "completed" },
+    {},
+  );
+  await expect(
+    service.markNoShow(recruiterUser, companyId, finished.id, {}),
+  ).resolves.toMatchObject({ status: "no-show" });
 
   const cancelled = await fx.scheduleInterview({});
-  await service.updateStatus(recruiterUser, companyId, cancelled.id, { newStatus: "cancelled" }, {});
-  await expect(service.markNoShow(recruiterUser, companyId, cancelled.id, {}))
-    .rejects.toThrow(/INVALID_STATUS_TRANSITION/);
+  await service.updateStatus(
+    recruiterUser,
+    companyId,
+    cancelled.id,
+    { newStatus: "cancelled" },
+    {},
+  );
+  await expect(
+    service.markNoShow(recruiterUser, companyId, cancelled.id, {}),
+  ).rejects.toThrow(/INVALID_STATUS_TRANSITION/);
 });
 ```
 
@@ -1815,6 +1977,7 @@ git commit -m "feat(interviews): PATCH /interviews/:id/no-show"
 ### Task 17: `POST /interviews/:id/reschedule`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.controller.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.repository.ts`
@@ -1826,7 +1989,9 @@ git commit -m "feat(interviews): PATCH /interviews/:id/no-show"
 it("reschedule marks original 'rescheduled', creates new linked row, sends email", async () => {
   const original = await fx.scheduleInterview({});
   const result = await service.reschedule(
-    recruiterUser, companyId, original.id,
+    recruiterUser,
+    companyId,
+    original.id,
     fx.scheduleInput({ scheduledAt: future(48).toISOString() }),
     {},
   );
@@ -1838,18 +2003,29 @@ it("reschedule marks original 'rescheduled', creates new linked row, sends email
   expect(reloaded?.rescheduledToId).toBe(result.id);
   expect(result.rescheduledFromId).toBe(original.id);
 
-  expect(email.send).toHaveBeenCalledWith(expect.objectContaining({
-    subject: expect.stringMatching(/rescheduled/i),
-    attachments: expect.arrayContaining([expect.objectContaining({ filename: "interview.ics" })]),
-  }));
+  expect(email.send).toHaveBeenCalledWith(
+    expect.objectContaining({
+      subject: expect.stringMatching(/rescheduled/i),
+      attachments: expect.arrayContaining([
+        expect.objectContaining({ filename: "interview.ics" }),
+      ]),
+    }),
+  );
 });
 
 it("reschedule rejects from completed | cancelled | rescheduled", async () => {
   for (const bad of ["completed", "cancelled", "rescheduled"] as const) {
     const i = await fx.scheduleInterview({});
     await fx.setStatusDirect(i.id, bad);
-    await expect(service.reschedule(recruiterUser, companyId, i.id, fx.scheduleInput({}), {}))
-      .rejects.toThrow(/INVALID_STATUS_TRANSITION/);
+    await expect(
+      service.reschedule(
+        recruiterUser,
+        companyId,
+        i.id,
+        fx.scheduleInput({}),
+        {},
+      ),
+    ).rejects.toThrow(/INVALID_STATUS_TRANSITION/);
   }
 });
 ```
@@ -1864,7 +2040,9 @@ Expected: FAIL — `service.reschedule is not a function`.
 ```ts
 import { createZodDto } from "nestjs-zod";
 import { rescheduleInterviewSchema } from "@aurahire/shared";
-export class RescheduleInterviewDto extends createZodDto(rescheduleInterviewSchema) {}
+export class RescheduleInterviewDto extends createZodDto(
+  rescheduleInterviewSchema,
+) {}
 ```
 
 - [ ] **Step 4: Implement service.reschedule**
@@ -1997,6 +2175,7 @@ git commit -m "feat(interviews): POST /interviews/:id/reschedule (atomic chain +
 ### Task 18: Update `interviews.service.schedule()` to consume new venue inputs
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.repository.ts`
 
@@ -2005,13 +2184,22 @@ git commit -m "feat(interviews): POST /interviews/:id/reschedule (atomic chain +
 ```ts
 it("schedule persists venue + guidance fields", async () => {
   const app = await fx.createApplication({ status: "screening" });
-  const result = await service.schedule(recruiterUser, app.companyId, app.id, fx.scheduleInput({
-    venueName: "JRMSU Main", addressLine: "Dapitan", roomOrFloor: "ICT 305",
-    mapUrl: "https://maps.google.com/?q=foo",
-    reportingInstructions: "Arrive 15 min early.",
-    whatToBring: "Valid ID + resume.",
-    interviewerName: "Maria Santos", interviewerTitle: "Engineering Manager",
-  }), {});
+  const result = await service.schedule(
+    recruiterUser,
+    app.companyId,
+    app.id,
+    fx.scheduleInput({
+      venueName: "JRMSU Main",
+      addressLine: "Dapitan",
+      roomOrFloor: "ICT 305",
+      mapUrl: "https://maps.google.com/?q=foo",
+      reportingInstructions: "Arrive 15 min early.",
+      whatToBring: "Valid ID + resume.",
+      interviewerName: "Maria Santos",
+      interviewerTitle: "Engineering Manager",
+    }),
+    {},
+  );
   expect(result.venueName).toBe("JRMSU Main");
   expect(result.addressLine).toBe("Dapitan");
   expect(result.roomOrFloor).toBe("ICT 305");
@@ -2069,6 +2257,7 @@ git commit -m "feat(interviews): schedule persists structured venue + guidance f
 ### Task 19: Scaffold module + repository
 
 **Files:**
+
 - Create: `apps/api/src/modules/interview-venues/interview-venues.module.ts`
 - Create: `apps/api/src/modules/interview-venues/interview-venues.repository.ts`
 - Create: `apps/api/src/modules/interview-venues/interview-venues.service.ts`
@@ -2107,33 +2296,54 @@ export class InterviewVenuesRepository {
   constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient) {}
 
   async list(companyId: string) {
-    return this.db.select().from(interviewVenuesTable)
+    return this.db
+      .select()
+      .from(interviewVenuesTable)
       .where(eq(interviewVenuesTable.companyId, companyId))
-      .orderBy(desc(interviewVenuesTable.isDefault), asc(interviewVenuesTable.label));
+      .orderBy(
+        desc(interviewVenuesTable.isDefault),
+        asc(interviewVenuesTable.label),
+      );
   }
   async findById(id: string) {
-    const [row] = await this.db.select().from(interviewVenuesTable).where(eq(interviewVenuesTable.id, id)).limit(1);
+    const [row] = await this.db
+      .select()
+      .from(interviewVenuesTable)
+      .where(eq(interviewVenuesTable.id, id))
+      .limit(1);
     return row ?? null;
   }
   async insert(input: NewVenueRow) {
-    const [row] = await this.db.insert(interviewVenuesTable).values(input).returning();
+    const [row] = await this.db
+      .insert(interviewVenuesTable)
+      .values(input)
+      .returning();
     return row;
   }
   async update(id: string, patch: Partial<NewVenueRow>) {
-    const [row] = await this.db.update(interviewVenuesTable)
+    const [row] = await this.db
+      .update(interviewVenuesTable)
       .set({ ...patch, updatedAt: new Date() })
       .where(eq(interviewVenuesTable.id, id))
       .returning();
     return row;
   }
   async delete(id: string) {
-    await this.db.delete(interviewVenuesTable).where(eq(interviewVenuesTable.id, id));
+    await this.db
+      .delete(interviewVenuesTable)
+      .where(eq(interviewVenuesTable.id, id));
   }
   async clearDefaultForCompany(companyId: string, exceptId?: string) {
     const cond = exceptId
-      ? and(eq(interviewVenuesTable.companyId, companyId), ne(interviewVenuesTable.id, exceptId))
+      ? and(
+          eq(interviewVenuesTable.companyId, companyId),
+          ne(interviewVenuesTable.id, exceptId),
+        )
       : eq(interviewVenuesTable.companyId, companyId);
-    await this.db.update(interviewVenuesTable).set({ isDefault: false }).where(cond);
+    await this.db
+      .update(interviewVenuesTable)
+      .set({ isDefault: false })
+      .where(cond);
   }
 }
 ```
@@ -2143,15 +2353,28 @@ export class InterviewVenuesRepository {
 ```ts
 // interview-venue-input.dto.ts
 import { createZodDto } from "nestjs-zod";
-import { interviewVenueInputSchema, interviewVenuePartialSchema } from "@aurahire/shared";
-export class InterviewVenueInputDto extends createZodDto(interviewVenueInputSchema) {}
-export class InterviewVenuePartialDto extends createZodDto(interviewVenuePartialSchema) {}
+import {
+  interviewVenueInputSchema,
+  interviewVenuePartialSchema,
+} from "@aurahire/shared";
+export class InterviewVenueInputDto extends createZodDto(
+  interviewVenueInputSchema,
+) {}
+export class InterviewVenuePartialDto extends createZodDto(
+  interviewVenuePartialSchema,
+) {}
 
 // interview-venue-response.dto.ts
 import { ApiProperty } from "@nestjs/swagger";
-export class InterviewVenueDto { /* mirror columns */ }
-export class InterviewVenueListEnvelopeDto { @ApiProperty({ type: [InterviewVenueDto] }) data!: InterviewVenueDto[]; }
-export class InterviewVenueEnvelopeDto { @ApiProperty({ type: InterviewVenueDto }) data!: InterviewVenueDto; }
+export class InterviewVenueDto {
+  /* mirror columns */
+}
+export class InterviewVenueListEnvelopeDto {
+  @ApiProperty({ type: [InterviewVenueDto] }) data!: InterviewVenueDto[];
+}
+export class InterviewVenueEnvelopeDto {
+  @ApiProperty({ type: InterviewVenueDto }) data!: InterviewVenueDto;
+}
 ```
 
 - [ ] **Step 4: Commit**
@@ -2166,6 +2389,7 @@ git commit -m "feat(interview-venues): scaffold module + repository + DTOs"
 ### Task 20: Service + CRUD endpoints
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interview-venues/interview-venues.service.ts`
 - Modify: `apps/api/src/modules/interview-venues/interview-venues.controller.ts`
 
@@ -2173,8 +2397,16 @@ git commit -m "feat(interview-venues): scaffold module + repository + DTOs"
 
 ```ts
 it("create + list + update + delete + setDefault round-trip", async () => {
-  const a = await service.create(recruiter, companyId, { label: "A", venueName: "JRMSU Main", addressLine: "Dapitan" });
-  const b = await service.create(recruiter, companyId, { label: "B", venueName: "JRMSU South", addressLine: "Pagadian" });
+  const a = await service.create(recruiter, companyId, {
+    label: "A",
+    venueName: "JRMSU Main",
+    addressLine: "Dapitan",
+  });
+  const b = await service.create(recruiter, companyId, {
+    label: "B",
+    venueName: "JRMSU South",
+    addressLine: "Pagadian",
+  });
 
   await service.setDefault(recruiter, companyId, b.id);
   const list = await service.list(recruiter, companyId);
@@ -2186,7 +2418,9 @@ it("create + list + update + delete + setDefault round-trip", async () => {
   expect(reloaded.find((v) => v.id === a.id)?.roomOrFloor).toBe("ICT 305");
 
   await service.remove(recruiter, companyId, a.id);
-  expect((await service.list(recruiter, companyId)).find((v) => v.id === a.id)).toBeUndefined();
+  expect(
+    (await service.list(recruiter, companyId)).find((v) => v.id === a.id),
+  ).toBeUndefined();
 });
 ```
 
@@ -2216,12 +2450,20 @@ export class InterviewVenuesService {
     return this.repo.list(companyId);
   }
 
-  async create(user: AuthUser, companyId: string, dto: InterviewVenueInputDto, requestMeta = {}) {
+  async create(
+    user: AuthUser,
+    companyId: string,
+    dto: InterviewVenueInputDto,
+    requestMeta = {},
+  ) {
     this.requireRecruiter(user);
     if (dto.isDefault) await this.repo.clearDefaultForCompany(companyId);
     const row = await this.repo.insert({
-      companyId, createdBy: user.id, label: dto.label,
-      venueName: dto.venueName, addressLine: dto.addressLine,
+      companyId,
+      createdBy: user.id,
+      label: dto.label,
+      venueName: dto.venueName,
+      addressLine: dto.addressLine,
       roomOrFloor: dto.roomOrFloor ?? null,
       mapUrl: dto.mapUrl ? sanitizeMapUrl(dto.mapUrl) : null,
       reportingInstructions: dto.reportingInstructions ?? null,
@@ -2231,10 +2473,14 @@ export class InterviewVenuesService {
       isDefault: dto.isDefault ?? false,
     });
     await this.audit.log({
-      actorId: user.id, actorType: "user",
+      actorId: user.id,
+      actorType: "user",
       action: AUDIT_ACTIONS.INTERVIEW_VENUE_CREATED,
-      entityType: "interview_venue", entityId: row.id, companyId,
-      details: { label: row.label }, ...requestMeta,
+      entityType: "interview_venue",
+      entityId: row.id,
+      companyId,
+      details: { label: row.label },
+      ...requestMeta,
     });
     return row;
   }
@@ -2242,27 +2488,35 @@ export class InterviewVenuesService {
   async update(user, companyId, id, dto, requestMeta = {}) {
     this.requireRecruiter(user);
     const existing = await this.repo.findById(id);
-    if (!existing || existing.companyId !== companyId) throw new NotFoundException();
+    if (!existing || existing.companyId !== companyId)
+      throw new NotFoundException();
     const patch = { ...dto };
-    if (patch.mapUrl !== undefined) patch.mapUrl = patch.mapUrl ? sanitizeMapUrl(patch.mapUrl) : null;
+    if (patch.mapUrl !== undefined)
+      patch.mapUrl = patch.mapUrl ? sanitizeMapUrl(patch.mapUrl) : null;
     if (patch.isDefault) await this.repo.clearDefaultForCompany(companyId, id);
     const updated = await this.repo.update(id, patch);
-    await this.audit.log({ /* INTERVIEW_VENUE_UPDATED */ });
+    await this.audit.log({
+      /* INTERVIEW_VENUE_UPDATED */
+    });
     return updated;
   }
 
   async remove(user, companyId, id, requestMeta = {}) {
     this.requireRecruiter(user);
     const existing = await this.repo.findById(id);
-    if (!existing || existing.companyId !== companyId) throw new NotFoundException();
+    if (!existing || existing.companyId !== companyId)
+      throw new NotFoundException();
     await this.repo.delete(id);
-    await this.audit.log({ /* INTERVIEW_VENUE_DELETED */ });
+    await this.audit.log({
+      /* INTERVIEW_VENUE_DELETED */
+    });
   }
 
   async setDefault(user, companyId, id, requestMeta = {}) {
     this.requireRecruiter(user);
     const existing = await this.repo.findById(id);
-    if (!existing || existing.companyId !== companyId) throw new NotFoundException();
+    if (!existing || existing.companyId !== companyId)
+      throw new NotFoundException();
     await this.repo.clearDefaultForCompany(companyId, id);
     return this.repo.update(id, { isDefault: true });
   }
@@ -2280,7 +2534,10 @@ export class InterviewVenuesController {
 
   @Get("companies/:companyId/interview-venues")
   @Roles("recruiter", "admin")
-  async list(@CurrentUser() user, @Param("companyId") companyId: string): Promise<InterviewVenueListEnvelopeDto> {
+  async list(
+    @CurrentUser() user,
+    @Param("companyId") companyId: string,
+  ): Promise<InterviewVenueListEnvelopeDto> {
     const data = await this.service.list(user, companyId);
     return { data };
   }
@@ -2288,8 +2545,18 @@ export class InterviewVenuesController {
   @Post("companies/:companyId/interview-venues")
   @Roles("recruiter", "admin")
   @HttpCode(HttpStatus.CREATED)
-  async create(@CurrentUser() user, @Param("companyId") companyId: string, @Body() dto: InterviewVenueInputDto, @Req() req): Promise<InterviewVenueEnvelopeDto> {
-    const data = await this.service.create(user, companyId, dto, this.requestMeta(req));
+  async create(
+    @CurrentUser() user,
+    @Param("companyId") companyId: string,
+    @Body() dto: InterviewVenueInputDto,
+    @Req() req,
+  ): Promise<InterviewVenueEnvelopeDto> {
+    const data = await this.service.create(
+      user,
+      companyId,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -2322,6 +2589,7 @@ git commit -m "feat(interview-venues): CRUD + set-default endpoints"
 ### Task 21: Wire schedule modal's `saveAsTemplate` to the venues service
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.module.ts`
 
@@ -2367,6 +2635,7 @@ git commit -m "feat(interviews): persist venue template when saveAsTemplate is s
 ### Task 22: Realtime emitter methods
 
 **Files:**
+
 - Modify: `apps/api/src/realtime/events.service.ts`
 
 - [ ] **Step 1: Add 5 emitter methods**
@@ -2419,6 +2688,7 @@ git commit -m "feat(realtime): emit interview.completed/rescheduled/feedbackShar
 ### Task 23: Notification event defaults
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notifications/event-defaults.ts`
 
 - [ ] **Step 1: Add new event default rows**
@@ -2444,6 +2714,7 @@ git commit -m "feat(notifications): default prefs for new interview-flow events"
 ### Task 24: Auto-complete cron
 
 **Files:**
+
 - Create: `apps/api/src/cron/interview-autocomplete.cron.ts`
 - Create: `apps/api/src/cron/interview-autocomplete.cron.spec.ts`
 - Modify: `apps/api/src/cron/cron.module.ts`
@@ -2455,8 +2726,16 @@ Mirror `interview-feedback-due.cron.spec.ts` pattern.
 
 ```ts
 it("flips overdue scheduled interviews to completed", async () => {
-  const past = await fx.scheduleInterview({ scheduledAt: hoursAgo(2), durationMinutes: 60, status: "scheduled" });
-  const future = await fx.scheduleInterview({ scheduledAt: hoursFromNow(2), durationMinutes: 60, status: "scheduled" });
+  const past = await fx.scheduleInterview({
+    scheduledAt: hoursAgo(2),
+    durationMinutes: 60,
+    status: "scheduled",
+  });
+  const future = await fx.scheduleInterview({
+    scheduledAt: hoursFromNow(2),
+    durationMinutes: 60,
+    status: "scheduled",
+  });
 
   const result = await cron.execute();
 
@@ -2466,7 +2745,11 @@ it("flips overdue scheduled interviews to completed", async () => {
 });
 
 it("does not flip recently-ended interviews within grace period", async () => {
-  const justEnded = await fx.scheduleInterview({ scheduledAt: hoursAgo(0).getTime() - 30 * 60_000, durationMinutes: 30, status: "scheduled" });
+  const justEnded = await fx.scheduleInterview({
+    scheduledAt: hoursAgo(0).getTime() - 30 * 60_000,
+    durationMinutes: 30,
+    status: "scheduled",
+  });
   // ended 0 min ago + duration 30 means 30 min ago end + 15min grace not yet passed.
   // adjust as needed
   const result = await cron.execute();
@@ -2474,7 +2757,11 @@ it("does not flip recently-ended interviews within grace period", async () => {
 });
 
 it("is idempotent — second run does not re-process", async () => {
-  await fx.scheduleInterview({ scheduledAt: hoursAgo(2), durationMinutes: 60, status: "scheduled" });
+  await fx.scheduleInterview({
+    scheduledAt: hoursAgo(2),
+    durationMinutes: 60,
+    status: "scheduled",
+  });
   const a = await cron.execute();
   const b = await cron.execute();
   expect(a.completed).toBe(1);
@@ -2515,7 +2802,9 @@ export class InterviewAutocompleteCron {
   ) {}
 
   @Cron("0 * * * *", { name: CRON_NAME, timeZone: "Asia/Manila" })
-  async run() { return this.execute(); }
+  async run() {
+    return this.execute();
+  }
 
   async execute(): Promise<{ completed: number; durationMs: number }> {
     const startedAt = Date.now();
@@ -2528,11 +2817,16 @@ export class InterviewAutocompleteCron {
         jobId: applicationsTable.jobId,
       })
       .from(interviewsTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
-      .where(and(
-        eq(interviewsTable.status, "scheduled"),
-        sql`(${interviewsTable.scheduledAt} + ((${interviewsTable.durationMinutes} + ${GRACE_MINUTES}) || ' minutes')::interval) <= now()`,
-      ))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, interviewsTable.applicationId),
+      )
+      .where(
+        and(
+          eq(interviewsTable.status, "scheduled"),
+          sql`(${interviewsTable.scheduledAt} + ((${interviewsTable.durationMinutes} + ${GRACE_MINUTES}) || ' minutes')::interval) <= now()`,
+        ),
+      )
       .limit(200);
 
     let completed = 0;
@@ -2541,49 +2835,67 @@ export class InterviewAutocompleteCron {
         const [updated] = await this.db
           .update(interviewsTable)
           .set({ status: "completed", updatedAt: new Date() })
-          .where(and(eq(interviewsTable.id, row.id), eq(interviewsTable.status, "scheduled")))
+          .where(
+            and(
+              eq(interviewsTable.id, row.id),
+              eq(interviewsTable.status, "scheduled"),
+            ),
+          )
           .returning({ id: interviewsTable.id });
         if (!updated) continue;
 
         await this.audit.log({
-          actorId: null, actorType: "system",
+          actorId: null,
+          actorType: "system",
           action: AUDIT_ACTIONS.INTERVIEW_AUTO_COMPLETED,
-          entityType: "interview", entityId: row.id,
+          entityType: "interview",
+          entityId: row.id,
           details: { applicationId: row.applicationId },
         });
 
         this.events.emitInterviewCompleted({
-          interviewId: row.id, applicationId: row.applicationId,
-          candidateId: row.candidateId, recruiterId: row.scheduledBy, jobId: row.jobId,
+          interviewId: row.id,
+          applicationId: row.applicationId,
+          candidateId: row.candidateId,
+          recruiterId: row.scheduledBy,
+          jobId: row.jobId,
           completedAt: new Date().toISOString(),
         });
 
         await this.notifications.emit({
           userId: row.candidateId,
           eventType: "interview_completed",
-          entityType: "interview", entityId: row.id,
+          entityType: "interview",
+          entityId: row.id,
           metadata: { applicationId: row.applicationId },
         });
         await this.notifications.emit({
           userId: row.scheduledBy,
           eventType: "interview_record_feedback",
-          entityType: "interview", entityId: row.id,
+          entityType: "interview",
+          entityId: row.id,
           metadata: { applicationId: row.applicationId },
         });
         completed += 1;
       } catch (err) {
-        this.logger.error(`[${CRON_NAME}] failed for ${row.id}: ${(err as Error).message}`);
+        this.logger.error(
+          `[${CRON_NAME}] failed for ${row.id}: ${(err as Error).message}`,
+        );
       }
     }
 
     const durationMs = Date.now() - startedAt;
     await this.audit.log({
-      actorId: null, actorType: "system",
+      actorId: null,
+      actorType: "system",
       action: AUDIT_ACTIONS.INTERVIEW_AUTOCOMPLETE_RUN,
-      entityType: "cron", entityId: CRON_ENTITY_SENTINEL,
+      entityType: "cron",
+      entityId: CRON_ENTITY_SENTINEL,
       details: { completed, scanned: due.length, durationMs },
     });
-    this.logger.log(`[${CRON_NAME}] completed ${completed}/${due.length} in ${durationMs}ms`);
+    this.logger.log(
+      `[${CRON_NAME}] completed ${completed}/${due.length} in ${durationMs}ms`,
+    );
     return { completed, durationMs };
   }
 }
@@ -2605,6 +2917,7 @@ git commit -m "feat(cron): interview-autocomplete (hourly, flips overdue schedul
 ### Task 25: Update `InterviewScheduledEmail` for venue + ICS attachment
 
 **Files:**
+
 - Modify: `apps/api/src/email/templates/interview-scheduled.tsx`
 - Modify: `apps/api/src/email/email.service.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts` (notifyCandidateScheduled)
@@ -2618,7 +2931,11 @@ export interface SendEmailInput {
   to: string;
   subject: string;
   template: ReactElement;
-  attachments?: Array<{ filename: string; content: string; contentType: string }>;
+  attachments?: Array<{
+    filename: string;
+    content: string;
+    contentType: string;
+  }>;
 }
 ```
 
@@ -2631,12 +2948,22 @@ Render new fields: venue, address, room, reporting instructions, what-to-bring, 
 - [ ] **Step 3: Update `notifyCandidateScheduled` to attach ICS**
 
 ```ts
-const ics = buildInterviewIcs({ /* ... */ });
+const ics = buildInterviewIcs({
+  /* ... */
+});
 await this.email.send({
   to: candidate.email,
   subject: `Interview scheduled: ${jobRow.title}`,
-  template: InterviewScheduledEmail({ /* ...with all venue fields */ }),
-  attachments: [{ filename: "interview.ics", content: Buffer.from(ics).toString("base64"), contentType: "text/calendar" }],
+  template: InterviewScheduledEmail({
+    /* ...with all venue fields */
+  }),
+  attachments: [
+    {
+      filename: "interview.ics",
+      content: Buffer.from(ics).toString("base64"),
+      contentType: "text/calendar",
+    },
+  ],
 });
 ```
 
@@ -2652,6 +2979,7 @@ git commit -m "feat(email): InterviewScheduledEmail renders venue + attaches ICS
 ### Task 26: `InterviewRescheduledEmail` template
 
 **Files:**
+
 - Create: `apps/api/src/email/templates/interview-rescheduled.tsx`
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts` (notifyCandidateRescheduled)
 
@@ -2675,6 +3003,7 @@ git commit -m "feat(email): InterviewRescheduledEmail + stable ICS UID across re
 ### Task 27: `InterviewReminderEmail` template + reminder cron payload upgrade
 
 **Files:**
+
 - Create: `apps/api/src/email/templates/interview-reminder.tsx`
 - Modify: `apps/api/src/cron/interview-reminder.cron.ts`
 
@@ -2698,6 +3027,7 @@ git commit -m "feat(email): InterviewReminderEmail with full venue fields"
 ### Task 28: `InterviewFeedbackSharedEmail` template + wire share-feedback notify path
 
 **Files:**
+
 - Create: `apps/api/src/email/templates/interview-feedback-shared.tsx`
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts` (notifyCandidateFeedbackShared)
 
@@ -2723,6 +3053,7 @@ git commit -m "feat(email): InterviewFeedbackSharedEmail (candidate-facing summa
 ### Task 29: Decision bar — add "Move to Interview" CTA at applied
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx`
 
 - [ ] **Step 1: Modify the `NEXT_POSITIVE` map**
@@ -2736,13 +3067,17 @@ const NEXT_POSITIVE: Record<string, AdvanceAction[] | null> = {
     { status: "interview", label: "Move to Interview" },
   ],
   screening: [{ status: "interview", label: "Move to Interview" }],
-  interview: [{
-    status: "offer",
-    label: "Send Offer",
-    href: (id) => `/recruiter/offers/new?applicationId=${id}`,
-  }],
+  interview: [
+    {
+      status: "offer",
+      label: "Send Offer",
+      href: (id) => `/recruiter/offers/new?applicationId=${id}`,
+    },
+  ],
   offer: [{ status: "hired", label: "Mark Hired" }],
-  hired: null, rejected: null, withdrawn: null,
+  hired: null,
+  rejected: null,
+  withdrawn: null,
 };
 ```
 
@@ -2764,6 +3099,7 @@ git commit -m "feat(recruiter): Move to Interview CTA at applied stage"
 ### Task 30: Schedule interview modal — venue + interviewer fields
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx`
 
 - [ ] **Step 1: Replace state with new fields**
@@ -2806,8 +3142,8 @@ body: JSON.stringify({
   interviewerName: interviewerName.trim() || null,
   interviewerTitle: interviewerTitle.trim() || null,
   saveAsTemplate,
-  templateLabel: saveAsTemplate ? (templateLabel.trim() || null) : null,
-})
+  templateLabel: saveAsTemplate ? templateLabel.trim() || null : null,
+});
 ```
 
 - [ ] **Step 5: Validate before submit**
@@ -2826,6 +3162,7 @@ git commit -m "feat(recruiter): redesigned schedule modal with venue + interview
 ### Task 31: Schedule modal — saved-venue dropdown + auto-fill
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx`
 - Modify: `apps/web/lib/query/queries.ts`
 - Modify: `apps/web/lib/query/keys.ts`
@@ -2873,6 +3210,7 @@ git commit -m "feat(recruiter): saved-venue dropdown autofills schedule modal"
 ### Task 32: Schedule modal — conflict warning chips
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx`
 
 - [ ] **Step 1: Debounced check on date/duration change**
@@ -2895,16 +3233,20 @@ useEffect(() => {
 - [ ] **Step 2: Render chips below the date input**
 
 ```tsx
-{conflicts.recruiterConflicts.length > 0 && (
-  <div className="mt-1 text-xs text-[var(--color-status-warning)]">
-    You have another scheduled interview overlapping this time.
-  </div>
-)}
-{conflicts.candidateConflicts.length > 0 && (
-  <div className="mt-1 text-xs text-[var(--color-status-warning)]">
-    Candidate has another interview overlapping this time.
-  </div>
-)}
+{
+  conflicts.recruiterConflicts.length > 0 && (
+    <div className="mt-1 text-xs text-[var(--color-status-warning)]">
+      You have another scheduled interview overlapping this time.
+    </div>
+  );
+}
+{
+  conflicts.candidateConflicts.length > 0 && (
+    <div className="mt-1 text-xs text-[var(--color-status-warning)]">
+      Candidate has another interview overlapping this time.
+    </div>
+  );
+}
 ```
 
 - [ ] **Step 3: Commit**
@@ -2919,12 +3261,19 @@ git commit -m "feat(recruiter): conflict warning chips on schedule modal"
 ### Task 33: Interview Pipeline panel (replaces Interviews section)
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_interviews-section-client.tsx`
 
 - [ ] **Step 1: Sort + active selection**
 
 ```ts
-const STATUS_PRIORITY = { scheduled: 0, rescheduled: 1, completed: 2, cancelled: 3, "no-show": 4 } as const;
+const STATUS_PRIORITY = {
+  scheduled: 0,
+  rescheduled: 1,
+  completed: 2,
+  cancelled: 3,
+  "no-show": 4,
+} as const;
 const sorted = [...interviews].sort((a, b) => {
   const pa = STATUS_PRIORITY[a.status as keyof typeof STATUS_PRIORITY] ?? 99;
   const pb = STATUS_PRIORITY[b.status as keyof typeof STATUS_PRIORITY] ?? 99;
@@ -2938,6 +3287,7 @@ const past = sorted.slice(1);
 - [ ] **Step 2: Render active card**
 
 Active: full venue display, status pill, scheduled time, duration, interviewer; per-status action set:
+
 - `scheduled` → Reschedule, Mark No-Show, Cancel
 - `completed` → Add Feedback (Link to `/recruiter/interviews/[id]`)
 - `cancelled | no-show | rescheduled` → read-only
@@ -2962,6 +3312,7 @@ git commit -m "feat(recruiter): Interview Pipeline panel (active card + past acc
 ### Task 34: Decision panel (inline feedback form on application detail)
 
 **Files:**
+
 - Create: `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-panel-client.tsx`
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_application-detail-client.tsx`
 
@@ -3046,6 +3397,7 @@ git commit -m "feat(recruiter): inline Decision panel with feedback + recommenda
 ### Task 35: Soft confirmation modal (offer/reject without feedback)
 
 **Files:**
+
 - Create: `apps/web/app/(recruiter)/recruiter/applications/[id]/_offer-confirm-modal-client.tsx`
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx`
 
@@ -3055,10 +3407,16 @@ Per spec: appears when latest interview is `completed` AND `recommendation` is n
 
 ```tsx
 "use client";
-export function OfferConfirmModalClient({ open, onOpenChange, onConfirm, action }: Props) {
-  const message = action === "offer"
-    ? "You haven't recorded interview feedback. Continue with offer?"
-    : "You haven't recorded interview feedback. Continue with rejection?";
+export function OfferConfirmModalClient({
+  open,
+  onOpenChange,
+  onConfirm,
+  action,
+}: Props) {
+  const message =
+    action === "offer"
+      ? "You haven't recorded interview feedback. Continue with offer?"
+      : "You haven't recorded interview feedback. Continue with rejection?";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -3067,8 +3425,17 @@ export function OfferConfirmModalClient({ open, onOpenChange, onConfirm, action 
           <DialogDescription>{message}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Go back</Button>
-          <Button onClick={() => { onConfirm(); onOpenChange(false); }}>Continue</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Go back
+          </Button>
+          <Button
+            onClick={() => {
+              onConfirm();
+              onOpenChange(false);
+            }}
+          >
+            Continue
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -3092,6 +3459,7 @@ git commit -m "feat(recruiter): soft confirmation when offering/rejecting withou
 ### Task 36: Recruiter interview detail page
 
 **Files:**
+
 - Create: `apps/web/app/(recruiter)/recruiter/interviews/[id]/page.tsx`
 - Create: `apps/web/app/(recruiter)/recruiter/interviews/[id]/_interview-detail-client.tsx`
 - Create: `apps/web/app/(recruiter)/recruiter/interviews/[id]/_feedback-panel-client.tsx`
@@ -3106,7 +3474,11 @@ import { RecruiterInterviewDetailClient } from "./_interview-detail-client";
 
 export const metadata = { title: "Interview · AuraHire" };
 
-export default async function RecruiterInterviewDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function RecruiterInterviewDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const session = await getCurrentSession();
   if (!session) redirect("/login");
@@ -3150,6 +3522,7 @@ git commit -m "feat(recruiter): interview detail page (header + venue + actions 
 ### Task 37: Share feedback modal
 
 **Files:**
+
 - Create: `apps/web/app/(recruiter)/recruiter/interviews/[id]/_share-feedback-modal-client.tsx`
 - Modify: `_decision-panel-client.tsx`, `_feedback-panel-client.tsx` (mount the modal)
 
@@ -3157,23 +3530,39 @@ git commit -m "feat(recruiter): interview detail page (header + venue + actions 
 
 ```tsx
 "use client";
-export function ShareFeedbackModalClient({ open, onOpenChange, interviewId, defaultSummary, currentSummary }: Props) {
-  const [summary, setSummary] = useState(currentSummary ?? sanitize(defaultSummary));
+export function ShareFeedbackModalClient({
+  open,
+  onOpenChange,
+  interviewId,
+  defaultSummary,
+  currentSummary,
+}: Props) {
+  const [summary, setSummary] = useState(
+    currentSummary ?? sanitize(defaultSummary),
+  );
   const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
     setSubmitting(true);
     try {
-      const res = await authedFetch(`/api/v1/interviews/${interviewId}/share-feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ candidateSummary: summary }),
-      });
-      if (!res.ok) { toastApiError(null, "Couldn't share feedback"); return; }
+      const res = await authedFetch(
+        `/api/v1/interviews/${interviewId}/share-feedback`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ candidateSummary: summary }),
+        },
+      );
+      if (!res.ok) {
+        toastApiError(null, "Couldn't share feedback");
+        return;
+      }
       toastSuccess("Feedback shared with candidate");
       onOpenChange(false);
       router.refresh();
-    } finally { setSubmitting(false); }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -3181,12 +3570,25 @@ export function ShareFeedbackModalClient({ open, onOpenChange, interviewId, defa
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Share feedback with candidate</DialogTitle>
-          <DialogDescription>This text is sent directly to the candidate via email and shown in their portal. Keep it constructive.</DialogDescription>
+          <DialogDescription>
+            This text is sent directly to the candidate via email and shown in
+            their portal. Keep it constructive.
+          </DialogDescription>
         </DialogHeader>
-        <textarea value={summary} onChange={(e) => setSummary(e.target.value)} />
+        <textarea
+          value={summary}
+          onChange={(e) => setSummary(e.target.value)}
+        />
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={submitting || summary.trim().length === 0}>Send</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={submit}
+            disabled={submitting || summary.trim().length === 0}
+          >
+            Send
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -3194,7 +3596,12 @@ export function ShareFeedbackModalClient({ open, onOpenChange, interviewId, defa
 }
 
 function sanitize(internal: string): string {
-  return internal.split("\n").filter((l) => !/^(internal:|concern:|note to team:)/i.test(l.trim())).join("\n").trim().slice(0, 4000);
+  return internal
+    .split("\n")
+    .filter((l) => !/^(internal:|concern:|note to team:)/i.test(l.trim()))
+    .join("\n")
+    .trim()
+    .slice(0, 4000);
 }
 ```
 
@@ -3210,6 +3617,7 @@ git commit -m "feat(recruiter): share-feedback modal (sanitized pre-fill)"
 ### Task 38: Reschedule modal
 
 **Files:**
+
 - Create: `apps/web/app/(recruiter)/recruiter/interviews/[id]/_reschedule-modal-client.tsx`
 
 - [ ] **Step 1: Build modal**
@@ -3230,6 +3638,7 @@ git commit -m "feat(recruiter): reschedule modal"
 ### Task 39: Venue templates settings page
 
 **Files:**
+
 - Create: `apps/web/app/(recruiter)/recruiter/settings/interview-venues/page.tsx`
 - Create: `apps/web/app/(recruiter)/recruiter/settings/interview-venues/_venues-list-client.tsx`
 - Create: `apps/web/app/(recruiter)/recruiter/settings/interview-venues/_venue-form-modal-client.tsx`
@@ -3254,7 +3663,10 @@ export default async function InterviewVenuesPage() {
 
 ```tsx
 "use client";
-const { data, isLoading } = useQuery({ queryKey: ["interview-venues", companyId], queryFn: () => fetchVenues(companyId) });
+const { data, isLoading } = useQuery({
+  queryKey: ["interview-venues", companyId],
+  queryFn: () => fetchVenues(companyId),
+});
 // Renders: list of cards with label, venue summary, default badge; Edit/Delete/Set-Default buttons.
 // "Add venue template" button at top opens form modal.
 ```
@@ -3279,6 +3691,7 @@ git commit -m "feat(recruiter): interview venue templates settings page"
 ### Task 40: Upcoming interview banner on application detail
 
 **Files:**
+
 - Create: `apps/web/app/(candidate)/candidate/applications/[id]/_upcoming-interview-banner-client.tsx`
 - Modify: `apps/web/app/(candidate)/candidate/applications/[id]/_application-detail-client.tsx`
 
@@ -3286,19 +3699,32 @@ git commit -m "feat(recruiter): interview venue templates settings page"
 
 ```tsx
 "use client";
-export function UpcomingInterviewBannerClient({ interview }: { interview: InterviewDto }) {
+export function UpcomingInterviewBannerClient({
+  interview,
+}: {
+  interview: InterviewDto;
+}) {
   const date = new Date(interview.scheduledAt);
   return (
     <section className="rounded-[var(--radius-lg)] border border-[var(--color-primary)] bg-[var(--color-primary-soft)] p-6">
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-primary)]">Upcoming Interview</h2>
+      <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-primary)]">
+        Upcoming Interview
+      </h2>
       <p className="mt-2 text-base text-[var(--color-ink)]">
-        <strong>{date.toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" })}</strong>
+        <strong>
+          {date.toLocaleString(undefined, {
+            dateStyle: "full",
+            timeStyle: "short",
+          })}
+        </strong>
         <br />
         {interview.venueName} — {interview.addressLine}
         {interview.roomOrFloor && ` (${interview.roomOrFloor})`}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Link href={`/candidate/interviews/${interview.id}`} className="...">View interview details</Link>
+        <Link href={`/candidate/interviews/${interview.id}`} className="...">
+          View interview details
+        </Link>
         <AddToCalendarButton interviewId={interview.id} />
         <WithdrawApplicationButton applicationId={interview.applicationId} />
       </div>
@@ -3323,22 +3749,36 @@ git commit -m "feat(candidate): upcoming interview banner on application detail"
 ### Task 41: Interview feedback panel on application detail
 
 **Files:**
+
 - Create: `apps/web/app/(candidate)/candidate/applications/[id]/_interview-feedback-panel-client.tsx`
 - Modify: `apps/web/app/(candidate)/candidate/applications/[id]/_application-detail-client.tsx`
 
 - [ ] **Step 1: Build panel**
 
 ```tsx
-export function InterviewFeedbackPanelClient({ interview }: { interview: InterviewDto }) {
-  if (!interview.sharedWithCandidateAt || !interview.candidateSummary) return null;
+export function InterviewFeedbackPanelClient({
+  interview,
+}: {
+  interview: InterviewDto;
+}) {
+  if (!interview.sharedWithCandidateAt || !interview.candidateSummary)
+    return null;
   return (
     <section className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">Recruiter feedback</h2>
-      <p className="mt-1 text-xs text-[var(--color-muted)]">From your interview on {new Date(interview.scheduledAt).toLocaleDateString()}</p>
+      <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+        Recruiter feedback
+      </h2>
+      <p className="mt-1 text-xs text-[var(--color-muted)]">
+        From your interview on{" "}
+        {new Date(interview.scheduledAt).toLocaleDateString()}
+      </p>
       <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-body)]">
         {interview.candidateSummary}
       </div>
-      <Link href={`/candidate/interviews/${interview.id}`} className="mt-3 inline-block text-sm text-[var(--color-primary)] hover:underline">
+      <Link
+        href={`/candidate/interviews/${interview.id}`}
+        className="mt-3 inline-block text-sm text-[var(--color-primary)] hover:underline"
+      >
         View full interview details
       </Link>
     </section>
@@ -3362,6 +3802,7 @@ git commit -m "feat(candidate): interview feedback panel on application detail"
 ### Task 42: Candidate interview detail page
 
 **Files:**
+
 - Create: `apps/web/app/(candidate)/candidate/interviews/[id]/page.tsx`
 - Create: `apps/web/app/(candidate)/candidate/interviews/[id]/_interview-detail-client.tsx`
 - Create: `apps/web/app/(candidate)/candidate/interviews/[id]/loading.tsx`
@@ -3375,13 +3816,18 @@ import { CandidateInterviewDetailClient } from "./_interview-detail-client";
 
 export const metadata = { title: "Interview · AuraHire" };
 
-export default async function CandidateInterviewDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CandidateInterviewDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const session = await getCurrentSession();
   if (!session) redirect("/login");
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
   const res = await fetch(`${apiUrl}/api/v1/interviews/${id}`, {
-    headers: { Authorization: `Bearer ${session.access_token}` }, cache: "no-store",
+    headers: { Authorization: `Bearer ${session.access_token}` },
+    cache: "no-store",
   });
   if (res.status === 404) notFound();
   if (!res.ok) return <div>Failed to load interview</div>;
@@ -3410,6 +3856,7 @@ git commit -m "feat(candidate): interview detail page"
 ### Task 43: Withdraw application modal (shared component)
 
 **Files:**
+
 - Create: `apps/web/components/interview/withdraw-application-modal.tsx`
 - Modify: `apps/web/app/(candidate)/candidate/applications/[id]/_withdraw-button-client.tsx`
 
@@ -3417,22 +3864,36 @@ git commit -m "feat(candidate): interview detail page"
 
 ```tsx
 "use client";
-export function WithdrawApplicationModal({ open, onOpenChange, applicationId, onSuccess }: Props) {
+export function WithdrawApplicationModal({
+  open,
+  onOpenChange,
+  applicationId,
+  onSuccess,
+}: Props) {
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
     setSubmitting(true);
     try {
-      const res = await authedFetch(`/api/v1/applications/${applicationId}/withdraw`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim() || null }),
-      });
-      if (!res.ok) { toastApiError(null, "Couldn't withdraw"); return; }
+      const res = await authedFetch(
+        `/api/v1/applications/${applicationId}/withdraw`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: reason.trim() || null }),
+        },
+      );
+      if (!res.ok) {
+        toastApiError(null, "Couldn't withdraw");
+        return;
+      }
       toastSuccess("Application withdrawn");
       onOpenChange(false);
       onSuccess?.();
-    } finally { setSubmitting(false); }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -3440,12 +3901,22 @@ export function WithdrawApplicationModal({ open, onOpenChange, applicationId, on
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Withdraw application?</DialogTitle>
-          <DialogDescription>This cannot be undone. The recruiter will be notified.</DialogDescription>
+          <DialogDescription>
+            This cannot be undone. The recruiter will be notified.
+          </DialogDescription>
         </DialogHeader>
-        <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Optional reason (private)" />
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Optional reason (private)"
+        />
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Keep my application</Button>
-          <Button variant="destructive" onClick={submit} disabled={submitting}>Yes, withdraw</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Keep my application
+          </Button>
+          <Button variant="destructive" onClick={submit} disabled={submitting}>
+            Yes, withdraw
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -3469,6 +3940,7 @@ git commit -m "feat(candidate): shared withdraw-application modal"
 ### Task 44: Add to calendar (ICS download client)
 
 **Files:**
+
 - Create: `apps/web/components/interview/add-to-calendar-button.tsx`
 
 - [ ] **Step 1: Build button**
@@ -3482,20 +3954,36 @@ export function AddToCalendarButton({ interviewId }: { interviewId: string }) {
     setDownloading(true);
     try {
       const supabase = createSupabaseBrowserClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toastApiError(null, "Please sign in again"); return; }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        toastApiError(null, "Please sign in again");
+        return;
+      }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-      const res = await fetch(`${apiUrl}/api/v1/interviews/${interviewId}/ics`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      if (!res.ok) { toastApiError(null, "Couldn't download"); return; }
+      const res = await fetch(
+        `${apiUrl}/api/v1/interviews/${interviewId}/ics`,
+        {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        },
+      );
+      if (!res.ok) {
+        toastApiError(null, "Couldn't download");
+        return;
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = `interview-${interviewId}.ics`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      a.href = url;
+      a.download = `interview-${interviewId}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } finally { setDownloading(false); }
+    } finally {
+      setDownloading(false);
+    }
   }
 
   return (
@@ -3522,6 +4010,7 @@ git commit -m "feat(candidate): add-to-calendar ICS download button"
 ### Task 45: Notification preferences UI rows for new event keys
 
 **Files:**
+
 - Modify: `apps/web/components/notifications/notification-preferences-form.tsx`
 
 - [ ] **Step 1: Add toggle rows**
@@ -3544,6 +4033,7 @@ git commit -m "feat(notifications): preference toggles for interview-flow v2 eve
 ### Task 46: E2E happy-path test
 
 **Files:**
+
 - Create: `apps/api/test/e2e/interview-flow-v2.e2e-spec.ts`
 
 - [ ] **Step 1: Write end-to-end test (supertest + drizzle fixtures)**
@@ -3556,8 +4046,12 @@ import { createTestApp, fixtures, mockNow } from "./helpers";
 describe("Interview flow v2 end-to-end", () => {
   let app, candidateToken, recruiterToken, applicationId, interviewId;
 
-  beforeAll(async () => { app = await createTestApp(); });
-  afterAll(async () => { await app.close(); });
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+  afterAll(async () => {
+    await app.close();
+  });
 
   it("candidate applies", async () => {
     const job = await fixtures.publishedJob({});
@@ -3609,7 +4103,11 @@ describe("Interview flow v2 end-to-end", () => {
       .patch(`/api/v1/interviews/${interviewId}/feedback`)
       .set("Authorization", `Bearer ${recruiterToken}`)
       .set("X-Active-Company-Id", fixtures.companyId)
-      .send({ feedback: "Strong candidate.", rating: 5, recommendation: "proceed" });
+      .send({
+        feedback: "Strong candidate.",
+        rating: 5,
+        recommendation: "proceed",
+      });
     expect(res.status).toBe(200);
     expect(res.body.data.recommendation).toBe("proceed");
   });
@@ -3619,7 +4117,9 @@ describe("Interview flow v2 end-to-end", () => {
       .post(`/api/v1/interviews/${interviewId}/share-feedback`)
       .set("Authorization", `Bearer ${recruiterToken}`)
       .set("X-Active-Company-Id", fixtures.companyId)
-      .send({ candidateSummary: "Great interview — looking forward to next steps." });
+      .send({
+        candidateSummary: "Great interview — looking forward to next steps.",
+      });
     expect(res.status).toBe(200);
     expect(res.body.data.sharedWithCandidateAt).toBeTruthy();
   });
@@ -3682,10 +4182,3 @@ If any inconsistency surfaces during a real run, fix at that task; do not paper 
 - The plan calls one DB migration (Task 4). The human applies it before downstream tasks rely on the new columns. Plan execution will pause at Task 4 Step 2 for human confirmation.
 - The plan does not call for a feature flag at code level — the spec listed `INTERVIEW_FLOW_V2_ENABLED` as a deployment-time toggle, but the per-PR layered nature of these commits already gives a controlled rollout. If the human wants the flag, layer it at the controller route level (NestJS guards) and on the recruiter UI sections; treat as a separate follow-up task.
 - After Task 46, drop `interviews.location_or_link` in a follow-up migration (`0010_drop_interview_location_or_link.sql`) once two weeks of stable usage have passed and all reads are off the legacy field. Not part of this plan.
-
-
-
-
-
-
-

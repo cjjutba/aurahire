@@ -1,7 +1,9 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version (Next.js 16) has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `apps/web/node_modules/next/dist/docs/` before writing any code in `apps/web/`. Heed deprecation notices.
+
 <!-- END:nextjs-agent-rules -->
 
 ---
@@ -60,6 +62,7 @@ See `CLAUDE.md` § "Hard rules for Claude Code" for the full list. Highlights:
 ## Where to look first
 
 When in doubt:
+
 1. `CLAUDE.md` — workflow rules
 2. `docs/main/sprint-plan.md` — what slice is current
 3. `docs/main/<relevant-doc>.md` — the spec for the feature

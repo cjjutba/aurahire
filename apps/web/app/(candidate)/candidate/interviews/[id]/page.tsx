@@ -11,7 +11,9 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function CandidateInterviewDetailPage({ params }: PageProps) {
+export default async function CandidateInterviewDetailPage({
+  params,
+}: PageProps) {
   const { id } = await params;
   const session = await getCurrentSession();
   if (!session) redirect("/login");

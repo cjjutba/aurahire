@@ -29,7 +29,13 @@ export const APPLICATION_SCORE_STATUS = [
   "failed",
 ] as const;
 
-export const OFFER_STATUS = ["pending", "accepted", "declined", "expired", "withdrawn"] as const;
+export const OFFER_STATUS = [
+  "pending",
+  "accepted",
+  "declined",
+  "expired",
+  "withdrawn",
+] as const;
 export const INTERVIEW_FORMAT = ["phone", "video", "in-person"] as const;
 export const INTERVIEW_STATUS = [
   "scheduled",
@@ -76,9 +82,20 @@ export const COMPANY_SIZE = [
 export const SCORE_BAND = ["strong", "partial", "limited"] as const;
 export const SCORE_STATUS = ["pending", "completed", "failed"] as const;
 
-export const RESUME_PARSE_STATUS = ["pending", "parsing", "parsed", "failed"] as const;
+export const RESUME_PARSE_STATUS = [
+  "pending",
+  "parsing",
+  "parsed",
+  "failed",
+] as const;
 
-export const BIAS_CATEGORY = ["gendered", "age-coded", "ableist", "exclusionary", "other"] as const;
+export const BIAS_CATEGORY = [
+  "gendered",
+  "age-coded",
+  "ableist",
+  "exclusionary",
+  "other",
+] as const;
 export const BIAS_FLAG_STATUS = ["flagged", "overridden", "resolved"] as const;
 export const BIAS_SEVERITY = ["high", "medium", "low"] as const;
 
@@ -93,15 +110,36 @@ export const SCORE_COMPONENT_PROFILE = [
   "experience_clarity",
   "education_quality",
 ] as const;
-export const SCORE_COMPONENT_MATCH = ["skills", "experience", "education", "cultural_fit"] as const;
+export const SCORE_COMPONENT_MATCH = [
+  "skills",
+  "experience",
+  "education",
+  "cultural_fit",
+] as const;
 
 export const COMPANY_MEMBER_ROLE = ["owner", "admin", "recruiter"] as const;
-export const COMPANY_MEMBER_STATUS = ["invited", "active", "suspended", "left"] as const;
+export const COMPANY_MEMBER_STATUS = [
+  "invited",
+  "active",
+  "suspended",
+  "left",
+] as const;
 
 // In-app feedback — user-submitted via the sidebar profile popover.
-export const FEEDBACK_TYPE = ["bug", "suggestion", "praise", "question", "other"] as const;
+export const FEEDBACK_TYPE = [
+  "bug",
+  "suggestion",
+  "praise",
+  "question",
+  "other",
+] as const;
 export const FEEDBACK_SEVERITY = ["low", "normal", "high"] as const;
-export const FEEDBACK_STATUS = ["new", "reviewing", "resolved", "dismissed"] as const;
+export const FEEDBACK_STATUS = [
+  "new",
+  "reviewing",
+  "resolved",
+  "dismissed",
+] as const;
 
 // TypeScript types derived from the const tuples
 export type UserRole = (typeof USER_ROLES)[number];

@@ -122,15 +122,14 @@ export class AdminAnalyticsRepository {
         count: sql<number>`count(*)::int`,
       })
       .from(jobsTable)
-      .where(
-        and(gte(jobsTable.createdAt, from), lte(jobsTable.createdAt, to)),
-      )
-      .groupBy(
-        sql`date_trunc('day', ${jobsTable.createdAt})`,
-        jobsTable.status,
-      )
+      .where(and(gte(jobsTable.createdAt, from), lte(jobsTable.createdAt, to)))
+      .groupBy(sql`date_trunc('day', ${jobsTable.createdAt})`, jobsTable.status)
       .orderBy(sql`date_trunc('day', ${jobsTable.createdAt})`);
-    return rows.map((r) => ({ date: r.date, status: r.status, count: r.count }));
+    return rows.map((r) => ({
+      date: r.date,
+      status: r.status,
+      count: r.count,
+    }));
   }
 
   async applicationsByDay(
@@ -206,9 +205,7 @@ export class AdminAnalyticsRepository {
   async aiProcessingTimeByDay(
     from: Date,
     to: Date,
-  ): Promise<
-    Array<{ date: string; avgParseMs: number; avgScoreMs: number }>
-  > {
+  ): Promise<Array<{ date: string; avgParseMs: number; avgScoreMs: number }>> {
     const scoreRows = await this.db
       .select({
         date: sql<string>`to_char(date_trunc('day', ${matchScoresTable.createdAt}), 'YYYY-MM-DD')`,

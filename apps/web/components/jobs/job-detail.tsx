@@ -1,4 +1,10 @@
-import { Briefcase, MapPin, Calendar, DollarSign, Building2 } from "lucide-react";
+import {
+  Briefcase,
+  MapPin,
+  Calendar,
+  DollarSign,
+  Building2,
+} from "lucide-react";
 import type { JobStatus } from "@aurahire/shared";
 import { JobStatusChip } from "./job-status-chip";
 

@@ -64,11 +64,14 @@ export function ShortlistRowActionsClient({
     if (!ok) return;
     setBusy(true);
     try {
-      const res = await authedFetch(`/api/v1/applications/${applicationId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newStatus: "interview", note: null }),
-      });
+      const res = await authedFetch(
+        `/api/v1/applications/${applicationId}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newStatus: "interview", note: null }),
+        },
+      );
       if (!res.ok) throw new Error("Failed to update status");
       toastSuccess("Moved to Interview");
       router.refresh();
@@ -90,11 +93,14 @@ export function ShortlistRowActionsClient({
     if (!ok) return;
     setBusy(true);
     try {
-      const res = await authedFetch(`/api/v1/applications/${applicationId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newStatus: "offer", note: null }),
-      });
+      const res = await authedFetch(
+        `/api/v1/applications/${applicationId}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newStatus: "offer", note: null }),
+        },
+      );
       if (!res.ok) throw new Error("Failed to send offer");
       toastSuccess("Offer sent");
       router.refresh();
@@ -116,9 +122,12 @@ export function ShortlistRowActionsClient({
     if (!ok) return;
     setBusy(true);
     try {
-      const res = await authedFetch(`/api/v1/applications/${applicationId}/shortlist`, {
-        method: "DELETE",
-      });
+      const res = await authedFetch(
+        `/api/v1/applications/${applicationId}/shortlist`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!res.ok) throw new Error("Failed to remove from shortlist");
       toastSuccess("Removed from shortlist");
       router.refresh();
@@ -130,7 +139,8 @@ export function ShortlistRowActionsClient({
   }
 
   const terminal = ["hired", "rejected", "withdrawn"].includes(status);
-  const canMoveToInterview = !terminal && status !== "interview" && status !== "offer";
+  const canMoveToInterview =
+    !terminal && status !== "interview" && status !== "offer";
   const canSendOffer = status === "interview";
   const showStatusActions = canMoveToInterview || canSendOffer;
 
@@ -155,7 +165,9 @@ export function ShortlistRowActionsClient({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="bottom">
         <DropdownMenuItem
-          onClick={() => router.push(`/recruiter/applications/${applicationId}`)}
+          onClick={() =>
+            router.push(`/recruiter/applications/${applicationId}`)
+          }
           className="flex cursor-pointer items-center gap-2"
         >
           <Eye className="h-4 w-4" />

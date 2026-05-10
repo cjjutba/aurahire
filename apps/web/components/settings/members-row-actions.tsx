@@ -75,10 +75,7 @@ export function MembersRowActions({ member, callerRole }: Props) {
   async function handleResend() {
     try {
       await resend.mutateAsync(member.id);
-      toastSuccess(
-        "Invitation resent",
-        `New email sent to ${member.email}.`,
-      );
+      toastSuccess("Invitation resent", `New email sent to ${member.email}.`);
     } catch (err) {
       toastApiError(err, "Couldn't resend");
     }
@@ -86,7 +83,11 @@ export function MembersRowActions({ member, callerRole }: Props) {
 
   async function handleCopyLink() {
     if (!member.invitationToken) {
-      toastApiError(null, "No invitation token", "Resend the invitation first.");
+      toastApiError(
+        null,
+        "No invitation token",
+        "Resend the invitation first.",
+      );
       return;
     }
     const url = `${window.location.origin}/invite/${member.invitationToken}`;
@@ -130,7 +131,9 @@ export function MembersRowActions({ member, callerRole }: Props) {
   }
 
   async function handleSubmitTransfer() {
-    if (transferEmail.trim().toLowerCase() !== member.email.trim().toLowerCase()) {
+    if (
+      transferEmail.trim().toLowerCase() !== member.email.trim().toLowerCase()
+    ) {
       toastApiError(
         null,
         "Email doesn't match",
@@ -143,7 +146,10 @@ export function MembersRowActions({ member, callerRole }: Props) {
         memberId: member.id,
         values: { confirmEmail: member.email },
       });
-      toastSuccess("Ownership transferred", `${member.email} is now the owner.`);
+      toastSuccess(
+        "Ownership transferred",
+        `${member.email} is now the owner.`,
+      );
       setDialog({ kind: "none" });
     } catch (err) {
       toastApiError(err, "Couldn't transfer ownership");
@@ -287,8 +293,8 @@ export function MembersRowActions({ member, callerRole }: Props) {
             <DialogTitle>Transfer ownership?</DialogTitle>
             <DialogDescription>
               <strong>{member.user?.fullName ?? member.email}</strong> will
-              become the owner. You'll be downgraded to admin and can be
-              removed by them. To confirm, type their email exactly:{" "}
+              become the owner. You'll be downgraded to admin and can be removed
+              by them. To confirm, type their email exactly:{" "}
               <strong>{member.email}</strong>.
             </DialogDescription>
           </DialogHeader>

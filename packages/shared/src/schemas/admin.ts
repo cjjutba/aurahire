@@ -123,29 +123,35 @@ export const updateScoringConfigSchema = z
     matchWeights: matchWeightsSchema.optional(),
     profileWeights: profileWeightsSchema.optional(),
     bandThresholds: bandThresholdsSchema.optional(),
-    biasCategoriesEnabled: z.array(z.enum(BIAS_CATEGORY_VALUES)).max(5).optional(),
+    biasCategoriesEnabled: z
+      .array(z.enum(BIAS_CATEGORY_VALUES))
+      .max(5)
+      .optional(),
     customFlaggedTerms: z.array(z.string().min(1).max(100)).max(50).optional(),
     piiRedactionEnabled: z.boolean().optional(),
     piiFieldsRedacted: z.array(z.string().min(1).max(50)).max(20).optional(),
   })
-  .refine(
-    (data) => !data.matchWeights || sumsTo100(data.matchWeights),
-    { message: "matchWeights must sum to 100", path: ["matchWeights"] },
-  )
-  .refine(
-    (data) => !data.profileWeights || sumsTo100(data.profileWeights),
-    { message: "profileWeights must sum to 100", path: ["profileWeights"] },
-  )
+  .refine((data) => !data.matchWeights || sumsTo100(data.matchWeights), {
+    message: "matchWeights must sum to 100",
+    path: ["matchWeights"],
+  })
+  .refine((data) => !data.profileWeights || sumsTo100(data.profileWeights), {
+    message: "profileWeights must sum to 100",
+    path: ["profileWeights"],
+  })
   .refine(
     (data) =>
       !data.bandThresholds ||
       data.bandThresholds.strong > data.bandThresholds.partial,
     {
-      message: "bandThresholds.strong must be greater than bandThresholds.partial",
+      message:
+        "bandThresholds.strong must be greater than bandThresholds.partial",
       path: ["bandThresholds"],
     },
   );
-export type UpdateScoringConfigInput = z.infer<typeof updateScoringConfigSchema>;
+export type UpdateScoringConfigInput = z.infer<
+  typeof updateScoringConfigSchema
+>;
 
 // ---------- PREVIEW IMPACT REQUEST ----------
 
@@ -155,16 +161,17 @@ export const previewImpactRequestSchema = z.object({
       matchWeights: matchWeightsSchema.optional(),
       bandThresholds: bandThresholdsSchema.optional(),
     })
-    .refine(
-      (data) => !data.matchWeights || sumsTo100(data.matchWeights),
-      { message: "matchWeights must sum to 100", path: ["matchWeights"] },
-    )
+    .refine((data) => !data.matchWeights || sumsTo100(data.matchWeights), {
+      message: "matchWeights must sum to 100",
+      path: ["matchWeights"],
+    })
     .refine(
       (data) =>
         !data.bandThresholds ||
         data.bandThresholds.strong > data.bandThresholds.partial,
       {
-        message: "bandThresholds.strong must be greater than bandThresholds.partial",
+        message:
+          "bandThresholds.strong must be greater than bandThresholds.partial",
         path: ["bandThresholds"],
       },
     ),
@@ -243,4 +250,6 @@ export type BiasMonitorQuery = z.infer<typeof biasMonitorQuerySchema>;
 export const enqueueRescoreBatchSchema = z.object({
   sampleSize: z.coerce.number().int().min(1).max(500).default(50),
 });
-export type EnqueueRescoreBatchInput = z.infer<typeof enqueueRescoreBatchSchema>;
+export type EnqueueRescoreBatchInput = z.infer<
+  typeof enqueueRescoreBatchSchema
+>;

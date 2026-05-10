@@ -14,14 +14,22 @@ interface Props {
   initialShortlistedAt: string | null;
 }
 
-export function ShortlistButtonClient({ applicationId, initialShortlistedAt }: Props) {
+export function ShortlistButtonClient({
+  applicationId,
+  initialShortlistedAt,
+}: Props) {
   const router = useRouter();
   const confirm = useConfirm();
-  const [shortlistedAt, setShortlistedAt] = useState<string | null>(initialShortlistedAt);
+  const [shortlistedAt, setShortlistedAt] = useState<string | null>(
+    initialShortlistedAt,
+  );
   const [busy, setBusy] = useState(false);
   const isShortlisted = shortlistedAt !== null;
 
-  async function authedFetch(path: string, init: RequestInit): Promise<Response> {
+  async function authedFetch(
+    path: string,
+    init: RequestInit,
+  ): Promise<Response> {
     const supabase = createSupabaseBrowserClient();
     const {
       data: { session },
@@ -43,23 +51,28 @@ export function ShortlistButtonClient({ applicationId, initialShortlistedAt }: P
     if (busy) return;
     const wasShortlisted = isShortlisted;
     const ok = await confirm({
-      title: wasShortlisted
-        ? "Remove from shortlist?"
-        : "Add to shortlist?",
+      title: wasShortlisted ? "Remove from shortlist?" : "Add to shortlist?",
       description: wasShortlisted
         ? "The candidate will no longer appear on your shortlist. You can re-add them anytime."
         : "The candidate will be added to your shortlist for easier follow-up.",
-      confirmLabel: wasShortlisted ? "Remove from shortlist" : "Add to shortlist",
+      confirmLabel: wasShortlisted
+        ? "Remove from shortlist"
+        : "Add to shortlist",
       variant: wasShortlisted ? "destructive" : "info",
     });
     if (!ok) return;
     setBusy(true);
     try {
-      const res = await authedFetch(`/api/v1/applications/${applicationId}/shortlist`, {
-        method: wasShortlisted ? "DELETE" : "POST",
-      });
+      const res = await authedFetch(
+        `/api/v1/applications/${applicationId}/shortlist`,
+        {
+          method: wasShortlisted ? "DELETE" : "POST",
+        },
+      );
       if (!res.ok) {
-        let message = wasShortlisted ? "Failed to remove from shortlist" : "Failed to add to shortlist";
+        let message = wasShortlisted
+          ? "Failed to remove from shortlist"
+          : "Failed to add to shortlist";
         try {
           const body = (await res.json()) as { message?: string };
           if (body.message) message = body.message;
@@ -68,12 +81,21 @@ export function ShortlistButtonClient({ applicationId, initialShortlistedAt }: P
         }
         throw new Error(message);
       }
-      const body = (await res.json()) as { data: { shortlistedAt: string | null } };
+      const body = (await res.json()) as {
+        data: { shortlistedAt: string | null };
+      };
       setShortlistedAt(body.data.shortlistedAt);
-      toastSuccess(wasShortlisted ? "Removed from shortlist" : "Added to shortlist");
+      toastSuccess(
+        wasShortlisted ? "Removed from shortlist" : "Added to shortlist",
+      );
       router.refresh();
     } catch (err) {
-      toastApiError(err, wasShortlisted ? "Failed to remove from shortlist" : "Failed to add to shortlist");
+      toastApiError(
+        err,
+        wasShortlisted
+          ? "Failed to remove from shortlist"
+          : "Failed to add to shortlist",
+      );
     } finally {
       setBusy(false);
     }

@@ -56,16 +56,16 @@ The redesign is presentation-only and routing-only: no API change, no schema cha
 
 ### Component delta
 
-| File | Change |
-|---|---|
-| `apps/web/components/onboarding/candidate/parse-success-card.tsx` | **Delete.** |
-| `apps/web/components/onboarding/candidate/parsing-progress-card.tsx` | **Extend.** New `parseStatus` + `parsed` + `onAutoAdvance` props; new `done` visual branch. |
-| `apps/web/components/onboarding/candidate/resume-upload-card.tsx` | **Rewire.** `done` branch renders `ParsingProgressCard` with done-mode + auto-advance callback. New `forceIdle` prop. Drops `ParseSuccessCard` import. |
-| `apps/web/app/onboarding/candidate/page.tsx` | **Redirect on parsed.** Reads `searchParams.replace`; if `latestResume.parseStatus === "parsed"` and `searchParams.replace !== "1"`, calls `redirect("/onboarding/candidate/personal")`. Otherwise passes `forceIdle={searchParams.replace === "1"}` to `ResumeUploadCard`. |
-| `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx` | **Add `Replace resume` link** in the existing top-bar row alongside the PDF/Text segmented toggle. Routes to `/onboarding/candidate?replace=1`. |
-| `apps/web/components/onboarding/candidate/low-confidence-banner.tsx` | **New file.** Presentational. |
-| `apps/web/app/onboarding/candidate/personal/_client.tsx` | **Wire.** Render `<LowConfidenceBanner confidence={latestResume?.parsed?.parse_confidence ?? null} />` above `<CandidatePersonalInfoForm />`. |
-| `apps/web/app/onboarding/candidate/review/_client.tsx` | **Wire.** Same banner above `<ReviewStep />`. |
+| File                                                                    | Change                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/components/onboarding/candidate/parse-success-card.tsx`       | **Delete.**                                                                                                                                                                                                                                                                 |
+| `apps/web/components/onboarding/candidate/parsing-progress-card.tsx`    | **Extend.** New `parseStatus` + `parsed` + `onAutoAdvance` props; new `done` visual branch.                                                                                                                                                                                 |
+| `apps/web/components/onboarding/candidate/resume-upload-card.tsx`       | **Rewire.** `done` branch renders `ParsingProgressCard` with done-mode + auto-advance callback. New `forceIdle` prop. Drops `ParseSuccessCard` import.                                                                                                                      |
+| `apps/web/app/onboarding/candidate/page.tsx`                            | **Redirect on parsed.** Reads `searchParams.replace`; if `latestResume.parseStatus === "parsed"` and `searchParams.replace !== "1"`, calls `redirect("/onboarding/candidate/personal")`. Otherwise passes `forceIdle={searchParams.replace === "1"}` to `ResumeUploadCard`. |
+| `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx` | **Add `Replace resume` link** in the existing top-bar row alongside the PDF/Text segmented toggle. Routes to `/onboarding/candidate?replace=1`.                                                                                                                             |
+| `apps/web/components/onboarding/candidate/low-confidence-banner.tsx`    | **New file.** Presentational.                                                                                                                                                                                                                                               |
+| `apps/web/app/onboarding/candidate/personal/_client.tsx`                | **Wire.** Render `<LowConfidenceBanner confidence={latestResume?.parsed?.parse_confidence ?? null} />` above `<CandidatePersonalInfoForm />`.                                                                                                                               |
+| `apps/web/app/onboarding/candidate/review/_client.tsx`                  | **Wire.** Same banner above `<ReviewStep />`.                                                                                                                                                                                                                               |
 
 No other files change. No `packages/shared/`, no `apps/api/`, no `packages/db/`.
 
@@ -87,6 +87,7 @@ interface ParsingProgressCardProps {
 **`parsing` state:** identical to current behavior. Indeterminate sweep bar; four stages with the existing `STAGES` time curve; stage 4 (`Polishing the details`) pulses on AuraHire Blue indefinitely.
 
 **`done` state, on entry:**
+
 1. Stage 4 transitions from `active → done`. The existing `StageRow` component already renders `animate-stage-check-pop` when its `state` prop becomes `"done"`. The internal `activeIdx` state is force-set to `STAGES.length` (i.e. past the last index) via a `useEffect` watching `parseStatus`, which makes all four stages compute as `state === "done"`.
 2. The indeterminate sweep bar (currently `<div className="animate-indeterminate-sweep h-full w-1/3 ..." />` inside a `h-[2px]` track) is replaced by a static `100%`-wide bar in `var(--color-primary)`: `<div className="h-full w-full bg-[var(--color-primary)]" />`. Track height stays 2 px.
 3. A new line renders below the stage list, after a one-time 200 ms opacity fade-in:
@@ -105,6 +106,7 @@ interface LowConfidenceBannerProps {
 ```
 
 Returns `null` unless `confidence === "low"`. Otherwise renders an amber-bordered card:
+
 - 1px left border in `var(--color-score-mid)`, 4px wide accent.
 - Background `var(--color-score-mid-soft)`.
 - Lucide `AlertTriangle` icon, `var(--color-score-mid)`.
@@ -191,6 +193,7 @@ Sibling of the segmented toggle, right-aligned via the existing flex row.
 ### Data flow
 
 **Happy path (new candidate):**
+
 1. User uploads PDF.
 2. `ResumeUploadCard` POSTs to `/api/v1/resumes/upload`, transitions stage `idle → uploading`.
 3. `ParsingProgressCard` renders in `parsing` mode, runs its time-curve animation.
@@ -201,10 +204,12 @@ Sibling of the segmented toggle, right-aligned via the existing flex row.
 8. Step 2 renders with prefilled values + AI Suggested badges. If `parse_confidence === "low"`, the banner appears above the form.
 
 **Returning user (already parsed):**
+
 1. User navigates to `/onboarding/candidate`.
 2. Server redirect short-circuits to `/onboarding/candidate/personal` before render.
 
 **Replace flow (Step 2 or Step 3):**
+
 1. User clicks `Replace resume` in `ResumePreviewPane`.
 2. Browser routes to `/onboarding/candidate?replace=1`.
 3. Server skips the redirect (URL param present), renders the upload screen with `forceIdle={true}`.

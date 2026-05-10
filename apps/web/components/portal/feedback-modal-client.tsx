@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Bug, HelpCircle, Lightbulb, MessageCircle, Sparkles } from "lucide-react";
+import {
+  Bug,
+  HelpCircle,
+  Lightbulb,
+  MessageCircle,
+  Sparkles,
+} from "lucide-react";
 import type { FeedbackSeverity, FeedbackType } from "@aurahire/shared";
 
 import {

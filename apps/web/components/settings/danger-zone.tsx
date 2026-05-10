@@ -105,8 +105,8 @@ export function LeaveCompanyCard() {
         Leave this company
       </h3>
       <p className="mt-1 text-sm text-[var(--color-body)]">
-        Your access to {companyName}'s jobs, applications, and pipeline will
-        be revoked immediately. Anything you created stays in the workspace.
+        Your access to {companyName}'s jobs, applications, and pipeline will be
+        revoked immediately. Anything you created stays in the workspace.
       </p>
       {blockReason ? (
         <p className="mt-2 text-sm text-[var(--color-status-warning)]">
@@ -184,13 +184,12 @@ export function TransferOwnershipCard() {
         Transfer ownership
       </h3>
       <p className="mt-1 text-sm text-[var(--color-body)]">
-        Promote another active member to owner. You'll be downgraded to
-        admin and they'll be able to remove you.
+        Promote another active member to owner. You'll be downgraded to admin
+        and they'll be able to remove you.
       </p>
       {candidates.length === 0 ? (
         <p className="mt-2 text-sm text-[var(--color-status-warning)]">
-          You have no other active members to transfer to. Invite someone
-          first.
+          You have no other active members to transfer to. Invite someone first.
         </p>
       ) : null}
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
@@ -232,11 +231,8 @@ export function TransferOwnershipCard() {
           <DialogHeader>
             <DialogTitle>Transfer ownership of {companyName}?</DialogTitle>
             <DialogDescription>
-              Type{" "}
-              <strong>
-                {target?.email ?? ""}
-              </strong>{" "}
-              to confirm. They'll become the owner immediately.
+              Type <strong>{target?.email ?? ""}</strong> to confirm. They'll
+              become the owner immediately.
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -285,7 +281,8 @@ export function DeleteCompanyCard() {
   const nextActive =
     ctx?.memberships.find(
       (m) =>
-        m.status === "active" && m.companyId !== ctx?.activeMembership?.companyId,
+        m.status === "active" &&
+        m.companyId !== ctx?.activeMembership?.companyId,
     ) ?? null;
 
   async function handleConfirm() {
@@ -324,8 +321,7 @@ export function DeleteCompanyCard() {
       </h3>
       <p className="mt-1 text-sm text-[var(--color-body)]">
         Permanently delete <strong>{companyName}</strong>, including jobs,
-        applications, scoring history, and team members. This cannot be
-        undone.
+        applications, scoring history, and team members. This cannot be undone.
       </p>
       <div className="mt-4">
         <Button
@@ -342,8 +338,8 @@ export function DeleteCompanyCard() {
           <DialogHeader>
             <DialogTitle>Delete {companyName}?</DialogTitle>
             <DialogDescription>
-              Type <strong>{companyName}</strong> to confirm. Everyone in
-              the workspace loses access immediately.
+              Type <strong>{companyName}</strong> to confirm. Everyone in the
+              workspace loses access immediately.
             </DialogDescription>
           </DialogHeader>
           <Input

@@ -54,11 +54,15 @@ export function ConfigEditorClient({ initial }: Props) {
   const [matchWeights, setMatchWeights] = useState(initial.matchWeights);
   const [profileWeights, setProfileWeights] = useState(initial.profileWeights);
   const [bandThresholds, setBandThresholds] = useState(initial.bandThresholds);
-  const [biasCats, setBiasCats] = useState<string[]>(initial.biasCategoriesEnabled);
+  const [biasCats, setBiasCats] = useState<string[]>(
+    initial.biasCategoriesEnabled,
+  );
   const [customTermsText, setCustomTermsText] = useState(
     initial.customFlaggedTerms.join("\n"),
   );
-  const [piiFields, setPiiFields] = useState<string[]>(initial.piiFieldsRedacted);
+  const [piiFields, setPiiFields] = useState<string[]>(
+    initial.piiFieldsRedacted,
+  );
   const [piiAddInput, setPiiAddInput] = useState("");
   const [working, setWorking] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -99,8 +103,10 @@ export function ConfigEditorClient({ initial }: Props) {
   const dirty = useMemo(
     () =>
       JSON.stringify(matchWeights) !== JSON.stringify(initial.matchWeights) ||
-      JSON.stringify(profileWeights) !== JSON.stringify(initial.profileWeights) ||
-      JSON.stringify(bandThresholds) !== JSON.stringify(initial.bandThresholds) ||
+      JSON.stringify(profileWeights) !==
+        JSON.stringify(initial.profileWeights) ||
+      JSON.stringify(bandThresholds) !==
+        JSON.stringify(initial.bandThresholds) ||
       JSON.stringify([...biasCats].sort()) !==
         JSON.stringify([...initial.biasCategoriesEnabled].sort()) ||
       JSON.stringify(customTermsList) !==
@@ -122,7 +128,10 @@ export function ConfigEditorClient({ initial }: Props) {
     const n = Math.max(0, Math.min(100, Number(raw) || 0));
     setMatchWeights({ ...matchWeights, [key]: n });
   }
-  function setProfile<K extends keyof typeof profileWeights>(key: K, raw: string) {
+  function setProfile<K extends keyof typeof profileWeights>(
+    key: K,
+    raw: string,
+  ) {
     const n = Math.max(0, Math.min(100, Number(raw) || 0));
     setProfileWeights({ ...profileWeights, [key]: n });
   }
@@ -147,7 +156,11 @@ export function ConfigEditorClient({ initial }: Props) {
   }
   function removePiiField(field: string) {
     if (REQUIRED_PII_FIELDS.includes(field)) {
-      toastApiError(null, "Check your input", `'${field}' is required and cannot be removed.`);
+      toastApiError(
+        null,
+        "Check your input",
+        `'${field}' is required and cannot be removed.`,
+      );
       return;
     }
     setPiiFields(piiFields.filter((f) => f !== field));
@@ -171,7 +184,11 @@ export function ConfigEditorClient({ initial }: Props) {
 
   async function save() {
     if (!allValid) {
-      toastApiError(null, "Check your input", "Fix validation errors before saving.");
+      toastApiError(
+        null,
+        "Check your input",
+        "Fix validation errors before saving.",
+      );
       return;
     }
     if (!dirty) {
@@ -204,7 +221,11 @@ export function ConfigEditorClient({ initial }: Props) {
         const body = (await res.json().catch(() => ({}))) as {
           message?: string;
         };
-        toastApiError(null, "Couldn't save configuration", body.message ?? `HTTP ${res.status}`);
+        toastApiError(
+          null,
+          "Couldn't save configuration",
+          body.message ?? `HTTP ${res.status}`,
+        );
         return;
       }
       toastSuccess("Configuration saved");
@@ -328,8 +349,9 @@ export function ConfigEditorClient({ initial }: Props) {
         </div>
         {bandValid ? (
           <p className="mt-3 font-mono text-xs text-[var(--color-body)]">
-            Strong: {bandThresholds.strong}-100 · Partial: {bandThresholds.partial}-
-            {bandThresholds.strong - 1} · Limited: 0-{bandThresholds.partial - 1}
+            Strong: {bandThresholds.strong}-100 · Partial:{" "}
+            {bandThresholds.partial}-{bandThresholds.strong - 1} · Limited: 0-
+            {bandThresholds.partial - 1}
           </p>
         ) : (
           <p className="mt-3 text-xs text-[var(--color-status-danger)]">
@@ -352,7 +374,10 @@ export function ConfigEditorClient({ initial }: Props) {
             </p>
             <div className="flex flex-wrap gap-3">
               {BIAS_CATEGORIES.map((c) => (
-                <label key={c.value} className="flex items-center gap-2 text-sm">
+                <label
+                  key={c.value}
+                  className="flex items-center gap-2 text-sm"
+                >
                   <Checkbox
                     checked={biasCats.includes(c.value)}
                     onCheckedChange={() => toggleCategory(c.value)}
@@ -395,8 +420,8 @@ export function ConfigEditorClient({ initial }: Props) {
           <Info className="mt-0.5 h-3 w-3 flex-shrink-0" />
           <span>
             PII redaction is mandatory in this system and cannot be disabled —
-            it&rsquo;s part of the thesis-defining fairness contract. You can ADD
-            additional fields to redact but cannot remove the core required
+            it&rsquo;s part of the thesis-defining fairness contract. You can
+            ADD additional fields to redact but cannot remove the core required
             fields ({REQUIRED_PII_FIELDS.join(", ")}).
           </span>
         </p>

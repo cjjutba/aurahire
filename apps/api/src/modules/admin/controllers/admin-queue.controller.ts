@@ -8,7 +8,12 @@ import {
   Post,
   Req,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import type { FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
@@ -41,7 +46,11 @@ export class AdminQueueController {
     @Body() dto: EnqueueRescoreBatchDto,
     @Req() req: FastifyRequest,
   ): Promise<EnqueueRescoreBatchResponseDto> {
-    const data = await this.service.enqueueRescoreBatch(user, dto, this.requestMeta(req));
+    const data = await this.service.enqueueRescoreBatch(
+      user,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -52,7 +61,9 @@ export class AdminQueueController {
       "Poll the status of a queued background job. Route is /admin/queue/jobs/:queueJobId/status to avoid collision with /admin/jobs/:id (3.1 job moderation).",
   })
   @ApiResponse({ status: 200, type: QueueJobStatusResponseDto })
-  async getJobStatus(@Param("queueJobId") queueJobId: string): Promise<QueueJobStatusResponseDto> {
+  async getJobStatus(
+    @Param("queueJobId") queueJobId: string,
+  ): Promise<QueueJobStatusResponseDto> {
     const data = await this.service.getJobStatus(queueJobId);
     return { data };
   }

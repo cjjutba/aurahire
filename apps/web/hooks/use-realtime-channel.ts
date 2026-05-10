@@ -3,7 +3,10 @@
 import { useEffect } from "react";
 
 import { useSocket } from "@/components/providers/socket-provider";
-import type { RealtimeEventName, RealtimeEventPayloadMap } from "@/lib/realtime";
+import type {
+  RealtimeEventName,
+  RealtimeEventPayloadMap,
+} from "@/lib/realtime";
 
 /**
  * Subscribe a typed handler to a single realtime event for the lifetime of

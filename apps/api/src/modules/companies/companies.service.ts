@@ -18,11 +18,7 @@ import type {
   UpdateCompanyInput,
   UpdateMemberInput,
 } from "@aurahire/shared";
-import type {
-  Company,
-  CompanyMember,
-  Profile,
-} from "@aurahire/db";
+import type { Company, CompanyMember, Profile } from "@aurahire/db";
 
 import { AuditService, AUDIT_ACTIONS } from "../../audit";
 import { CacheService, TAGS } from "../../cache";
@@ -146,7 +142,8 @@ export class CompaniesService {
     if (dto.logoUrl !== undefined) patch.logoUrl = dto.logoUrl ?? null;
     if (dto.headquartersLocation !== undefined)
       patch.headquartersLocation = dto.headquartersLocation ?? null;
-    if (dto.description !== undefined) patch.description = dto.description ?? null;
+    if (dto.description !== undefined)
+      patch.description = dto.description ?? null;
 
     if (Object.keys(patch).length === 0) {
       // Nothing to update — return existing.
@@ -222,7 +219,9 @@ export class CompaniesService {
 
   async listMembers(companyId: string): Promise<CompanyMemberResponseDto[]> {
     const rows = await this.membersRepo.listForCompany(companyId);
-    return rows.map((row) => this.toMemberResponse(row, row.user, row.inviterName));
+    return rows.map((row) =>
+      this.toMemberResponse(row, row.user, row.inviterName),
+    );
   }
 
   async inviteMember(
@@ -316,7 +315,14 @@ export class CompaniesService {
 
     await this.cacheService.bustTags([TAGS.companyMembership(companyId)]);
 
-    void this.sendInvitationEmail(token, dto.email, inserted, inviterProfile, company, expiresAt);
+    void this.sendInvitationEmail(
+      token,
+      dto.email,
+      inserted,
+      inviterProfile,
+      company,
+      expiresAt,
+    );
 
     return this.toMemberResponse(inserted, null, inviterProfile.fullName);
   }

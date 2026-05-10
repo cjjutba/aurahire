@@ -59,8 +59,12 @@ export function FiltersClient({ initialFilters }: Props) {
     initialFilters.dateTo ? initialFilters.dateTo.slice(0, 10) : "",
   );
 
-  const qDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const scoreDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const qDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  const scoreDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     setQ(initialFilters.q ?? "");
@@ -70,9 +74,7 @@ export function FiltersClient({ initialFilters }: Props) {
     setDateFrom(
       initialFilters.dateFrom ? initialFilters.dateFrom.slice(0, 10) : "",
     );
-    setDateTo(
-      initialFilters.dateTo ? initialFilters.dateTo.slice(0, 10) : "",
-    );
+    setDateTo(initialFilters.dateTo ? initialFilters.dateTo.slice(0, 10) : "");
   }, [
     initialFilters.q,
     initialFilters.status,
@@ -117,7 +119,9 @@ export function FiltersClient({ initialFilters }: Props) {
     }
     params.delete("page");
     startTransition(() => {
-      router.push(`/admin/applications${params.toString() ? `?${params.toString()}` : ""}`);
+      router.push(
+        `/admin/applications${params.toString() ? `?${params.toString()}` : ""}`,
+      );
     });
   }
 
@@ -189,7 +193,10 @@ export function FiltersClient({ initialFilters }: Props) {
           }
         >
           <span>Status: {currentStatus.label}</span>
-          <ChevronDown className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+          <ChevronDown
+            className="h-3.5 w-3.5 text-[var(--color-muted)]"
+            aria-hidden
+          />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="bottom">
           {STATUS_OPTIONS.map((opt) => (

@@ -13,7 +13,9 @@ interface ResendVerificationButtonProps {
   email: string;
 }
 
-export function ResendVerificationButton({ email }: ResendVerificationButtonProps) {
+export function ResendVerificationButton({
+  email,
+}: ResendVerificationButtonProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 

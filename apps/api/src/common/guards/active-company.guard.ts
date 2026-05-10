@@ -142,8 +142,7 @@ export class ActiveCompanyGuard implements CanActivate {
     if (!companyId) {
       throw new ForbiddenException({
         code: "NO_ACTIVE_COMPANY",
-        message:
-          "User has no active company. Create or accept an invitation.",
+        message: "User has no active company. Create or accept an invitation.",
       });
     }
 
@@ -156,10 +155,7 @@ export class ActiveCompanyGuard implements CanActivate {
     const membership = await this.cacheService.getOrSet<CompanyMember | null>({
       key: `membership:${user.id}:${companyId}`,
       ttlSeconds: TTL_SECONDS.warm,
-      tags: [
-        TAGS.companyMembership(companyId),
-        TAGS.userMemberships(user.id),
-      ],
+      tags: [TAGS.companyMembership(companyId), TAGS.userMemberships(user.id)],
       telemetryName: "guard:membership",
       load: () =>
         this.companyMembersRepo.findActiveMembership(user.id, companyId),

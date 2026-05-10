@@ -42,7 +42,11 @@ export function RecomputeButtonClient() {
       });
 
       if (res.status === 429) {
-        toastApiError(null, "Couldn't recalculate", "Please wait a moment before recalculating.");
+        toastApiError(
+          null,
+          "Couldn't recalculate",
+          "Please wait a moment before recalculating.",
+        );
         return;
       }
 

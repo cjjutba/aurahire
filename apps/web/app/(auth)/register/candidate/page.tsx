@@ -15,7 +15,10 @@ export default function RegisterCandidatePage() {
       footer={
         <span>
           Already have an account?{" "}
-          <Link href="/login" className="text-[var(--color-primary)] hover:underline">
+          <Link
+            href="/login"
+            className="text-[var(--color-primary)] hover:underline"
+          >
             Sign in
           </Link>
         </span>

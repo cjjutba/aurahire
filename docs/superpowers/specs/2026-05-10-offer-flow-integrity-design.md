@@ -55,7 +55,7 @@ export const APPLICATION_STATUS = [
   "screening",
   "interview",
   "offer",
-  "offer_declined",  // NEW
+  "offer_declined", // NEW
   "hired",
   "rejected",
   "withdrawn",
@@ -73,18 +73,22 @@ Mirror the same value in `packages/shared/src/enums/index.ts` (it re-exports fro
 `apps/api/src/modules/applications/state-machine.ts`:
 
 ```ts
-const VALID_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
-  applied:        ["screening", "interview", "rejected", "withdrawn"],
-  screening:      ["interview",              "rejected", "withdrawn"],
-  interview:      ["offer",                  "rejected", "withdrawn"],
-  offer:          ["hired", "offer_declined", "rejected", "withdrawn"],
+const VALID_TRANSITIONS: Record<
+  ApplicationStatus,
+  readonly ApplicationStatus[]
+> = {
+  applied: ["screening", "interview", "rejected", "withdrawn"],
+  screening: ["interview", "rejected", "withdrawn"],
+  interview: ["offer", "rejected", "withdrawn"],
+  offer: ["hired", "offer_declined", "rejected", "withdrawn"],
   offer_declined: ["offer", "rejected", "withdrawn"],
-  hired:          [],
-  rejected:       [],
-  withdrawn:      [],
+  hired: [],
+  rejected: [],
+  withdrawn: [],
 };
 
-export const STATUSES_REQUIRING_ACCEPTED_OFFER: ReadonlyArray<ApplicationStatus> = ["hired"];
+export const STATUSES_REQUIRING_ACCEPTED_OFFER: ReadonlyArray<ApplicationStatus> =
+  ["hired"];
 ```
 
 Two new edges:
@@ -93,7 +97,7 @@ Two new edges:
 - `offer_declined → offer` — recruiter re-extends a new offer (the existing `OffersService.create` auto-advance handles the transition).
 - `offer_declined → rejected` and `offer_declined → withdrawn` — terminal closures.
 
-The accepted-offer guard layers *on top* of the state machine; it is checked only when transitioning into a status in `STATUSES_REQUIRING_ACCEPTED_OFFER`.
+The accepted-offer guard layers _on top_ of the state machine; it is checked only when transitioning into a status in `STATUSES_REQUIRING_ACCEPTED_OFFER`.
 
 ### 3.3 Backend service changes
 
@@ -101,7 +105,10 @@ The accepted-offer guard layers *on top* of the state machine; it is checked onl
 
 ```ts
 return this.db.transaction(async (tx) => {
-  const app = await this.applicationsRepo.findByIdForUpdate(tx, offer.applicationId);
+  const app = await this.applicationsRepo.findByIdForUpdate(
+    tx,
+    offer.applicationId,
+  );
   // re-validate ownership + offer.status === "pending"
   // update offer to declined (with reason)
   await this.applicationsService.transitionFromSystem(
@@ -110,7 +117,7 @@ return this.db.transaction(async (tx) => {
     "offer_declined",
     "Candidate declined offer",
     requestMeta,
-    tx,                          // pass transaction handle
+    tx, // pass transaction handle
   );
 });
 ```
@@ -123,9 +130,9 @@ The lock prevents a Decline arriving in the narrow window between Accept's offer
 
 ```ts
 await this.db.transaction(async (tx) => {
-  await this.applicationsRepo.findByIdForUpdate(tx, c.applicationId);  // lock
+  await this.applicationsRepo.findByIdForUpdate(tx, c.applicationId); // lock
   await this.applicationsService.transitionFromSystem(
-    null,                                // system actor
+    null, // system actor
     c.applicationId,
     "offer_declined",
     "Offer expired without response",
@@ -203,6 +210,7 @@ async hire(
 ```
 
 Notes:
+
 - Side effects (cache bust, realtime emit, email send, in-app notify) happen **after commit**, not inside the transaction. A failed email must not roll back the hire.
 - The bulk-reject loop is a tight `for` rather than a single `UPDATE` because each row needs a distinct audit row and notification; the loop is bounded by typical job applicant counts (sprint scale: tens, not thousands).
 
@@ -210,7 +218,10 @@ Notes:
 
 ```ts
 return this.db.transaction(async (tx) => {
-  const app = await this.applicationsRepo.findByIdForUpdate(tx, offer.applicationId);
+  const app = await this.applicationsRepo.findByIdForUpdate(
+    tx,
+    offer.applicationId,
+  );
   // re-validate offer is still pending
   // update offer to accepted
   // transition app to hired (already in transaction; transitionFromSystem must accept tx)
@@ -227,7 +238,7 @@ DTO extension in `packages/shared/src/schemas/applications.ts`:
 export const updateApplicationStatusSchema = z.object({
   newStatus: z.enum(APPLICATION_STATUS),
   note: z.string().max(2000).optional(),
-  autoRejectOthers: z.boolean().optional(),  // NEW; honored only when newStatus === "hired"
+  autoRejectOthers: z.boolean().optional(), // NEW; honored only when newStatus === "hired"
 });
 ```
 
@@ -267,7 +278,7 @@ This avoids a version column and retry loop — both add complexity disproportio
 
 Pass `latestOffer.status` from the server-rendered application page (already loaded for the offer card) into the client component. Two new behaviors:
 
-- **App at `offer` AND `latestOffer.status !== "accepted"`** — Mark Hired button rendered as `disabled` with a tooltip: *"Waiting for candidate to accept the offer."* Reject button stays enabled.
+- **App at `offer` AND `latestOffer.status !== "accepted"`** — Mark Hired button rendered as `disabled` with a tooltip: _"Waiting for candidate to accept the offer."_ Reject button stays enabled.
 - **App at `offer_declined`** — replace the `[Mark Hired] [Reject]` button pair with `[Re-extend Offer] [Close as Rejected]`. "Re-extend Offer" opens the existing offer creation modal pre-filled with the prior offer's terms (title, salary, start date, manager) so the recruiter can adjust. "Close as Rejected" calls `PATCH /applications/:id/status` with `newStatus: "rejected"`.
 
 **Recruiter Hire confirmation modal** — new file `apps/web/components/recruiter/hire-confirmation-modal.tsx`:
@@ -287,13 +298,14 @@ Pass `latestOffer.status` from the server-rendered application page (already loa
 └───────────────────────────────────────────────┘
 ```
 
-The recruiter can uncheck the auto-reject box. On Confirm, the client calls the status endpoint with `{ newStatus: "hired", autoRejectOthers: <checkbox state> }` and shows a success toast: *"Christian Jutba hired. 47 other applicants auto-rejected."* (count omitted if 0 or auto-reject was unchecked).
+The recruiter can uncheck the auto-reject box. On Confirm, the client calls the status endpoint with `{ newStatus: "hired", autoRejectOthers: <checkbox state> }` and shows a success toast: _"Christian Jutba hired. 47 other applicants auto-rejected."_ (count omitted if 0 or auto-reject was unchecked).
 
 The "47 other open applicants" count comes from a small new endpoint `GET /applications/:id/sibling-count` (or is added to the existing application detail payload). Choose whichever requires fewer changes during implementation.
 
 **Candidate `/candidate/applications/[id]`** — when `app.status === "offer_declined"`:
 
 Replace the "OFFER EXTENDED" card with an "OFFER CLOSED" card that shows the offer terms (read-only) and one of two footers based on `offer.status`:
+
 - `declined` → "You declined this offer on May 10, 2026." (+ the candidate's reason if provided)
 - `expired` → "This offer expired on May 24, 2026 without a response."
 
@@ -320,6 +332,7 @@ APPLICATION_AUTO_REJECTED_POSITION_FILLED:  "application.auto_rejected_position_
 ```
 
 Each carries enough metadata to reconstruct the cause:
+
 - `offer_declined`: `{ offerId, applicationId }`
 - `offer_expired`: `{ offerId, applicationId, expiresAt }`
 - `auto_rejected_position_filled`: `{ hiredApplicationId, hiredCandidateId, jobId }`
@@ -335,31 +348,32 @@ Body: warm, neutral copy explaining that another candidate was selected; thanks 
 
 ## 4. Components & ownership
 
-| File | Change |
-|---|---|
-| `packages/db/src/enums.ts` | Add `offer_declined` to `APPLICATION_STATUS` |
-| `packages/db/drizzle/0013_offer_declined_status.sql` | New migration (no-op DDL with comment) |
-| `apps/api/src/modules/applications/state-machine.ts` | Add `offer_declined` row + edges; export `STATUSES_REQUIRING_ACCEPTED_OFFER` |
-| `apps/api/src/modules/applications/applications.repository.ts` | Add `findByIdForUpdate(tx, id)`, `findInflightByJobId(tx, jobId, excludeId)` |
-| `apps/api/src/modules/applications/applications.service.ts` | New `hire()` method; `updateStatus()` gets accepted-offer guard; controller routes hire to new method |
-| `apps/api/src/modules/applications/applications.controller.ts` | DTO accepts `autoRejectOthers`; response shape extended for hire |
-| `apps/api/src/modules/offers/offers.repository.ts` | Add `findLatestByApplicationId(appId)` |
-| `apps/api/src/modules/offers/offers.service.ts` | Wrap `accept` in transaction; `decline` triggers app auto-transition |
-| `apps/api/src/cron/expire-offers.cron.ts` | Per expired offer, transition app to `offer_declined` |
-| `apps/api/src/audit/audit.types.ts` | Three new audit action constants |
-| `apps/api/src/email/templates/position-filled.tsx` | New email template |
-| `packages/shared/src/schemas/applications.ts` | DTO accepts `autoRejectOthers`; response type extended |
-| `apps/web/components/recruiter/hire-confirmation-modal.tsx` | New modal |
-| `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx` | Disabled state, `offer_declined` action set, modal launch |
-| `apps/web/app/(candidate)/candidate/applications/[id]/page.tsx` | "Offer Closed" variant of card |
-| `apps/web/components/ui/status-chip.tsx` | `offer_declined` variant |
-| `apps/web/app/(recruiter)/recruiter/applications/_pipeline.tsx` (or equivalent) | New column + filter chip |
+| File                                                                            | Change                                                                                                |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `packages/db/src/enums.ts`                                                      | Add `offer_declined` to `APPLICATION_STATUS`                                                          |
+| `packages/db/drizzle/0013_offer_declined_status.sql`                            | New migration (no-op DDL with comment)                                                                |
+| `apps/api/src/modules/applications/state-machine.ts`                            | Add `offer_declined` row + edges; export `STATUSES_REQUIRING_ACCEPTED_OFFER`                          |
+| `apps/api/src/modules/applications/applications.repository.ts`                  | Add `findByIdForUpdate(tx, id)`, `findInflightByJobId(tx, jobId, excludeId)`                          |
+| `apps/api/src/modules/applications/applications.service.ts`                     | New `hire()` method; `updateStatus()` gets accepted-offer guard; controller routes hire to new method |
+| `apps/api/src/modules/applications/applications.controller.ts`                  | DTO accepts `autoRejectOthers`; response shape extended for hire                                      |
+| `apps/api/src/modules/offers/offers.repository.ts`                              | Add `findLatestByApplicationId(appId)`                                                                |
+| `apps/api/src/modules/offers/offers.service.ts`                                 | Wrap `accept` in transaction; `decline` triggers app auto-transition                                  |
+| `apps/api/src/cron/expire-offers.cron.ts`                                       | Per expired offer, transition app to `offer_declined`                                                 |
+| `apps/api/src/audit/audit.types.ts`                                             | Three new audit action constants                                                                      |
+| `apps/api/src/email/templates/position-filled.tsx`                              | New email template                                                                                    |
+| `packages/shared/src/schemas/applications.ts`                                   | DTO accepts `autoRejectOthers`; response type extended                                                |
+| `apps/web/components/recruiter/hire-confirmation-modal.tsx`                     | New modal                                                                                             |
+| `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx` | Disabled state, `offer_declined` action set, modal launch                                             |
+| `apps/web/app/(candidate)/candidate/applications/[id]/page.tsx`                 | "Offer Closed" variant of card                                                                        |
+| `apps/web/components/ui/status-chip.tsx`                                        | `offer_declined` variant                                                                              |
+| `apps/web/app/(recruiter)/recruiter/applications/_pipeline.tsx` (or equivalent) | New column + filter chip                                                                              |
 
 ---
 
 ## 5. Tests
 
 **Unit — state machine** (`state-machine.spec.ts`):
+
 - `canTransition("offer", "offer_declined")` → true
 - `canTransition("offer_declined", "offer")` → true
 - `canTransition("offer_declined", "rejected")` → true
@@ -367,6 +381,7 @@ Body: warm, neutral copy explaining that another candidate was selected; thanks 
 - All other transitions out of `offer_declined` to non-allowed states → false
 
 **Unit — applications service**:
+
 - `updateStatus` with `newStatus: "hired"` and no offer → throws `OFFER_NOT_ACCEPTED`
 - `updateStatus` with `newStatus: "hired"` and offer in `pending` → throws `OFFER_NOT_ACCEPTED`
 - `updateStatus` with `newStatus: "hired"` and offer in `declined` → throws `OFFER_NOT_ACCEPTED`
@@ -375,15 +390,18 @@ Body: warm, neutral copy explaining that another candidate was selected; thanks 
 - `hire()` skips already-terminal applications (`rejected`, `withdrawn`, `hired`, `offer_declined`)
 
 **Unit — offers service**:
+
 - `decline` transitions app from `offer` to `offer_declined`
 - `accept` transitions app from `offer` to `hired` (existing test, verify still passes)
 - Concurrent `accept` + recruiter `hire()` simulated via parallel promises → exactly one ends in `hired`, the other returns `INVALID_STATUS_TRANSITION`
 
 **Cron** (`expire-offers.cron.spec.ts` extension):
+
 - Expired offer triggers app transition to `offer_declined`
 - App already in non-`offer` state when cron fires → transition skipped (logged but no error)
 
 **Integration — controller**:
+
 - `PATCH /applications/:id/status` body `{ newStatus: "hired", autoRejectOthers: true }` returns `{ application, otherApplicationsRejected: N }`
 - Same body without an accepted offer → 400 `OFFER_NOT_ACCEPTED`
 

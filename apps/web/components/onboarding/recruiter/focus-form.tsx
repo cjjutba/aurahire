@@ -70,7 +70,11 @@ export function RecruiterFocusForm({ defaults }: FocusFormProps) {
     };
     const parsed = recruiterFocusSchema.safeParse(data);
     if (!parsed.success) {
-      toastApiError(null, "Check your input", parsed.error.errors.map((e) => e.message).join(", "));
+      toastApiError(
+        null,
+        "Check your input",
+        parsed.error.errors.map((e) => e.message).join(", "),
+      );
       return;
     }
     await updateFocus.mutateAsync({ data: parsed.data });

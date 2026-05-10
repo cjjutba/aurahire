@@ -65,7 +65,10 @@ export class ResumesRepository {
       .select()
       .from(resumesTable)
       .where(
-        and(eq(resumesTable.candidateId, candidateId), eq(resumesTable.isDefault, true)),
+        and(
+          eq(resumesTable.candidateId, candidateId),
+          eq(resumesTable.isDefault, true),
+        ),
       )
       .limit(1);
     return row ?? null;
@@ -128,7 +131,11 @@ export class ResumesRepository {
           ne(resumesTable.id, excludeResumeId),
         ),
       )
-      .orderBy(desc(resumesTable.updatedAt), desc(resumesTable.createdAt), resumesTable.id)
+      .orderBy(
+        desc(resumesTable.updatedAt),
+        desc(resumesTable.createdAt),
+        resumesTable.id,
+      )
       .limit(1);
     return row ?? null;
   }

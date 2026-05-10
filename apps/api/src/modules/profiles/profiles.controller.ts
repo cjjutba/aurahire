@@ -32,11 +32,15 @@ export class ProfilesController {
 
   @Get("me")
   @SkipActiveCompany()
-  @ApiOperation({ summary: "Get the current user's profile + role-specific subprofile" })
+  @ApiOperation({
+    summary: "Get the current user's profile + role-specific subprofile",
+  })
   @ApiResponse({ status: 200, type: ProfileResponseEnvelopeDto })
   @ApiResponse({ status: 401, description: "Missing or invalid token" })
   @ApiResponse({ status: 404, description: "Profile not yet initialized" })
-  async getMe(@CurrentUser() user: AuthUser): Promise<ProfileResponseEnvelopeDto> {
+  async getMe(
+    @CurrentUser() user: AuthUser,
+  ): Promise<ProfileResponseEnvelopeDto> {
     const data = await this.profilesService.getMe(user);
     return { data };
   }
@@ -63,7 +67,10 @@ export class ProfilesController {
       "Phase 2b: only `lastActiveCompanyId` is editable here; full profile editing lands in Phase 5.",
   })
   @ApiResponse({ status: 200, type: ProfileResponseEnvelopeDto })
-  @ApiResponse({ status: 400, description: "Not a member of the target company" })
+  @ApiResponse({
+    status: 400,
+    description: "Not a member of the target company",
+  })
   async updateMe(
     @CurrentUser() user: AuthUser,
     @Body() dto: UpdateMyProfileDto,

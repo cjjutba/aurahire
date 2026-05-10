@@ -10,14 +10,22 @@ import {
   Post,
   Req,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import type { FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 
-import { InterviewVenueInputDto, InterviewVenuePartialDto } from "./dto/interview-venue-input.dto";
+import {
+  InterviewVenueInputDto,
+  InterviewVenuePartialDto,
+} from "./dto/interview-venue-input.dto";
 import {
   InterviewVenueDto,
   InterviewVenueEnvelopeDto,
@@ -39,7 +47,10 @@ export class InterviewVenuesController {
     @CurrentUser() user: AuthUser,
     @Param("companyId") companyId: string,
   ): Promise<InterviewVenueListEnvelopeDto> {
-    const data = (await this.service.list(user, companyId)) as InterviewVenueDto[];
+    const data = (await this.service.list(
+      user,
+      companyId,
+    )) as InterviewVenueDto[];
     return { data };
   }
 
@@ -99,7 +110,9 @@ export class InterviewVenuesController {
   @Post("interview-venues/:id/set-default")
   @Roles("recruiter", "admin")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Set this venue as the company default (clears other defaults)" })
+  @ApiOperation({
+    summary: "Set this venue as the company default (clears other defaults)",
+  })
   @ApiResponse({ status: 200, type: InterviewVenueEnvelopeDto })
   async setDefault(
     @CurrentUser() user: AuthUser,
@@ -114,7 +127,10 @@ export class InterviewVenuesController {
     return { data };
   }
 
-  private requestMeta(req: FastifyRequest): { ipAddress: string | null; userAgent: string | null } {
+  private requestMeta(req: FastifyRequest): {
+    ipAddress: string | null;
+    userAgent: string | null;
+  } {
     return {
       ipAddress: req.ip ?? null,
       userAgent: (req.headers["user-agent"] as string | undefined) ?? null,

@@ -29,7 +29,8 @@ export default async function RecruiterDashboardPage() {
     }),
     queryClient.prefetchQuery({
       queryKey: queryKeys.recruiterDashboard.recent(DEFAULT_RECENT_LIMIT),
-      queryFn: () => serverQueries.recruiterDashboardRecent(DEFAULT_RECENT_LIMIT),
+      queryFn: () =>
+        serverQueries.recruiterDashboardRecent(DEFAULT_RECENT_LIMIT),
     }),
   ]);
 

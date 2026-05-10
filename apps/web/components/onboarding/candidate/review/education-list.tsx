@@ -57,14 +57,18 @@ export function EducationList({ initial, onSync }: Props) {
         Education <span className="font-mono text-xs">{entries.length}</span>
       </h3>
       {entries.length === 0 && (
-        <p className="text-sm text-[var(--color-muted)]">No education parsed.</p>
+        <p className="text-sm text-[var(--color-muted)]">
+          No education parsed.
+        </p>
       )}
       {entries.map((e) => (
         <EducationCard
           key={e.id}
           entry={e}
           defaultExpanded={e.id.startsWith("tmp-edu-")}
-          onSave={(updated) => update(entries.map((x) => (x.id === e.id ? updated : x)))}
+          onSave={(updated) =>
+            update(entries.map((x) => (x.id === e.id ? updated : x)))
+          }
           onDelete={() => handleDelete(e.id)}
         />
       ))}

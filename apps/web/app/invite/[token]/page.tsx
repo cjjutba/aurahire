@@ -54,9 +54,10 @@ export default async function PublicInvitePage({ params }: PageProps) {
   // Signed-in — verify the user is a recruiter (or admin). Candidates can't
   // join recruiter teams; we surface a clear error rather than silently
   // 403-ing on accept.
-  const profile = (await getCurrentProfile()) as
-    | { id: string; role: string }
-    | null;
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+  } | null;
 
   if (!profile) {
     redirect(`/login?next=${encodeURIComponent(`/invite/${token}`)}`);

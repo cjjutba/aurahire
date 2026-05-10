@@ -48,8 +48,8 @@ export default async function RecruiterFocusPage() {
       <RecruiterFocusForm
         defaults={{
           rolesHiringFor: body.data.rolesHiringFor,
-          hiringVolumePerQuarter:
-            body.data.hiringVolumePerQuarter as HiringVolume | null,
+          hiringVolumePerQuarter: body.data
+            .hiringVolumePerQuarter as HiringVolume | null,
         }}
       />
     </OnboardingShell>

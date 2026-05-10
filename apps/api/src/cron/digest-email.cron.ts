@@ -27,12 +27,20 @@ export class DigestEmailCron {
 
   /** Daily at 08:00 Asia/Manila. */
   @Cron("0 8 * * *", { name: CRON_NAME, timeZone: "Asia/Manila" })
-  async run(): Promise<{ userCount: number; notificationCount: number; durationMs: number }> {
+  async run(): Promise<{
+    userCount: number;
+    notificationCount: number;
+    durationMs: number;
+  }> {
     return this.execute();
   }
 
   /** Public for the dev-only debug endpoint to invoke manually. */
-  async execute(): Promise<{ userCount: number; notificationCount: number; durationMs: number }> {
+  async execute(): Promise<{
+    userCount: number;
+    notificationCount: number;
+    durationMs: number;
+  }> {
     const startedAt = Date.now();
     const batches = await this.repo.findDigestPendingByUser();
     let totalNotifications = 0;
@@ -61,11 +69,19 @@ export class DigestEmailCron {
       action: AUDIT_ACTIONS.DIGEST_EMAIL_BATCH_RUN,
       entityType: "cron",
       entityId: CRON_ENTITY_SENTINEL,
-      details: { userCount: batches.length, notificationCount: totalNotifications, durationMs },
+      details: {
+        userCount: batches.length,
+        notificationCount: totalNotifications,
+        durationMs,
+      },
     });
     this.logger.log(
       `[${CRON_NAME}] enqueued ${batches.length} user batches / ${totalNotifications} notifications in ${durationMs}ms`,
     );
-    return { userCount: batches.length, notificationCount: totalNotifications, durationMs };
+    return {
+      userCount: batches.length,
+      notificationCount: totalNotifications,
+      durationMs,
+    };
   }
 }

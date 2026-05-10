@@ -142,9 +142,7 @@ export function HelpView({ variant }: HelpViewProps) {
     if (!el) return;
     const update = () => {
       setTocCanScrollUp(el.scrollTop > 1);
-      setTocCanScrollDown(
-        el.scrollTop + el.clientHeight < el.scrollHeight - 1,
-      );
+      setTocCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
     };
     update();
     el.addEventListener("scroll", update, { passive: true });
@@ -634,9 +632,7 @@ function blockMatches(
         (block.cite?.toLowerCase().includes(q) ?? false)
       );
     case "kbd":
-      return block.entries.some((e) =>
-        e.description.toLowerCase().includes(q),
-      );
+      return block.entries.some((e) => e.description.toLowerCase().includes(q));
     case "matrix":
       return (
         block.head.some((h) => h.toLowerCase().includes(q)) ||

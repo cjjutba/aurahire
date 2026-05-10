@@ -145,7 +145,11 @@ export default async function AdminFeedbackPage({ searchParams }: PageProps) {
       />
 
       {body.data.length === 0 ? (
-        filtersActive ? <EmptyFiltered /> : <EmptyFeedback />
+        filtersActive ? (
+          <EmptyFiltered />
+        ) : (
+          <EmptyFeedback />
+        )
       ) : (
         <FeedbackTableClient
           rows={body.data}

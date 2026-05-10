@@ -13,33 +13,42 @@
 ## File Structure
 
 **Schema (1):**
+
 - Modify: `packages/shared/src/schemas/score.ts:27-29` — add `reasoning` to `scoredEvidenceSchema`
 
 **Prompts (2):**
+
 - Modify: `apps/api/src/ai/prompts/score-profile.ts` (1.3.0 → 1.4.0)
 - Modify: `apps/api/src/ai/prompts/score-match.ts` (1.2.0 → 1.3.0)
 
 **API DTOs (3):**
+
 - Modify: `apps/api/src/modules/scoring/dto/profile-score-response.dto.ts:3-7,27-39` — add `contributionPoints` + `reasoning` to `ScoreEvidenceDto`; add `calibrationWarnings` to `ProfileScoreDto`
 - Modify: `apps/api/src/modules/applications/dto/application-response.dto.ts:3-9,21-35` — add `reasoning` to `MatchEvidenceDto`; add `calibrationWarnings` to `MatchScoreDto`
 - Modify: `apps/api/src/modules/scoring/dto/match-preview-response.dto.ts:7-25` — add `calibrationWarnings` to `MatchScorePreviewDto`
 
 **Shared types (1):**
+
 - Modify: `packages/shared/src/schemas/score.ts` — export `CalibrationWarning` type for cross-package use
 
 **Service / mappers (1):**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts:529-598,832-866,1267-1296,1298-1332` — pipe `reasoning` and `contribution_points` through all 5 DTO mappers; recompute `calibrationWarnings` in mappers
 
 **Tests (1):**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.spec.ts` — three new test cases
 
 **Web component (1):**
+
 - Modify: `apps/web/components/score/evidence-callout.tsx` — accept and render `reasoning`
 
 **Web infra (1):**
+
 - Modify: `apps/web/components/score/score-dashboard.tsx:10-15,318-326,360-368` — extend `ScoreDashboardEvidence` with `reasoning`; pass through to `EvidenceCallout`; add optional `calibrationWarnings` notice slot
 
 **Web consumers (6 — pass `reasoning` through):**
+
 - Modify: `apps/web/app/(candidate)/candidate/jobs/[id]/_match-preview-client.tsx` — pipe + add inline calibration-warning notice
 - Modify: `apps/web/components/score/apply-match-summary.tsx` — pipe + notice
 - Modify: `apps/web/app/(admin)/admin/applications/_application-detail-sheet-client.tsx` — pipe
@@ -52,6 +61,7 @@
 ## Task 1: Schema — add `reasoning` to `scoredEvidenceSchema` + `CalibrationWarning` type
 
 **Files:**
+
 - Modify: `packages/shared/src/schemas/score.ts`
 
 - [ ] **Step 1.1: Extend `scoredEvidenceSchema` with `reasoning`**
@@ -121,6 +131,7 @@ git commit -m "feat(shared): add reasoning to scoredEvidenceSchema and Calibrati
 ## Task 2: Bump profile prompt to v1.4.0 with `reasoning` + tightened gap rule
 
 **Files:**
+
 - Modify: `apps/api/src/ai/prompts/score-profile.ts`
 
 - [ ] **Step 2.1: Bump version constant**
@@ -179,6 +190,7 @@ git commit -m "feat(api): bump profile-score prompt to v1.4.0 — reasoning + sy
 ## Task 3: Bump match prompt to v1.3.0 with same updates
 
 **Files:**
+
 - Modify: `apps/api/src/ai/prompts/score-match.ts`
 
 - [ ] **Step 3.1: Bump version constant**
@@ -234,6 +246,7 @@ git commit -m "feat(api): bump match-score prompt to v1.3.0 — reasoning + symm
 ## Task 4: Extend API DTOs with `reasoning` + `calibrationWarnings`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/dto/profile-score-response.dto.ts`
 - Modify: `apps/api/src/modules/applications/dto/application-response.dto.ts`
 - Modify: `apps/api/src/modules/scoring/dto/match-preview-response.dto.ts`
@@ -246,7 +259,8 @@ Replace `apps/api/src/modules/scoring/dto/profile-score-response.dto.ts` lines 3
 export class ScoreEvidenceDto {
   @ApiProperty() excerpt!: string;
   @ApiProperty() source!: string;
-  @ApiProperty({ enum: ["positive", "negative", "neutral"] }) relevance!: string;
+  @ApiProperty({ enum: ["positive", "negative", "neutral"] })
+  relevance!: string;
   @ApiPropertyOptional({ nullable: true, type: Number })
   contributionPoints!: number | null;
   @ApiPropertyOptional({ nullable: true, type: String })
@@ -277,7 +291,8 @@ export class ProfileScoreDto {
   @ApiProperty() id!: string;
   @ApiProperty() overallScore!: number;
   @ApiProperty({ enum: ["strong", "partial", "limited"] }) band!: string;
-  @ApiProperty({ type: [ProfileComponentDto] }) components!: ProfileComponentDto[];
+  @ApiProperty({ type: [ProfileComponentDto] })
+  components!: ProfileComponentDto[];
   @ApiProperty({ type: [ImprovementSuggestionDto] })
   improvementSuggestions!: ImprovementSuggestionDto[];
   @ApiProperty({ type: [String] }) redactedFields!: string[];
@@ -298,7 +313,8 @@ Replace `apps/api/src/modules/applications/dto/application-response.dto.ts` line
 export class MatchEvidenceDto {
   @ApiProperty() excerpt!: string;
   @ApiProperty() source!: string;
-  @ApiProperty({ enum: ["positive", "negative", "neutral"] }) relevance!: string;
+  @ApiProperty({ enum: ["positive", "negative", "neutral"] })
+  relevance!: string;
   @ApiPropertyOptional({ nullable: true, type: Number })
   contributionPoints!: number | null;
   @ApiPropertyOptional({ nullable: true, type: String })
@@ -357,6 +373,7 @@ Skip this commit — bundle DTOs + mappers in Task 5's commit so the tree never 
 ## Task 5: Pipe `reasoning` + `calibrationWarnings` through scoring service mappers
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts`
 
 - [ ] **Step 5.1: Import `CalibrationWarningDto` from applications DTO at top of `scoring.service.ts`**
@@ -683,6 +700,7 @@ git commit -m "feat(api): pipe reasoning + calibrationWarnings through scoring D
 ## Task 6: Render `reasoning` in `EvidenceCallout`
 
 **Files:**
+
 - Modify: `apps/web/components/score/evidence-callout.tsx`
 
 - [ ] **Step 6.1: Add `reasoning` prop and render it**
@@ -751,7 +769,9 @@ export function EvidenceCallout({
         </span>
       </header>
       {source && (
-        <p className="mb-2 text-xs italic text-[var(--color-muted)]">{source}</p>
+        <p className="mb-2 text-xs italic text-[var(--color-muted)]">
+          {source}
+        </p>
       )}
       <blockquote className="text-sm italic text-[var(--color-body)] break-words">
         &ldquo;{excerpt}&rdquo;
@@ -795,6 +815,7 @@ git commit -m "feat(web): render per-row reasoning in EvidenceCallout"
 ## Task 7: Extend `ScoreDashboard` to pipe `reasoning` and accept calibration-warning notice slot
 
 **Files:**
+
 - Modify: `apps/web/components/score/score-dashboard.tsx`
 
 - [ ] **Step 7.1: Extend `ScoreDashboardEvidence` type**
@@ -846,7 +867,9 @@ Then in the destructuring on line 78-89 add `calibrationNotice`.
 In the component body (around line 290 — between the explanation paragraph and the evidence list — i.e. after `<p className="text-sm leading-relaxed text-[var(--color-body)]">{c.explanation}</p>`) the notice should render at the top of the right pane, NOT per-component. Add it BEFORE the grid in the main layout (around line 106, after `topActions`):
 
 ```tsx
-{calibrationNotice}
+{
+  calibrationNotice;
+}
 ```
 
 Pass `calibrationNotice` from the destructured props.
@@ -868,6 +891,7 @@ git commit -m "feat(web): pipe reasoning through ScoreDashboard and add calibrat
 ## Task 8: Update web consumers — pipe `reasoning` and surface calibration notices
 
 **Files (6):**
+
 - Modify: `apps/web/app/(candidate)/candidate/jobs/[id]/_match-preview-client.tsx`
 - Modify: `apps/web/components/score/apply-match-summary.tsx`
 - Modify: `apps/web/app/(admin)/admin/applications/_application-detail-sheet-client.tsx`
@@ -876,6 +900,7 @@ git commit -m "feat(web): pipe reasoning through ScoreDashboard and add calibrat
 - Modify: `apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx`
 
 For each consumer, the work is the same shape:
+
 1. Find where the consumer maps API evidence into `EvidenceCallout` props (or into `ScoreDashboardEvidence`).
 2. Add `reasoning: e.reasoning ?? null` to the mapped object.
 3. If the consumer's source data is also typed (e.g. an interface defined inline), extend that interface with `reasoning?: string | null` and `calibrationWarnings?: CalibrationWarning[]` where applicable.
@@ -884,6 +909,7 @@ For each consumer, the work is the same shape:
 - [ ] **Step 8.1: Inspect each consumer to locate the evidence map**
 
 Run sequentially:
+
 - `Grep -n "evidence" apps/web/app/(candidate)/candidate/jobs/\[id\]/_match-preview-client.tsx`
 - `Grep -n "evidence" apps/web/components/score/apply-match-summary.tsx`
 - `Grep -n "evidence" apps/web/app/(admin)/admin/applications/_application-detail-sheet-client.tsx`
@@ -923,18 +949,20 @@ If the consumer's source-data interface is an inline TypeScript shape that doesn
 For `_match-preview-client.tsx`, `apply-match-summary.tsx`, and `_application-detail-client.tsx` — locate where the breakdown is rendered (typically near the Recompute / Apply Now button, or near the score-ring header) and add:
 
 ```tsx
-{score.calibrationWarnings && score.calibrationWarnings.length > 0 && (
-  <div
-    className="rounded-[var(--radius-pill)] px-4 py-2 text-xs"
-    style={{
-      backgroundColor: "var(--color-score-mid-soft)",
-      color: "var(--color-score-mid)",
-    }}
-  >
-    <span className="font-semibold">Heads up — </span>
-    This breakdown may be incomplete. Recompute to refresh.
-  </div>
-)}
+{
+  score.calibrationWarnings && score.calibrationWarnings.length > 0 && (
+    <div
+      className="rounded-[var(--radius-pill)] px-4 py-2 text-xs"
+      style={{
+        backgroundColor: "var(--color-score-mid-soft)",
+        color: "var(--color-score-mid)",
+      }}
+    >
+      <span className="font-semibold">Heads up — </span>
+      This breakdown may be incomplete. Recompute to refresh.
+    </div>
+  );
+}
 ```
 
 For `_profile-score-dashboard-client.tsx`, render the notice via the new `calibrationNotice` prop on `ScoreDashboard`:
@@ -982,6 +1010,7 @@ git commit -m "feat(web): surface reasoning + calibration-warning notice on all 
 ## Task 9: Add unit tests in `scoring.service.spec.ts`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.spec.ts`
 
 - [ ] **Step 9.1: Locate the existing `describe("detectCalibrationWarnings")` block**
@@ -1001,10 +1030,30 @@ it("fires `deduction_without_negative_evidence` for the screenshot failure mode 
     score: 20,
     max: 40,
     evidence: [
-      { excerpt: "TypeScript", source: "skills", relevance: "positive", contribution_points: 10 },
-      { excerpt: "Kubernetes", source: "skills", relevance: "positive", contribution_points: 10 },
-      { excerpt: "Go, Backstage, Bazel", source: "Job requirement › Required Skills", relevance: "neutral", contribution_points: 0 },
-      { excerpt: "JavaScript, React, Node.js, AWS, Docker", source: "skills", relevance: "neutral", contribution_points: 0 },
+      {
+        excerpt: "TypeScript",
+        source: "skills",
+        relevance: "positive",
+        contribution_points: 10,
+      },
+      {
+        excerpt: "Kubernetes",
+        source: "skills",
+        relevance: "positive",
+        contribution_points: 10,
+      },
+      {
+        excerpt: "Go, Backstage, Bazel",
+        source: "Job requirement › Required Skills",
+        relevance: "neutral",
+        contribution_points: 0,
+      },
+      {
+        excerpt: "JavaScript, React, Node.js, AWS, Docker",
+        source: "skills",
+        relevance: "neutral",
+        contribution_points: 0,
+      },
     ],
   });
   expect(warnings).toEqual([

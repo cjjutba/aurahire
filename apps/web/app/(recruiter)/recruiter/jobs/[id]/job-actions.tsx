@@ -96,8 +96,14 @@ export function JobActions({ id, status }: JobActionsProps) {
       }
 
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { message?: string };
-        toastApiError(null, "Couldn't publish job", body.message ?? `HTTP ${res.status}`);
+        const body = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
+        toastApiError(
+          null,
+          "Couldn't publish job",
+          body.message ?? `HTTP ${res.status}`,
+        );
         return;
       }
 
@@ -114,7 +120,8 @@ export function JobActions({ id, status }: JobActionsProps) {
   async function archive() {
     const ok = await confirm({
       title: "Archive this job?",
-      description: "Candidates will no longer see it. You can unarchive it later from your job list.",
+      description:
+        "Candidates will no longer see it. You can unarchive it later from your job list.",
       confirmLabel: "Archive job",
       variant: "destructive",
     });

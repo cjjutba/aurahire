@@ -67,8 +67,7 @@ export function FeedbackDetailSheetClient({ entryId, open, onClose }: Props) {
         setError("Not signed in");
         return;
       }
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
       const res = await fetch(`${apiUrl}/api/v1/admin/feedback/${entryId}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
         cache: "no-store",
@@ -108,8 +107,7 @@ export function FeedbackDetailSheetClient({ entryId, open, onClose }: Props) {
         toastApiError(null, "Sign-in required");
         return;
       }
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
       const body: Record<string, unknown> = {};
       if (pendingStatus !== detail.status) body.status = pendingStatus;
       const trimmedNote = pendingNote.trim() === "" ? null : pendingNote.trim();
@@ -157,9 +155,7 @@ export function FeedbackDetailSheetClient({ entryId, open, onClose }: Props) {
         className="w-full overflow-y-auto bg-[var(--color-canvas)] sm:max-w-2xl"
       >
         <SheetHeader>
-          <SheetTitle>
-            {detail ? detail.subject : "Loading…"}
-          </SheetTitle>
+          <SheetTitle>{detail ? detail.subject : "Loading…"}</SheetTitle>
           {detail ? (
             <p className="mt-1 text-xs text-[var(--color-muted)]">
               {detail.type.toUpperCase()}

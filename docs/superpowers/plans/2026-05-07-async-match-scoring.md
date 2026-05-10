@@ -58,6 +58,7 @@
 **Why first:** Several later tasks (DB column, DTO, service status writes) all depend on this enum being available from `@aurahire/shared`. Defining it once removes drift risk.
 
 **Files:**
+
 - Modify: `packages/shared/src/enums.ts`
 
 - [ ] **Step 1: Locate the existing enum block**
@@ -102,6 +103,7 @@ git commit -m "feat(shared): add APPLICATION_SCORE_STATUS enum for async scoring
 ## Task 2: Add `application.scored` realtime event schema
 
 **Files:**
+
 - Modify: `packages/shared/src/realtime/events.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -223,6 +225,7 @@ git commit -m "feat(shared): add application.scored realtime event schema"
 ## Task 3: Add `score_status` column to `applications` (schema + migration)
 
 **Files:**
+
 - Modify: `packages/db/src/schema.ts`
 - Create: `packages/db/drizzle/0008_application_score_status.sql`
 
@@ -231,7 +234,7 @@ git commit -m "feat(shared): add application.scored realtime event schema"
 In `packages/db/src/schema.ts`, near the top of the file ensure the import for `APPLICATION_SCORE_STATUS` exists. Find the existing `APPLICATION_STATUS` import:
 
 ```ts
-import { APPLICATION_STATUS, /* … */ } from "@aurahire/shared";
+import { APPLICATION_STATUS /* … */ } from "@aurahire/shared";
 ```
 
 Extend to:
@@ -311,6 +314,7 @@ Expected: silent success.
 This is the human-or-Claude-authorized step. Apply the migration:
 
 Tool call (Claude or human via MCP UI):
+
 ```
 mcp__plugin_supabase_supabase__apply_migration({
   project_id: "fzjvalmouygmmnrgpgtg",
@@ -324,6 +328,7 @@ Expected: `{ success: true }`.
 - [ ] **Step 5: Verify the column landed**
 
 Tool call:
+
 ```
 mcp__plugin_supabase_supabase__execute_sql({
   project_id: "fzjvalmouygmmnrgpgtg",
@@ -345,6 +350,7 @@ git commit -m "feat(db): add applications.score_status for async match scoring"
 ## Task 4: Batched redaction prompt v2.0.0 (the 14s → 1s win)
 
 **Files:**
+
 - Create: `apps/api/src/ai/prompts/redact-batch.ts`
 - Modify: `apps/api/src/ai/redact-pii.service.ts`
 - Modify: `apps/api/src/ai/redact-pii.service.spec.ts`
@@ -490,7 +496,8 @@ describe("RedactPiiService.redactResume batching", () => {
       generateText: jest.fn(),
     } as never);
 
-    const original = "Led 4-engineer team migrating legacy Express monolith to a NestJS-based service mesh.";
+    const original =
+      "Led 4-engineer team migrating legacy Express monolith to a NestJS-based service mesh.";
     const parsed = buildResume({
       summaryText: null,
       responsibilities: [[original]],
@@ -663,7 +670,7 @@ export class RedactPiiService {
 
 - [ ] **Step 5: Update audit fields downstream — `prompt_version`**
 
-The `match_scores.prompt_version` audit column has historically pointed at the *match* prompt, not the redaction prompt. Redaction tracking lives in `redacted_fields`. No code change is required here, but a thesis appendix note should record the bump 1.0.0 → 2.0.0.
+The `match_scores.prompt_version` audit column has historically pointed at the _match_ prompt, not the redaction prompt. Redaction tracking lives in `redacted_fields`. No code change is required here, but a thesis appendix note should record the bump 1.0.0 → 2.0.0.
 
 - [ ] **Step 6: Run the spec to verify GREEN**
 
@@ -687,6 +694,7 @@ git commit -m "feat(api): batch PII redaction into one structured call (prompt v
 ## Task 5: `MATCH_SCORE_QUEUE` constant + enqueue facade
 
 **Files:**
+
 - Modify: `apps/api/src/queue/queue.constants.ts`
 - Create: `apps/api/src/queue/match-score-queue.service.ts`
 - Modify: `apps/api/src/queue/queue.module.ts`
@@ -879,6 +887,7 @@ git commit -m "feat(api): add match-score BullMQ queue + enqueue facade"
 ## Task 6: Add `emitApplicationScored` to `EventsService`
 
 **Files:**
+
 - Modify: `apps/api/src/realtime/events.service.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -984,6 +993,7 @@ git commit -m "feat(api): emit application.scored event over realtime gateway"
 ## Task 7: `MatchScoreProcessor` — the BullMQ worker
 
 **Files:**
+
 - Create: `apps/api/src/modules/scoring/processors/match-score.processor.ts`
 - Modify: `apps/api/src/modules/scoring/scoring.module.ts`
 
@@ -1150,6 +1160,7 @@ git commit -m "feat(api): MatchScoreProcessor — async BullMQ worker for match 
 ## Task 8: Refactor `applications.service.ts` to enqueue instead of compute
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.service.ts`
 - Modify: `apps/api/src/modules/applications/applications.repository.ts`
 - Modify: `apps/api/src/modules/applications/dto/application-response.dto.ts`
@@ -1298,6 +1309,7 @@ git commit -m "feat(api): apply enqueues match-score job; returns 201 immediatel
 ## Task 9: Frontend — apply page redirects immediately
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/jobs/[id]/apply/_apply-form-client.tsx`
 
 - [ ] **Step 1: Strip the synchronous AiShimmer wait state**
@@ -1343,6 +1355,7 @@ git commit -m "feat(web): apply page redirects immediately; wait UI moves to det
 ## Task 10: Frontend — application detail page shows shimmer + listens for `application.scored`
 
 **Files:**
+
 - Create: `apps/web/app/(candidate)/candidate/applications/[id]/_application-scored-client.tsx`
 - Modify: `apps/web/app/(candidate)/candidate/applications/[id]/page.tsx`
 - Modify: `apps/web/hooks/use-applications.ts`
@@ -1418,10 +1431,7 @@ Create `apps/web/app/(candidate)/candidate/applications/[id]/_application-scored
 
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
-  RealtimeEvent,
-  type ApplicationScoredPayload,
-} from "@aurahire/shared";
+import { RealtimeEvent, type ApplicationScoredPayload } from "@aurahire/shared";
 
 import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 

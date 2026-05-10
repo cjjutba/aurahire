@@ -28,10 +28,7 @@ export default function Loading() {
             <Skeleton className="mb-3 h-3 w-40" />
             <ul className="space-y-1">
               {Array.from({ length: 4 }).map((_, i) => (
-                <li
-                  key={i}
-                  className="rounded-[var(--radius-md)] px-3 py-2.5"
-                >
+                <li key={i} className="rounded-[var(--radius-md)] px-3 py-2.5">
                   <div className="flex items-baseline justify-between gap-2">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-3 w-12" />

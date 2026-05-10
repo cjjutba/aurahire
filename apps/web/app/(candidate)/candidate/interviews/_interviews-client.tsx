@@ -26,7 +26,10 @@ interface InterviewRow {
   company?: { id: string; name: string; logoUrl: string | null } | null;
 }
 
-const STATUS_STYLES: Record<string, { label: string; dot: string; text: string }> = {
+const STATUS_STYLES: Record<
+  string,
+  { label: string; dot: string; text: string }
+> = {
   scheduled: {
     label: "Scheduled",
     dot: "bg-[var(--color-status-info)]",
@@ -91,7 +94,9 @@ interface CandidateInterviewsClientProps {
   };
 }
 
-export function CandidateInterviewsClient({ params }: CandidateInterviewsClientProps) {
+export function CandidateInterviewsClient({
+  params,
+}: CandidateInterviewsClientProps) {
   const queryClient = useQueryClient();
   const { data, isError } = useMyInterviewsQuery({});
 
@@ -103,10 +108,7 @@ export function CandidateInterviewsClient({ params }: CandidateInterviewsClientP
     queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
   });
 
-  const all = useMemo(
-    () => (data?.data ?? []) as InterviewRow[],
-    [data?.data],
-  );
+  const all = useMemo(() => (data?.data ?? []) as InterviewRow[], [data?.data]);
 
   const filtered = useMemo(() => {
     let rows = [...all];
@@ -205,7 +207,11 @@ export function CandidateInterviewsClient({ params }: CandidateInterviewsClientP
 
       {/* Table or empty state */}
       {rows.length === 0 ? (
-        filtersActive ? <EmptyFiltered /> : <EmptyInterviews />
+        filtersActive ? (
+          <EmptyFiltered />
+        ) : (
+          <EmptyInterviews />
+        )
       ) : (
         <>
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)]">
@@ -294,7 +300,9 @@ function InterviewRowEl({ row }: { row: InterviewRow }) {
       </td>
       <td className="px-4 py-3">
         <div className="text-[var(--color-ink)]">{when.date}</div>
-        <div className="font-mono text-xs text-[var(--color-muted)]">{when.time}</div>
+        <div className="font-mono text-xs text-[var(--color-muted)]">
+          {when.time}
+        </div>
       </td>
       <td className="px-4 py-3 text-[var(--color-body)]">
         {formatLabel(row.format)}
@@ -306,7 +314,10 @@ function InterviewRowEl({ row }: { row: InterviewRow }) {
         <span
           className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
         >
-          <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+            aria-hidden
+          />
           {status.label}
         </span>
       </td>

@@ -23,13 +23,23 @@ interface FieldInputProps {
   required?: boolean;
 }
 
-function FieldInput({ label, value, onChange, disabled, placeholder, required = false }: FieldInputProps) {
+function FieldInput({
+  label,
+  value,
+  onChange,
+  disabled,
+  placeholder,
+  required = false,
+}: FieldInputProps) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-[11px] font-semibold text-[var(--color-ink)]">
         {label}
         {required && (
-          <span aria-hidden className="text-[var(--color-status-danger)]"> *</span>
+          <span aria-hidden className="text-[var(--color-status-danger)]">
+            {" "}
+            *
+          </span>
         )}
       </label>
       <input
@@ -50,7 +60,12 @@ interface Props {
   onDelete: () => void;
 }
 
-export function ExperienceCard({ entry, defaultExpanded = false, onSave, onDelete }: Props) {
+export function ExperienceCard({
+  entry,
+  defaultExpanded = false,
+  onSave,
+  onDelete,
+}: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [draft, setDraft] = useState<ExperienceEntry>(entry);
 
@@ -66,7 +81,8 @@ export function ExperienceCard({ entry, defaultExpanded = false, onSave, onDelet
               {entry.title || "Untitled"} · {entry.company || "—"}
             </div>
             <div className="font-mono text-xs text-[var(--color-muted)]">
-              {entry.start_date ?? "?"} – {entry.is_current ? "Present" : (entry.end_date ?? "?")}
+              {entry.start_date ?? "?"} –{" "}
+              {entry.is_current ? "Present" : (entry.end_date ?? "?")}
             </div>
           </div>
           <div className="flex gap-2 opacity-0 transition group-hover:opacity-100">
@@ -92,8 +108,18 @@ export function ExperienceCard({ entry, defaultExpanded = false, onSave, onDelet
   return (
     <div className="rounded-xl border-2 border-[var(--color-primary)] bg-[var(--color-canvas)] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <FieldInput label="Title" required value={draft.title} onChange={(v) => setDraft({ ...draft, title: v })} />
-        <FieldInput label="Company" required value={draft.company} onChange={(v) => setDraft({ ...draft, company: v })} />
+        <FieldInput
+          label="Title"
+          required
+          value={draft.title}
+          onChange={(v) => setDraft({ ...draft, title: v })}
+        />
+        <FieldInput
+          label="Company"
+          required
+          value={draft.company}
+          onChange={(v) => setDraft({ ...draft, company: v })}
+        />
         <FieldInput
           label="Start (YYYY-MM)"
           value={draft.start_date ?? ""}
@@ -105,7 +131,9 @@ export function ExperienceCard({ entry, defaultExpanded = false, onSave, onDelet
           value={draft.is_current ? "" : (draft.end_date ?? "")}
           placeholder="2023-06"
           disabled={draft.is_current}
-          onChange={(v) => setDraft({ ...draft, end_date: v || null, is_current: false })}
+          onChange={(v) =>
+            setDraft({ ...draft, end_date: v || null, is_current: false })
+          }
         />
         <label className="col-span-full flex items-center gap-2 text-xs">
           <input
@@ -124,7 +152,9 @@ export function ExperienceCard({ entry, defaultExpanded = false, onSave, onDelet
       </div>
 
       <div className="mt-4">
-        <div className="mb-1 text-xs font-semibold text-[var(--color-ink)]">Responsibilities</div>
+        <div className="mb-1 text-xs font-semibold text-[var(--color-ink)]">
+          Responsibilities
+        </div>
         {draft.responsibilities.map((r, i) => (
           <div key={i} className="mb-2 flex gap-2">
             <textarea
@@ -143,7 +173,9 @@ export function ExperienceCard({ entry, defaultExpanded = false, onSave, onDelet
               onClick={() =>
                 setDraft({
                   ...draft,
-                  responsibilities: draft.responsibilities.filter((_, j) => j !== i),
+                  responsibilities: draft.responsibilities.filter(
+                    (_, j) => j !== i,
+                  ),
                 })
               }
             >
@@ -153,7 +185,12 @@ export function ExperienceCard({ entry, defaultExpanded = false, onSave, onDelet
         ))}
         <button
           className="text-xs font-semibold text-[var(--color-primary)] underline"
-          onClick={() => setDraft({ ...draft, responsibilities: [...draft.responsibilities, ""] })}
+          onClick={() =>
+            setDraft({
+              ...draft,
+              responsibilities: [...draft.responsibilities, ""],
+            })
+          }
         >
           + Add bullet
         </button>

@@ -70,12 +70,21 @@ export interface ScoreDashboardProps {
 
 function bandColors(ratio: number): { fill: string; track: string } {
   if (ratio >= 0.7) {
-    return { fill: "var(--color-score-high)", track: "var(--color-score-high-soft)" };
+    return {
+      fill: "var(--color-score-high)",
+      track: "var(--color-score-high-soft)",
+    };
   }
   if (ratio >= 0.4) {
-    return { fill: "var(--color-score-mid)", track: "var(--color-score-mid-soft)" };
+    return {
+      fill: "var(--color-score-mid)",
+      track: "var(--color-score-mid-soft)",
+    };
   }
-  return { fill: "var(--color-score-low)", track: "var(--color-score-low-soft)" };
+  return {
+    fill: "var(--color-score-low)",
+    track: "var(--color-score-low-soft)",
+  };
 }
 
 function trimQuotes(s: string): string {
@@ -219,7 +228,9 @@ function ComponentRow({
           <span className="font-mono text-xs text-[var(--color-muted)]">
             <span
               className={
-                selected ? "text-[var(--color-primary)]" : "text-[var(--color-ink)]"
+                selected
+                  ? "text-[var(--color-primary)]"
+                  : "text-[var(--color-ink)]"
               }
             >
               {c.score}
@@ -274,7 +285,10 @@ function ActiveComponentPanel({
         <div className="text-right">
           <div className="font-mono text-xl text-[var(--color-ink)]">
             {c.score}
-            <span className="text-sm text-[var(--color-muted)]"> / {c.max}</span>
+            <span className="text-sm text-[var(--color-muted)]">
+              {" "}
+              / {c.max}
+            </span>
           </div>
           <div
             className="mt-1 h-1.5 w-32 overflow-hidden rounded-[var(--radius-pill)]"
@@ -383,7 +397,11 @@ function EvidenceGroup({
   );
 }
 
-function FairnessDisclosure({ fairness: f }: { fairness: ScoreDashboardFairness }) {
+function FairnessDisclosure({
+  fairness: f,
+}: {
+  fairness: ScoreDashboardFairness;
+}) {
   return (
     <details className="group rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-5">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3">

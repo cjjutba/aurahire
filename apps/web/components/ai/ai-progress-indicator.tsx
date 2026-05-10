@@ -90,9 +90,7 @@ export function AiProgressIndicator({
 
   const displayPct = Math.round(Math.min(percent, 100));
   const stage = stages[stageIdx];
-  const label = done
-    ? "Done"
-    : (stage?.label ?? fallbackCaption);
+  const label = done ? "Done" : (stage?.label ?? fallbackCaption);
 
   return (
     <div

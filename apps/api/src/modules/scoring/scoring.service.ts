@@ -110,10 +110,7 @@ export function deriveOverallScore(
  */
 export function normalizeComponentsToWeights<
   C extends { name: string; score: number; max: number; weight: number },
->(
-  components: ReadonlyArray<C>,
-  weights: Record<string, number>,
-): C[] {
+>(components: ReadonlyArray<C>, weights: Record<string, number>): C[] {
   return components.map((c) => {
     const configuredMax = weights[c.name] ?? c.max;
     return {
@@ -154,10 +151,18 @@ export function reconcileEvidenceContributions<
 ): {
   component: C;
   residual: number;
-  quantizationDeltas: Array<{ evidenceIndex: number; original: number; quantized: number }>;
+  quantizationDeltas: Array<{
+    evidenceIndex: number;
+    original: number;
+    quantized: number;
+  }>;
 } {
   const aiScore = component.score;
-  const quantizationDeltas: Array<{ evidenceIndex: number; original: number; quantized: number }> = [];
+  const quantizationDeltas: Array<{
+    evidenceIndex: number;
+    original: number;
+    quantized: number;
+  }> = [];
 
   const reconciled = component.evidence.map((ev, evidenceIndex) => {
     const original = Number(ev.contribution_points) || 0;
@@ -170,7 +175,10 @@ export function reconcileEvidenceContributions<
     return { ...ev, contribution_points: quantized, relevance };
   });
 
-  const derivedRaw = reconciled.reduce((sum, ev) => sum + ev.contribution_points, 0);
+  const derivedRaw = reconciled.reduce(
+    (sum, ev) => sum + ev.contribution_points,
+    0,
+  );
   const derived = Math.max(0, Math.min(component.max, derivedRaw));
 
   return {
@@ -203,21 +211,30 @@ export type CalibrationWarningReason =
  *      evidence row carries a negative contribution. The deduction has no
  *      visible justification.
  */
-export function detectCalibrationWarnings<C extends {
-  name: string;
-  score: number;
-  max: number;
-  evidence: Array<{
-    excerpt: string;
-    source: string;
-    relevance: "positive" | "negative" | "neutral";
-    contribution_points: number;
-  }>;
-}>(component: C): Array<{ componentName: string; reason: CalibrationWarningReason }> {
-  const warnings: Array<{ componentName: string; reason: CalibrationWarningReason }> = [];
+export function detectCalibrationWarnings<
+  C extends {
+    name: string;
+    score: number;
+    max: number;
+    evidence: Array<{
+      excerpt: string;
+      source: string;
+      relevance: "positive" | "negative" | "neutral";
+      contribution_points: number;
+    }>;
+  },
+>(
+  component: C,
+): Array<{ componentName: string; reason: CalibrationWarningReason }> {
+  const warnings: Array<{
+    componentName: string;
+    reason: CalibrationWarningReason;
+  }> = [];
 
   if (component.score === component.max) {
-    const positives = component.evidence.filter((e) => e.relevance === "positive");
+    const positives = component.evidence.filter(
+      (e) => e.relevance === "positive",
+    );
     if (positives.length < 2) {
       warnings.push({
         componentName: component.name,
@@ -227,7 +244,9 @@ export function detectCalibrationWarnings<C extends {
   }
 
   if (component.score < component.max) {
-    const negatives = component.evidence.filter((e) => e.relevance === "negative");
+    const negatives = component.evidence.filter(
+      (e) => e.relevance === "negative",
+    );
     if (negatives.length === 0) {
       warnings.push({
         componentName: component.name,
@@ -441,7 +460,9 @@ export class ScoringService {
     // ThrottlerGuard on ScoringController.computeProfile enforces 1/60s PER IP.
     // Both layers are valuable — a determined attacker rotating IPs would
     // bypass Throttler but not this user-keyed check.
-    const lastScore = await this.scoringRepo.findMostRecentProfileScore(user.id);
+    const lastScore = await this.scoringRepo.findMostRecentProfileScore(
+      user.id,
+    );
     if (lastScore) {
       const elapsedMs = Date.now() - lastScore.createdAt.getTime();
       if (elapsedMs < 60_000) {
@@ -456,7 +477,9 @@ export class ScoringService {
       }
     }
 
-    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(user.id);
+    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(
+      user.id,
+    );
     if (!defaultResume) {
       throw new BadRequestException({
         code: "NO_DEFAULT_RESUME",
@@ -488,7 +511,8 @@ export class ScoringService {
       requestMeta?: RequestMeta;
     } = {},
   ): Promise<ProfileScoreDto> {
-    const reason: ProfileScoreRecomputeReason = options.reason ?? "manual_recompute";
+    const reason: ProfileScoreRecomputeReason =
+      options.reason ?? "manual_recompute";
     const requestMeta = options.requestMeta ?? {};
 
     const resume = await this.resumesRepo.findById(resumeId);
@@ -505,7 +529,8 @@ export class ScoringService {
       });
     }
 
-    const candidateProfile = await this.profilesRepo.findCandidateProfile(candidateId);
+    const candidateProfile =
+      await this.profilesRepo.findCandidateProfile(candidateId);
     if (!candidateProfile) {
       throw new BadRequestException({
         code: "PROFILE_INCOMPLETE",
@@ -542,9 +567,10 @@ export class ScoringService {
       parsedResume,
       weights.completeness,
     );
-    const componentsWithDeterministicCompleteness = aiResult.score.components.map(
-      (c) => (c.name === "completeness" ? completenessOverride : c),
-    );
+    const componentsWithDeterministicCompleteness =
+      aiResult.score.components.map((c) =>
+        c.name === "completeness" ? completenessOverride : c,
+      );
 
     // Engine-enforced arithmetic: components are normalized against the
     // configured weights (so a model that fabricates its own maxes can't
@@ -601,7 +627,10 @@ export class ScoringService {
         resumeId: resume.id,
         overallScore: derivedOverall,
         band: derivedBand,
-        components: reconciledProfileComponents as unknown as Record<string, unknown>,
+        components: reconciledProfileComponents as unknown as Record<
+          string,
+          unknown
+        >,
         improvementSuggestions: aiResult.score
           .improvement_suggestions as unknown as Record<string, unknown>,
         redactedFields: aiResult.redactedFields,
@@ -682,7 +711,9 @@ export class ScoringService {
       tags: [TAGS.profileScore(user.id)],
       telemetryName: "profile-score:read",
       load: async () => {
-        const score = await this.scoringRepo.findMostRecentProfileScore(user.id);
+        const score = await this.scoringRepo.findMostRecentProfileScore(
+          user.id,
+        );
         if (!score) return null;
 
         return this.fromDbRow(score);
@@ -693,7 +724,12 @@ export class ScoringService {
   private toDto(
     scoreId: string,
     score: ProfileScoreOutput,
-    aiMeta: { latencyMs: number; model: string; promptVersion: string; redactedFields: string[] },
+    aiMeta: {
+      latencyMs: number;
+      model: string;
+      promptVersion: string;
+      redactedFields: string[];
+    },
     createdAt: Date,
     overallOverride?: number,
     bandOverride?: "strong" | "partial" | "limited",
@@ -744,9 +780,11 @@ export class ScoringService {
   }
 
   private fromDbRow(row: DbProfileScore): ProfileScoreDto {
-    const components = (row.components as ProfileScoreOutput["components"]) ?? [];
+    const components =
+      (row.components as ProfileScoreOutput["components"]) ?? [];
     const suggestions =
-      (row.improvementSuggestions as ProfileScoreOutput["improvement_suggestions"]) ?? [];
+      (row.improvementSuggestions as ProfileScoreOutput["improvement_suggestions"]) ??
+      [];
 
     const calibrationWarnings = components.flatMap((c) =>
       detectCalibrationWarnings({
@@ -884,7 +922,9 @@ export class ScoringService {
     const matchReconciliations = normalizedMatchComponents.map((c) =>
       reconcileEvidenceContributions(c),
     );
-    const reconciledMatchComponents = matchReconciliations.map((r) => r.component);
+    const reconciledMatchComponents = matchReconciliations.map(
+      (r) => r.component,
+    );
     const matchScoreResiduals = matchReconciliations
       .filter((r) => r.residual !== 0)
       .map((r) => ({
@@ -892,13 +932,14 @@ export class ScoringService {
         aiScore: r.component.score + r.residual,
         derivedScore: r.component.score,
       }));
-    const matchEvidenceQuantizationResiduals = matchReconciliations.flatMap((r) =>
-      r.quantizationDeltas.map((d) => ({
-        componentName: r.component.name,
-        evidenceIndex: d.evidenceIndex,
-        original: d.original,
-        quantized: d.quantized,
-      })),
+    const matchEvidenceQuantizationResiduals = matchReconciliations.flatMap(
+      (r) =>
+        r.quantizationDeltas.map((d) => ({
+          componentName: r.component.name,
+          evidenceIndex: d.evidenceIndex,
+          original: d.original,
+          quantized: d.quantized,
+        })),
     );
     const matchCalibrationWarnings = reconciledMatchComponents.flatMap((c) =>
       detectCalibrationWarnings(c),
@@ -925,7 +966,10 @@ export class ScoringService {
         resumeId,
         overallScore: derivedOverall,
         band: derivedBand,
-        components: reconciledMatchComponents as unknown as Record<string, unknown>,
+        components: reconciledMatchComponents as unknown as Record<
+          string,
+          unknown
+        >,
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
         promptVersion: aiResult.promptVersion,
@@ -1029,7 +1073,8 @@ export class ScoringService {
   async getMatchScoreByApplicationId(
     applicationId: string,
   ): Promise<MatchScoreDto | null> {
-    const row = await this.scoringRepo.findMatchScoreByApplicationId(applicationId);
+    const row =
+      await this.scoringRepo.findMatchScoreByApplicationId(applicationId);
     if (!row) return null;
 
     const components = (row.components as MatchScoreOutput["components"]) ?? [];
@@ -1145,7 +1190,8 @@ export class ScoringService {
     const candidateId = user.id;
 
     // 1. Resolve the candidate's current default resume.
-    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(candidateId);
+    const defaultResume =
+      await this.resumesRepo.findDefaultByCandidateId(candidateId);
     if (!defaultResume) {
       throw new BadRequestException({
         code: "NO_DEFAULT_RESUME",
@@ -1287,7 +1333,9 @@ export class ScoringService {
     const previewReconciliations = normalizedPreviewComponents.map((c) =>
       reconcileEvidenceContributions(c),
     );
-    const reconciledPreviewComponents = previewReconciliations.map((r) => r.component);
+    const reconciledPreviewComponents = previewReconciliations.map(
+      (r) => r.component,
+    );
     const previewScoreResiduals = previewReconciliations
       .filter((r) => r.residual !== 0)
       .map((r) => ({
@@ -1295,16 +1343,17 @@ export class ScoringService {
         aiScore: r.component.score + r.residual,
         derivedScore: r.component.score,
       }));
-    const previewEvidenceQuantizationResiduals = previewReconciliations.flatMap((r) =>
-      r.quantizationDeltas.map((d) => ({
-        componentName: r.component.name,
-        evidenceIndex: d.evidenceIndex,
-        original: d.original,
-        quantized: d.quantized,
-      })),
+    const previewEvidenceQuantizationResiduals = previewReconciliations.flatMap(
+      (r) =>
+        r.quantizationDeltas.map((d) => ({
+          componentName: r.component.name,
+          evidenceIndex: d.evidenceIndex,
+          original: d.original,
+          quantized: d.quantized,
+        })),
     );
-    const previewCalibrationWarnings = reconciledPreviewComponents.flatMap((c) =>
-      detectCalibrationWarnings(c),
+    const previewCalibrationWarnings = reconciledPreviewComponents.flatMap(
+      (c) => detectCalibrationWarnings(c),
     );
 
     const derivedOverall = deriveOverallScore(reconciledPreviewComponents);
@@ -1316,7 +1365,10 @@ export class ScoringService {
       resumeId: defaultResume.id,
       overallScore: derivedOverall,
       band: derivedBand,
-      components: reconciledPreviewComponents as unknown as Record<string, unknown>,
+      components: reconciledPreviewComponents as unknown as Record<
+        string,
+        unknown
+      >,
       redactedFields: aiResult.redactedFields,
       weightsUsed: weights as unknown as Record<string, unknown>,
       promptVersion: aiResult.promptVersion,
@@ -1438,9 +1490,7 @@ export class ScoringService {
       jobIds.map((id) => this.jobsRepo.findByIdWithCompany(id)),
     );
     const jobsById = new Map(
-      jobs
-        .filter((j): j is NonNullable<typeof j> => !!j)
-        .map((j) => [j.id, j]),
+      jobs.filter((j): j is NonNullable<typeof j> => !!j).map((j) => [j.id, j]),
     );
 
     return rows.map((row) => {
@@ -1468,7 +1518,8 @@ export class ScoringService {
    * candidate's current default resume.
    */
   async invalidatePreviewsForResume(resumeId: string): Promise<void> {
-    const deleted = await this.scoringRepo.deleteMatchPreviewsByResume(resumeId);
+    const deleted =
+      await this.scoringRepo.deleteMatchPreviewsByResume(resumeId);
     if (deleted > 0) {
       this.logger.log(
         `Invalidated ${deleted} match preview(s) for resume ${resumeId}`,
@@ -1525,7 +1576,12 @@ export class ScoringService {
   private matchScoreToDto(
     scoreId: string,
     score: MatchScoreOutput,
-    aiMeta: { latencyMs: number; model: string; promptVersion: string; redactedFields: string[] },
+    aiMeta: {
+      latencyMs: number;
+      model: string;
+      promptVersion: string;
+      redactedFields: string[];
+    },
     createdAt: Date,
     overallOverride?: number,
     bandOverride?: "strong" | "partial" | "limited",

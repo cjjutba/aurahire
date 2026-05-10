@@ -100,9 +100,7 @@ export class FeedbackRepository {
           ? conditions[0]
           : and(...conditions);
 
-    const countQuery = this.db
-      .select({ count: count() })
-      .from(feedbackTable);
+    const countQuery = this.db.select({ count: count() }).from(feedbackTable);
     const countRows = await (where ? countQuery.where(where) : countQuery);
     const total = Number(countRows[0]?.count ?? 0);
 
@@ -165,7 +163,10 @@ export class FeedbackRepository {
     return {
       feedback: row.feedback,
       submitter:
-        row.submitterId && row.submitterFullName && row.submitterEmail && row.submitterRole
+        row.submitterId &&
+        row.submitterFullName &&
+        row.submitterEmail &&
+        row.submitterRole
           ? {
               id: row.submitterId,
               fullName: row.submitterFullName,

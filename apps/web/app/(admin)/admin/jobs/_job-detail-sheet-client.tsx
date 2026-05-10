@@ -58,8 +58,7 @@ export function JobDetailSheetClient({ jobId, open, onClose }: Props) {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) return;
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
       const res = await fetch(`${apiUrl}/api/v1/admin/jobs/${jobId}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
         cache: "no-store",
@@ -94,15 +93,11 @@ export function JobDetailSheetClient({ jobId, open, onClose }: Props) {
         toastApiError(null, "Couldn't archive job", "Please sign in again.");
         return;
       }
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-      const res = await fetch(
-        `${apiUrl}/api/v1/admin/jobs/${jobId}/archive`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        },
-      );
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const res = await fetch(`${apiUrl}/api/v1/admin/jobs/${jobId}/archive`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
       if (!res.ok) {
         toastApiError(null, "Couldn't archive job");
         return;
@@ -166,11 +161,7 @@ export function JobDetailSheetClient({ jobId, open, onClose }: Props) {
                       id: f.id,
                       term: f.term,
                       category: f.category,
-                      severity: f.severity as
-                        | "high"
-                        | "medium"
-                        | "low"
-                        | null,
+                      severity: f.severity as "high" | "medium" | "low" | null,
                       status: f.status,
                       explanation: null,
                       suggestion: null,

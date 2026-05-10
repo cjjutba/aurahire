@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-} from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { AuthUser } from "@aurahire/shared";
 
 import { AuditService } from "../../../audit";
@@ -32,7 +28,9 @@ export class AdminCompaniesService {
     private readonly audit: AuditService,
   ) {}
 
-  async list(query: ListAdminCompaniesQuery): Promise<AdminCompanyListEnvelopeDto> {
+  async list(
+    query: ListAdminCompaniesQuery,
+  ): Promise<AdminCompanyListEnvelopeDto> {
     const { rows, total } = await this.repo.list({
       q: query.q,
       page: query.page,
@@ -86,9 +84,7 @@ export class AdminCompaniesService {
       userAgent: requestMeta.userAgent ?? null,
     });
 
-    this.logger.log(
-      `Admin ${user.id} deleted company ${id} (${company.name})`,
-    );
+    this.logger.log(`Admin ${user.id} deleted company ${id} (${company.name})`);
 
     return { deleted: true, companyId: id };
   }

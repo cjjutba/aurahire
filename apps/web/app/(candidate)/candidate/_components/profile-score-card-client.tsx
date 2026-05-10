@@ -32,7 +32,9 @@ interface ProfileScoreCardClientProps {
   candidateId: string | null;
 }
 
-export function ProfileScoreCardClient({ candidateId }: ProfileScoreCardClientProps) {
+export function ProfileScoreCardClient({
+  candidateId,
+}: ProfileScoreCardClientProps) {
   const qc = useQueryClient();
   const query = useProfileScoreQuery();
   const score = (query.data as { data?: ProfileScore })?.data ?? null;
@@ -73,9 +75,12 @@ export function ProfileScoreCardClient({ candidateId }: ProfileScoreCardClientPr
 
   const recompute = useMutation({
     mutationFn: () =>
-      clientApiFetch<{ data: ProfileScore }>("/api/v1/scoring/profile/compute", {
-        method: "POST",
-      }),
+      clientApiFetch<{ data: ProfileScore }>(
+        "/api/v1/scoring/profile/compute",
+        {
+          method: "POST",
+        },
+      ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.profileScore.me() });
       toastSuccess("Score recalculated");
@@ -122,7 +127,8 @@ export function ProfileScoreCardClient({ candidateId }: ProfileScoreCardClientPr
               We couldn&rsquo;t compute your score yet.
             </p>
             <p className="text-xs text-[var(--color-muted)]">
-              This usually self-resolves within a minute. You can also try again now.
+              This usually self-resolves within a minute. You can also try again
+              now.
             </p>
             <button
               type="button"

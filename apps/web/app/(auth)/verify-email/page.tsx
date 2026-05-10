@@ -9,7 +9,10 @@ export default function VerifyEmailPage() {
   return (
     <Suspense
       fallback={
-        <AuthShell title="Verifying your email..." subtitle="This will only take a moment." />
+        <AuthShell
+          title="Verifying your email..."
+          subtitle="This will only take a moment."
+        />
       }
     >
       <VerifyEmailClient />

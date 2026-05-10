@@ -46,7 +46,8 @@ export function useDebouncedBiasCheck(descriptionPlain: string): {
         } = await supabase.auth.getSession();
         if (!session) return;
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
         const activeCompanyId = getActiveCompanyId();
         const res = await fetch(`${apiUrl}/api/v1/bias/check`, {
           method: "POST",
@@ -66,7 +67,9 @@ export function useDebouncedBiasCheck(descriptionPlain: string): {
         if (res.status === 429) return;
         if (!res.ok) return;
 
-        const body = (await res.json()) as { data: { flags: BiasFlagPreview[] } };
+        const body = (await res.json()) as {
+          data: { flags: BiasFlagPreview[] };
+        };
         setFlags(body.data.flags);
       } catch (err) {
         if ((err as Error).name === "AbortError") return;

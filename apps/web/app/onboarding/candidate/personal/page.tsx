@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
 import { PersonalStepClient } from "./_client";
-import {
-  fetchCandidateProfileMe,
-  fetchLatestParsedResume,
-} from "../_data";
+import { fetchCandidateProfileMe, fetchLatestParsedResume } from "../_data";
 import { getCurrentSession } from "@/lib/auth/session";
 
 export const metadata = { title: "Personal Info — Onboarding" };
@@ -36,14 +33,16 @@ export default async function Step2Page() {
     summary: me.summary ?? parsedSummary?.text ?? "",
     locationCity: me.locationCity ?? parsedContact?.location_city ?? "",
     locationRegion: me.locationRegion ?? "",
-    locationCountry: me.locationCountry ?? parsedContact?.location_country ?? "",
+    locationCountry:
+      me.locationCountry ?? parsedContact?.location_country ?? "",
   };
 
   const aiSuggestedFields: Partial<Record<keyof typeof defaults, boolean>> = {};
   if (!me.phone && parsedContact?.phone) aiSuggestedFields.phone = true;
   if (!me.headline && parsedHeadline) aiSuggestedFields.headline = true;
   if (!me.summary && parsedSummary?.text) aiSuggestedFields.summary = true;
-  if (!me.locationCity && parsedContact?.location_city) aiSuggestedFields.locationCity = true;
+  if (!me.locationCity && parsedContact?.location_city)
+    aiSuggestedFields.locationCity = true;
   if (!me.locationCountry && parsedContact?.location_country)
     aiSuggestedFields.locationCountry = true;
 

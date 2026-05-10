@@ -37,16 +37,19 @@ Ship the full enterprise-grade post-application flow in one bundle:
 ### In scope
 
 **Schema (`packages/db/`)**
+
 - `interviewsTable` — add 13 columns; deprecate `location_or_link`; extend `INTERVIEW_STATUS` enum with `rescheduled`.
 - New table `interview_venues` (per-company reusable templates) + RLS.
 - `applications` — no new columns (status flag already represents the funnel).
 - State machine update: `applied → interview` and `* → withdrawn` from any non-terminal stage.
 
 **Shared types (`packages/shared/`)**
+
 - New Zod schemas: `ScheduleInterviewInputV2` (with venue fields), `RescheduleInterviewInput`, `ShareInterviewFeedbackInput`, `SetInterviewRecommendationInput`, `WithdrawApplicationInput`, `InterviewVenue` CRUD shapes.
 - Updated `UpdateInterviewFeedbackInput` to include `recommendation`.
 
 **Backend (`apps/api/`)**
+
 - `applications` module:
   - State machine relaxation (state-machine.ts).
   - New `POST /api/v1/applications/:id/withdraw` (candidate auth required).
@@ -68,6 +71,7 @@ Ship the full enterprise-grade post-application flow in one bundle:
 - Audit actions added (see §Audit).
 
 **Web (`apps/web/`)**
+
 - Recruiter — application detail (`/recruiter/applications/[id]`):
   - Decision bar adds "Move to Interview" CTA when status=`applied`.
   - Replaces today's flat Interviews section with an Interview Pipeline panel: active interview card (full venue display + actions), past-interviews accordion, "Schedule another" button.
@@ -119,30 +123,33 @@ Ship the full enterprise-grade post-application flow in one bundle:
 
 ### `interviews` table (changes to existing)
 
-| Column | Type | Constraints | Purpose |
-|---|---|---|---|
-| `venue_name` | text | NOT NULL DEFAULT '' | Primary venue label, e.g. "JRMSU Main Campus" |
-| `address_line` | text | NOT NULL DEFAULT '' | Full street address |
-| `room_or_floor` | text | NULL | "ICT Building, Room 305" |
-| `map_url` | text | NULL | Google Maps URL (sanitized) |
-| `reporting_instructions` | text | NULL | "Arrive 15 min early; check in at front desk" |
-| `what_to_bring` | text | NULL | "1 valid ID, printed resume" |
-| `interviewer_name` | text | NULL | Defaults to scheduling recruiter |
-| `interviewer_title` | text | NULL | "Senior Engineering Manager" |
-| `candidate_summary` | text | NULL | Sanitized feedback shown to candidate |
-| `recommendation` | text | NULL, enum: `proceed \| hold \| reject` | Recruiter's post-interview call |
-| `shared_with_candidate_at` | timestamptz | NULL | When `candidate_summary` was last shared |
-| `rescheduled_from_id` | uuid | NULL FK→interviews(id) ON DELETE SET NULL | Back-pointer in reschedule chain |
-| `rescheduled_to_id` | uuid | NULL FK→interviews(id) ON DELETE SET NULL | Forward-pointer in reschedule chain |
+| Column                     | Type        | Constraints                               | Purpose                                       |
+| -------------------------- | ----------- | ----------------------------------------- | --------------------------------------------- |
+| `venue_name`               | text        | NOT NULL DEFAULT ''                       | Primary venue label, e.g. "JRMSU Main Campus" |
+| `address_line`             | text        | NOT NULL DEFAULT ''                       | Full street address                           |
+| `room_or_floor`            | text        | NULL                                      | "ICT Building, Room 305"                      |
+| `map_url`                  | text        | NULL                                      | Google Maps URL (sanitized)                   |
+| `reporting_instructions`   | text        | NULL                                      | "Arrive 15 min early; check in at front desk" |
+| `what_to_bring`            | text        | NULL                                      | "1 valid ID, printed resume"                  |
+| `interviewer_name`         | text        | NULL                                      | Defaults to scheduling recruiter              |
+| `interviewer_title`        | text        | NULL                                      | "Senior Engineering Manager"                  |
+| `candidate_summary`        | text        | NULL                                      | Sanitized feedback shown to candidate         |
+| `recommendation`           | text        | NULL, enum: `proceed \| hold \| reject`   | Recruiter's post-interview call               |
+| `shared_with_candidate_at` | timestamptz | NULL                                      | When `candidate_summary` was last shared      |
+| `rescheduled_from_id`      | uuid        | NULL FK→interviews(id) ON DELETE SET NULL | Back-pointer in reschedule chain              |
+| `rescheduled_to_id`        | uuid        | NULL FK→interviews(id) ON DELETE SET NULL | Forward-pointer in reschedule chain           |
 
 Existing column changes:
+
 - `format` — default changed to `'in-person'`. Enum remains `phone | video | in-person` for forward-compat. UI hides selector.
 - `location_or_link` — kept for legacy reads. Backfill copies value into `address_line` if `address_line` is empty.
 
 Enum changes:
+
 - `INTERVIEW_STATUS` adds `'rescheduled'`. New full set: `scheduled | completed | cancelled | no-show | rescheduled`.
 
 Indexes (new):
+
 - `interviews_recommendation_idx` on `(application_id, recommendation)` — supports the decision panel query.
 - `interviews_shared_idx` on `(application_id) WHERE shared_with_candidate_at IS NOT NULL` — partial index for candidate's "any shared feedback?" query.
 
@@ -170,6 +177,7 @@ index (company_id, is_default) WHERE is_default = true
 ```
 
 RLS:
+
 - `interview_venues_company_select` — `EXISTS company_members WHERE company_id = interview_venues.company_id AND user_id = auth.uid()`
 - `interview_venues_recruiter_write` — same check + `role = 'recruiter'`
 - `interview_venues_admin_all` — admin role bypasses
@@ -177,18 +185,22 @@ RLS:
 ### State machine — `apps/api/src/modules/applications/state-machine.ts`
 
 ```ts
-const VALID_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
-  applied:   ["screening", "interview", "rejected", "withdrawn"],
-  screening: ["interview",              "rejected", "withdrawn"],
-  interview: ["offer",                  "rejected", "withdrawn"],
-  offer:     ["hired",                  "rejected", "withdrawn"],
-  hired:     [],
-  rejected:  [],
+const VALID_TRANSITIONS: Record<
+  ApplicationStatus,
+  readonly ApplicationStatus[]
+> = {
+  applied: ["screening", "interview", "rejected", "withdrawn"],
+  screening: ["interview", "rejected", "withdrawn"],
+  interview: ["offer", "rejected", "withdrawn"],
+  offer: ["hired", "rejected", "withdrawn"],
+  hired: [],
+  rejected: [],
   withdrawn: [],
 };
 ```
 
 Authorization rules layered on top of the transitions table:
+
 - `* → withdrawn` is allowed only when actor is the application's candidate, or admin.
 - `* → screening | interview | offer | hired | rejected` is allowed only when actor is a recruiter for the company that owns the job, or admin.
 - The recruiter cannot withdraw on behalf of a candidate.
@@ -213,10 +225,12 @@ APPLICATION_WITHDRAWN_BY_CANDIDATE
 ### Endpoints (new and changed)
 
 **Application stage transitions:**
+
 - `POST /api/v1/applications/:id/interviews` (recruiter) — body includes new venue fields. Service runs `applied → interview` (or `screening → interview`) and interview INSERT in one transaction. Returns interview DTO.
 - `POST /api/v1/applications/:id/withdraw` (candidate or admin) — sets status to `withdrawn`, audits, emits `application.withdrawn`. Body: `{ reason?: string }`.
 
 **Interview operations:**
+
 - `PATCH /api/v1/interviews/:id/feedback` (recruiter) — body: `{ feedback: string, rating: 1-5 \| null, recommendation: 'proceed' \| 'hold' \| 'reject' \| null }`. Sets the three fields, audits `INTERVIEW_FEEDBACK_SUBMITTED` and (if recommendation changed) `INTERVIEW_RECOMMENDATION_SET`. Emits `application.recommendationSet`.
 - `POST /api/v1/interviews/:id/share-feedback` (recruiter) — body: `{ candidateSummary: string }`. Validates length (1–4000 chars). Sets `candidate_summary` and `shared_with_candidate_at = now()`. Audits, sends email via `InterviewFeedbackSharedEmail`, fires in-app `interview_feedback_shared`.
 - `PATCH /api/v1/interviews/:id/no-show` (recruiter) — flips status to `no-show`. Allowed from `scheduled` or `completed`. Audits.
@@ -225,6 +239,7 @@ APPLICATION_WITHDRAWN_BY_CANDIDATE
 - `GET /api/v1/interviews/:id/ics` (candidate or recruiter, ownership-checked) — returns `text/calendar` body with `Content-Disposition: attachment; filename="interview.ics"`.
 
 **Venue templates:**
+
 - `GET /api/v1/companies/:companyId/interview-venues` (recruiter, member of company) — list.
 - `POST /api/v1/companies/:companyId/interview-venues` (recruiter) — create.
 - `PATCH /api/v1/interview-venues/:id` (recruiter, member of owning company) — update.
@@ -234,12 +249,14 @@ APPLICATION_WITHDRAWN_BY_CANDIDATE
 ### Conflict detection (soft, never-blocking)
 
 Helper inside `interviews.service.ts`:
+
 ```ts
 async checkConflicts(input: { scheduledAt: Date; durationMinutes: number; recruiterId: string; candidateId: string }): Promise<{
   recruiterConflicts: InterviewSummary[];
   candidateConflicts: InterviewSummary[];
 }>
 ```
+
 SQL queries `interviews` joined to `applications` for candidate-side conflicts; uses `scheduled_by` for recruiter-side. Time overlap = `[start, start+duration)` ranges intersect with existing `scheduled` interviews.
 
 Schedule modal calls a separate `POST /api/v1/applications/:id/interviews/check-conflicts` (no DB write) before the actual schedule POST, displays warning chips in modal. Recruiter can override (proceeding without changes is allowed).
@@ -247,6 +264,7 @@ Schedule modal calls a separate `POST /api/v1/applications/:id/interviews/check-
 ### Map URL sanitizer
 
 `apps/api/src/modules/interviews/lib/sanitize-map-url.ts`:
+
 - Trim, lowercase scheme.
 - Allow only schemes `http://` and `https://`.
 - Reject `javascript:`, `data:`, `file:`, etc.
@@ -256,14 +274,16 @@ Schedule modal calls a separate `POST /api/v1/applications/:id/interviews/check-
 ### ICS builder
 
 `apps/api/src/lib/calendar/build-interview-ics.ts`:
+
 ```ts
 export function buildInterviewIcs(input: {
   interview: InterviewRow;
   candidate: { fullName: string; email: string };
   job: { title: string };
   company: { name: string; recruiterEmail: string };
-}): string
+}): string;
 ```
+
 Returns RFC-5545 compliant ICS string. Required fields: `BEGIN:VCALENDAR`, `VERSION:2.0`, `PRODID:-//AuraHire//Interview//EN`, `BEGIN:VEVENT`, `UID:interview-{interview.id}@aurahire.app`, `DTSTAMP`, `DTSTART`, `DTEND` (DTSTART + duration), `SUMMARY` (`Interview: {jobTitle} at {companyName}`), `LOCATION` (`{venueName}, {addressLine}{ , room_or_floor if set}`), `DESCRIPTION` (interviewer info + reporting instructions + what to bring + map URL), `ORGANIZER` (recruiter mailto), `ATTENDEE` (candidate mailto), `END:VEVENT`, `END:VCALENDAR`. Folds long lines per RFC 5545. UID stable across reschedule so calendar updates the existing event.
 
 ### Cron job (NEW): interview-autocomplete
@@ -275,6 +295,7 @@ Returns RFC-5545 compliant ICS string. Required fields: `BEGIN:VCALENDAR`, `VERS
 ```
 
 Query (raw SQL needed for column-derived comparison, like the existing feedback-due cron):
+
 ```sql
 SELECT id, application_id, scheduled_by FROM interviews
 WHERE status = 'scheduled'
@@ -283,6 +304,7 @@ LIMIT 200
 ```
 
 For each row:
+
 1. `UPDATE interviews SET status='completed', updated_at=now() WHERE id = $1 AND status='scheduled'` (guards against race).
 2. Audit `INTERVIEW_AUTO_COMPLETED`.
 3. Cache bust (company interviews, candidate interviews, dashboard).
@@ -294,23 +316,24 @@ For each row:
 
 Events plug into existing `notifications` + `notification-preferences` modules. Event keys (some new):
 
-| Event key | Email | In-app | Recipient | Trigger |
-|---|---|---|---|---|
-| `interview_scheduled` | ✓ + ICS | ✓ | candidate | recruiter schedules |
-| `interview_rescheduled` | ✓ + ICS (same UID) | ✓ | candidate | recruiter reschedules |
-| `interview_cancelled` | ✓ | ✓ | candidate | recruiter cancels |
-| `interview_reminder_24h` | ✓ | ✓ | candidate | reminder cron |
-| `interview_completed` | — | ✓ | candidate | autocomplete cron |
-| `interview_feedback_shared` | ✓ | ✓ | candidate | recruiter shares |
-| `interview_record_feedback` | — | ✓ | recruiter | autocomplete cron — fires immediately when status flips to completed |
-| `interview_feedback_due` | — | ✓ | recruiter | existing feedback-due cron — fires 24h after completion if feedback still unrecorded (second nudge) |
-| `application_withdrawn` | — | ✓ | recruiter | candidate withdraws |
+| Event key                   | Email              | In-app | Recipient | Trigger                                                                                             |
+| --------------------------- | ------------------ | ------ | --------- | --------------------------------------------------------------------------------------------------- |
+| `interview_scheduled`       | ✓ + ICS            | ✓      | candidate | recruiter schedules                                                                                 |
+| `interview_rescheduled`     | ✓ + ICS (same UID) | ✓      | candidate | recruiter reschedules                                                                               |
+| `interview_cancelled`       | ✓                  | ✓      | candidate | recruiter cancels                                                                                   |
+| `interview_reminder_24h`    | ✓                  | ✓      | candidate | reminder cron                                                                                       |
+| `interview_completed`       | —                  | ✓      | candidate | autocomplete cron                                                                                   |
+| `interview_feedback_shared` | ✓                  | ✓      | candidate | recruiter shares                                                                                    |
+| `interview_record_feedback` | —                  | ✓      | recruiter | autocomplete cron — fires immediately when status flips to completed                                |
+| `interview_feedback_due`    | —                  | ✓      | recruiter | existing feedback-due cron — fires 24h after completion if feedback still unrecorded (second nudge) |
+| `application_withdrawn`     | —                  | ✓      | recruiter | candidate withdraws                                                                                 |
 
 Default preferences: all enabled for both channels except `interview_completed`, `interview_record_feedback`, `interview_feedback_due`, and `application_withdrawn` (in-app only — these are workflow nudges, not announcements).
 
 ### Realtime events added
 
 `interview.completed`, `interview.rescheduled`, `interview.feedbackShared`, `application.recommendationSet`, `application.withdrawn`. Subscribed by:
+
 - Recruiter application detail and recruiter interview detail pages (live status sync).
 - Candidate application detail and candidate interview detail pages (live banner + feedback panel sync).
 
@@ -319,6 +342,7 @@ Default preferences: all enabled for both channels except `interview_completed`,
 ### Recruiter — application detail (`/recruiter/applications/[id]`)
 
 Layout (top to bottom):
+
 1. **Header** (existing) — back link, candidate name, contact row, status pill, applied-at, job link.
 2. **Decision bar** (existing, augmented):
    - Pipeline path visualization (existing).
@@ -357,6 +381,7 @@ Layout (top to bottom):
 ### Recruiter — schedule interview modal (`_schedule-interview-modal-client.tsx`, redesigned)
 
 Width grows to ~640px to accommodate new fields. Sections:
+
 - **Use saved venue** (top): dropdown loads `interview_venues` for the active company. On select, autofills all venue + guidance + interviewer fields. "None — fill manually" is the default.
 - **Date & time** + **Duration** (existing). Below the date input: conflict warning chips populated from `check-conflicts` endpoint (debounced 500ms after change).
 - **Venue:** venue_name (required), address_line (required), room_or_floor, map_url.
@@ -381,6 +406,7 @@ Format selector is removed entirely. Server defaults `format='in-person'`.
 ```
 
 Sections:
+
 1. Header with back link to applications list, candidate name + initials avatar, job + company, status pill.
 2. Schedule card: date/time in company TZ + candidate TZ if known (fallback Asia/Manila), duration, ICS download button.
 3. Venue card with optional map embed (lazy iframe to `mapUrl` only if it points to google.com/maps; otherwise plain link).
@@ -395,6 +421,7 @@ Sections:
 ### Recruiter — share-feedback modal
 
 Inputs:
+
 - Candidate-facing summary textarea (1–4000 chars). Pre-filled by stripping common internal markers from private feedback (heuristic: removes lines starting with "internal:", "concern:", "note to team:"; trims down to a 2-paragraph max). Recruiter can fully edit.
 - Tone tip block: "This text is sent directly to the candidate via email and shown in their portal. Keep it constructive."
 - Diff preview if updating a previously shared summary (shows added/removed lines).
@@ -411,6 +438,7 @@ Inputs:
 ```
 
 Page shows:
+
 - "Add venue template" button (top-right) → opens form modal.
 - List of existing templates (cards):
   - Label (bold) + venue_name + address summary.
@@ -420,6 +448,7 @@ Page shows:
 ### Candidate — application detail (`/candidate/applications/[id]`, augmented)
 
 New blocks added between existing sections:
+
 - **Upcoming Interview banner** (visible when latest interview = `scheduled` or `rescheduled`):
   - Card with primary surface — interview date/time in candidate's TZ, venue_name, address summary, room_or_floor.
   - Buttons: "View interview details" (→ `/candidate/interviews/[id]`), "Add to calendar" (downloads ICS), "Withdraw application" (opens confirmation modal).
@@ -439,6 +468,7 @@ New blocks added between existing sections:
 ```
 
 Sections (top to bottom):
+
 1. Header: job title + company name, status pill, scheduled time in candidate's TZ.
 2. Venue card: venue_name, address_line, room_or_floor, map link (or embed if `mapUrl` is google.com/maps).
 3. What to bring card.
@@ -448,6 +478,7 @@ Sections (top to bottom):
 7. Recruiter feedback panel (only when shared) — `candidate_summary` text, no rating exposure.
 
 Data load:
+
 - Server component fetches via `GET /api/v1/me/interviews/:id` (existing endpoint, dto extended with new fields and conditional `candidate_summary`).
 - 404 if interview belongs to different candidate (existing RLS).
 
@@ -456,6 +487,7 @@ Data load:
 Used on both candidate application detail banner and candidate interview detail page.
 
 Inputs:
+
 - Optional reason textarea (500-char limit).
 - "Yes, withdraw my application" destructive button + "Keep my application" cancel button.
 - Warning copy: "This cannot be undone. The recruiter will be notified."
@@ -465,6 +497,7 @@ Submit → `POST /api/v1/applications/:id/withdraw` → toast "Application withd
 ### Notification preferences UI
 
 Existing settings page gains the following toggle rows (each with email + in-app subtoggles where applicable):
+
 - Interview reminders (24h before)
 - Interview rescheduled
 - Interview feedback shared (candidate side)
@@ -494,6 +527,7 @@ Existing settings page gains the following toggle rows (each with email + in-app
 ## Testing
 
 ### Unit
+
 - State machine transitions (extended): every entry in `VALID_TRANSITIONS` has positive and negative tests.
 - ICS builder: snapshot test against fixtures; UID stability across reschedule; long-line folding.
 - Map URL sanitizer: allow http/https; reject javascript:, data:, file:, mailto:, ftp:; length cap.
@@ -502,6 +536,7 @@ Existing settings page gains the following toggle rows (each with email + in-app
 - Withdrawal authorization: only candidate or admin can withdraw.
 
 ### Integration (NestJS + supertest)
+
 - Schedule from `applied` → status flips to `interview`, interview row exists, audit record created.
 - Schedule from `screening` → status flips to `interview`.
 - Reschedule chain: original row marked `rescheduled`, new row created with `rescheduled_from_id` pointing back, `rescheduled_to_id` set on original. Email fired with new ICS.
@@ -512,6 +547,7 @@ Existing settings page gains the following toggle rows (each with email + in-app
 - Conflict detection endpoint: returns recruiter + candidate overlap rows; does not block schedule POST.
 
 ### E2E (full happy path)
+
 1. Candidate applies.
 2. Recruiter opens application, clicks Schedule Interview from `applied` (skip Screening). Modal saves with venue + guidance fields. Status auto-advances.
 3. Time-mock advances past `scheduled_at + duration + 15min`. Autocomplete cron runs.
@@ -522,6 +558,7 @@ Existing settings page gains the following toggle rows (each with email + in-app
 8. Candidate accepts offer. Status → `hired` (existing flow).
 
 ### UI
+
 - axe accessibility on all new modals and pages.
 - Keyboard navigation through schedule modal, share-feedback modal, withdraw modal.
 - Visual snapshot tests for new pages: recruiter interview detail, candidate interview detail, venue templates settings.
@@ -529,6 +566,7 @@ Existing settings page gains the following toggle rows (each with email + in-app
 - Realtime event handling: simulated socket message flips UI state.
 
 ### Cron
+
 - Time-mocked vitest specs (existing pattern in `interview-feedback-due.cron.spec.ts`):
   - autocomplete picks up overdue rows.
   - autocomplete leaves not-yet-overdue rows alone.

@@ -15,9 +15,11 @@
 ## File Structure
 
 ### Modified file
+
 - `apps/web/components/help/help-view.tsx` — the only file touched.
 
 ### Untouched (intentionally)
+
 - `apps/web/components/help/help-block.tsx`
 - `apps/web/components/help/content/{candidate,recruiter,admin}-content.ts`
 - `apps/web/app/(candidate)/candidate/help/page.tsx`
@@ -26,6 +28,7 @@
 - The mobile `<details>` block (lines 192–215). It re-uses `<TocList>`, so it inherits the new active-state styling automatically — that's correct per spec.
 
 ### No new files
+
 The `prefersReducedMotion()` helper is local to `help-view.tsx` (single consumer; YAGNI). No new hook in `apps/web/hooks/`, no new util in `apps/web/lib/`.
 
 ---
@@ -43,6 +46,7 @@ The `prefersReducedMotion()` helper is local to `help-view.tsx` (single consumer
 ## Task 1: Add the `prefersReducedMotion()` helper
 
 **Files:**
+
 - Modify: `apps/web/components/help/help-view.tsx`
 
 **What:** A tiny safe-on-server helper used by both `handleTocClick` and the new auto-track effect. It returns `true` only when the user has explicitly opted into reduced motion, so smooth scrolling falls back to instant.
@@ -63,6 +67,7 @@ Rationale: simple read, no React state needed (callers invoke it at the moment o
 - [ ] **Step 2: Type-check the file**
 
 Run from repo root:
+
 ```bash
 pnpm --filter web type-check
 ```
@@ -74,6 +79,7 @@ Expected: PASS (no errors). The helper is unused at this point but valid.
 ## Task 2: Add `data-toc-id` and `aria-current` to TOC buttons; restyle active state
 
 **Files:**
+
 - Modify: `apps/web/components/help/help-view.tsx` — the `TocList` component (currently lines 351–419), specifically both `<button>` blocks (the per-group buttons and the `extra` buttons).
 
 **What:** Replace the filled-pill active treatment with a 2-px left-rail bar in primary blue + ink text. Drop the hover-background fill on inactive items (hover becomes text-color shift only). Add `data-toc-id` so the auto-track effect can find the active button, and `aria-current="location"` for screen readers.
@@ -122,6 +128,7 @@ Replace with:
 ```
 
 Notes:
+
 - `pl-3 pr-2` replaces `px-2` to give the 2-px rail breathing room without overlapping text.
 - `before:` pseudo-element renders the rail. Always present in DOM; color is transparent when inactive so it doesn't shift layout on activation.
 - `inset-y-1` keeps the rail visually shorter than the full button height (1 px gap above/below) — matches Vercel/Linear.
@@ -175,6 +182,7 @@ Replace with:
 - [ ] **Step 3: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter web type-check
 ```
@@ -186,6 +194,7 @@ Expected: PASS. (`aria-current` accepts `"location"` per ARIA; the `undefined` b
 ## Task 3: Restructure the desktop aside — bounded scroll wrapper + edge fade masks
 
 **Files:**
+
 - Modify: `apps/web/components/help/help-view.tsx` — the desktop aside (currently lines 269–286).
 
 **What:** Convert the sticky block into a flex column. The header ("On this page") sits outside the scroll area with `shrink-0`. The list sits inside a `relative` wrapper that contains a `ref`-attached scrollable inner div plus two `pointer-events-none` gradient masks at the top and bottom edges.
@@ -209,7 +218,9 @@ const tocScrollRef = useRef<HTMLDivElement | null>(null);
 Find this block (lines 269–286):
 
 ```tsx
-{/* Desktop sticky TOC */}
+{
+  /* Desktop sticky TOC */
+}
 <aside className="hidden lg:block">
   <div className="sticky top-8">
     <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
@@ -226,13 +237,15 @@ Find this block (lines 269–286):
       }
     />
   </div>
-</aside>
+</aside>;
 ```
 
 Replace with:
 
 ```tsx
-{/* Desktop sticky TOC */}
+{
+  /* Desktop sticky TOC */
+}
 <aside className="hidden lg:block">
   <div className="sticky top-8 flex max-h-[calc(100vh-4rem)] flex-col">
     <div className="mb-3 shrink-0 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
@@ -267,10 +280,11 @@ Replace with:
       />
     </div>
   </div>
-</aside>
+</aside>;
 ```
 
 Notes:
+
 - `max-h-[calc(100vh-4rem)]`: viewport minus 32 px sticky offset minus 32 px breathing room.
 - `flex flex-col` + `shrink-0` on header + `flex-1 min-h-0` on the scroll wrapper is the canonical "fixed header, scrolling body" pattern. `min-h-0` is required — without it, the flex child refuses to shrink below content height and overflow never engages.
 - `pr-2` reserves space for the scrollbar so list-item widths don't shift when scrolling becomes active.
@@ -281,6 +295,7 @@ Notes:
 - [ ] **Step 3: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter web type-check
 ```
@@ -292,6 +307,7 @@ Expected: PASS. The new `tocScrollRef` is unused at this point — TypeScript wo
 ## Task 4: Wire the auto-track effect
 
 **Files:**
+
 - Modify: `apps/web/components/help/help-view.tsx` — add a new `useEffect` after the existing scroll-spy effect.
 
 **What:** When `activeId` changes (driven by the existing `IntersectionObserver`), find the matching button via `data-toc-id` inside `tocScrollRef` and call `scrollIntoView({ block: "nearest" })`. `block: "nearest"` only scrolls when the target is outside the visible region — it's a no-op when the active item is already in view, which prevents fighting with manual TOC scrolling.
@@ -322,6 +338,7 @@ useEffect(() => {
 ```
 
 Notes:
+
 - The query lives inside `tocScrollRef.current` (not `document`), so it scopes the lookup to the desktop aside. The mobile `<details>` rendering of `<TocList>` also has `data-toc-id` buttons but lives outside this ref — they're correctly ignored.
 - `behavior: "auto"` under reduced-motion preference jumps instantly. No animation, no nausea trigger.
 - `useCallback` not needed — the effect runs on `activeId` change only.
@@ -329,6 +346,7 @@ Notes:
 - [ ] **Step 2: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter web type-check
 ```
@@ -338,6 +356,7 @@ Expected: PASS.
 - [ ] **Step 3: Lint**
 
 Run:
+
 ```bash
 pnpm --filter web lint
 ```
@@ -349,6 +368,7 @@ Expected: PASS. (No new ESLint warnings — the effect's dependency array is cor
 ## Task 5: Honor reduced-motion in `handleTocClick`
 
 **Files:**
+
 - Modify: `apps/web/components/help/help-view.tsx` — `handleTocClick` (currently lines 112–121).
 
 **What:** Mirror the new helper into the existing click handler so click-driven scrolls also respect the user's preference. Same applied to the in-section permalink scroll (`SectionView`, lines 314–328) for consistency.
@@ -413,6 +433,7 @@ document.getElementById(section.id)?.scrollIntoView({
 - [ ] **Step 3: Type-check + lint**
 
 Run:
+
 ```bash
 pnpm --filter web type-check && pnpm --filter web lint
 ```
@@ -430,6 +451,7 @@ Expected: both PASS.
 - [ ] **Step 1: Workspace-level type-check**
 
 Run from repo root:
+
 ```bash
 pnpm --filter web type-check
 ```
@@ -439,6 +461,7 @@ Expected: PASS.
 - [ ] **Step 2: Workspace-level lint**
 
 Run from repo root:
+
 ```bash
 pnpm --filter web lint
 ```
@@ -450,6 +473,7 @@ Expected: PASS, zero new warnings or errors attributable to `help-view.tsx`.
 This is allowed by CLAUDE.md (`turbo run build` is explicitly permitted).
 
 Run:
+
 ```bash
 pnpm --filter web build
 ```
@@ -469,28 +493,30 @@ If build fails for an unrelated reason (e.g., env vars), document it but do not 
 - [ ] **Step 1: Hand off the checklist**
 
 Ask the human to run:
+
 ```bash
 pnpm dev
 ```
 
 Then in a browser, navigate through these checks:
 
-| # | Check | Expected |
-|---|---|---|
-| 1 | `/candidate/help` at viewport ~1366×768 (13" laptop) | Right-rail TOC is bounded — visible scrollbar inside the aside; "Notifications" and "Report a bias concern" reachable by scrolling the TOC, not the page. |
-| 2 | Same page — scroll the page from top to bottom | Active TOC item updates per scroll-spy AND auto-scrolls into the TOC viewport so it's always visible. |
-| 3 | Same page — viewport ≥ 1440 px tall | TOC fits without internal scroll; fade masks present but visually negligible against full content. |
-| 4 | Click a TOC item below the fold (e.g., "How to improve your match score") | Page scrolls smoothly to section; TOC active rail moves to that item; URL hash updates. |
-| 5 | Type "bias" in the search box | TOC list filters; bounded behavior intact; auto-track still works on the filtered list. |
-| 6 | Resize from 1440 → 1024 → 768 (mobile breakpoint) | Desktop bounded aside vanishes at < 1024 px; mobile `<details>` "On this page" disclosure appears with the same active-rail style applied. |
-| 7 | Repeat checks 1–4 on `/recruiter/help` | Same behavior. |
-| 8 | Repeat checks 1–4 on `/admin/help` | Same behavior. |
-| 9 | macOS: System Settings → Accessibility → Display → Reduce motion ON | TOC item clicks and auto-track snap instantly with no smooth-scroll animation. |
-| 10 | VoiceOver / NVDA on the desktop TOC | The active button announces "current location" (from `aria-current="location"`). |
+| #   | Check                                                                     | Expected                                                                                                                                                  |
+| --- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `/candidate/help` at viewport ~1366×768 (13" laptop)                      | Right-rail TOC is bounded — visible scrollbar inside the aside; "Notifications" and "Report a bias concern" reachable by scrolling the TOC, not the page. |
+| 2   | Same page — scroll the page from top to bottom                            | Active TOC item updates per scroll-spy AND auto-scrolls into the TOC viewport so it's always visible.                                                     |
+| 3   | Same page — viewport ≥ 1440 px tall                                       | TOC fits without internal scroll; fade masks present but visually negligible against full content.                                                        |
+| 4   | Click a TOC item below the fold (e.g., "How to improve your match score") | Page scrolls smoothly to section; TOC active rail moves to that item; URL hash updates.                                                                   |
+| 5   | Type "bias" in the search box                                             | TOC list filters; bounded behavior intact; auto-track still works on the filtered list.                                                                   |
+| 6   | Resize from 1440 → 1024 → 768 (mobile breakpoint)                         | Desktop bounded aside vanishes at < 1024 px; mobile `<details>` "On this page" disclosure appears with the same active-rail style applied.                |
+| 7   | Repeat checks 1–4 on `/recruiter/help`                                    | Same behavior.                                                                                                                                            |
+| 8   | Repeat checks 1–4 on `/admin/help`                                        | Same behavior.                                                                                                                                            |
+| 9   | macOS: System Settings → Accessibility → Display → Reduce motion ON       | TOC item clicks and auto-track snap instantly with no smooth-scroll animation.                                                                            |
+| 10  | VoiceOver / NVDA on the desktop TOC                                       | The active button announces "current location" (from `aria-current="location"`).                                                                          |
 
 - [ ] **Step 2: Capture screenshots**
 
 Two before/after screenshots requested:
+
 - 13" viewport, candidate page, scrolled into "Privacy & fairness" — confirm "Report a bias concern" is now visible inside the TOC.
 - 13" viewport, recruiter page, scrolled into final section — confirm last item visible.
 
@@ -509,6 +535,7 @@ The human responds with PASS/FAIL per check. On PASS, proceed to Task 8. On any 
 - [ ] **Step 1: Stage the modified file**
 
 Run:
+
 ```bash
 git add apps/web/components/help/help-view.tsx
 ```
@@ -518,6 +545,7 @@ Do NOT use `git add -A` or `git add .` — per CLAUDE.md, stage by exact path.
 - [ ] **Step 2: Verify staged diff**
 
 Run:
+
 ```bash
 git diff --staged --stat
 ```
@@ -527,6 +555,7 @@ Expected: only `apps/web/components/help/help-view.tsx` listed. Should be roughl
 - [ ] **Step 3: Commit**
 
 Run:
+
 ```bash
 git commit -m "$(cat <<'EOF'
 feat(web): bounded scrollable TOC on help pages
@@ -552,6 +581,7 @@ EOF
 - [ ] **Step 4: Verify the commit**
 
 Run:
+
 ```bash
 git log -1 --stat
 ```

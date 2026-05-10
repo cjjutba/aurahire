@@ -53,7 +53,8 @@ export function CandidateJobDetailView({
     .filter(Boolean)
     .join(", ");
   const hasSalary = job.salaryMin !== null && job.salaryMax !== null;
-  const hasEducation = !!job.educationRequirement && job.educationRequirement !== "none";
+  const hasEducation =
+    !!job.educationRequirement && job.educationRequirement !== "none";
   const showHeaderTagline = !!(job.department || hasEducation);
   const hasApplied = !!existingApplicationId;
   const viewApplicationHref = `/candidate/applications/${existingApplicationId ?? ""}`;
@@ -93,7 +94,9 @@ export function CandidateJobDetailView({
             </h1>
             <p className="mt-1.5 text-sm font-medium text-[var(--color-body)]">
               {job.company.name}
-              {showHeaderTagline && job.department ? ` · ${job.department}` : ""}
+              {showHeaderTagline && job.department
+                ? ` · ${job.department}`
+                : ""}
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Pill icon={Briefcase} label={job.employmentType} />
@@ -180,7 +183,9 @@ export function CandidateJobDetailView({
             {job.publishedAt && (
               <p className="mt-3 text-center text-xs text-[var(--color-muted)]">
                 Posted{" "}
-                <span className="font-mono">{relativeDate(job.publishedAt)}</span>
+                <span className="font-mono">
+                  {relativeDate(job.publishedAt)}
+                </span>
               </p>
             )}
           </div>
@@ -215,7 +220,9 @@ export function CandidateJobDetailView({
               <Fact
                 icon={Sparkles}
                 label="Experience"
-                value={<span className="capitalize">{job.experienceLevel}</span>}
+                value={
+                  <span className="capitalize">{job.experienceLevel}</span>
+                }
               />
               {job.applicationDeadline && (
                 <Fact

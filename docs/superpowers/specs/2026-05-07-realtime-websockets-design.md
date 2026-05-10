@@ -41,13 +41,13 @@ The user has previously had reliability problems with **Supabase Realtime** (rec
 
 ## Tech additions
 
-| Package | Where | Why |
-|---|---|---|
-| `@nestjs/websockets` | `apps/api` | NestJS gateway abstraction |
-| `@nestjs/platform-socket.io` | `apps/api` | Socket.io adapter for NestJS gateway |
-| `socket.io` | `apps/api` (transitive) | Server library |
-| `@socket.io/redis-adapter` | `apps/api` | Multi-instance pub/sub via existing Redis |
-| `socket.io-client` | `apps/web` | Browser client |
+| Package                      | Where                   | Why                                       |
+| ---------------------------- | ----------------------- | ----------------------------------------- |
+| `@nestjs/websockets`         | `apps/api`              | NestJS gateway abstraction                |
+| `@nestjs/platform-socket.io` | `apps/api`              | Socket.io adapter for NestJS gateway      |
+| `socket.io`                  | `apps/api` (transitive) | Server library                            |
+| `@socket.io/redis-adapter`   | `apps/api`              | Multi-instance pub/sub via existing Redis |
+| `socket.io-client`           | `apps/web`              | Browser client                            |
 
 Existing dependencies that stay unchanged: `ioredis` (already at 5.10.1, used by `cache/redis.provider.ts` and BullMQ — same client we'll wire into the Redis adapter), `jose` (already at 6.2.3, used by `SupabaseAuthGuard` — reused for WS handshake JWT verification), `@tanstack/react-query` (events trigger `invalidateQueries` on existing keys defined in `apps/web/lib/query/keys.ts`).
 
@@ -93,7 +93,9 @@ The injectable that mutating services call after a successful DB write. Single s
 ```ts
 @Injectable()
 export class EventsService {
-  constructor(@Inject(forwardRef(() => RealtimeGateway)) private gateway: RealtimeGateway) {}
+  constructor(
+    @Inject(forwardRef(() => RealtimeGateway)) private gateway: RealtimeGateway,
+  ) {}
 
   emitApplicationCreated(payload: ApplicationCreatedPayload): void;
   emitApplicationStatusChanged(payload: ApplicationStatusChangedPayload): void;
@@ -105,6 +107,7 @@ export class EventsService {
 ```
 
 Each method:
+
 - Computes the target rooms from the payload (e.g., `application.created` goes to `recruiter:{recruiterId}` AND `job:{jobId}`).
 - Calls `this.gateway.server.to(rooms).emit(eventName, payload)`.
 - Catches any error and logs via pino at `warn` level — emission failures **never** propagate to the caller. The DB write already succeeded; a missed broadcast degrades to "user refreshes to see it" and that is acceptable.
@@ -124,15 +127,15 @@ Currently `SupabaseAuthGuard` inlines its `jose` JWKS verifier. Extract the veri
 
 Each integration point is a single `eventsService.emit*` line added **after** the DB-write commits — never before. Pattern matches the existing `audit.service.ts` invocation pattern in these files.
 
-| File | After which write | Event | Rooms |
-|---|---|---|---|
-| `apps/api/src/modules/applications/applications.service.ts` `create()` | Application row insert | `application.created` | `recruiter:{recruiterId}`, `job:{jobId}` |
-| `apps/api/src/modules/applications/applications.service.ts` `updateStatus()` (line 475) | Status update + state-machine transition | `application.status_changed` | `user:{candidateId}`, `recruiter:{recruiterId}`, `job:{jobId}` |
-| `apps/api/src/modules/applications/applications.service.ts` `withdraw()` if present | Status update | `application.status_changed` (status=`withdrawn`) | same as above |
-| `apps/api/src/modules/interviews/interviews.service.ts` `schedule()` | Interview row insert | `interview.scheduled` | `user:{candidateId}`, `recruiter:{recruiterId}` |
-| `apps/api/src/modules/offers/offers.service.ts` `send()` | Offer row insert | `offer.sent` | `user:{candidateId}`, `recruiter:{recruiterId}` |
-| `apps/api/src/audit/audit.service.ts` `record()` | Audit row insert | `audit.entry` | `role:admin` |
-| `apps/api/src/modules/bias/bias.service.ts` (whichever method records a flag) | Flag row insert | `bias.flag_created` | `role:admin` |
+| File                                                                                    | After which write                        | Event                                             | Rooms                                                          |
+| --------------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------- |
+| `apps/api/src/modules/applications/applications.service.ts` `create()`                  | Application row insert                   | `application.created`                             | `recruiter:{recruiterId}`, `job:{jobId}`                       |
+| `apps/api/src/modules/applications/applications.service.ts` `updateStatus()` (line 475) | Status update + state-machine transition | `application.status_changed`                      | `user:{candidateId}`, `recruiter:{recruiterId}`, `job:{jobId}` |
+| `apps/api/src/modules/applications/applications.service.ts` `withdraw()` if present     | Status update                            | `application.status_changed` (status=`withdrawn`) | same as above                                                  |
+| `apps/api/src/modules/interviews/interviews.service.ts` `schedule()`                    | Interview row insert                     | `interview.scheduled`                             | `user:{candidateId}`, `recruiter:{recruiterId}`                |
+| `apps/api/src/modules/offers/offers.service.ts` `send()`                                | Offer row insert                         | `offer.sent`                                      | `user:{candidateId}`, `recruiter:{recruiterId}`                |
+| `apps/api/src/audit/audit.service.ts` `record()`                                        | Audit row insert                         | `audit.entry`                                     | `role:admin`                                                   |
+| `apps/api/src/modules/bias/bias.service.ts` (whichever method records a flag)           | Flag row insert                          | `bias.flag_created`                               | `role:admin`                                                   |
 
 Note: candidate-side score updates (rescore on resume change) are **not** in this list. Profile rescore is a single-user operation; the user's own UI already shows the AI shimmer + result. No second observer needs the event.
 
@@ -163,6 +166,7 @@ Mounted in `apps/web/app/layout.tsx` **inside** `QueryProvider` and `AuthTokenPr
 ```
 
 Responsibilities:
+
 - Lazily constructs the singleton socket on **first authenticated render**. If no Supabase session, no socket.
 - Reads the access token from `auth-token-provider` (or directly from `supabase.auth.getSession()`).
 - Passes the token via `socket.io-client`'s `auth: { token }` option at handshake.
@@ -188,7 +192,7 @@ Subscribes on mount, unsubscribes on unmount, no race conditions.
 For resource-scoped rooms (jobs):
 
 ```ts
-export function useRealtimeRoom(resource: 'job', id: string | null): void;
+export function useRealtimeRoom(resource: "job", id: string | null): void;
 ```
 
 On mount: emits `subscribe { resource, id }`. On unmount or `id` change: emits `unsubscribe { resource, id: previous }`. Backend gateway validates access; if rejected, the socket emits `subscribe_error` which the hook logs (no toast — this is a system-level event, not user-initiated).
@@ -206,25 +210,25 @@ Spec rule: **start with Pattern A everywhere.** Pattern B is a future optimizati
 
 Each event has: name (string constant), payload (typed in `apps/web/lib/realtime/events.ts` and re-exported from `packages/shared/src/realtime/` for backend reuse), emitting service, target rooms, frontend cache action.
 
-| Event | Payload (key fields) | Emitted by | Rooms | Frontend action |
-|---|---|---|---|---|
-| `application.created` | `applicationId`, `jobId`, `recruiterId`, `candidateId`, `createdAt` | `applications.service.create()` | `recruiter:{recruiterId}`, `job:{jobId}` | Invalidate `applicationsForJob(jobId)`, `recruiterStats`, `recruiterRecent` |
-| `application.status_changed` | `applicationId`, `jobId`, `recruiterId`, `candidateId`, `previousStatus`, `status`, `changedAt` | `applications.service.updateStatus()` | `user:{candidateId}`, `recruiter:{recruiterId}`, `job:{jobId}` | Invalidate `application(applicationId)`, `myApplications` (candidate side), `applicationsForJob(jobId)` (recruiter side) |
-| `interview.scheduled` | `interviewId`, `applicationId`, `jobId`, `recruiterId`, `candidateId`, `scheduledFor`, `format` | `interviews.service.schedule()` | `user:{candidateId}`, `recruiter:{recruiterId}` | Invalidate `myInterviews`, `recruiterInterviews` |
-| `offer.sent` | `offerId`, `applicationId`, `recruiterId`, `candidateId`, `sentAt` | `offers.service.send()` | `user:{candidateId}`, `recruiter:{recruiterId}` | Invalidate `application(applicationId)`, `myApplications` |
-| `audit.entry` | `auditId`, `actorId`, `action`, `entityType`, `entityId`, `createdAt`, `summary` | `audit.service.record()` | `role:admin` | Prepend to admin audit-log query cache (Pattern B exception — append-only feed); fall back to invalidate if cache shape doesn't match |
-| `bias.flag_created` | `flagId`, `jobId`, `term`, `category`, `createdAt` | `bias.service.<method>` | `role:admin` | Invalidate `biasMonitor`, `adminDashboardStats` |
+| Event                        | Payload (key fields)                                                                            | Emitted by                            | Rooms                                                          | Frontend action                                                                                                                       |
+| ---------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `application.created`        | `applicationId`, `jobId`, `recruiterId`, `candidateId`, `createdAt`                             | `applications.service.create()`       | `recruiter:{recruiterId}`, `job:{jobId}`                       | Invalidate `applicationsForJob(jobId)`, `recruiterStats`, `recruiterRecent`                                                           |
+| `application.status_changed` | `applicationId`, `jobId`, `recruiterId`, `candidateId`, `previousStatus`, `status`, `changedAt` | `applications.service.updateStatus()` | `user:{candidateId}`, `recruiter:{recruiterId}`, `job:{jobId}` | Invalidate `application(applicationId)`, `myApplications` (candidate side), `applicationsForJob(jobId)` (recruiter side)              |
+| `interview.scheduled`        | `interviewId`, `applicationId`, `jobId`, `recruiterId`, `candidateId`, `scheduledFor`, `format` | `interviews.service.schedule()`       | `user:{candidateId}`, `recruiter:{recruiterId}`                | Invalidate `myInterviews`, `recruiterInterviews`                                                                                      |
+| `offer.sent`                 | `offerId`, `applicationId`, `recruiterId`, `candidateId`, `sentAt`                              | `offers.service.send()`               | `user:{candidateId}`, `recruiter:{recruiterId}`                | Invalidate `application(applicationId)`, `myApplications`                                                                             |
+| `audit.entry`                | `auditId`, `actorId`, `action`, `entityType`, `entityId`, `createdAt`, `summary`                | `audit.service.record()`              | `role:admin`                                                   | Prepend to admin audit-log query cache (Pattern B exception — append-only feed); fall back to invalidate if cache shape doesn't match |
+| `bias.flag_created`          | `flagId`, `jobId`, `term`, `category`, `createdAt`                                              | `bias.service.<method>`               | `role:admin`                                                   | Invalidate `biasMonitor`, `adminDashboardStats`                                                                                       |
 
 **Event name discipline:** dotted-namespace, past-tense verb (`<entity>.<verb_past>`). No `update`, no `change` — names describe what happened, not what to do.
 
 ## Room model
 
-| Room | Members | Joined when | Purpose |
-|---|---|---|---|
-| `user:{userId}` | The user themselves (any role) | On connect | Personal events (status of my application, my interview scheduled, my offer received) |
-| `recruiter:{recruiterId}` | The recruiter themselves | On connect, if `role === 'recruiter'` | Recruiter dashboard aggregate feed |
-| `job:{jobId}` | Recruiter who owns the job + admins | On `subscribe` from a job-detail page | New applications, status changes for that specific job |
-| `role:admin` | All admin users | On connect, if `role === 'admin'` | Audit feed, bias-flag feed |
+| Room                      | Members                             | Joined when                           | Purpose                                                                               |
+| ------------------------- | ----------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------- |
+| `user:{userId}`           | The user themselves (any role)      | On connect                            | Personal events (status of my application, my interview scheduled, my offer received) |
+| `recruiter:{recruiterId}` | The recruiter themselves            | On connect, if `role === 'recruiter'` | Recruiter dashboard aggregate feed                                                    |
+| `job:{jobId}`             | Recruiter who owns the job + admins | On `subscribe` from a job-detail page | New applications, status changes for that specific job                                |
+| `role:admin`              | All admin users                     | On connect, if `role === 'admin'`     | Audit feed, bias-flag feed                                                            |
 
 Multi-tenancy note: AuraHire has companies, but at the event level, room membership is keyed by **user**, not company. The user's role + ownership chain (recruiter owns job → recruiter is in `job:{jobId}`) handles tenancy implicitly. We do not introduce `company:{id}` rooms in this spec — they are not needed by any tier-1 surface and would require deciding company-wide broadcast policy.
 
@@ -233,10 +237,12 @@ Multi-tenancy note: AuraHire has companies, but at the event level, room members
 ### Surface 1 — Recruiter pipeline live updates
 
 **Pages:**
+
 - `apps/web/app/(recruiter)/recruiter/jobs/[id]/page.tsx` (Applications tab)
 - `apps/web/app/(recruiter)/recruiter/page.tsx` (dashboard pipeline funnel + Top Candidates + Recent Activity widgets)
 
 **Behavior:**
+
 - Job detail page: on mount, `useRealtimeRoom('job', jobId)` joins `job:{jobId}`. Listens for `application.created` and `application.status_changed`; invalidates the applications-for-job query on either.
 - Recruiter dashboard: relies on auto-joined `recruiter:{recruiterId}` room. Listens for `application.created`, `application.status_changed`, `bias.flag_created` (recruiter sees their own jobs' flags); invalidates `recruiterStats`, `recruiterRecent`, `recruiterAnalytics` queries.
 
@@ -245,11 +251,13 @@ Multi-tenancy note: AuraHire has companies, but at the event level, room members
 ### Surface 2 — Candidate application status live updates
 
 **Pages:**
+
 - `apps/web/app/(candidate)/candidate/applications/page.tsx`
 - `apps/web/app/(candidate)/candidate/applications/[id]/page.tsx`
 - `apps/web/app/(candidate)/candidate/interviews/page.tsx`
 
 **Behavior:**
+
 - All candidate portal pages benefit from the auto-joined `user:{userId}` room.
 - Listens for `application.status_changed`, `interview.scheduled`, `offer.sent`; invalidates the corresponding queries.
 - No toast on status change (a recruiter changing status is an external action, per toast scope rules). The status chip silently changes color and label; the timeline tab gets a new entry; the offer tab appears if `offer.sent` arrived.
@@ -259,11 +267,13 @@ Multi-tenancy note: AuraHire has companies, but at the event level, room members
 ### Surface 3 — Admin audit feed
 
 **Pages:**
+
 - `apps/web/app/(admin)/admin/audit/page.tsx`
 - `apps/web/app/(admin)/admin/page.tsx` (Recent Audit Events widget)
 - `apps/web/app/(admin)/admin/bias-monitor/page.tsx`
 
 **Behavior:**
+
 - All admin pages benefit from auto-joined `role:admin` room.
 - Audit page: listens for `audit.entry`. Pattern B exception: prepends the entry to the cached audit-log array so the user sees the row appear at the top of the table. (Filter coherence note: if the user has filters applied that exclude this entry, prepending creates a row that doesn't match the filter. Mitigation: re-evaluate filter client-side on insert; if it doesn't match, drop. Implementation can start with Pattern A — invalidate — and migrate to B only if perf demands it.)
 - Bias monitor: listens for `bias.flag_created`; invalidates the bias-monitor query and the admin dashboard stats.
@@ -319,22 +329,23 @@ Multi-tenancy note: AuraHire has companies, but at the event level, room members
 
 ## Failure modes & graceful degradation
 
-| Failure | System behavior | UX impact |
-|---|---|---|
-| Redis adapter unreachable on boot | Gateway logs error, falls back to single-instance broadcast (no adapter). Single Railway instance still works. | None during sprint (one instance). |
-| Redis goes down mid-session | Adapter buffers/drops; events emitted on instance A may not reach instance B. With one instance, no impact. With multiple, brief inconsistency. | TanStack Query staleTime / refetch on focus catches the drift. |
-| Client cannot connect (firewall, corp proxy) | Socket.io falls back to long-polling automatically (declared in transports). | If polling also fails, status indicator shows `disconnected`; data is fetched via REST as before. **Nothing breaks.** |
-| Server emits but client missed it (briefly disconnected) | No retry. | Defense in depth: `useRealtimeChannel` consumers invalidate on reconnect. |
-| JWT expired during long idle session | Server rejects on next handshake. Auth provider triggers refresh on `TOKEN_REFRESHED`; socket reconnects. | Sub-second gap. |
-| Suspended user with active socket | Their next handshake is rejected. Mid-session admin suspension does not auto-disconnect them — accepted limitation; their next REST call is also still permitted until the next request. (Sprint-acceptable.) | Worst case: ~1h of continued access before token refresh. Same exposure as REST. |
-| User exceeds subscribe rate limit | Disconnected. Client re-connects automatically. | Self-corrects; no UX change unless they're actively flooding. |
-| Multi-tab same user | Each tab opens its own socket; both join `user:{userId}`. Events arrive in both. | Both tabs update simultaneously. Expected. |
+| Failure                                                  | System behavior                                                                                                                                                                                               | UX impact                                                                                                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Redis adapter unreachable on boot                        | Gateway logs error, falls back to single-instance broadcast (no adapter). Single Railway instance still works.                                                                                                | None during sprint (one instance).                                                                                    |
+| Redis goes down mid-session                              | Adapter buffers/drops; events emitted on instance A may not reach instance B. With one instance, no impact. With multiple, brief inconsistency.                                                               | TanStack Query staleTime / refetch on focus catches the drift.                                                        |
+| Client cannot connect (firewall, corp proxy)             | Socket.io falls back to long-polling automatically (declared in transports).                                                                                                                                  | If polling also fails, status indicator shows `disconnected`; data is fetched via REST as before. **Nothing breaks.** |
+| Server emits but client missed it (briefly disconnected) | No retry.                                                                                                                                                                                                     | Defense in depth: `useRealtimeChannel` consumers invalidate on reconnect.                                             |
+| JWT expired during long idle session                     | Server rejects on next handshake. Auth provider triggers refresh on `TOKEN_REFRESHED`; socket reconnects.                                                                                                     | Sub-second gap.                                                                                                       |
+| Suspended user with active socket                        | Their next handshake is rejected. Mid-session admin suspension does not auto-disconnect them — accepted limitation; their next REST call is also still permitted until the next request. (Sprint-acceptable.) | Worst case: ~1h of continued access before token refresh. Same exposure as REST.                                      |
+| User exceeds subscribe rate limit                        | Disconnected. Client re-connects automatically.                                                                                                                                                               | Self-corrects; no UX change unless they're actively flooding.                                                         |
+| Multi-tab same user                                      | Each tab opens its own socket; both join `user:{userId}`. Events arrive in both.                                                                                                                              | Both tabs update simultaneously. Expected.                                                                            |
 
 ## Files affected
 
 **Backend — 13 new + 8 modified.**
 
 ### New (backend)
+
 - `apps/api/src/realtime/realtime.module.ts`
 - `apps/api/src/realtime/realtime.gateway.ts`
 - `apps/api/src/realtime/events.service.ts`
@@ -348,6 +359,7 @@ Multi-tenancy note: AuraHire has companies, but at the event level, room members
 - `packages/shared/src/realtime/index.ts` (barrel)
 
 ### Modified (backend)
+
 - `apps/api/src/common/guards/supabase-auth.guard.ts` — replace inline JWT verify with `verify-supabase-jwt.ts` util
 - `apps/api/src/app.module.ts` — register `RealtimeModule` (global)
 - `apps/api/src/main.ts` — `app.useWebSocketAdapter(new IoAdapter(app))` + Redis adapter wiring
@@ -361,6 +373,7 @@ Multi-tenancy note: AuraHire has companies, but at the event level, room members
 **Frontend — 5 new + 8 modified.**
 
 ### New (frontend)
+
 - `apps/web/components/providers/socket-provider.tsx`
 - `apps/web/lib/realtime/client.ts`
 - `apps/web/lib/realtime/events.ts` (re-exports from `@aurahire/shared/realtime`)
@@ -370,6 +383,7 @@ Multi-tenancy note: AuraHire has companies, but at the event level, room members
 - `apps/web/hooks/use-realtime-room.ts`
 
 ### Modified (frontend)
+
 - `apps/web/app/layout.tsx` — mount `<SocketProvider>` inside `QueryProvider`
 - `apps/web/app/(recruiter)/recruiter/jobs/[id]/page.tsx` and its applications-tab client component — add `useRealtimeRoom('job', id)` + `useRealtimeChannel` for `application.*`
 - `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx` — add `useRealtimeChannel` for recruiter feed events
@@ -382,6 +396,7 @@ Multi-tenancy note: AuraHire has companies, but at the event level, room members
 - `apps/web/package.json` — add `socket.io-client`
 
 ### Not changing
+
 - Database schema. No migration.
 - Drizzle queries. No new repository methods.
 - Existing REST endpoints. No new endpoints.
@@ -393,6 +408,7 @@ Multi-tenancy note: AuraHire has companies, but at the event level, room members
 ## Configuration
 
 New environment variables: **none**. Reuses:
+
 - `WEB_ORIGIN` (already used for REST CORS)
 - `REDIS_URL` (already used by cache + BullMQ)
 - `SUPABASE_URL` (already used by `SupabaseAuthGuard` for JWKS)
@@ -416,21 +432,25 @@ New environment variables: **none**. Reuses:
 No automated test harness for WS in this repo. Verification is manual, run by the human after implementation.
 
 **Pre-flight:**
+
 - `pnpm tsc --noEmit` passes in `apps/api` and `apps/web`.
 - `pnpm lint` passes in both.
 - `pnpm build` succeeds in both.
 
 **Backend smoke (single browser):**
+
 1. Sign in as a recruiter. Open browser devtools → Network → WS. Confirm `/socket.io` connection upgrades and the `connected` ack fires with the right `joinedRooms`.
 2. Sign in as candidate in a different browser (or incognito). Same check — different rooms.
 3. Sign in as admin. Confirm `role:admin` in joined rooms.
 
 **Surface 1 — recruiter pipeline:**
+
 - Two windows: recruiter on `/recruiter/jobs/[id]`. Candidate (separate browser) submits an application to that job.
 - Recruiter window: new application row appears in the applications table without manual refresh, within ~2s.
 - Recruiter dashboard: pipeline funnel count increments; Recent Activity shows the new event.
 
 **Surface 2 — candidate status:**
+
 - Two windows side-by-side: candidate on `/candidate/applications/[id]`, recruiter on `/recruiter/applications/[id]` for the same application.
 - Recruiter changes status from Applied → Screening.
 - Candidate window: chip color + label updates; timeline tab gets a new entry. No refresh.
@@ -439,12 +459,14 @@ No automated test harness for WS in this repo. Verification is manual, run by th
 - Recruiter sends an offer. Candidate application detail: offer section appears.
 
 **Surface 3 — admin audit:**
+
 - Admin on `/admin/audit`. Recruiter (separate browser) takes any auditable action (publishes a job, changes a status).
 - Admin window: new audit row appears at the top of the table within ~2s.
 - Admin dashboard "Recent Audit Events" widget: same.
 - Recruiter publishes a JD with a flagged term and overrides the bias flag. Admin bias-monitor page: flag count increments without refresh.
 
 **Failure modes:**
+
 - Disconnect Wi-Fi for 10s mid-session. Reconnect. Confirm:
   - Socket auto-reconnects (status indicator transitions disconnected → connected).
   - Any events emitted during the gap are picked up via the on-reconnect invalidation.
@@ -456,9 +478,11 @@ No automated test harness for WS in this repo. Verification is manual, run by th
 - Suspend a logged-in user via admin. They keep their socket until next reconnect, then are rejected. Acceptable.
 
 **Cross-browser:**
+
 - Chrome, Safari, Firefox. Socket.io handles transport differences; no special checks beyond confirming all three connect.
 
 **Mobile:**
+
 - Open candidate portal on phone. Background the tab for 30s (mobile suspends sockets). Foreground. Confirm reconnect + invalidate-on-reconnect behavior fills any gap. (Mobile suspension is the most common real-world disconnect; this is the test that matters.)
 
 ## Open questions

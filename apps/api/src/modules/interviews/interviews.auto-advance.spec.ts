@@ -9,7 +9,11 @@
  *  5. emitApplicationStatusChanged is called with previousStatus + status:"interview"
  */
 
-import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from "@nestjs/common";
 import type { AuthUser } from "@aurahire/shared";
 
 import { InterviewsService } from "./interviews.service";
@@ -89,7 +93,9 @@ function makeService(applicationStatus: string) {
   const applicationsRepo = {
     findApplicationContextForCompany: jest.fn().mockResolvedValue(application),
     findById: jest.fn().mockResolvedValue(application),
-    update: jest.fn().mockResolvedValue({ ...application, status: "interview" }),
+    update: jest
+      .fn()
+      .mockResolvedValue({ ...application, status: "interview" }),
   };
 
   const interviewsRepo = {
@@ -102,7 +108,11 @@ function makeService(applicationStatus: string) {
   };
 
   const jobsRepo = {
-    findById: jest.fn().mockResolvedValue({ id: uuid(200), companyId: uuid(10), recruiterId: uuid(1) }),
+    findById: jest.fn().mockResolvedValue({
+      id: uuid(200),
+      companyId: uuid(10),
+      recruiterId: uuid(1),
+    }),
     findByIdWithCompany: jest.fn(),
   };
 

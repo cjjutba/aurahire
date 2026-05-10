@@ -12,14 +12,18 @@ import { join } from "node:path";
 
 const SAMPLE_PDF = join(__dirname, "fixtures", "sample-resume.pdf");
 
-test("candidate completes onboarding via PDF resume upload", async ({ page }) => {
+test("candidate completes onboarding via PDF resume upload", async ({
+  page,
+}) => {
   // TODO: replace with auth state injection or a `loginAsCandidate()` helper.
   // For now, assume the test runs after a manual login.
   await page.goto("/onboarding/candidate");
 
   // Step 1: upload PDF.
   await page.locator('input[type="file"]').setInputFiles(SAMPLE_PDF);
-  await expect(page.getByText(/We've read your resume/i)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/We've read your resume/i)).toBeVisible({
+    timeout: 60_000,
+  });
 
   // Verify the success card shows item counts (chips).
   const continueButton = page.getByRole("link", { name: /^Continue$/ });

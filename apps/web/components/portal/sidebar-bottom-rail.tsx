@@ -5,7 +5,11 @@ import { Bell, MoreHorizontal } from "lucide-react";
 import type { UserRole } from "@aurahire/shared";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useUserNotifications } from "@/lib/realtime/use-user-notifications";
 
 import { SidebarNotificationsPopoverBody } from "./sidebar-notifications-popover";
@@ -37,13 +41,14 @@ export interface SidebarBottomRailProps {
  * content so the choice between them is purely affordance — clicking either
  * yields identical behavior.
  */
-export function SidebarBottomRail({ user, onSignedOut }: SidebarBottomRailProps) {
+export function SidebarBottomRail({
+  user,
+  onSignedOut,
+}: SidebarBottomRailProps) {
   const { unreadCount } = useUserNotifications(user.id);
   const initials = getInitials(user.name);
   const bellLabel =
-    unreadCount > 0
-      ? `Notifications (${unreadCount} unread)`
-      : "Notifications";
+    unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications";
 
   // Controlled open state for the profile popover so the three-dot button
   // (rendered OUTSIDE the Popover root) can open the SAME popover that the

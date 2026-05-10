@@ -93,7 +93,9 @@ export function MembersTable() {
               key={m.id}
               member={m}
               isLast={idx === sorted.length - 1}
-              callerRole={isOwnerOrAdmin ? (callerRole as "owner" | "admin") : null}
+              callerRole={
+                isOwnerOrAdmin ? (callerRole as "owner" | "admin") : null
+              }
             />
           ))}
         </tbody>

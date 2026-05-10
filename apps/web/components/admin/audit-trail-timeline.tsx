@@ -30,7 +30,9 @@ function detailSnippet(
   if (action === "score.match.computed") {
     const overallScore = details.overallScore;
     const band = details.band;
-    return overallScore != null ? `${String(overallScore)}/100 (${String(band)})` : null;
+    return overallScore != null
+      ? `${String(overallScore)}/100 (${String(band)})`
+      : null;
   }
   if (action === "application.email_sent") {
     return (details.kind as string) ?? null;

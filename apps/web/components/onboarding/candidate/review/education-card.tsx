@@ -33,7 +33,10 @@ function FieldInput({
       <label className="text-[11px] font-semibold text-[var(--color-ink)]">
         {label}
         {required && (
-          <span aria-hidden className="text-[var(--color-status-danger)]"> *</span>
+          <span aria-hidden className="text-[var(--color-status-danger)]">
+            {" "}
+            *
+          </span>
         )}
       </label>
       <input
@@ -54,7 +57,12 @@ interface Props {
   onDelete: () => void;
 }
 
-export function EducationCard({ entry, defaultExpanded = false, onSave, onDelete }: Props) {
+export function EducationCard({
+  entry,
+  defaultExpanded = false,
+  onSave,
+  onDelete,
+}: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [draft, setDraft] = useState<EducationEntry>(entry);
 
@@ -70,7 +78,9 @@ export function EducationCard({ entry, defaultExpanded = false, onSave, onDelete
               {entry.institution || "Untitled school"}
             </div>
             <div className="text-xs text-[var(--color-muted)]">
-              {[entry.degree, entry.field_of_study].filter(Boolean).join(" · ") || "—"}
+              {[entry.degree, entry.field_of_study]
+                .filter(Boolean)
+                .join(" · ") || "—"}
             </div>
             <div className="font-mono text-xs text-[var(--color-muted)]">
               {entry.start_year ?? "?"} – {entry.end_year ?? "?"}
@@ -127,7 +137,10 @@ export function EducationCard({ entry, defaultExpanded = false, onSave, onDelete
           value={draft.start_year?.toString() ?? ""}
           type="number"
           onChange={(v) =>
-            setDraft({ ...draft, start_year: v ? Number.parseInt(v, 10) : null })
+            setDraft({
+              ...draft,
+              start_year: v ? Number.parseInt(v, 10) : null,
+            })
           }
         />
         <FieldInput

@@ -28,13 +28,18 @@ export class ScoringConfigUpdatedByDto {
 export class ScoringConfigDto {
   @ApiProperty() id!: string;
   @ApiProperty({ type: () => MatchWeightsDto }) matchWeights!: MatchWeightsDto;
-  @ApiProperty({ type: () => ProfileWeightsDto }) profileWeights!: ProfileWeightsDto;
-  @ApiProperty({ type: () => BandThresholdsDto }) bandThresholds!: BandThresholdsDto;
+  @ApiProperty({ type: () => ProfileWeightsDto })
+  profileWeights!: ProfileWeightsDto;
+  @ApiProperty({ type: () => BandThresholdsDto })
+  bandThresholds!: BandThresholdsDto;
   @ApiProperty({ type: [String] }) biasCategoriesEnabled!: string[];
   @ApiProperty({ type: [String] }) customFlaggedTerms!: string[];
   @ApiProperty() piiRedactionEnabled!: boolean;
   @ApiProperty({ type: [String] }) piiFieldsRedacted!: string[];
-  @ApiPropertyOptional({ type: () => ScoringConfigUpdatedByDto, nullable: true })
+  @ApiPropertyOptional({
+    type: () => ScoringConfigUpdatedByDto,
+    nullable: true,
+  })
   updatedBy!: ScoringConfigUpdatedByDto | null;
   @ApiProperty() updatedAt!: string;
 }
@@ -65,8 +70,10 @@ export class TopMoverDto {
 
 export class PreviewImpactDataDto {
   @ApiProperty() sampledCount!: number;
-  @ApiProperty({ type: () => BandDistributionDto }) current!: BandDistributionDto;
-  @ApiProperty({ type: () => BandDistributionDto }) proposed!: BandDistributionDto;
+  @ApiProperty({ type: () => BandDistributionDto })
+  current!: BandDistributionDto;
+  @ApiProperty({ type: () => BandDistributionDto })
+  proposed!: BandDistributionDto;
   @ApiProperty({ type: () => BandDistributionDto }) delta!: BandDistributionDto;
   @ApiProperty({ type: [TopMoverDto] }) examples!: TopMoverDto[];
 }

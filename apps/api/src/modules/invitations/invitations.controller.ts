@@ -23,9 +23,7 @@ import { Public } from "../../common/decorators/public.decorator";
 import { SkipActiveCompany } from "../../common/decorators/skip-active-company.decorator";
 
 import { InvitationsService } from "./invitations.service";
-import {
-  InvitationPreviewEnvelopeDto,
-} from "./dto/invitation-preview.dto";
+import { InvitationPreviewEnvelopeDto } from "./dto/invitation-preview.dto";
 import {
   InvitationAcceptEnvelopeDto,
   InvitationDeclineEnvelopeDto,

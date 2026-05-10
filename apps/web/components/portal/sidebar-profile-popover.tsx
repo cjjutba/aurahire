@@ -3,13 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  BookOpen,
-  HelpCircle,
-  LogOut,
-  Settings,
-  Smile,
-} from "lucide-react";
+import { BookOpen, HelpCircle, LogOut, Settings, Smile } from "lucide-react";
 import type { UserRole } from "@aurahire/shared";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -148,10 +142,7 @@ export function SidebarProfilePopoverBody({
         <AiStatusPill />
       </div>
 
-      <FeedbackModalClient
-        open={feedbackOpen}
-        onOpenChange={setFeedbackOpen}
-      />
+      <FeedbackModalClient open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );
 }

@@ -86,7 +86,11 @@ export default async function UsersPage({ searchParams }: PageProps) {
       />
 
       {body.data.length === 0 ? (
-        filtersActive ? <EmptyFiltered /> : <EmptyUsers />
+        filtersActive ? (
+          <EmptyFiltered />
+        ) : (
+          <EmptyUsers />
+        )
       ) : (
         <UsersTableClient
           rows={body.data}

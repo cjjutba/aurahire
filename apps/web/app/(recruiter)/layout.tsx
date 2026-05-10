@@ -9,20 +9,18 @@ export default async function RecruiterLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const profile = (await getCurrentProfile()) as
-    | {
-        id: string;
-        role: string;
-        fullName: string;
-        email: string;
-        avatarUrl: string | null;
-        profileCompleted: boolean;
-        // Phase 3: surfaced in the API response so we can seed the active
-        // company singleton with the server-known value before the
-        // memberships query resolves on the client.
-        lastActiveCompanyId: string | null;
-      }
-    | null;
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+    fullName: string;
+    email: string;
+    avatarUrl: string | null;
+    profileCompleted: boolean;
+    // Phase 3: surfaced in the API response so we can seed the active
+    // company singleton with the server-known value before the
+    // memberships query resolves on the client.
+    lastActiveCompanyId: string | null;
+  } | null;
 
   if (!profile) redirect("/login");
   if (profile.role !== "recruiter" && profile.role !== "admin") {

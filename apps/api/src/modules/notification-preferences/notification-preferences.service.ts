@@ -1,8 +1,5 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
-import type {
-  NotificationEventType,
-  NotificationMode,
-} from "@aurahire/db";
+import type { NotificationEventType, NotificationMode } from "@aurahire/db";
 import { NOTIFICATION_EVENT_TYPE } from "@aurahire/db";
 import {
   DEFAULT_MODES,
@@ -69,7 +66,7 @@ export class NotificationPreferencesService {
       const overridden = map.get(eventType);
       const mode: NotificationMode = isSecurityLocked
         ? "instant"
-        : overridden ?? DEFAULT_MODES[eventType];
+        : (overridden ?? DEFAULT_MODES[eventType]);
       return {
         eventType,
         mode,

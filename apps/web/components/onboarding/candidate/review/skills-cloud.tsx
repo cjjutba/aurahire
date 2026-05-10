@@ -47,7 +47,9 @@ export function SkillsCloud({ initial, onSync }: Props) {
         Skills <span className="font-mono text-xs">{skills.length}</span>
       </h3>
       {skills.length === 0 && (
-        <p className="text-sm text-[var(--color-muted)]">No skills found yet.</p>
+        <p className="text-sm text-[var(--color-muted)]">
+          No skills found yet.
+        </p>
       )}
       <div className="flex flex-wrap gap-2">
         {skills.map((s, i) => (

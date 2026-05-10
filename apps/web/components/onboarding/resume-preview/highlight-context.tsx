@@ -44,6 +44,7 @@ export function HighlightProvider({ children }: { children: ReactNode }) {
 
 export function useHighlightContext(): HighlightContextValue {
   const v = useContext(HighlightContext);
-  if (!v) throw new Error("useHighlightContext must be inside <HighlightProvider>");
+  if (!v)
+    throw new Error("useHighlightContext must be inside <HighlightProvider>");
   return v;
 }

@@ -113,28 +113,26 @@ describe("RedactPiiService.redactStructured", () => {
 
 describe("RedactPiiService.redactResume batching", () => {
   it("makes ONE structured call covering summary + every responsibility", async () => {
-    const generateStructured = jest.fn(
-      async (opts: { userPrompt: string }) => {
-        // Echo every input id back as scrubbed:<id> so we can verify pairing.
-        const arrStart = opts.userPrompt.indexOf("[");
-        const items = JSON.parse(opts.userPrompt.slice(arrStart)) as Array<{
-          id: string;
-          text: string;
-        }>;
-        return {
-          data: {
-            items: items.map((it) => ({
-              id: it.id,
-              scrubbed: `scrubbed:${it.id}`,
-            })),
-          },
-          latencyMs: 100,
-          model: "gpt-4o-mini",
-          promptTokens: 0,
-          completionTokens: 0,
-        };
-      },
-    );
+    const generateStructured = jest.fn(async (opts: { userPrompt: string }) => {
+      // Echo every input id back as scrubbed:<id> so we can verify pairing.
+      const arrStart = opts.userPrompt.indexOf("[");
+      const items = JSON.parse(opts.userPrompt.slice(arrStart)) as Array<{
+        id: string;
+        text: string;
+      }>;
+      return {
+        data: {
+          items: items.map((it) => ({
+            id: it.id,
+            scrubbed: `scrubbed:${it.id}`,
+          })),
+        },
+        latencyMs: 100,
+        model: "gpt-4o-mini",
+        promptTokens: 0,
+        completionTokens: 0,
+      };
+    });
     const svc = new RedactPiiService({
       generateStructured,
       generateText: jest.fn(),
@@ -238,27 +236,25 @@ describe("RedactPiiService.redactResume batching", () => {
   });
 
   it("skips free-text fields below FREE_TEXT_MIN_LENGTH (50 chars)", async () => {
-    const generateStructured = jest.fn(
-      async (opts: { userPrompt: string }) => {
-        const arrStart = opts.userPrompt.indexOf("[");
-        const items = JSON.parse(opts.userPrompt.slice(arrStart)) as Array<{
-          id: string;
-          text: string;
-        }>;
-        return {
-          data: {
-            items: items.map((it) => ({
-              id: it.id,
-              scrubbed: `scrubbed:${it.id}`,
-            })),
-          },
-          latencyMs: 0,
-          model: "gpt-4o-mini",
-          promptTokens: 0,
-          completionTokens: 0,
-        };
-      },
-    );
+    const generateStructured = jest.fn(async (opts: { userPrompt: string }) => {
+      const arrStart = opts.userPrompt.indexOf("[");
+      const items = JSON.parse(opts.userPrompt.slice(arrStart)) as Array<{
+        id: string;
+        text: string;
+      }>;
+      return {
+        data: {
+          items: items.map((it) => ({
+            id: it.id,
+            scrubbed: `scrubbed:${it.id}`,
+          })),
+        },
+        latencyMs: 0,
+        model: "gpt-4o-mini",
+        promptTokens: 0,
+        completionTokens: 0,
+      };
+    });
     const svc = new RedactPiiService({
       generateStructured,
       generateText: jest.fn(),

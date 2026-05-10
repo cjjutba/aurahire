@@ -78,7 +78,9 @@ export function ScoringQualityPanel({
                 <span className="text-[var(--color-body)]">
                   {REASON_LABELS[r.reason] ?? r.reason}
                 </span>
-                <span className="font-mono text-[var(--color-ink)]">{r.count}</span>
+                <span className="font-mono text-[var(--color-ink)]">
+                  {r.count}
+                </span>
               </li>
             ))}
           </ul>
@@ -94,7 +96,9 @@ export function ScoringQualityPanel({
                 <span className="text-[var(--color-body)]">
                   {COMPONENT_LABELS[c.componentName] ?? c.componentName}
                 </span>
-                <span className="font-mono text-[var(--color-ink)]">{c.count}</span>
+                <span className="font-mono text-[var(--color-ink)]">
+                  {c.count}
+                </span>
               </li>
             ))}
           </ul>

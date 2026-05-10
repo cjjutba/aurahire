@@ -5,16 +5,19 @@
 **Goal:** Build a production-grade two-layer caching system — a tagged Redis cache-aside layer in the NestJS backend (cuts OpenAI costs, DB load, and aggregate latency) and a TanStack-Query SSR-prefetch + hydration layer in the Next.js 16 frontend (eliminates the skeleton-on-refresh flash) — applied across the recruiter, candidate, and admin portals.
 
 **Architecture:**
+
 - **Backend (NestJS):** A new project-local `CacheModule` exports a typed `CacheService` with a `getOrSet<T>()` cache-aside primitive, tag-based invalidation (Redis SETs index keys per tag), in-process single-flight to prevent stampedes, fail-open behavior on Redis outage, and pino-logged hit/miss telemetry. The existing `@nestjs/cache-manager` + `@keyv/redis` global stays untouched (used elsewhere); `CacheService` owns its own `ioredis` client so it has the raw primitives needed for tag indexing and atomic operations.
 - **Backend cache targets:** AI services (resume parse, profile score, match score, bias detect) keyed by `sha256(input)` with 24h TTL — biggest cost win. `scoring_config` cached 1h with bust-on-update. Recruiter dashboard aggregates (`recruiter-stats`, `recruiter-analytics`, `recent`) cached 60s with tag `dashboard:recruiter:{userId}` busted on application/job mutations. Jobs `listMine`/`getForRecruiter`/`listPublic`/`getPublic` cached 60s with tags `jobs:recruiter:{userId}` and `jobs:public` busted on create/update/publish/archive.
 - **Frontend (Next.js):** Server Components prefetch via `prefetchQuery` against a typed `QueryClient`, dehydrate, and pass dehydrated state into a `<HydrationBoundary>` that wraps the page. Client components reading the same query key see filled cache on first render — no skeleton flash on refresh. A new `lib/query/` package centralizes query keys, query functions, and the server-side fetch helper. Mutations declare `invalidateKeys` so the client cache stays consistent.
 
 **Tech Stack:**
+
 - **Backend:** NestJS 10, ioredis 5 (already a dependency for throttle), pino logger, Drizzle ORM, `@aurahire/shared` Zod schemas. Cache TTLs declared as constants per domain.
 - **Frontend:** Next.js 16 App Router (Server Components default), `@tanstack/react-query` v5 (`HydrationBoundary`, `dehydrate`, `prefetchQuery`), Supabase SSR for cookie-based auth, the auto-generated Orval API client at `packages/shared/src/api-client/generated.ts`.
 - **Verification:** No automated test harness exists in this repo (no `*.spec.ts`, no `test` script per the prior plan). Verification per task = `pnpm tsc --noEmit` passes + `pnpm lint` passes + a manual smoke checklist the human runs after each phase.
 
 **Hard rules from CLAUDE.md that govern this plan:**
+
 - Claude does NOT run dev servers, Docker commands, DB mutations, or deploys. The human runs `pnpm dev` and verifies.
 - Claude does NOT make billed external calls (OpenAI, Resend) for testing — leave AI cache warming to the human's manual smoke.
 - `pnpm tsc --noEmit` and `pnpm lint` are the automated gates Claude runs.
@@ -24,6 +27,7 @@
 ## Spec Reference
 
 Conversation context with the user (May 5, 2026):
+
 1. User screenshot: navigating to `/recruiter/jobs` after refresh shows a long skeleton flash before data renders.
 2. User noted Redis is already running in `docker-compose.dev.yml` and asked for a system-wide caching strategy.
 3. Claude separated the two layers: skeleton-on-refresh is a frontend cache problem (React Query in-memory cache wipes on refresh); Redis is for backend latency/cost. Both worth doing.
@@ -34,50 +38,50 @@ Conversation context with the user (May 5, 2026):
 
 ## File Structure
 
-| Path | Role | Touch |
-|---|---|---|
-| `apps/api/src/cache/cache.module.ts` | New project-local cache module (registered global) | Create |
-| `apps/api/src/cache/cache.service.ts` | `getOrSet`, `bustTag`, `bustKey`, single-flight, fail-open, telemetry | Create |
-| `apps/api/src/cache/cache.constants.ts` | Cache namespace, TTL bands, tag templates | Create |
-| `apps/api/src/cache/redis.provider.ts` | `IORedisProvider` factory; injectable `Redis` client | Create |
-| `apps/api/src/cache/hash.util.ts` | `sha256OfStable(input)` for content-hash keys | Create |
-| `apps/api/src/cache/index.ts` | Barrel export | Create |
-| `apps/api/src/app.module.ts` | Import the new `CacheModule` (project-local; the keyv one stays) | Modify |
-| `apps/api/src/ai/parse-resume.service.ts` | Wrap parse in `getOrSet` keyed by `sha256(rawText)` | Modify |
-| `apps/api/src/ai/score-profile.service.ts` | Wrap score in `getOrSet` keyed by `sha256(redacted+weights+role+seniority)` | Modify |
-| `apps/api/src/ai/score-match.service.ts` | Wrap score in `getOrSet` keyed by `sha256(redacted+job+weights)` | Modify |
-| `apps/api/src/ai/detect-bias.service.ts` | Wrap detect in `getOrSet` keyed by `sha256(jdPlain)` | Modify |
-| `apps/api/src/ai/ai.module.ts` | Re-export with `CacheModule` made available (it's global so no import needed) | No change expected |
-| `apps/api/src/modules/admin/services/admin-config.service.ts` | Cache `getActive()` 1h with tag `scoring-config:active`; bust on update | Modify |
-| `apps/api/src/modules/jobs/jobs.service.ts` | Replace ad-hoc `cache.get/set` with `cacheService.getOrSet` + tag bust on writes | Modify |
-| `apps/api/src/modules/applications/applications.service.ts` | Cache recruiter-stats / recruiter-analytics / recent + tag bust on apply/status | Modify |
-| `apps/web/lib/query/query-client.ts` | `makeQueryClient()` shared between server prefetch + client provider | Create |
-| `apps/web/lib/query/keys.ts` | Centralized typed query-key factories (jobs, applications, dashboard, etc.) | Create |
-| `apps/web/lib/query/server-fetch.ts` | `serverApiFetch<T>(path, init)` — Bearer-attaches Supabase session, used in Server Components | Create |
-| `apps/web/lib/query/queries.ts` | Per-domain query functions (typed, used by both `prefetchQuery` and `useQuery`) | Create |
-| `apps/web/lib/query/hydration.tsx` | `<PrefetchedHydration>` wrapper helper + `dehydratePrefetched` | Create |
-| `apps/web/lib/query/index.ts` | Barrel export | Create |
-| `apps/web/components/providers/query-provider.tsx` | Use shared `makeQueryClient()` from `lib/query` | Modify |
-| `apps/web/app/(recruiter)/recruiter/page.tsx` | Switch from raw fetch to `prefetchQuery` + `<PrefetchedHydration>` | Modify |
-| `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx` | Replace local fetch with `useQuery` reading prefetched key | Modify |
-| `apps/web/app/(recruiter)/recruiter/jobs/page.tsx` | Switch to prefetch + hydrate; client list component reads via `useQuery` | Modify |
-| `apps/web/app/(recruiter)/recruiter/jobs/_jobs-list-client.tsx` | New client component holding `useRecruiterJobsQuery` | Create |
-| `apps/web/app/(recruiter)/recruiter/jobs/[id]/page.tsx` | Prefetch single job + applications | Modify |
-| `apps/web/app/(recruiter)/recruiter/shortlist/page.tsx` | Prefetch shortlist | Modify |
-| `apps/web/app/(recruiter)/recruiter/interviews/page.tsx` | Prefetch interviews | Modify |
-| `apps/web/app/(candidate)/candidate/page.tsx` | Prefetch profile score + applications | Modify |
-| `apps/web/app/(candidate)/candidate/jobs/page.tsx` | Prefetch candidate jobs list | Modify |
-| `apps/web/app/(candidate)/candidate/jobs/[id]/page.tsx` | Prefetch single job | Modify |
-| `apps/web/app/(candidate)/candidate/applications/page.tsx` | Prefetch applications | Modify |
-| `apps/web/app/(candidate)/candidate/interviews/page.tsx` | Prefetch interviews | Modify |
-| `apps/web/hooks/use-recruiter-jobs.ts` | `useRecruiterJobsQuery(params)` — used by client list + filter | Create |
-| `apps/web/hooks/use-candidate-jobs.ts` | `useCandidateJobsQuery(params)` | Create |
-| `apps/web/hooks/use-applications.ts` | `useMyApplicationsQuery`, `useRecruiterRecentApplicationsQuery` | Create |
-| `apps/web/hooks/use-dashboard.ts` | `useRecruiterStatsQuery`, `useRecruiterAnalyticsQuery` | Create |
-| `apps/web/hooks/use-interviews.ts` | `useMyInterviewsQuery`, `useRecruiterInterviewsQuery` | Create |
-| `apps/web/hooks/use-shortlist.ts` | `useShortlistQuery` | Create |
-| `apps/web/hooks/use-profile-score.ts` | `useProfileScoreQuery` | Create |
-| `docs/main/caching-strategy.md` | Long-term reference doc (TTL bands, tag conventions, invalidation matrix) | Create |
+| Path                                                            | Role                                                                                          | Touch              |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------ |
+| `apps/api/src/cache/cache.module.ts`                            | New project-local cache module (registered global)                                            | Create             |
+| `apps/api/src/cache/cache.service.ts`                           | `getOrSet`, `bustTag`, `bustKey`, single-flight, fail-open, telemetry                         | Create             |
+| `apps/api/src/cache/cache.constants.ts`                         | Cache namespace, TTL bands, tag templates                                                     | Create             |
+| `apps/api/src/cache/redis.provider.ts`                          | `IORedisProvider` factory; injectable `Redis` client                                          | Create             |
+| `apps/api/src/cache/hash.util.ts`                               | `sha256OfStable(input)` for content-hash keys                                                 | Create             |
+| `apps/api/src/cache/index.ts`                                   | Barrel export                                                                                 | Create             |
+| `apps/api/src/app.module.ts`                                    | Import the new `CacheModule` (project-local; the keyv one stays)                              | Modify             |
+| `apps/api/src/ai/parse-resume.service.ts`                       | Wrap parse in `getOrSet` keyed by `sha256(rawText)`                                           | Modify             |
+| `apps/api/src/ai/score-profile.service.ts`                      | Wrap score in `getOrSet` keyed by `sha256(redacted+weights+role+seniority)`                   | Modify             |
+| `apps/api/src/ai/score-match.service.ts`                        | Wrap score in `getOrSet` keyed by `sha256(redacted+job+weights)`                              | Modify             |
+| `apps/api/src/ai/detect-bias.service.ts`                        | Wrap detect in `getOrSet` keyed by `sha256(jdPlain)`                                          | Modify             |
+| `apps/api/src/ai/ai.module.ts`                                  | Re-export with `CacheModule` made available (it's global so no import needed)                 | No change expected |
+| `apps/api/src/modules/admin/services/admin-config.service.ts`   | Cache `getActive()` 1h with tag `scoring-config:active`; bust on update                       | Modify             |
+| `apps/api/src/modules/jobs/jobs.service.ts`                     | Replace ad-hoc `cache.get/set` with `cacheService.getOrSet` + tag bust on writes              | Modify             |
+| `apps/api/src/modules/applications/applications.service.ts`     | Cache recruiter-stats / recruiter-analytics / recent + tag bust on apply/status               | Modify             |
+| `apps/web/lib/query/query-client.ts`                            | `makeQueryClient()` shared between server prefetch + client provider                          | Create             |
+| `apps/web/lib/query/keys.ts`                                    | Centralized typed query-key factories (jobs, applications, dashboard, etc.)                   | Create             |
+| `apps/web/lib/query/server-fetch.ts`                            | `serverApiFetch<T>(path, init)` — Bearer-attaches Supabase session, used in Server Components | Create             |
+| `apps/web/lib/query/queries.ts`                                 | Per-domain query functions (typed, used by both `prefetchQuery` and `useQuery`)               | Create             |
+| `apps/web/lib/query/hydration.tsx`                              | `<PrefetchedHydration>` wrapper helper + `dehydratePrefetched`                                | Create             |
+| `apps/web/lib/query/index.ts`                                   | Barrel export                                                                                 | Create             |
+| `apps/web/components/providers/query-provider.tsx`              | Use shared `makeQueryClient()` from `lib/query`                                               | Modify             |
+| `apps/web/app/(recruiter)/recruiter/page.tsx`                   | Switch from raw fetch to `prefetchQuery` + `<PrefetchedHydration>`                            | Modify             |
+| `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx`      | Replace local fetch with `useQuery` reading prefetched key                                    | Modify             |
+| `apps/web/app/(recruiter)/recruiter/jobs/page.tsx`              | Switch to prefetch + hydrate; client list component reads via `useQuery`                      | Modify             |
+| `apps/web/app/(recruiter)/recruiter/jobs/_jobs-list-client.tsx` | New client component holding `useRecruiterJobsQuery`                                          | Create             |
+| `apps/web/app/(recruiter)/recruiter/jobs/[id]/page.tsx`         | Prefetch single job + applications                                                            | Modify             |
+| `apps/web/app/(recruiter)/recruiter/shortlist/page.tsx`         | Prefetch shortlist                                                                            | Modify             |
+| `apps/web/app/(recruiter)/recruiter/interviews/page.tsx`        | Prefetch interviews                                                                           | Modify             |
+| `apps/web/app/(candidate)/candidate/page.tsx`                   | Prefetch profile score + applications                                                         | Modify             |
+| `apps/web/app/(candidate)/candidate/jobs/page.tsx`              | Prefetch candidate jobs list                                                                  | Modify             |
+| `apps/web/app/(candidate)/candidate/jobs/[id]/page.tsx`         | Prefetch single job                                                                           | Modify             |
+| `apps/web/app/(candidate)/candidate/applications/page.tsx`      | Prefetch applications                                                                         | Modify             |
+| `apps/web/app/(candidate)/candidate/interviews/page.tsx`        | Prefetch interviews                                                                           | Modify             |
+| `apps/web/hooks/use-recruiter-jobs.ts`                          | `useRecruiterJobsQuery(params)` — used by client list + filter                                | Create             |
+| `apps/web/hooks/use-candidate-jobs.ts`                          | `useCandidateJobsQuery(params)`                                                               | Create             |
+| `apps/web/hooks/use-applications.ts`                            | `useMyApplicationsQuery`, `useRecruiterRecentApplicationsQuery`                               | Create             |
+| `apps/web/hooks/use-dashboard.ts`                               | `useRecruiterStatsQuery`, `useRecruiterAnalyticsQuery`                                        | Create             |
+| `apps/web/hooks/use-interviews.ts`                              | `useMyInterviewsQuery`, `useRecruiterInterviewsQuery`                                         | Create             |
+| `apps/web/hooks/use-shortlist.ts`                               | `useShortlistQuery`                                                                           | Create             |
+| `apps/web/hooks/use-profile-score.ts`                           | `useProfileScoreQuery`                                                                        | Create             |
+| `docs/main/caching-strategy.md`                                 | Long-term reference doc (TTL bands, tag conventions, invalidation matrix)                     | Create             |
 
 ---
 
@@ -92,6 +96,7 @@ Builds the `CacheService` and its Redis provider. Phase A delivers a usable cach
 Stable JSON serialization + sha256 → used by every AI cache key. Stable means object key order doesn't change the hash.
 
 **Files:**
+
 - Create: `apps/api/src/cache/hash.util.ts`
 
 ### Steps
@@ -148,6 +153,7 @@ git commit -m "feat(api/cache): add sha256OfStable hash utility for content-hash
 The constants file declares TTL bands, the namespace prefix, and tag templates so every caller uses the same conventions. The provider wraps ioredis as an injectable.
 
 **Files:**
+
 - Create: `apps/api/src/cache/cache.constants.ts`
 - Create: `apps/api/src/cache/redis.provider.ts`
 
@@ -188,7 +194,8 @@ export const TAGS = {
   jobsPublic: () => "jobs:public",
   jobsRecruiter: (recruiterId: string) => `jobs:recruiter:${recruiterId}`,
   jobDetail: (jobId: string) => `job:${jobId}`,
-  dashboardRecruiter: (recruiterId: string) => `dashboard:recruiter:${recruiterId}`,
+  dashboardRecruiter: (recruiterId: string) =>
+    `dashboard:recruiter:${recruiterId}`,
   applicationsRecruiter: (recruiterId: string) =>
     `applications:recruiter:${recruiterId}`,
   applicationsCandidate: (candidateId: string) =>
@@ -197,7 +204,8 @@ export const TAGS = {
     `interviews:recruiter:${recruiterId}`,
   interviewsCandidate: (candidateId: string) =>
     `interviews:candidate:${candidateId}`,
-  shortlistRecruiter: (recruiterId: string) => `shortlist:recruiter:${recruiterId}`,
+  shortlistRecruiter: (recruiterId: string) =>
+    `shortlist:recruiter:${recruiterId}`,
   profileScore: (userId: string) => `profile-score:${userId}`,
 } as const;
 
@@ -271,6 +279,7 @@ git commit -m "feat(api/cache): add cache constants (TTL bands, tag templates) a
 The core. Cache-aside pattern with stampede protection and graceful Redis-down behavior.
 
 **Files:**
+
 - Create: `apps/api/src/cache/cache.service.ts`
 
 ### Steps
@@ -476,6 +485,7 @@ git commit -m "feat(api/cache): add CacheService with cache-aside, tags, single-
 ## Task 4: CacheModule and global registration
 
 **Files:**
+
 - Create: `apps/api/src/cache/cache.module.ts`
 - Create: `apps/api/src/cache/index.ts`
 - Modify: `apps/api/src/app.module.ts`
@@ -564,6 +574,7 @@ Apply `CacheService` to the highest-leverage targets. Order: scoring_config (che
 `scoring_config.getActive()` is read by every scoring call. Changes are admin-only and rare → 1h TTL with tag bust on update.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/admin/services/admin-config.service.ts`
 
 ### Steps
@@ -632,6 +643,7 @@ git commit -m "feat(api/admin): cache scoring_config.getActive (1h TTL, bust on 
 Resume parsing by raw text → same input always produces same parsed output. 24h TTL, content-hash key. No tags — content-keyed entries naturally invalidate when the input changes.
 
 **Files:**
+
 - Modify: `apps/api/src/ai/parse-resume.service.ts`
 
 ### Steps
@@ -699,6 +711,7 @@ git commit -m "feat(api/ai): cache parse-resume by content hash (24h TTL)"
 Profile score depends on redacted resume content + active scoring weights + role/seniority. Hash all of those.
 
 **Files:**
+
 - Modify: `apps/api/src/ai/score-profile.service.ts`
 
 ### Steps
@@ -774,6 +787,7 @@ git commit -m "feat(api/ai): cache score-profile by content hash (24h TTL)"
 Same pattern as profile scoring. Hash includes redacted resume + job fields + weights + prompt version.
 
 **Files:**
+
 - Modify: `apps/api/src/ai/score-match.service.ts`
 
 ### Steps
@@ -879,6 +893,7 @@ git commit -m "feat(api/ai): cache score-match by content hash (24h TTL)"
 Bias detection on a job description: `sha256(jdPlain + promptVersion)`.
 
 **Files:**
+
 - Modify: `apps/api/src/ai/detect-bias.service.ts`
 
 ### Steps
@@ -939,6 +954,7 @@ git commit -m "feat(api/ai): cache detect-bias by content hash (24h TTL)"
 The current jobs service uses `@nestjs/cache-manager`'s `Cache` with TTL-only eviction (the `invalidatePublicCache()` method is a no-op TODO). Switch to `CacheService` so writes can do exact tag-based invalidation, eliminating the 60s staleness window after publish/update.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/jobs/jobs.service.ts`
 
 ### Steps
@@ -1132,6 +1148,7 @@ git commit -m "feat(api/jobs): replace ad-hoc cache with tagged CacheService + b
 The recruiter dashboard pulls three endpoints concurrently. All three benefit from caching with the same tag (`dashboard:recruiter:{userId}`) so they bust together on application/job mutations.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.service.ts`
 
 ### Steps
@@ -1232,6 +1249,7 @@ git commit -m "feat(api/applications): cache dashboard aggregates + my-applicati
 Same pattern as applications. Apply to whichever services own these reads.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.service.ts` (shortlist may live here)
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 
@@ -1242,6 +1260,7 @@ Same pattern as applications. Apply to whichever services own these reads.
 Run: `grep -n "shortlist" apps/api/src/modules/**/*.service.ts`
 
 The shortlist is "applications a recruiter has explicitly shortlisted." Likely a method like `listShortlistForRecruiter(user)` on applications.service. Wrap with:
+
 - key: `shortlist:recruiter:${user.id}:list:${serializeQuery(query)}`
 - ttlSeconds: `TTL_SECONDS.hot`
 - tags: `[TAGS.shortlistRecruiter(user.id), TAGS.applicationsRecruiter(user.id)]`
@@ -1253,10 +1272,12 @@ Bust `TAGS.shortlistRecruiter(user.id)` whenever the shortlist boolean is toggle
 Open `apps/api/src/modules/interviews/interviews.service.ts`. Add imports + `CacheService` to constructor.
 
 Wrap the recruiter list method:
+
 - key: `interviews:recruiter:${user.id}:list:${serializeQuery(query)}`
 - tags: `[TAGS.interviewsRecruiter(user.id)]`
 
 And the candidate list method:
+
 - key: `interviews:candidate:${user.id}:list:${serializeQuery(query)}`
 - tags: `[TAGS.interviewsCandidate(user.id)]`
 
@@ -1291,6 +1312,7 @@ git commit -m "feat(api): cache shortlist + interviews lists, bust on writes"
 Profile score is read on every candidate dashboard load. Long TTL because it only changes when the candidate recomputes (which already busts via the compute endpoint).
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts`
 
 ### Steps
@@ -1352,6 +1374,7 @@ Builds the shared query plumbing, then refactors each portal page to prefetch on
 `makeQueryClient` is needed in two places: the existing client provider AND every Server Component that prefetches. Pull it into `lib/query/`.
 
 **Files:**
+
 - Create: `apps/web/lib/query/query-client.ts`
 - Modify: `apps/web/components/providers/query-provider.tsx`
 
@@ -1362,7 +1385,10 @@ Builds the shared query plumbing, then refactors each portal page to prefetch on
 Create `apps/web/lib/query/query-client.ts`:
 
 ```ts
-import { QueryClient, defaultShouldDehydrateQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  defaultShouldDehydrateQuery,
+} from "@tanstack/react-query";
 
 /**
  * Single source of truth for QueryClient configuration. Used by both:
@@ -1380,7 +1406,8 @@ export function makeQueryClient(): QueryClient {
         gcTime: 5 * 60_000,
         refetchOnWindowFocus: false,
         retry: (failureCount, error) => {
-          const status = (error as { response?: { status?: number } })?.response?.status;
+          const status = (error as { response?: { status?: number } })?.response
+            ?.status;
           if (status === 401 || status === 403 || status === 404) return false;
           return failureCount < 2;
         },
@@ -1392,7 +1419,8 @@ export function makeQueryClient(): QueryClient {
         // Only ship successfully-loaded queries to the client. Pending queries
         // serialized would re-trigger the loader on hydrate, defeating the purpose.
         shouldDehydrateQuery: (query) =>
-          defaultShouldDehydrateQuery(query) && query.state.status === "success",
+          defaultShouldDehydrateQuery(query) &&
+          query.state.status === "success",
       },
     },
   });
@@ -1449,6 +1477,7 @@ git commit -m "feat(web/query): extract makeQueryClient into lib/query for share
 A typed helper that Server Components call inside `prefetchQuery`. Reads the Supabase session via cookies, attaches Bearer token, throws a typed error on non-2xx.
 
 **Files:**
+
 - Create: `apps/web/lib/query/server-fetch.ts`
 
 ### Steps
@@ -1521,7 +1550,9 @@ export async function serverApiFetch<T>(
     method: init.method ?? "GET",
     headers: {
       Authorization: `Bearer ${session.access_token}`,
-      ...(init.body !== undefined ? { "content-type": "application/json" } : {}),
+      ...(init.body !== undefined
+        ? { "content-type": "application/json" }
+        : {}),
     },
     body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     cache: init.cache ?? "no-store",
@@ -1535,7 +1566,11 @@ export async function serverApiFetch<T>(
     } catch {
       // body may not be JSON; ignore.
     }
-    throw new ServerApiError(res.status, body, `API ${res.status} for ${url.pathname}`);
+    throw new ServerApiError(
+      res.status,
+      body,
+      `API ${res.status} for ${url.pathname}`,
+    );
   }
 
   if (res.status === 204) return undefined as T;
@@ -1562,6 +1597,7 @@ git commit -m "feat(web/query): add serverApiFetch helper for Server Component p
 Centralize keys and queryFns so both the Server Component prefetch and the client `useQuery` reach for the same key + same function. This is what makes hydration work — keys must match exactly.
 
 **Files:**
+
 - Create: `apps/web/lib/query/keys.ts`
 - Create: `apps/web/lib/query/queries.ts`
 - Create: `apps/web/lib/query/index.ts`
@@ -1584,7 +1620,8 @@ export const queryKeys = {
   recruiterDashboard: {
     stats: (range: string) => ["recruiter-dashboard", "stats", range] as const,
     analytics: () => ["recruiter-dashboard", "analytics"] as const,
-    recent: (limit: number) => ["recruiter-dashboard", "recent", limit] as const,
+    recent: (limit: number) =>
+      ["recruiter-dashboard", "recent", limit] as const,
   },
   recruiterJobs: {
     list: (params: RecruiterJobsListParams) =>
@@ -1715,9 +1752,12 @@ export interface RecruiterRecentApplicationItem {
 
 export const serverQueries = {
   recruiterDashboardStats: (range: string) =>
-    serverApiFetch<RecruiterStatsResponse>("/api/v1/applications/recruiter-stats", {
-      query: { range },
-    }),
+    serverApiFetch<RecruiterStatsResponse>(
+      "/api/v1/applications/recruiter-stats",
+      {
+        query: { range },
+      },
+    ),
   recruiterDashboardAnalytics: () =>
     serverApiFetch<RecruiterAnalyticsResponse>(
       "/api/v1/applications/recruiter-analytics",
@@ -1728,10 +1768,16 @@ export const serverQueries = {
       { query: { limit } },
     ),
   recruiterJobsList: (params: RecruiterJobsListParams) =>
-    serverApiFetch<{ data: unknown[]; meta: { total: number; page: number; limit: number } }>(
-      "/api/v1/jobs/mine",
-      { query: { status: params.status, page: params.page, include: params.include } },
-    ),
+    serverApiFetch<{
+      data: unknown[];
+      meta: { total: number; page: number; limit: number };
+    }>("/api/v1/jobs/mine", {
+      query: {
+        status: params.status,
+        page: params.page,
+        include: params.include,
+      },
+    }),
   recruiterJobDetail: (id: string) =>
     serverApiFetch<unknown>(`/api/v1/jobs/${id}`),
   recruiterShortlist: (params: RecruiterShortlistParams) =>
@@ -1742,9 +1788,14 @@ export const serverQueries = {
   recruiterInterviews: (params: RecruiterInterviewsParams) =>
     serverApiFetch<{ data: unknown[]; meta: { total: number } }>(
       "/api/v1/interviews",
-      { query: { status: params.status, page: params.page, scope: "recruiter" } },
+      {
+        query: { status: params.status, page: params.page, scope: "recruiter" },
+      },
     ),
-  recruiterApplicationsByJob: (jobId: string, params: RecruiterApplicationsByJobParams) =>
+  recruiterApplicationsByJob: (
+    jobId: string,
+    params: RecruiterApplicationsByJobParams,
+  ) =>
     serverApiFetch<{ data: unknown[]; meta: { total: number } }>(
       "/api/v1/applications",
       { query: { jobId, status: params.status, page: params.page } },
@@ -1771,10 +1822,11 @@ export const serverQueries = {
   candidateInterviews: (params: CandidateInterviewsParams) =>
     serverApiFetch<{ data: unknown[]; meta: { total: number } }>(
       "/api/v1/interviews",
-      { query: { status: params.status, page: params.page, scope: "candidate" } },
+      {
+        query: { status: params.status, page: params.page, scope: "candidate" },
+      },
     ),
-  profileScoreMe: () =>
-    serverApiFetch<unknown>("/api/v1/scoring/profile/me"),
+  profileScoreMe: () => serverApiFetch<unknown>("/api/v1/scoring/profile/me"),
 } as const;
 ```
 
@@ -1822,6 +1874,7 @@ git commit -m "feat(web/query): centralized query keys + server-side query funct
 Wraps the page's children in `<HydrationBoundary>` and accepts a freshly-built `QueryClient` with prefetched queries already loaded.
 
 **Files:**
+
 - Create: `apps/web/lib/query/hydration.tsx`
 
 ### Steps
@@ -1870,7 +1923,9 @@ export function PrefetchedHydration({
   children,
 }: PrefetchedHydrationProps) {
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>{children}</HydrationBoundary>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      {children}
+    </HydrationBoundary>
   );
 }
 ```
@@ -1902,6 +1957,7 @@ git commit -m "feat(web/query): add PrefetchedHydration helper for SSR-to-CSR ca
 Each hook calls `useQuery` with the canonical key + a client-side fetcher that uses the existing Orval bearer-attached fetcher. Hydrated data → first paint without a network round trip.
 
 **Files:**
+
 - Create: `apps/web/hooks/use-recruiter-jobs.ts`
 - Create: `apps/web/hooks/use-candidate-jobs.ts`
 - Create: `apps/web/hooks/use-applications.ts`
@@ -1957,7 +2013,9 @@ export async function clientApiFetch<T>(
     method: init.method ?? "GET",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init.body !== undefined ? { "content-type": "application/json" } : {}),
+      ...(init.body !== undefined
+        ? { "content-type": "application/json" }
+        : {}),
     },
     body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     credentials: "include",
@@ -1968,7 +2026,11 @@ export async function clientApiFetch<T>(
     try {
       body = await res.json();
     } catch {}
-    const err = new ClientApiError(res.status, body, `API ${res.status} for ${url.pathname}`);
+    const err = new ClientApiError(
+      res.status,
+      body,
+      `API ${res.status} for ${url.pathname}`,
+    );
     (err as { response?: unknown }).response = { status: res.status, body };
     throw err;
   }
@@ -2042,10 +2104,13 @@ export function useRecruiterStatsQuery(range: string) {
   return useQuery({
     queryKey: queryKeys.recruiterDashboard.stats(range),
     queryFn: ({ signal }) =>
-      clientApiFetch<RecruiterStatsResponse>("/api/v1/applications/recruiter-stats", {
-        query: { range },
-        signal,
-      }),
+      clientApiFetch<RecruiterStatsResponse>(
+        "/api/v1/applications/recruiter-stats",
+        {
+          query: { range },
+          signal,
+        },
+      ),
   });
 }
 
@@ -2093,6 +2158,7 @@ git commit -m "feat(web/hooks): add typed client query hooks for hydrated SSR da
 This is the page in the user's screenshot. The template every other page mirrors.
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/jobs/page.tsx`
 - Create: `apps/web/app/(recruiter)/recruiter/jobs/_jobs-list-client.tsx`
 
@@ -2141,7 +2207,9 @@ export function JobsListClient({ status, page }: JobsListClientProps) {
   // `isLoading` only fires when the cache miss is real (e.g. initial CSR navigation).
   if (isError) {
     return (
-      <div className="text-[var(--color-status-danger)]">Failed to load jobs.</div>
+      <div className="text-[var(--color-status-danger)]">
+        Failed to load jobs.
+      </div>
     );
   }
 
@@ -2261,6 +2329,7 @@ git commit -m "feat(web/recruiter): prefetch+hydrate /recruiter/jobs (kills skel
 The dashboard fetches three endpoints in parallel. All three get prefetched and hydrated. The existing `_dashboard-client.tsx` (which already has the date-range filter) becomes a `useQuery` consumer instead of a Server-Action consumer.
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/page.tsx`
 - Modify: `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx`
 
@@ -2269,6 +2338,7 @@ The dashboard fetches three endpoints in parallel. All three get prefetched and 
 - [ ] **Step 1: Read the current files**
 
 Run:
+
 ```
 cat apps/web/app/(recruiter)/recruiter/page.tsx
 cat apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx
@@ -2314,7 +2384,8 @@ export default async function RecruiterDashboardPage() {
     }),
     queryClient.prefetchQuery({
       queryKey: queryKeys.recruiterDashboard.recent(DEFAULT_RECENT_LIMIT),
-      queryFn: () => serverQueries.recruiterDashboardRecent(DEFAULT_RECENT_LIMIT),
+      queryFn: () =>
+        serverQueries.recruiterDashboardRecent(DEFAULT_RECENT_LIMIT),
     }),
   ]);
 
@@ -2365,7 +2436,9 @@ export function RecruiterDashboardClient({
         <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
           Recruiter Dashboard
         </h1>
-        <p className="mt-1 text-sm text-[var(--color-body)]">Pipeline at a glance.</p>
+        <p className="mt-1 text-sm text-[var(--color-body)]">
+          Pipeline at a glance.
+        </p>
       </header>
 
       {/*
@@ -2383,7 +2456,9 @@ export function RecruiterDashboardClient({
 
       {/* Replace these placeholders with the existing sections, wired to the queries above. */}
       <section>{/* ActiveJobsSection: render stats.data */}</section>
-      <section>{/* PipelineAnalyticsSection: render analytics.data + range filter (setRange) */}</section>
+      <section>
+        {/* PipelineAnalyticsSection: render analytics.data + range filter (setRange) */}
+      </section>
       <section>{/* RecentApplicationsSection: render recent.data */}</section>
     </div>
   );
@@ -2413,6 +2488,7 @@ git commit -m "feat(web/recruiter): prefetch+hydrate dashboard (stats/analytics/
 ## Task 21: Refactor `/recruiter/jobs/[id]` to prefetch + hydrate
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/jobs/[id]/page.tsx`
 - Create: `apps/web/app/(recruiter)/recruiter/jobs/[id]/_job-detail-client.tsx`
 
@@ -2446,7 +2522,10 @@ interface PageProps {
   searchParams: Promise<{ status?: string; page?: string }>;
 }
 
-export default async function RecruiterJobDetailPage({ params, searchParams }: PageProps) {
+export default async function RecruiterJobDetailPage({
+  params,
+  searchParams,
+}: PageProps) {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
@@ -2498,6 +2577,7 @@ git commit -m "feat(web/recruiter): prefetch+hydrate /recruiter/jobs/[id]"
 Identical pattern — Server Component prefetches via `serverQueries`, wraps a small `_*-client.tsx` in `<PrefetchedHydration>`. Each client component uses the matching hook from Task 18.
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/shortlist/page.tsx`
 - Create: `apps/web/app/(recruiter)/recruiter/shortlist/_shortlist-client.tsx`
 - Modify: `apps/web/app/(recruiter)/recruiter/interviews/page.tsx`
@@ -2508,14 +2588,15 @@ Identical pattern — Server Component prefetches via `serverQueries`, wraps a s
 - [ ] **Step 1: Apply the Task 19 template**
 
 For each page:
+
 1. Move existing render code into `_*-client.tsx` with `"use client"` and the matching `use*Query` hook.
 2. Rewrite `page.tsx` to: get session, build params, `makeQueryClient`, `prefetchQuery({ queryKey, queryFn })`, return `<PrefetchedHydration><ClientComponent ... /></PrefetchedHydration>`.
 
 Use these mappings:
 
-| Page | Query key | Query function |
-|---|---|---|
-| `/recruiter/shortlist` | `queryKeys.recruiterShortlist.list({ page })` | `serverQueries.recruiterShortlist({ page })` |
+| Page                    | Query key                                              | Query function                                        |
+| ----------------------- | ------------------------------------------------------ | ----------------------------------------------------- |
+| `/recruiter/shortlist`  | `queryKeys.recruiterShortlist.list({ page })`          | `serverQueries.recruiterShortlist({ page })`          |
 | `/recruiter/interviews` | `queryKeys.recruiterInterviews.list({ status, page })` | `serverQueries.recruiterInterviews({ status, page })` |
 
 - [ ] **Step 2: Verify it compiles**
@@ -2535,6 +2616,7 @@ git commit -m "feat(web/recruiter): prefetch+hydrate /recruiter/{shortlist,inter
 ## Task 23: Refactor candidate dashboard, jobs list, and job detail
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/page.tsx` + new `_dashboard-client.tsx`
 - Modify: `apps/web/app/(candidate)/candidate/jobs/page.tsx` + new `_jobs-list-client.tsx`
 - Modify: `apps/web/app/(candidate)/candidate/jobs/[id]/page.tsx` + new `_job-detail-client.tsx`
@@ -2545,11 +2627,11 @@ git commit -m "feat(web/recruiter): prefetch+hydrate /recruiter/{shortlist,inter
 
 Mappings:
 
-| Page | Prefetched keys + functions |
-|---|---|
-| `/candidate` | `profileScore.me()` → `serverQueries.profileScoreMe()` AND `candidateApplications.list({})` → `serverQueries.candidateApplications({})` |
-| `/candidate/jobs` | `candidateJobs.list({ q, mode, experienceLevel, page })` → `serverQueries.candidateJobsList({...})` |
-| `/candidate/jobs/[id]` | `candidateJobs.detail(id)` → `serverQueries.candidateJobDetail(id)` |
+| Page                   | Prefetched keys + functions                                                                                                             |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `/candidate`           | `profileScore.me()` → `serverQueries.profileScoreMe()` AND `candidateApplications.list({})` → `serverQueries.candidateApplications({})` |
+| `/candidate/jobs`      | `candidateJobs.list({ q, mode, experienceLevel, page })` → `serverQueries.candidateJobsList({...})`                                     |
+| `/candidate/jobs/[id]` | `candidateJobs.detail(id)` → `serverQueries.candidateJobDetail(id)`                                                                     |
 
 For each, port the existing render code into a `"use client"` component reading from the matching hook (`useProfileScoreQuery`, `useMyApplicationsQuery`, `useCandidateJobsQuery`, `useCandidateJobDetailQuery`).
 
@@ -2570,6 +2652,7 @@ git commit -m "feat(web/candidate): prefetch+hydrate /candidate/{,jobs,jobs/[id]
 ## Task 24: Refactor candidate applications + interviews pages
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/applications/page.tsx` + new `_applications-client.tsx`
 - Modify: `apps/web/app/(candidate)/candidate/interviews/page.tsx` + new `_interviews-client.tsx`
 
@@ -2579,10 +2662,10 @@ git commit -m "feat(web/candidate): prefetch+hydrate /candidate/{,jobs,jobs/[id]
 
 Mappings:
 
-| Page | Query key | Query function |
-|---|---|---|
+| Page                      | Query key                                                | Query function                                          |
+| ------------------------- | -------------------------------------------------------- | ------------------------------------------------------- |
 | `/candidate/applications` | `queryKeys.candidateApplications.list({ status, page })` | `serverQueries.candidateApplications({ status, page })` |
-| `/candidate/interviews` | `queryKeys.candidateInterviews.list({ status, page })` | `serverQueries.candidateInterviews({ status, page })` |
+| `/candidate/interviews`   | `queryKeys.candidateInterviews.list({ status, page })`   | `serverQueries.candidateInterviews({ status, page })`   |
 
 Each uses `useMyApplicationsQuery` / `useMyInterviewsQuery` from Task 18.
 
@@ -2605,6 +2688,7 @@ git commit -m "feat(web/candidate): prefetch+hydrate /candidate/{applications,in
 When the client mutates (e.g. publishes a job), the in-memory React Query cache must drop the matching keys so the next render fetches fresh. The backend already busts its Redis tags; the client just needs to invalidate the query keys.
 
 **Files:**
+
 - Create: `apps/web/hooks/use-invalidate-queries.ts`
 
 ### Steps
@@ -2671,16 +2755,16 @@ const publish = useJobsControllerPublishV1({
 
 Map mutations to invalidation:
 
-| Mutation | Invalidate |
-|---|---|
-| `useJobsControllerCreateV1`, `useJobsControllerUpdateV1`, `useJobsControllerPublishV1`, `useJobsControllerArchiveV1` | `recruiterJobs`, `recruiterDashboard`, `candidateJobs` |
-| `useApplicationsControllerApplyV1` | `candidateApplications`, `recruiterApplications`, `recruiterDashboard` |
-| `useApplicationsControllerUpdateStatusV1` | `recruiterApplications`, `recruiterDashboard`, `candidateApplications` |
-| `useApplicationsControllerWithdrawV1` | `candidateApplications`, `recruiterApplications`, `recruiterDashboard` |
-| `useInterviewsControllerScheduleV1`, `*UpdateStatusV1`, `*UpdateFeedbackV1` | `recruiterInterviews`, `candidateInterviews`, `recruiterDashboard` |
-| `useScoringControllerComputeProfileScoreV1` | `profileScore` |
-| `useBiasControllerOverrideV1` | `recruiterJobs` |
-| `useAdminConfigControllerUpdateV1` (if present) | none on client (it's admin-only; admin pages can refetch on demand) |
+| Mutation                                                                                                             | Invalidate                                                             |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `useJobsControllerCreateV1`, `useJobsControllerUpdateV1`, `useJobsControllerPublishV1`, `useJobsControllerArchiveV1` | `recruiterJobs`, `recruiterDashboard`, `candidateJobs`                 |
+| `useApplicationsControllerApplyV1`                                                                                   | `candidateApplications`, `recruiterApplications`, `recruiterDashboard` |
+| `useApplicationsControllerUpdateStatusV1`                                                                            | `recruiterApplications`, `recruiterDashboard`, `candidateApplications` |
+| `useApplicationsControllerWithdrawV1`                                                                                | `candidateApplications`, `recruiterApplications`, `recruiterDashboard` |
+| `useInterviewsControllerScheduleV1`, `*UpdateStatusV1`, `*UpdateFeedbackV1`                                          | `recruiterInterviews`, `candidateInterviews`, `recruiterDashboard`     |
+| `useScoringControllerComputeProfileScoreV1`                                                                          | `profileScore`                                                         |
+| `useBiasControllerOverrideV1`                                                                                        | `recruiterJobs`                                                        |
+| `useAdminConfigControllerUpdateV1` (if present)                                                                      | none on client (it's admin-only; admin pages can refetch on demand)    |
 
 - [ ] **Step 3: Verify it compiles**
 
@@ -2705,6 +2789,7 @@ git commit -m "feat(web): invalidate React Query cache on mutation success"
 A reference doc in `docs/main/` so future contributors know where to add caching for new endpoints.
 
 **Files:**
+
 - Create: `docs/main/caching-strategy.md`
 
 ### Steps
@@ -2713,32 +2798,35 @@ A reference doc in `docs/main/` so future contributors know where to add caching
 
 Create `docs/main/caching-strategy.md`:
 
-```markdown
+````markdown
 # Caching Strategy
 
 Two layers, owned by two different parts of the stack:
 
-| Layer | Where | What it caches | Invalidation |
-|---|---|---|---|
-| Backend Redis cache | `apps/api/src/cache/` | DB query results, AI outputs, aggregates | Tag-based via CacheService.bustTag, TTL backstop |
-| Frontend React Query cache | `apps/web/lib/query/` | Server-prefetched data, hydrated to client | Key-based via useInvalidate, staleTime 60s |
+| Layer                      | Where                 | What it caches                             | Invalidation                                     |
+| -------------------------- | --------------------- | ------------------------------------------ | ------------------------------------------------ |
+| Backend Redis cache        | `apps/api/src/cache/` | DB query results, AI outputs, aggregates   | Tag-based via CacheService.bustTag, TTL backstop |
+| Frontend React Query cache | `apps/web/lib/query/` | Server-prefetched data, hydrated to client | Key-based via useInvalidate, staleTime 60s       |
 
 ## Backend cache (NestJS + ioredis)
 
 **Module:** `apps/api/src/cache/cache.module.ts` — registered globally.
 
 **Service:** `CacheService` (injectable). Three primitives:
+
 - `getOrSet({ key, ttlSeconds, tags?, load })` — cache-aside with single-flight
 - `bustTag(tag)` — evict every key indexed under a tag
 - `bustKey(key)` — evict a single key
 
 **TTL bands** (`apps/api/src/cache/cache.constants.ts`):
+
 - `hot` (60s) — recruiter aggregates, list pages
 - `warm` (5m) — single-entity reads when cheap to recompute
 - `cool` (1h) — admin config, system flags
 - `ai` (24h) — content-hash-keyed AI outputs
 
 **Tag conventions** (always use `TAGS.<name>(...)` from constants):
+
 - `scoring-config:active`
 - `jobs:public`, `jobs:recruiter:{userId}`, `job:{jobId}`
 - `dashboard:recruiter:{userId}`
@@ -2766,6 +2854,7 @@ Two layers, owned by two different parts of the stack:
 **QueryClient factory:** `apps/web/lib/query/query-client.ts` — same config server + client. `staleTime: 60_000` matches the backend hot-tier TTL.
 
 **Server prefetch pattern (Server Component pages):**
+
 ```tsx
 const queryClient = makeQueryClient();
 await queryClient.prefetchQuery({
@@ -2778,8 +2867,10 @@ return (
   </PrefetchedHydration>
 );
 ```
+````
 
 **Client read pattern (`"use client"` components):**
+
 ```tsx
 const { data, isLoading } = useRecruiterJobsQuery(params);
 ```
@@ -2791,25 +2882,28 @@ The keys MUST match. They're centralized in `apps/web/lib/query/keys.ts` so pref
 ## Adding caching to a new endpoint
 
 Backend:
+
 1. Add a tag template in `cache.constants.ts` if a new entity is involved.
 2. In the service method that reads, wrap with `cacheService.getOrSet({ key, ttlSeconds, tags, load })`.
 3. In every service method that writes, call `cacheService.bustTags([...])`.
 
 Frontend (if the endpoint is hit by a page):
+
 1. Add a key to `queryKeys` in `lib/query/keys.ts`.
 2. Add a server query function to `lib/query/queries.ts`.
 3. Add a client hook under `apps/web/hooks/use-*.ts`.
 4. In the page Server Component, `prefetchQuery` and wrap children in `PrefetchedHydration`.
 5. In the client component, call the hook.
 6. In any mutation that writes data the page reads, add an `onSuccess` invalidation via `useInvalidate()`.
-```
+
+````
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add docs/main/caching-strategy.md
 git commit -m "docs: add caching strategy reference"
-```
+````
 
 ---
 

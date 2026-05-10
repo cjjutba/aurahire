@@ -68,14 +68,20 @@ export const profilesTable = pgTable(
     // type-inference loop with companiesTable.createdBy → profilesTable.id.
     // The relation is wired in relations.ts so query joins still work.
     lastActiveCompanyId: uuid("last_active_company_id"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     emailIdx: index("profiles_email_idx").on(t.email),
     roleIdx: index("profiles_role_idx").on(t.role),
     statusIdx: index("profiles_status_idx").on(t.status),
-    lastActiveCompanyIdx: index("profiles_last_active_company_idx").on(t.lastActiveCompanyId),
+    lastActiveCompanyIdx: index("profiles_last_active_company_idx").on(
+      t.lastActiveCompanyId,
+    ),
   }),
 );
 
@@ -90,20 +96,38 @@ export const candidateProfilesTable = pgTable(
     locationCity: text("location_city"),
     locationRegion: text("location_region"),
     locationCountry: text("location_country"),
-    desiredRoles: text("desired_roles").array().notNull().default(sql`'{}'::text[]`),
+    desiredRoles: text("desired_roles")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     desiredSeniority: text("desired_seniority"),
-    openTo: text("open_to").array().notNull().default(sql`'{}'::text[]`),
-    desiredSalaryMin: numeric("desired_salary_min", { precision: 12, scale: 2 }),
-    desiredSalaryMax: numeric("desired_salary_max", { precision: 12, scale: 2 }),
+    openTo: text("open_to")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    desiredSalaryMin: numeric("desired_salary_min", {
+      precision: 12,
+      scale: 2,
+    }),
+    desiredSalaryMax: numeric("desired_salary_max", {
+      precision: 12,
+      scale: 2,
+    }),
     desiredCurrency: text("desired_currency").default("USD"),
     availableStartDate: date("available_start_date"),
     defaultResumeId: uuid("default_resume_id"), // FK added below to avoid circular reference
     profileCompleted: boolean("profile_completed").notNull().default(false),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    completedIdx: index("candidate_profiles_completed_idx").on(t.profileCompleted),
+    completedIdx: index("candidate_profiles_completed_idx").on(
+      t.profileCompleted,
+    ),
   }),
 );
 
@@ -121,8 +145,12 @@ export const companiesTable = pgTable(
     createdBy: uuid("created_by")
       .notNull()
       .references(() => profilesTable.id),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     createdByIdx: index("companies_created_by_idx").on(t.createdBy),
@@ -136,11 +164,18 @@ export const recruiterProfilesTable = pgTable("recruiter_profiles", {
     .references(() => profilesTable.id, { onDelete: "cascade" }),
   jobTitle: text("job_title"),
   department: text("department"),
-  rolesHiringFor: text("roles_hiring_for").array().notNull().default(sql`'{}'::text[]`),
+  rolesHiringFor: text("roles_hiring_for")
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
   hiringVolumePerQuarter: text("hiring_volume_per_quarter"),
   profileCompleted: boolean("profile_completed").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 // One row per (user, company) membership. Replaces the old 1:1 link from
@@ -154,24 +189,48 @@ export const companyMembersTable = pgTable(
     companyId: uuid("company_id")
       .notNull()
       .references(() => companiesTable.id, { onDelete: "cascade" }),
-    userId: uuid("user_id").references(() => profilesTable.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => profilesTable.id, {
+      onDelete: "cascade",
+    }),
     email: text("email").notNull(),
     role: text("role", { enum: COMPANY_MEMBER_ROLE }).notNull(),
     status: text("status", { enum: COMPANY_MEMBER_STATUS }).notNull(),
     invitationToken: text("invitation_token").unique(),
-    invitationExpiresAt: timestamp("invitation_expires_at", { withTimezone: true }),
-    invitedBy: uuid("invited_by").references(() => profilesTable.id, { onDelete: "set null" }),
-    invitedAt: timestamp("invited_at", { withTimezone: true }).notNull().defaultNow(),
+    invitationExpiresAt: timestamp("invitation_expires_at", {
+      withTimezone: true,
+    }),
+    invitedBy: uuid("invited_by").references(() => profilesTable.id, {
+      onDelete: "set null",
+    }),
+    invitedAt: timestamp("invited_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     joinedAt: timestamp("joined_at", { withTimezone: true }),
     removedAt: timestamp("removed_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    companyUserUnique: unique("company_members_company_user_unique").on(t.companyId, t.userId),
-    companyEmailUnique: unique("company_members_company_email_unique").on(t.companyId, t.email),
-    userStatusIdx: index("company_members_user_status_idx").on(t.userId, t.status),
-    companyStatusIdx: index("company_members_company_status_idx").on(t.companyId, t.status),
+    companyUserUnique: unique("company_members_company_user_unique").on(
+      t.companyId,
+      t.userId,
+    ),
+    companyEmailUnique: unique("company_members_company_email_unique").on(
+      t.companyId,
+      t.email,
+    ),
+    userStatusIdx: index("company_members_user_status_idx").on(
+      t.userId,
+      t.status,
+    ),
+    companyStatusIdx: index("company_members_company_status_idx").on(
+      t.companyId,
+      t.status,
+    ),
     // No separate index on invitationToken — the .unique() above is backed by
     // an automatic btree index sufficient for token lookups.
   }),
@@ -193,7 +252,9 @@ export const jobsTable = pgTable(
       .references(() => companiesTable.id, { onDelete: "restrict" }),
     title: text("title").notNull(),
     department: text("department"),
-    employmentType: text("employment_type", { enum: EMPLOYMENT_TYPE }).notNull(),
+    employmentType: text("employment_type", {
+      enum: EMPLOYMENT_TYPE,
+    }).notNull(),
     workMode: text("work_mode", { enum: WORK_MODE }).notNull(),
     locationCity: text("location_city"),
     locationRegion: text("location_region"),
@@ -203,9 +264,16 @@ export const jobsTable = pgTable(
     salaryCurrency: text("salary_currency").default("USD"),
     description: text("description").notNull(),
     descriptionPlain: text("description_plain").notNull(),
-    requiredSkills: text("required_skills").array().notNull().default(sql`'{}'::text[]`),
-    experienceLevel: text("experience_level", { enum: EXPERIENCE_LEVEL }).notNull(),
-    educationRequirement: text("education_requirement", { enum: EDUCATION_REQUIREMENT }),
+    requiredSkills: text("required_skills")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    experienceLevel: text("experience_level", {
+      enum: EXPERIENCE_LEVEL,
+    }).notNull(),
+    educationRequirement: text("education_requirement", {
+      enum: EDUCATION_REQUIREMENT,
+    }),
     applicationDeadline: date("application_deadline"),
     status: text("status", { enum: JOB_STATUS }).notNull().default("draft"),
     viewCount: integer("view_count").notNull().default(0),
@@ -217,8 +285,12 @@ export const jobsTable = pgTable(
      * not "archived".
      */
     archivedReason: text("archived_reason"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     recruiterIdx: index("jobs_recruiter_idx").on(t.recruiterId),
@@ -242,11 +314,17 @@ export const resumesTable = pgTable(
     canonicalPdfPath: text("canonical_pdf_path"),
     rawText: text("raw_text"),
     parsedData: jsonb("parsed_data"),
-    parseStatus: text("parse_status", { enum: RESUME_PARSE_STATUS }).notNull().default("pending"),
+    parseStatus: text("parse_status", { enum: RESUME_PARSE_STATUS })
+      .notNull()
+      .default("pending"),
     parseError: text("parse_error"),
     isDefault: boolean("is_default").notNull().default(false),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     candidateIdx: index("resumes_candidate_idx").on(t.candidateId),
@@ -268,19 +346,32 @@ export const applicationsTable = pgTable(
       .notNull()
       .references(() => resumesTable.id, { onDelete: "restrict" }),
     coverLetter: text("cover_letter"),
-    status: text("status", { enum: APPLICATION_STATUS }).notNull().default("applied"),
+    status: text("status", { enum: APPLICATION_STATUS })
+      .notNull()
+      .default("applied"),
     scoreStatus: text("score_status", { enum: APPLICATION_SCORE_STATUS })
       .notNull()
       .default("computing"),
     recruiterNotes: text("recruiter_notes"),
-    appliedAt: timestamp("applied_at", { withTimezone: true }).notNull().defaultNow(),
-    statusUpdatedAt: timestamp("status_updated_at", { withTimezone: true }).notNull().defaultNow(),
+    appliedAt: timestamp("applied_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    statusUpdatedAt: timestamp("status_updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     shortlistedAt: timestamp("shortlisted_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    uniqueCandidateJob: unique("applications_unique_candidate_job").on(t.candidateId, t.jobId),
+    uniqueCandidateJob: unique("applications_unique_candidate_job").on(
+      t.candidateId,
+      t.jobId,
+    ),
     jobIdx: index("applications_job_idx").on(t.jobId),
     candidateIdx: index("applications_candidate_idx").on(t.candidateId),
     statusIdx: index("applications_status_idx").on(t.status),
@@ -304,20 +395,30 @@ export const interviewsTable = pgTable(
     durationMinutes: integer("duration_minutes").notNull().default(60),
     format: text("format", { enum: INTERVIEW_FORMAT }).notNull(),
     locationOrLink: text("location_or_link"),
-    status: text("status", { enum: INTERVIEW_STATUS }).notNull().default("scheduled"),
+    status: text("status", { enum: INTERVIEW_STATUS })
+      .notNull()
+      .default("scheduled"),
     feedback: text("feedback"),
     rating: integer("rating"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
-    feedbackDueNotifiedAt: timestamp("feedback_due_notified_at", { withTimezone: true }),
+    feedbackDueNotifiedAt: timestamp("feedback_due_notified_at", {
+      withTimezone: true,
+    }),
     /**
      * Set when the post-interview feedback reminder notification has been
      * dispatched to the recruiter. Distinct from `feedbackDueNotifiedAt`
      * (the legacy initial nudge) — this one drives the periodic reminder
      * cron added by the proactive-system slice.
      */
-    feedbackReminderSentAt: timestamp("feedback_reminder_sent_at", { withTimezone: true }),
+    feedbackReminderSentAt: timestamp("feedback_reminder_sent_at", {
+      withTimezone: true,
+    }),
     venueName: text("venue_name").notNull().default(""),
     addressLine: text("address_line").notNull().default(""),
     roomOrFloor: text("room_or_floor"),
@@ -328,15 +429,23 @@ export const interviewsTable = pgTable(
     interviewerTitle: text("interviewer_title"),
     candidateSummary: text("candidate_summary"),
     recommendation: text("recommendation", { enum: INTERVIEW_RECOMMENDATION }),
-    sharedWithCandidateAt: timestamp("shared_with_candidate_at", { withTimezone: true }),
+    sharedWithCandidateAt: timestamp("shared_with_candidate_at", {
+      withTimezone: true,
+    }),
     rescheduledFromId: uuid("rescheduled_from_id"),
     rescheduledToId: uuid("rescheduled_to_id"),
   },
   (t) => ({
     applicationIdx: index("interviews_application_idx").on(t.applicationId),
     scheduledAtIdx: index("interviews_scheduled_at_idx").on(t.scheduledAt),
-    ratingCheck: check("interviews_rating_range", sql`${t.rating} IS NULL OR (${t.rating} >= 1 AND ${t.rating} <= 5)`),
-    recommendationIdx: index("interviews_recommendation_idx").on(t.applicationId, t.recommendation),
+    ratingCheck: check(
+      "interviews_rating_range",
+      sql`${t.rating} IS NULL OR (${t.rating} >= 1 AND ${t.rating} <= 5)`,
+    ),
+    recommendationIdx: index("interviews_recommendation_idx").on(
+      t.applicationId,
+      t.recommendation,
+    ),
     sharedIdx: index("interviews_shared_idx")
       .on(t.applicationId)
       .where(sql`shared_with_candidate_at IS NOT NULL`),
@@ -363,11 +472,18 @@ export const interviewVenuesTable = pgTable(
     interviewerName: text("interviewer_name"),
     interviewerTitle: text("interviewer_title"),
     isDefault: boolean("is_default").notNull().default(false),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    companyLabelUnique: unique("interview_venues_company_label_unique").on(t.companyId, t.label),
+    companyLabelUnique: unique("interview_venues_company_label_unique").on(
+      t.companyId,
+      t.label,
+    ),
     companyDefaultIdx: index("interview_venues_company_default_idx")
       .on(t.companyId)
       .where(sql`is_default = true`),
@@ -396,9 +512,15 @@ export const offersTable = pgTable(
     sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
     respondedAt: timestamp("responded_at", { withTimezone: true }),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-    expiryReminderSentAt: timestamp("expiry_reminder_sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiryReminderSentAt: timestamp("expiry_reminder_sent_at", {
+      withTimezone: true,
+    }),
   },
   (t) => ({
     statusIdx: index("offers_status_idx").on(t.status),
@@ -422,23 +544,35 @@ export const profileScoresTable = pgTable(
     overallScore: integer("overall_score").notNull(),
     band: text("band", { enum: SCORE_BAND }).notNull(),
     components: jsonb("components").notNull(),
-    improvementSuggestions: jsonb("improvement_suggestions").notNull().default(sql`'[]'::jsonb`),
-    redactedFields: text("redacted_fields").array().notNull().default(sql`'{}'::text[]`),
+    improvementSuggestions: jsonb("improvement_suggestions")
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    redactedFields: text("redacted_fields")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     promptVersion: text("prompt_version").notNull(),
     modelUsed: text("model_used").notNull(),
     rawOutput: jsonb("raw_output").notNull(),
     latencyMs: integer("latency_ms"),
-    status: text("status", { enum: SCORE_STATUS }).notNull().default("completed"),
+    status: text("status", { enum: SCORE_STATUS })
+      .notNull()
+      .default("completed"),
     /**
      * Set when this score is known to no longer reflect the candidate's
      * current resume/profile state (e.g. profile edit, resume change).
      * NULL = current. The recompute worker clears it on a fresh insert.
      */
     staleAt: timestamp("stale_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    candidateIdx: index("profile_scores_candidate_idx").on(t.candidateId, t.createdAt),
+    candidateIdx: index("profile_scores_candidate_idx").on(
+      t.candidateId,
+      t.createdAt,
+    ),
     resumeIdx: index("profile_scores_resume_idx").on(t.resumeId),
     overallScoreCheck: check(
       "profile_scores_overall_range",
@@ -467,14 +601,21 @@ export const matchScoresTable = pgTable(
     overallScore: integer("overall_score").notNull(),
     band: text("band", { enum: SCORE_BAND }).notNull(),
     components: jsonb("components").notNull(),
-    redactedFields: text("redacted_fields").array().notNull().default(sql`'{}'::text[]`),
+    redactedFields: text("redacted_fields")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     weightsUsed: jsonb("weights_used").notNull(),
     promptVersion: text("prompt_version").notNull(),
     modelUsed: text("model_used").notNull(),
     rawOutput: jsonb("raw_output").notNull(),
     latencyMs: integer("latency_ms"),
-    status: text("status", { enum: SCORE_STATUS }).notNull().default("completed"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    status: text("status", { enum: SCORE_STATUS })
+      .notNull()
+      .default("completed"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     candidateIdx: index("match_scores_candidate_idx").on(t.candidateId),
@@ -513,7 +654,10 @@ export const matchScorePreviewsTable = pgTable(
     overallScore: integer("overall_score").notNull(),
     band: text("band", { enum: SCORE_BAND }).notNull(),
     components: jsonb("components").notNull(),
-    redactedFields: text("redacted_fields").array().notNull().default(sql`'{}'::text[]`),
+    redactedFields: text("redacted_fields")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     weightsUsed: jsonb("weights_used").notNull(),
     promptVersion: text("prompt_version").notNull(),
     modelUsed: text("model_used").notNull(),
@@ -528,16 +672,16 @@ export const matchScorePreviewsTable = pgTable(
     source: text("source", { enum: ["system", "candidate", "candidate_view"] })
       .notNull()
       .default("candidate"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     // One preview per (candidate, job, resume) tuple — re-computing for the
     // same resume hits the existing row.
-    uniqueByResume: uniqueIndex("match_score_previews_candidate_job_resume_uniq").on(
-      t.candidateId,
-      t.jobId,
-      t.resumeId,
-    ),
+    uniqueByResume: uniqueIndex(
+      "match_score_previews_candidate_job_resume_uniq",
+    ).on(t.candidateId, t.jobId, t.resumeId),
     candidateIdx: index("match_score_previews_candidate_idx").on(t.candidateId),
     candidateScoreIdx: index("match_score_previews_candidate_score_idx").on(
       t.candidateId,
@@ -561,9 +705,13 @@ export const evidenceExcerptsTable = pgTable(
     componentName: text("component_name").notNull(),
     excerptText: text("excerpt_text").notNull(),
     excerptSource: text("excerpt_source"),
-    relevance: text("relevance", { enum: ["positive", "negative", "neutral"] }).notNull(),
+    relevance: text("relevance", {
+      enum: ["positive", "negative", "neutral"],
+    }).notNull(),
     contributionPoints: integer("contribution_points"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     scoreIdx: index("evidence_excerpts_score_idx").on(t.scoreType, t.scoreId),
@@ -583,13 +731,17 @@ export const biasFlagsTable = pgTable(
     suggestion: text("suggestion"),
     positionStart: integer("position_start"),
     positionEnd: integer("position_end"),
-    status: text("status", { enum: BIAS_FLAG_STATUS }).notNull().default("flagged"),
+    status: text("status", { enum: BIAS_FLAG_STATUS })
+      .notNull()
+      .default("flagged"),
     overrideReason: text("override_reason"),
     overriddenBy: uuid("overridden_by").references(() => profilesTable.id),
     overriddenAt: timestamp("overridden_at", { withTimezone: true }),
     promptVersion: text("prompt_version").notNull(),
     modelUsed: text("model_used").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     jobIdx: index("bias_flags_job_idx").on(t.jobId),
@@ -611,15 +763,24 @@ export const scoringConfigTable = pgTable(
       .array()
       .notNull()
       .default(sql`'{gendered,age-coded,ableist,exclusionary}'::text[]`),
-    customFlaggedTerms: text("custom_flagged_terms").array().notNull().default(sql`'{}'::text[]`),
-    piiRedactionEnabled: boolean("pii_redaction_enabled").notNull().default(true),
+    customFlaggedTerms: text("custom_flagged_terms")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    piiRedactionEnabled: boolean("pii_redaction_enabled")
+      .notNull()
+      .default(true),
     piiFieldsRedacted: text("pii_fields_redacted")
       .array()
       .notNull()
       .default(sql`'{name,photo,age,gender,address,date_of_birth}'::text[]`),
     updatedBy: uuid("updated_by").references(() => profilesTable.id),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     activeIdx: index("scoring_config_active_idx").on(t.isActive),
@@ -638,14 +799,20 @@ export const authTokensTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").notNull(), // mirrors auth.users.id (no FK; auth schema is owned by Supabase)
     email: text("email").notNull(),
-    kind: text("kind", { enum: ["email_verification", "password_reset"] }).notNull(),
+    kind: text("kind", {
+      enum: ["email_verification", "password_reset"],
+    }).notNull(),
     tokenHash: text("token_hash").notNull(),
-    metadata: jsonb("metadata").notNull().default(sql`'{}'::jsonb`),
+    metadata: jsonb("metadata")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     consumedAt: timestamp("consumed_at", { withTimezone: true }),
     ipAddress: inet("ip_address"),
     userAgent: text("user_agent"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     tokenHashIdx: unique("auth_tokens_token_hash_unique").on(t.tokenHash),
@@ -663,18 +830,26 @@ export const auditLogsTable = pgTable(
   "audit_logs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    actorId: uuid("actor_id").references(() => profilesTable.id, { onDelete: "set null" }),
+    actorId: uuid("actor_id").references(() => profilesTable.id, {
+      onDelete: "set null",
+    }),
     actorType: text("actor_type", { enum: AUDIT_ACTOR_TYPE }).notNull(),
     // Per-tenant explainability. Nullable so cross-tenant admin/system
     // actions can still log with no company context.
-    companyId: uuid("company_id").references(() => companiesTable.id, { onDelete: "set null" }),
+    companyId: uuid("company_id").references(() => companiesTable.id, {
+      onDelete: "set null",
+    }),
     action: text("action").notNull(),
     entityType: text("entity_type").notNull(),
     entityId: uuid("entity_id").notNull(),
-    details: jsonb("details").notNull().default(sql`'{}'::jsonb`),
+    details: jsonb("details")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     ipAddress: inet("ip_address"),
     userAgent: text("user_agent"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
     createdIdx: index("audit_logs_created_idx").on(t.createdAt),
@@ -722,11 +897,18 @@ export const feedbackTable = pgTable(
     resolvedBy: uuid("resolved_by").references(() => profilesTable.id, {
       onDelete: "set null",
     }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    statusCreatedIdx: index("feedback_status_created_idx").on(t.status, t.createdAt),
+    statusCreatedIdx: index("feedback_status_created_idx").on(
+      t.status,
+      t.createdAt,
+    ),
     typeIdx: index("feedback_type_idx").on(t.type),
     submitterIdx: index("feedback_submitter_idx").on(t.submitterId),
     companyIdx: index("feedback_company_idx").on(t.companyId),
@@ -750,23 +932,36 @@ export const notificationsTable = pgTable(
       .notNull()
       .references(() => profilesTable.id, { onDelete: "cascade" }),
     eventType: text("event_type", { enum: NOTIFICATION_EVENT_TYPE }).notNull(),
-    scope: text("scope", { enum: NOTIFICATION_SCOPE }).notNull().default("personal"),
+    scope: text("scope", { enum: NOTIFICATION_SCOPE })
+      .notNull()
+      .default("personal"),
     title: text("title").notNull(),
     body: text("body").notNull(),
     link: text("link"),
     entityType: text("entity_type"),
     entityId: uuid("entity_id"),
-    actorId: uuid("actor_id").references(() => profilesTable.id, { onDelete: "set null" }),
+    actorId: uuid("actor_id").references(() => profilesTable.id, {
+      onDelete: "set null",
+    }),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     readAt: timestamp("read_at", { withTimezone: true }),
     dismissedAt: timestamp("dismissed_at", { withTimezone: true }),
     digestPending: boolean("digest_pending").notNull().default(false),
     emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    userUnreadIdx: index("notifications_user_unread_idx").on(t.userId, t.readAt, t.createdAt),
-    userCreatedIdx: index("notifications_user_created_idx").on(t.userId, t.createdAt),
+    userUnreadIdx: index("notifications_user_unread_idx").on(
+      t.userId,
+      t.readAt,
+      t.createdAt,
+    ),
+    userCreatedIdx: index("notifications_user_created_idx").on(
+      t.userId,
+      t.createdAt,
+    ),
     createdAtIdx: index("notifications_created_at_idx").on(t.createdAt),
     digestPendingIdx: index("notifications_digest_pending_idx")
       .on(t.digestPending)
@@ -783,11 +978,18 @@ export const notificationPreferencesTable = pgTable(
       .references(() => profilesTable.id, { onDelete: "cascade" }),
     eventType: text("event_type", { enum: NOTIFICATION_EVENT_TYPE }).notNull(),
     mode: text("mode", { enum: NOTIFICATION_MODE }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    userEventUniq: uniqueIndex("notification_prefs_user_event_uniq").on(t.userId, t.eventType),
+    userEventUniq: uniqueIndex("notification_prefs_user_event_uniq").on(
+      t.userId,
+      t.eventType,
+    ),
   }),
 );
 
@@ -835,7 +1037,9 @@ export type CompanyMember = typeof companyMembersTable.$inferSelect;
 export type NewCompanyMember = typeof companyMembersTable.$inferInsert;
 export type Notification = typeof notificationsTable.$inferSelect;
 export type NewNotification = typeof notificationsTable.$inferInsert;
-export type NotificationPreference = typeof notificationPreferencesTable.$inferSelect;
-export type NewNotificationPreference = typeof notificationPreferencesTable.$inferInsert;
+export type NotificationPreference =
+  typeof notificationPreferencesTable.$inferSelect;
+export type NewNotificationPreference =
+  typeof notificationPreferencesTable.$inferInsert;
 export type Feedback = typeof feedbackTable.$inferSelect;
 export type NewFeedback = typeof feedbackTable.$inferInsert;

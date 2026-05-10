@@ -72,7 +72,9 @@ describe("ScoringController.computeMatchPreview (POST match-preview/:jobId)", ()
       createdAt: new Date().toISOString(),
       job: null,
     };
-    (service.computeMatchPreviewOnView as jest.Mock).mockResolvedValue(previewRow);
+    (service.computeMatchPreviewOnView as jest.Mock).mockResolvedValue(
+      previewRow,
+    );
 
     const user = buildCandidate();
     const result = await controller.computeMatchPreview(user, jobId);

@@ -26,9 +26,12 @@ export function AddToCalendarButton({ interviewId }: AddToCalendarButtonProps) {
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-      const res = await fetch(`${apiUrl}/api/v1/interviews/${interviewId}/ics`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      const res = await fetch(
+        `${apiUrl}/api/v1/interviews/${interviewId}/ics`,
+        {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        },
+      );
       if (!res.ok) {
         toastApiError(null, "Couldn't download calendar file");
         return;

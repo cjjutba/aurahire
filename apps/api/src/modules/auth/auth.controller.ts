@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+} from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import type { FastifyRequest } from "fastify";
@@ -23,12 +30,16 @@ export class AuthController {
   @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({
-    summary: "Sign up a candidate (creates Supabase user, sends verification email)",
+    summary:
+      "Sign up a candidate (creates Supabase user, sends verification email)",
     description:
       "Backend-owned signup: creates the Supabase auth user with email_confirm=false, issues a single-use verification token, and emails the link via Mailpit (dev) or Resend (prod). The profile row is created on /verify-email.",
   })
   @ApiResponse({ status: 202, type: AuthMessageDto })
-  @ApiResponse({ status: 409, description: "Email already registered (and confirmed)" })
+  @ApiResponse({
+    status: 409,
+    description: "Email already registered (and confirmed)",
+  })
   async signupCandidate(
     @Body() dto: SignupCandidateDto,
     @Req() req: FastifyRequest,
@@ -41,10 +52,14 @@ export class AuthController {
   @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({
-    summary: "Sign up a recruiter (creates Supabase user, sends verification email)",
+    summary:
+      "Sign up a recruiter (creates Supabase user, sends verification email)",
   })
   @ApiResponse({ status: 202, type: AuthMessageDto })
-  @ApiResponse({ status: 409, description: "Email already registered (and confirmed)" })
+  @ApiResponse({
+    status: 409,
+    description: "Email already registered (and confirmed)",
+  })
   async signupRecruiter(
     @Body() dto: SignupRecruiterDto,
     @Req() req: FastifyRequest,
@@ -62,7 +77,10 @@ export class AuthController {
       "Consumes the token, marks the Supabase user as email-confirmed, creates the profile + role-specific subprofile, and writes audit logs.",
   })
   @ApiResponse({ status: 200, type: VerifyEmailResponseDto })
-  @ApiResponse({ status: 400, description: "Token invalid, expired, or already used" })
+  @ApiResponse({
+    status: 400,
+    description: "Token invalid, expired, or already used",
+  })
   async verifyEmail(
     @Body() dto: VerifyEmailDto,
     @Req() req: FastifyRequest,
@@ -76,14 +94,18 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Resend the verification email",
-    description: "Always returns 200; never discloses whether an account exists.",
+    description:
+      "Always returns 200; never discloses whether an account exists.",
   })
   @ApiResponse({ status: 200, type: AuthMessageDto })
   async resendVerification(
     @Body() dto: ResendVerificationDto,
     @Req() req: FastifyRequest,
   ): Promise<AuthMessageDto> {
-    return this.authService.resendVerification(dto.email, this.requestMeta(req));
+    return this.authService.resendVerification(
+      dto.email,
+      this.requestMeta(req),
+    );
   }
 
   @Post("forgot-password")
@@ -92,31 +114,47 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Request a password reset email",
-    description: "Always returns 200; never discloses whether an account exists.",
+    description:
+      "Always returns 200; never discloses whether an account exists.",
   })
   @ApiResponse({ status: 200, type: AuthMessageDto })
   async forgotPassword(
     @Body() dto: ForgotPasswordDto,
     @Req() req: FastifyRequest,
   ): Promise<AuthMessageDto> {
-    return this.authService.requestPasswordReset(dto.email, this.requestMeta(req));
+    return this.authService.requestPasswordReset(
+      dto.email,
+      this.requestMeta(req),
+    );
   }
 
   @Post("reset-password")
   @Public()
   @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Consume a password-reset token and set a new password" })
+  @ApiOperation({
+    summary: "Consume a password-reset token and set a new password",
+  })
   @ApiResponse({ status: 200, type: AuthMessageDto })
-  @ApiResponse({ status: 400, description: "Token invalid, expired, or already used" })
+  @ApiResponse({
+    status: 400,
+    description: "Token invalid, expired, or already used",
+  })
   async resetPassword(
     @Body() dto: ResetPasswordDto,
     @Req() req: FastifyRequest,
   ): Promise<AuthMessageDto> {
-    return this.authService.resetPassword(dto.token, dto.password, this.requestMeta(req));
+    return this.authService.resetPassword(
+      dto.token,
+      dto.password,
+      this.requestMeta(req),
+    );
   }
 
-  private requestMeta(req: FastifyRequest): { ipAddress: string | null; userAgent: string | null } {
+  private requestMeta(req: FastifyRequest): {
+    ipAddress: string | null;
+    userAgent: string | null;
+  } {
     return {
       ipAddress: req.ip ?? null,
       userAgent: (req.headers["user-agent"] as string | undefined) ?? null,

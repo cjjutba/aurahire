@@ -128,7 +128,10 @@ export function PdfRenderer({
         for (const it of textContent.items) {
           if (!("str" in it)) continue;
           const textItem = it as TextItem;
-          const tx = pdfjs.Util.transform(viewport.transform, textItem.transform);
+          const tx = pdfjs.Util.transform(
+            viewport.transform,
+            textItem.transform,
+          );
           const span = document.createElement("span");
           span.textContent = textItem.str;
           span.style.position = "absolute";

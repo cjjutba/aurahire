@@ -31,7 +31,10 @@ import { ScoringService } from "../scoring/scoring.service";
 import { StorageService } from "../../storage/storage.service";
 import { ApplicationsRepository } from "./applications.repository";
 import type { ApplicationsTx } from "./applications.repository";
-import { canTransition, STATUSES_REQUIRING_ACCEPTED_OFFER } from "./state-machine";
+import {
+  canTransition,
+  STATUSES_REQUIRING_ACCEPTED_OFFER,
+} from "./state-machine";
 import { OffersRepository } from "../offers/offers.repository";
 import type {
   ApplicationDto,
@@ -61,7 +64,8 @@ export class ApplicationsService {
     @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
     private readonly repo: ApplicationsRepository,
     private readonly jobsRepo: JobsRepository,
-    @Inject(forwardRef(() => OffersRepository)) private readonly offersRepo: OffersRepository,
+    @Inject(forwardRef(() => OffersRepository))
+    private readonly offersRepo: OffersRepository,
     private readonly profilesRepo: ProfilesRepository,
     private readonly resumesRepo: ResumesRepository,
     private readonly scoringService: ScoringService,
@@ -92,7 +96,10 @@ export class ApplicationsService {
 
     const job = await this.jobsRepo.findById(dto.jobId);
     if (!job) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
     if (job.status !== "published") {
       throw new BadRequestException({
@@ -100,7 +107,10 @@ export class ApplicationsService {
         message: "This job isn't accepting applications",
       });
     }
-    if (job.applicationDeadline && new Date(job.applicationDeadline) < new Date()) {
+    if (
+      job.applicationDeadline &&
+      new Date(job.applicationDeadline) < new Date()
+    ) {
       throw new BadRequestException({
         code: "JOB_DEADLINE_PASSED",
         message: "Application deadline has passed",
@@ -109,7 +119,9 @@ export class ApplicationsService {
 
     let resumeId = dto.resumeId;
     if (!resumeId) {
-      const defaultResume = await this.resumesRepo.findDefaultByCandidateId(user.id);
+      const defaultResume = await this.resumesRepo.findDefaultByCandidateId(
+        user.id,
+      );
       if (!defaultResume) {
         throw new BadRequestException({
           code: "NO_DEFAULT_RESUME",
@@ -121,7 +133,10 @@ export class ApplicationsService {
 
     const resume = await this.resumesRepo.findById(resumeId);
     if (!resume || resume.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
     if (resume.parseStatus !== "parsed") {
       throw new BadRequestException({
@@ -237,8 +252,8 @@ export class ApplicationsService {
     // In-app notification to the recruiter team (currently the single hiring
     // recruiter who owns the job — the data model will expand to multi-member
     // hiring teams later, at which point emitMany already supports it).
-    const recruiterUserIds = [job.recruiterId].filter(
-      (id): id is string => Boolean(id),
+    const recruiterUserIds = [job.recruiterId].filter((id): id is string =>
+      Boolean(id),
     );
     // Resolve the company once so the notification can render
     // "Applied to <jobTitle> at <companyName>" instead of fallback text.
@@ -310,7 +325,10 @@ export class ApplicationsService {
     }
     const job = await this.jobsRepo.findById(jobId);
     if (!job || job.companyId !== companyId) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
     const apps = await this.repo.findByJobIdSortedByMatchScore(jobId);
     return Promise.all(apps.map((a) => this.toDto(a.id)));
@@ -379,11 +397,20 @@ export class ApplicationsService {
     applicationId: string,
   ): Promise<ApplicationDto> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
-    const owned = await this.repo.findApplicationContextForCompany(applicationId, companyId);
+    const owned = await this.repo.findApplicationContextForCompany(
+      applicationId,
+      companyId,
+    );
     if (!owned) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
     const updated = await this.repo.setShortlistedAt(applicationId, new Date());
     await this.audit.log({
@@ -425,11 +452,20 @@ export class ApplicationsService {
     applicationId: string,
   ): Promise<ApplicationDto> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
-    const owned = await this.repo.findApplicationContextForCompany(applicationId, companyId);
+    const owned = await this.repo.findApplicationContextForCompany(
+      applicationId,
+      companyId,
+    );
     if (!owned) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
     const updated = await this.repo.setShortlistedAt(applicationId, null);
     await this.audit.log({
@@ -482,9 +518,15 @@ export class ApplicationsService {
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
-    const { rows, total } = await this.repo.listShortlistedForCompany(companyId, query);
+    const { rows, total } = await this.repo.listShortlistedForCompany(
+      companyId,
+      query,
+    );
     return {
       data: rows.map((row) => this.toDashboardDto(row)),
       meta: {
@@ -542,7 +584,13 @@ export class ApplicationsService {
       pendingReviews: number;
       avgMatchScore: number;
     };
-    topJobs: Array<{ jobId: string; title: string; status: string; applicationCount: number; avgScore: number }>;
+    topJobs: Array<{
+      jobId: string;
+      title: string;
+      status: string;
+      applicationCount: number;
+      avgScore: number;
+    }>;
     applicationsByStatus: Array<{ status: string; count: number }>;
   }> {
     if (user.role !== "recruiter") {
@@ -582,16 +630,25 @@ export class ApplicationsService {
   ): Promise<ApplicationDto> {
     const app = await this.repo.findById(id);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     if (user.role === "candidate" && app.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
       if (!job || job.companyId !== companyId) {
-        throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Application not found",
+        });
       }
     }
 
@@ -614,7 +671,10 @@ export class ApplicationsService {
     applicationId: string,
     dto: { autoRejectOthers: boolean; note?: string | null },
     requestMeta: RequestMeta = {},
-  ): Promise<{ application: ApplicationDto; otherApplicationsRejected: number }> {
+  ): Promise<{
+    application: ApplicationDto;
+    otherApplicationsRejected: number;
+  }> {
     if (user.role !== "recruiter") {
       throw new ForbiddenException({
         code: "FORBIDDEN",
@@ -623,14 +683,23 @@ export class ApplicationsService {
     }
 
     const result = await this.db.transaction(async (tx) => {
-      const app = await this.repo.findByIdForUpdate(tx as ApplicationsTx, applicationId);
+      const app = await this.repo.findByIdForUpdate(
+        tx as ApplicationsTx,
+        applicationId,
+      );
       if (!app) {
-        throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Application not found",
+        });
       }
 
       const job = await this.jobsRepo.findById(app.jobId);
       if (!job || job.companyId !== companyId) {
-        throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Application not found",
+        });
       }
 
       if (!canTransition(app.status as ApplicationStatus, "hired")) {
@@ -714,7 +783,10 @@ export class ApplicationsService {
           });
         }
 
-        cascaded = others.map((o) => ({ id: o.id, candidateId: o.candidateId }));
+        cascaded = others.map((o) => ({
+          id: o.id,
+          candidateId: o.candidateId,
+        }));
       }
 
       return { app, job, cascaded };
@@ -727,7 +799,9 @@ export class ApplicationsService {
         TAGS.companyApplications(companyId),
         TAGS.companyShortlist(companyId),
         TAGS.applicationsCandidate(result.app.candidateId),
-        ...result.cascaded.map((c) => TAGS.applicationsCandidate(c.candidateId)),
+        ...result.cascaded.map((c) =>
+          TAGS.applicationsCandidate(c.candidateId),
+        ),
       ])
       .catch((err) =>
         this.logger.warn(`hire bustTags failed: ${(err as Error).message}`),
@@ -743,13 +817,21 @@ export class ApplicationsService {
       changedAt: new Date().toISOString(),
     });
 
-    void this.notifyCandidateOfStatusChange(applicationId, result.app.status, "hired").catch(
-      (err) => this.logger.warn(`Hire candidate notify failed: ${(err as Error).message}`),
+    void this.notifyCandidateOfStatusChange(
+      applicationId,
+      result.app.status,
+      "hired",
+    ).catch((err) =>
+      this.logger.warn(
+        `Hire candidate notify failed: ${(err as Error).message}`,
+      ),
     );
 
     // Resolve job + company so the candidate notification can render
     // "your application for <jobTitle> at <companyName>" rather than fallbacks.
-    const hiredJobRow = await this.jobsRepo.findByIdWithCompany(result.app.jobId);
+    const hiredJobRow = await this.jobsRepo.findByIdWithCompany(
+      result.app.jobId,
+    );
     void this.notifications
       .emit({
         userId: result.app.candidateId,
@@ -777,11 +859,14 @@ export class ApplicationsService {
 
     // Cascade notifications + position-filled email per affected sibling
     for (const other of result.cascaded) {
-      void this.notifyPositionFilled(other.id, other.candidateId, result.app.jobId).catch(
-        (err) =>
-          this.logger.warn(
-            `position-filled notify failed for ${other.id}: ${(err as Error).message}`,
-          ),
+      void this.notifyPositionFilled(
+        other.id,
+        other.candidateId,
+        result.app.jobId,
+      ).catch((err) =>
+        this.logger.warn(
+          `position-filled notify failed for ${other.id}: ${(err as Error).message}`,
+        ),
       );
 
       void this.notifications
@@ -861,12 +946,18 @@ export class ApplicationsService {
 
     const app = await this.repo.findById(id);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     const job = await this.jobsRepo.findById(app.jobId);
     if (!job || job.companyId !== companyId) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     if (!canTransition(app.status as ApplicationStatus, dto.newStatus)) {
@@ -922,7 +1013,11 @@ export class ApplicationsService {
       changedAt: new Date().toISOString(),
     });
 
-    void this.notifyCandidateOfStatusChange(id, app.status, dto.newStatus).catch((err) => {
+    void this.notifyCandidateOfStatusChange(
+      id,
+      app.status,
+      dto.newStatus,
+    ).catch((err) => {
       this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
     });
 
@@ -973,12 +1068,18 @@ export class ApplicationsService {
 
     const app = await this.repo.findById(id);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     const job = await this.jobsRepo.findById(app.jobId);
     if (!job || job.companyId !== companyId) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     await this.repo.update(id, { recruiterNotes: dto.notes });
@@ -1018,7 +1119,10 @@ export class ApplicationsService {
   ): Promise<ApplicationDto> {
     const app = await this.repo.findById(id);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
     if (app.status === newStatus) {
       return this.toDto(id);
@@ -1069,12 +1173,16 @@ export class ApplicationsService {
         changedAt: new Date().toISOString(),
       });
     } else {
-      await this.cacheService.bustTags([TAGS.applicationsCandidate(app.candidateId)]);
+      await this.cacheService.bustTags([
+        TAGS.applicationsCandidate(app.candidateId),
+      ]);
     }
 
-    void this.notifyCandidateOfStatusChange(id, app.status, newStatus).catch((err) => {
-      this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
-    });
+    void this.notifyCandidateOfStatusChange(id, app.status, newStatus).catch(
+      (err) => {
+        this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
+      },
+    );
 
     const systemJobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     void this.notifications
@@ -1116,12 +1224,18 @@ export class ApplicationsService {
   ): Promise<ApplicationDto> {
     const app = await this.repo.findById(applicationId);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     // Only the candidate or an admin may withdraw.
     if (user.role !== "admin" && user.id !== app.candidateId) {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Only the candidate can withdraw" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Only the candidate can withdraw",
+      });
     }
     if (!canTransition(app.status as ApplicationStatus, "withdrawn")) {
       throw new BadRequestException({
@@ -1180,22 +1294,34 @@ export class ApplicationsService {
   ): Promise<{ signedUrl: string; expiresAt: string }> {
     const app = await this.repo.findById(applicationId);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     if (user.role === "candidate" && app.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
       if (!job || job.companyId !== companyId) {
-        throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Application not found",
+        });
       }
     }
 
     const resume = await this.resumesRepo.findById(app.resumeId);
     if (!resume) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
 
     const expiresIn = 60 * 60;
@@ -1218,14 +1344,19 @@ export class ApplicationsService {
   private async toDto(applicationId: string): Promise<ApplicationDto> {
     const app = await this.repo.findById(applicationId);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     const matchScore =
       await this.scoringService.getMatchScoreByApplicationId(applicationId);
 
     const candidateProfile = await this.profilesRepo.findById(app.candidateId);
-    const candidateProfileExt = await this.profilesRepo.findCandidateProfile(app.candidateId);
+    const candidateProfileExt = await this.profilesRepo.findCandidateProfile(
+      app.candidateId,
+    );
 
     const candidate: ApplicationCandidateDto | null = candidateProfile
       ? {
@@ -1289,7 +1420,11 @@ export class ApplicationsService {
     appliedAt: Date;
     statusUpdatedAt: Date;
     shortlistedAt: Date | null;
-    matchScore: { id: string; overallScore: number; band: "strong" | "partial" | "limited" } | null;
+    matchScore: {
+      id: string;
+      overallScore: number;
+      band: "strong" | "partial" | "limited";
+    } | null;
     candidateFullName: string | null;
     candidateEmail: string | null;
     jobTitle: string | null;
@@ -1357,7 +1492,9 @@ export class ApplicationsService {
     return existing ? `${existing}\n\n${prefix}${note}` : `${prefix}${note}`;
   }
 
-  private async notifyRecruiterOfApplication(applicationId: string): Promise<void> {
+  private async notifyRecruiterOfApplication(
+    applicationId: string,
+  ): Promise<void> {
     const app = await this.repo.findById(applicationId);
     if (!app) return;
 
@@ -1370,7 +1507,8 @@ export class ApplicationsService {
     const candidate = await this.profilesRepo.findById(app.candidateId);
     if (!candidate) return;
 
-    const matchScore = await this.scoringService.getMatchScoreByApplicationId(applicationId);
+    const matchScore =
+      await this.scoringService.getMatchScoreByApplicationId(applicationId);
 
     const appUrl = process.env.APP_URL ?? "http://localhost:3000";
 

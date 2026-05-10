@@ -1,4 +1,8 @@
-import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { type ParsedResume, parsedResumeSchema } from "@aurahire/shared";
 import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
@@ -14,7 +18,8 @@ import { CacheService, TTL_SECONDS, sha256OfStable } from "../cache";
 
 const RESUMES_BUCKET = "resumes";
 const PDF_MIME = "application/pdf";
-const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const DOCX_MIME =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 export interface ParseResumeInput {
   storagePath: string;
@@ -50,7 +55,8 @@ export class ParseResumeService {
     const reqId = input.requestId ?? "parse";
 
     const rawText =
-      input.rawText ?? (await this.extractText(input.storagePath, input.mimeType, reqId));
+      input.rawText ??
+      (await this.extractText(input.storagePath, input.mimeType, reqId));
 
     if (!rawText.trim()) {
       throw new ServiceUnavailableException({
@@ -59,11 +65,18 @@ export class ParseResumeService {
       });
     }
 
-    const truncated = rawText.length > 30_000 ? rawText.slice(0, 30_000) : rawText;
+    const truncated =
+      rawText.length > 30_000 ? rawText.slice(0, 30_000) : rawText;
 
-    const inputHash = sha256OfStable({ truncatedText: truncated, promptVersion: PARSE_RESUME_VERSION });
+    const inputHash = sha256OfStable({
+      truncatedText: truncated,
+      promptVersion: PARSE_RESUME_VERSION,
+    });
     const aiResult = await this.cacheService.getOrSet<
-      Omit<ParseResumeOutput, "rawText" | "sourceFieldCoverage" | "sourceHallucinations">
+      Omit<
+        ParseResumeOutput,
+        "rawText" | "sourceFieldCoverage" | "sourceHallucinations"
+      >
     >({
       key: `ai:parse-resume:${inputHash}`,
       ttlSeconds: TTL_SECONDS.ai,
@@ -109,23 +122,48 @@ export class ParseResumeService {
     sources.push({ field: "contact.full_name", value: c.full_name_source });
     sources.push({ field: "contact.email", value: c.email_source });
     sources.push({ field: "contact.phone", value: c.phone_source });
-    sources.push({ field: "contact.location_city", value: c.location_city_source });
-    sources.push({ field: "contact.location_country", value: c.location_country_source });
-    sources.push({ field: "contact.linkedin_url", value: c.linkedin_url_source });
-    sources.push({ field: "contact.portfolio_url", value: c.portfolio_url_source });
-    if (parsed.summary) sources.push({ field: "summary", value: parsed.summary.text_source });
+    sources.push({
+      field: "contact.location_city",
+      value: c.location_city_source,
+    });
+    sources.push({
+      field: "contact.location_country",
+      value: c.location_country_source,
+    });
+    sources.push({
+      field: "contact.linkedin_url",
+      value: c.linkedin_url_source,
+    });
+    sources.push({
+      field: "contact.portfolio_url",
+      value: c.portfolio_url_source,
+    });
+    if (parsed.summary)
+      sources.push({ field: "summary", value: parsed.summary.text_source });
     parsed.experience.forEach((e, i) => {
       sources.push({ field: `experience.${i}.title`, value: e.title_source });
-      sources.push({ field: `experience.${i}.company`, value: e.company_source });
+      sources.push({
+        field: `experience.${i}.company`,
+        value: e.company_source,
+      });
       sources.push({ field: `experience.${i}.period`, value: e.period_source });
       e.responsibilities_source.forEach((s, j) => {
-        sources.push({ field: `experience.${i}.responsibilities.${j}`, value: s });
+        sources.push({
+          field: `experience.${i}.responsibilities.${j}`,
+          value: s,
+        });
       });
     });
     parsed.education.forEach((e, i) => {
-      sources.push({ field: `education.${i}.institution`, value: e.institution_source });
+      sources.push({
+        field: `education.${i}.institution`,
+        value: e.institution_source,
+      });
       sources.push({ field: `education.${i}.degree`, value: e.degree_source });
-      sources.push({ field: `education.${i}.field_of_study`, value: e.field_of_study_source });
+      sources.push({
+        field: `education.${i}.field_of_study`,
+        value: e.field_of_study_source,
+      });
       sources.push({ field: `education.${i}.period`, value: e.period_source });
       sources.push({ field: `education.${i}.gpa`, value: e.gpa_source });
     });
@@ -133,13 +171,17 @@ export class ParseResumeService {
       sources.push({ field: `skills.${i}`, value: s.source });
     });
     parsed.certifications.forEach((cert, i) => {
-      sources.push({ field: `certifications.${i}.name`, value: cert.name_source });
+      sources.push({
+        field: `certifications.${i}.name`,
+        value: cert.name_source,
+      });
     });
 
     const populated = sources.filter((s) => s.value !== null && s.value !== "");
     if (populated.length === 0) return { coverage: 0, hallucinations: [] };
 
-    const normalize = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+    const normalize = (s: string) =>
+      s.replace(/\s+/g, " ").trim().toLowerCase();
     const haystack = normalize(rawText);
 
     const hallucinations: string[] = [];
@@ -169,7 +211,9 @@ export class ParseResumeService {
       const parser = new PDFParse({ data: new Uint8Array(buffer) });
       try {
         const result = await parser.getText();
-        this.logger.log(`[${reqId}] PDF extracted: ${result.text.length} chars`);
+        this.logger.log(
+          `[${reqId}] PDF extracted: ${result.text.length} chars`,
+        );
         return result.text;
       } finally {
         await parser.destroy();
@@ -178,7 +222,9 @@ export class ParseResumeService {
 
     if (mimeType === DOCX_MIME) {
       const result = await mammoth.extractRawText({ buffer });
-      this.logger.log(`[${reqId}] DOCX extracted: ${result.value.length} chars`);
+      this.logger.log(
+        `[${reqId}] DOCX extracted: ${result.value.length} chars`,
+      );
       return result.value;
     }
 

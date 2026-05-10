@@ -1,12 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  AlertCircle,
-  ChevronRight,
-  RotateCcw,
-  Sparkles,
-} from "lucide-react";
+import { AlertCircle, ChevronRight, RotateCcw, Sparkles } from "lucide-react";
 
 import { EvidenceCallout } from "@/components/score/evidence-callout";
 import { MatchBandChip } from "@/components/score/match-band-chip";
@@ -91,7 +86,12 @@ function bandColors(ratio: number): { fill: string; track: string } {
 }
 
 function trimQuotes(s: string): string {
-  return s.replace(/^["'`\u201c\u201d\u2018\u2019]+|["'`\u201c\u201d\u2018\u2019]+$/g, "").trim();
+  return s
+    .replace(
+      /^["'`\u201c\u201d\u2018\u2019]+|["'`\u201c\u201d\u2018\u2019]+$/g,
+      "",
+    )
+    .trim();
 }
 
 export function ApplyMatchSummary({

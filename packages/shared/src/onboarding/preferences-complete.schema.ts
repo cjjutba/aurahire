@@ -6,7 +6,9 @@ import { z } from "zod";
  * a candidate without a target role has nothing to be matched against.
  */
 export const preferencesCompleteSchema = z.object({
-  desiredRoles: z.array(z.string().min(1)).min(1, "Add at least one desired role"),
+  desiredRoles: z
+    .array(z.string().min(1))
+    .min(1, "Add at least one desired role"),
 });
 
 export type PreferencesComplete = z.infer<typeof preferencesCompleteSchema>;

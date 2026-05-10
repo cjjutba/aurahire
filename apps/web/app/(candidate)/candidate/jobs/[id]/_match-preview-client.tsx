@@ -67,12 +67,21 @@ interface MatchPreviewEnvelope {
 
 function bandColors(ratio: number): { fill: string; track: string } {
   if (ratio >= 0.7) {
-    return { fill: "var(--color-score-high)", track: "var(--color-score-high-soft)" };
+    return {
+      fill: "var(--color-score-high)",
+      track: "var(--color-score-high-soft)",
+    };
   }
   if (ratio >= 0.4) {
-    return { fill: "var(--color-score-mid)", track: "var(--color-score-mid-soft)" };
+    return {
+      fill: "var(--color-score-mid)",
+      track: "var(--color-score-mid-soft)",
+    };
   }
-  return { fill: "var(--color-score-low)", track: "var(--color-score-low-soft)" };
+  return {
+    fill: "var(--color-score-low)",
+    track: "var(--color-score-low-soft)",
+  };
 }
 
 function trimQuotes(s: string): string {
@@ -84,7 +93,9 @@ function trimQuotes(s: string): string {
  * exceptions follow `{ code, message, ...details }`. We only need the code +
  * message here.
  */
-function readErrorBody(err: unknown): { status: number; code: string | null; message: string | null } | null {
+function readErrorBody(
+  err: unknown,
+): { status: number; code: string | null; message: string | null } | null {
   if (!(err instanceof ClientApiError)) return null;
   const body = err.body as { code?: string; message?: string } | null;
   return {
@@ -458,7 +469,9 @@ function ComponentRow({
           <span className="font-mono text-xs text-[var(--color-muted)]">
             <span
               className={
-                selected ? "text-[var(--color-primary)]" : "text-[var(--color-ink)]"
+                selected
+                  ? "text-[var(--color-primary)]"
+                  : "text-[var(--color-ink)]"
               }
             >
               {c.score}

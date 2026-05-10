@@ -53,9 +53,12 @@ export interface RecruiterRecentApplicationItem {
 
 export const serverQueries = {
   recruiterDashboardStats: (range: string) =>
-    serverApiFetch<RecruiterStatsResponse>("/api/v1/applications/recruiter-stats", {
-      query: { range },
-    }),
+    serverApiFetch<RecruiterStatsResponse>(
+      "/api/v1/applications/recruiter-stats",
+      {
+        query: { range },
+      },
+    ),
   recruiterDashboardAnalytics: () =>
     serverApiFetch<RecruiterAnalyticsResponse>(
       "/api/v1/applications/recruiter-analytics",
@@ -66,21 +69,21 @@ export const serverQueries = {
       { query: { limit } },
     ),
   recruiterJobsList: (params: RecruiterJobsListParams) =>
-    serverApiFetch<{ data: unknown[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(
-      "/api/v1/jobs/mine",
-      {
-        query: {
-          q: params.q,
-          status: params.status,
-          mode: params.mode,
-          experienceLevel: params.experienceLevel,
-          sort: params.sort,
-          page: params.page,
-          limit: params.limit,
-          include: params.include,
-        },
+    serverApiFetch<{
+      data: unknown[];
+      meta: { total: number; page: number; limit: number; totalPages: number };
+    }>("/api/v1/jobs/mine", {
+      query: {
+        q: params.q,
+        status: params.status,
+        mode: params.mode,
+        experienceLevel: params.experienceLevel,
+        sort: params.sort,
+        page: params.page,
+        limit: params.limit,
+        include: params.include,
       },
-    ),
+    }),
   recruiterJobDetail: (id: string) =>
     serverApiFetch<unknown>(`/api/v1/jobs/${id}`),
   recruiterShortlist: (params: RecruiterShortlistParams) =>
@@ -102,7 +105,10 @@ export const serverQueries = {
         limit: params.limit,
       },
     }),
-  recruiterApplicationsByJob: (jobId: string, params: RecruiterApplicationsByJobParams) =>
+  recruiterApplicationsByJob: (
+    jobId: string,
+    params: RecruiterApplicationsByJobParams,
+  ) =>
     serverApiFetch<{ data: unknown[]; meta: { total: number } }>(
       "/api/v1/applications",
       { query: { jobId, status: params.status, page: params.page } },
@@ -148,12 +154,10 @@ export const serverQueries = {
       { query: { status: params.status, page: params.page } },
     ),
   candidateInterviews: (params: CandidateInterviewsParams) =>
-    serverApiFetch<{ data: unknown[] }>(
-      "/api/v1/interviews/mine",
-      { query: { status: params.status, page: params.page } },
-    ),
-  profileScoreMe: () =>
-    serverApiFetch<unknown>("/api/v1/scoring/profile/me"),
+    serverApiFetch<{ data: unknown[] }>("/api/v1/interviews/mine", {
+      query: { status: params.status, page: params.page },
+    }),
+  profileScoreMe: () => serverApiFetch<unknown>("/api/v1/scoring/profile/me"),
   myMatchPreviews: () =>
     serverApiFetch<{
       data: Array<{

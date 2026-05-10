@@ -1,9 +1,4 @@
-import {
-  CircleCheck,
-  Info,
-  Sparkles,
-  TriangleAlert,
-} from "lucide-react";
+import { CircleCheck, Info, Sparkles, TriangleAlert } from "lucide-react";
 import type { ComponentType } from "react";
 import { cn } from "@/lib/utils";
 import type { LegalBlock } from "./legal-types";

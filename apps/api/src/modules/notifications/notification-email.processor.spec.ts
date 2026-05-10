@@ -17,9 +17,12 @@ describe("NotificationEmailProcessor", () => {
       setEmailSent: jest.fn(),
     };
     profiles = {
-      findById: jest
-        .fn()
-        .mockResolvedValue({ id: "u1", email: "u@x.io", role: "candidate", status: "active" }),
+      findById: jest.fn().mockResolvedValue({
+        id: "u1",
+        email: "u@x.io",
+        role: "candidate",
+        status: "active",
+      }),
     };
     email = { send: jest.fn().mockResolvedValue(undefined) };
 
@@ -29,7 +32,10 @@ describe("NotificationEmailProcessor", () => {
         { provide: NotificationsRepository, useValue: repo },
         { provide: ProfilesRepository, useValue: profiles },
         { provide: EmailService, useValue: email },
-        { provide: ConfigService, useValue: { get: () => "http://localhost:3000" } },
+        {
+          provide: ConfigService,
+          useValue: { get: () => "http://localhost:3000" },
+        },
       ],
     }).compile();
     processor = moduleRef.get(NotificationEmailProcessor);
@@ -47,10 +53,15 @@ describe("NotificationEmailProcessor", () => {
       emailSentAt: null,
       createdAt: new Date(),
     });
-    await processor.process({ data: { kind: "instant", notificationId: "n1" } } as any);
+    await processor.process({
+      data: { kind: "instant", notificationId: "n1" },
+    } as any);
     expect(email.send).toHaveBeenCalledTimes(1);
     expect(email.send.mock.calls[0][0]).toEqual(
-      expect.objectContaining({ to: "u@x.io", subject: expect.stringContaining("Application update") }),
+      expect.objectContaining({
+        to: "u@x.io",
+        subject: expect.stringContaining("Application update"),
+      }),
     );
     expect(repo.setEmailSent).toHaveBeenCalledWith("n1");
   });
@@ -67,14 +78,18 @@ describe("NotificationEmailProcessor", () => {
       body: "b",
       link: null,
     });
-    await processor.process({ data: { kind: "instant", notificationId: "n1" } } as any);
+    await processor.process({
+      data: { kind: "instant", notificationId: "n1" },
+    } as any);
     expect(email.send).not.toHaveBeenCalled();
     expect(repo.setEmailSent).not.toHaveBeenCalled();
   });
 
   it("instant: skips when notification row not found", async () => {
     repo.findById.mockResolvedValue(null);
-    await processor.process({ data: { kind: "instant", notificationId: "missing" } } as any);
+    await processor.process({
+      data: { kind: "instant", notificationId: "missing" },
+    } as any);
     expect(email.send).not.toHaveBeenCalled();
     expect(repo.setEmailSent).not.toHaveBeenCalled();
   });
@@ -92,7 +107,9 @@ describe("NotificationEmailProcessor", () => {
       link: "/x",
     });
     profiles.findById.mockResolvedValue(null);
-    await processor.process({ data: { kind: "instant", notificationId: "n1" } } as any);
+    await processor.process({
+      data: { kind: "instant", notificationId: "n1" },
+    } as any);
     expect(email.send).not.toHaveBeenCalled();
     expect(repo.setEmailSent).not.toHaveBeenCalled();
   });

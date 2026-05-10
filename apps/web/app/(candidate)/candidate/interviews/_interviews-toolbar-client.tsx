@@ -49,7 +49,9 @@ export function CandidateInterviewsToolbarClient({
   const [isPending, startTransition] = useTransition();
 
   const [q, setQ] = useState(initialQuery);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     setQ(initialQuery);
@@ -156,7 +158,10 @@ function FilterDropdown({
         <span>
           {label}: {current}
         </span>
-        <ChevronDown className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+        <ChevronDown
+          className="h-3.5 w-3.5 text-[var(--color-muted)]"
+          aria-hidden
+        />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="bottom">
         {options.map((opt) => (

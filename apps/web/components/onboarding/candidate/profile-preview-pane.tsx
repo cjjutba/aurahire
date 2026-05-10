@@ -37,7 +37,9 @@ export function ProfilePreviewPane({ me, experience, skills }: Props) {
             {me.fullName}
           </div>
           {me.headline && (
-            <div className="truncate text-xs text-[var(--color-muted)]">{me.headline}</div>
+            <div className="truncate text-xs text-[var(--color-muted)]">
+              {me.headline}
+            </div>
           )}
           {(me.locationCity || me.locationCountry) && (
             <div className="truncate text-xs text-[var(--color-muted)]">
@@ -59,11 +61,14 @@ export function ProfilePreviewPane({ me, experience, skills }: Props) {
           <ul className="mt-2 space-y-2">
             {experience.slice(0, 3).map((e, i) => (
               <li key={i}>
-                <div className="text-sm font-semibold text-[var(--color-ink)]">{e.title}</div>
+                <div className="text-sm font-semibold text-[var(--color-ink)]">
+                  {e.title}
+                </div>
                 <div className="text-xs text-[var(--color-muted)]">
                   {e.company} ·{" "}
                   <span className="font-mono">
-                    {e.start_date ?? "?"} – {e.is_current ? "Present" : e.end_date ?? "?"}
+                    {e.start_date ?? "?"} –{" "}
+                    {e.is_current ? "Present" : (e.end_date ?? "?")}
                   </span>
                 </div>
               </li>

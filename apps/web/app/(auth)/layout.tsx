@@ -3,7 +3,11 @@ import Link from "next/link";
 import { AuthFooter } from "@/components/auth/auth-footer";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-canvas)]">
       <header className="border-b border-[var(--color-hairline-soft)] bg-[var(--color-canvas)]">

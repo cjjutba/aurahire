@@ -55,8 +55,7 @@ export function AuditDetailSheetClient({ entryId, open, onClose }: Props) {
         setError("Not signed in");
         return;
       }
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
       const res = await fetch(`${apiUrl}/api/v1/admin/audit/${entryId}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
         cache: "no-store",
@@ -127,8 +126,7 @@ export function AuditDetailSheetClient({ entryId, open, onClose }: Props) {
                 </p>
               )}
               <p className="text-[var(--color-body)]">
-                Entity:{" "}
-                <span className="font-mono">{detail.entityType}</span> /{" "}
+                Entity: <span className="font-mono">{detail.entityType}</span> /{" "}
                 <span className="font-mono text-[var(--color-muted)]">
                   {detail.entityId}
                 </span>

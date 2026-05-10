@@ -51,7 +51,11 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
     {
       label: "Pipeline",
       items: [
-        { href: "/candidate/applications", label: "Applications", icon: FileText },
+        {
+          href: "/candidate/applications",
+          label: "Applications",
+          icon: FileText,
+        },
         { href: "/candidate/interviews", label: "Interviews", icon: Calendar },
       ],
     },
@@ -72,13 +76,19 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
   recruiter: [
     {
       label: "Main",
-      items: [{ href: "/recruiter", label: "Dashboard", icon: LayoutDashboard }],
+      items: [
+        { href: "/recruiter", label: "Dashboard", icon: LayoutDashboard },
+      ],
     },
     {
       label: "Pipeline",
       items: [
         { href: "/recruiter/jobs", label: "Jobs", icon: Briefcase },
-        { href: "/recruiter/applications", label: "Applications", icon: FileText },
+        {
+          href: "/recruiter/applications",
+          label: "Applications",
+          icon: FileText,
+        },
         { href: "/recruiter/shortlist", label: "Shortlist", icon: Star },
         { href: "/recruiter/interviews", label: "Interviews", icon: Calendar },
       ],
@@ -99,7 +109,9 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
   admin: [
     {
       label: "Main",
-      items: [{ href: "/admin", label: "Command Center", icon: LayoutDashboard }],
+      items: [
+        { href: "/admin", label: "Command Center", icon: LayoutDashboard },
+      ],
     },
     {
       label: "Operations",
@@ -113,10 +125,18 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
     {
       label: "Insights",
       items: [
-        { href: "/admin/ai-config", label: "AI Config", icon: SlidersHorizontal },
+        {
+          href: "/admin/ai-config",
+          label: "AI Config",
+          icon: SlidersHorizontal,
+        },
         { href: "/admin/audit", label: "Audit Log", icon: ScrollText },
         { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-        { href: "/admin/bias-monitor", label: "Bias Monitor", icon: ShieldAlert },
+        {
+          href: "/admin/bias-monitor",
+          label: "Bias Monitor",
+          icon: ShieldAlert,
+        },
         { href: "/admin/feedback", label: "Feedback", icon: MessageSquare },
       ],
     },
@@ -173,7 +193,7 @@ export function PortalSidebarContent({
   const activeHref = resolveActiveHref(
     pathname,
     sections.flatMap((s) =>
-      s.items.map((i) => ({ href: i.href, prefix: i.matchPrefix ?? i.href }))
+      s.items.map((i) => ({ href: i.href, prefix: i.matchPrefix ?? i.href })),
     ),
   );
 
@@ -181,11 +201,7 @@ export function PortalSidebarContent({
     <div className="flex h-full flex-col">
       {/* Top: brand wordmark + tenant chip */}
       <div className="px-6 pt-6 pb-4">
-        <Link
-          href="/"
-          onClick={onNavClick}
-          aria-label="AuraHire home"
-        >
+        <Link href="/" onClick={onNavClick} aria-label="AuraHire home">
           <BrandWordmark size="md" />
         </Link>
         {role === "recruiter" ? <CompanySwitcher /> : null}

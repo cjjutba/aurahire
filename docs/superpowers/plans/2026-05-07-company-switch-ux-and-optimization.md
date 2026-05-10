@@ -15,6 +15,7 @@
 ## Reference: file changes
 
 **Create:**
+
 - `apps/web/components/layout/company-switch-overlay.tsx`
 - `apps/web/components/layout/company-switch-overlay.test.tsx`
 - `apps/web/lib/dashboard-prefetch.ts`
@@ -22,6 +23,7 @@
 - `apps/api/src/common/guards/active-company.guard.spec.ts` (extend if present, else new)
 
 **Modify:**
+
 - `apps/web/contexts/active-company-context.tsx`
 - `apps/web/components/layout/company-switcher.tsx`
 - `apps/web/app/(recruiter)/layout.tsx`
@@ -41,6 +43,7 @@ User-visible win: overlay appears during the switch and stays up until the new t
 ### Task 1.1: Build the overlay component
 
 **Files:**
+
 - Create: `apps/web/components/layout/company-switch-overlay.tsx`
 - Create: `apps/web/components/layout/company-switch-overlay.test.tsx`
 
@@ -80,8 +83,7 @@ export function CompanySwitchOverlay() {
         <Spinner aria-label="Loading" />
         <p className="text-center text-sm text-[var(--color-body)]">
           Switching to{" "}
-          <span className="font-semibold text-[var(--color-ink)]">{name}</span>
-          …
+          <span className="font-semibold text-[var(--color-ink)]">{name}</span>…
         </p>
       </div>
     </div>
@@ -156,7 +158,9 @@ describe("CompanySwitchOverlay", () => {
 
   it("falls back to 'company' caption if pendingCompanyName is null", () => {
     render(harness({ isSwitching: true, pendingCompanyName: null }));
-    expect(screen.getByRole("status")).toHaveTextContent(/switching to company/i);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /switching to company/i,
+    );
   });
 
   it("spinner has aria-label='Loading'", () => {
@@ -171,9 +175,11 @@ The test imports `ActiveCompanyContextForTesting` — we'll export the bare `Con
 ### Task 1.2: Lift switching state into the context + wire `useTransition`
 
 **Files:**
+
 - Modify: `apps/web/contexts/active-company-context.tsx`
 
 Changes:
+
 - Add `isSwitching: boolean`, `pendingCompanyName: string | null`, `prefetchCompanyDashboard: (companyId: string) => void` to `ActiveCompanyContextValue`.
 - Inside the provider, hold `isSwitching` / `pendingCompanyName` in `useState`. Use React's `useTransition` and clear `isSwitching` in a `useEffect` when `isPending` flips to false.
 - Rewrite `switchCompany`:
@@ -222,7 +228,9 @@ Inside `ActiveCompanyProvider`, after `const activeMembership = ...`:
 
 ```ts
 const [isSwitching, setIsSwitching] = useState(false);
-const [pendingCompanyName, setPendingCompanyName] = useState<string | null>(null);
+const [pendingCompanyName, setPendingCompanyName] = useState<string | null>(
+  null,
+);
 const [isPending, startTransition] = useTransition();
 
 // Auto-clear when the SSR transition settles.
@@ -330,6 +338,7 @@ export const ActiveCompanyContextForTesting = ActiveCompanyContext;
 ### Task 1.3: Build the prefetch helper
 
 **Files:**
+
 - Create: `apps/web/lib/dashboard-prefetch.ts`
 
 - [ ] **Step 1: Create the file**
@@ -382,6 +391,7 @@ export function prefetchDashboardForCompany(companyId: string): void {
 ### Task 1.4: Mount the overlay in the recruiter layout
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/layout.tsx`
 
 Add a single import and mount the overlay component once. The overlay returns null when not switching, so the cost when idle is one React tree node.
@@ -415,6 +425,7 @@ The overlay must be a descendant of the provider (it reads from `useActiveCompan
 ### Task 1.5: Rewire `CompanySwitcher`
 
 **Files:**
+
 - Modify: `apps/web/components/layout/company-switcher.tsx`
 
 Drop the local `switching` state, read `isSwitching` from the context, and add hover prefetch handlers on each non-active dropdown row.
@@ -546,6 +557,7 @@ User-visible win: every authenticated recruiter request drops one Postgres round
 ### Task 2.1: Wire `CacheService` into `ActiveCompanyGuard`
 
 **Files:**
+
 - Modify: `apps/api/src/common/guards/active-company.guard.ts`
 
 The guard currently injects `Reflector`, `CompanyMembersRepository`, and `DRIZZLE_CLIENT`. Add `CacheService`. Confirm `CacheModule` is exported globally (it is, per `apps/api/src/cache/cache.module.ts`) so no module wiring change is needed beyond the constructor.
@@ -588,17 +600,13 @@ const membership = await this.cacheService.getOrSet<
 >({
   key: `membership:${user.id}:${companyId}`,
   ttlSeconds: TTL_SECONDS.warm,
-  tags: [
-    TAGS.companyMembership(companyId),
-    TAGS.userMemberships(user.id),
-  ],
+  tags: [TAGS.companyMembership(companyId), TAGS.userMemberships(user.id)],
   telemetryName: "guard:membership",
-  load: () =>
-    this.companyMembersRepo.findActiveMembership(user.id, companyId),
+  load: () => this.companyMembersRepo.findActiveMembership(user.id, companyId),
 });
 ```
 
-The cached value can be `null` (no membership). `cacheService.getOrSet` stores `null` as JSON `null` and returns it on hit — that path is critical because it caches the *negative* answer, preventing repeated DB hits for users probing companies they don't belong to.
+The cached value can be `null` (no membership). `cacheService.getOrSet` stores `null` as JSON `null` and returns it on hit — that path is critical because it caches the _negative_ answer, preventing repeated DB hits for users probing companies they don't belong to.
 
 - [ ] **Step 4: Cache the profile lookup fallback**
 
@@ -638,6 +646,7 @@ So the fresh pointer doesn't conflict with a now-stale cached null.
 ### Task 2.2: Bust on `setActiveCompany` profile-pointer writes
 
 **Files:**
+
 - Modify: `apps/api/src/modules/profiles/profiles.repository.ts`
 
 `setActiveCompany` updates `profiles.lastActiveCompanyId`. The new profile-lookup cache uses tag `userMemberships(userId)`. We must bust that tag whenever the pointer moves, otherwise a request that arrives between the write and the next 5-minute TTL boundary reads the stale value.
@@ -645,6 +654,7 @@ So the fresh pointer doesn't conflict with a now-stale cached null.
 - [ ] **Step 1: Find the `setActiveCompany` method**
 
 The two write paths in `profiles.repository.ts`:
+
 - Line ~138: writes `lastActiveCompanyId` as part of `acceptInvitation` / company creation.
 - Line ~159: writes `lastActiveCompanyId` directly in `setActiveCompany`.
 
@@ -676,9 +686,11 @@ Read the current method bodies first; the exact bust call signature follows the 
 ### Task 2.3: Backend tests
 
 **Files:**
+
 - Create / extend: `apps/api/src/common/guards/active-company.guard.spec.ts`
 
 Cover:
+
 - Cache hit on `membership:{userId}:{companyId}`: assert `companyMembersRepo.findActiveMembership` is NOT called.
 - Cache miss: loader runs once.
 - After `bustTags([companyMembership(companyId)])`, the next call hits the loader again.
@@ -715,6 +727,7 @@ User-visible win: ~100ms shaved off cold dashboard load (one Postgres roundtrip 
 ### Task 3.1: Rewrite `companyStats` as a single CTE query
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.repository.ts`
 
 - [ ] **Step 1: Locate the method**
@@ -852,6 +865,7 @@ If zero remaining references outside its own definition, delete the method.
 ### Task 3.2: Backend tests for `companyStats`
 
 **Files:**
+
 - Create / extend: `apps/api/src/modules/applications/applications.repository.spec.ts`
 
 - [ ] **Step 1: Use the existing real-Postgres test fixture**
@@ -861,6 +875,7 @@ The repo's existing repository specs use a real Postgres test database. Follow t
 - [ ] **Step 2: Cover all four ranges**
 
 For each of `"7d"`, `"30d"`, `"90d"`, `"all"`:
+
 - Seed apps with `appliedAt` straddling the range boundary.
 - Assert `totalApplications` reflects only the in-range rows.
 - Assert `activeJobs` ignores the range filter (it's published-status, not date-based).
@@ -922,6 +937,7 @@ Human runs `pnpm dev` from repo root. Both Next.js (`:3000`) and NestJS (`:3333`
 - [ ] **Step 2: Smoke test — overlay**
 
 Log in as a recruiter with two memberships. Click switch from A → B in the sidebar. Verify:
+
 - A blurred-canvas overlay appears with a centered card.
 - The card shows `Switching to B…` with B's actual name.
 - The spinner rotates with the AuraHire-Blue ring.
@@ -931,6 +947,7 @@ Log in as a recruiter with two memberships. Click switch from A → B in the sid
 - [ ] **Step 3: Smoke test — detail-page redirect**
 
 Switch from A → B while on `/recruiter/jobs/{some-job-id-from-A}`. Verify:
+
 - URL changes to `/recruiter/jobs` (the section index).
 - Overlay appears once (no double-render).
 - Dashboard shows B's data.
@@ -938,6 +955,7 @@ Switch from A → B while on `/recruiter/jobs/{some-job-id-from-A}`. Verify:
 - [ ] **Step 4: Smoke test — hover prefetch**
 
 Open browser devtools Network tab. Open the company switcher dropdown, hover (don't click) a non-active row, hold for 200 ms. Verify:
+
 - Three GETs to `/api/v1/applications/recruiter-stats`, `/recruiter-analytics`, `/recent` fire with `X-Active-Company-Id` set to the hovered company.
 - Now click that row to switch. Verify the resulting switch is faster than a no-prefetch switch.
 
@@ -948,6 +966,7 @@ With one terminal tailing the NestJS logs, switch back and forth between two com
 - [ ] **Step 6: Smoke test — Redis fail-open**
 
 Stop the Redis container (`docker compose -f docker-compose.dev.yml stop redis`). Switch companies. Verify:
+
 - Overlay still appears.
 - Dashboard still renders (slower).
 - No 500 errors.

@@ -57,7 +57,9 @@ export const initCandidateProfileSchema = z.object({
   phone: phoneSchema,
 });
 
-export type InitCandidateProfileInput = z.infer<typeof initCandidateProfileSchema>;
+export type InitCandidateProfileInput = z.infer<
+  typeof initCandidateProfileSchema
+>;
 
 // ============================================================================
 // REGISTER — RECRUITER
@@ -98,7 +100,9 @@ export const initRecruiterProfileSchema = z.object({
   phone: phoneSchema,
 });
 
-export type InitRecruiterProfileInput = z.infer<typeof initRecruiterProfileSchema>;
+export type InitRecruiterProfileInput = z.infer<
+  typeof initRecruiterProfileSchema
+>;
 
 // ============================================================================
 // PASSWORD RESET
@@ -145,4 +149,6 @@ export const resetPasswordRequestSchema = z.object({
   password: passwordSchema,
 });
 
-export type ResetPasswordRequestInput = z.infer<typeof resetPasswordRequestSchema>;
+export type ResetPasswordRequestInput = z.infer<
+  typeof resetPasswordRequestSchema
+>;

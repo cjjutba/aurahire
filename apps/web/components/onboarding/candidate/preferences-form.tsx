@@ -14,7 +14,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const WORK_MODES = ["full-time", "part-time", "contract", "remote", "hybrid", "on-site"] as const;
+const WORK_MODES = [
+  "full-time",
+  "part-time",
+  "contract",
+  "remote",
+  "hybrid",
+  "on-site",
+] as const;
 
 const WORK_MODE_LABELS: Record<(typeof WORK_MODES)[number], string> = {
   "full-time": "Full-time",
@@ -67,9 +74,10 @@ export function CandidatePreferencesForm({
   onSaveStatusChange,
 }: Props) {
   const router = useRouter();
-  const { register, formState, getValues, watch, setValue } = useForm<PreferencesFormValues>({
-    defaultValues: defaults,
-  });
+  const { register, formState, getValues, watch, setValue } =
+    useForm<PreferencesFormValues>({
+      defaultValues: defaults,
+    });
   const [finishing, setFinishing] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
 
@@ -93,7 +101,9 @@ export function CandidatePreferencesForm({
   // Single source of truth for the PATCH so handleFinish can call it
   // directly (bypassing the autosave debounce / in-flight queue) and the
   // useAutosave hook can call it on blur as before.
-  const savePreferences = async (payload: PreferencesPayload): Promise<void> => {
+  const savePreferences = async (
+    payload: PreferencesPayload,
+  ): Promise<void> => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
     const res = await fetch(`${apiUrl}/api/v1/candidate-profiles/preferences`, {
       method: "PATCH",
@@ -169,9 +179,15 @@ export function CandidatePreferencesForm({
   return (
     <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
       <div className="flex flex-col gap-1">
-        <label htmlFor="desiredRoles" className="text-xs font-semibold text-[var(--color-ink)]">
+        <label
+          htmlFor="desiredRoles"
+          className="text-xs font-semibold text-[var(--color-ink)]"
+        >
           Desired Roles{" "}
-          <span aria-hidden="true" className="text-[var(--color-status-danger)]">
+          <span
+            aria-hidden="true"
+            className="text-[var(--color-status-danger)]"
+          >
             *
           </span>
           <span className="sr-only"> (required)</span>
@@ -201,7 +217,9 @@ export function CandidatePreferencesForm({
           value={watch("desiredSeniority") || undefined}
           onValueChange={(v) => {
             setValue("desiredSeniority", v ?? "", { shouldDirty: true });
-            schedule(buildPayload({ ...getValues(), desiredSeniority: v ?? "" }));
+            schedule(
+              buildPayload({ ...getValues(), desiredSeniority: v ?? "" }),
+            );
           }}
         >
           <SelectTrigger id="desiredSeniority">
@@ -296,7 +314,9 @@ export function CandidatePreferencesForm({
       </div>
 
       {finishError && (
-        <p className="text-sm text-[var(--color-status-danger)]">{finishError}</p>
+        <p className="text-sm text-[var(--color-status-danger)]">
+          {finishError}
+        </p>
       )}
 
       <div className="flex justify-between pt-3">

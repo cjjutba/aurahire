@@ -52,8 +52,16 @@ interface VenueListResponse {
 }
 
 interface ConflictCheckResult {
-  recruiterConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
-  candidateConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
+  recruiterConflicts: Array<{
+    id: string;
+    scheduledAt: string;
+    durationMinutes: number;
+  }>;
+  candidateConflicts: Array<{
+    id: string;
+    scheduledAt: string;
+    durationMinutes: number;
+  }>;
 }
 
 interface Props {
@@ -218,7 +226,8 @@ export function RescheduleModalClient({
           data: { session },
         } = await supabase.auth.getSession();
         if (!session) return;
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
         const activeCompanyId = getActiveCompanyId();
         const res = await fetch(
           `${apiUrl}/api/v1/applications/${applicationId}/interviews/check-conflicts`,
@@ -259,7 +268,9 @@ export function RescheduleModalClient({
   function validateMapUrl(value: string): string {
     const trimmed = value.trim();
     if (!trimmed) return "";
-    return /^https?:\/\//i.test(trimmed) ? "" : "Must start with http:// or https://";
+    return /^https?:\/\//i.test(trimmed)
+      ? ""
+      : "Must start with http:// or https://";
   }
 
   // ── Submit ────────────────────────────────────────────────────────────────
@@ -540,7 +551,10 @@ export function RescheduleModalClient({
           <Button
             onClick={submit}
             disabled={
-              working || !scheduledAt || !venueName.trim() || !addressLine.trim()
+              working ||
+              !scheduledAt ||
+              !venueName.trim() ||
+              !addressLine.trim()
             }
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
           >

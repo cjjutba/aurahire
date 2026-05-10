@@ -150,10 +150,17 @@ describe("InterviewsService.markNoShow", () => {
       candidateId: CANDIDATE_ID,
     } as any);
 
-    const result = await service.markNoShow(recruiterUser, COMPANY_ID, INTERVIEW_ID, {});
+    const result = await service.markNoShow(
+      recruiterUser,
+      COMPANY_ID,
+      INTERVIEW_ID,
+      {},
+    );
 
     // Status persisted as no-show.
-    expect(repo.update).toHaveBeenCalledWith(INTERVIEW_ID, { status: "no-show" });
+    expect(repo.update).toHaveBeenCalledWith(INTERVIEW_ID, {
+      status: "no-show",
+    });
 
     // Correct audit action logged.
     const auditActions = audit.log.mock.calls.map((c) => c[0].action);
@@ -163,7 +170,10 @@ describe("InterviewsService.markNoShow", () => {
     const noShowAudit = audit.log.mock.calls.find(
       (c) => c[0].action === AUDIT_ACTIONS.INTERVIEW_NO_SHOW_MARKED,
     )!;
-    expect(noShowAudit[0].details).toMatchObject({ from: "scheduled", applicationId: APPLICATION_ID });
+    expect(noShowAudit[0].details).toMatchObject({
+      from: "scheduled",
+      applicationId: APPLICATION_ID,
+    });
 
     // Realtime event fired.
     expect(events.emitInterviewStatusChanged).toHaveBeenCalledWith(
@@ -197,7 +207,9 @@ describe("InterviewsService.markNoShow", () => {
 
     await service.markNoShow(recruiterUser, COMPANY_ID, INTERVIEW_ID, {});
 
-    expect(repo.update).toHaveBeenCalledWith(INTERVIEW_ID, { status: "no-show" });
+    expect(repo.update).toHaveBeenCalledWith(INTERVIEW_ID, {
+      status: "no-show",
+    });
 
     const auditActions = audit.log.mock.calls.map((c) => c[0].action);
     expect(auditActions).toContain(AUDIT_ACTIONS.INTERVIEW_NO_SHOW_MARKED);
@@ -233,7 +245,9 @@ describe("InterviewsService.markNoShow", () => {
       await expect(
         service.markNoShow(recruiterUser, COMPANY_ID, INTERVIEW_ID, {}),
       ).rejects.toMatchObject({
-        response: expect.objectContaining({ code: "INVALID_STATUS_TRANSITION" }),
+        response: expect.objectContaining({
+          code: "INVALID_STATUS_TRANSITION",
+        }),
       });
 
       expect(repo.update).not.toHaveBeenCalled();

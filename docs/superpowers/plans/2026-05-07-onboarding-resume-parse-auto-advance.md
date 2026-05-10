@@ -15,11 +15,13 @@
 ## Reference: file structure changes
 
 **Create:**
+
 - `apps/web/components/onboarding/candidate/low-confidence-banner.tsx`
 - `apps/web/components/onboarding/candidate/low-confidence-banner.test.tsx`
 - `apps/web/components/onboarding/candidate/parsing-progress-card.test.tsx`
 
 **Modify:**
+
 - `apps/web/components/onboarding/candidate/parsing-progress-card.tsx`
 - `apps/web/components/onboarding/candidate/resume-upload-card.tsx`
 - `apps/web/app/onboarding/candidate/page.tsx`
@@ -28,6 +30,7 @@
 - `apps/web/app/onboarding/candidate/review/_client.tsx`
 
 **Delete:**
+
 - `apps/web/components/onboarding/candidate/parse-success-card.tsx`
 
 **Test runner:** `pnpm --filter @aurahire/web test` (one-shot Vitest run). Watch mode: `pnpm --filter @aurahire/web test:watch`.
@@ -41,6 +44,7 @@
 ## Task 1: Extend `ParsingProgressCard` with a `done` state
 
 **Files:**
+
 - Modify: `apps/web/components/onboarding/candidate/parsing-progress-card.tsx`
 - Create: `apps/web/components/onboarding/candidate/parsing-progress-card.test.tsx`
 
@@ -48,7 +52,7 @@ The current `ParsingProgressCard` runs a four-stage time curve and never resolve
 
 1. New props: `parseStatus: "parsing" | "done"`, `parsed: ParsedResumeV2 | null`, `onAutoAdvance?: () => void`.
 2. When `parseStatus === "done"`: force `activeIdx` to `STAGES.length` (4) so all four stages render as `done`; replace the indeterminate sweep bar with a static fill; render a `Done · ...` summary line; swap the caption above the file row from "Hang tight..." to "Routing to your details..."; fire `onAutoAdvance` after 1500 ms.
-3. The `Hang tight — this usually takes 5–15 seconds.` caption (currently rendered by `ResumeUploadCard` outside the card) moves *into* `ParsingProgressCard` so it can swap with status.
+3. The `Hang tight — this usually takes 5–15 seconds.` caption (currently rendered by `ResumeUploadCard` outside the card) moves _into_ `ParsingProgressCard` so it can swap with status.
 
 - [ ] **Step 1: Create the test file with the first failing test (parsing state still renders)**
 
@@ -78,36 +82,59 @@ function makeParsed(
   const crt = partial.certifications ?? 1;
   return {
     contact: {
-      full_name: null, full_name_source: null,
-      email: null, email_source: null,
-      phone: null, phone_source: null,
-      location_city: null, location_city_source: null,
-      location_country: null, location_country_source: null,
-      linkedin_url: null, linkedin_url_source: null,
-      portfolio_url: null, portfolio_url_source: null,
+      full_name: null,
+      full_name_source: null,
+      email: null,
+      email_source: null,
+      phone: null,
+      phone_source: null,
+      location_city: null,
+      location_city_source: null,
+      location_country: null,
+      location_country_source: null,
+      linkedin_url: null,
+      linkedin_url_source: null,
+      portfolio_url: null,
+      portfolio_url_source: null,
     },
     summary: null,
     education: Array.from({ length: edu }, () => ({
-      institution: "Stanford", institution_source: "Stanford",
-      degree: null, degree_source: null,
-      field_of_study: null, field_of_study_source: null,
-      start_year: null, end_year: null, period_source: null,
-      gpa: null, gpa_source: null,
+      institution: "Stanford",
+      institution_source: "Stanford",
+      degree: null,
+      degree_source: null,
+      field_of_study: null,
+      field_of_study_source: null,
+      start_year: null,
+      end_year: null,
+      period_source: null,
+      gpa: null,
+      gpa_source: null,
     })),
     experience: Array.from({ length: exp }, () => ({
-      company: "Acme", company_source: "Acme",
-      title: "Engineer", title_source: "Engineer",
-      start_date: null, end_date: null, period_source: "",
-      is_current: false, responsibilities: [], responsibilities_source: [],
+      company: "Acme",
+      company_source: "Acme",
+      title: "Engineer",
+      title_source: "Engineer",
+      start_date: null,
+      end_date: null,
+      period_source: "",
+      is_current: false,
+      responsibilities: [],
+      responsibilities_source: [],
       technologies_used: [],
     })),
     skills: Array.from({ length: skl }, (_, i) => ({
-      name: `skill-${i}`, source: `skill-${i}`,
+      name: `skill-${i}`,
+      source: `skill-${i}`,
     })),
     certifications: Array.from({ length: crt }, () => ({
-      name: "AWS", name_source: "AWS",
-      issuing_organization: null, issuing_organization_source: null,
-      issue_date: null, issue_date_source: null,
+      name: "AWS",
+      name_source: "AWS",
+      issuing_organization: null,
+      issuing_organization_source: null,
+      issue_date: null,
+      issue_date_source: null,
       expires: null,
     })),
     languages: [],
@@ -125,15 +152,13 @@ describe("ParsingProgressCard", () => {
 
   it("renders all four stage labels in parsing state", () => {
     render(
-      <ParsingProgressCard
-        file={FILE}
-        parseStatus="parsing"
-        parsed={null}
-      />,
+      <ParsingProgressCard file={FILE} parseStatus="parsing" parsed={null} />,
     );
     expect(screen.getByText("Uploading file")).toBeInTheDocument();
     expect(screen.getByText("Extracting text")).toBeInTheDocument();
-    expect(screen.getByText("Identifying experience & skills")).toBeInTheDocument();
+    expect(
+      screen.getByText("Identifying experience & skills"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Polishing the details")).toBeInTheDocument();
   });
 });
@@ -152,141 +177,153 @@ Expected: PASS (first test verifies existing behavior).
 Append inside the existing `describe("ParsingProgressCard", ...)` block in the same test file:
 
 ```tsx
-  it("renders the 'Done · ...' summary line when parseStatus is 'done'", () => {
-    render(
-      <ParsingProgressCard
-        file={FILE}
-        parseStatus="done"
-        parsed={makeParsed({ experience: 3, education: 1, skills: 12, certifications: 1 })}
-      />,
-    );
-    const line = screen.getByTestId("parse-done-summary");
-    expect(line).toHaveTextContent(
-      "Done · 3 experiences, 1 school, 12 skills, 1 cert extracted",
-    );
-  });
+it("renders the 'Done · ...' summary line when parseStatus is 'done'", () => {
+  render(
+    <ParsingProgressCard
+      file={FILE}
+      parseStatus="done"
+      parsed={makeParsed({
+        experience: 3,
+        education: 1,
+        skills: 12,
+        certifications: 1,
+      })}
+    />,
+  );
+  const line = screen.getByTestId("parse-done-summary");
+  expect(line).toHaveTextContent(
+    "Done · 3 experiences, 1 school, 12 skills, 1 cert extracted",
+  );
+});
 
-  it("omits zero-count categories from the summary line", () => {
-    render(
-      <ParsingProgressCard
-        file={FILE}
-        parseStatus="done"
-        parsed={makeParsed({ experience: 2, education: 0, skills: 5, certifications: 0 })}
-      />,
-    );
-    const line = screen.getByTestId("parse-done-summary");
-    expect(line).toHaveTextContent("Done · 2 experiences, 5 skills extracted");
-    expect(line).not.toHaveTextContent("school");
-    expect(line).not.toHaveTextContent("cert");
-  });
+it("omits zero-count categories from the summary line", () => {
+  render(
+    <ParsingProgressCard
+      file={FILE}
+      parseStatus="done"
+      parsed={makeParsed({
+        experience: 2,
+        education: 0,
+        skills: 5,
+        certifications: 0,
+      })}
+    />,
+  );
+  const line = screen.getByTestId("parse-done-summary");
+  expect(line).toHaveTextContent("Done · 2 experiences, 5 skills extracted");
+  expect(line).not.toHaveTextContent("school");
+  expect(line).not.toHaveTextContent("cert");
+});
 
-  it("appends 'Some fields may need review' suffix on low confidence", () => {
-    render(
-      <ParsingProgressCard
-        file={FILE}
-        parseStatus="done"
-        parsed={makeParsed({ confidence: "low", experience: 1, education: 1, skills: 4, certifications: 0 })}
-      />,
-    );
-    const line = screen.getByTestId("parse-done-summary");
-    expect(line).toHaveTextContent("Some fields may need review");
-  });
+it("appends 'Some fields may need review' suffix on low confidence", () => {
+  render(
+    <ParsingProgressCard
+      file={FILE}
+      parseStatus="done"
+      parsed={makeParsed({
+        confidence: "low",
+        experience: 1,
+        education: 1,
+        skills: 4,
+        certifications: 0,
+      })}
+    />,
+  );
+  const line = screen.getByTestId("parse-done-summary");
+  expect(line).toHaveTextContent("Some fields may need review");
+});
 
-  it("does not append the low-confidence suffix on high or medium confidence", () => {
-    render(
-      <ParsingProgressCard
-        file={FILE}
-        parseStatus="done"
-        parsed={makeParsed({ confidence: "medium" })}
-      />,
-    );
-    expect(screen.queryByText(/Some fields may need review/)).toBeNull();
-  });
+it("does not append the low-confidence suffix on high or medium confidence", () => {
+  render(
+    <ParsingProgressCard
+      file={FILE}
+      parseStatus="done"
+      parsed={makeParsed({ confidence: "medium" })}
+    />,
+  );
+  expect(screen.queryByText(/Some fields may need review/)).toBeNull();
+});
 
-  it("swaps the caption above the file row when in done state", () => {
-    const { rerender } = render(
-      <ParsingProgressCard
-        file={FILE}
-        parseStatus="parsing"
-        parsed={null}
-      />,
-    );
-    expect(screen.getByTestId("parse-caption")).toHaveTextContent(
-      "Hang tight — this usually takes 5–15 seconds.",
-    );
-    rerender(
-      <ParsingProgressCard
-        file={FILE}
-        parseStatus="done"
-        parsed={makeParsed()}
-      />,
-    );
-    expect(screen.getByTestId("parse-caption")).toHaveTextContent(
-      "Routing to your details...",
-    );
-  });
+it("swaps the caption above the file row when in done state", () => {
+  const { rerender } = render(
+    <ParsingProgressCard file={FILE} parseStatus="parsing" parsed={null} />,
+  );
+  expect(screen.getByTestId("parse-caption")).toHaveTextContent(
+    "Hang tight — this usually takes 5–15 seconds.",
+  );
+  rerender(
+    <ParsingProgressCard
+      file={FILE}
+      parseStatus="done"
+      parsed={makeParsed()}
+    />,
+  );
+  expect(screen.getByTestId("parse-caption")).toHaveTextContent(
+    "Routing to your details...",
+  );
+});
 
-  it("fires onAutoAdvance exactly once 1500 ms after entering 'done'", () => {
-    const onAutoAdvance = vi.fn();
-    render(
-      <ParsingProgressCard
-        file={FILE}
-        parseStatus="done"
-        parsed={makeParsed()}
-        onAutoAdvance={onAutoAdvance}
-      />,
-    );
-    expect(onAutoAdvance).not.toHaveBeenCalled();
-    act(() => {
-      vi.advanceTimersByTime(1499);
-    });
-    expect(onAutoAdvance).not.toHaveBeenCalled();
-    act(() => {
-      vi.advanceTimersByTime(1);
-    });
-    expect(onAutoAdvance).toHaveBeenCalledTimes(1);
-    // Should not fire again on additional time advance.
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
-    expect(onAutoAdvance).toHaveBeenCalledTimes(1);
+it("fires onAutoAdvance exactly once 1500 ms after entering 'done'", () => {
+  const onAutoAdvance = vi.fn();
+  render(
+    <ParsingProgressCard
+      file={FILE}
+      parseStatus="done"
+      parsed={makeParsed()}
+      onAutoAdvance={onAutoAdvance}
+    />,
+  );
+  expect(onAutoAdvance).not.toHaveBeenCalled();
+  act(() => {
+    vi.advanceTimersByTime(1499);
   });
+  expect(onAutoAdvance).not.toHaveBeenCalled();
+  act(() => {
+    vi.advanceTimersByTime(1);
+  });
+  expect(onAutoAdvance).toHaveBeenCalledTimes(1);
+  // Should not fire again on additional time advance.
+  act(() => {
+    vi.advanceTimersByTime(5000);
+  });
+  expect(onAutoAdvance).toHaveBeenCalledTimes(1);
+});
 
-  it("does not fire onAutoAdvance while still in 'parsing' state", () => {
-    const onAutoAdvance = vi.fn();
-    render(
-      <ParsingProgressCard
-        file={FILE}
-        parseStatus="parsing"
-        parsed={null}
-        onAutoAdvance={onAutoAdvance}
-      />,
-    );
-    act(() => {
-      vi.advanceTimersByTime(10_000);
-    });
-    expect(onAutoAdvance).not.toHaveBeenCalled();
+it("does not fire onAutoAdvance while still in 'parsing' state", () => {
+  const onAutoAdvance = vi.fn();
+  render(
+    <ParsingProgressCard
+      file={FILE}
+      parseStatus="parsing"
+      parsed={null}
+      onAutoAdvance={onAutoAdvance}
+    />,
+  );
+  act(() => {
+    vi.advanceTimersByTime(10_000);
   });
+  expect(onAutoAdvance).not.toHaveBeenCalled();
+});
 
-  it("clears the auto-advance timer if unmounted before it fires", () => {
-    const onAutoAdvance = vi.fn();
-    const { unmount } = render(
-      <ParsingProgressCard
-        file={FILE}
-        parseStatus="done"
-        parsed={makeParsed()}
-        onAutoAdvance={onAutoAdvance}
-      />,
-    );
-    act(() => {
-      vi.advanceTimersByTime(500);
-    });
-    unmount();
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
-    expect(onAutoAdvance).not.toHaveBeenCalled();
+it("clears the auto-advance timer if unmounted before it fires", () => {
+  const onAutoAdvance = vi.fn();
+  const { unmount } = render(
+    <ParsingProgressCard
+      file={FILE}
+      parseStatus="done"
+      parsed={makeParsed()}
+      onAutoAdvance={onAutoAdvance}
+    />,
+  );
+  act(() => {
+    vi.advanceTimersByTime(500);
   });
+  unmount();
+  act(() => {
+    vi.advanceTimersByTime(5000);
+  });
+  expect(onAutoAdvance).not.toHaveBeenCalled();
+});
 ```
 
 - [ ] **Step 4: Run tests — the new ones should fail**
@@ -331,7 +368,11 @@ const STAGES: Stage[] = [
   { id: "upload", label: "Uploading file", duration: 800 },
   { id: "extract", label: "Extracting text", duration: 3500 },
   { id: "identify", label: "Identifying experience & skills", duration: 4500 },
-  { id: "polish", label: "Polishing the details", duration: Number.POSITIVE_INFINITY },
+  {
+    id: "polish",
+    label: "Polishing the details",
+    duration: Number.POSITIVE_INFINITY,
+  },
 ];
 
 const AUTO_ADVANCE_MS = 1500;
@@ -366,7 +407,11 @@ function buildSummary(parsed: ParsedResumeV2): {
 } {
   // Order matches the legacy ParseSuccessCard chip order so terminology stays consistent.
   const parts: SummaryPart[] = [
-    { count: parsed.experience.length, singular: "experience", plural: "experiences" },
+    {
+      count: parsed.experience.length,
+      singular: "experience",
+      plural: "experiences",
+    },
     { count: parsed.education.length, singular: "school", plural: "schools" },
     { count: parsed.skills.length, singular: "skill", plural: "skills" },
     { count: parsed.certifications.length, singular: "cert", plural: "certs" },
@@ -378,7 +423,10 @@ function buildSummary(parsed: ParsedResumeV2): {
   const segments = nonzero.map(
     (p) => `${p.count} ${p.count === 1 ? p.singular : p.plural}`,
   );
-  return { countsLine: `Done · ${segments.join(", ")} extracted`, showLine: true };
+  return {
+    countsLine: `Done · ${segments.join(", ")} extracted`,
+    showLine: true,
+  };
 }
 
 export function ParsingProgressCard({
@@ -477,7 +525,9 @@ export function ParsingProgressCard({
           {STAGES.map((stage, i) => {
             const state: "done" | "active" | "pending" =
               i < activeIdx ? "done" : i === activeIdx ? "active" : "pending";
-            return <StageRow key={stage.id} label={stage.label} state={state} />;
+            return (
+              <StageRow key={stage.id} label={stage.label} state={state} />
+            );
           })}
         </ul>
 
@@ -562,6 +612,7 @@ function StageRow({
 ```
 
 Notes for the implementer:
+
 - The `Hang tight — this usually takes 5–15 seconds.` caption now lives **inside** the card component. The next task removes the duplicate from `ResumeUploadCard`.
 - `data-testid="parse-caption"` and `data-testid="parse-done-summary"` are required for the tests above.
 - Keep the existing keyframes (`animate-indeterminate-sweep`, `animate-stage-check-pop`, `animate-stage-fade-in`) — they're already defined in `apps/web/app/globals.css` and don't need changes.
@@ -604,6 +655,7 @@ EOF
 ## Task 2: Create `LowConfidenceBanner` component
 
 **Files:**
+
 - Create: `apps/web/components/onboarding/candidate/low-confidence-banner.tsx`
 - Create: `apps/web/components/onboarding/candidate/low-confidence-banner.test.tsx`
 
@@ -623,7 +675,9 @@ describe("LowConfidenceBanner", () => {
   it("renders banner when confidence is 'low'", () => {
     render(<LowConfidenceBanner confidence="low" />);
     expect(screen.getByText(/low-confidence parse/i)).toBeInTheDocument();
-    expect(screen.getByText(/Double-check every prefilled field/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Double-check every prefilled field/i),
+    ).toBeInTheDocument();
   });
 
   it("renders nothing for 'high' confidence", () => {
@@ -642,7 +696,9 @@ describe("LowConfidenceBanner", () => {
   });
 
   it("renders nothing for undefined", () => {
-    const { container } = render(<LowConfidenceBanner confidence={undefined} />);
+    const { container } = render(
+      <LowConfidenceBanner confidence={undefined} />,
+    );
     expect(container).toBeEmptyDOMElement();
   });
 });
@@ -686,7 +742,8 @@ export function LowConfidenceBanner({ confidence }: LowConfidenceBannerProps) {
           Heads up — low-confidence parse
         </p>
         <p className="mt-0.5 text-sm text-[var(--color-body)]">
-          The AI wasn&apos;t sure about parts of this resume. Double-check every prefilled field before continuing.
+          The AI wasn&apos;t sure about parts of this resume. Double-check every
+          prefilled field before continuing.
         </p>
       </div>
     </div>
@@ -731,6 +788,7 @@ EOF
 ## Task 3: Rewire `ResumeUploadCard` and delete `ParseSuccessCard`
 
 **Files:**
+
 - Modify: `apps/web/components/onboarding/candidate/resume-upload-card.tsx`
 - Delete: `apps/web/components/onboarding/candidate/parse-success-card.tsx`
 
@@ -767,7 +825,11 @@ interface Props {
 
 type Stage = "idle" | "uploading" | "done" | "failed";
 
-export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false }: Props) {
+export function ResumeUploadCard({
+  latestResume,
+  accessToken,
+  forceIdle = false,
+}: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
@@ -923,8 +985,12 @@ export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false 
         }}
       >
         <UploadCloud className="h-10 w-10 text-[var(--color-muted)]" />
-        <p className="mt-3 text-sm font-semibold">Drop your resume here, or click to browse</p>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">PDF or DOCX · 10MB max</p>
+        <p className="mt-3 text-sm font-semibold">
+          Drop your resume here, or click to browse
+        </p>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          PDF or DOCX · 10MB max
+        </p>
         <input
           type="file"
           accept={ACCEPT}
@@ -935,7 +1001,11 @@ export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false 
           }}
         />
       </label>
-      {error && <p className="mt-3 text-sm text-[var(--color-status-danger)]">{error}</p>}
+      {error && (
+        <p className="mt-3 text-sm text-[var(--color-status-danger)]">
+          {error}
+        </p>
+      )}
       <button
         onClick={() => router.push("/onboarding/candidate/personal")}
         className="mt-5 text-sm text-[var(--color-muted)] underline transition-colors hover:text-[var(--color-ink)]"
@@ -948,6 +1018,7 @@ export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false 
 ```
 
 Key changes from the previous version:
+
 - Drops `import { ParseSuccessCard } from "./parse-success-card";`.
 - `Props` adds `forceIdle?: boolean`.
 - `useState<Stage>(...)` initializer is a function that respects `forceIdle`.
@@ -1010,6 +1081,7 @@ Note: `git add` on the deleted file records the deletion.
 ## Task 4: Server-redirect on Step 1 page + thread `forceIdle`
 
 **Files:**
+
 - Modify: `apps/web/app/onboarding/candidate/page.tsx`
 
 If a returning candidate already has a parsed resume, the page redirects them straight to Step 2 — unless the URL carries `?replace=1`, in which case we render the dropzone.
@@ -1107,6 +1179,7 @@ EOF
 ## Task 5: Add `Replace resume` link to `ResumePreviewPane`
 
 **Files:**
+
 - Modify: `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx`
 
 A small text-button next to the existing PDF/Text segmented toggle that routes to `/onboarding/candidate?replace=1`. Lives wherever `ResumePreviewPane` is rendered (Step 2, Step 3, mobile sheet).
@@ -1164,57 +1237,60 @@ Find this block (currently around lines 130-170):
 Replace the whole block with:
 
 ```tsx
-      {/* Header row: toggle (when both modes usable) or label, plus replace + open affordances. */}
-      <div className="mb-3 flex items-center justify-between gap-3">
-        {canToggle ? (
-          <div
-            role="tablist"
-            aria-label="Resume view mode"
-            className="inline-flex rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-0.5"
-          >
-            <ViewToggleButton
-              icon={<FileType2 className="h-3.5 w-3.5" aria-hidden />}
-              label="PDF"
-              selected={displayedMode === "pdf"}
-              onClick={() => setUserMode("pdf")}
-            />
-            <ViewToggleButton
-              icon={<FileText className="h-3.5 w-3.5" aria-hidden />}
-              label="Text"
-              selected={displayedMode === "text"}
-              onClick={() => setUserMode("text")}
-            />
-          </div>
-        ) : (
-          <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-muted)]">
-            Your resume
-          </span>
-        )}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/onboarding/candidate?replace=1"
-            className="inline-flex items-center gap-1 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-ink)]"
-          >
-            <RotateCcw className="h-3 w-3" aria-hidden />
-            Replace resume
-          </Link>
-          {hasPdf && signedPdfUrl && (
-            <a
-              href={signedPdfUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-ink)]"
-              aria-label="Open original PDF in a new tab"
-            >
-              Open
-              <ExternalLink className="h-3 w-3" aria-hidden />
-            </a>
-          )}
-        </div>
-      </div>
+{
+  /* Header row: toggle (when both modes usable) or label, plus replace + open affordances. */
+}
+<div className="mb-3 flex items-center justify-between gap-3">
+  {canToggle ? (
+    <div
+      role="tablist"
+      aria-label="Resume view mode"
+      className="inline-flex rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-0.5"
+    >
+      <ViewToggleButton
+        icon={<FileType2 className="h-3.5 w-3.5" aria-hidden />}
+        label="PDF"
+        selected={displayedMode === "pdf"}
+        onClick={() => setUserMode("pdf")}
+      />
+      <ViewToggleButton
+        icon={<FileText className="h-3.5 w-3.5" aria-hidden />}
+        label="Text"
+        selected={displayedMode === "text"}
+        onClick={() => setUserMode("text")}
+      />
+    </div>
+  ) : (
+    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-muted)]">
+      Your resume
+    </span>
+  )}
+  <div className="flex items-center gap-3">
+    <Link
+      href="/onboarding/candidate?replace=1"
+      className="inline-flex items-center gap-1 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-ink)]"
+    >
+      <RotateCcw className="h-3 w-3" aria-hidden />
+      Replace resume
+    </Link>
+    {hasPdf && signedPdfUrl && (
+      <a
+        href={signedPdfUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-1 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-ink)]"
+        aria-label="Open original PDF in a new tab"
+      >
+        Open
+        <ExternalLink className="h-3 w-3" aria-hidden />
+      </a>
+    )}
+  </div>
+</div>;
 ```
 
 Key changes:
+
 - Removed the outer `(canToggle || hasPdf) && ` gate — header now always renders.
 - Wrapped the right-side actions in a flex container holding `Replace resume` (always shown) and `Open` (still gated on `hasPdf && signedPdfUrl`).
 - Used `next/link`'s `<Link>` for the replace navigation so client-side routing works.
@@ -1257,6 +1333,7 @@ EOF
 ## Task 6: Wire `LowConfidenceBanner` into Step 2 and Step 3 client components
 
 **Files:**
+
 - Modify: `apps/web/app/onboarding/candidate/personal/_client.tsx`
 - Modify: `apps/web/app/onboarding/candidate/review/_client.tsx`
 
@@ -1286,12 +1363,12 @@ import { LowConfidenceBanner } from "@/components/onboarding/candidate/low-confi
 Then find the JSX that renders `<CandidatePersonalInfoForm ... />` inside the `<OnboardingShell>` body:
 
 ```tsx
-        <CandidatePersonalInfoForm
-          defaults={defaults}
-          aiSuggestedFields={aiSuggestedFields}
-          accessToken={accessToken}
-          onSaveStatusChange={setSaveStatus}
-        />
+<CandidatePersonalInfoForm
+  defaults={defaults}
+  aiSuggestedFields={aiSuggestedFields}
+  accessToken={accessToken}
+  onSaveStatusChange={setSaveStatus}
+/>
 ```
 
 Wrap it with the banner so the banner sits above:
@@ -1323,13 +1400,13 @@ import { LowConfidenceBanner } from "@/components/onboarding/candidate/low-confi
 Then find the JSX that renders `<ReviewStep ... />` inside the `<OnboardingShell>` body:
 
 ```tsx
-        <ReviewStep
-          initialExperience={initialExperience}
-          initialEducation={initialEducation}
-          initialSkills={initialSkills}
-          syncSection={syncSection}
-          onCategoriesChange={setActiveCategories}
-        />
+<ReviewStep
+  initialExperience={initialExperience}
+  initialEducation={initialEducation}
+  initialSkills={initialSkills}
+  syncSection={syncSection}
+  onCategoriesChange={setActiveCategories}
+/>
 ```
 
 Wrap it with the banner so the banner sits above:
@@ -1414,6 +1491,7 @@ Expected: build succeeds.
 Ask the user to run `pnpm dev` from the repo root and walk through each scenario below, reporting back any deviations:
 
 **Scenario A — happy path (new candidate, high-confidence resume):**
+
 1. Sign up + verify email (existing onboarding flow lands on Step 1).
 2. Drag a known-good PDF onto the dropzone.
 3. Watch the parsing card animate through four stages.
@@ -1421,10 +1499,12 @@ Ask the user to run `pnpm dev` from the repo root and walk through each scenario
 5. On Step 2, verify the AI Suggested badges appear next to prefilled fields and no low-confidence banner appears.
 
 **Scenario B — returning user with parsed resume:**
+
 1. Navigate manually to `/onboarding/candidate`.
 2. Verify: URL immediately becomes `/onboarding/candidate/personal` (server-side redirect).
 
 **Scenario C — replace flow:**
+
 1. From Step 2 (or Step 3), look at the resume preview pane on the right.
 2. Verify a `↻ Replace resume` link is visible in the header next to the PDF/Text toggle.
 3. Click it — URL becomes `/onboarding/candidate?replace=1`, the dropzone renders.
@@ -1432,17 +1512,20 @@ Ask the user to run `pnpm dev` from the repo root and walk through each scenario
 5. Verify the auto-advance flow runs again and the new file's prefilled values appear on Step 2.
 
 **Scenario D — failed parse:**
+
 1. Upload an unparseable file (e.g. an empty PDF, or a PDF with image-only content beyond the heuristic).
 2. Verify: stage flips to `failed` view ("We couldn't parse this resume." + retry/skip buttons). Existing behavior; should not regress.
 
 **Scenario E — low-confidence parse (manual fixture):**
 This requires a resume that the OpenAI prompt scores as `parse_confidence: "low"`. If you don't have one handy, you can temporarily edit `apps/web/app/onboarding/candidate/_data.ts` (or wherever `fetchLatestParsedResume` lives) to override `parse_confidence: "low"` for testing — revert before committing.
+
 1. Upload the low-confidence resume.
 2. Verify on the parse-success flash: summary line includes `· Some fields may need review` in amber.
 3. Verify on Step 2: amber banner appears above the form: "Heads up — low-confidence parse · The AI wasn't sure about parts of this resume. Double-check every prefilled field before continuing."
 4. Verify on Step 3: same banner.
 
 **Scenario F — skip "fill manually":**
+
 1. From a clean Step 1 (no parsed resume), click `Skip — I'll fill in manually`.
 2. Verify: routes to Step 2 with no prefilled values, no AI Suggested badges, no low-confidence banner.
 
@@ -1454,17 +1537,17 @@ This requires a resume that the OpenAI prompt scores as `parse_confidence: "low"
 
 Each section of the spec maps to a task:
 
-| Spec section | Implemented in |
-|---|---|
-| Delete `parse-success-card.tsx` | Task 3, Step 2 |
-| Extend `ParsingProgressCard` with done state | Task 1 |
-| Rewire `ResumeUploadCard` | Task 3 |
-| Server redirect on Step 1 page | Task 4 |
-| `forceIdle` prop on `ResumeUploadCard` | Task 3 (prop), Task 4 (page wires it) |
-| `Replace resume` link on `ResumePreviewPane` | Task 5 |
-| New `LowConfidenceBanner` component | Task 2 |
-| Wire banner into Step 2 + Step 3 | Task 6 |
-| Unit test: `ParsingProgressCard` done state | Task 1 |
-| Unit test: `LowConfidenceBanner` | Task 2 |
+| Spec section                                                                            | Implemented in                                                                                                                                           |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Delete `parse-success-card.tsx`                                                         | Task 3, Step 2                                                                                                                                           |
+| Extend `ParsingProgressCard` with done state                                            | Task 1                                                                                                                                                   |
+| Rewire `ResumeUploadCard`                                                               | Task 3                                                                                                                                                   |
+| Server redirect on Step 1 page                                                          | Task 4                                                                                                                                                   |
+| `forceIdle` prop on `ResumeUploadCard`                                                  | Task 3 (prop), Task 4 (page wires it)                                                                                                                    |
+| `Replace resume` link on `ResumePreviewPane`                                            | Task 5                                                                                                                                                   |
+| New `LowConfidenceBanner` component                                                     | Task 2                                                                                                                                                   |
+| Wire banner into Step 2 + Step 3                                                        | Task 6                                                                                                                                                   |
+| Unit test: `ParsingProgressCard` done state                                             | Task 1                                                                                                                                                   |
+| Unit test: `LowConfidenceBanner`                                                        | Task 2                                                                                                                                                   |
 | Integration: Step 1 redirect (no `?replace=1` → redirect; with `?replace=1` → dropzone) | Task 7 manual verification (Scenario B + C); no automated server-component test infrastructure exists in the repo, so this stays manual for sprint scope |
-| Manual e2e (happy path, replace, low-confidence) | Task 7 |
+| Manual e2e (happy path, replace, low-confidence)                                        | Task 7                                                                                                                                                   |

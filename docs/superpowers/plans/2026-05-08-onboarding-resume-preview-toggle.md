@@ -15,9 +15,11 @@
 ## File Structure
 
 ### Modified file
+
 - `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx` — the only file touched.
 
 ### Untouched (intentionally)
+
 - `apps/web/components/onboarding/resume-preview/pdf-renderer.tsx` — PDF.js wrapper, no changes needed.
 - `apps/web/components/onboarding/resume-preview/highlight-overlay.tsx` — overlay logic unchanged.
 - `apps/web/components/onboarding/resume-preview/linearized-resume-view.tsx` — text-fallback view unchanged.
@@ -30,6 +32,7 @@
 - `apps/web/app/(candidate)/candidate/resume/_resume-client.tsx` — `/candidate/resume` is intentionally untouched.
 
 ### No new files
+
 The `PreviewEmptyState` helper is local to `resume-preview-pane.tsx` (single consumer; YAGNI). No new hook, no new util.
 
 ---
@@ -47,6 +50,7 @@ The `PreviewEmptyState` helper is local to `resume-preview-pane.tsx` (single con
 ## Task 1: Replace ResumePreviewPane with always-on toggle + per-tab empty states
 
 **Files:**
+
 - Modify: `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx`
 
 **What:** Rewrites the component so the toggle is always visible whenever any preview source exists; each tab renders either its content or an empty-state with a one-click jump to the other tab; tab buttons disable when their source is unavailable; existing highlight + warm-PDF behavior is preserved.
@@ -54,12 +58,15 @@ The `PreviewEmptyState` helper is local to `resume-preview-pane.tsx` (single con
 - [ ] **Step 1: Confirm current file state**
 
 Run:
+
 ```bash
 wc -l apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx
 ```
+
 Expected output: `267 apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx` (or close to it — confirms you're working against the same starting point as the plan).
 
 Read lines 1–60 to verify the imports and prop shape match what you're about to replace:
+
 ```bash
 sed -n '1,60p' apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx
 ```
@@ -77,7 +84,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, FileText, FileType2, RotateCcw } from "lucide-react";
 import { PdfRenderer } from "./pdf-renderer";
-import { HighlightOverlay, type PositionedHighlight } from "./highlight-overlay";
+import {
+  HighlightOverlay,
+  type PositionedHighlight,
+} from "./highlight-overlay";
 import { LinearizedResumeView } from "./linearized-resume-view";
 import { findTextSpans, type TextLayerItem } from "./find-text-spans";
 import { deriveHighlights, type HighlightCategory } from "./derive-highlights";
@@ -175,7 +185,11 @@ export function ResumePreviewPane({
 
   // Compute highlight rects whenever Original is shown AND the PDF rendered.
   const positioned: PositionedHighlight[] = useMemo(() => {
-    if (displayedMode !== "pdf" || pdfStatus !== "rendered" || pages.length === 0) {
+    if (
+      displayedMode !== "pdf" ||
+      pdfStatus !== "rendered" ||
+      pages.length === 0
+    ) {
       return [];
     }
     const out: PositionedHighlight[] = [];
@@ -412,6 +426,7 @@ function ViewToggleButton({
 - [ ] **Step 3: Verify TypeScript compiles**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web type-check
 ```
@@ -421,11 +436,13 @@ Expected: exits 0 with no errors. If you see "Cannot find module" errors for `./
 - [ ] **Step 4: Verify ESLint passes**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web lint
 ```
 
 Expected: exits 0. Common failures and fixes:
+
 - `react/no-unescaped-entities` on the apostrophe in "aren't" → already handled by `aren&apos;t` in the image-only banner.
 - `@typescript-eslint/no-unused-vars` on an import → remove the unused import (don't suppress).
 - `react-hooks/exhaustive-deps` warning on `useEffect` or `useMemo` → add the missing dep, do not suppress.
@@ -433,6 +450,7 @@ Expected: exits 0. Common failures and fixes:
 - [ ] **Step 5: Verify existing unit tests still pass**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web test -- --run resume-preview
 ```
@@ -487,7 +505,7 @@ For each scenario the human should report `✅` (matches spec) or describe the d
 
 2. **Image-only PDF.** Upload a scanned/image-only PDF.
    - Toggle visible.
-   - On Original: PDF renders below a small banner: *"This PDF appears to be image-only — highlights aren't available on the document. Switch to Parsed Text for the highlighted content."*
+   - On Original: PDF renders below a small banner: _"This PDF appears to be image-only — highlights aren't available on the document. Switch to Parsed Text for the highlighted content."_
    - On Parsed Text: highlights work as expected.
 
 3. **DOCX upload.** Upload a `.docx` resume.
@@ -525,20 +543,20 @@ This section is my (the planner's) check, run before handing the plan off.
 
 **1. Spec coverage:**
 
-| Spec section | Plan task |
-|---|---|
-| "Drop the `canToggle` conditional" | Task 1 / Step 2 — `anyAvailable` replaces `canToggle`; toggle renders unconditionally |
-| "Rename tab labels" | Task 1 / Step 2 — `Original` and `Parsed Text` literal labels |
-| "Disable tab button when source unavailable" | Task 1 / Step 2 — `ViewToggleButton` accepts `disabled` + `disabledReason` |
-| "Empty state with CTA to other tab" | Task 1 / Step 2 — `PreviewEmptyState` helper + per-tab branches |
-| "Image-only banner only on Original" | Task 1 / Step 2 — banner gated by `displayedMode === "pdf"` |
-| "Default tab uses existing auto-routing; userMode wins" | Task 1 / Step 2 — `displayedMode` useMemo preserves the auto-routing chain |
-| "PDF renderer stays mounted to keep state warm" | Task 1 / Step 2 — container kept under `display:none` via `showPdfDocument` flag |
-| "Header right-side actions unchanged" | Task 1 / Step 2 — `Replace resume` Link + `Open` external link preserved |
-| "DOCX uses canonical-PDF derivative; no DOCX-specific code" | Task 1 / Step 2 — same `signedPdfUrl` path; no branch added |
-| "Existing unit tests stay green" | Task 1 / Step 5 |
-| "Manual verification scenarios" | Task 2 / Step 2 |
-| Out-of-scope — `/candidate/resume`, structured-cards tab, native DOCX, post-onboarding highlights | "Untouched (intentionally)" + "No new files" |
+| Spec section                                                                                      | Plan task                                                                             |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| "Drop the `canToggle` conditional"                                                                | Task 1 / Step 2 — `anyAvailable` replaces `canToggle`; toggle renders unconditionally |
+| "Rename tab labels"                                                                               | Task 1 / Step 2 — `Original` and `Parsed Text` literal labels                         |
+| "Disable tab button when source unavailable"                                                      | Task 1 / Step 2 — `ViewToggleButton` accepts `disabled` + `disabledReason`            |
+| "Empty state with CTA to other tab"                                                               | Task 1 / Step 2 — `PreviewEmptyState` helper + per-tab branches                       |
+| "Image-only banner only on Original"                                                              | Task 1 / Step 2 — banner gated by `displayedMode === "pdf"`                           |
+| "Default tab uses existing auto-routing; userMode wins"                                           | Task 1 / Step 2 — `displayedMode` useMemo preserves the auto-routing chain            |
+| "PDF renderer stays mounted to keep state warm"                                                   | Task 1 / Step 2 — container kept under `display:none` via `showPdfDocument` flag      |
+| "Header right-side actions unchanged"                                                             | Task 1 / Step 2 — `Replace resume` Link + `Open` external link preserved              |
+| "DOCX uses canonical-PDF derivative; no DOCX-specific code"                                       | Task 1 / Step 2 — same `signedPdfUrl` path; no branch added                           |
+| "Existing unit tests stay green"                                                                  | Task 1 / Step 5                                                                       |
+| "Manual verification scenarios"                                                                   | Task 2 / Step 2                                                                       |
+| Out-of-scope — `/candidate/resume`, structured-cards tab, native DOCX, post-onboarding highlights | "Untouched (intentionally)" + "No new files"                                          |
 
 **2. Placeholder scan:** Plan contains complete code for the file rewrite (no "fill in"), exact commands for typecheck/lint/test/commit (no "run the appropriate tests"), exact failure-mode hints in Steps 3–5. No "TBD," no "similar to," no "handle edge cases" without showing how.
 

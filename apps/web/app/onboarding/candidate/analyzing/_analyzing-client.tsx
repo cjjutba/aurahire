@@ -3,7 +3,10 @@
 import { useEffect, useReducer, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-import { ANALYZING_SCREEN_WALLCLOCK_MS, setAccessToken } from "@aurahire/shared";
+import {
+  ANALYZING_SCREEN_WALLCLOCK_MS,
+  setAccessToken,
+} from "@aurahire/shared";
 
 import { AiShimmer } from "@/components/ai/ai-shimmer";
 import { ScoreRing } from "@/components/score/score-ring";
@@ -20,7 +23,13 @@ import { useCandidateRealtime } from "@/lib/realtime/use-candidate-realtime";
  */
 const ONBOARDING_VALIDATION_CODES: Record<
   string,
-  { step: "/onboarding/candidate/personal" | "/onboarding/candidate/review" | "/onboarding/candidate/preferences"; label: string }
+  {
+    step:
+      | "/onboarding/candidate/personal"
+      | "/onboarding/candidate/review"
+      | "/onboarding/candidate/preferences";
+    label: string;
+  }
 > = {
   INCOMPLETE_PERSONAL: {
     step: "/onboarding/candidate/personal",
@@ -104,7 +113,11 @@ export function analyzingReducer(
       // late-arriving responses after a degraded/error fork would otherwise
       // resurrect the happy path on top of an already-rendered failure UI.
       if (state.kind !== "computingProfileScore") return state;
-      return { kind: "profileScoreReady", score: action.score, readyAt: action.now };
+      return {
+        kind: "profileScoreReady",
+        score: action.score,
+        readyAt: action.now,
+      };
     case "PROFILE_SCORE_DEGRADED":
       if (state.kind !== "computingProfileScore") return state;
       return { kind: "profileScoreDegraded" };
@@ -224,10 +237,11 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
         const token = sessionResult.data.session?.access_token ?? null;
         if (token) setAccessToken(token);
 
-        const envelope = await clientApiFetch<{ data: CompleteOnboardingResponseData }>(
-          "/api/v1/candidate-profiles/me/complete-onboarding",
-          { method: "PATCH" },
-        );
+        const envelope = await clientApiFetch<{
+          data: CompleteOnboardingResponseData;
+        }>("/api/v1/candidate-profiles/me/complete-onboarding", {
+          method: "PATCH",
+        });
         const data = envelope.data;
         if (data.profileScore) {
           dispatch({
@@ -259,7 +273,8 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
             return;
           }
         }
-        const message = err instanceof Error ? err.message : "Something went wrong";
+        const message =
+          err instanceof Error ? err.message : "Something went wrong";
         dispatch({ type: "PROFILE_SCORE_ERROR", message });
       }
     })();
@@ -277,14 +292,18 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
   //    timer; the cleanup tears it down if the state changes (e.g. another
   //    preview arrives) so we don't pile up redirect timers.
   useEffect(() => {
-    if (state.kind !== "profileScoreReady" && state.kind !== "streamingPreviews") {
+    if (
+      state.kind !== "profileScoreReady" &&
+      state.kind !== "streamingPreviews"
+    ) {
       return;
     }
     if (state.kind === "streamingPreviews" && state.previewCount >= 5) {
       dispatch({ type: "REDIRECT" });
       return;
     }
-    const remaining = ANALYZING_SCREEN_WALLCLOCK_MS - (Date.now() - state.readyAt);
+    const remaining =
+      ANALYZING_SCREEN_WALLCLOCK_MS - (Date.now() - state.readyAt);
     if (remaining <= 0) {
       dispatch({ type: "REDIRECT" });
       return;
@@ -298,7 +317,10 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
   //    a retry.
   useEffect(() => {
     if (state.kind !== "profileScoreDegraded") return;
-    const t = setTimeout(() => router.push("/candidate?profileScoreRetry=1"), 2000);
+    const t = setTimeout(
+      () => router.push("/candidate?profileScoreRetry=1"),
+      2000,
+    );
     return () => clearTimeout(t);
   }, [state, router]);
 
@@ -317,8 +339,7 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
     const previewsReady =
       state.kind === "streamingPreviews" ? state.previewCount : 0;
     const scoreReady =
-      state.kind === "profileScoreReady" ||
-      state.kind === "streamingPreviews"; // both states imply score landed
+      state.kind === "profileScoreReady" || state.kind === "streamingPreviews"; // both states imply score landed
     void clientApiFetch(
       "/api/v1/candidate-profiles/me/onboarding/skipped-analyzing",
       {
@@ -337,10 +358,7 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
       <div className="w-full max-w-md space-y-6 rounded-[var(--radius-xl)] border border-[var(--color-hairline-soft)] bg-[var(--color-canvas)] p-8 text-center">
         {state.kind === "computingProfileScore" && (
           <div aria-live="polite" className="space-y-4">
-            <AiShimmer
-              caption="Computing your Profile Score…"
-              height={120}
-            />
+            <AiShimmer caption="Computing your Profile Score…" height={120} />
           </div>
         )}
 
@@ -369,32 +387,30 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
               <span style={{ fontFamily: "var(--font-mono)" }}>
                 {state.previewCount}
               </span>{" "}
-              of <span style={{ fontFamily: "var(--font-mono)" }}>5</span> matches ready
+              of <span style={{ fontFamily: "var(--font-mono)" }}>5</span>{" "}
+              matches ready
             </p>
           </div>
         )}
 
         {state.kind === "profileScoreDegraded" && (
-          <p
-            aria-live="polite"
-            className="text-sm text-[var(--color-body)]"
-          >
-            We&rsquo;re still working on your score — taking you to your dashboard now.
+          <p aria-live="polite" className="text-sm text-[var(--color-body)]">
+            We&rsquo;re still working on your score — taking you to your
+            dashboard now.
           </p>
         )}
 
         {state.kind === "redirecting" && (
-          <p
-            aria-live="polite"
-            className="text-sm text-[var(--color-muted)]"
-          >
+          <p aria-live="polite" className="text-sm text-[var(--color-muted)]">
             Taking you to your dashboard…
           </p>
         )}
 
         {state.kind === "error" && (
           <div role="alert" className="space-y-4">
-            <p className="text-sm text-[var(--color-status-danger)]">{state.message}</p>
+            <p className="text-sm text-[var(--color-status-danger)]">
+              {state.message}
+            </p>
             <button
               type="button"
               onClick={() => {

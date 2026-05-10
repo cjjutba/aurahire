@@ -17,12 +17,21 @@ interface ScoreBreakdownBarProps {
 
 function bandColor(ratio: number): { fill: string; track: string } {
   if (ratio >= 0.7) {
-    return { fill: "var(--color-score-high)", track: "var(--color-score-high-soft)" };
+    return {
+      fill: "var(--color-score-high)",
+      track: "var(--color-score-high-soft)",
+    };
   }
   if (ratio >= 0.4) {
-    return { fill: "var(--color-score-mid)", track: "var(--color-score-mid-soft)" };
+    return {
+      fill: "var(--color-score-mid)",
+      track: "var(--color-score-mid-soft)",
+    };
   }
-  return { fill: "var(--color-score-low)", track: "var(--color-score-low-soft)" };
+  return {
+    fill: "var(--color-score-low)",
+    track: "var(--color-score-low-soft)",
+  };
 }
 
 export function ScoreBreakdownBar({
@@ -68,7 +77,10 @@ export function ScoreBreakdownBar({
 
           const segment = (
             <div
-              style={{ flexBasis: `${widthPct}%`, backgroundColor: colors.track }}
+              style={{
+                flexBasis: `${widthPct}%`,
+                backgroundColor: colors.track,
+              }}
               className="relative w-full overflow-hidden first:rounded-l-[var(--radius-pill)] last:rounded-r-[var(--radius-pill)]"
             >
               <div

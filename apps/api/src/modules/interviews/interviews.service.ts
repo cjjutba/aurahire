@@ -71,15 +71,22 @@ export class InterviewsService {
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
 
-    const application = await this.applicationsRepo.findApplicationContextForCompany(
-      applicationId,
-      companyId,
-    );
+    const application =
+      await this.applicationsRepo.findApplicationContextForCompany(
+        applicationId,
+        companyId,
+      );
     if (!application) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     const scheduledAt = new Date(dto.scheduledAt);
@@ -239,7 +246,11 @@ export class InterviewsService {
     dto: UpdateInterviewFeedbackInput,
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
-    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
 
     const previousRecommendation = interview.recommendation ?? null;
     const newRecommendation = dto.recommendation ?? null;
@@ -310,7 +321,11 @@ export class InterviewsService {
     dto: ShareInterviewFeedbackInput,
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
-    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
     const sharedAt = new Date();
 
     const updated = await this.repo.update(interviewId, {
@@ -373,7 +388,9 @@ export class InterviewsService {
       });
 
       void this.notifyCandidateFeedbackShared(interviewId).catch((err) => {
-        this.logger.warn(`Feedback-shared email failed: ${(err as Error).message}`);
+        this.logger.warn(
+          `Feedback-shared email failed: ${(err as Error).message}`,
+        );
       });
     }
 
@@ -386,7 +403,11 @@ export class InterviewsService {
     interviewId: string,
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
-    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
 
     if (!["scheduled", "completed"].includes(interview.status)) {
       throw new BadRequestException({
@@ -438,7 +459,11 @@ export class InterviewsService {
     dto: RescheduleInterviewInput,
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
-    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
 
     if (!["scheduled", "no-show"].includes(interview.status)) {
       throw new BadRequestException({
@@ -449,11 +474,17 @@ export class InterviewsService {
 
     const scheduledAt = new Date(dto.scheduledAt);
     if (Number.isNaN(scheduledAt.getTime())) {
-      throw new BadRequestException({ code: "INVALID_DATE", message: "scheduledAt is not a valid date" });
+      throw new BadRequestException({
+        code: "INVALID_DATE",
+        message: "scheduledAt is not a valid date",
+      });
     }
     // 60s grace window absorbs clock skew and form-submit latency.
     if (scheduledAt.getTime() < Date.now() - 60_000) {
-      throw new BadRequestException({ code: "PAST_DATE", message: "Reschedule cannot be in the past" });
+      throw new BadRequestException({
+        code: "PAST_DATE",
+        message: "Reschedule cannot be in the past",
+      });
     }
 
     const sanitizedMapUrl = dto.mapUrl ? sanitizeMapUrl(dto.mapUrl) : null;
@@ -540,10 +571,15 @@ export class InterviewsService {
           },
         })
         .catch((err) =>
-          this.logger.warn(`Notify candidate (rescheduled) failed: ${(err as Error).message}`),
+          this.logger.warn(
+            `Notify candidate (rescheduled) failed: ${(err as Error).message}`,
+          ),
         );
 
-      void this.notifyCandidateRescheduled(newInterview.id, interview.scheduledAt).catch((err) =>
+      void this.notifyCandidateRescheduled(
+        newInterview.id,
+        interview.scheduledAt,
+      ).catch((err) =>
         this.logger.warn(`Reschedule notify failed: ${(err as Error).message}`),
       );
     }
@@ -558,7 +594,11 @@ export class InterviewsService {
     dto: UpdateInterviewStatusInput,
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
-    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
 
     if (interview.status !== "scheduled") {
       throw new BadRequestException({
@@ -612,7 +652,10 @@ export class InterviewsService {
 
   async listMine(user: AuthUser): Promise<InterviewDto[]> {
     if (user.role !== "candidate") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Candidate role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
     }
     return this.cacheService.getOrSet<InterviewDto[]>({
       key: `interviews:candidate:${user.id}:list`,
@@ -633,16 +676,25 @@ export class InterviewsService {
   ): Promise<InterviewDto[]> {
     const app = await this.applicationsRepo.findById(applicationId);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     if (user.role === "candidate" && app.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
       if (!job || job.companyId !== companyId) {
-        throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Application not found",
+        });
       }
     }
 
@@ -659,9 +711,15 @@ export class InterviewsService {
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
-    const { rows, total } = await this.repo.listForCompanyPaginated(companyId, query);
+    const { rows, total } = await this.repo.listForCompanyPaginated(
+      companyId,
+      query,
+    );
     return {
       data: rows.map((row) => this.toDtoFromRecruiterRow(row)),
       meta: {
@@ -680,11 +738,21 @@ export class InterviewsService {
     candidateId: string;
     excludeInterviewId?: string;
   }): Promise<{
-    recruiterConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
-    candidateConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
+    recruiterConflicts: Array<{
+      id: string;
+      scheduledAt: string;
+      durationMinutes: number;
+    }>;
+    candidateConflicts: Array<{
+      id: string;
+      scheduledAt: string;
+      durationMinutes: number;
+    }>;
   }> {
     const startsAt = new Date(input.scheduledAt);
-    const endsAt = new Date(startsAt.getTime() + input.durationMinutes * 60_000);
+    const endsAt = new Date(
+      startsAt.getTime() + input.durationMinutes * 60_000,
+    );
 
     const [recruiterRows, candidateRows] = await Promise.all([
       this.repo.findOverlapping({
@@ -701,7 +769,11 @@ export class InterviewsService {
       }),
     ]);
 
-    const toSummary = (r: { id: string; scheduledAt: Date; durationMinutes: number }) => ({
+    const toSummary = (r: {
+      id: string;
+      scheduledAt: Date;
+      durationMinutes: number;
+    }) => ({
       id: r.id,
       scheduledAt: r.scheduledAt.toISOString(),
       durationMinutes: r.durationMinutes,
@@ -717,20 +789,39 @@ export class InterviewsService {
     user: AuthUser,
     companyId: string,
     applicationId: string,
-    dto: { scheduledAt: string; durationMinutes: number; excludeInterviewId?: string },
+    dto: {
+      scheduledAt: string;
+      durationMinutes: number;
+      excludeInterviewId?: string;
+    },
   ): Promise<{
-    recruiterConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
-    candidateConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
+    recruiterConflicts: Array<{
+      id: string;
+      scheduledAt: string;
+      durationMinutes: number;
+    }>;
+    candidateConflicts: Array<{
+      id: string;
+      scheduledAt: string;
+      durationMinutes: number;
+    }>;
   }> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
-    const application = await this.applicationsRepo.findApplicationContextForCompany(
-      applicationId,
-      companyId,
-    );
+    const application =
+      await this.applicationsRepo.findApplicationContextForCompany(
+        applicationId,
+        companyId,
+      );
     if (!application) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
     return this.checkConflicts({
       scheduledAt: new Date(dto.scheduledAt),
@@ -746,21 +837,37 @@ export class InterviewsService {
     companyId: string,
     interviewId: string,
   ): Promise<InterviewDto> {
-    const interview = await this.requireCompanyOwnership(user, companyId, interviewId);
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
     return this.toDto(interview);
   }
 
-  async getByIdForCandidate(user: AuthUser, interviewId: string): Promise<InterviewDto> {
+  async getByIdForCandidate(
+    user: AuthUser,
+    interviewId: string,
+  ): Promise<InterviewDto> {
     if (user.role !== "candidate") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Candidate role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
     }
     const interview = await this.repo.findById(interviewId);
     if (!interview) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
     }
     const app = await this.applicationsRepo.findById(interview.applicationId);
     if (!app || app.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
     }
     return this.toCandidateSingleDto(interview);
   }
@@ -768,31 +875,47 @@ export class InterviewsService {
   async getIcs(user: AuthUser, interviewId: string): Promise<string> {
     const interview = await this.repo.findById(interviewId);
     if (!interview) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
     }
     const app = await this.applicationsRepo.findById(interview.applicationId);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     // Candidate must own the application; recruiter must belong to the company that owns the job.
     if (user.role === "candidate" && app.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
     }
     if (user.role === "recruiter") {
-      const ownership = await this.applicationsRepo.findApplicationContextForCompanyByUser(
-        interview.applicationId,
-        user.id,
-      );
+      const ownership =
+        await this.applicationsRepo.findApplicationContextForCompanyByUser(
+          interview.applicationId,
+          user.id,
+        );
       if (!ownership) {
-        throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Interview not found",
+        });
       }
     }
 
     const candidate = await this.profilesRepo.findById(app.candidateId);
     const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     if (!candidate || !jobRow) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
     }
 
     return buildInterviewIcs({
@@ -845,18 +968,28 @@ export class InterviewsService {
     updatedAt: Date;
   }> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
     const interview = await this.repo.findById(interviewId);
     if (!interview) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
     }
-    const ownership = await this.applicationsRepo.findApplicationContextForCompany(
-      interview.applicationId,
-      companyId,
-    );
+    const ownership =
+      await this.applicationsRepo.findApplicationContextForCompany(
+        interview.applicationId,
+        companyId,
+      );
     if (!ownership) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
     }
     return interview;
   }
@@ -996,7 +1129,9 @@ export class InterviewsService {
     });
   }
 
-  private async notifyCandidateFeedbackShared(interviewId: string): Promise<void> {
+  private async notifyCandidateFeedbackShared(
+    interviewId: string,
+  ): Promise<void> {
     const interview = await this.repo.findById(interviewId);
     if (!interview || !interview.candidateSummary) return;
     const app = await this.applicationsRepo.findById(interview.applicationId);
@@ -1083,7 +1218,11 @@ export class InterviewsService {
       status: i.status,
       feedback: i.feedback,
       rating: i.rating,
-      recommendation: (i.recommendation ?? null) as "proceed" | "hold" | "reject" | null,
+      recommendation: (i.recommendation ?? null) as
+        | "proceed"
+        | "hold"
+        | "reject"
+        | null,
       candidateSummary: i.candidateSummary ?? null,
       sharedWithCandidateAt: i.sharedWithCandidateAt?.toISOString() ?? null,
       venueName: i.venueName ?? null,
@@ -1124,32 +1263,30 @@ export class InterviewsService {
    * Internal fields (feedback, rating, recommendation) are omitted.
    * candidateSummary is included only when sharedWithCandidateAt is set.
    */
-  private toCandidateSingleDto(
-    i: {
-      id: string;
-      applicationId: string;
-      scheduledBy: string;
-      scheduledAt: Date;
-      durationMinutes: number;
-      format: string;
-      locationOrLink: string | null;
-      status: string;
-      venueName?: string | null;
-      addressLine?: string | null;
-      roomOrFloor?: string | null;
-      mapUrl?: string | null;
-      reportingInstructions?: string | null;
-      whatToBring?: string | null;
-      interviewerName?: string | null;
-      interviewerTitle?: string | null;
-      candidateSummary?: string | null;
-      sharedWithCandidateAt?: Date | null;
-      rescheduledFromId?: string | null;
-      rescheduledToId?: string | null;
-      createdAt: Date;
-      updatedAt: Date;
-    },
-  ): InterviewDto {
+  private toCandidateSingleDto(i: {
+    id: string;
+    applicationId: string;
+    scheduledBy: string;
+    scheduledAt: Date;
+    durationMinutes: number;
+    format: string;
+    locationOrLink: string | null;
+    status: string;
+    venueName?: string | null;
+    addressLine?: string | null;
+    roomOrFloor?: string | null;
+    mapUrl?: string | null;
+    reportingInstructions?: string | null;
+    whatToBring?: string | null;
+    interviewerName?: string | null;
+    interviewerTitle?: string | null;
+    candidateSummary?: string | null;
+    sharedWithCandidateAt?: Date | null;
+    rescheduledFromId?: string | null;
+    rescheduledToId?: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): InterviewDto {
     const hasSharedFeedback = !!i.sharedWithCandidateAt;
     return {
       id: i.id,

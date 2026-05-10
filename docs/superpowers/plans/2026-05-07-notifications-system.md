@@ -5,17 +5,20 @@
 **Goal:** Build a cross-portal notifications system with a sidebar bell badge (capped at `99+`), a dedicated `/[role]/notifications` page per role, and a per-event-type Instant/Digest/Off email mode preference UI — wired into the same service-layer call sites that already write `audit_logs`.
 
 **Architecture:**
+
 - **Backend:** Two new NestJS modules (`apps/api/src/modules/notifications/` and `notification-preferences/`). `NotificationsService.emit()` is the single fan-out: it inserts a row, consults preferences, then either enqueues an instant email job or marks the row `digest_pending = true`. One new BullMQ queue (`notification-email`) serves both instant and digest paths. Five new `@nestjs/schedule` crons: digest batch (daily 08:00 Asia/Manila), retention sweep (daily 03:00), and three 24-hour reminder crons (interview start, offer expiry, interview feedback due).
 - **Frontend:** A `<NavItemBadge />` component polls `useGetNotificationsUnreadCount` every 30s (paused when blurred). A shared `<NotificationsPage role={...} />` powers three thin route files, with Unread/All tabs (admin gets a third System tab). A rewrite of `notifications-form.tsx` replaces its localStorage-only implementation with API-backed grouped categories, 3-way segmented controls, security-locked rows, and per-category restore-defaults.
 - **No new dependencies.** Reuses existing React Email + Mailpit/Resend, BullMQ, `@nestjs/schedule`, Drizzle, Supabase, Orval, TanStack Query.
 
 **Tech Stack:**
+
 - **Backend:** NestJS 10 (Fastify), `@nestjs/schedule`, `@nestjs/bullmq`, Drizzle ORM, `@react-email/render`, Pino logger, Jest.
 - **Frontend:** Next.js 16 (App Router), TanStack Query 5, react-hook-form + Zod resolver, Lucide icons, Vitest + Testing Library, Playwright (e2e gated).
 - **Shared:** Zod schemas in `packages/shared/src/schemas/notifications.ts`; Orval-generated TanStack Query hooks.
 - **Verification per task:** `pnpm --filter api type-check && pnpm --filter api lint`, `pnpm --filter web type-check && pnpm --filter web lint`, plus `pnpm --filter api test -- <pattern>` and `pnpm --filter web test -- <pattern>` where tests apply. Per-phase verification: `pnpm --filter api build && pnpm --filter web build` plus the manual smoke checklist (Phase 12).
 
 **Hard rules from CLAUDE.md that govern this plan:**
+
 - Claude does **NOT** run dev servers, Docker commands, DB mutations, deploys, or destructive/history-rewriting git commands. The human runs `pnpm dev`, applies the migration via `drizzle-kit push` or Supabase CLI, and runs the `seed-db` / `reset-db` scripts.
 - `pnpm tsc --noEmit` and `pnpm lint` are the automated gates Claude runs.
 - Claude does not make billed external calls; the human verifies email by reading Mailpit at `http://localhost:8025`.
@@ -30,89 +33,89 @@
 
 ## File Structure
 
-| Path | Role | Touch |
-|---|---|---|
-| `packages/db/src/enums.ts` | Add `NOTIFICATION_EVENT_TYPE`, `NOTIFICATION_MODE`, `NOTIFICATION_SCOPE` | Modify |
-| `packages/db/src/schema.ts` | Add `notificationsTable`, `notificationPreferencesTable`; add `reminderSentAt`, `feedbackDueNotifiedAt` to `interviewsTable`; add `expiryReminderSentAt` to `offersTable` | Modify |
-| `packages/db/src/relations.ts` | Add notifications ↔ profiles relation | Modify |
-| `supabase/migrations/<ts>_notifications.sql` | Drizzle-generated migration for the two new tables + column additions | Create (via drizzle-kit; human runs) |
-| `supabase/migrations/<ts>_notifications_rls.sql` | RLS policies on the two new tables | Create |
-| `packages/shared/src/schemas/notifications.ts` | Zod DTOs (list query, mark read, upsert preference, restore defaults) + types | Create |
-| `packages/shared/src/index.ts` | Re-export new schemas | Modify |
-| `apps/api/src/modules/notifications/notifications.module.ts` | Module registration | Create |
-| `apps/api/src/modules/notifications/notifications.controller.ts` | HTTP endpoints | Create |
-| `apps/api/src/modules/notifications/notifications.service.ts` | `emit()`, `emitMany()`, list, count, mark-read, dismiss | Create |
-| `apps/api/src/modules/notifications/notifications.repository.ts` | Drizzle queries | Create |
-| `apps/api/src/modules/notifications/event-defaults.ts` | `DEFAULT_MODES`, `SECURITY_EVENTS`, `EVENT_CATEGORIES`, `ROLE_VISIBLE_EVENTS` | Create |
-| `apps/api/src/modules/notifications/queues.ts` | `NOTIFICATION_EMAIL_QUEUE` constant + job-payload types | Create |
-| `apps/api/src/modules/notifications/notification-email.processor.ts` | BullMQ worker for instant + digest emails | Create |
-| `apps/api/src/modules/notifications/templates/index.ts` | `buildTitle`, `buildBody`, `buildLink`, `emailSubject`, `emailComponent`, `icon` registry | Create |
-| `apps/api/src/modules/notifications/templates/base-layout.tsx` | Shared React Email layout | Create |
-| `apps/api/src/modules/notifications/templates/<event>-email.tsx` × 20 | One per event type | Create |
-| `apps/api/src/modules/notifications/templates/digest-email.tsx` | Multi-event composite | Create |
-| `apps/api/src/modules/notifications/dto/list-notifications.dto.ts` | Query DTO | Create |
-| `apps/api/src/modules/notifications/__tests__/*.spec.ts` | Service + repo + controller + event-defaults + templates | Create |
-| `apps/api/src/modules/notification-preferences/notification-preferences.module.ts` | Module registration | Create |
-| `apps/api/src/modules/notification-preferences/notification-preferences.controller.ts` | HTTP endpoints | Create |
-| `apps/api/src/modules/notification-preferences/notification-preferences.service.ts` | `getEffectiveMode`, list, upsert, restore | Create |
-| `apps/api/src/modules/notification-preferences/dto/upsert-preference.dto.ts` | Body DTO | Create |
-| `apps/api/src/modules/notification-preferences/dto/restore-defaults.dto.ts` | Body DTO | Create |
-| `apps/api/src/modules/notification-preferences/__tests__/*.spec.ts` | Service + controller | Create |
-| `apps/api/src/cron/digest-email.cron.ts` | Daily 08:00 Asia/Manila digest batch | Create |
-| `apps/api/src/cron/notifications-retention.cron.ts` | Daily 03:00 90-day delete | Create |
-| `apps/api/src/cron/interview-reminder.cron.ts` | Hourly 24h-ahead interview reminders | Create |
-| `apps/api/src/cron/offer-expiry-reminder.cron.ts` | Hourly 24h-ahead offer expiry reminders | Create |
-| `apps/api/src/cron/interview-feedback-due.cron.ts` | Hourly 24h-after-interview feedback prompts | Create |
-| `apps/api/src/cron/__tests__/*.spec.ts` | Each cron's deduplication and side effects | Create |
-| `apps/api/src/cron/cron.module.ts` | Register the 5 new crons | Modify |
-| `apps/api/src/app.module.ts` | Import the two new modules | Modify |
-| `apps/api/src/audit/audit.types.ts` | Add `NOTIFICATIONS_MARKED_ALL_READ`, `NOTIFICATION_PREFERENCE_UPDATED`, `NOTIFICATION_PREFERENCES_RESET`, `DIGEST_EMAIL_BATCH_RUN`, `NOTIFICATIONS_RETENTION_RUN`, `INTERVIEW_REMINDER_RUN`, `OFFER_EXPIRY_REMINDER_RUN`, `INTERVIEW_FEEDBACK_DUE_RUN`, `SYSTEM_AI_SCORING_FAILURE_NOTIFIED` | Modify |
-| `apps/api/src/modules/applications/applications.service.ts` | Inject `NotificationsService`; emit on `apply()`, `changeStatus()`, `withdraw()` | Modify |
-| `apps/api/src/modules/applications/applications.module.ts` | Import `NotificationsModule` | Modify |
-| `apps/api/src/modules/interviews/interviews.service.ts` | Inject + emit on `schedule()`, `cancel()` | Modify |
-| `apps/api/src/modules/interviews/interviews.module.ts` | Import `NotificationsModule` | Modify |
-| `apps/api/src/modules/offers/offers.service.ts` | Inject + emit on `create()`, `accept()`, `decline()` | Modify |
-| `apps/api/src/modules/offers/offers.module.ts` | Import `NotificationsModule` | Modify |
-| `apps/api/src/modules/bias/bias.service.ts` *(gated on module presence)* | Inject + emit on flag — both `bias_flag_raised` (recruiter) and `system_bias_flag_raised` (admin) | Modify (or wait) |
-| `apps/api/src/modules/auth/auth.service.ts` | Inject + emit on `resetPassword()`, `verifyEmail()` | Modify |
-| `apps/api/src/modules/invitations/invitations.service.ts` | Inject + emit on `accept()`, `decline()` | Modify |
-| The match-preview-precompute worker (`MatchPreviewQueueService`, exact path resolved during execution) | Catch-block emit `system_ai_scoring_failure` to all admins | Modify |
-| `apps/api/openapi.json` | Regenerated | Regenerate |
-| `packages/shared/openapi.json` (if separate) | Regenerated | Regenerate |
-| `packages/shared/src/api-client/generated.ts` | Regenerated by `pnpm --filter shared codegen` | Regenerate |
-| `apps/web/components/layout/nav-item-badge.tsx` | Bell badge polling unread count | Create |
-| `apps/web/components/layout/portal-sidebar.tsx` | Add Notifications nav item to MAIN section for all 3 roles | Modify |
-| `apps/web/components/notifications/notification-icon-map.ts` | `eventType → LucideIcon` registry | Create |
-| `apps/web/components/notifications/notifications-empty-state.tsx` | Per-tab empty state | Create |
-| `apps/web/components/notifications/notification-row.tsx` | Single row | Create |
-| `apps/web/components/notifications/notifications-list.tsx` | Infinite-scroll list | Create |
-| `apps/web/components/notifications/notifications-page.tsx` | Header + tabs + list orchestration | Create |
-| `apps/web/components/notifications/__tests__/*.spec.tsx` | Vitest + Testing Library tests | Create |
-| `apps/web/app/(candidate)/candidate/notifications/page.tsx` | Route shell | Create |
-| `apps/web/app/(recruiter)/recruiter/notifications/page.tsx` | Route shell | Create |
-| `apps/web/app/(admin)/admin/notifications/page.tsx` | Route shell | Create |
-| `apps/web/components/settings/notifications-form.tsx` | Full rewrite — API-backed, grouped, 3-mode, security-locked, restore-defaults, localStorage migration | Modify |
-| `apps/web/components/notifications/__tests__/notifications-form.spec.tsx` | Vitest tests | Create |
-| `apps/web/tests/notifications.spec.ts` | Playwright e2e (gated on `e2e` script existing) | Create |
+| Path                                                                                                   | Role                                                                                                                                                                                                                                                                                         | Touch                                |
+| ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `packages/db/src/enums.ts`                                                                             | Add `NOTIFICATION_EVENT_TYPE`, `NOTIFICATION_MODE`, `NOTIFICATION_SCOPE`                                                                                                                                                                                                                     | Modify                               |
+| `packages/db/src/schema.ts`                                                                            | Add `notificationsTable`, `notificationPreferencesTable`; add `reminderSentAt`, `feedbackDueNotifiedAt` to `interviewsTable`; add `expiryReminderSentAt` to `offersTable`                                                                                                                    | Modify                               |
+| `packages/db/src/relations.ts`                                                                         | Add notifications ↔ profiles relation                                                                                                                                                                                                                                                        | Modify                               |
+| `supabase/migrations/<ts>_notifications.sql`                                                           | Drizzle-generated migration for the two new tables + column additions                                                                                                                                                                                                                        | Create (via drizzle-kit; human runs) |
+| `supabase/migrations/<ts>_notifications_rls.sql`                                                       | RLS policies on the two new tables                                                                                                                                                                                                                                                           | Create                               |
+| `packages/shared/src/schemas/notifications.ts`                                                         | Zod DTOs (list query, mark read, upsert preference, restore defaults) + types                                                                                                                                                                                                                | Create                               |
+| `packages/shared/src/index.ts`                                                                         | Re-export new schemas                                                                                                                                                                                                                                                                        | Modify                               |
+| `apps/api/src/modules/notifications/notifications.module.ts`                                           | Module registration                                                                                                                                                                                                                                                                          | Create                               |
+| `apps/api/src/modules/notifications/notifications.controller.ts`                                       | HTTP endpoints                                                                                                                                                                                                                                                                               | Create                               |
+| `apps/api/src/modules/notifications/notifications.service.ts`                                          | `emit()`, `emitMany()`, list, count, mark-read, dismiss                                                                                                                                                                                                                                      | Create                               |
+| `apps/api/src/modules/notifications/notifications.repository.ts`                                       | Drizzle queries                                                                                                                                                                                                                                                                              | Create                               |
+| `apps/api/src/modules/notifications/event-defaults.ts`                                                 | `DEFAULT_MODES`, `SECURITY_EVENTS`, `EVENT_CATEGORIES`, `ROLE_VISIBLE_EVENTS`                                                                                                                                                                                                                | Create                               |
+| `apps/api/src/modules/notifications/queues.ts`                                                         | `NOTIFICATION_EMAIL_QUEUE` constant + job-payload types                                                                                                                                                                                                                                      | Create                               |
+| `apps/api/src/modules/notifications/notification-email.processor.ts`                                   | BullMQ worker for instant + digest emails                                                                                                                                                                                                                                                    | Create                               |
+| `apps/api/src/modules/notifications/templates/index.ts`                                                | `buildTitle`, `buildBody`, `buildLink`, `emailSubject`, `emailComponent`, `icon` registry                                                                                                                                                                                                    | Create                               |
+| `apps/api/src/modules/notifications/templates/base-layout.tsx`                                         | Shared React Email layout                                                                                                                                                                                                                                                                    | Create                               |
+| `apps/api/src/modules/notifications/templates/<event>-email.tsx` × 20                                  | One per event type                                                                                                                                                                                                                                                                           | Create                               |
+| `apps/api/src/modules/notifications/templates/digest-email.tsx`                                        | Multi-event composite                                                                                                                                                                                                                                                                        | Create                               |
+| `apps/api/src/modules/notifications/dto/list-notifications.dto.ts`                                     | Query DTO                                                                                                                                                                                                                                                                                    | Create                               |
+| `apps/api/src/modules/notifications/__tests__/*.spec.ts`                                               | Service + repo + controller + event-defaults + templates                                                                                                                                                                                                                                     | Create                               |
+| `apps/api/src/modules/notification-preferences/notification-preferences.module.ts`                     | Module registration                                                                                                                                                                                                                                                                          | Create                               |
+| `apps/api/src/modules/notification-preferences/notification-preferences.controller.ts`                 | HTTP endpoints                                                                                                                                                                                                                                                                               | Create                               |
+| `apps/api/src/modules/notification-preferences/notification-preferences.service.ts`                    | `getEffectiveMode`, list, upsert, restore                                                                                                                                                                                                                                                    | Create                               |
+| `apps/api/src/modules/notification-preferences/dto/upsert-preference.dto.ts`                           | Body DTO                                                                                                                                                                                                                                                                                     | Create                               |
+| `apps/api/src/modules/notification-preferences/dto/restore-defaults.dto.ts`                            | Body DTO                                                                                                                                                                                                                                                                                     | Create                               |
+| `apps/api/src/modules/notification-preferences/__tests__/*.spec.ts`                                    | Service + controller                                                                                                                                                                                                                                                                         | Create                               |
+| `apps/api/src/cron/digest-email.cron.ts`                                                               | Daily 08:00 Asia/Manila digest batch                                                                                                                                                                                                                                                         | Create                               |
+| `apps/api/src/cron/notifications-retention.cron.ts`                                                    | Daily 03:00 90-day delete                                                                                                                                                                                                                                                                    | Create                               |
+| `apps/api/src/cron/interview-reminder.cron.ts`                                                         | Hourly 24h-ahead interview reminders                                                                                                                                                                                                                                                         | Create                               |
+| `apps/api/src/cron/offer-expiry-reminder.cron.ts`                                                      | Hourly 24h-ahead offer expiry reminders                                                                                                                                                                                                                                                      | Create                               |
+| `apps/api/src/cron/interview-feedback-due.cron.ts`                                                     | Hourly 24h-after-interview feedback prompts                                                                                                                                                                                                                                                  | Create                               |
+| `apps/api/src/cron/__tests__/*.spec.ts`                                                                | Each cron's deduplication and side effects                                                                                                                                                                                                                                                   | Create                               |
+| `apps/api/src/cron/cron.module.ts`                                                                     | Register the 5 new crons                                                                                                                                                                                                                                                                     | Modify                               |
+| `apps/api/src/app.module.ts`                                                                           | Import the two new modules                                                                                                                                                                                                                                                                   | Modify                               |
+| `apps/api/src/audit/audit.types.ts`                                                                    | Add `NOTIFICATIONS_MARKED_ALL_READ`, `NOTIFICATION_PREFERENCE_UPDATED`, `NOTIFICATION_PREFERENCES_RESET`, `DIGEST_EMAIL_BATCH_RUN`, `NOTIFICATIONS_RETENTION_RUN`, `INTERVIEW_REMINDER_RUN`, `OFFER_EXPIRY_REMINDER_RUN`, `INTERVIEW_FEEDBACK_DUE_RUN`, `SYSTEM_AI_SCORING_FAILURE_NOTIFIED` | Modify                               |
+| `apps/api/src/modules/applications/applications.service.ts`                                            | Inject `NotificationsService`; emit on `apply()`, `changeStatus()`, `withdraw()`                                                                                                                                                                                                             | Modify                               |
+| `apps/api/src/modules/applications/applications.module.ts`                                             | Import `NotificationsModule`                                                                                                                                                                                                                                                                 | Modify                               |
+| `apps/api/src/modules/interviews/interviews.service.ts`                                                | Inject + emit on `schedule()`, `cancel()`                                                                                                                                                                                                                                                    | Modify                               |
+| `apps/api/src/modules/interviews/interviews.module.ts`                                                 | Import `NotificationsModule`                                                                                                                                                                                                                                                                 | Modify                               |
+| `apps/api/src/modules/offers/offers.service.ts`                                                        | Inject + emit on `create()`, `accept()`, `decline()`                                                                                                                                                                                                                                         | Modify                               |
+| `apps/api/src/modules/offers/offers.module.ts`                                                         | Import `NotificationsModule`                                                                                                                                                                                                                                                                 | Modify                               |
+| `apps/api/src/modules/bias/bias.service.ts` _(gated on module presence)_                               | Inject + emit on flag — both `bias_flag_raised` (recruiter) and `system_bias_flag_raised` (admin)                                                                                                                                                                                            | Modify (or wait)                     |
+| `apps/api/src/modules/auth/auth.service.ts`                                                            | Inject + emit on `resetPassword()`, `verifyEmail()`                                                                                                                                                                                                                                          | Modify                               |
+| `apps/api/src/modules/invitations/invitations.service.ts`                                              | Inject + emit on `accept()`, `decline()`                                                                                                                                                                                                                                                     | Modify                               |
+| The match-preview-precompute worker (`MatchPreviewQueueService`, exact path resolved during execution) | Catch-block emit `system_ai_scoring_failure` to all admins                                                                                                                                                                                                                                   | Modify                               |
+| `apps/api/openapi.json`                                                                                | Regenerated                                                                                                                                                                                                                                                                                  | Regenerate                           |
+| `packages/shared/openapi.json` (if separate)                                                           | Regenerated                                                                                                                                                                                                                                                                                  | Regenerate                           |
+| `packages/shared/src/api-client/generated.ts`                                                          | Regenerated by `pnpm --filter shared codegen`                                                                                                                                                                                                                                                | Regenerate                           |
+| `apps/web/components/layout/nav-item-badge.tsx`                                                        | Bell badge polling unread count                                                                                                                                                                                                                                                              | Create                               |
+| `apps/web/components/layout/portal-sidebar.tsx`                                                        | Add Notifications nav item to MAIN section for all 3 roles                                                                                                                                                                                                                                   | Modify                               |
+| `apps/web/components/notifications/notification-icon-map.ts`                                           | `eventType → LucideIcon` registry                                                                                                                                                                                                                                                            | Create                               |
+| `apps/web/components/notifications/notifications-empty-state.tsx`                                      | Per-tab empty state                                                                                                                                                                                                                                                                          | Create                               |
+| `apps/web/components/notifications/notification-row.tsx`                                               | Single row                                                                                                                                                                                                                                                                                   | Create                               |
+| `apps/web/components/notifications/notifications-list.tsx`                                             | Infinite-scroll list                                                                                                                                                                                                                                                                         | Create                               |
+| `apps/web/components/notifications/notifications-page.tsx`                                             | Header + tabs + list orchestration                                                                                                                                                                                                                                                           | Create                               |
+| `apps/web/components/notifications/__tests__/*.spec.tsx`                                               | Vitest + Testing Library tests                                                                                                                                                                                                                                                               | Create                               |
+| `apps/web/app/(candidate)/candidate/notifications/page.tsx`                                            | Route shell                                                                                                                                                                                                                                                                                  | Create                               |
+| `apps/web/app/(recruiter)/recruiter/notifications/page.tsx`                                            | Route shell                                                                                                                                                                                                                                                                                  | Create                               |
+| `apps/web/app/(admin)/admin/notifications/page.tsx`                                                    | Route shell                                                                                                                                                                                                                                                                                  | Create                               |
+| `apps/web/components/settings/notifications-form.tsx`                                                  | Full rewrite — API-backed, grouped, 3-mode, security-locked, restore-defaults, localStorage migration                                                                                                                                                                                        | Modify                               |
+| `apps/web/components/notifications/__tests__/notifications-form.spec.tsx`                              | Vitest tests                                                                                                                                                                                                                                                                                 | Create                               |
+| `apps/web/tests/notifications.spec.ts`                                                                 | Playwright e2e (gated on `e2e` script existing)                                                                                                                                                                                                                                              | Create                               |
 
 ---
 
 ## Phases
 
-| Phase | Tasks | Outcome |
-|---|---|---|
-| 1 — Schema | T1–T5 | DB tables, enums, relations, RLS migration |
-| 2 — Shared schemas | T6 | Zod DTOs available to both apps |
-| 3 — Backend foundation | T7–T11 | event-defaults, repository, services, modules wired |
-| 4 — Email + queue | T12–T15 | Templates registry, base layout, digest, processor |
-| 5 — HTTP controllers | T16–T17 | Endpoints exposed, audited |
-| 6 — Crons | T18–T22 | All 5 crons registered + deduplication-tested |
-| 7 — Service hookups | T23–T28 | Every event type's producer wired |
-| 8 — API client regen | T29 | Frontend gets typed hooks |
-| 9 — Bell + nav | T30–T31 | Badge polls, sidebar shows count |
-| 10 — Notifications page | T32–T36 | `/[role]/notifications` works end-to-end |
-| 11 — Settings rewrite | T37 | localStorage retired, API-backed prefs |
-| 12 — Verification | T38 | Manual smoke checklist + final build gate |
+| Phase                   | Tasks   | Outcome                                             |
+| ----------------------- | ------- | --------------------------------------------------- |
+| 1 — Schema              | T1–T5   | DB tables, enums, relations, RLS migration          |
+| 2 — Shared schemas      | T6      | Zod DTOs available to both apps                     |
+| 3 — Backend foundation  | T7–T11  | event-defaults, repository, services, modules wired |
+| 4 — Email + queue       | T12–T15 | Templates registry, base layout, digest, processor  |
+| 5 — HTTP controllers    | T16–T17 | Endpoints exposed, audited                          |
+| 6 — Crons               | T18–T22 | All 5 crons registered + deduplication-tested       |
+| 7 — Service hookups     | T23–T28 | Every event type's producer wired                   |
+| 8 — API client regen    | T29     | Frontend gets typed hooks                           |
+| 9 — Bell + nav          | T30–T31 | Badge polls, sidebar shows count                    |
+| 10 — Notifications page | T32–T36 | `/[role]/notifications` works end-to-end            |
+| 11 — Settings rewrite   | T37     | localStorage retired, API-backed prefs              |
+| 12 — Verification       | T38     | Manual smoke checklist + final build gate           |
 
 ---
 
@@ -121,6 +124,7 @@
 ### Task 1: Add notification enums
 
 **Files:**
+
 - Modify: `packages/db/src/enums.ts`
 
 - [ ] **Step 1: Append the three new enums to the bottom of `packages/db/src/enums.ts`**
@@ -179,11 +183,13 @@ git commit -m "feat(db): add notification enums (event type, mode, scope)"
 ### Task 2: Add `notifications` table
 
 **Files:**
+
 - Modify: `packages/db/src/schema.ts`
 
 - [ ] **Step 1: At the top of `schema.ts`, extend the import block from `./enums` to include the three new enums**
 
 Find the existing import:
+
 ```ts
 import {
   USER_ROLES,
@@ -193,6 +199,7 @@ import {
 ```
 
 Add at the end of the imported names:
+
 ```ts
   NOTIFICATION_EVENT_TYPE,
   NOTIFICATION_MODE,
@@ -210,23 +217,36 @@ export const notificationsTable = pgTable(
       .notNull()
       .references(() => profilesTable.id, { onDelete: "cascade" }),
     eventType: text("event_type", { enum: NOTIFICATION_EVENT_TYPE }).notNull(),
-    scope: text("scope", { enum: NOTIFICATION_SCOPE }).notNull().default("personal"),
+    scope: text("scope", { enum: NOTIFICATION_SCOPE })
+      .notNull()
+      .default("personal"),
     title: text("title").notNull(),
     body: text("body").notNull(),
     link: text("link"),
     entityType: text("entity_type"),
     entityId: uuid("entity_id"),
-    actorId: uuid("actor_id").references(() => profilesTable.id, { onDelete: "set null" }),
+    actorId: uuid("actor_id").references(() => profilesTable.id, {
+      onDelete: "set null",
+    }),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     readAt: timestamp("read_at", { withTimezone: true }),
     dismissedAt: timestamp("dismissed_at", { withTimezone: true }),
     digestPending: boolean("digest_pending").notNull().default(false),
     emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    userUnreadIdx: index("notifications_user_unread_idx").on(t.userId, t.readAt, t.createdAt),
-    userCreatedIdx: index("notifications_user_created_idx").on(t.userId, t.createdAt),
+    userUnreadIdx: index("notifications_user_unread_idx").on(
+      t.userId,
+      t.readAt,
+      t.createdAt,
+    ),
+    userCreatedIdx: index("notifications_user_created_idx").on(
+      t.userId,
+      t.createdAt,
+    ),
     createdAtIdx: index("notifications_created_at_idx").on(t.createdAt),
     digestPendingIdx: index("notifications_digest_pending_idx")
       .on(t.digestPending)
@@ -255,6 +275,7 @@ git commit -m "feat(db): add notifications table"
 ### Task 3: Add `notification_preferences` table
 
 **Files:**
+
 - Modify: `packages/db/src/schema.ts`
 
 - [ ] **Step 1: Append `notificationPreferencesTable` to `schema.ts`, immediately after `notificationsTable`**
@@ -269,16 +290,25 @@ export const notificationPreferencesTable = pgTable(
       .references(() => profilesTable.id, { onDelete: "cascade" }),
     eventType: text("event_type", { enum: NOTIFICATION_EVENT_TYPE }).notNull(),
     mode: text("mode", { enum: NOTIFICATION_MODE }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => ({
-    userEventUniq: uniqueIndex("notification_prefs_user_event_uniq").on(t.userId, t.eventType),
+    userEventUniq: uniqueIndex("notification_prefs_user_event_uniq").on(
+      t.userId,
+      t.eventType,
+    ),
   }),
 );
 
-export type NotificationPreference = typeof notificationPreferencesTable.$inferSelect;
-export type NewNotificationPreference = typeof notificationPreferencesTable.$inferInsert;
+export type NotificationPreference =
+  typeof notificationPreferencesTable.$inferSelect;
+export type NewNotificationPreference =
+  typeof notificationPreferencesTable.$inferInsert;
 ```
 
 - [ ] **Step 2: Type-check**
@@ -298,6 +328,7 @@ git commit -m "feat(db): add notification_preferences table"
 ### Task 4: Add cron-flag columns to existing tables
 
 **Files:**
+
 - Modify: `packages/db/src/schema.ts`
 
 - [ ] **Step 1: In `interviewsTable`, add two timestamp columns inside the column block**
@@ -334,6 +365,7 @@ git commit -m "feat(db): add cron deduplication flag columns to interviews and o
 ### Task 5: Generate Drizzle migration + author RLS migration
 
 **Files:**
+
 - Create (via drizzle-kit): `supabase/migrations/<timestamp>_notifications.sql` — the human runs `pnpm drizzle:generate` (or the project's equivalent script) to generate this; if generation is the human's responsibility, provide the SQL directly so the human can paste it into a hand-written migration file.
 - Create: `supabase/migrations/<timestamp>_notifications_rls.sql` — RLS policies.
 
@@ -455,6 +487,7 @@ Wait for confirmation before proceeding to Phase 2.
 ### Task 6: Add Zod schemas for notifications and preferences
 
 **Files:**
+
 - Create: `packages/shared/src/schemas/notifications.ts`
 - Modify: `packages/shared/src/index.ts` (add re-export)
 
@@ -520,13 +553,17 @@ export const listNotificationsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   cursor: z.string().optional(),
 });
-export type ListNotificationsQuery = z.infer<typeof listNotificationsQuerySchema>;
+export type ListNotificationsQuery = z.infer<
+  typeof listNotificationsQuerySchema
+>;
 
 export const listNotificationsResponseSchema = z.object({
   items: z.array(notificationItemSchema),
   nextCursor: z.string().nullable(),
 });
-export type ListNotificationsResponse = z.infer<typeof listNotificationsResponseSchema>;
+export type ListNotificationsResponse = z.infer<
+  typeof listNotificationsResponseSchema
+>;
 
 export const unreadCountResponseSchema = z.object({
   count: z.number().int().min(0),
@@ -558,7 +595,15 @@ export type PreferenceItem = z.infer<typeof preferenceItemSchema>;
 
 export const restoreDefaultsBodySchema = z.object({
   category: z
-    .enum(["applications", "interviews", "offers", "bias", "team", "system", "all"])
+    .enum([
+      "applications",
+      "interviews",
+      "offers",
+      "bias",
+      "team",
+      "system",
+      "all",
+    ])
     .default("all"),
 });
 export type RestoreDefaultsBody = z.infer<typeof restoreDefaultsBodySchema>;
@@ -566,12 +611,15 @@ export type RestoreDefaultsBody = z.infer<typeof restoreDefaultsBodySchema>;
 export const restoreDefaultsResponseSchema = z.object({
   deleted: z.number().int().min(0),
 });
-export type RestoreDefaultsResponse = z.infer<typeof restoreDefaultsResponseSchema>;
+export type RestoreDefaultsResponse = z.infer<
+  typeof restoreDefaultsResponseSchema
+>;
 ```
 
 - [ ] **Step 2: Add the re-export to `packages/shared/src/index.ts`**
 
 Append to the existing exports:
+
 ```ts
 export * from "./schemas/notifications";
 ```
@@ -595,6 +643,7 @@ git commit -m "feat(shared): add notification Zod schemas + types"
 ### Task 7: Create event-defaults registry
 
 **Files:**
+
 - Create: `apps/api/src/modules/notifications/event-defaults.ts`
 - Create: `apps/api/src/modules/notifications/__tests__/event-defaults.spec.ts`
 
@@ -650,8 +699,12 @@ describe("event-defaults", () => {
   });
 
   it("ROLE_VISIBLE_EVENTS lists the events each role's settings page can toggle", () => {
-    expect(ROLE_VISIBLE_EVENTS.candidate).toContain("application_status_changed");
-    expect(ROLE_VISIBLE_EVENTS.candidate).not.toContain("new_application_received");
+    expect(ROLE_VISIBLE_EVENTS.candidate).toContain(
+      "application_status_changed",
+    );
+    expect(ROLE_VISIBLE_EVENTS.candidate).not.toContain(
+      "new_application_received",
+    );
     expect(ROLE_VISIBLE_EVENTS.recruiter).toContain("new_application_received");
     expect(ROLE_VISIBLE_EVENTS.admin).toContain("system_bias_flag_raised");
   });
@@ -673,10 +726,7 @@ Expected: Cannot find module `../event-defaults`.
 - [ ] **Step 3: Create `apps/api/src/modules/notifications/event-defaults.ts`**
 
 ```ts
-import type {
-  NotificationEventType,
-  NotificationMode,
-} from "@aurahire/db";
+import type { NotificationEventType, NotificationMode } from "@aurahire/db";
 
 export const DEFAULT_MODES: Record<NotificationEventType, NotificationMode> = {
   application_status_changed: "instant",
@@ -804,26 +854,35 @@ export const EVENT_LABELS: Record<NotificationEventType, string> = {
 };
 
 export const EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
-  application_status_changed: "Your application moves to Screening, Interview, Offer, Hired, or Rejected.",
+  application_status_changed:
+    "Your application moves to Screening, Interview, Offer, Hired, or Rejected.",
   interview_scheduled: "A recruiter scheduled an interview with you.",
   interview_reminder_24h: "An interview starts within 24 hours.",
   interview_cancelled: "A scheduled interview was cancelled.",
   offer_received: "A recruiter sent you a job offer.",
-  offer_expiring_soon: "An offer expires within 24 hours. Required for security — cannot be disabled.",
+  offer_expiring_soon:
+    "An offer expires within 24 hours. Required for security — cannot be disabled.",
   new_application_received: "A candidate applied to a job you own.",
-  candidate_withdrew: "A candidate withdrew their application from a job you own.",
+  candidate_withdrew:
+    "A candidate withdrew their application from a job you own.",
   interview_feedback_due: "Feedback for an interview you ran is overdue.",
   offer_accepted: "A candidate accepted your offer.",
   offer_declined: "A candidate declined your offer.",
-  bias_flag_raised: "Bias detection flagged language on a job description you published.",
+  bias_flag_raised:
+    "Bias detection flagged language on a job description you published.",
   team_invite_accepted: "A team member you invited accepted.",
   team_invite_declined: "A team member you invited declined.",
-  system_bias_flag_raised: "Bias detection flagged a job description anywhere on the platform.",
-  system_ai_scoring_failure: "An AI scoring job failed and needs investigation.",
+  system_bias_flag_raised:
+    "Bias detection flagged a job description anywhere on the platform.",
+  system_ai_scoring_failure:
+    "An AI scoring job failed and needs investigation.",
   system_moderation_queue_item: "A new item entered the moderation queue.",
-  account_password_reset: "Your password was changed. Required for security — cannot be disabled.",
-  account_email_verified: "Your email address was verified. Required for security — cannot be disabled.",
-  account_login_new_device: "A login was detected from a device fingerprint we haven't seen. Required for security — cannot be disabled.",
+  account_password_reset:
+    "Your password was changed. Required for security — cannot be disabled.",
+  account_email_verified:
+    "Your email address was verified. Required for security — cannot be disabled.",
+  account_login_new_device:
+    "A login was detected from a device fingerprint we haven't seen. Required for security — cannot be disabled.",
 };
 ```
 
@@ -844,6 +903,7 @@ git commit -m "feat(api): add notification event-defaults registry (categories, 
 ### Task 8: Create notifications repository
 
 **Files:**
+
 - Create: `apps/api/src/modules/notifications/notifications.repository.ts`
 - Create: `apps/api/src/modules/notifications/__tests__/notifications.repository.spec.ts`
 
@@ -861,7 +921,7 @@ The structure (replace `<DB_HELPER_IMPORT>` with the path discovered in Step 1):
 ```ts
 import { Test } from "@nestjs/testing";
 import { NotificationsRepository } from "../notifications.repository";
-import { /* test-db helpers */ } from "<DB_HELPER_IMPORT>";
+import {} from /* test-db helpers */ "<DB_HELPER_IMPORT>";
 
 describe("NotificationsRepository", () => {
   let repo: NotificationsRepository;
@@ -899,7 +959,10 @@ describe("NotificationsRepository", () => {
   });
 
   it("listForUser excludes dismissed rows and orders by createdAt DESC", async () => {
-    const { items } = await repo.listForUser(TEST_USER_ID, { tab: "all", limit: 20 });
+    const { items } = await repo.listForUser(TEST_USER_ID, {
+      tab: "all",
+      limit: 20,
+    });
     expect(items.length).toBeGreaterThan(0);
     expect(items[0].dismissedAt).toBeNull();
   });
@@ -949,7 +1012,10 @@ describe("NotificationsRepository", () => {
   });
 
   it("listForUser supports cursor pagination", async () => {
-    const page1 = await repo.listForUser(TEST_USER_ID, { tab: "all", limit: 1 });
+    const page1 = await repo.listForUser(TEST_USER_ID, {
+      tab: "all",
+      limit: 1,
+    });
     expect(page1.nextCursor).toBeDefined();
     const page2 = await repo.listForUser(TEST_USER_ID, {
       tab: "all",
@@ -996,7 +1062,10 @@ export class NotificationsRepository {
   constructor(@Inject(DRIZZLE_DB) private readonly db: NodePgDatabase) {}
 
   async insertOne(input: NewNotification): Promise<Notification> {
-    const [row] = await this.db.insert(notificationsTable).values(input).returning();
+    const [row] = await this.db
+      .insert(notificationsTable)
+      .values(input)
+      .returning();
     return row;
   }
 
@@ -1028,7 +1097,10 @@ export class NotificationsRepository {
     return count ?? 0;
   }
 
-  async listForUser(userId: string, params: ListForUserParams): Promise<ListForUserResult> {
+  async listForUser(
+    userId: string,
+    params: ListForUserParams,
+  ): Promise<ListForUserResult> {
     const conditions = [
       eq(notificationsTable.userId, userId),
       isNull(notificationsTable.dismissedAt),
@@ -1055,7 +1127,9 @@ export class NotificationsRepository {
     const last = items[items.length - 1];
     const nextCursor =
       hasMore && last
-        ? Buffer.from(`${last.createdAt.toISOString()}|${last.id}`).toString("base64")
+        ? Buffer.from(`${last.createdAt.toISOString()}|${last.id}`).toString(
+            "base64",
+          )
         : null;
     return { items, nextCursor };
   }
@@ -1064,7 +1138,12 @@ export class NotificationsRepository {
     await this.db
       .update(notificationsTable)
       .set({ readAt: new Date() })
-      .where(and(eq(notificationsTable.id, id), eq(notificationsTable.userId, userId)));
+      .where(
+        and(
+          eq(notificationsTable.id, id),
+          eq(notificationsTable.userId, userId),
+        ),
+      );
     const unreadCount = await this.countUnread(userId);
     return { unreadCount };
   }
@@ -1087,7 +1166,12 @@ export class NotificationsRepository {
     await this.db
       .update(notificationsTable)
       .set({ dismissedAt: new Date() })
-      .where(and(eq(notificationsTable.id, id), eq(notificationsTable.userId, userId)));
+      .where(
+        and(
+          eq(notificationsTable.id, id),
+          eq(notificationsTable.userId, userId),
+        ),
+      );
     const unreadCount = await this.countUnread(userId);
     return { unreadCount };
   }
@@ -1106,7 +1190,9 @@ export class NotificationsRepository {
       .where(eq(notificationsTable.id, id));
   }
 
-  async findDigestPendingByUser(): Promise<Array<{ userId: string; ids: string[] }>> {
+  async findDigestPendingByUser(): Promise<
+    Array<{ userId: string; ids: string[] }>
+  > {
     const rows = await this.db
       .select({ id: notificationsTable.id, userId: notificationsTable.userId })
       .from(notificationsTable)
@@ -1117,7 +1203,10 @@ export class NotificationsRepository {
       arr.push(row.id);
       grouped.set(row.userId, arr);
     }
-    return Array.from(grouped.entries()).map(([userId, ids]) => ({ userId, ids }));
+    return Array.from(grouped.entries()).map(([userId, ids]) => ({
+      userId,
+      ids,
+    }));
   }
 
   async clearDigestPending(ids: string[]): Promise<void> {
@@ -1161,6 +1250,7 @@ git commit -m "feat(api): notifications repository (insert, list, count, mark-re
 ### Task 9: Create NotificationsService.emit() with TDD
 
 **Files:**
+
 - Create: `apps/api/src/modules/notifications/notifications.service.ts`
 - Create: `apps/api/src/modules/notifications/__tests__/notifications.service.spec.ts`
 
@@ -1202,7 +1292,11 @@ describe("NotificationsService.emit", () => {
     queue = mockQueue();
     profiles = mockProfiles();
 
-    profiles.findById.mockResolvedValue({ id: "u1", status: "active", role: "candidate" });
+    profiles.findById.mockResolvedValue({
+      id: "u1",
+      status: "active",
+      role: "candidate",
+    });
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -1272,8 +1366,15 @@ describe("NotificationsService.emit", () => {
   });
 
   it("does not insert a row for suspended users", async () => {
-    profiles.findById.mockResolvedValue({ id: "u1", status: "suspended", role: "candidate" });
-    await service.emit({ userId: "u1", eventType: "application_status_changed" });
+    profiles.findById.mockResolvedValue({
+      id: "u1",
+      status: "suspended",
+      role: "candidate",
+    });
+    await service.emit({
+      userId: "u1",
+      eventType: "application_status_changed",
+    });
     expect(repo.insertOne).not.toHaveBeenCalled();
   });
 
@@ -1285,7 +1386,11 @@ describe("NotificationsService.emit", () => {
   });
 
   it("emitMany fans out to all user ids", async () => {
-    profiles.findById.mockResolvedValue({ id: "x", status: "active", role: "admin" });
+    profiles.findById.mockResolvedValue({
+      id: "x",
+      status: "active",
+      role: "admin",
+    });
     prefs.getEffectiveMode.mockResolvedValue("instant");
     await service.emitMany(["a", "b", "c"], {
       eventType: "system_bias_flag_raised",
@@ -1309,7 +1414,10 @@ import { InjectQueue } from "@nestjs/bullmq";
 import type { Queue } from "bullmq";
 import { NotificationsRepository } from "./notifications.repository";
 import { NotificationPreferencesService } from "../notification-preferences/notification-preferences.service";
-import { NOTIFICATION_EMAIL_QUEUE, type NotificationEmailJobData } from "./queues";
+import {
+  NOTIFICATION_EMAIL_QUEUE,
+  type NotificationEmailJobData,
+} from "./queues";
 import { SECURITY_EVENTS } from "./event-defaults";
 import { buildTitle, buildBody, buildLink } from "./templates";
 import { ProfilesRepository } from "../profiles/profiles.repository"; // confirm path
@@ -1367,7 +1475,10 @@ export class NotificationsService {
         metadata: params.metadata ?? null,
       });
 
-      const mode = await this.resolveDeliveryMode(params.userId, params.eventType);
+      const mode = await this.resolveDeliveryMode(
+        params.userId,
+        params.eventType,
+      );
 
       this.logger.debug(
         `emit: user=${params.userId} eventType=${params.eventType} mode=${mode} id=${row.id}`,
@@ -1387,8 +1498,13 @@ export class NotificationsService {
     }
   }
 
-  async emitMany(userIds: string[], params: Omit<EmitParams, "userId">): Promise<void> {
-    await Promise.all(userIds.map((userId) => this.emit({ ...params, userId })));
+  async emitMany(
+    userIds: string[],
+    params: Omit<EmitParams, "userId">,
+  ): Promise<void> {
+    await Promise.all(
+      userIds.map((userId) => this.emit({ ...params, userId })),
+    );
   }
 
   private async resolveDeliveryMode(
@@ -1410,11 +1526,17 @@ The full templates land in Phase 4. Create a minimal stub at `apps/api/src/modul
 ```ts
 import type { NotificationEventType } from "@aurahire/db";
 
-export function buildTitle(eventType: NotificationEventType, metadata: Record<string, unknown>): string {
+export function buildTitle(
+  eventType: NotificationEventType,
+  metadata: Record<string, unknown>,
+): string {
   return `Notification: ${eventType}`;
 }
 
-export function buildBody(eventType: NotificationEventType, metadata: Record<string, unknown>): string {
+export function buildBody(
+  eventType: NotificationEventType,
+  metadata: Record<string, unknown>,
+): string {
   return "";
 }
 
@@ -1451,6 +1573,7 @@ git commit -m "feat(api): NotificationsService.emit() with delivery routing and 
 ### Task 10: Create NotificationPreferencesService with TDD
 
 **Files:**
+
 - Create: `apps/api/src/modules/notification-preferences/notification-preferences.service.ts`
 - Create: `apps/api/src/modules/notification-preferences/__tests__/notification-preferences.service.spec.ts`
 - Create: `apps/api/src/modules/notification-preferences/notification-preferences.repository.ts`
@@ -1509,14 +1632,20 @@ export class NotificationPreferencesRepository {
       .insert(notificationPreferencesTable)
       .values({ userId, eventType, mode })
       .onConflictDoUpdate({
-        target: [notificationPreferencesTable.userId, notificationPreferencesTable.eventType],
+        target: [
+          notificationPreferencesTable.userId,
+          notificationPreferencesTable.eventType,
+        ],
         set: { mode, updatedAt: new Date() },
       })
       .returning();
     return row;
   }
 
-  async deleteForCategory(userId: string, eventTypes: NotificationEventType[]): Promise<number> {
+  async deleteForCategory(
+    userId: string,
+    eventTypes: NotificationEventType[],
+  ): Promise<number> {
     if (eventTypes.length === 0) return 0;
     const result = await this.db
       .delete(notificationPreferencesTable)
@@ -1574,19 +1703,28 @@ describe("NotificationPreferencesService", () => {
   describe("getEffectiveMode", () => {
     it("returns the stored mode when a row exists", async () => {
       repo.findOne.mockResolvedValue({ mode: "off" });
-      const mode = await service.getEffectiveMode("u1", "application_status_changed");
+      const mode = await service.getEffectiveMode(
+        "u1",
+        "application_status_changed",
+      );
       expect(mode).toBe("off");
     });
 
     it("falls back to DEFAULT_MODES when no row exists", async () => {
       repo.findOne.mockResolvedValue(null);
-      const mode = await service.getEffectiveMode("u1", "new_application_received");
+      const mode = await service.getEffectiveMode(
+        "u1",
+        "new_application_received",
+      );
       expect(mode).toBe("digest");
     });
 
     it("always returns 'instant' for SECURITY_EVENTS regardless of stored row", async () => {
       repo.findOne.mockResolvedValue({ mode: "off" });
-      const mode = await service.getEffectiveMode("u1", "account_password_reset");
+      const mode = await service.getEffectiveMode(
+        "u1",
+        "account_password_reset",
+      );
       expect(mode).toBe("instant");
     });
   });
@@ -1594,26 +1732,45 @@ describe("NotificationPreferencesService", () => {
   describe("upsert", () => {
     it("rejects security event-types with BadRequest", async () => {
       await expect(
-        service.upsert("u1", { eventType: "account_password_reset", mode: "off" }),
+        service.upsert("u1", {
+          eventType: "account_password_reset",
+          mode: "off",
+        }),
       ).rejects.toThrow(BadRequestException);
       expect(repo.upsert).not.toHaveBeenCalled();
     });
 
     it("upserts non-security events", async () => {
-      repo.upsert.mockResolvedValue({ eventType: "application_status_changed", mode: "off" });
-      await service.upsert("u1", { eventType: "application_status_changed", mode: "off" });
-      expect(repo.upsert).toHaveBeenCalledWith("u1", "application_status_changed", "off");
+      repo.upsert.mockResolvedValue({
+        eventType: "application_status_changed",
+        mode: "off",
+      });
+      await service.upsert("u1", {
+        eventType: "application_status_changed",
+        mode: "off",
+      });
+      expect(repo.upsert).toHaveBeenCalledWith(
+        "u1",
+        "application_status_changed",
+        "off",
+      );
     });
   });
 
   describe("listForRole", () => {
     it("returns one entry per role-visible event with isDefault flag", async () => {
-      repo.findByUser.mockResolvedValue([{ eventType: "application_status_changed", mode: "off" }]);
+      repo.findByUser.mockResolvedValue([
+        { eventType: "application_status_changed", mode: "off" },
+      ]);
       const list = await service.listForRole("u1", "candidate");
-      const overridden = list.find((x) => x.eventType === "application_status_changed");
+      const overridden = list.find(
+        (x) => x.eventType === "application_status_changed",
+      );
       expect(overridden?.mode).toBe("off");
       expect(overridden?.isDefault).toBe(false);
-      const stillDefault = list.find((x) => x.eventType === "interview_scheduled");
+      const stillDefault = list.find(
+        (x) => x.eventType === "interview_scheduled",
+      );
       expect(stillDefault?.mode).toBe("instant");
       expect(stillDefault?.isDefault).toBe(true);
     });
@@ -1630,14 +1787,18 @@ describe("NotificationPreferencesService", () => {
   describe("restoreDefaults", () => {
     it("with category 'all' deletes all preference rows", async () => {
       repo.deleteAllForUser.mockResolvedValue(7);
-      const { deleted } = await service.restoreDefaults("u1", { category: "all" });
+      const { deleted } = await service.restoreDefaults("u1", {
+        category: "all",
+      });
       expect(deleted).toBe(7);
       expect(repo.deleteAllForUser).toHaveBeenCalledWith("u1");
     });
 
     it("with category 'applications' only deletes application-event rows", async () => {
       repo.deleteForCategory.mockResolvedValue(2);
-      const { deleted } = await service.restoreDefaults("u1", { category: "applications" });
+      const { deleted } = await service.restoreDefaults("u1", {
+        category: "applications",
+      });
       expect(deleted).toBe(2);
       const call = repo.deleteForCategory.mock.calls[0];
       expect(call[1]).toEqual(
@@ -1663,10 +1824,7 @@ Expected: Cannot find module.
 
 ```ts
 import { Injectable, BadRequestException } from "@nestjs/common";
-import type {
-  NotificationEventType,
-  NotificationMode,
-} from "@aurahire/db";
+import type { NotificationEventType, NotificationMode } from "@aurahire/db";
 import { NOTIFICATION_EVENT_TYPE } from "@aurahire/db";
 import {
   DEFAULT_MODES,
@@ -1731,7 +1889,9 @@ export class NotificationPreferencesService {
     return visible.map((eventType) => {
       const isSecurityLocked = SECURITY_EVENTS.has(eventType);
       const overridden = map.get(eventType);
-      const mode = isSecurityLocked ? "instant" : overridden ?? DEFAULT_MODES[eventType];
+      const mode = isSecurityLocked
+        ? "instant"
+        : (overridden ?? DEFAULT_MODES[eventType]);
       return {
         eventType,
         mode,
@@ -1780,6 +1940,7 @@ git commit -m "feat(api): NotificationPreferencesService (effective mode, listFo
 ### Task 11: Wire notifications + preferences modules
 
 **Files:**
+
 - Create: `apps/api/src/modules/notifications/notifications.module.ts`
 - Create: `apps/api/src/modules/notifications/queues.ts`
 - Create: `apps/api/src/modules/notification-preferences/notification-preferences.module.ts`
@@ -1819,7 +1980,11 @@ import { AuditModule } from "../../audit/audit.module";
     AuditModule,
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService, NotificationsRepository, NotificationEmailProcessor],
+  providers: [
+    NotificationsService,
+    NotificationsRepository,
+    NotificationEmailProcessor,
+  ],
   exports: [NotificationsService],
 })
 export class NotificationsModule {}
@@ -1830,6 +1995,7 @@ export class NotificationsModule {}
 - [ ] **Step 3: Create temporary minimal stubs so the module compiles**
 
 `apps/api/src/modules/notifications/notifications.controller.ts`:
+
 ```ts
 import { Controller } from "@nestjs/common";
 
@@ -1838,6 +2004,7 @@ export class NotificationsController {}
 ```
 
 `apps/api/src/modules/notifications/notification-email.processor.ts`:
+
 ```ts
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { NOTIFICATION_EMAIL_QUEUE } from "./queues";
@@ -1865,7 +2032,10 @@ import { AuditModule } from "../../audit/audit.module";
 @Module({
   imports: [forwardRef(() => NotificationsModule), AuditModule],
   controllers: [NotificationPreferencesController],
-  providers: [NotificationPreferencesService, NotificationPreferencesRepository],
+  providers: [
+    NotificationPreferencesService,
+    NotificationPreferencesRepository,
+  ],
   exports: [NotificationPreferencesService],
 })
 export class NotificationPreferencesModule {}
@@ -1874,6 +2044,7 @@ export class NotificationPreferencesModule {}
 - [ ] **Step 5: Stub the preferences controller**
 
 `apps/api/src/modules/notification-preferences/notification-preferences.controller.ts`:
+
 ```ts
 import { Controller } from "@nestjs/common";
 
@@ -1884,10 +2055,12 @@ export class NotificationPreferencesController {}
 - [ ] **Step 6: Register both modules in `apps/api/src/app.module.ts`**
 
 In the imports array, add:
+
 ```ts
 NotificationsModule,
 NotificationPreferencesModule,
 ```
+
 plus the corresponding imports at the top of the file.
 
 - [ ] **Step 7: Type-check and lint**
@@ -1909,6 +2082,7 @@ git commit -m "feat(api): wire notifications and notification-preferences module
 ### Task 12: Create the templates registry and base layout
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notifications/templates/index.ts` (replace stub)
 - Create: `apps/api/src/modules/notifications/templates/base-layout.tsx`
 - Create: `apps/api/src/modules/notifications/__tests__/templates.spec.ts`
@@ -1937,7 +2111,12 @@ interface BaseLayoutProps {
   appOrigin: string;
 }
 
-export function BaseLayout({ preview, children, unsubscribePath, appOrigin }: BaseLayoutProps) {
+export function BaseLayout({
+  preview,
+  children,
+  unsubscribePath,
+  appOrigin,
+}: BaseLayoutProps) {
   return (
     <Html>
       <Head />
@@ -1945,7 +2124,8 @@ export function BaseLayout({ preview, children, unsubscribePath, appOrigin }: Ba
       <Body
         style={{
           backgroundColor: "#f7f7f7",
-          fontFamily: "Inter, -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif",
+          fontFamily:
+            "Inter, -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif",
           color: "#0a0b0d",
           margin: 0,
           padding: 0,
@@ -1974,10 +2154,20 @@ export function BaseLayout({ preview, children, unsubscribePath, appOrigin }: Ba
             </Heading>
           </Section>
           {children}
-          <Hr style={{ border: 0, borderTop: "1px solid #dee1e6", margin: "32px 0 16px" }} />
+          <Hr
+            style={{
+              border: 0,
+              borderTop: "1px solid #dee1e6",
+              margin: "32px 0 16px",
+            }}
+          />
           <Text style={{ fontSize: 12, color: "#7c828a", lineHeight: 1.5 }}>
-            You're receiving this because of your AuraHire notification preferences.{" "}
-            <Link href={`${appOrigin}${unsubscribePath}`} style={{ color: "#2563eb" }}>
+            You're receiving this because of your AuraHire notification
+            preferences.{" "}
+            <Link
+              href={`${appOrigin}${unsubscribePath}`}
+              style={{ color: "#2563eb" }}
+            >
               Manage notification settings
             </Link>
           </Text>
@@ -2399,7 +2589,13 @@ export function getIconName(eventType: NotificationEventType): string {
 
 ```ts
 import { NOTIFICATION_EVENT_TYPE } from "@aurahire/db";
-import { buildTitle, buildBody, buildLink, emailSubject, getIconName } from "../templates";
+import {
+  buildTitle,
+  buildBody,
+  buildLink,
+  emailSubject,
+  getIconName,
+} from "../templates";
 
 describe("template registry", () => {
   it("every event type has a non-empty title, body, subject, and icon", () => {
@@ -2419,20 +2615,30 @@ describe("template registry", () => {
   });
 
   it("application_status_changed renders the new status in the title", () => {
-    expect(buildTitle("application_status_changed", { newStatus: "Interview" })).toContain("Interview");
+    expect(
+      buildTitle("application_status_changed", { newStatus: "Interview" }),
+    ).toContain("Interview");
   });
 
   it("system events route to /admin/* paths", () => {
-    expect(buildLink("system_bias_flag_raised", "admin", { flagId: "f1" })).toBe(
-      "/admin/bias-flags/f1",
+    expect(
+      buildLink("system_bias_flag_raised", "admin", { flagId: "f1" }),
+    ).toBe("/admin/bias-flags/f1");
+    expect(buildLink("system_moderation_queue_item", "admin", {})).toBe(
+      "/admin/moderation",
     );
-    expect(buildLink("system_moderation_queue_item", "admin", {})).toBe("/admin/moderation");
   });
 
   it("account events route to the recipient's role-specific security page", () => {
-    expect(buildLink("account_password_reset", "candidate", {})).toBe("/candidate/settings/security");
-    expect(buildLink("account_password_reset", "recruiter", {})).toBe("/recruiter/settings/security");
-    expect(buildLink("account_password_reset", "admin", {})).toBe("/admin/settings/security");
+    expect(buildLink("account_password_reset", "candidate", {})).toBe(
+      "/candidate/settings/security",
+    );
+    expect(buildLink("account_password_reset", "recruiter", {})).toBe(
+      "/recruiter/settings/security",
+    );
+    expect(buildLink("account_password_reset", "admin", {})).toBe(
+      "/admin/settings/security",
+    );
   });
 });
 ```
@@ -2459,6 +2665,7 @@ git commit -m "feat(api): notification templates registry + base layout for 20 e
 ### Task 13: Create the digest email template
 
 **Files:**
+
 - Create: `apps/api/src/modules/notifications/templates/digest-email.tsx`
 
 - [ ] **Step 1: Create the digest template**
@@ -2542,15 +2749,28 @@ export function DigestEmail({ rows, appOrigin, role }: DigestEmailProps) {
                 borderBottom: "1px solid #eef0f3",
               }}
             >
-              <p style={{ fontSize: 16, fontWeight: 600, margin: "0 0 4px", color: "#0a0b0d" }}>
+              <p
+                style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  margin: "0 0 4px",
+                  color: "#0a0b0d",
+                }}
+              >
                 {row.title}
               </p>
-              <p style={{ fontSize: 14, color: "#5b616e", margin: 0 }}>{row.body}</p>
+              <p style={{ fontSize: 14, color: "#5b616e", margin: 0 }}>
+                {row.body}
+              </p>
               {row.link && (
                 <p style={{ marginTop: 8 }}>
                   <a
                     href={`${appOrigin}${row.link}`}
-                    style={{ color: "#2563eb", textDecoration: "none", fontSize: 14 }}
+                    style={{
+                      color: "#2563eb",
+                      textDecoration: "none",
+                      fontSize: 14,
+                    }}
                   >
                     View →
                   </a>
@@ -2582,6 +2802,7 @@ git commit -m "feat(api): digest email template grouping notifications by catego
 ### Task 14: Implement notification-email processor
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notifications/notification-email.processor.ts` (replace stub)
 - Create: `apps/api/src/modules/notifications/__tests__/notification-email.processor.spec.ts`
 
@@ -2593,7 +2814,10 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bullmq";
 import { render } from "@react-email/render";
 import * as React from "react";
-import { NOTIFICATION_EMAIL_QUEUE, type NotificationEmailJobData } from "./queues";
+import {
+  NOTIFICATION_EMAIL_QUEUE,
+  type NotificationEmailJobData,
+} from "./queues";
 import { NotificationsRepository } from "./notifications.repository";
 import { ProfilesRepository } from "../profiles/profiles.repository"; // confirm
 import { EmailService } from "../../email/email.service";
@@ -2625,7 +2849,9 @@ export class NotificationEmailProcessor extends WorkerHost {
   private async processInstant(notificationId: string): Promise<void> {
     const row = await this.repo.findById(notificationId);
     if (!row) {
-      this.logger.warn(`processInstant: notification not found: ${notificationId}`);
+      this.logger.warn(
+        `processInstant: notification not found: ${notificationId}`,
+      );
       return;
     }
     if (row.emailSentAt) {
@@ -2637,7 +2863,8 @@ export class NotificationEmailProcessor extends WorkerHost {
 
     const role = profile.role as "candidate" | "recruiter" | "admin";
     const tpl = TEMPLATES[row.eventType];
-    const appOrigin = this.config.get<string>("APP_ORIGIN") ?? "http://localhost:3000";
+    const appOrigin =
+      this.config.get<string>("APP_ORIGIN") ?? "http://localhost:3000";
     const html = await render(
       React.createElement(tpl.EmailComponent, {
         metadata: row.metadata ?? {},
@@ -2654,10 +2881,15 @@ export class NotificationEmailProcessor extends WorkerHost {
     await this.repo.setEmailSent(notificationId);
   }
 
-  private async processDigest(userId: string, notificationIds: string[]): Promise<void> {
+  private async processDigest(
+    userId: string,
+    notificationIds: string[],
+  ): Promise<void> {
     const profile = await this.profiles.findById(userId);
     if (!profile) return;
-    const rows = await Promise.all(notificationIds.map((id) => this.repo.findById(id)));
+    const rows = await Promise.all(
+      notificationIds.map((id) => this.repo.findById(id)),
+    );
     const validRows = rows
       .filter((r): r is NonNullable<typeof r> => r !== null)
       .map((r) => ({
@@ -2672,7 +2904,8 @@ export class NotificationEmailProcessor extends WorkerHost {
     if (validRows.length === 0) return;
 
     const role = profile.role as "candidate" | "recruiter" | "admin";
-    const appOrigin = this.config.get<string>("APP_ORIGIN") ?? "http://localhost:3000";
+    const appOrigin =
+      this.config.get<string>("APP_ORIGIN") ?? "http://localhost:3000";
     const html = await render(
       React.createElement(DigestEmail, { rows: validRows, appOrigin, role }),
     );
@@ -2712,7 +2945,11 @@ describe("NotificationEmailProcessor", () => {
       findById: jest.fn(),
       setEmailSent: jest.fn(),
     };
-    profiles = { findById: jest.fn().mockResolvedValue({ id: "u1", email: "u@x.io", role: "candidate" }) };
+    profiles = {
+      findById: jest
+        .fn()
+        .mockResolvedValue({ id: "u1", email: "u@x.io", role: "candidate" }),
+    };
     email = { send: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
@@ -2721,7 +2958,10 @@ describe("NotificationEmailProcessor", () => {
         { provide: NotificationsRepository, useValue: repo },
         { provide: ProfilesRepository, useValue: profiles },
         { provide: EmailService, useValue: email },
-        { provide: ConfigService, useValue: { get: () => "http://localhost:3000" } },
+        {
+          provide: ConfigService,
+          useValue: { get: () => "http://localhost:3000" },
+        },
       ],
     }).compile();
     processor = moduleRef.get(NotificationEmailProcessor);
@@ -2739,7 +2979,9 @@ describe("NotificationEmailProcessor", () => {
       emailSentAt: null,
       createdAt: new Date(),
     });
-    await processor.process({ data: { kind: "instant", notificationId: "n1" } } as any);
+    await processor.process({
+      data: { kind: "instant", notificationId: "n1" },
+    } as any);
     expect(email.send).toHaveBeenCalledTimes(1);
     expect(repo.setEmailSent).toHaveBeenCalledWith("n1");
   });
@@ -2756,7 +2998,9 @@ describe("NotificationEmailProcessor", () => {
       body: "b",
       link: null,
     });
-    await processor.process({ data: { kind: "instant", notificationId: "n1" } } as any);
+    await processor.process({
+      data: { kind: "instant", notificationId: "n1" },
+    } as any);
     expect(email.send).not.toHaveBeenCalled();
     expect(repo.setEmailSent).not.toHaveBeenCalled();
   });
@@ -2807,6 +3051,7 @@ git commit -m "feat(api): notification-email processor (instant + digest paths w
 ### Task 15: Notifications controller
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notifications/notifications.controller.ts` (replace stub)
 - Create: `apps/api/src/modules/notifications/dto/list-notifications.dto.ts`
 - Modify: `apps/api/src/modules/notifications/notifications.service.ts` (add list/count/mark-read/dismiss methods that delegate to repo + audit)
@@ -2839,7 +3084,9 @@ Match the existing key/value style — if the file uses a TypeScript `as const` 
 import { createZodDto } from "nestjs-zod";
 import { listNotificationsQuerySchema } from "@aurahire/shared";
 
-export class ListNotificationsDto extends createZodDto(listNotificationsQuerySchema) {}
+export class ListNotificationsDto extends createZodDto(
+  listNotificationsQuerySchema,
+) {}
 ```
 
 - [ ] **Step 3: Add list/count/mark-read/dismiss methods to `NotificationsService`**
@@ -2920,7 +3167,11 @@ import { AuditService } from "../../audit/audit.service";
 import { AUDIT_ACTIONS } from "../../audit/audit.types"; // confirm export name
 
 interface AuthedRequest {
-  user: { id: string; role: "candidate" | "recruiter" | "admin"; email: string };
+  user: {
+    id: string;
+    role: "candidate" | "recruiter" | "admin";
+    email: string;
+  };
   ip?: string;
   headers: Record<string, string | string[] | undefined>;
 }
@@ -3013,7 +3264,11 @@ describe("NotificationsController", () => {
   });
 
   it("markAllRead writes an audit log entry", async () => {
-    service.markAllRead.mockResolvedValue({ unreadCount: 0, count: 0, displayCount: "0" });
+    service.markAllRead.mockResolvedValue({
+      unreadCount: 0,
+      count: 0,
+      displayCount: "0",
+    });
     await controller.markAllRead({
       user: { id: "u1", role: "candidate", email: "x@y.z" },
     } as any);
@@ -3026,8 +3281,15 @@ describe("NotificationsController", () => {
   });
 
   it("dismiss returns capped displayCount when count > 99", async () => {
-    service.dismiss.mockResolvedValue({ unreadCount: 150, count: 150, displayCount: "99+" });
-    const result = await controller.dismiss({ user: { id: "u1" } } as any, "n1");
+    service.dismiss.mockResolvedValue({
+      unreadCount: 150,
+      count: 150,
+      displayCount: "99+",
+    });
+    const result = await controller.dismiss(
+      { user: { id: "u1" } } as any,
+      "n1",
+    );
     expect(result.displayCount).toBe("99+");
   });
 });
@@ -3050,6 +3312,7 @@ git commit -m "feat(api): notifications HTTP endpoints (list, unread-count, mark
 ### Task 16: Notification preferences controller
 
 **Files:**
+
 - Modify: `apps/api/src/modules/notification-preferences/notification-preferences.controller.ts` (replace stub)
 - Create: `apps/api/src/modules/notification-preferences/dto/upsert-preference.dto.ts`
 - Create: `apps/api/src/modules/notification-preferences/dto/restore-defaults.dto.ts`
@@ -3058,19 +3321,25 @@ git commit -m "feat(api): notifications HTTP endpoints (list, unread-count, mark
 - [ ] **Step 1: Create the two DTOs**
 
 `dto/upsert-preference.dto.ts`:
+
 ```ts
 import { createZodDto } from "nestjs-zod";
 import { upsertPreferenceBodySchema } from "@aurahire/shared";
 
-export class UpsertPreferenceDto extends createZodDto(upsertPreferenceBodySchema) {}
+export class UpsertPreferenceDto extends createZodDto(
+  upsertPreferenceBodySchema,
+) {}
 ```
 
 `dto/restore-defaults.dto.ts`:
+
 ```ts
 import { createZodDto } from "nestjs-zod";
 import { restoreDefaultsBodySchema } from "@aurahire/shared";
 
-export class RestoreDefaultsDto extends createZodDto(restoreDefaultsBodySchema) {}
+export class RestoreDefaultsDto extends createZodDto(
+  restoreDefaultsBodySchema,
+) {}
 ```
 
 - [ ] **Step 2: Replace the controller stub**
@@ -3078,7 +3347,16 @@ export class RestoreDefaultsDto extends createZodDto(restoreDefaultsBodySchema) 
 `notification-preferences.controller.ts`:
 
 ```ts
-import { Body, Controller, Get, Post, Put, Req, HttpCode, HttpStatus } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Req,
+  HttpCode,
+  HttpStatus,
+} from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { NotificationPreferencesService } from "./notification-preferences.service";
 import { UpsertPreferenceDto } from "./dto/upsert-preference.dto";
@@ -3106,7 +3384,10 @@ export class NotificationPreferencesController {
   @Put()
   @HttpCode(HttpStatus.OK)
   async upsert(@Req() req: AuthedRequest, @Body() body: UpsertPreferenceDto) {
-    const previous = await this.service.getEffectiveMode(req.user.id, body.eventType);
+    const previous = await this.service.getEffectiveMode(
+      req.user.id,
+      body.eventType,
+    );
     const result = await this.service.upsert(req.user.id, body);
     await this.audit.log({
       actorId: req.user.id,
@@ -3114,14 +3395,21 @@ export class NotificationPreferencesController {
       action: AUDIT_ACTIONS.NOTIFICATION_PREFERENCE_UPDATED,
       entityType: "notification_preference",
       entityId: req.user.id,
-      details: { eventType: body.eventType, oldMode: previous, newMode: body.mode },
+      details: {
+        eventType: body.eventType,
+        oldMode: previous,
+        newMode: body.mode,
+      },
     });
     return { eventType: result.eventType, mode: result.mode, isDefault: false };
   }
 
   @Post("restore-defaults")
   @HttpCode(HttpStatus.OK)
-  async restoreDefaults(@Req() req: AuthedRequest, @Body() body: RestoreDefaultsDto) {
+  async restoreDefaults(
+    @Req() req: AuthedRequest,
+    @Body() body: RestoreDefaultsDto,
+  ) {
     const result = await this.service.restoreDefaults(req.user.id, body);
     await this.audit.log({
       actorId: req.user.id,
@@ -3170,14 +3458,21 @@ describe("NotificationPreferencesController", () => {
 
   it("upsert audits the change with old and new mode", async () => {
     service.getEffectiveMode.mockResolvedValue("instant");
-    service.upsert.mockResolvedValue({ eventType: "application_status_changed", mode: "off" });
+    service.upsert.mockResolvedValue({
+      eventType: "application_status_changed",
+      mode: "off",
+    });
     await controller.upsert(
       { user: { id: "u1", role: "candidate" } } as any,
       { eventType: "application_status_changed", mode: "off" } as any,
     );
     expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        details: { eventType: "application_status_changed", oldMode: "instant", newMode: "off" },
+        details: {
+          eventType: "application_status_changed",
+          oldMode: "instant",
+          newMode: "off",
+        },
       }),
     );
   });
@@ -3228,6 +3523,7 @@ git commit -m "feat(api): notification-preferences HTTP endpoints (list, upsert,
 ### Task 17: DigestEmailCron
 
 **Files:**
+
 - Create: `apps/api/src/cron/digest-email.cron.ts`
 - Create: `apps/api/src/cron/__tests__/digest-email.cron.spec.ts`
 - Modify: `apps/api/src/cron/cron.module.ts` (register the cron)
@@ -3240,7 +3536,10 @@ import { Cron } from "@nestjs/schedule";
 import { InjectQueue } from "@nestjs/bullmq";
 import type { Queue } from "bullmq";
 import { NotificationsRepository } from "../modules/notifications/notifications.repository";
-import { NOTIFICATION_EMAIL_QUEUE, type NotificationEmailJobData } from "../modules/notifications/queues";
+import {
+  NOTIFICATION_EMAIL_QUEUE,
+  type NotificationEmailJobData,
+} from "../modules/notifications/queues";
 import { AuditService } from "../audit/audit.service";
 import { AUDIT_ACTIONS } from "../audit/audit.types";
 
@@ -3260,7 +3559,10 @@ export class DigestEmailCron {
     await this.handleDigestRun();
   }
 
-  async handleDigestRun(): Promise<{ userCount: number; notificationCount: number }> {
+  async handleDigestRun(): Promise<{
+    userCount: number;
+    notificationCount: number;
+  }> {
     const batches = await this.repo.findDigestPendingByUser();
     let totalNotifications = 0;
     for (const batch of batches) {
@@ -3273,7 +3575,10 @@ export class DigestEmailCron {
         await this.repo.clearDigestPending(batch.ids);
         totalNotifications += batch.ids.length;
       } catch (err) {
-        this.logger.error(`digest enqueue failed for user ${batch.userId}`, err);
+        this.logger.error(
+          `digest enqueue failed for user ${batch.userId}`,
+          err,
+        );
       }
     }
     await this.audit.log({
@@ -3282,7 +3587,10 @@ export class DigestEmailCron {
       action: AUDIT_ACTIONS.DIGEST_EMAIL_BATCH_RUN,
       entityType: "cron",
       entityId: null,
-      details: { userCount: batches.length, notificationCount: totalNotifications },
+      details: {
+        userCount: batches.length,
+        notificationCount: totalNotifications,
+      },
     });
     this.logger.log(
       `digest run: ${batches.length} users / ${totalNotifications} notifications`,
@@ -3344,7 +3652,9 @@ describe("DigestEmailCron", () => {
     repo.findDigestPendingByUser.mockResolvedValue([]);
     await cron.handleDigestRun();
     expect(audit.log).toHaveBeenCalledWith(
-      expect.objectContaining({ action: expect.stringContaining("digest_email_batch_run") }),
+      expect.objectContaining({
+        action: expect.stringContaining("digest_email_batch_run"),
+      }),
     );
   });
 
@@ -3377,6 +3687,7 @@ git commit -m "feat(api): DigestEmailCron — daily 08:00 Asia/Manila batch"
 ### Task 18: NotificationsRetentionCron
 
 **Files:**
+
 - Create: `apps/api/src/cron/notifications-retention.cron.ts`
 - Create: `apps/api/src/cron/__tests__/notifications-retention.cron.spec.ts`
 - Modify: `apps/api/src/cron/cron.module.ts`
@@ -3417,7 +3728,9 @@ export class NotificationsRetentionCron {
       entityId: null,
       details: { deleted, cutoffIso: cutoff.toISOString() },
     });
-    this.logger.log(`retention run: deleted ${deleted} rows older than ${cutoff.toISOString()}`);
+    this.logger.log(
+      `retention run: deleted ${deleted} rows older than ${cutoff.toISOString()}`,
+    );
     return { deleted };
   }
 }
@@ -3482,6 +3795,7 @@ git commit -m "feat(api): NotificationsRetentionCron — daily 03:00 90-day dele
 ### Task 19: InterviewReminderCron
 
 **Files:**
+
 - Create: `apps/api/src/cron/interview-reminder.cron.ts`
 - Create: `apps/api/src/cron/__tests__/interview-reminder.cron.spec.ts`
 - Modify: `apps/api/src/cron/cron.module.ts`
@@ -3626,8 +3940,24 @@ describe("InterviewReminderCron", () => {
 
   it("emits a notification and marks reminder_sent_at for each due interview", async () => {
     interviews.findRemindersDue.mockResolvedValue([
-      { id: "i1", applicationId: "a1", candidateId: "c1", jobTitle: "Engineer", companyName: "ACME", startTime: new Date(), format: "video" },
-      { id: "i2", applicationId: "a2", candidateId: "c2", jobTitle: "PM", companyName: "ACME", startTime: new Date(), format: "phone" },
+      {
+        id: "i1",
+        applicationId: "a1",
+        candidateId: "c1",
+        jobTitle: "Engineer",
+        companyName: "ACME",
+        startTime: new Date(),
+        format: "video",
+      },
+      {
+        id: "i2",
+        applicationId: "a2",
+        candidateId: "c2",
+        jobTitle: "PM",
+        companyName: "ACME",
+        startTime: new Date(),
+        format: "phone",
+      },
     ]);
     const result = await cron.handleRun();
     expect(notifications.emit).toHaveBeenCalledTimes(2);
@@ -3661,6 +3991,7 @@ git commit -m "feat(api): InterviewReminderCron — hourly 24h reminder with ded
 ### Task 20: OfferExpiryReminderCron
 
 Mirror Task 19's structure for offers:
+
 - Add `findExpiryRemindersDue()` and `markExpiryReminderSent()` to `OffersRepository`
 - Create the cron emitting `offer_expiring_soon`
 - Test with mocked repo + service
@@ -3801,8 +4132,22 @@ describe("OfferExpiryReminderCron", () => {
 
   it("emits offer_expiring_soon and marks expiry_reminder_sent_at for each due offer", async () => {
     offers.findExpiryRemindersDue.mockResolvedValue([
-      { id: "o1", applicationId: "a1", candidateId: "c1", jobTitle: "Engineer", companyName: "ACME", expiresAt: new Date() },
-      { id: "o2", applicationId: "a2", candidateId: "c2", jobTitle: "PM", companyName: "ACME", expiresAt: new Date() },
+      {
+        id: "o1",
+        applicationId: "a1",
+        candidateId: "c1",
+        jobTitle: "Engineer",
+        companyName: "ACME",
+        expiresAt: new Date(),
+      },
+      {
+        id: "o2",
+        applicationId: "a2",
+        candidateId: "c2",
+        jobTitle: "PM",
+        companyName: "ACME",
+        expiresAt: new Date(),
+      },
     ]);
     const result = await cron.handleRun();
     expect(notifications.emit).toHaveBeenCalledTimes(2);
@@ -3818,7 +4163,9 @@ describe("OfferExpiryReminderCron", () => {
     offers.findExpiryRemindersDue.mockResolvedValue([]);
     await cron.handleRun();
     expect(audit.log).toHaveBeenCalledWith(
-      expect.objectContaining({ action: expect.stringContaining("offer_expiry_reminder_run") }),
+      expect.objectContaining({
+        action: expect.stringContaining("offer_expiry_reminder_run"),
+      }),
     );
   });
 
@@ -3846,6 +4193,7 @@ git commit -m "feat(api): OfferExpiryReminderCron — hourly 24h reminder with d
 ### Task 21: InterviewFeedbackDueCron
 
 **Files:**
+
 - Add `findFeedbackDue()` + `markFeedbackDueNotified()` to `InterviewsRepository`
 - Create `apps/api/src/cron/interview-feedback-due.cron.ts`
 - Create test
@@ -3931,7 +4279,10 @@ export class InterviewFeedbackDueCron {
         });
         await this.interviews.markFeedbackDueNotified(i.id);
       } catch (err) {
-        this.logger.error(`feedback-due emit failed for interview ${i.id}`, err);
+        this.logger.error(
+          `feedback-due emit failed for interview ${i.id}`,
+          err,
+        );
       }
     }
     await this.audit.log({
@@ -3984,14 +4335,23 @@ describe("InterviewFeedbackDueCron", () => {
 
   it("emits interview_feedback_due to the recruiter and marks the flag column", async () => {
     interviews.findFeedbackDue.mockResolvedValue([
-      { id: "i1", recruiterId: "r1", candidateId: "c1", candidateName: "Alex", jobTitle: "Engineer" },
+      {
+        id: "i1",
+        recruiterId: "r1",
+        candidateId: "c1",
+        candidateName: "Alex",
+        jobTitle: "Engineer",
+      },
     ]);
     const result = await cron.handleRun();
     expect(notifications.emit).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: "r1",
         eventType: "interview_feedback_due",
-        metadata: expect.objectContaining({ interviewId: "i1", candidateName: "Alex" }),
+        metadata: expect.objectContaining({
+          interviewId: "i1",
+          candidateName: "Alex",
+        }),
       }),
     );
     expect(interviews.markFeedbackDueNotified).toHaveBeenCalledWith("i1");
@@ -4002,7 +4362,9 @@ describe("InterviewFeedbackDueCron", () => {
     interviews.findFeedbackDue.mockResolvedValue([]);
     await cron.handleRun();
     expect(audit.log).toHaveBeenCalledWith(
-      expect.objectContaining({ action: expect.stringContaining("interview_feedback_due_run") }),
+      expect.objectContaining({
+        action: expect.stringContaining("interview_feedback_due_run"),
+      }),
     );
   });
 
@@ -4029,6 +4391,7 @@ git commit -m "feat(api): InterviewFeedbackDueCron — hourly 24h-after-intervie
 ## Phase 7 — Service-layer hookups
 
 > **Pattern for every task in this phase:**
+>
 > 1. Import `NotificationsModule` into the affected feature module.
 > 2. Inject `NotificationsService` into the service.
 > 3. After the existing successful DB write (and after the existing `auditService.log()` if any), call `notifications.emit({ ... })` with the matching event type and metadata.
@@ -4038,6 +4401,7 @@ git commit -m "feat(api): InterviewFeedbackDueCron — hourly 24h-after-intervie
 ### Task 22: Wire applications.service
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.service.ts`
 - Modify: `apps/api/src/modules/applications/applications.module.ts`
 - Modify: `apps/api/src/modules/applications/__tests__/applications.service.spec.ts` (or create if absent)
@@ -4056,6 +4420,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
 - [ ] **Step 2: Inject `NotificationsService` into `ApplicationsService`**
 
 Add to constructor:
+
 ```ts
 import { NotificationsService } from "../notifications/notifications.service";
 // ...
@@ -4140,8 +4505,12 @@ describe("notification side-effects", () => {
       }),
     );
   });
-  it("changeStatus emits application_status_changed to the candidate", async () => {/* ... */});
-  it("withdraw emits candidate_withdrew to the job owner", async () => {/* ... */});
+  it("changeStatus emits application_status_changed to the candidate", async () => {
+    /* ... */
+  });
+  it("withdraw emits candidate_withdrew to the job owner", async () => {
+    /* ... */
+  });
 });
 ```
 
@@ -4160,6 +4529,7 @@ git commit -m "feat(api): emit notifications on application apply/status-change/
 ### Task 23: Wire interviews.service
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 - Modify: `apps/api/src/modules/interviews/interviews.module.ts`
 - Modify: tests
@@ -4217,6 +4587,7 @@ git commit -m "feat(api): emit notifications on interview schedule/cancel"
 ### Task 24: Wire offers.service
 
 **Files:**
+
 - Modify: `apps/api/src/modules/offers/offers.service.ts` + module + tests
 
 - [ ] **Step 1: Import + inject** (same pattern).
@@ -4274,6 +4645,7 @@ git commit -m "feat(api): emit notifications on offer create/accept/decline"
 ### Task 25: Wire bias.service (gated on module presence)
 
 **Files:**
+
 - Modify: `apps/api/src/modules/bias/bias.service.ts` + module + tests
 - Or: skip if no bias module exists yet
 
@@ -4321,6 +4693,7 @@ await this.notifications.emitMany(adminIds, {
 ```
 
 > **Confirm:** the existence of `profiles.findIdsByRole(role)`. If absent, add it to `ProfilesRepository` first:
+>
 > ```ts
 > async findIdsByRole(role: "candidate" | "recruiter" | "admin"): Promise<string[]> {
 >   const rows = await this.db.select({ id: profilesTable.id }).from(profilesTable).where(eq(profilesTable.role, role));
@@ -4342,6 +4715,7 @@ git commit -m "feat(api): emit personal + system notifications on bias flag"
 ### Task 26: Wire auth.service
 
 **Files:**
+
 - Modify: `apps/api/src/modules/auth/auth.service.ts` + module + tests
 
 - [ ] **Step 1: Inject `NotificationsService`**
@@ -4382,6 +4756,7 @@ git commit -m "feat(api): emit notifications on password reset and email verify"
 ### Task 27: Wire invitations.service + match-preview-precompute catch
 
 **Files:**
+
 - Modify: `apps/api/src/modules/invitations/invitations.service.ts`
 - Modify: the match-preview-precompute worker (`MatchPreviewQueueService`)
 
@@ -4455,6 +4830,7 @@ git commit -m "feat(api): emit notifications on invite accept/decline + AI scori
 ### Task 28: Regenerate openapi.json + Orval client
 
 **Files:**
+
 - Regenerate: `apps/api/openapi.json` (or `packages/shared/openapi.json` — check which the project uses)
 - Regenerate: `packages/shared/src/api-client/generated.ts`
 
@@ -4503,6 +4879,7 @@ git commit -m "chore: regenerate openapi.json + Orval client for notifications e
 ### Task 29: Create the nav-item-badge component
 
 **Files:**
+
 - Create: `apps/web/components/layout/nav-item-badge.tsx`
 - Create: `apps/web/components/layout/__tests__/nav-item-badge.spec.tsx`
 
@@ -4555,7 +4932,9 @@ describe("NavItemBadge", () => {
   });
 
   it("renders nothing when data is undefined (loading)", () => {
-    (api.useGetNotificationsUnreadCount as any).mockReturnValue({ data: undefined });
+    (api.useGetNotificationsUnreadCount as any).mockReturnValue({
+      data: undefined,
+    });
     const { container } = wrap(<NavItemBadge />);
     expect(container.textContent).toBe("");
   });
@@ -4604,6 +4983,7 @@ git commit -m "feat(web): NavItemBadge polling unread notification count (99+ ca
 ### Task 30: Add Notifications nav item to portal-sidebar
 
 **Files:**
+
 - Modify: `apps/web/components/layout/portal-sidebar.tsx`
 
 - [ ] **Step 1: Read the current sidebar to confirm the `NavItem` shape**
@@ -4629,12 +5009,15 @@ interface NavItem {
 Find the JSX that renders a single `NavItem`. Add (immediately after the label):
 
 ```tsx
-{item.badge && <item.badge />}
+{
+  item.badge && <item.badge />;
+}
 ```
 
 - [ ] **Step 4: Add the Notifications entry to all three roles' MAIN section**
 
 Import:
+
 ```tsx
 import { Bell } from "lucide-react";
 import { NavItemBadge } from "./nav-item-badge";
@@ -4672,6 +5055,7 @@ git commit -m "feat(web): add Notifications nav entry with badge to all three ro
 ### Task 31: Notification icon map
 
 **Files:**
+
 - Create: `apps/web/components/notifications/notification-icon-map.ts`
 
 - [ ] **Step 1: Create the file**
@@ -4718,7 +5102,9 @@ export const NOTIFICATION_ICONS: Record<NotificationEventType, LucideIcon> = {
   account_login_new_device: ShieldAlert,
 };
 
-export function getNotificationIcon(eventType: NotificationEventType): LucideIcon {
+export function getNotificationIcon(
+  eventType: NotificationEventType,
+): LucideIcon {
   return NOTIFICATION_ICONS[eventType] ?? Bell;
 }
 ```
@@ -4736,6 +5122,7 @@ git commit -m "feat(web): notification event-type → Lucide icon registry"
 ### Task 32: Empty state component
 
 **Files:**
+
 - Create: `apps/web/components/notifications/notifications-empty-state.tsx`
 
 - [ ] **Step 1: Create the component**
@@ -4747,7 +5134,10 @@ interface NotificationsEmptyStateProps {
   tab: "unread" | "all" | "system";
 }
 
-const COPY: Record<NotificationsEmptyStateProps["tab"], { title: string; subtitle: string; Icon: typeof Inbox }> = {
+const COPY: Record<
+  NotificationsEmptyStateProps["tab"],
+  { title: string; subtitle: string; Icon: typeof Inbox }
+> = {
   unread: {
     title: "All caught up",
     subtitle: "No unread notifications.",
@@ -4760,7 +5150,8 @@ const COPY: Record<NotificationsEmptyStateProps["tab"], { title: string; subtitl
   },
   system: {
     title: "No system events",
-    subtitle: "Cross-tenant bias flags, AI scoring failures, and moderation events will appear here.",
+    subtitle:
+      "Cross-tenant bias flags, AI scoring failures, and moderation events will appear here.",
     Icon: Inbox,
   },
 };
@@ -4773,7 +5164,9 @@ export function NotificationsEmptyState({ tab }: NotificationsEmptyStateProps) {
         <Icon className="h-7 w-7 text-[var(--color-muted)]" />
       </div>
       <h3 className="text-lg font-semibold text-[var(--color-ink)]">{title}</h3>
-      <p className="mt-1 max-w-sm text-sm text-[var(--color-muted)]">{subtitle}</p>
+      <p className="mt-1 max-w-sm text-sm text-[var(--color-muted)]">
+        {subtitle}
+      </p>
     </div>
   );
 }
@@ -4792,6 +5185,7 @@ git commit -m "feat(web): NotificationsEmptyState (per-tab copy)"
 ### Task 33: NotificationRow
 
 **Files:**
+
 - Create: `apps/web/components/notifications/notification-row.tsx`
 - Create: `apps/web/components/notifications/__tests__/notification-row.spec.tsx`
 
@@ -4847,8 +5241,12 @@ describe("NotificationRow", () => {
     mutateRead = vi.fn();
     mutateDismiss = vi.fn();
     (nav.useRouter as any).mockReturnValue({ push });
-    (api.usePostNotificationsIdRead as any).mockReturnValue({ mutate: mutateRead });
-    (api.useDeleteNotificationsId as any).mockReturnValue({ mutate: mutateDismiss });
+    (api.usePostNotificationsIdRead as any).mockReturnValue({
+      mutate: mutateRead,
+    });
+    (api.useDeleteNotificationsId as any).mockReturnValue({
+      mutate: mutateDismiss,
+    });
   });
 
   it("shows unread dot when readAt is null", () => {
@@ -4857,7 +5255,11 @@ describe("NotificationRow", () => {
   });
 
   it("hides unread dot when readAt is set", () => {
-    wrap(<NotificationRow row={{ ...baseRow, readAt: new Date().toISOString() }} />);
+    wrap(
+      <NotificationRow
+        row={{ ...baseRow, readAt: new Date().toISOString() }}
+      />,
+    );
     expect(screen.queryByTestId("unread-dot")).not.toBeInTheDocument();
   });
 
@@ -4948,10 +5350,16 @@ export function NotificationRow({ row }: NotificationRowProps) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="truncate text-sm font-semibold text-[var(--color-ink)]">{row.title}</p>
-          <span className="text-xs text-[var(--color-muted)]">{relativeTime(row.createdAt)}</span>
+          <p className="truncate text-sm font-semibold text-[var(--color-ink)]">
+            {row.title}
+          </p>
+          <span className="text-xs text-[var(--color-muted)]">
+            {relativeTime(row.createdAt)}
+          </span>
         </div>
-        <p className="mt-0.5 line-clamp-2 text-sm text-[var(--color-body)]">{row.body}</p>
+        <p className="mt-0.5 line-clamp-2 text-sm text-[var(--color-body)]">
+          {row.body}
+        </p>
       </div>
       <button
         type="button"
@@ -4985,6 +5393,7 @@ git commit -m "feat(web): NotificationRow (icon, title, body, timestamp, unread 
 ### Task 34: Notifications list with infinite scroll
 
 **Files:**
+
 - Create: `apps/web/components/notifications/notifications-list.tsx`
 
 - [ ] **Step 1: Implement the list**
@@ -5017,7 +5426,11 @@ export function NotificationsList({ tab }: NotificationsListProps) {
     const node = sentinelRef.current;
     if (!node) return;
     const obs = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && query.hasNextPage && !query.isFetchingNextPage) {
+      if (
+        entries[0].isIntersecting &&
+        query.hasNextPage &&
+        !query.isFetchingNextPage
+      ) {
         query.fetchNextPage();
       }
     });
@@ -5026,11 +5439,18 @@ export function NotificationsList({ tab }: NotificationsListProps) {
   }, [query]);
 
   if (query.isLoading) {
-    return <div className="py-8 text-center text-sm text-[var(--color-muted)]">Loading…</div>;
+    return (
+      <div className="py-8 text-center text-sm text-[var(--color-muted)]">
+        Loading…
+      </div>
+    );
   }
 
-  const allRows: NotificationItem[] = (query.data?.pages ?? []).flatMap((p) => p.items);
-  const filtered = tab === "system" ? allRows.filter((r) => r.scope === "system") : allRows;
+  const allRows: NotificationItem[] = (query.data?.pages ?? []).flatMap(
+    (p) => p.items,
+  );
+  const filtered =
+    tab === "system" ? allRows.filter((r) => r.scope === "system") : allRows;
 
   if (filtered.length === 0) {
     return <NotificationsEmptyState tab={tab} />;
@@ -5072,6 +5492,7 @@ git commit -m "feat(web): NotificationsList with infinite scroll + intersection 
 ### Task 35: NotificationsPage orchestrator
 
 **Files:**
+
 - Create: `apps/web/components/notifications/notifications-page.tsx`
 - Create: `apps/web/components/notifications/__tests__/notifications-page.spec.tsx`
 
@@ -5108,7 +5529,8 @@ export function NotificationsPage({ role }: NotificationsPageProps) {
     },
   });
 
-  const tabs: Tab[] = role === "admin" ? ["unread", "all", "system"] : ["unread", "all"];
+  const tabs: Tab[] =
+    role === "admin" ? ["unread", "all", "system"] : ["unread", "all"];
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
@@ -5118,7 +5540,8 @@ export function NotificationsPage({ role }: NotificationsPageProps) {
             Notifications
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
-            <span className="font-mono">{unread?.displayCount ?? "0"}</span> unread
+            <span className="font-mono">{unread?.displayCount ?? "0"}</span>{" "}
+            unread
           </p>
         </div>
         {(unread?.count ?? 0) > 0 && (
@@ -5177,7 +5600,9 @@ vi.mock("@aurahire/shared", async () => {
 });
 
 vi.mock("../notifications-list", () => ({
-  NotificationsList: ({ tab }: { tab: string }) => <div data-testid="list">{tab}</div>,
+  NotificationsList: ({ tab }: { tab: string }) => (
+    <div data-testid="list">{tab}</div>
+  ),
 }));
 
 function wrap(ui: React.ReactElement) {
@@ -5216,12 +5641,16 @@ describe("NotificationsPage", () => {
 
   it("admin sees a System tab", () => {
     wrap(<NotificationsPage role="admin" />);
-    expect(screen.getByRole("button", { name: /^system$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^system$/i }),
+    ).toBeInTheDocument();
   });
 
   it("non-admin does not see a System tab", () => {
     wrap(<NotificationsPage role="candidate" />);
-    expect(screen.queryByRole("button", { name: /^system$/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^system$/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("clicking a tab switches the list", () => {
@@ -5246,6 +5675,7 @@ git commit -m "feat(web): NotificationsPage (header, tabs, mark-all-read, role-c
 ### Task 36: Three thin route files
 
 **Files:**
+
 - Create: `apps/web/app/(candidate)/candidate/notifications/page.tsx`
 - Create: `apps/web/app/(recruiter)/recruiter/notifications/page.tsx`
 - Create: `apps/web/app/(admin)/admin/notifications/page.tsx`
@@ -5283,6 +5713,7 @@ git commit -m "feat(web): /[role]/notifications route files for all three portal
 ### Task 37: Rewrite notifications-form.tsx
 
 **Files:**
+
 - Modify: `apps/web/components/settings/notifications-form.tsx` (full rewrite)
 - Create: `apps/web/components/settings/__tests__/notifications-form.spec.tsx`
 
@@ -5328,7 +5759,15 @@ const CATEGORY_LABEL: Record<string, string> = {
   system: "System",
 };
 
-const CATEGORY_ORDER = ["account", "applications", "interviews", "offers", "bias", "team", "system"];
+const CATEGORY_ORDER = [
+  "account",
+  "applications",
+  "interviews",
+  "offers",
+  "bias",
+  "team",
+  "system",
+];
 
 const LEGACY_KEYS: Record<string, string[]> = {
   candidate: ["notif-prefs:candidate"],
@@ -5383,7 +5822,9 @@ export function NotificationsForm({ role }: NotificationsFormProps) {
       arr.push(item);
       map.set(item.category, arr);
     }
-    return CATEGORY_ORDER.filter((c) => map.has(c)).map((c) => [c, map.get(c)!] as const);
+    return CATEGORY_ORDER.filter((c) => map.has(c)).map(
+      (c) => [c, map.get(c)!] as const,
+    );
   }, [prefs]);
 
   return (
@@ -5397,7 +5838,9 @@ export function NotificationsForm({ role }: NotificationsFormProps) {
             {category !== "account" && (
               <button
                 type="button"
-                onClick={() => restore.mutate({ data: { category: category as any } })}
+                onClick={() =>
+                  restore.mutate({ data: { category: category as any } })
+                }
                 className="text-xs text-[var(--color-primary)] hover:underline"
               >
                 Restore defaults
@@ -5437,7 +5880,9 @@ function PreferenceRow({ item }: PreferenceRowProps) {
         { data: { eventType: item.eventType, mode } },
         {
           onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
+            queryClient.invalidateQueries({
+              queryKey: ["notification-preferences"],
+            });
             setPending(null);
           },
           onError: () => setPending(null),
@@ -5449,8 +5894,12 @@ function PreferenceRow({ item }: PreferenceRowProps) {
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-3">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-[var(--color-ink)]">{item.label}</p>
-        <p className="mt-0.5 text-xs text-[var(--color-muted)]">{item.description}</p>
+        <p className="text-sm font-medium text-[var(--color-ink)]">
+          {item.label}
+        </p>
+        <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+          {item.description}
+        </p>
       </div>
       <div className="shrink-0">
         {disabled ? (
@@ -5533,9 +5982,16 @@ describe("NotificationsForm", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     upsertMutate = vi.fn();
     restoreMutate = vi.fn();
-    (api.useGetNotificationPreferences as any).mockReturnValue({ data: mockPrefs, refetch: vi.fn() });
-    (api.usePutNotificationPreferences as any).mockReturnValue({ mutate: upsertMutate });
-    (api.usePostNotificationPreferencesRestoreDefaults as any).mockReturnValue({ mutate: restoreMutate });
+    (api.useGetNotificationPreferences as any).mockReturnValue({
+      data: mockPrefs,
+      refetch: vi.fn(),
+    });
+    (api.usePutNotificationPreferences as any).mockReturnValue({
+      mutate: upsertMutate,
+    });
+    (api.usePostNotificationPreferencesRestoreDefaults as any).mockReturnValue({
+      mutate: restoreMutate,
+    });
   });
 
   afterEach(() => vi.useRealTimers());
@@ -5559,7 +6015,9 @@ describe("NotificationsForm", () => {
   it("Restore defaults calls the right endpoint", () => {
     wrap(<NotificationsForm role="candidate" />);
     fireEvent.click(screen.getByRole("button", { name: /Restore defaults/i }));
-    expect(restoreMutate).toHaveBeenCalledWith({ data: { category: "applications" } });
+    expect(restoreMutate).toHaveBeenCalledWith({
+      data: { category: "applications" },
+    });
   });
 
   it("does not show Restore defaults for the account category", () => {
@@ -5568,7 +6026,9 @@ describe("NotificationsForm", () => {
       refetch: vi.fn(),
     });
     wrap(<NotificationsForm role="candidate" />);
-    expect(screen.queryByRole("button", { name: /Restore defaults/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Restore defaults/i }),
+    ).not.toBeInTheDocument();
   });
 });
 ```
@@ -5593,6 +6053,7 @@ git commit -m "feat(web): rewrite notifications-form with API backing + 3-mode p
 ### Task 38: Final build + manual smoke checklist
 
 **Files:**
+
 - None (verification only)
 
 - [ ] **Step 1: Full type-check across all packages**
@@ -5603,6 +6064,7 @@ pnpm --filter @aurahire/shared type-check
 pnpm --filter api type-check
 pnpm --filter web type-check
 ```
+
 Expected: every command exits 0.
 
 - [ ] **Step 2: Full lint**
@@ -5612,6 +6074,7 @@ pnpm --filter api lint
 pnpm --filter web lint
 pnpm --filter @aurahire/shared lint
 ```
+
 Expected: every command exits 0.
 
 - [ ] **Step 3: Full backend test suite**
@@ -5619,6 +6082,7 @@ Expected: every command exits 0.
 ```bash
 pnpm --filter api test
 ```
+
 Expected: all tests pass.
 
 - [ ] **Step 4: Full frontend test suite**
@@ -5626,6 +6090,7 @@ Expected: all tests pass.
 ```bash
 pnpm --filter web test
 ```
+
 Expected: all tests pass.
 
 - [ ] **Step 5: Production builds**
@@ -5634,6 +6099,7 @@ Expected: all tests pass.
 pnpm --filter api build
 pnpm --filter web build
 ```
+
 Expected: both builds succeed.
 
 - [ ] **Step 6: Hand off to the human for manual smoke verification**

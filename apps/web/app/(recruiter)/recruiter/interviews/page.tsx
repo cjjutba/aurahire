@@ -138,7 +138,9 @@ interface PageProps {
   }>;
 }
 
-export default async function RecruiterInterviewsPage({ searchParams }: PageProps) {
+export default async function RecruiterInterviewsPage({
+  searchParams,
+}: PageProps) {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
@@ -209,7 +211,12 @@ export default async function RecruiterInterviewsPage({ searchParams }: PageProp
       </header>
 
       {/* Toolbar */}
-      <InterviewsToolbarClient q={q} status={status} format={format} sort={sort} />
+      <InterviewsToolbarClient
+        q={q}
+        status={status}
+        format={format}
+        sort={sort}
+      />
 
       {/* Table or empty state */}
       {rows.length === 0 ? (
@@ -329,7 +336,9 @@ export default async function RecruiterInterviewsPage({ searchParams }: PageProp
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-hairline-soft)] bg-[var(--color-surface-soft)] px-2.5 py-1 text-xs font-medium ${statusStyle.text}`}
                       >
-                        <span className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`} />
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`}
+                        />
                         {statusStyle.label}
                       </span>
                     </td>

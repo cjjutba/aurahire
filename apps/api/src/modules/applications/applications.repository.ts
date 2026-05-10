@@ -1,5 +1,14 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, count, desc, eq, isNotNull, ne, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  isNotNull,
+  ne,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { PgTransaction } from "drizzle-orm/pg-core";
 import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
@@ -31,7 +40,10 @@ export class ApplicationsRepository {
   constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient) {}
 
   async insert(data: NewApplication): Promise<Application> {
-    const [row] = await this.db.insert(applicationsTable).values(data).returning();
+    const [row] = await this.db
+      .insert(applicationsTable)
+      .values(data)
+      .returning();
     if (!row) throw new Error("Application insert failed");
     return row;
   }
@@ -65,7 +77,10 @@ export class ApplicationsRepository {
    * the offer accept / decline / hire flows to serialise writers so that
    * the application's status + the latest offer's status stay consistent.
    */
-  async findByIdForUpdate(tx: ApplicationsTx, id: string): Promise<Application | null> {
+  async findByIdForUpdate(
+    tx: ApplicationsTx,
+    id: string,
+  ): Promise<Application | null> {
     const [row] = await tx
       .select()
       .from(applicationsTable)
@@ -92,7 +107,10 @@ export class ApplicationsRepository {
         matchScore: matchScoresTable,
       })
       .from(applicationsTable)
-      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
+      .leftJoin(
+        matchScoresTable,
+        eq(matchScoresTable.applicationId, applicationsTable.id),
+      )
       .where(eq(applicationsTable.jobId, jobId))
       .orderBy(
         sql`COALESCE(${matchScoresTable.overallScore}, -1) DESC`,
@@ -142,7 +160,10 @@ export class ApplicationsRepository {
     return Number(row?.value ?? 0);
   }
 
-  async findExisting(candidateId: string, jobId: string): Promise<Application | null> {
+  async findExisting(
+    candidateId: string,
+    jobId: string,
+  ): Promise<Application | null> {
     const [row] = await this.db
       .select()
       .from(applicationsTable)
@@ -237,9 +258,9 @@ export class ApplicationsRepository {
     range: "7d" | "30d" | "90d" | "all",
   ): Promise<{
     activeJobs: number;
-    totalApplications: number;       // alias for totalApps (deprecated, keep for one release)
+    totalApplications: number; // alias for totalApps (deprecated, keep for one release)
     totalApps: number;
-    pendingReviews: number;          // alias for pendingReview (deprecated, keep for one release)
+    pendingReviews: number; // alias for pendingReview (deprecated, keep for one release)
     pendingReview: number;
     inInterview: number;
     offered: number;
@@ -311,16 +332,18 @@ export class ApplicationsRepository {
 
     // Drizzle's postgres-js wrapper returns rows directly as the awaited array
     // (matches the pattern in admin-stats.repository.ts: `result[0]`).
-    const row = (result as Array<{
-      active_jobs: number;
-      total: number;
-      pending: number;
-      interview: number;
-      offered: number;
-      hired: number;
-      avg_score: number | null;
-      bias_flags: number;
-    }>)[0];
+    const row = (
+      result as Array<{
+        active_jobs: number;
+        total: number;
+        pending: number;
+        interview: number;
+        offered: number;
+        hired: number;
+        avg_score: number | null;
+        bias_flags: number;
+      }>
+    )[0];
 
     if (!row) {
       return {
@@ -365,14 +388,24 @@ export class ApplicationsRepository {
   async companyTopJobsByApplications(
     companyId: string,
     limit: number,
-  ): Promise<Array<{ jobId: string; title: string; status: string; applicationCount: number; avgScore: number }>> {
+  ): Promise<
+    Array<{
+      jobId: string;
+      title: string;
+      status: string;
+      applicationCount: number;
+      avgScore: number;
+    }>
+  > {
     const rows = await this.db
       .select({
         jobId: jobsTable.id,
         title: jobsTable.title,
         status: jobsTable.status,
         applicationCount: sql<number>`count(distinct ${applicationsTable.id})::int`,
-        avgScore: sql<number | null>`avg(${matchScoresTable.overallScore})::float`,
+        avgScore: sql<
+          number | null
+        >`avg(${matchScoresTable.overallScore})::float`,
       })
       .from(jobsTable)
       .leftJoin(applicationsTable, eq(applicationsTable.jobId, jobsTable.id))
@@ -405,7 +438,10 @@ export class ApplicationsRepository {
     return rows;
   }
 
-  async setShortlistedAt(applicationId: string, value: Date | null): Promise<Application> {
+  async setShortlistedAt(
+    applicationId: string,
+    value: Date | null,
+  ): Promise<Application> {
     const [row] = await this.db
       .update(applicationsTable)
       .set({ shortlistedAt: value, updatedAt: new Date() })
@@ -462,8 +498,14 @@ export class ApplicationsRepository {
       .select({ count: count() })
       .from(applicationsTable)
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
-      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .leftJoin(
+        matchScoresTable,
+        eq(matchScoresTable.applicationId, applicationsTable.id),
+      )
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .where(where);
     const total = countRows[0]?.count ?? 0;
 
@@ -491,8 +533,14 @@ export class ApplicationsRepository {
       })
       .from(applicationsTable)
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
-      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .leftJoin(
+        matchScoresTable,
+        eq(matchScoresTable.applicationId, applicationsTable.id),
+      )
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .where(where)
       .orderBy(orderClause)
       .limit(options.limit)
@@ -554,8 +602,14 @@ export class ApplicationsRepository {
       .select({ count: count() })
       .from(applicationsTable)
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
-      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .leftJoin(
+        matchScoresTable,
+        eq(matchScoresTable.applicationId, applicationsTable.id),
+      )
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .where(where);
     const total = countRows[0]?.count ?? 0;
 
@@ -583,8 +637,14 @@ export class ApplicationsRepository {
       })
       .from(applicationsTable)
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
-      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .leftJoin(
+        matchScoresTable,
+        eq(matchScoresTable.applicationId, applicationsTable.id),
+      )
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .where(where)
       .orderBy(orderClause)
       .limit(options.limit)
@@ -625,8 +685,14 @@ export class ApplicationsRepository {
       })
       .from(applicationsTable)
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
-      .leftJoin(matchScoresTable, eq(matchScoresTable.applicationId, applicationsTable.id))
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
+      .leftJoin(
+        matchScoresTable,
+        eq(matchScoresTable.applicationId, applicationsTable.id),
+      )
       .where(eq(jobsTable.companyId, companyId))
       .orderBy(desc(applicationsTable.appliedAt))
       .limit(limit);

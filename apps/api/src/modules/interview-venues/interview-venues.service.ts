@@ -4,7 +4,11 @@ import {
   Logger,
   NotFoundException,
 } from "@nestjs/common";
-import type { AuthUser, InterviewVenueInput, InterviewVenuePartialInput } from "@aurahire/shared";
+import type {
+  AuthUser,
+  InterviewVenueInput,
+  InterviewVenuePartialInput,
+} from "@aurahire/shared";
 
 import { AuditService, AUDIT_ACTIONS } from "../../audit";
 import { CacheService } from "../../cache";
@@ -28,7 +32,10 @@ export class InterviewVenuesService {
 
   private requireRecruiterOrAdmin(user: AuthUser): void {
     if (user.role !== "recruiter" && user.role !== "admin") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
   }
 
@@ -89,7 +96,10 @@ export class InterviewVenuesService {
 
     const existing = await this.repo.findById(venueId);
     if (!existing) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Venue not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Venue not found",
+      });
     }
     const companyId = existing.companyId;
 
@@ -127,7 +137,10 @@ export class InterviewVenuesService {
 
     const existing = await this.repo.findById(venueId);
     if (!existing) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Venue not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Venue not found",
+      });
     }
 
     await this.repo.delete(venueId);
@@ -155,7 +168,10 @@ export class InterviewVenuesService {
 
     const existing = await this.repo.findById(venueId);
     if (!existing) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Venue not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Venue not found",
+      });
     }
 
     // Clear all other defaults for this company, keeping this venue exempt.
@@ -209,8 +225,14 @@ export class InterviewVenuesService {
       interviewerName: row.interviewerName ?? null,
       interviewerTitle: row.interviewerTitle ?? null,
       isDefault: row.isDefault,
-      createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
-      updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : row.updatedAt,
+      createdAt:
+        row.createdAt instanceof Date
+          ? row.createdAt.toISOString()
+          : row.createdAt,
+      updatedAt:
+        row.updatedAt instanceof Date
+          ? row.updatedAt.toISOString()
+          : row.updatedAt,
     };
   }
 

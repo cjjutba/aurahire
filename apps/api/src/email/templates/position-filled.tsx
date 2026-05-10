@@ -47,7 +47,9 @@ export function PositionFilledEmail({
           }}
         >
           <EmailBrandHeader company={company} />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             Update on your application
           </Heading>
           <Section>

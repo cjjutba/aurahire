@@ -86,19 +86,20 @@ export function ActionModalsClient({ action, onClose }: Props) {
 
   async function suspend() {
     if (reason.trim().length < 10) {
-      toastApiError(null, "Check your input", "Reason must be at least 10 characters.");
+      toastApiError(
+        null,
+        "Check your input",
+        "Reason must be at least 10 characters.",
+      );
       return;
     }
     setWorking(true);
     try {
-      const res = await authedFetch(
-        `/api/v1/admin/users/${user.id}/suspend`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reason: reason.trim() }),
-        },
-      );
+      const res = await authedFetch(`/api/v1/admin/users/${user.id}/suspend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as {
           message?: string;
@@ -162,7 +163,11 @@ export function ActionModalsClient({ action, onClose }: Props) {
 
   async function deleteUser() {
     if (emailConfirm !== user.email) {
-      toastApiError(null, "Check your input", "Email confirmation does not match.");
+      toastApiError(
+        null,
+        "Check your input",
+        "Email confirmation does not match.",
+      );
       return;
     }
     setWorking(true);
@@ -203,7 +208,10 @@ export function ActionModalsClient({ action, onClose }: Props) {
       if (body.data.emailSent) {
         toastSuccess("Reset link sent");
       } else {
-        toastSuccess("Reset link ready", "Email delivery failed. Copy the URL below to deliver manually.");
+        toastSuccess(
+          "Reset link ready",
+          "Email delivery failed. Copy the URL below to deliver manually.",
+        );
       }
     } finally {
       setWorking(false);
@@ -223,8 +231,8 @@ export function ActionModalsClient({ action, onClose }: Props) {
             <DialogHeader>
               <DialogTitle>Suspend {user.fullName}</DialogTitle>
               <DialogDescription>
-                The user will lose access immediately. Reason is captured in
-                the audit log.
+                The user will lose access immediately. Reason is captured in the
+                audit log.
               </DialogDescription>
             </DialogHeader>
             <Textarea
@@ -327,8 +335,8 @@ export function ActionModalsClient({ action, onClose }: Props) {
             <DialogHeader>
               <DialogTitle>Delete {user.fullName}?</DialogTitle>
               <DialogDescription>
-                This soft-deletes the profile (status=&apos;deleted&apos;) and removes
-                the auth.users row. Their data persists for audit. Type{" "}
+                This soft-deletes the profile (status=&apos;deleted&apos;) and
+                removes the auth.users row. Their data persists for audit. Type{" "}
                 <strong>{user.email}</strong> to confirm.
               </DialogDescription>
             </DialogHeader>

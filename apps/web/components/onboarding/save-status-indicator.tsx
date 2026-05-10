@@ -11,7 +11,9 @@ interface Props {
 export function SaveStatusIndicator({ status, onRetry, className }: Props) {
   const cls = [
     "flex items-center gap-1.5 text-xs",
-    status === "error" ? "text-[var(--color-status-danger)]" : "text-[var(--color-muted)]",
+    status === "error"
+      ? "text-[var(--color-status-danger)]"
+      : "text-[var(--color-muted)]",
     className,
   ]
     .filter(Boolean)

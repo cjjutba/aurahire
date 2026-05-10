@@ -7,7 +7,12 @@ import {
   Param,
   Post,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 
 import { Roles } from "../common/decorators/roles.decorator";
 
@@ -99,7 +104,17 @@ export class CronAdminController {
         throw new NotFoundException({
           code: "UNKNOWN_CRON",
           message: `Unknown cron name: ${cronName}`,
-          available: ["expire-offers", "archive-jobs", "cleanup-unverified", "digest-email", "interview-autocomplete", "notifications-retention", "interview-reminder", "offer-expiry-reminder", "interview-feedback-due"],
+          available: [
+            "expire-offers",
+            "archive-jobs",
+            "cleanup-unverified",
+            "digest-email",
+            "interview-autocomplete",
+            "notifications-retention",
+            "interview-reminder",
+            "offer-expiry-reminder",
+            "interview-feedback-due",
+          ],
         });
     }
 

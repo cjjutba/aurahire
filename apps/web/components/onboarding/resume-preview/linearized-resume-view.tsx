@@ -14,10 +14,17 @@ interface Props {
  * Fallback for image-only PDFs / failed PDF.js loads / DOCX without a canonical PDF.
  * Renders rawText as styled HTML with substring-based highlights.
  */
-export function LinearizedResumeView({ rawText, highlights, activeCategories }: Props) {
+export function LinearizedResumeView({
+  rawText,
+  highlights,
+  activeCategories,
+}: Props) {
   const { focusField, hoveredFieldId } = useHighlightContext();
 
-  const segments = useMemo(() => buildSegments(rawText, highlights), [rawText, highlights]);
+  const segments = useMemo(
+    () => buildSegments(rawText, highlights),
+    [rawText, highlights],
+  );
 
   return (
     <div className="rounded-lg border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 text-xs leading-6 text-[var(--color-body)]">
@@ -35,7 +42,9 @@ export function LinearizedResumeView({ rawText, highlights, activeCategories }: 
                 backgroundColor: "rgba(37, 99, 235, 0.16)",
                 color: "var(--color-primary)",
                 fontWeight: 600,
-                opacity: activeCategories.includes(seg.highlight.category) ? 1 : 0.4,
+                opacity: activeCategories.includes(seg.highlight.category)
+                  ? 1
+                  : 0.4,
                 outline:
                   hoveredFieldId === seg.highlight.fieldRef
                     ? "2px solid var(--color-primary)"
@@ -63,10 +72,12 @@ interface Segment {
 }
 
 function buildSegments(rawText: string, highlights: Highlight[]): Segment[] {
-  const matches: Array<{ start: number; end: number; highlight: Highlight }> = [];
+  const matches: Array<{ start: number; end: number; highlight: Highlight }> =
+    [];
   for (const h of highlights) {
     const idx = rawText.toLowerCase().indexOf(h.source.toLowerCase());
-    if (idx >= 0) matches.push({ start: idx, end: idx + h.source.length, highlight: h });
+    if (idx >= 0)
+      matches.push({ start: idx, end: idx + h.source.length, highlight: h });
   }
   matches.sort((a, b) => a.start - b.start);
 
@@ -74,8 +85,12 @@ function buildSegments(rawText: string, highlights: Highlight[]): Segment[] {
   let cursor = 0;
   for (const m of matches) {
     if (m.start < cursor) continue; // overlapping, skip
-    if (m.start > cursor) segments.push({ text: rawText.slice(cursor, m.start) });
-    segments.push({ text: rawText.slice(m.start, m.end), highlight: m.highlight });
+    if (m.start > cursor)
+      segments.push({ text: rawText.slice(cursor, m.start) });
+    segments.push({
+      text: rawText.slice(m.start, m.end),
+      highlight: m.highlight,
+    });
     cursor = m.end;
   }
   if (cursor < rawText.length) segments.push({ text: rawText.slice(cursor) });

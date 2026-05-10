@@ -9,7 +9,12 @@ import {
   Post,
   Req,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import type { FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
@@ -35,7 +40,9 @@ export class CandidateProfilesController {
   @Roles("candidate")
   @ApiOperation({ summary: "Get the authenticated candidate's full profile" })
   @ApiResponse({ status: 200, type: CandidateProfileEnvelopeDto })
-  async getMe(@CurrentUser() user: AuthUser): Promise<CandidateProfileEnvelopeDto> {
+  async getMe(
+    @CurrentUser() user: AuthUser,
+  ): Promise<CandidateProfileEnvelopeDto> {
     const data = await this.service.getMe(user);
 
     // Phase 1 Task 12 — backfill guard. Legacy candidates (completed
@@ -55,14 +62,21 @@ export class CandidateProfilesController {
   @Patch("personal")
   @HttpCode(HttpStatus.OK)
   @Roles("candidate")
-  @ApiOperation({ summary: "Onboarding step 2: personal info (name, phone, location, headline)" })
+  @ApiOperation({
+    summary:
+      "Onboarding step 2: personal info (name, phone, location, headline)",
+  })
   @ApiResponse({ status: 200, type: CandidateProfileEnvelopeDto })
   async updatePersonal(
     @CurrentUser() user: AuthUser,
     @Body() dto: UpdateCandidatePersonalDto,
     @Req() req: FastifyRequest,
   ): Promise<CandidateProfileEnvelopeDto> {
-    const data = await this.service.updatePersonal(user, dto, this.requestMeta(req));
+    const data = await this.service.updatePersonal(
+      user,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -76,7 +90,11 @@ export class CandidateProfilesController {
     @Body() dto: UpdateCandidatePreferencesDto,
     @Req() req: FastifyRequest,
   ): Promise<CandidateProfileEnvelopeDto> {
-    const data = await this.service.updatePreferences(user, dto, this.requestMeta(req));
+    const data = await this.service.updatePreferences(
+      user,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -109,7 +127,10 @@ export class CandidateProfilesController {
     @CurrentUser() user: AuthUser,
     @Req() req: FastifyRequest,
   ): Promise<CompleteOnboardingEnvelopeDto> {
-    const data = await this.service.completeOnboarding(user, this.requestMeta(req));
+    const data = await this.service.completeOnboarding(
+      user,
+      this.requestMeta(req),
+    );
     return { data };
   }
 

@@ -5,16 +5,19 @@
 **Goal:** Add a Socket.io-based real-time event channel between the NestJS backend and the Next.js frontend so that three thesis-defining surfaces (recruiter pipeline, candidate application status, admin audit feed) update without page refreshes — using semantic events emitted by the backend on every consequential mutation.
 
 **Architecture:**
+
 - **Backend:** New `apps/api/src/realtime/` module (global) exporting an injectable `EventsService`. A `RealtimeGateway` (`@nestjs/websockets` + `@nestjs/platform-socket.io`) terminates connections, validates the Supabase JWT in the handshake using the same `jose` JWKS verifier as `SupabaseAuthGuard` (extracted into a shared util), and manages four room types (`user:{id}`, `recruiter:{id}`, `job:{id}`, `role:admin`). Mutating services (`ApplicationsService`, `InterviewsService`, `OffersService`, `BiasService`, `AuditService`) inject `EventsService` and call `emit*()` after a successful DB write. A `@socket.io/redis-adapter` is wired against the existing `REDIS_URL` so a future second Railway instance does not require re-architecture.
 - **Frontend:** New `apps/web/lib/realtime/` library + `<SocketProvider>` mounted inside `<QueryProvider>` in the root layout. Two hooks — `useRealtimeChannel(event, handler)` for typed event listeners and `useRealtimeRoom('job', id)` for resource-scoped subscriptions. Event handlers call `queryClient.invalidateQueries` on the relevant keys from `apps/web/lib/query/keys.ts` (Pattern A — invalidate everywhere; surgical patches deferred). On JWT refresh the socket disconnects and reconnects with the new token; on reconnect, the handler also invalidates queries to recover from any missed events.
 
 **Tech Stack:**
+
 - **Backend:** NestJS 10, `@nestjs/websockets`, `@nestjs/platform-socket.io`, `socket.io`, `@socket.io/redis-adapter`, `ioredis` (already a dependency), `jose` (already a dependency for JWT verification).
 - **Frontend:** `socket.io-client`, `@tanstack/react-query` (already at v5).
 - **Shared:** Typed event names + payload schemas in `packages/shared/src/realtime/` (Zod-derived).
 - **Verification:** No automated test harness for WebSockets in this repo (matches `redis-caching-strategy` plan precedent). Per-task verification = `pnpm tsc --noEmit` passes + `pnpm lint` passes. Per-phase verification = `pnpm build` passes + a manual smoke checklist the human runs (see Phase 6).
 
 **Hard rules from CLAUDE.md that govern this plan:**
+
 - Claude does NOT run dev servers, Docker commands, DB mutations, or deploys. The human runs `pnpm dev` and verifies all real-time behavior.
 - Claude does NOT make billed external calls — N/A here, no AI calls in this plan.
 - Claude does NOT run destructive or history-rewriting git commands. Per-task commits use `git add <specific paths>` + `git commit` (never `--amend`, never `--no-verify`).
@@ -30,49 +33,49 @@
 
 ## File Structure
 
-| Path | Role | Touch |
-|---|---|---|
-| `apps/api/src/common/auth/verify-supabase-jwt.ts` | Extracted JWKS verify util — pure function shared by `SupabaseAuthGuard` and the WS gateway | Create |
-| `apps/api/src/common/guards/supabase-auth.guard.ts` | Replace inline verify with the new util | Modify |
-| `apps/api/src/realtime/realtime.module.ts` | `@Global()` module exporting `EventsService` | Create |
-| `apps/api/src/realtime/realtime.gateway.ts` | `@WebSocketGateway`; handles connection auth, room joins, `subscribe`/`unsubscribe` messages | Create |
-| `apps/api/src/realtime/events.service.ts` | Injectable; `emitApplicationCreated`, `emitApplicationStatusChanged`, `emitInterviewScheduled`, `emitOfferSent`, `emitAuditEntry`, `emitBiasFlagCreated` | Create |
-| `apps/api/src/realtime/ws-jwt.util.ts` | Wraps `verify-supabase-jwt` + profile lookup for handshake auth | Create |
-| `apps/api/src/realtime/room.constants.ts` | Room-key builders + event-name constants | Create |
-| `apps/api/src/realtime/redis-adapter.provider.ts` | Pub/sub ioredis clients + Socket.io adapter wiring | Create |
-| `apps/api/src/realtime/realtime-rate-limit.ts` | Per-socket subscribe-message rate limiter | Create |
-| `apps/api/src/realtime/index.ts` | Barrel | Create |
-| `apps/api/src/main.ts` | `app.useWebSocketAdapter(...)` + Redis adapter wiring | Modify |
-| `apps/api/src/app.module.ts` | Import `RealtimeModule` | Modify |
-| `apps/api/src/modules/applications/applications.service.ts` | Inject `EventsService`; emit `application.created` after `create()`, `application.status_changed` after `updateStatus()` | Modify |
-| `apps/api/src/modules/interviews/interviews.service.ts` | Inject `EventsService`; emit `interview.scheduled` after `schedule()` | Modify |
-| `apps/api/src/modules/offers/offers.service.ts` | Inject `EventsService`; emit `offer.sent` after `create()` | Modify |
-| `apps/api/src/modules/bias/bias.service.ts` | Inject `EventsService`; emit `bias.flag_created` after the flag-recording method commits | Modify |
-| `apps/api/src/audit/audit.service.ts` | Inject `EventsService`; emit `audit.entry` after `log()` insert | Modify |
-| `apps/api/src/modules/applications/applications.module.ts`, `interviews.module.ts`, `offers.module.ts`, `bias/bias.module.ts`, `audit/audit.module.ts` | No imports needed (RealtimeModule is `@Global()`) | No change expected |
-| `apps/api/package.json` | Add `@nestjs/websockets`, `@nestjs/platform-socket.io`, `@socket.io/redis-adapter` | Modify |
-| `packages/shared/src/realtime/events.ts` | Typed event names + Zod payload schemas | Create |
-| `packages/shared/src/realtime/index.ts` | Barrel | Create |
-| `packages/shared/src/index.ts` | Re-export `realtime/*` | Modify |
-| `apps/web/lib/realtime/client.ts` | `makeSocket(getToken)` factory + status enum | Create |
-| `apps/web/lib/realtime/events.ts` | Re-exports event types from `@aurahire/shared/realtime` | Create |
-| `apps/web/lib/realtime/rooms.ts` | Resource-scoped subscribe helpers | Create |
-| `apps/web/lib/realtime/index.ts` | Barrel | Create |
-| `apps/web/components/providers/socket-provider.tsx` | React context, lifecycle, JWT-refresh handling | Create |
-| `apps/web/hooks/use-realtime-channel.ts` | Subscribes to a single event for the lifetime of the component | Create |
-| `apps/web/hooks/use-realtime-room.ts` | Subscribes/unsubscribes a resource-scoped room | Create |
-| `apps/web/app/layout.tsx` | Mount `<SocketProvider>` inside `<QueryProvider>` | Modify |
-| `apps/web/app/(recruiter)/recruiter/jobs/[id]/_applications-tab-client.tsx` (or equivalent client component on that page) | Add `useRealtimeRoom('job', id)` + invalidate handlers | Modify |
-| `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx` | Add `useRealtimeChannel` for recruiter feed events | Modify |
-| `apps/web/app/(candidate)/candidate/applications/[id]/page.tsx` and its client component | Add `useRealtimeChannel` for `application.status_changed`, `interview.scheduled`, `offer.sent` | Modify |
-| `apps/web/app/(candidate)/candidate/applications/page.tsx` client list | Same set of channels | Modify |
-| `apps/web/app/(candidate)/candidate/interviews/page.tsx` client list | `interview.scheduled` channel | Modify |
-| `apps/web/app/(admin)/admin/audit/page.tsx` client component | `audit.entry` channel | Modify |
-| `apps/web/app/(admin)/admin/page.tsx` Recent Audit Events widget client | `audit.entry` channel | Modify |
-| `apps/web/app/(admin)/admin/bias-monitor/page.tsx` client | `bias.flag_created` channel | Modify |
-| `apps/web/components/admin/connection-status-indicator.tsx` | Tiny status badge, admin-only (Phase 5 polish) | Create |
-| `apps/web/components/layout/portal-sidebar.tsx` | Conditionally render the indicator for admin role | Modify |
-| `apps/web/package.json` | Add `socket.io-client` | Modify |
+| Path                                                                                                                                                   | Role                                                                                                                                                     | Touch              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `apps/api/src/common/auth/verify-supabase-jwt.ts`                                                                                                      | Extracted JWKS verify util — pure function shared by `SupabaseAuthGuard` and the WS gateway                                                              | Create             |
+| `apps/api/src/common/guards/supabase-auth.guard.ts`                                                                                                    | Replace inline verify with the new util                                                                                                                  | Modify             |
+| `apps/api/src/realtime/realtime.module.ts`                                                                                                             | `@Global()` module exporting `EventsService`                                                                                                             | Create             |
+| `apps/api/src/realtime/realtime.gateway.ts`                                                                                                            | `@WebSocketGateway`; handles connection auth, room joins, `subscribe`/`unsubscribe` messages                                                             | Create             |
+| `apps/api/src/realtime/events.service.ts`                                                                                                              | Injectable; `emitApplicationCreated`, `emitApplicationStatusChanged`, `emitInterviewScheduled`, `emitOfferSent`, `emitAuditEntry`, `emitBiasFlagCreated` | Create             |
+| `apps/api/src/realtime/ws-jwt.util.ts`                                                                                                                 | Wraps `verify-supabase-jwt` + profile lookup for handshake auth                                                                                          | Create             |
+| `apps/api/src/realtime/room.constants.ts`                                                                                                              | Room-key builders + event-name constants                                                                                                                 | Create             |
+| `apps/api/src/realtime/redis-adapter.provider.ts`                                                                                                      | Pub/sub ioredis clients + Socket.io adapter wiring                                                                                                       | Create             |
+| `apps/api/src/realtime/realtime-rate-limit.ts`                                                                                                         | Per-socket subscribe-message rate limiter                                                                                                                | Create             |
+| `apps/api/src/realtime/index.ts`                                                                                                                       | Barrel                                                                                                                                                   | Create             |
+| `apps/api/src/main.ts`                                                                                                                                 | `app.useWebSocketAdapter(...)` + Redis adapter wiring                                                                                                    | Modify             |
+| `apps/api/src/app.module.ts`                                                                                                                           | Import `RealtimeModule`                                                                                                                                  | Modify             |
+| `apps/api/src/modules/applications/applications.service.ts`                                                                                            | Inject `EventsService`; emit `application.created` after `create()`, `application.status_changed` after `updateStatus()`                                 | Modify             |
+| `apps/api/src/modules/interviews/interviews.service.ts`                                                                                                | Inject `EventsService`; emit `interview.scheduled` after `schedule()`                                                                                    | Modify             |
+| `apps/api/src/modules/offers/offers.service.ts`                                                                                                        | Inject `EventsService`; emit `offer.sent` after `create()`                                                                                               | Modify             |
+| `apps/api/src/modules/bias/bias.service.ts`                                                                                                            | Inject `EventsService`; emit `bias.flag_created` after the flag-recording method commits                                                                 | Modify             |
+| `apps/api/src/audit/audit.service.ts`                                                                                                                  | Inject `EventsService`; emit `audit.entry` after `log()` insert                                                                                          | Modify             |
+| `apps/api/src/modules/applications/applications.module.ts`, `interviews.module.ts`, `offers.module.ts`, `bias/bias.module.ts`, `audit/audit.module.ts` | No imports needed (RealtimeModule is `@Global()`)                                                                                                        | No change expected |
+| `apps/api/package.json`                                                                                                                                | Add `@nestjs/websockets`, `@nestjs/platform-socket.io`, `@socket.io/redis-adapter`                                                                       | Modify             |
+| `packages/shared/src/realtime/events.ts`                                                                                                               | Typed event names + Zod payload schemas                                                                                                                  | Create             |
+| `packages/shared/src/realtime/index.ts`                                                                                                                | Barrel                                                                                                                                                   | Create             |
+| `packages/shared/src/index.ts`                                                                                                                         | Re-export `realtime/*`                                                                                                                                   | Modify             |
+| `apps/web/lib/realtime/client.ts`                                                                                                                      | `makeSocket(getToken)` factory + status enum                                                                                                             | Create             |
+| `apps/web/lib/realtime/events.ts`                                                                                                                      | Re-exports event types from `@aurahire/shared/realtime`                                                                                                  | Create             |
+| `apps/web/lib/realtime/rooms.ts`                                                                                                                       | Resource-scoped subscribe helpers                                                                                                                        | Create             |
+| `apps/web/lib/realtime/index.ts`                                                                                                                       | Barrel                                                                                                                                                   | Create             |
+| `apps/web/components/providers/socket-provider.tsx`                                                                                                    | React context, lifecycle, JWT-refresh handling                                                                                                           | Create             |
+| `apps/web/hooks/use-realtime-channel.ts`                                                                                                               | Subscribes to a single event for the lifetime of the component                                                                                           | Create             |
+| `apps/web/hooks/use-realtime-room.ts`                                                                                                                  | Subscribes/unsubscribes a resource-scoped room                                                                                                           | Create             |
+| `apps/web/app/layout.tsx`                                                                                                                              | Mount `<SocketProvider>` inside `<QueryProvider>`                                                                                                        | Modify             |
+| `apps/web/app/(recruiter)/recruiter/jobs/[id]/_applications-tab-client.tsx` (or equivalent client component on that page)                              | Add `useRealtimeRoom('job', id)` + invalidate handlers                                                                                                   | Modify             |
+| `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx`                                                                                             | Add `useRealtimeChannel` for recruiter feed events                                                                                                       | Modify             |
+| `apps/web/app/(candidate)/candidate/applications/[id]/page.tsx` and its client component                                                               | Add `useRealtimeChannel` for `application.status_changed`, `interview.scheduled`, `offer.sent`                                                           | Modify             |
+| `apps/web/app/(candidate)/candidate/applications/page.tsx` client list                                                                                 | Same set of channels                                                                                                                                     | Modify             |
+| `apps/web/app/(candidate)/candidate/interviews/page.tsx` client list                                                                                   | `interview.scheduled` channel                                                                                                                            | Modify             |
+| `apps/web/app/(admin)/admin/audit/page.tsx` client component                                                                                           | `audit.entry` channel                                                                                                                                    | Modify             |
+| `apps/web/app/(admin)/admin/page.tsx` Recent Audit Events widget client                                                                                | `audit.entry` channel                                                                                                                                    | Modify             |
+| `apps/web/app/(admin)/admin/bias-monitor/page.tsx` client                                                                                              | `bias.flag_created` channel                                                                                                                              | Modify             |
+| `apps/web/components/admin/connection-status-indicator.tsx`                                                                                            | Tiny status badge, admin-only (Phase 5 polish)                                                                                                           | Create             |
+| `apps/web/components/layout/portal-sidebar.tsx`                                                                                                        | Conditionally render the indicator for admin role                                                                                                        | Modify             |
+| `apps/web/package.json`                                                                                                                                | Add `socket.io-client`                                                                                                                                   | Modify             |
 
 ---
 
@@ -81,12 +84,14 @@
 ### Task 1: Install backend + frontend dependencies
 
 **Files:**
+
 - Modify: `apps/api/package.json`
 - Modify: `apps/web/package.json`
 
 - [ ] **Step 1: Install backend WebSocket packages**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api add @nestjs/websockets @nestjs/platform-socket.io @socket.io/redis-adapter
 ```
@@ -96,6 +101,7 @@ Expected: three new entries in `apps/api/package.json` `dependencies`. `socket.i
 - [ ] **Step 2: Install frontend Socket.io client**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web add socket.io-client
 ```
@@ -105,6 +111,7 @@ Expected: `socket.io-client` added to `apps/web/package.json` `dependencies`. `p
 - [ ] **Step 3: Verify lockfile is consistent**
 
 Run:
+
 ```bash
 pnpm install
 ```
@@ -114,6 +121,7 @@ Expected: "Already up to date" or near-zero changes. No errors.
 - [ ] **Step 4: Type-check both apps**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api type-check && pnpm --filter @aurahire/web type-check
 ```
@@ -137,6 +145,7 @@ EOF
 ### Task 2: Define shared real-time event types
 
 **Files:**
+
 - Create: `packages/shared/src/realtime/events.ts`
 - Create: `packages/shared/src/realtime/index.ts`
 - Modify: `packages/shared/src/index.ts`
@@ -144,6 +153,7 @@ EOF
 - [ ] **Step 1: Confirm shared package barrel structure**
 
 Run:
+
 ```bash
 cat packages/shared/src/index.ts | head -40
 ```
@@ -170,7 +180,8 @@ export const RealtimeEvent = {
   BiasFlagCreated: "bias.flag_created",
 } as const;
 
-export type RealtimeEventName = (typeof RealtimeEvent)[keyof typeof RealtimeEvent];
+export type RealtimeEventName =
+  (typeof RealtimeEvent)[keyof typeof RealtimeEvent];
 
 // Payload schemas. All IDs are uuids; timestamps are ISO strings (the wire format).
 // Status/format/category fields use the canonical enum tuples to match the rest of
@@ -185,7 +196,9 @@ export const applicationCreatedSchema = z.object({
   candidateId: z.string().uuid(),
   createdAt: isoDate,
 });
-export type ApplicationCreatedPayload = z.infer<typeof applicationCreatedSchema>;
+export type ApplicationCreatedPayload = z.infer<
+  typeof applicationCreatedSchema
+>;
 
 export const applicationStatusChangedSchema = z.object({
   applicationId: z.string().uuid(),
@@ -209,7 +222,9 @@ export const interviewScheduledSchema = z.object({
   scheduledFor: isoDate,
   format: z.enum(INTERVIEW_FORMAT),
 });
-export type InterviewScheduledPayload = z.infer<typeof interviewScheduledSchema>;
+export type InterviewScheduledPayload = z.infer<
+  typeof interviewScheduledSchema
+>;
 
 export const offerSentSchema = z.object({
   offerId: z.string().uuid(),
@@ -279,6 +294,7 @@ export * from "./realtime";
 - [ ] **Step 5: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/shared type-check 2>/dev/null || pnpm --filter @aurahire/api type-check
 ```
@@ -304,6 +320,7 @@ EOF
 ### Task 3: Extract Supabase JWT verifier into a shared util
 
 **Files:**
+
 - Create: `apps/api/src/common/auth/verify-supabase-jwt.ts`
 - Modify: `apps/api/src/common/guards/supabase-auth.guard.ts`
 
@@ -397,15 +414,15 @@ Remove the now-unused `jwtVerify`, `createRemoteJWKSet`, and `JWTPayload` import
 In `canActivate`, replace the inline `try { result = await jwtVerify(...) }` block with:
 
 ```ts
-    let payload: JWTPayload;
-    try {
-      payload = await this.verifier.verify(token);
-    } catch {
-      throw new UnauthorizedException({
-        code: "INVALID_TOKEN",
-        message: "Invalid or expired token",
-      });
-    }
+let payload: JWTPayload;
+try {
+  payload = await this.verifier.verify(token);
+} catch {
+  throw new UnauthorizedException({
+    code: "INVALID_TOKEN",
+    message: "Invalid or expired token",
+  });
+}
 ```
 
 (The `try/catch` keeps the same `UnauthorizedException` shape; the verifier already logs the underlying reason.)
@@ -413,6 +430,7 @@ In `canActivate`, replace the inline `try { result = await jwtVerify(...) }` blo
 - [ ] **Step 3: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api type-check
 ```
@@ -422,6 +440,7 @@ Expected: pass. If `JWTPayload` is no longer used anywhere in `supabase-auth.gua
 - [ ] **Step 4: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api lint
 ```
@@ -447,6 +466,7 @@ EOF
 ### Task 4: Scaffold the realtime module — constants, JWT util, rate limit
 
 **Files:**
+
 - Create: `apps/api/src/realtime/room.constants.ts`
 - Create: `apps/api/src/realtime/ws-jwt.util.ts`
 - Create: `apps/api/src/realtime/realtime-rate-limit.ts`
@@ -634,6 +654,7 @@ EOF
 ### Task 5: Implement `EventsService`
 
 **Files:**
+
 - Create: `apps/api/src/realtime/events.service.ts`
 
 - [ ] **Step 1: Write the service**
@@ -678,39 +699,32 @@ export class EventsService {
   ) {}
 
   emitApplicationCreated(payload: ApplicationCreatedPayload): void {
-    this.broadcast(
-      RealtimeEvent.ApplicationCreated,
-      payload,
-      [Rooms.recruiter(payload.recruiterId), Rooms.job(payload.jobId)],
-    );
+    this.broadcast(RealtimeEvent.ApplicationCreated, payload, [
+      Rooms.recruiter(payload.recruiterId),
+      Rooms.job(payload.jobId),
+    ]);
   }
 
   emitApplicationStatusChanged(payload: ApplicationStatusChangedPayload): void {
-    this.broadcast(
-      RealtimeEvent.ApplicationStatusChanged,
-      payload,
-      [
-        Rooms.user(payload.candidateId),
-        Rooms.recruiter(payload.recruiterId),
-        Rooms.job(payload.jobId),
-      ],
-    );
+    this.broadcast(RealtimeEvent.ApplicationStatusChanged, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+      Rooms.job(payload.jobId),
+    ]);
   }
 
   emitInterviewScheduled(payload: InterviewScheduledPayload): void {
-    this.broadcast(
-      RealtimeEvent.InterviewScheduled,
-      payload,
-      [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
-    );
+    this.broadcast(RealtimeEvent.InterviewScheduled, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+    ]);
   }
 
   emitOfferSent(payload: OfferSentPayload): void {
-    this.broadcast(
-      RealtimeEvent.OfferSent,
-      payload,
-      [Rooms.user(payload.candidateId), Rooms.recruiter(payload.recruiterId)],
-    );
+    this.broadcast(RealtimeEvent.OfferSent, payload, [
+      Rooms.user(payload.candidateId),
+      Rooms.recruiter(payload.recruiterId),
+    ]);
   }
 
   emitAuditEntry(payload: AuditEntryPayload): void {
@@ -753,6 +767,7 @@ This file references `RealtimeGateway` which is created in Task 6. Do not run ty
 ### Task 6: Implement `RealtimeGateway`
 
 **Files:**
+
 - Create: `apps/api/src/realtime/realtime.gateway.ts`
 
 - [ ] **Step 1: Write the gateway**
@@ -956,7 +971,9 @@ export class RealtimeGateway
         const rows = await this.db
           .select({ id: jobsTable.id })
           .from(jobsTable)
-          .where(and(eq(jobsTable.id, msg.id), eq(jobsTable.recruiterId, user.id)))
+          .where(
+            and(eq(jobsTable.id, msg.id), eq(jobsTable.recruiterId, user.id)),
+          )
           .limit(1);
         return rows.length === 1;
       }
@@ -970,6 +987,7 @@ export class RealtimeGateway
 - [ ] **Step 2: Verify the `jobsTable` schema has `recruiterId` (or equivalent owner column)**
 
 Run:
+
 ```bash
 grep -n "recruiterId\|recruiter_id\|ownerId\|createdBy" packages/db/src/schemas/jobs*.ts 2>/dev/null
 ```
@@ -979,6 +997,7 @@ If the column has a different name (e.g., `createdBy`, `ownerId`), substitute th
 - [ ] **Step 3: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api type-check
 ```
@@ -988,6 +1007,7 @@ Expected: pass. (`EventsService` from Task 5 is now resolvable too.)
 - [ ] **Step 4: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api lint
 ```
@@ -1017,6 +1037,7 @@ EOF
 ### Task 7: Wire the Redis adapter
 
 **Files:**
+
 - Create: `apps/api/src/realtime/redis-adapter.provider.ts`
 
 - [ ] **Step 1: Write the adapter provider**
@@ -1089,6 +1110,7 @@ export class RedisIoAdapter extends IoAdapter {
 - [ ] **Step 2: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api type-check
 ```
@@ -1115,6 +1137,7 @@ EOF
 ### Task 8: Create `RealtimeModule` and wire into `AppModule` + `main.ts`
 
 **Files:**
+
 - Create: `apps/api/src/realtime/realtime.module.ts`
 - Modify: `apps/api/src/app.module.ts`
 - Modify: `apps/api/src/main.ts`
@@ -1164,16 +1187,17 @@ import { RedisIoAdapter } from "./realtime/redis-adapter.provider";
 After the existing CORS configuration block (around line 54) and before `app.setGlobalPrefix("api")`, add:
 
 ```ts
-  // WebSocket adapter — must run before listen(). Connects the Redis
-  // pub/sub backing for Socket.io rooms across instances.
-  const wsAdapter = new RedisIoAdapter(app);
-  await wsAdapter.connectToRedis();
-  app.useWebSocketAdapter(wsAdapter);
+// WebSocket adapter — must run before listen(). Connects the Redis
+// pub/sub backing for Socket.io rooms across instances.
+const wsAdapter = new RedisIoAdapter(app);
+await wsAdapter.connectToRedis();
+app.useWebSocketAdapter(wsAdapter);
 ```
 
 - [ ] **Step 4: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api type-check
 ```
@@ -1183,6 +1207,7 @@ Expected: pass.
 - [ ] **Step 5: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api lint
 ```
@@ -1192,6 +1217,7 @@ Expected: pass.
 - [ ] **Step 6: Build**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api build
 ```
@@ -1201,6 +1227,7 @@ Expected: build succeeds, `dist/main.js` produced.
 - [ ] **Step 7: Stop and ask the human for boot verification**
 
 > **Human action required:** start the API (`pnpm dev` from repo root, or `pnpm --filter @aurahire/api dev`). Confirm the logs show:
+>
 > - `Realtime gateway initialized`
 > - `Socket.io Redis adapter connected` (if `REDIS_URL` set) **or** the in-memory fallback warning (if unset)
 > - `AuraHire API running at http://localhost:3333`
@@ -1226,11 +1253,13 @@ EOF
 ### Task 9: Emit `application.created` and `application.status_changed`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.service.ts`
 
 - [ ] **Step 1: Read the file to find the exact `create()` and `updateStatus()` boundaries**
 
 Run:
+
 ```bash
 grep -n "async create\|async updateStatus\|async withdraw" apps/api/src/modules/applications/applications.service.ts
 ```
@@ -1256,15 +1285,16 @@ Add the constructor parameter (alongside existing `@Inject(...)` params):
 Inside `create()`, immediately after the application row is successfully inserted (and the inserted row's id/columns are available to the method), add — right before the method returns:
 
 ```ts
-    this.events.emitApplicationCreated({
-      applicationId: created.id,
-      jobId: created.jobId,
-      recruiterId: created.recruiterId,
-      candidateId: created.candidateId,
-      createdAt: created.createdAt instanceof Date
-        ? created.createdAt.toISOString()
-        : new Date(created.createdAt).toISOString(),
-    });
+this.events.emitApplicationCreated({
+  applicationId: created.id,
+  jobId: created.jobId,
+  recruiterId: created.recruiterId,
+  candidateId: created.candidateId,
+  createdAt:
+    created.createdAt instanceof Date
+      ? created.createdAt.toISOString()
+      : new Date(created.createdAt).toISOString(),
+});
 ```
 
 (Adjust `created` to whatever local variable holds the inserted row. If the service returns a DTO without these fields, fetch them from the row before mapping to the DTO.)
@@ -1274,15 +1304,15 @@ Inside `create()`, immediately after the application row is successfully inserte
 Inside `updateStatus()`, after the status update commits and the state-machine transition has been validated, add:
 
 ```ts
-    this.events.emitApplicationStatusChanged({
-      applicationId: updated.id,
-      jobId: updated.jobId,
-      recruiterId: updated.recruiterId,
-      candidateId: updated.candidateId,
-      previousStatus,
-      status: updated.status,
-      changedAt: new Date().toISOString(),
-    });
+this.events.emitApplicationStatusChanged({
+  applicationId: updated.id,
+  jobId: updated.jobId,
+  recruiterId: updated.recruiterId,
+  candidateId: updated.candidateId,
+  previousStatus,
+  status: updated.status,
+  changedAt: new Date().toISOString(),
+});
 ```
 
 (`previousStatus` is whatever local variable holds the status before the update — if the method doesn't capture it, read it from the original row before the update and store in a local.)
@@ -1294,6 +1324,7 @@ If `applications.service.ts` has a `withdraw()` method that updates status to `w
 - [ ] **Step 6: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api type-check
 ```
@@ -1303,6 +1334,7 @@ Expected: pass.
 - [ ] **Step 7: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api lint
 ```
@@ -1326,6 +1358,7 @@ EOF
 ### Task 10: Emit `interview.scheduled` and `offer.sent`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/interviews/interviews.service.ts`
 - Modify: `apps/api/src/modules/offers/offers.service.ts`
 
@@ -1342,17 +1375,18 @@ import { EventsService } from "../../realtime";
 After the interview row inserts successfully, before returning, add:
 
 ```ts
-    this.events.emitInterviewScheduled({
-      interviewId: created.id,
-      applicationId: created.applicationId,
-      jobId: created.jobId,
-      recruiterId: created.recruiterId,
-      candidateId: created.candidateId,
-      scheduledFor: created.scheduledFor instanceof Date
-        ? created.scheduledFor.toISOString()
-        : new Date(created.scheduledFor).toISOString(),
-      format: created.format,
-    });
+this.events.emitInterviewScheduled({
+  interviewId: created.id,
+  applicationId: created.applicationId,
+  jobId: created.jobId,
+  recruiterId: created.recruiterId,
+  candidateId: created.candidateId,
+  scheduledFor:
+    created.scheduledFor instanceof Date
+      ? created.scheduledFor.toISOString()
+      : new Date(created.scheduledFor).toISOString(),
+  format: created.format,
+});
 ```
 
 If the column names differ (e.g., `interviewerId` instead of `recruiterId`, `startsAt` instead of `scheduledFor`), substitute. The contract is: every payload field defined in `interviewScheduledSchema` must be populated.
@@ -1370,18 +1404,19 @@ import { EventsService } from "../../realtime";
 After the offer row inserts and the email side-effect dispatches, add:
 
 ```ts
-    this.events.emitOfferSent({
-      offerId: created.id,
-      applicationId: created.applicationId,
-      recruiterId: created.recruiterId,
-      candidateId: created.candidateId,
-      sentAt: new Date().toISOString(),
-    });
+this.events.emitOfferSent({
+  offerId: created.id,
+  applicationId: created.applicationId,
+  recruiterId: created.recruiterId,
+  candidateId: created.candidateId,
+  sentAt: new Date().toISOString(),
+});
 ```
 
 - [ ] **Step 3: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api type-check
 ```
@@ -1391,6 +1426,7 @@ Expected: pass.
 - [ ] **Step 4: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api lint
 ```
@@ -1414,6 +1450,7 @@ EOF
 ### Task 11: Emit `audit.entry` and `bias.flag_created`
 
 **Files:**
+
 - Modify: `apps/api/src/audit/audit.service.ts`
 - Modify: `apps/api/src/modules/bias/bias.service.ts`
 
@@ -1481,6 +1518,7 @@ import { EventsService } from "../realtime";
 - [ ] **Step 2: Read `bias.service.ts` and find the flag-recording method**
 
 Run:
+
 ```bash
 grep -n "async \w\+\s*(" apps/api/src/modules/bias/bias.service.ts | head -20
 ```
@@ -1500,16 +1538,16 @@ import { EventsService } from "../../realtime";
 After the flag row commits in the identified method, add:
 
 ```ts
-    this.events.emitBiasFlagCreated({
-      flagId: created.id,
-      jobId: created.jobId,
-      term: created.term,
-      category: created.category,
-      createdAt:
-        created.createdAt instanceof Date
-          ? created.createdAt.toISOString()
-          : new Date(created.createdAt).toISOString(),
-    });
+this.events.emitBiasFlagCreated({
+  flagId: created.id,
+  jobId: created.jobId,
+  term: created.term,
+  category: created.category,
+  createdAt:
+    created.createdAt instanceof Date
+      ? created.createdAt.toISOString()
+      : new Date(created.createdAt).toISOString(),
+});
 ```
 
 If the bias service stores flags in a per-job JSON blob rather than a per-flag row (no individual `flagId`), emit one event per detected term using a deterministic key like `${jobId}:${term}` as `flagId` after first checking that the row exists. If unclear, ask the human before guessing.
@@ -1517,6 +1555,7 @@ If the bias service stores flags in a per-job JSON blob rather than a per-flag r
 - [ ] **Step 4: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api type-check
 ```
@@ -1526,6 +1565,7 @@ Expected: pass.
 - [ ] **Step 5: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api lint
 ```
@@ -1535,6 +1575,7 @@ Expected: pass.
 - [ ] **Step 6: Build**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api build
 ```
@@ -1560,6 +1601,7 @@ EOF
 ### Task 12: Create `lib/realtime/*` (client + types + room helpers)
 
 **Files:**
+
 - Create: `apps/web/lib/realtime/client.ts`
 - Create: `apps/web/lib/realtime/events.ts`
 - Create: `apps/web/lib/realtime/rooms.ts`
@@ -1673,6 +1715,7 @@ export * from "./rooms";
 - [ ] **Step 5: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web type-check
 ```
@@ -1696,11 +1739,13 @@ EOF
 ### Task 13: Create `<SocketProvider>`
 
 **Files:**
+
 - Create: `apps/web/components/providers/socket-provider.tsx`
 
 - [ ] **Step 1: Read existing auth/token plumbing**
 
 Run:
+
 ```bash
 cat apps/web/components/providers/auth-token-provider.tsx
 ```
@@ -1815,6 +1860,7 @@ If the import path for the auth token hook differs (e.g., not `@/components/prov
 - [ ] **Step 3: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web type-check
 ```
@@ -1824,6 +1870,7 @@ Expected: pass.
 - [ ] **Step 4: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web lint
 ```
@@ -1847,6 +1894,7 @@ EOF
 ### Task 14: Create `useRealtimeChannel` and `useRealtimeRoom` hooks
 
 **Files:**
+
 - Create: `apps/web/hooks/use-realtime-channel.ts`
 - Create: `apps/web/hooks/use-realtime-room.ts`
 
@@ -1858,7 +1906,10 @@ EOF
 import { useEffect } from "react";
 
 import { useSocket } from "@/components/providers/socket-provider";
-import type { RealtimeEventName, RealtimeEventPayloadMap } from "@/lib/realtime";
+import type {
+  RealtimeEventName,
+  RealtimeEventPayloadMap,
+} from "@/lib/realtime";
 
 /**
  * Subscribe a typed handler to a single realtime event for the lifetime of
@@ -1936,6 +1987,7 @@ export function useRealtimeRoom(resource: Resource, id: string | null): void {
 - [ ] **Step 3: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web type-check
 ```
@@ -1945,6 +1997,7 @@ Expected: pass.
 - [ ] **Step 4: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web lint
 ```
@@ -1968,11 +2021,13 @@ EOF
 ### Task 15: Mount `<SocketProvider>` in the root layout
 
 **Files:**
+
 - Modify: `apps/web/app/layout.tsx`
 
 - [ ] **Step 1: Read the current provider tree**
 
 Run:
+
 ```bash
 cat apps/web/app/layout.tsx
 ```
@@ -1993,9 +2048,7 @@ Wrap whatever currently sits inside `<QueryProvider>` with `<SocketProvider>`. T
 <AuthTokenProvider>
   <QueryProvider>
     <SocketProvider>
-      <ConfirmProvider>
-        {/* existing children */}
-      </ConfirmProvider>
+      <ConfirmProvider>{/* existing children */}</ConfirmProvider>
     </SocketProvider>
   </QueryProvider>
 </AuthTokenProvider>
@@ -2006,6 +2059,7 @@ If the existing tree has different providers (e.g., theme provider) the rule is:
 - [ ] **Step 4: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web type-check
 ```
@@ -2015,6 +2069,7 @@ Expected: pass.
 - [ ] **Step 5: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web lint
 ```
@@ -2024,6 +2079,7 @@ Expected: pass.
 - [ ] **Step 6: Build**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web build
 ```
@@ -2033,6 +2089,7 @@ Expected: build succeeds.
 - [ ] **Step 7: Stop and ask the human for connection verification**
 
 > **Human action required:** with the API running (Phase 1 Task 8), start the web app (`pnpm dev` from repo root). Sign in as any role. Open browser devtools → Network → WS. Confirm:
+>
 > - A `/socket.io/?EIO=...` request opens.
 > - The response shows a successful upgrade.
 > - In the browser console there is no `connect_error` or `UNAUTHORIZED` entry.
@@ -2061,12 +2118,14 @@ EOF
 ### Task 16: Surface 1 — recruiter pipeline live updates
 
 **Files:**
+
 - Modify: the client component on `apps/web/app/(recruiter)/recruiter/jobs/[id]/page.tsx` that renders the Applications tab table
 - Modify: `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx` (or the equivalent client component the recruiter dashboard uses to render its widgets)
 
 - [ ] **Step 1: Locate the recruiter job-detail applications client component**
 
 Run:
+
 ```bash
 ls apps/web/app/\(recruiter\)/recruiter/jobs/\[id\]/
 ```
@@ -2088,22 +2147,22 @@ import { RealtimeEvent } from "@/lib/realtime";
 Inside the component:
 
 ```tsx
-  const queryClient = useQueryClient();
-  useRealtimeRoom("job", jobId);
+const queryClient = useQueryClient();
+useRealtimeRoom("job", jobId);
 
-  useRealtimeChannel(RealtimeEvent.ApplicationCreated, (payload) => {
-    if (payload.jobId !== jobId) return;
-    queryClient.invalidateQueries({
-      queryKey: ["recruiter-applications", "by-job", jobId],
-    });
+useRealtimeChannel(RealtimeEvent.ApplicationCreated, (payload) => {
+  if (payload.jobId !== jobId) return;
+  queryClient.invalidateQueries({
+    queryKey: ["recruiter-applications", "by-job", jobId],
   });
+});
 
-  useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, (payload) => {
-    if (payload.jobId !== jobId) return;
-    queryClient.invalidateQueries({
-      queryKey: ["recruiter-applications", "by-job", jobId],
-    });
+useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, (payload) => {
+  if (payload.jobId !== jobId) return;
+  queryClient.invalidateQueries({
+    queryKey: ["recruiter-applications", "by-job", jobId],
   });
+});
 ```
 
 (`jobId` should already be available from `useParams()` or page props. The query-key prefix matches the structure declared in `apps/web/lib/query/keys.ts`.)
@@ -2113,14 +2172,14 @@ Inside the component:
 Read `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx`. Add the same imports. Inside the dashboard component:
 
 ```tsx
-  const queryClient = useQueryClient();
+const queryClient = useQueryClient();
 
-  const invalidateDashboard = (): void => {
-    queryClient.invalidateQueries({ queryKey: ["recruiter-dashboard"] });
-  };
+const invalidateDashboard = (): void => {
+  queryClient.invalidateQueries({ queryKey: ["recruiter-dashboard"] });
+};
 
-  useRealtimeChannel(RealtimeEvent.ApplicationCreated, invalidateDashboard);
-  useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, invalidateDashboard);
+useRealtimeChannel(RealtimeEvent.ApplicationCreated, invalidateDashboard);
+useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, invalidateDashboard);
 ```
 
 (The `["recruiter-dashboard"]` prefix invalidates `stats`, `analytics`, and `recent` together since all three keys share the prefix.)
@@ -2130,6 +2189,7 @@ Read `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx`. Add the same im
 - [ ] **Step 4: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web type-check
 ```
@@ -2139,6 +2199,7 @@ Expected: pass.
 - [ ] **Step 5: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web lint
 ```
@@ -2148,6 +2209,7 @@ Expected: pass.
 - [ ] **Step 6: Stop and ask the human for surface-1 smoke**
 
 > **Human action required:** open the recruiter portal at `/recruiter/jobs/<id>` (Applications tab) in one window. In another browser (or incognito), sign in as a candidate and submit an application to that job. Confirm the recruiter window:
+>
 > - Adds the new row to the table without manual refresh, within ~2s.
 >
 > Then on the recruiter dashboard `/recruiter`, confirm the pipeline funnel and Recent Activity widgets reflect the new application (after the next interval, since they may be cached briefly).
@@ -2169,6 +2231,7 @@ EOF
 ### Task 17: Surface 2 — candidate application status live updates
 
 **Files:**
+
 - Modify: client component on `apps/web/app/(candidate)/candidate/applications/[id]/page.tsx`
 - Modify: client component on `apps/web/app/(candidate)/candidate/applications/page.tsx`
 - Modify: client component on `apps/web/app/(candidate)/candidate/interviews/page.tsx`
@@ -2176,6 +2239,7 @@ EOF
 - [ ] **Step 1: Locate the candidate application-detail client component**
 
 Run:
+
 ```bash
 ls apps/web/app/\(candidate\)/candidate/applications/\[id\]/
 ```
@@ -2187,29 +2251,29 @@ Identify the client component that renders the application detail (Overview / Sc
 Add the imports (same as Task 16 Step 2). In the component body:
 
 ```tsx
-  const queryClient = useQueryClient();
+const queryClient = useQueryClient();
 
-  useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, (payload) => {
-    if (payload.applicationId !== applicationId) return;
-    queryClient.invalidateQueries({
-      queryKey: ["candidate-applications"],
-    });
-    // If a more specific single-application key exists, invalidate it too.
-    queryClient.invalidateQueries({
-      queryKey: ["candidate-application", applicationId],
-    });
+useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, (payload) => {
+  if (payload.applicationId !== applicationId) return;
+  queryClient.invalidateQueries({
+    queryKey: ["candidate-applications"],
   });
+  // If a more specific single-application key exists, invalidate it too.
+  queryClient.invalidateQueries({
+    queryKey: ["candidate-application", applicationId],
+  });
+});
 
-  useRealtimeChannel(RealtimeEvent.InterviewScheduled, (payload) => {
-    if (payload.applicationId !== applicationId) return;
-    queryClient.invalidateQueries({ queryKey: ["candidate-applications"] });
-    queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
-  });
+useRealtimeChannel(RealtimeEvent.InterviewScheduled, (payload) => {
+  if (payload.applicationId !== applicationId) return;
+  queryClient.invalidateQueries({ queryKey: ["candidate-applications"] });
+  queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
+});
 
-  useRealtimeChannel(RealtimeEvent.OfferSent, (payload) => {
-    if (payload.applicationId !== applicationId) return;
-    queryClient.invalidateQueries({ queryKey: ["candidate-applications"] });
-  });
+useRealtimeChannel(RealtimeEvent.OfferSent, (payload) => {
+  if (payload.applicationId !== applicationId) return;
+  queryClient.invalidateQueries({ queryKey: ["candidate-applications"] });
+});
 ```
 
 (`applicationId` comes from `useParams()` or page props.)
@@ -2219,26 +2283,27 @@ Add the imports (same as Task 16 Step 2). In the component body:
 In the applications-list client component:
 
 ```tsx
-  const queryClient = useQueryClient();
-  const invalidateList = (): void => {
-    queryClient.invalidateQueries({ queryKey: ["candidate-applications"] });
-  };
-  useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, invalidateList);
-  useRealtimeChannel(RealtimeEvent.OfferSent, invalidateList);
+const queryClient = useQueryClient();
+const invalidateList = (): void => {
+  queryClient.invalidateQueries({ queryKey: ["candidate-applications"] });
+};
+useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, invalidateList);
+useRealtimeChannel(RealtimeEvent.OfferSent, invalidateList);
 ```
 
 - [ ] **Step 4: Wire channels into the candidate interviews-list client**
 
 ```tsx
-  const queryClient = useQueryClient();
-  useRealtimeChannel(RealtimeEvent.InterviewScheduled, () => {
-    queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
-  });
+const queryClient = useQueryClient();
+useRealtimeChannel(RealtimeEvent.InterviewScheduled, () => {
+  queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
+});
 ```
 
 - [ ] **Step 5: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web type-check
 ```
@@ -2248,6 +2313,7 @@ Expected: pass.
 - [ ] **Step 6: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web lint
 ```
@@ -2257,6 +2323,7 @@ Expected: pass.
 - [ ] **Step 7: Stop and ask the human for surface-2 smoke**
 
 > **Human action required:**
+>
 > 1. Open the candidate portal at `/candidate/applications/<id>` in window A.
 > 2. Open the matching recruiter view at `/recruiter/applications/<id>` in window B (separate browser).
 > 3. In window B, change the application status (Applied → Screening). Confirm window A's status chip + timeline updates without refresh.
@@ -2283,6 +2350,7 @@ EOF
 ### Task 18: Surface 3 — admin audit + bias monitor live updates
 
 **Files:**
+
 - Modify: client component on `apps/web/app/(admin)/admin/audit/page.tsx`
 - Modify: client component on `apps/web/app/(admin)/admin/page.tsx` (Recent Audit Events widget)
 - Modify: client component on `apps/web/app/(admin)/admin/bias-monitor/page.tsx`
@@ -2290,6 +2358,7 @@ EOF
 - [ ] **Step 1: Locate the admin audit client component**
 
 Run:
+
 ```bash
 ls apps/web/app/\(admin\)/admin/audit/
 ```
@@ -2299,10 +2368,10 @@ Identify the client component that renders the audit-log table.
 - [ ] **Step 2: Wire `audit.entry` into the admin audit page**
 
 ```tsx
-  const queryClient = useQueryClient();
-  useRealtimeChannel(RealtimeEvent.AuditEntry, () => {
-    queryClient.invalidateQueries({ queryKey: ["admin-audit"] });
-  });
+const queryClient = useQueryClient();
+useRealtimeChannel(RealtimeEvent.AuditEntry, () => {
+  queryClient.invalidateQueries({ queryKey: ["admin-audit"] });
+});
 ```
 
 (Confirm the actual key prefix used by reading the existing query in the file. If it's `["audit", ...]`, use that.)
@@ -2312,27 +2381,28 @@ Identify the client component that renders the audit-log table.
 In the dashboard client component:
 
 ```tsx
-  const queryClient = useQueryClient();
-  useRealtimeChannel(RealtimeEvent.AuditEntry, () => {
-    queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
-  });
-  useRealtimeChannel(RealtimeEvent.BiasFlagCreated, () => {
-    queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
-  });
+const queryClient = useQueryClient();
+useRealtimeChannel(RealtimeEvent.AuditEntry, () => {
+  queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+});
+useRealtimeChannel(RealtimeEvent.BiasFlagCreated, () => {
+  queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+});
 ```
 
 - [ ] **Step 4: Wire `bias.flag_created` into the bias monitor page**
 
 ```tsx
-  const queryClient = useQueryClient();
-  useRealtimeChannel(RealtimeEvent.BiasFlagCreated, () => {
-    queryClient.invalidateQueries({ queryKey: ["admin-bias-monitor"] });
-  });
+const queryClient = useQueryClient();
+useRealtimeChannel(RealtimeEvent.BiasFlagCreated, () => {
+  queryClient.invalidateQueries({ queryKey: ["admin-bias-monitor"] });
+});
 ```
 
 - [ ] **Step 5: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web type-check
 ```
@@ -2342,6 +2412,7 @@ Expected: pass.
 - [ ] **Step 6: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web lint
 ```
@@ -2351,6 +2422,7 @@ Expected: pass.
 - [ ] **Step 7: Stop and ask the human for surface-3 smoke**
 
 > **Human action required:**
+>
 > 1. Sign in as admin at `/admin/audit` in window A.
 > 2. In window B, sign in as recruiter and take any auditable action (publish a job, change application status). Confirm window A's audit table prepends a new row within ~2s.
 > 3. Open `/admin` Recent Audit Events widget in window A (refresh first to pick up state). Repeat the recruiter action; confirm the widget updates.
@@ -2377,6 +2449,7 @@ EOF
 ### Task 19: Admin connection-status indicator
 
 **Files:**
+
 - Create: `apps/web/components/admin/connection-status-indicator.tsx`
 - Modify: `apps/web/components/layout/portal-sidebar.tsx`
 
@@ -2434,7 +2507,9 @@ Read `apps/web/components/layout/portal-sidebar.tsx`. Find the bottom section (w
 import { ConnectionStatusIndicator } from "@/components/admin/connection-status-indicator";
 
 // inside the sidebar component, where role is available:
-{user.role === "admin" ? <ConnectionStatusIndicator /> : null}
+{
+  user.role === "admin" ? <ConnectionStatusIndicator /> : null;
+}
 ```
 
 If the sidebar does not currently know the user's role at render, retrieve it via the same hook the rest of the file uses (or add a prop). Do not introduce a new global hook just for this.
@@ -2442,6 +2517,7 @@ If the sidebar does not currently know the user's role at render, retrieve it vi
 - [ ] **Step 3: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web type-check
 ```
@@ -2451,6 +2527,7 @@ Expected: pass.
 - [ ] **Step 4: Lint**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web lint
 ```
@@ -2460,6 +2537,7 @@ Expected: pass.
 - [ ] **Step 5: Build**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web build
 ```
@@ -2491,6 +2569,7 @@ This task does not create or modify code. It is a checklist the human runs after
 - [ ] **Step 1: Final type-check + lint + build across both apps**
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/api type-check && pnpm --filter @aurahire/api lint && pnpm --filter @aurahire/api build
 ```
@@ -2498,6 +2577,7 @@ pnpm --filter @aurahire/api type-check && pnpm --filter @aurahire/api lint && pn
 Expected: all three pass.
 
 Run:
+
 ```bash
 pnpm --filter @aurahire/web type-check && pnpm --filter @aurahire/web lint && pnpm --filter @aurahire/web build
 ```
@@ -2509,26 +2589,31 @@ Expected: all three pass.
 > **Human action required:** with `pnpm dev` running and Mailpit + Redis containers up, run through the full checklist below. Mark each item ✅ or ❌; paste any failure output.
 >
 > **Connection / handshake:**
+>
 > - [ ] Recruiter sign-in opens a `/socket.io` WS, API logs `WS connect` with `role=recruiter` and 2 joined rooms.
 > - [ ] Candidate sign-in: same with `role=candidate` and 1 joined room.
 > - [ ] Admin sign-in: same with `role=admin` and 2 joined rooms.
 > - [ ] Sign-out closes the socket cleanly (API logs `WS disconnect`).
 >
 > **Surface 1 — recruiter pipeline:**
+>
 > - [ ] New application (candidate submits) appears in recruiter `/recruiter/jobs/<id>` Applications tab without manual refresh, within ~2s.
 > - [ ] Recruiter dashboard widgets reflect the new event.
 >
 > **Surface 2 — candidate status:**
+>
 > - [ ] Status change Applied→Screening propagates from recruiter window to candidate window.
 > - [ ] Screening→Interview, Interview→Offer also propagate.
 > - [ ] Schedule interview from recruiter; new row appears in candidate `/candidate/interviews`.
 > - [ ] Send offer from recruiter; offer surfaces in candidate application detail.
 >
 > **Surface 3 — admin audit + bias:**
+>
 > - [ ] Recruiter publishing a job prepends the audit row in admin `/admin/audit` within ~2s.
 > - [ ] Bias-flag override increments admin bias-monitor counts without refresh.
 >
 > **Failure modes:**
+>
 > - [ ] Disable Wi-Fi for 10s in candidate window. Reconnect. Status chip changes color while disconnected and recovers to "Live" (admin window) when back.
 > - [ ] Change a status during the disconnect window. After reconnect, the candidate's view picks up the change (defense-in-depth invalidate-on-reconnect).
 > - [ ] Stop the Redis container (`docker compose stop redis`). Confirm:
@@ -2540,6 +2625,7 @@ Expected: all three pass.
 > - [ ] Suspend a logged-in user via admin. The user's existing socket continues until reconnect, then is rejected at handshake (API log: `WS handshake rejected`). Acceptable per spec.
 >
 > **Cross-browser:**
+>
 > - [ ] Chrome, Safari, Firefox all connect and receive at least one event.
 
 - [ ] **Step 3: Final commit (if any small fixes were needed)**

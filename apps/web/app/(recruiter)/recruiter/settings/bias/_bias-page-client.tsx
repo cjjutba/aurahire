@@ -18,15 +18,14 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   gendered:
-    "Detects gender-coded vocabulary (e.g. \"rockstar\", \"manpower\") in job descriptions.",
+    'Detects gender-coded vocabulary (e.g. "rockstar", "manpower") in job descriptions.',
   "age-coded":
-    "Flags age-coded phrasing (e.g. \"digital native\", \"recent grad\") that excludes candidates by age.",
+    'Flags age-coded phrasing (e.g. "digital native", "recent grad") that excludes candidates by age.',
   ableist:
-    "Identifies ableist language (e.g. \"crazy hours\", \"sanity check\") that may dissuade disabled applicants.",
+    'Identifies ableist language (e.g. "crazy hours", "sanity check") that may dissuade disabled applicants.',
   exclusionary:
     "Surfaces phrases that exclude protected groups (e.g. citizenship, family status).",
-  other:
-    "Catch-all for biased phrasing that doesn't fit the categories above.",
+  other: "Catch-all for biased phrasing that doesn't fit the categories above.",
 };
 
 /**
@@ -72,9 +71,9 @@ export function BiasPageClient() {
       />
 
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)]/30 p-4 text-sm text-[var(--color-ink)]">
-        Per-company bias thresholds will sync to the AI pipeline in a
-        future release. Today, every category is checked at the system
-        default sensitivity.
+        Per-company bias thresholds will sync to the AI pipeline in a future
+        release. Today, every category is checked at the system default
+        sensitivity.
       </div>
 
       <SettingsCard
@@ -119,8 +118,8 @@ export function BiasPageClient() {
         }
       >
         <p className="text-sm text-[var(--color-body)]">
-          Overrides are already recorded in audit logs. A dedicated
-          per-company timeline view will surface here in a future release.
+          Overrides are already recorded in audit logs. A dedicated per-company
+          timeline view will surface here in a future release.
         </p>
       </SettingsCard>
     </>

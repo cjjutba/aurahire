@@ -50,8 +50,18 @@ describe("ArchivePastDeadlineJobsCron", () => {
 
   it("archives published jobs past deadline with archived_reason='deadline_passed'", async () => {
     await setup([
-      { id: "j1", title: "Engineer", recruiterId: "r1", applicationDeadline: "2026-04-01" },
-      { id: "j2", title: "PM", recruiterId: "r2", applicationDeadline: "2026-04-15" },
+      {
+        id: "j1",
+        title: "Engineer",
+        recruiterId: "r1",
+        applicationDeadline: "2026-04-01",
+      },
+      {
+        id: "j2",
+        title: "PM",
+        recruiterId: "r2",
+        applicationDeadline: "2026-04-15",
+      },
     ]);
 
     const result = await cron.execute();
@@ -68,8 +78,18 @@ describe("ArchivePastDeadlineJobsCron", () => {
 
   it("emits job_archived_by_deadline to the owning recruiter for each archived job", async () => {
     await setup([
-      { id: "j1", title: "Engineer", recruiterId: "r1", applicationDeadline: "2026-04-01" },
-      { id: "j2", title: "PM", recruiterId: "r2", applicationDeadline: "2026-04-15" },
+      {
+        id: "j1",
+        title: "Engineer",
+        recruiterId: "r1",
+        applicationDeadline: "2026-04-01",
+      },
+      {
+        id: "j2",
+        title: "PM",
+        recruiterId: "r2",
+        applicationDeadline: "2026-04-15",
+      },
     ]);
 
     await cron.execute();
@@ -109,8 +129,18 @@ describe("ArchivePastDeadlineJobsCron", () => {
 
   it("a notify failure does not abort the rest of the run", async () => {
     await setup([
-      { id: "j1", title: "Engineer", recruiterId: "r1", applicationDeadline: "2026-04-01" },
-      { id: "j2", title: "PM", recruiterId: "r2", applicationDeadline: "2026-04-15" },
+      {
+        id: "j1",
+        title: "Engineer",
+        recruiterId: "r1",
+        applicationDeadline: "2026-04-01",
+      },
+      {
+        id: "j2",
+        title: "PM",
+        recruiterId: "r2",
+        applicationDeadline: "2026-04-15",
+      },
     ]);
     (notifications.emit as jest.Mock)
       .mockRejectedValueOnce(new Error("notify boom"))

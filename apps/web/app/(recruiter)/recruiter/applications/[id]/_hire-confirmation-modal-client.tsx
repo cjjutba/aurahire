@@ -30,7 +30,9 @@ export function HireConfirmationModalClient({
   siblingInflightCount,
   onConfirm,
 }: Props) {
-  const [autoReject, setAutoReject] = useState<boolean>(siblingInflightCount > 0);
+  const [autoReject, setAutoReject] = useState<boolean>(
+    siblingInflightCount > 0,
+  );
   const [working, setWorking] = useState(false);
 
   async function handleConfirm() {
@@ -74,7 +76,8 @@ export function HireConfirmationModalClient({
               Auto-reject the {siblingInflightCount} other open applicant
               {siblingInflightCount === 1 ? "" : "s"} on this job.
               <span className="mt-1 block text-xs text-[var(--color-muted)]">
-                Auto-rejected candidates receive a &ldquo;Position has been filled&rdquo; email.
+                Auto-rejected candidates receive a &ldquo;Position has been
+                filled&rdquo; email.
               </span>
             </span>
           </label>

@@ -90,7 +90,9 @@ export function CandidateApplicationRowActionsClient({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="bottom">
         <DropdownMenuItem
-          onClick={() => router.push(`/candidate/applications/${applicationId}`)}
+          onClick={() =>
+            router.push(`/candidate/applications/${applicationId}`)
+          }
           className="flex cursor-pointer items-center gap-2"
         >
           <Eye className="h-4 w-4" />

@@ -28,31 +28,29 @@ interface Props {
   rows: JobRow[];
 }
 
-const JOB_STATUS: Record<
-  string,
-  { label: string; dot: string; text: string }
-> = {
-  draft: {
-    label: "Draft",
-    dot: "bg-[var(--color-muted)]",
-    text: "text-[var(--color-muted)]",
-  },
-  published: {
-    label: "Published",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  closed: {
-    label: "Closed",
-    dot: "bg-[var(--color-status-danger)]",
-    text: "text-[var(--color-status-danger)]",
-  },
-  archived: {
-    label: "Archived",
-    dot: "bg-[var(--color-muted)]",
-    text: "text-[var(--color-muted)]",
-  },
-};
+const JOB_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    draft: {
+      label: "Draft",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+    published: {
+      label: "Published",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    closed: {
+      label: "Closed",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    archived: {
+      label: "Archived",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
 const DEFAULT_STATUS = JOB_STATUS["draft"]!;
 

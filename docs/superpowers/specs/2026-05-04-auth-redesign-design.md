@@ -26,16 +26,16 @@
 
 ## Pages In Scope (8)
 
-| Path                              | What it is                                    |
-| --------------------------------- | --------------------------------------------- |
-| `/login`                          | Email + password sign-in                      |
-| `/register`                       | Role-select (Candidate / Recruiter)           |
-| `/register/candidate`             | 5-field candidate signup                      |
-| `/register/recruiter`             | 6-field recruiter signup (incl. company name) |
-| `/forgot-password`                | Email → send reset link                       |
-| `/reset-password`                 | New password + confirm (from email link)      |
-| `/verify-email`                   | Token landing page (verify result states)     |
-| `/verify-email/sent`              | Post-signup "check your inbox" message        |
+| Path                  | What it is                                    |
+| --------------------- | --------------------------------------------- |
+| `/login`              | Email + password sign-in                      |
+| `/register`           | Role-select (Candidate / Recruiter)           |
+| `/register/candidate` | 5-field candidate signup                      |
+| `/register/recruiter` | 6-field recruiter signup (incl. company name) |
+| `/forgot-password`    | Email → send reset link                       |
+| `/reset-password`     | New password + confirm (from email link)      |
+| `/verify-email`       | Token landing page (verify result states)     |
+| `/verify-email/sent`  | Post-signup "check your inbox" message        |
 
 ---
 
@@ -76,9 +76,11 @@
 Above the H1 on `/register/candidate` and `/register/recruiter`:
 
 ```html
-<span class="inline-block bg-[var(--color-surface-strong)] text-[var(--color-body)]
+<span
+  class="inline-block bg-[var(--color-surface-strong)] text-[var(--color-body)]
   text-[10px] font-semibold tracking-[0.06em] uppercase
-  px-3 py-1 rounded-full mb-4">
+  px-3 py-1 rounded-full mb-4"
+>
   Candidate
 </span>
 ```
@@ -90,12 +92,14 @@ Centered. Reads as a quiet wayfinding chip so the user knows which signup they'r
 The canonical auth input. Replaces the current shadcn `<Input>` for auth pages only (portal/marketing inputs unchanged).
 
 Behavior:
+
 - Resting state: empty input shows placeholder ("Email address") inside the pill, color `var(--color-muted-soft)`.
 - On focus: 2px `var(--color-primary)` border replaces the 1px hairline.
 - On focus or when filled: the placeholder text shrinks to 11px, `font-medium`, color `var(--color-body)`, and animates to sit on the top edge of the pill (with a small white background pad to "cut" the border).
 - Error state: 2px `var(--color-status-danger)` border, error message rendered below input in `text-xs text-[var(--color-status-danger)]`.
 
 Geometry:
+
 - Height 52px (slightly taller than current 44px to comfortably contain the floated label).
 - Padding `0 20px`.
 - Border 1px `var(--color-hairline)`, radius `var(--radius-pill)` (100px).
@@ -270,6 +274,7 @@ Error display moves from shadcn `<FormMessage>` to inline error text rendered by
 Single PR, single deploy. No feature flag — auth UI is internal-facing pre-launch and the redesign is presentational.
 
 Order of file changes (recommended):
+
 1. Add new auth components (`AuthShell`, `AuthInput`, `AuthFooter`, `AuthRoleTag`, `AuthRoleCard`).
 2. Update `(auth)/layout.tsx` to consume `<AuthFooter />` + new header.
 3. Migrate `/login` first as the simplest 2-field reference.

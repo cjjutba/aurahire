@@ -10,9 +10,7 @@ interface PageProps {
 
 export const metadata = { title: "Job Detail" };
 
-type RecruiterJobDetail = Parameters<
-  typeof RecruiterJobDetailView
->[0]["job"];
+type RecruiterJobDetail = Parameters<typeof RecruiterJobDetailView>[0]["job"];
 
 interface BiasFlagRow {
   id: string;

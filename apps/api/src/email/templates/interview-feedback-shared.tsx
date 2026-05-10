@@ -51,17 +51,25 @@ export function InterviewFeedbackSharedEmail({
           }}
         >
           <EmailBrandHeader
-            company={company ? { name: company.name, logoUrl: company.logoUrl ?? null } : null}
+            company={
+              company
+                ? { name: company.name, logoUrl: company.logoUrl ?? null }
+                : null
+            }
           />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             Feedback from your interview at {companyName}
           </Heading>
           <Section>
-            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>Hi {candidateName},</Text>
+            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
+              Hi {candidateName},
+            </Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
               The recruiter at{" "}
-              <strong style={{ color: "#0a0b0d" }}>{companyName}</strong> has shared feedback from
-              your interview for{" "}
+              <strong style={{ color: "#0a0b0d" }}>{companyName}</strong> has
+              shared feedback from your interview for{" "}
               <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong>.
             </Text>
 
@@ -101,8 +109,8 @@ export function InterviewFeedbackSharedEmail({
             </Section>
 
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-              If you have any questions about this feedback, you can reply directly to this email
-              or reach out through your candidate portal.
+              If you have any questions about this feedback, you can reply
+              directly to this email or reach out through your candidate portal.
             </Text>
           </Section>
 

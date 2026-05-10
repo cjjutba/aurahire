@@ -57,7 +57,8 @@ export function ScoringPageClient() {
   const isOwnerOrAdmin = role === "owner" || role === "admin";
 
   const [weights] = useState<Weights>(DEFAULTS);
-  const total = weights.skills + weights.experience + weights.education + weights.keywords;
+  const total =
+    weights.skills + weights.experience + weights.education + weights.keywords;
 
   if (!isOwnerOrAdmin) {
     return (
@@ -91,8 +92,8 @@ export function ScoringPageClient() {
       />
 
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)]/30 p-4 text-sm text-[var(--color-ink)]">
-        These weights are global across AuraHire today. Per-company tuning
-        will land in a future release; for now this view is read-only.
+        These weights are global across AuraHire today. Per-company tuning will
+        land in a future release; for now this view is read-only.
       </div>
 
       <SettingsCard
@@ -114,7 +115,9 @@ export function ScoringPageClient() {
                     <p className="text-sm font-semibold text-[var(--color-ink)]">
                       {f.label}
                     </p>
-                    <p className="text-xs text-[var(--color-muted)]">{f.help}</p>
+                    <p className="text-xs text-[var(--color-muted)]">
+                      {f.help}
+                    </p>
                   </div>
                   <span className="font-mono text-sm font-medium text-[var(--color-ink)]">
                     {value}

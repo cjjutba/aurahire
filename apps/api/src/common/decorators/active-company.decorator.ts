@@ -22,9 +22,10 @@ export interface ActiveCompanyContext {
  */
 export const ActiveCompany = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): ActiveCompanyContext => {
-    const req = ctx
-      .switchToHttp()
-      .getRequest<{ activeCompanyId?: string; companyRole?: CompanyMemberRole }>();
+    const req = ctx.switchToHttp().getRequest<{
+      activeCompanyId?: string;
+      companyRole?: CompanyMemberRole;
+    }>();
     if (!req.activeCompanyId || !req.companyRole) {
       throw new Error(
         "@ActiveCompany() used on a route without ActiveCompanyGuard. " +

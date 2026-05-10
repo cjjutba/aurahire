@@ -16,8 +16,12 @@ export class OfferDto {
   })
   status!: string;
   @ApiProperty() sentAt!: string;
-  @ApiPropertyOptional({ nullable: true, type: String }) respondedAt!: string | null;
-  @ApiPropertyOptional({ nullable: true, type: String }) expiresAt!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) respondedAt!:
+    | string
+    | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) expiresAt!:
+    | string
+    | null;
 }
 
 export class OfferEnvelopeDto {

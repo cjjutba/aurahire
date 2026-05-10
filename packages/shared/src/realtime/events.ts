@@ -41,7 +41,8 @@ export const RealtimeEvent = {
   NotificationArchiveAll: "notification.archive_all",
 } as const;
 
-export type RealtimeEventName = (typeof RealtimeEvent)[keyof typeof RealtimeEvent];
+export type RealtimeEventName =
+  (typeof RealtimeEvent)[keyof typeof RealtimeEvent];
 
 // Payload schemas. All IDs are uuids; timestamps are ISO strings (the wire format).
 const isoDate = z.string().datetime();
@@ -53,7 +54,9 @@ export const applicationCreatedSchema = z.object({
   candidateId: z.string().uuid(),
   createdAt: isoDate,
 });
-export type ApplicationCreatedPayload = z.infer<typeof applicationCreatedSchema>;
+export type ApplicationCreatedPayload = z.infer<
+  typeof applicationCreatedSchema
+>;
 
 export const applicationStatusChangedSchema = z.object({
   applicationId: z.string().uuid(),
@@ -91,7 +94,9 @@ export const interviewScheduledSchema = z.object({
   scheduledFor: isoDate,
   format: z.enum(INTERVIEW_FORMAT),
 });
-export type InterviewScheduledPayload = z.infer<typeof interviewScheduledSchema>;
+export type InterviewScheduledPayload = z.infer<
+  typeof interviewScheduledSchema
+>;
 
 export const interviewStatusChangedSchema = z.object({
   interviewId: z.string().uuid(),
@@ -147,7 +152,9 @@ export const interviewCompletedSchema = z.object({
   jobId: z.string().uuid(),
   completedAt: isoDate,
 });
-export type InterviewCompletedPayload = z.infer<typeof interviewCompletedSchema>;
+export type InterviewCompletedPayload = z.infer<
+  typeof interviewCompletedSchema
+>;
 
 export const interviewRescheduledSchema = z.object({
   oldInterviewId: z.string().uuid(),
@@ -157,7 +164,9 @@ export const interviewRescheduledSchema = z.object({
   recruiterId: z.string().uuid(),
   scheduledFor: isoDate,
 });
-export type InterviewRescheduledPayload = z.infer<typeof interviewRescheduledSchema>;
+export type InterviewRescheduledPayload = z.infer<
+  typeof interviewRescheduledSchema
+>;
 
 export const interviewFeedbackSharedSchema = z.object({
   interviewId: z.string().uuid(),
@@ -166,7 +175,9 @@ export const interviewFeedbackSharedSchema = z.object({
   recruiterId: z.string().uuid(),
   sharedAt: isoDate,
 });
-export type InterviewFeedbackSharedPayload = z.infer<typeof interviewFeedbackSharedSchema>;
+export type InterviewFeedbackSharedPayload = z.infer<
+  typeof interviewFeedbackSharedSchema
+>;
 
 export const applicationRecommendationSetSchema = z.object({
   applicationId: z.string().uuid(),
@@ -185,7 +196,9 @@ export const applicationWithdrawnSchema = z.object({
   jobId: z.string().uuid(),
   reason: z.string().nullable(),
 });
-export type ApplicationWithdrawnPayload = z.infer<typeof applicationWithdrawnSchema>;
+export type ApplicationWithdrawnPayload = z.infer<
+  typeof applicationWithdrawnSchema
+>;
 
 // A discriminated map of event-name → payload, useful for typing handlers.
 export interface RealtimeEventPayloadMap {

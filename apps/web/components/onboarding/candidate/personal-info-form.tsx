@@ -33,9 +33,10 @@ export function CandidatePersonalInfoForm({
   onSaveStatusChange,
 }: Props) {
   const router = useRouter();
-  const { register, formState, getValues, setFocus } = useForm<PersonalFormValues>({
-    defaultValues: defaults,
-  });
+  const { register, formState, getValues, setFocus } =
+    useForm<PersonalFormValues>({
+      defaultValues: defaults,
+    });
   const { setHoveredFieldId, registerField } = useHighlightContext();
 
   // Register every named field as a focusable target so resume highlights can focus it on click.
@@ -92,7 +93,10 @@ export function CandidatePersonalInfoForm({
           <span className="whitespace-nowrap">
             {label}
             {required && (
-              <span aria-hidden className="text-[var(--color-status-danger)]"> *</span>
+              <span aria-hidden className="text-[var(--color-status-danger)]">
+                {" "}
+                *
+              </span>
             )}
           </span>
           {wasAi && (

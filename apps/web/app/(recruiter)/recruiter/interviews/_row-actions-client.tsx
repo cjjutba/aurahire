@@ -36,7 +36,9 @@ export function RecruiterInterviewRowActionsClient({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="bottom">
         <DropdownMenuItem
-          onClick={() => router.push(`/recruiter/applications/${applicationId}`)}
+          onClick={() =>
+            router.push(`/recruiter/applications/${applicationId}`)
+          }
           className="flex cursor-pointer items-center gap-2"
         >
           <Eye className="h-4 w-4" />

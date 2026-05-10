@@ -123,7 +123,9 @@ export class SupabaseAuthGuard implements CanActivate {
     return true;
   }
 
-  private extractToken(req: { headers: Record<string, string | string[] | undefined> }): string | null {
+  private extractToken(req: {
+    headers: Record<string, string | string[] | undefined>;
+  }): string | null {
     const header = req.headers["authorization"];
     if (!header || typeof header !== "string") return null;
     const [scheme, token] = header.split(" ");

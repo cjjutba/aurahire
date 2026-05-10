@@ -22,54 +22,55 @@ The date is the planned execution date (not the writing date — writing happens
 
 ### Day 1 — May 2, 2026 (Monorepo, Backend Foundation, Auth E2E)
 
-| Slice | Title | Plan File | Status |
-|---|---|---|---|
-| 1.1 | Monorepo Init | [2026-05-02-slice-1.1-monorepo-init.md](./2026-05-02-slice-1.1-monorepo-init.md) | ✅ Complete |
-| 1.2 | Database Schema + Drizzle Foundation | [2026-05-02-slice-1.2-database-schema.md](./2026-05-02-slice-1.2-database-schema.md) | ✅ Complete |
-| 1.3 | Shared Schemas + Auth Guards | [2026-05-02-slice-1.3-shared-schemas-auth-guards.md](./2026-05-02-slice-1.3-shared-schemas-auth-guards.md) | ✅ Complete |
-| 1.4 | Profiles Module + Auth Wiring | [2026-05-02-slice-1.4-profiles-module-auth-wiring.md](./2026-05-02-slice-1.4-profiles-module-auth-wiring.md) | ✅ Complete |
-| 1.5 | Auth UI: Login, Register, Forgot, Reset, Verify | [2026-05-02-slice-1.5-auth-ui.md](./2026-05-02-slice-1.5-auth-ui.md) | ✅ Complete |
-| 1.6 | Portal Shells | [2026-05-02-slice-1.6-portal-shells.md](./2026-05-02-slice-1.6-portal-shells.md) | ✅ Complete |
-| 1.7 | Recruiter Onboarding Wizard | [2026-05-02-slice-1.7-recruiter-onboarding.md](./2026-05-02-slice-1.7-recruiter-onboarding.md) | ✅ Complete |
-| 1.8 | Candidate Onboarding (Manual, no AI) | [2026-05-02-slice-1.8-candidate-onboarding.md](./2026-05-02-slice-1.8-candidate-onboarding.md) | ✅ Complete |
+| Slice | Title                                           | Plan File                                                                                                    | Status      |
+| ----- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------- |
+| 1.1   | Monorepo Init                                   | [2026-05-02-slice-1.1-monorepo-init.md](./2026-05-02-slice-1.1-monorepo-init.md)                             | ✅ Complete |
+| 1.2   | Database Schema + Drizzle Foundation            | [2026-05-02-slice-1.2-database-schema.md](./2026-05-02-slice-1.2-database-schema.md)                         | ✅ Complete |
+| 1.3   | Shared Schemas + Auth Guards                    | [2026-05-02-slice-1.3-shared-schemas-auth-guards.md](./2026-05-02-slice-1.3-shared-schemas-auth-guards.md)   | ✅ Complete |
+| 1.4   | Profiles Module + Auth Wiring                   | [2026-05-02-slice-1.4-profiles-module-auth-wiring.md](./2026-05-02-slice-1.4-profiles-module-auth-wiring.md) | ✅ Complete |
+| 1.5   | Auth UI: Login, Register, Forgot, Reset, Verify | [2026-05-02-slice-1.5-auth-ui.md](./2026-05-02-slice-1.5-auth-ui.md)                                         | ✅ Complete |
+| 1.6   | Portal Shells                                   | [2026-05-02-slice-1.6-portal-shells.md](./2026-05-02-slice-1.6-portal-shells.md)                             | ✅ Complete |
+| 1.7   | Recruiter Onboarding Wizard                     | [2026-05-02-slice-1.7-recruiter-onboarding.md](./2026-05-02-slice-1.7-recruiter-onboarding.md)               | ✅ Complete |
+| 1.8   | Candidate Onboarding (Manual, no AI)            | [2026-05-02-slice-1.8-candidate-onboarding.md](./2026-05-02-slice-1.8-candidate-onboarding.md)               | ✅ Complete |
 
 ### Day 2 — May 3, 2026 (Jobs, Applications, AI Layer)
 
-| Slice | Title | Plan File | Status |
-|---|---|---|---|
-| 2.1 | Jobs Module Backend | [2026-05-03-slice-2.1-jobs-module-backend.md](./2026-05-03-slice-2.1-jobs-module-backend.md) | ✅ Complete |
-| 2.2 | Jobs Frontend (Recruiter + Public Browse) | [2026-05-03-slice-2.2-jobs-frontend.md](./2026-05-03-slice-2.2-jobs-frontend.md) | ✅ Complete |
-| 2.3 | AI Foundation | [2026-05-03-slice-2.3-ai-foundation.md](./2026-05-03-slice-2.3-ai-foundation.md) | ✅ Complete |
-| 2.4 | Resume Upload + Parse | [2026-05-03-slice-2.4-resume-upload-parse.md](./2026-05-03-slice-2.4-resume-upload-parse.md) | ✅ Complete |
-| 2.5 | Profile Scoring + Score UI Components | [2026-05-03-slice-2.5-profile-scoring-ui.md](./2026-05-03-slice-2.5-profile-scoring-ui.md) | ✅ Complete |
-| 2.6 | Match Scoring on Apply | [2026-05-03-slice-2.6-match-scoring-on-apply.md](./2026-05-03-slice-2.6-match-scoring-on-apply.md) | ✅ Complete |
-| 2.7 | Bias Check + Job Publishing | [2026-05-03-slice-2.7-bias-check-job-publishing.md](./2026-05-03-slice-2.7-bias-check-job-publishing.md) | ✅ Complete |
-| 2.8 | Day 2 Polish | [2026-05-03-slice-2.8-day-2-polish.md](./2026-05-03-slice-2.8-day-2-polish.md) | ✅ Complete |
+| Slice | Title                                     | Plan File                                                                                                | Status      |
+| ----- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------- |
+| 2.1   | Jobs Module Backend                       | [2026-05-03-slice-2.1-jobs-module-backend.md](./2026-05-03-slice-2.1-jobs-module-backend.md)             | ✅ Complete |
+| 2.2   | Jobs Frontend (Recruiter + Public Browse) | [2026-05-03-slice-2.2-jobs-frontend.md](./2026-05-03-slice-2.2-jobs-frontend.md)                         | ✅ Complete |
+| 2.3   | AI Foundation                             | [2026-05-03-slice-2.3-ai-foundation.md](./2026-05-03-slice-2.3-ai-foundation.md)                         | ✅ Complete |
+| 2.4   | Resume Upload + Parse                     | [2026-05-03-slice-2.4-resume-upload-parse.md](./2026-05-03-slice-2.4-resume-upload-parse.md)             | ✅ Complete |
+| 2.5   | Profile Scoring + Score UI Components     | [2026-05-03-slice-2.5-profile-scoring-ui.md](./2026-05-03-slice-2.5-profile-scoring-ui.md)               | ✅ Complete |
+| 2.6   | Match Scoring on Apply                    | [2026-05-03-slice-2.6-match-scoring-on-apply.md](./2026-05-03-slice-2.6-match-scoring-on-apply.md)       | ✅ Complete |
+| 2.7   | Bias Check + Job Publishing               | [2026-05-03-slice-2.7-bias-check-job-publishing.md](./2026-05-03-slice-2.7-bias-check-job-publishing.md) | ✅ Complete |
+| 2.8   | Day 2 Polish                              | [2026-05-03-slice-2.8-day-2-polish.md](./2026-05-03-slice-2.8-day-2-polish.md)                           | ✅ Complete |
 
 ### Day 3 — May 4, 2026 (Admin, Background Jobs, Cron, Caching)
 
-| Slice | Title | Plan File | Status |
-|---|---|---|---|
-| 3.1 | Admin Foundation: Stats + User Mgmt + Job Moderation | [2026-05-04-slice-3.1-admin-foundation.md](./2026-05-04-slice-3.1-admin-foundation.md) | ✅ Complete |
-| 3.2 | Admin Application Oversight | [2026-05-04-slice-3.2-admin-application-oversight.md](./2026-05-04-slice-3.2-admin-application-oversight.md) | ✅ Complete |
-| 3.3 | AI Scoring Configuration + Preview Impact | [2026-05-04-slice-3.3-admin-ai-config.md](./2026-05-04-slice-3.3-admin-ai-config.md) | ✅ Complete |
-| 3.4 | Audit Log + System Analytics | [2026-05-04-slice-3.4-audit-analytics.md](./2026-05-04-slice-3.4-audit-analytics.md) | ✅ Complete |
-| 3.5 | Bias & Fairness Monitor | [2026-05-04-slice-3.5-bias-fairness-monitor.md](./2026-05-04-slice-3.5-bias-fairness-monitor.md) | ✅ Complete |
-| 3.6 | Background Jobs (BullMQ) | [2026-05-04-slice-3.6-bullmq-batch-rescore.md](./2026-05-04-slice-3.6-bullmq-batch-rescore.md) | ✅ Complete |
-| 3.7 | Cron Tasks + Cache Wiring | [2026-05-04-slice-3.7-cron-cache-throttle.md](./2026-05-04-slice-3.7-cron-cache-throttle.md) | 🔄 Executing |
-| 3.8 | Interview, Offer, Final Polish | [2026-05-04-slice-3.8-interviews-offers-final-polish.md](./2026-05-04-slice-3.8-interviews-offers-final-polish.md) | 🔄 Executing |
+| Slice | Title                                                | Plan File                                                                                                          | Status       |
+| ----- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| 3.1   | Admin Foundation: Stats + User Mgmt + Job Moderation | [2026-05-04-slice-3.1-admin-foundation.md](./2026-05-04-slice-3.1-admin-foundation.md)                             | ✅ Complete  |
+| 3.2   | Admin Application Oversight                          | [2026-05-04-slice-3.2-admin-application-oversight.md](./2026-05-04-slice-3.2-admin-application-oversight.md)       | ✅ Complete  |
+| 3.3   | AI Scoring Configuration + Preview Impact            | [2026-05-04-slice-3.3-admin-ai-config.md](./2026-05-04-slice-3.3-admin-ai-config.md)                               | ✅ Complete  |
+| 3.4   | Audit Log + System Analytics                         | [2026-05-04-slice-3.4-audit-analytics.md](./2026-05-04-slice-3.4-audit-analytics.md)                               | ✅ Complete  |
+| 3.5   | Bias & Fairness Monitor                              | [2026-05-04-slice-3.5-bias-fairness-monitor.md](./2026-05-04-slice-3.5-bias-fairness-monitor.md)                   | ✅ Complete  |
+| 3.6   | Background Jobs (BullMQ)                             | [2026-05-04-slice-3.6-bullmq-batch-rescore.md](./2026-05-04-slice-3.6-bullmq-batch-rescore.md)                     | ✅ Complete  |
+| 3.7   | Cron Tasks + Cache Wiring                            | [2026-05-04-slice-3.7-cron-cache-throttle.md](./2026-05-04-slice-3.7-cron-cache-throttle.md)                       | 🔄 Executing |
+| 3.8   | Interview, Offer, Final Polish                       | [2026-05-04-slice-3.8-interviews-offers-final-polish.md](./2026-05-04-slice-3.8-interviews-offers-final-polish.md) | 🔄 Executing |
 
 ### Day 4 — May 5, 2026 (Polish, Smoke Test, Deployment)
 
-| Slice | Title | Plan File | Status |
-|---|---|---|---|
-| 4.1 | Frontend Deployment (Vercel) | [2026-05-05-slice-4.1-vercel-deployment.md](./2026-05-05-slice-4.1-vercel-deployment.md) | 📝 Plan ready |
-| 4.2 | Backend Deployment (Railway) | [2026-05-05-slice-4.2-railway-deployment.md](./2026-05-05-slice-4.2-railway-deployment.md) | 📝 Plan ready |
-| 4.3 | End-to-End Demo Path Verification | [2026-05-05-slice-4.3-e2e-demo-verification.md](./2026-05-05-slice-4.3-e2e-demo-verification.md) | 📝 Plan ready |
-| 4.4 | Thesis Smoke Test | [2026-05-05-slice-4.4-thesis-smoke-test.md](./2026-05-05-slice-4.4-thesis-smoke-test.md) | 📝 Plan ready |
-| 4.5 | Documentation Pass + Buffer | [2026-05-05-slice-4.5-docs-pass-and-buffer.md](./2026-05-05-slice-4.5-docs-pass-and-buffer.md) | 📝 Plan ready |
+| Slice | Title                             | Plan File                                                                                        | Status        |
+| ----- | --------------------------------- | ------------------------------------------------------------------------------------------------ | ------------- |
+| 4.1   | Frontend Deployment (Vercel)      | [2026-05-05-slice-4.1-vercel-deployment.md](./2026-05-05-slice-4.1-vercel-deployment.md)         | 📝 Plan ready |
+| 4.2   | Backend Deployment (Railway)      | [2026-05-05-slice-4.2-railway-deployment.md](./2026-05-05-slice-4.2-railway-deployment.md)       | 📝 Plan ready |
+| 4.3   | End-to-End Demo Path Verification | [2026-05-05-slice-4.3-e2e-demo-verification.md](./2026-05-05-slice-4.3-e2e-demo-verification.md) | 📝 Plan ready |
+| 4.4   | Thesis Smoke Test                 | [2026-05-05-slice-4.4-thesis-smoke-test.md](./2026-05-05-slice-4.4-thesis-smoke-test.md)         | 📝 Plan ready |
+| 4.5   | Documentation Pass + Buffer       | [2026-05-05-slice-4.5-docs-pass-and-buffer.md](./2026-05-05-slice-4.5-docs-pass-and-buffer.md)   | 📝 Plan ready |
 
 **Status legend:**
+
 - ⏳ Not started — plan not yet written
 - 📝 Plan ready — written, awaiting execution
 - 🔄 Executing — currently being worked on
@@ -97,6 +98,7 @@ A separate Claude Code session opens in the same repo, reads the plan, and execu
 The authoritative source for **what** each slice does and **why** is `docs/main/sprint-plan.md`. The plans in this folder are the **how** — the bite-sized executable steps.
 
 Other relevant references for plan execution:
+
 - `CLAUDE.md` — hard rules (no dev servers, no Docker commands, etc.)
 - `AGENTS.md` — Next.js 16 caveat and module patterns
 - `docs/main/architecture.md` — system architecture

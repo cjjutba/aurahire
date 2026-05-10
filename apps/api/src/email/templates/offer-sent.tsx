@@ -73,11 +73,15 @@ export function OfferSentEmail({
           }}
         >
           <EmailBrandHeader company={company} />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             Congratulations — offer extended!
           </Heading>
           <Section>
-            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>Hi {candidateName},</Text>
+            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
+              Hi {candidateName},
+            </Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
               {companyName} has extended you an offer for{" "}
               <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong>.

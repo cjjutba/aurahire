@@ -70,7 +70,11 @@ export class AdminAuditRepository {
         actor: r.actor ?? null,
         company:
           r.companyId && r.companyName
-            ? { id: r.companyId, name: r.companyName, logoUrl: r.companyLogoUrl }
+            ? {
+                id: r.companyId,
+                name: r.companyName,
+                logoUrl: r.companyLogoUrl,
+              }
             : null,
       })),
       total: totalRows[0]?.c ?? 0,
@@ -134,7 +138,11 @@ export class AdminAuditRepository {
         actor: r.actor ?? null,
         company:
           r.companyId && r.companyName
-            ? { id: r.companyId, name: r.companyName, logoUrl: r.companyLogoUrl }
+            ? {
+                id: r.companyId,
+                name: r.companyName,
+                logoUrl: r.companyLogoUrl,
+              }
             : null,
       })),
       truncated,

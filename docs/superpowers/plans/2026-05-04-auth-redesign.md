@@ -20,38 +20,38 @@
 
 ### Create
 
-| Path                                                      | Responsibility                                                      |
-| --------------------------------------------------------- | ------------------------------------------------------------------- |
-| `apps/web/components/auth/auth-shell.tsx`                 | Centered max-width wrapper + headline + optional subtitle slot     |
-| `apps/web/components/auth/auth-input.tsx`                 | Floating-label pill input with error slot, RHF-compatible          |
-| `apps/web/components/auth/auth-footer.tsx`                | Dark footer with AuraHire glyph + Terms · Privacy links            |
-| `apps/web/components/auth/auth-role-tag.tsx`              | Small uppercase wayfinding chip ("Candidate" / "Recruiter")        |
-| `apps/web/components/auth/auth-role-card.tsx`             | Full-width pill role row with leading icon + chevron               |
+| Path                                          | Responsibility                                                 |
+| --------------------------------------------- | -------------------------------------------------------------- |
+| `apps/web/components/auth/auth-shell.tsx`     | Centered max-width wrapper + headline + optional subtitle slot |
+| `apps/web/components/auth/auth-input.tsx`     | Floating-label pill input with error slot, RHF-compatible      |
+| `apps/web/components/auth/auth-footer.tsx`    | Dark footer with AuraHire glyph + Terms · Privacy links        |
+| `apps/web/components/auth/auth-role-tag.tsx`  | Small uppercase wayfinding chip ("Candidate" / "Recruiter")    |
+| `apps/web/components/auth/auth-role-card.tsx` | Full-width pill role row with leading icon + chevron           |
 
 ### Modify
 
-| Path                                                            | Change                                                            |
-| --------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `apps/web/app/(auth)/layout.tsx`                                | Top-left wordmark, drop soft-grey bg, swap footer to `<AuthFooter />` |
-| `apps/web/app/(auth)/login/page.tsx`                            | Replace `AuthCard` with `AuthShell`                               |
-| `apps/web/app/(auth)/register/page.tsx`                         | Replace `AuthCard`, swap link cards for `<AuthRoleCard>`          |
-| `apps/web/app/(auth)/register/candidate/page.tsx`               | Replace `AuthCard`, add role tag                                  |
-| `apps/web/app/(auth)/register/recruiter/page.tsx`               | Replace `AuthCard`, add role tag                                  |
-| `apps/web/app/(auth)/forgot-password/page.tsx`                  | Replace `AuthCard`                                                |
-| `apps/web/app/(auth)/reset-password/page.tsx`                   | Replace `AuthCard`                                                |
-| `apps/web/app/(auth)/verify-email/page.tsx`                     | Replace `AuthCard`                                                |
-| `apps/web/app/(auth)/verify-email/sent/page.tsx`                | Replace `AuthCard`                                                |
-| `apps/web/components/auth/login-form.tsx`                       | Swap shadcn `<Input>`/`<Form*>` for `<AuthInput>`                 |
-| `apps/web/components/auth/register-candidate-form.tsx`          | Same as login-form                                                |
-| `apps/web/components/auth/register-recruiter-form.tsx`          | Same as login-form                                                |
-| `apps/web/components/auth/forgot-password-form.tsx`             | Same as login-form                                                |
-| `apps/web/components/auth/reset-password-form.tsx`              | Same as login-form                                                |
+| Path                                                   | Change                                                                |
+| ------------------------------------------------------ | --------------------------------------------------------------------- |
+| `apps/web/app/(auth)/layout.tsx`                       | Top-left wordmark, drop soft-grey bg, swap footer to `<AuthFooter />` |
+| `apps/web/app/(auth)/login/page.tsx`                   | Replace `AuthCard` with `AuthShell`                                   |
+| `apps/web/app/(auth)/register/page.tsx`                | Replace `AuthCard`, swap link cards for `<AuthRoleCard>`              |
+| `apps/web/app/(auth)/register/candidate/page.tsx`      | Replace `AuthCard`, add role tag                                      |
+| `apps/web/app/(auth)/register/recruiter/page.tsx`      | Replace `AuthCard`, add role tag                                      |
+| `apps/web/app/(auth)/forgot-password/page.tsx`         | Replace `AuthCard`                                                    |
+| `apps/web/app/(auth)/reset-password/page.tsx`          | Replace `AuthCard`                                                    |
+| `apps/web/app/(auth)/verify-email/page.tsx`            | Replace `AuthCard`                                                    |
+| `apps/web/app/(auth)/verify-email/sent/page.tsx`       | Replace `AuthCard`                                                    |
+| `apps/web/components/auth/login-form.tsx`              | Swap shadcn `<Input>`/`<Form*>` for `<AuthInput>`                     |
+| `apps/web/components/auth/register-candidate-form.tsx` | Same as login-form                                                    |
+| `apps/web/components/auth/register-recruiter-form.tsx` | Same as login-form                                                    |
+| `apps/web/components/auth/forgot-password-form.tsx`    | Same as login-form                                                    |
+| `apps/web/components/auth/reset-password-form.tsx`     | Same as login-form                                                    |
 
 ### Delete
 
-| Path                                          | Why                                                                         |
-| --------------------------------------------- | --------------------------------------------------------------------------- |
-| `apps/web/components/auth/auth-card.tsx`      | Superseded by `<AuthShell>`. Delete after every consumer migrates.          |
+| Path                                     | Why                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------ |
+| `apps/web/components/auth/auth-card.tsx` | Superseded by `<AuthShell>`. Delete after every consumer migrates. |
 
 ---
 
@@ -60,6 +60,7 @@
 **Goal:** Author all five new components in isolation. They have no consumers yet, so verification is just `tsc --noEmit` (type-check) — they cannot break anything.
 
 **Files:**
+
 - Create: `apps/web/components/auth/auth-shell.tsx`
 - Create: `apps/web/components/auth/auth-input.tsx`
 - Create: `apps/web/components/auth/auth-footer.tsx`
@@ -80,14 +81,22 @@ export function AuthFooter() {
             aria-hidden
             className="inline-block size-[18px] rounded-[4px] bg-[var(--color-primary)]"
           />
-          <span className="font-medium text-[var(--color-on-dark)]">AuraHire</span>
+          <span className="font-medium text-[var(--color-on-dark)]">
+            AuraHire
+          </span>
         </div>
         <nav className="flex items-center gap-5 text-[var(--color-on-dark-soft)]">
-          <Link href="/legal/terms" className="hover:text-[var(--color-on-dark)] hover:underline">
+          <Link
+            href="/legal/terms"
+            className="hover:text-[var(--color-on-dark)] hover:underline"
+          >
             Terms of Use
           </Link>
           <span aria-hidden>|</span>
-          <Link href="/legal/privacy" className="hover:text-[var(--color-on-dark)] hover:underline">
+          <Link
+            href="/legal/privacy"
+            className="hover:text-[var(--color-on-dark)] hover:underline"
+          >
             Privacy Policy
           </Link>
         </nav>
@@ -112,7 +121,13 @@ interface AuthShellProps {
   footer?: ReactNode;
 }
 
-export function AuthShell({ title, subtitle, topSlot, children, footer }: AuthShellProps) {
+export function AuthShell({
+  title,
+  subtitle,
+  topSlot,
+  children,
+  footer,
+}: AuthShellProps) {
   return (
     <div className="mx-auto w-full max-w-[360px] sm:max-w-[400px]">
       {topSlot && <div className="mb-4 flex justify-center">{topSlot}</div>}
@@ -127,7 +142,9 @@ export function AuthShell({ title, subtitle, topSlot, children, footer }: AuthSh
       {!subtitle && <div className="mb-8" />}
       {children}
       {footer && (
-        <div className="mt-6 text-center text-sm text-[var(--color-body)]">{footer}</div>
+        <div className="mt-6 text-center text-sm text-[var(--color-body)]">
+          {footer}
+        </div>
       )}
     </div>
   );
@@ -145,15 +162,20 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-interface AuthInputProps
-  extends Omit<React.ComponentProps<"input">, "placeholder"> {
+interface AuthInputProps extends Omit<
+  React.ComponentProps<"input">,
+  "placeholder"
+> {
   id: string;
   label: string;
   error?: string;
 }
 
 export const AuthInput = React.forwardRef<HTMLInputElement, AuthInputProps>(
-  function AuthInput({ id, label, error, className, type = "text", ...rest }, ref) {
+  function AuthInput(
+    { id, label, error, className, type = "text", ...rest },
+    ref,
+  ) {
     const errorId = error ? `${id}-error` : undefined;
     return (
       <div className="w-full">
@@ -183,7 +205,8 @@ export const AuthInput = React.forwardRef<HTMLInputElement, AuthInputProps>(
               "pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 bg-[var(--color-canvas)] px-1.5 text-[15px] text-[var(--color-muted-soft)] transition-all duration-150",
               "peer-focus:top-0 peer-focus:text-[11px] peer-focus:font-medium peer-focus:text-[var(--color-body)]",
               "peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-[var(--color-body)]",
-              error && "peer-focus:text-[var(--color-status-danger)] peer-[:not(:placeholder-shown)]:text-[var(--color-status-danger)]",
+              error &&
+                "peer-focus:text-[var(--color-status-danger)] peer-[:not(:placeholder-shown)]:text-[var(--color-status-danger)]",
             )}
           >
             {label}
@@ -232,7 +255,12 @@ interface AuthRoleCardProps {
   description: string;
 }
 
-export function AuthRoleCard({ href, icon: Icon, title, description }: AuthRoleCardProps) {
+export function AuthRoleCard({
+  href,
+  icon: Icon,
+  title,
+  description,
+}: AuthRoleCardProps) {
   return (
     <Link
       href={href}
@@ -242,8 +270,12 @@ export function AuthRoleCard({ href, icon: Icon, title, description }: AuthRoleC
         <Icon className="size-4" />
       </span>
       <span className="flex-1">
-        <span className="block text-sm font-semibold text-[var(--color-ink)]">{title}</span>
-        <span className="mt-0.5 block text-xs text-[var(--color-body)]">{description}</span>
+        <span className="block text-sm font-semibold text-[var(--color-ink)]">
+          {title}
+        </span>
+        <span className="mt-0.5 block text-xs text-[var(--color-body)]">
+          {description}
+        </span>
       </span>
       <ChevronRight className="size-4 text-[var(--color-muted)]" />
     </Link>
@@ -268,6 +300,7 @@ Expected: passes (no ESLint errors)
 **Goal:** Top-left wordmark with hairline-soft bottom border. White canvas (drop the `surface-soft` background). Swap footer to `<AuthFooter />`.
 
 **Files:**
+
 - Modify: `apps/web/app/(auth)/layout.tsx`
 
 - [ ] **Step 2.1: Rewrite the layout**
@@ -279,7 +312,11 @@ import Link from "next/link";
 
 import { AuthFooter } from "@/components/auth/auth-footer";
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-canvas)]">
       <header className="border-b border-[var(--color-hairline-soft)] px-6 py-5 sm:px-8 sm:py-6">
@@ -311,6 +348,7 @@ Expected: passes.
 **Goal:** Smallest 2-field migration. Establishes the page-level pattern (`<AuthShell>` + redesigned form) that the next 7 migrations follow.
 
 **Files:**
+
 - Modify: `apps/web/app/(auth)/login/page.tsx`
 - Modify: `apps/web/components/auth/login-form.tsx`
 
@@ -334,7 +372,10 @@ export default function LoginPage() {
       footer={
         <span>
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-[var(--color-primary)] hover:underline">
+          <Link
+            href="/register"
+            className="text-[var(--color-primary)] hover:underline"
+          >
             Sign up
           </Link>
         </span>
@@ -397,7 +438,9 @@ export function LoginForm() {
             description: "Check your inbox for the verification link.",
           });
         } else {
-          toast.error("Sign in failed", { description: "Email or password incorrect." });
+          toast.error("Sign in failed", {
+            description: "Email or password incorrect.",
+          });
         }
         return;
       }
@@ -414,24 +457,33 @@ export function LoginForm() {
       });
 
       if (profileRes.status === 404) {
-        toast.error("Profile not found", { description: "Please complete registration." });
+        toast.error("Profile not found", {
+          description: "Please complete registration.",
+        });
         router.push("/register");
         return;
       }
 
       if (!profileRes.ok) {
-        toast.error("Sign in failed", { description: "Could not load profile." });
+        toast.error("Sign in failed", {
+          description: "Could not load profile.",
+        });
         return;
       }
 
       const profileBody = (await profileRes.json()) as {
-        data: { role: "candidate" | "recruiter" | "admin"; profileCompleted: boolean };
+        data: {
+          role: "candidate" | "recruiter" | "admin";
+          profileCompleted: boolean;
+        };
       };
       const { role, profileCompleted } = profileBody.data;
 
       const dest =
         redirectTo ??
-        (profileCompleted ? `/${role}` : `/onboarding/${role === "admin" ? "" : role}`);
+        (profileCompleted
+          ? `/${role}`
+          : `/onboarding/${role === "admin" ? "" : role}`);
       router.push(dest);
       router.refresh();
     } catch (err) {
@@ -489,6 +541,7 @@ Expected: passes.
 ## Task 4: Migrate `/register` (role select)
 
 **Files:**
+
 - Modify: `apps/web/app/(auth)/register/page.tsx`
 
 - [ ] **Step 4.1: Rewrite `register/page.tsx`**
@@ -510,7 +563,10 @@ export default function RegisterPage() {
       footer={
         <span>
           Already have an account?{" "}
-          <Link href="/login" className="text-[var(--color-primary)] hover:underline">
+          <Link
+            href="/login"
+            className="text-[var(--color-primary)] hover:underline"
+          >
             Sign in
           </Link>
         </span>
@@ -545,6 +601,7 @@ Expected: passes.
 ## Task 5: Migrate `/register/candidate`
 
 **Files:**
+
 - Modify: `apps/web/app/(auth)/register/candidate/page.tsx`
 - Modify: `apps/web/components/auth/register-candidate-form.tsx`
 
@@ -568,7 +625,10 @@ export default function RegisterCandidatePage() {
       footer={
         <span>
           Already have an account?{" "}
-          <Link href="/login" className="text-[var(--color-primary)] hover:underline">
+          <Link
+            href="/login"
+            className="text-[var(--color-primary)] hover:underline"
+          >
             Sign in
           </Link>
         </span>
@@ -636,13 +696,17 @@ export function RegisterCandidateForm() {
         body: JSON.stringify(payload),
       });
 
-      router.push(`/verify-email/sent?email=${encodeURIComponent(values.email)}`);
+      router.push(
+        `/verify-email/sent?email=${encodeURIComponent(values.email)}`,
+      );
     } catch (err) {
       const status = (err as { status?: number }).status;
       const body = (err as { body?: { code?: string; message?: string } }).body;
       if (status === 409 && body?.code === "EMAIL_ALREADY_REGISTERED") {
         setError("email", {
-          message: body.message ?? "This email is already registered. Sign in instead?",
+          message:
+            body.message ??
+            "This email is already registered. Sign in instead?",
         });
       } else {
         toast.error("Registration failed", {
@@ -696,7 +760,8 @@ export function RegisterCandidateForm() {
         {...register("confirmPassword")}
       />
       <p className="px-2 pt-1 text-center text-xs leading-relaxed text-[var(--color-muted)]">
-        By creating an account you agree to the AuraHire Terms and Privacy Policy.
+        By creating an account you agree to the AuraHire Terms and Privacy
+        Policy.
       </p>
       <Button
         type="submit"
@@ -720,6 +785,7 @@ Expected: passes.
 ## Task 6: Migrate `/register/recruiter`
 
 **Files:**
+
 - Modify: `apps/web/app/(auth)/register/recruiter/page.tsx`
 - Modify: `apps/web/components/auth/register-recruiter-form.tsx`
 
@@ -743,7 +809,10 @@ export default function RegisterRecruiterPage() {
       footer={
         <span>
           Already have an account?{" "}
-          <Link href="/login" className="text-[var(--color-primary)] hover:underline">
+          <Link
+            href="/login"
+            className="text-[var(--color-primary)] hover:underline"
+          >
             Sign in
           </Link>
         </span>
@@ -813,13 +882,17 @@ export function RegisterRecruiterForm() {
         body: JSON.stringify(payload),
       });
 
-      router.push(`/verify-email/sent?email=${encodeURIComponent(values.email)}`);
+      router.push(
+        `/verify-email/sent?email=${encodeURIComponent(values.email)}`,
+      );
     } catch (err) {
       const status = (err as { status?: number }).status;
       const body = (err as { body?: { code?: string; message?: string } }).body;
       if (status === 409 && body?.code === "EMAIL_ALREADY_REGISTERED") {
         setError("email", {
-          message: body.message ?? "This email is already registered. Sign in instead?",
+          message:
+            body.message ??
+            "This email is already registered. Sign in instead?",
         });
       } else {
         toast.error("Registration failed", {
@@ -880,7 +953,8 @@ export function RegisterRecruiterForm() {
         {...register("confirmPassword")}
       />
       <p className="px-2 pt-1 text-center text-xs leading-relaxed text-[var(--color-muted)]">
-        By creating an account you agree to the AuraHire Terms and Privacy Policy.
+        By creating an account you agree to the AuraHire Terms and Privacy
+        Policy.
       </p>
       <Button
         type="submit"
@@ -904,6 +978,7 @@ Expected: passes.
 ## Task 7: Migrate `/forgot-password`
 
 **Files:**
+
 - Modify: `apps/web/app/(auth)/forgot-password/page.tsx`
 - Modify: `apps/web/components/auth/forgot-password-form.tsx`
 
@@ -925,7 +1000,10 @@ export default function ForgotPasswordPage() {
       footer={
         <span>
           Remember it?{" "}
-          <Link href="/login" className="text-[var(--color-primary)] hover:underline">
+          <Link
+            href="/login"
+            className="text-[var(--color-primary)] hover:underline"
+          >
             Sign in
           </Link>
         </span>
@@ -983,10 +1061,12 @@ export function ForgotPasswordForm() {
   if (sent) {
     return (
       <div className="text-center text-sm text-[var(--color-body)]">
-        <p className="mb-2 font-semibold text-[var(--color-ink)]">Check your email</p>
+        <p className="mb-2 font-semibold text-[var(--color-ink)]">
+          Check your email
+        </p>
         <p>
-          If an account exists for that address, we&apos;ve sent a password reset link.
-          The link expires in 1 hour.
+          If an account exists for that address, we&apos;ve sent a password
+          reset link. The link expires in 1 hour.
         </p>
       </div>
     );
@@ -1024,6 +1104,7 @@ Expected: passes.
 ## Task 8: Migrate `/reset-password`
 
 **Files:**
+
 - Modify: `apps/web/app/(auth)/reset-password/page.tsx`
 - Modify: `apps/web/components/auth/reset-password-form.tsx`
 
@@ -1165,6 +1246,7 @@ Expected: passes.
 ## Task 9: Migrate `/verify-email` (token landing page)
 
 **Files:**
+
 - Modify: `apps/web/app/(auth)/verify-email/page.tsx`
 
 This page is a `"use client"` page (not a separate form component). Replace `<AuthCard>` with `<AuthShell>` and adjust copy per spec to handle 4 states: verifying / signing-in / success / error.
@@ -1213,10 +1295,13 @@ export default function VerifyEmailPage() {
 
     void (async () => {
       try {
-        const result = await fetcher<VerifyResponse>("/api/v1/auth/verify-email", {
-          method: "POST",
-          body: JSON.stringify({ token }),
-        });
+        const result = await fetcher<VerifyResponse>(
+          "/api/v1/auth/verify-email",
+          {
+            method: "POST",
+            body: JSON.stringify({ token }),
+          },
+        );
 
         setStatus("signing-in");
 
@@ -1228,7 +1313,9 @@ export default function VerifyEmailPage() {
 
         if (otpError) {
           setStatus("error");
-          setErrorMessage("Your email is verified. Please sign in to continue.");
+          setErrorMessage(
+            "Your email is verified. Please sign in to continue.",
+          );
           setTimeout(() => router.push(`/login?verified=1`), 1500);
           return;
         }
@@ -1243,7 +1330,8 @@ export default function VerifyEmailPage() {
         const body = (err as { body?: { message?: string } }).body;
         setStatus("error");
         setErrorMessage(
-          body?.message ?? "Verification failed. The link may be invalid or expired.",
+          body?.message ??
+            "Verification failed. The link may be invalid or expired.",
         );
       }
     })();
@@ -1252,7 +1340,11 @@ export default function VerifyEmailPage() {
   if (status === "verifying" || status === "signing-in") {
     return (
       <AuthShell
-        title={status === "verifying" ? "Verifying your email..." : "Signing you in..."}
+        title={
+          status === "verifying"
+            ? "Verifying your email..."
+            : "Signing you in..."
+        }
         subtitle="This will only take a moment."
       >
         <div className="flex justify-center py-2">
@@ -1264,10 +1356,7 @@ export default function VerifyEmailPage() {
 
   if (status === "success") {
     return (
-      <AuthShell
-        title="Email verified"
-        subtitle="Taking you to onboarding..."
-      >
+      <AuthShell title="Email verified" subtitle="Taking you to onboarding...">
         <div className="flex justify-center py-2">
           <Loader2 className="size-6 animate-spin text-[var(--color-status-success)]" />
         </div>
@@ -1301,6 +1390,7 @@ Expected: passes.
 ## Task 10: Migrate `/verify-email/sent`
 
 **Files:**
+
 - Modify: `apps/web/app/(auth)/verify-email/sent/page.tsx`
 
 - [ ] **Step 10.1: Rewrite `verify-email/sent/page.tsx`**
@@ -1326,13 +1416,16 @@ export default async function VerifyEmailSentPage({ searchParams }: PageProps) {
       subtitle={
         <>
           We&apos;ve sent a verification link to{" "}
-          <span className="font-semibold text-[var(--color-ink)]">{email ?? "your inbox"}</span>.
+          <span className="font-semibold text-[var(--color-ink)]">
+            {email ?? "your inbox"}
+          </span>
+          .
         </>
       }
     >
       <p className="mx-auto mb-8 max-w-[320px] text-center text-sm leading-relaxed text-[var(--color-body)]">
-        Click the link in the email to activate your account. The link expires in 24 hours.
-        Don&apos;t see it? Check your spam folder.
+        Click the link in the email to activate your account. The link expires
+        in 24 hours. Don&apos;t see it? Check your spam folder.
       </p>
       <Button
         asChild
@@ -1355,6 +1448,7 @@ Expected: passes.
 ## Task 11: Delete `AuthCard` + final verification
 
 **Files:**
+
 - Delete: `apps/web/components/auth/auth-card.tsx`
 
 - [ ] **Step 11.1: Confirm no remaining consumers**

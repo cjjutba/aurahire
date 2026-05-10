@@ -39,9 +39,13 @@ export class ProfileScoreRecomputeProcessor extends WorkerHost {
     );
 
     try {
-      const dto = await this.scoring.computeProfileScore(candidateId, resumeId, {
-        reason,
-      });
+      const dto = await this.scoring.computeProfileScore(
+        candidateId,
+        resumeId,
+        {
+          reason,
+        },
+      );
       this.logger.log(
         `[recompute ${job.id}] ok in ${Date.now() - startedAt}ms — ${dto.overallScore}/100 ${dto.band}`,
       );

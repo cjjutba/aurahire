@@ -382,15 +382,33 @@ export const adminHelp: HelpPageContent = {
               head: ["Field", "Description"],
               rows: [
                 ["id", "ULID; lexicographically sortable by time."],
-                ["actor_user_id", "Who performed the action; null for system events."],
+                [
+                  "actor_user_id",
+                  "Who performed the action; null for system events.",
+                ],
                 ["actor_role", "candidate / recruiter / admin / system."],
-                ["workspace_id", "Tenant scope (nullable for cross-workspace events)."],
-                ["category", "Lifecycle, scoring, bias, offer, communication, config, identity."],
-                ["action", "Specific verb (e.g. score.override, offer.send, prompt.bump)."],
-                ["target_kind", "Resource type (job, application, user, prompt-version)."],
+                [
+                  "workspace_id",
+                  "Tenant scope (nullable for cross-workspace events).",
+                ],
+                [
+                  "category",
+                  "Lifecycle, scoring, bias, offer, communication, config, identity.",
+                ],
+                [
+                  "action",
+                  "Specific verb (e.g. score.override, offer.send, prompt.bump).",
+                ],
+                [
+                  "target_kind",
+                  "Resource type (job, application, user, prompt-version).",
+                ],
                 ["target_id", "Resource ID."],
                 ["before / after", "JSON diff of the resource state."],
-                ["reason", "Free-text reason (required for overrides and escalations)."],
+                [
+                  "reason",
+                  "Free-text reason (required for overrides and escalations).",
+                ],
                 ["created_at", "Server timestamp; not client-supplied."],
               ],
             },

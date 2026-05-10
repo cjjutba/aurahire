@@ -24,9 +24,11 @@ export default async function AnalyzingPage() {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
-  const profile = (await getCurrentProfile()) as
-    | { id: string; role: string; profileCompleted: boolean }
-    | null;
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+    profileCompleted: boolean;
+  } | null;
   if (!profile) redirect("/login");
   if (profile.role !== "candidate") redirect("/");
   if (profile.profileCompleted) redirect("/candidate");

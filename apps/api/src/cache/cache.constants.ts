@@ -43,7 +43,8 @@ export const TAGS = {
   profileScore: (userId: string) => `profile-score:${userId}`,
   // ─── Company-scoped tags (Phase 2 multi-tenancy) ─────────────────────
   companyJobs: (companyId: string) => `jobs:company:${companyId}`,
-  companyApplications: (companyId: string) => `applications:company:${companyId}`,
+  companyApplications: (companyId: string) =>
+    `applications:company:${companyId}`,
   companyInterviews: (companyId: string) => `interviews:company:${companyId}`,
   companyOffers: (companyId: string) => `offers:company:${companyId}`,
   companyShortlist: (companyId: string) => `shortlist:company:${companyId}`,

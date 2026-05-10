@@ -8,7 +8,10 @@ import type {
 } from "@aurahire/db";
 import { NotificationsRepository } from "./notifications.repository";
 import { NotificationPreferencesService } from "../notification-preferences/notification-preferences.service";
-import { NOTIFICATION_EMAIL_QUEUE, type NotificationEmailJobData } from "./queues";
+import {
+  NOTIFICATION_EMAIL_QUEUE,
+  type NotificationEmailJobData,
+} from "./queues";
 import { SECURITY_EVENTS } from "./event-defaults";
 import { buildTitle, buildBody, buildLink } from "./templates";
 import { ProfilesRepository } from "../profiles/profiles.repository";
@@ -79,7 +82,10 @@ export class NotificationsService {
         unreadCount,
       });
 
-      const mode = await this.resolveDeliveryMode(params.userId, params.eventType);
+      const mode = await this.resolveDeliveryMode(
+        params.userId,
+        params.eventType,
+      );
 
       this.logger.debug(
         `emit: user=${params.userId} eventType=${params.eventType} mode=${mode} id=${row.id}`,
@@ -99,8 +105,13 @@ export class NotificationsService {
     }
   }
 
-  async emitMany(userIds: string[], params: Omit<EmitParams, "userId">): Promise<void> {
-    await Promise.all(userIds.map((userId) => this.emit({ ...params, userId })));
+  async emitMany(
+    userIds: string[],
+    params: Omit<EmitParams, "userId">,
+  ): Promise<void> {
+    await Promise.all(
+      userIds.map((userId) => this.emit({ ...params, userId })),
+    );
   }
 
   private async resolveDeliveryMode(

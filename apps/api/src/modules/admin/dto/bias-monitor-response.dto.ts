@@ -95,10 +95,14 @@ export class BiasMonitorSampleSizeDto {
 export class BiasMonitorBundleDto {
   @ApiProperty({ type: () => BiasMonitorRangeDto }) range!: BiasMonitorRangeDto;
   @ApiProperty({ type: () => BiasMonitorKpisDto }) kpis!: BiasMonitorKpisDto;
-  @ApiProperty({ type: [FlagsByCategoryDto] }) flagsByCategory!: FlagsByCategoryDto[];
-  @ApiProperty({ type: [TopFlaggedTermDto] }) topFlaggedTerms!: TopFlaggedTermDto[];
-  @ApiProperty({ type: [ScoreBandSliceDto] }) scoreDistributionByBand!: ScoreBandSliceDto[];
-  @ApiProperty({ type: [RecentOverrideDto] }) recentOverrides!: RecentOverrideDto[];
+  @ApiProperty({ type: [FlagsByCategoryDto] })
+  flagsByCategory!: FlagsByCategoryDto[];
+  @ApiProperty({ type: [TopFlaggedTermDto] })
+  topFlaggedTerms!: TopFlaggedTermDto[];
+  @ApiProperty({ type: [ScoreBandSliceDto] })
+  scoreDistributionByBand!: ScoreBandSliceDto[];
+  @ApiProperty({ type: [RecentOverrideDto] })
+  recentOverrides!: RecentOverrideDto[];
   @ApiProperty({ type: () => BiasMonitorSampleSizeDto })
   sampleSize!: BiasMonitorSampleSizeDto;
   @ApiProperty({ type: () => ScoringQualityDto })

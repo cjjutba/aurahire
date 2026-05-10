@@ -33,7 +33,8 @@ export class ProfileResponseDto {
   @ApiProperty() email!: string;
   @ApiProperty() fullName!: string;
   @ApiProperty({ enum: ["candidate", "recruiter", "admin"] }) role!: UserRole;
-  @ApiProperty({ enum: ["active", "suspended", "deleted"] }) status!: UserStatus;
+  @ApiProperty({ enum: ["active", "suspended", "deleted"] })
+  status!: UserStatus;
   @ApiProperty({ nullable: true }) phone!: string | null;
   @ApiProperty({ nullable: true }) avatarUrl!: string | null;
   @ApiProperty() profileCompleted!: boolean;

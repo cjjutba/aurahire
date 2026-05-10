@@ -48,14 +48,19 @@ describe("DigestEmailCron", () => {
   });
 
   it("audit-logs the batch run with totals", async () => {
-    repo.findDigestPendingByUser.mockResolvedValue([{ userId: "u1", ids: ["n1"] }]);
+    repo.findDigestPendingByUser.mockResolvedValue([
+      { userId: "u1", ids: ["n1"] },
+    ]);
     await cron.execute();
     expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({
         actorId: null,
         actorType: "system",
         action: expect.stringContaining("digest_email_batch_run"),
-        details: expect.objectContaining({ userCount: 1, notificationCount: 1 }),
+        details: expect.objectContaining({
+          userCount: 1,
+          notificationCount: 1,
+        }),
       }),
     );
   });
@@ -74,7 +79,9 @@ describe("DigestEmailCron", () => {
       { userId: "u1", ids: ["n1"] },
       { userId: "u2", ids: ["n2"] },
     ]);
-    queue.add.mockRejectedValueOnce(new Error("redis down")).mockResolvedValue(undefined);
+    queue.add
+      .mockRejectedValueOnce(new Error("redis down"))
+      .mockResolvedValue(undefined);
     const result = await cron.execute();
     // Both batches attempted
     expect(queue.add).toHaveBeenCalledTimes(2);

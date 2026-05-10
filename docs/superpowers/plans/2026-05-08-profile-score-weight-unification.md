@@ -13,6 +13,7 @@
 ## File Structure
 
 **Modify:**
+
 - `packages/shared/src/schemas/admin.ts` — `profileWeightsSchema` keys
 - `apps/api/src/modules/admin/dto/scoring-config-response.dto.ts` — `ProfileWeightsDto` keys
 - `apps/api/scripts/seed-db.ts` — `SCORING_CONFIG.profileWeights` keys
@@ -24,9 +25,11 @@
 - `packages/shared/openapi.json` — regenerated from NestJS DTO
 
 **Create:**
+
 - `packages/db/drizzle/0011_unify_profile_weight_keys.sql` — JSONB rekey on `scoring_config`
 
 **Tests touched:**
+
 - `apps/api/src/modules/scoring/scoring.service.spec.ts` — already uses correct keys; verify no regression. Add a new test asserting `deriveOverallScore` normalizes (no clamp) and that the service overrides AI-returned `max` with config weights.
 
 ---
@@ -34,6 +37,7 @@
 ### Task 1: Unify `profileWeightsSchema` in shared
 
 **Files:**
+
 - Modify: `packages/shared/src/schemas/admin.ts:89-95`
 
 - [ ] **Step 1: Update Zod schema keys**
@@ -67,6 +71,7 @@ git commit -m "fix(scoring): rename profileWeightsSchema keys to match AI prompt
 ### Task 2: Update API DTO
 
 **Files:**
+
 - Modify: `apps/api/src/modules/admin/dto/scoring-config-response.dto.ts:10-15`
 
 - [ ] **Step 1: Replace `ProfileWeightsDto`**
@@ -99,6 +104,7 @@ git commit -m "fix(scoring): align ProfileWeightsDto with shared schema keys"
 ### Task 3: Update seed values
 
 **Files:**
+
 - Modify: `apps/api/scripts/seed-db.ts:75-80`
 
 - [ ] **Step 1: Replace `SCORING_CONFIG.profileWeights`**
@@ -133,6 +139,7 @@ git commit -m "fix(scoring): use canonical profile-weight keys in seed"
 ### Task 4: Drizzle migration to rekey existing `scoring_config` row
 
 **Files:**
+
 - Create: `packages/db/drizzle/0011_unify_profile_weight_keys.sql`
 
 - [ ] **Step 1: Write migration SQL**
@@ -181,6 +188,7 @@ git commit -m "fix(scoring): migration to unify profile-weight keys in scoring_c
 ### Task 5: Update admin UI types + render
 
 **Files:**
+
 - Modify: `apps/web/app/(admin)/admin/ai-config/page.tsx:17-22`
 - Modify: `apps/web/app/(admin)/admin/ai-config/_config-editor-client.tsx:25-30, 76-79, 269-275`
 
@@ -189,12 +197,12 @@ git commit -m "fix(scoring): migration to unify profile-weight keys in scoring_c
 Replace lines 17-22 of `apps/web/app/(admin)/admin/ai-config/page.tsx`:
 
 ```ts
-    profileWeights: {
-      completeness: number;
-      skill_depth: number;
-      experience_clarity: number;
-      education_quality: number;
-    };
+profileWeights: {
+  completeness: number;
+  skill_depth: number;
+  experience_clarity: number;
+  education_quality: number;
+}
 ```
 
 - [ ] **Step 2: Update `_config-editor-client.tsx` interface**
@@ -202,12 +210,12 @@ Replace lines 17-22 of `apps/web/app/(admin)/admin/ai-config/page.tsx`:
 Replace lines 25-30 of `apps/web/app/(admin)/admin/ai-config/_config-editor-client.tsx`:
 
 ```ts
-  profileWeights: {
-    completeness: number;
-    skill_depth: number;
-    experience_clarity: number;
-    education_quality: number;
-  };
+profileWeights: {
+  completeness: number;
+  skill_depth: number;
+  experience_clarity: number;
+  education_quality: number;
+}
 ```
 
 - [ ] **Step 3: Update sum memo (lines 74-81)**
@@ -215,14 +223,14 @@ Replace lines 25-30 of `apps/web/app/(admin)/admin/ai-config/_config-editor-clie
 Replace the `profileSum` memo with:
 
 ```ts
-  const profileSum = useMemo(
-    () =>
-      profileWeights.completeness +
-      profileWeights.skill_depth +
-      profileWeights.experience_clarity +
-      profileWeights.education_quality,
-    [profileWeights],
-  );
+const profileSum = useMemo(
+  () =>
+    profileWeights.completeness +
+    profileWeights.skill_depth +
+    profileWeights.experience_clarity +
+    profileWeights.education_quality,
+  [profileWeights],
+);
 ```
 
 - [ ] **Step 4: Update render labels (lines 269-275)**
@@ -257,6 +265,7 @@ git commit -m "fix(admin): use canonical profile-weight keys in AI config editor
 ### Task 6: Harden the scoring engine — override AI maxes + normalize
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts:82-92`
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts:229-244` (profile compute path)
 
@@ -280,7 +289,8 @@ function deriveOverallScore(
   const maxSum = components.reduce((acc, c) => acc + (Number(c.max) || 0), 0);
   if (maxSum <= 0) return 0;
   const scoreSum = components.reduce(
-    (acc, c) => acc + Math.max(0, Math.min(Number(c.max) || 0, Number(c.score) || 0)),
+    (acc, c) =>
+      acc + Math.max(0, Math.min(Number(c.max) || 0, Number(c.score) || 0)),
     0,
   );
   return Math.round((scoreSum / maxSum) * 100);
@@ -292,22 +302,22 @@ function deriveOverallScore(
 In `computeProfileScore`, replace lines 240-241 (the `derivedOverall` / `derivedBand` block) with:
 
 ```ts
-    // Enforce the AI-output ↔ configured-weights contract: the AI sometimes
-    // returns its own maxes when the prompt is ambiguous. Override them with
-    // the active scoring_config weights so the persisted breakdown always
-    // reconciles with the headline and so deriveOverallScore can normalize
-    // against a known denominator.
-    const normalizedComponents = aiResult.score.components.map((c) => {
-      const configuredMax = weights[c.name];
-      return {
-        ...c,
-        max: configuredMax,
-        weight: configuredMax,
-        score: Math.max(0, Math.min(configuredMax, c.score)),
-      };
-    });
-    const derivedOverall = deriveOverallScore(normalizedComponents);
-    const derivedBand = deriveBand(derivedOverall, bandThresholds);
+// Enforce the AI-output ↔ configured-weights contract: the AI sometimes
+// returns its own maxes when the prompt is ambiguous. Override them with
+// the active scoring_config weights so the persisted breakdown always
+// reconciles with the headline and so deriveOverallScore can normalize
+// against a known denominator.
+const normalizedComponents = aiResult.score.components.map((c) => {
+  const configuredMax = weights[c.name];
+  return {
+    ...c,
+    max: configuredMax,
+    weight: configuredMax,
+    score: Math.max(0, Math.min(configuredMax, c.score)),
+  };
+});
+const derivedOverall = deriveOverallScore(normalizedComponents);
+const derivedBand = deriveBand(derivedOverall, bandThresholds);
 ```
 
 - [ ] **Step 3: Use `normalizedComponents` for evidence + persistence**
@@ -341,14 +351,14 @@ Replace lines 243-251 (the `evidenceRows` and the `components: aiResult.score.co
 The `toDto` call at the bottom of `computeProfileScore` reads `aiResult.score.components`. Replace it with `{ ...aiResult.score, components: normalizedComponents }` so the response body matches what was persisted:
 
 ```ts
-    return this.toDto(
-      profileScore.id,
-      { ...aiResult.score, components: normalizedComponents } as ProfileScoreOutput,
-      aiResult,
-      profileScore.createdAt,
-      derivedOverall,
-      derivedBand,
-    );
+return this.toDto(
+  profileScore.id,
+  { ...aiResult.score, components: normalizedComponents } as ProfileScoreOutput,
+  aiResult,
+  profileScore.createdAt,
+  derivedOverall,
+  derivedBand,
+);
 ```
 
 - [ ] **Step 5: Apply the same normalization to match scoring**
@@ -356,17 +366,17 @@ The `toDto` call at the bottom of `computeProfileScore` reads `aiResult.score.co
 In `computeMatchScore` and `computeMatchPreviewInternal`, the existing `match_weights` keys (`skills`, `experience`, `education`, `cultural_fit`) already align with the prompt — but the same AI-deviation risk applies. Replace each `derivedOverall = deriveOverallScore(aiResult.score.components)` line with the same normalize-then-derive pattern, using `weights` (already in scope) as the override source:
 
 ```ts
-    const normalizedComponents = aiResult.score.components.map((c) => {
-      const configuredMax = weights[c.name];
-      return {
-        ...c,
-        max: configuredMax,
-        weight: configuredMax,
-        score: Math.max(0, Math.min(configuredMax, c.score)),
-      };
-    });
-    const derivedOverall = deriveOverallScore(normalizedComponents);
-    const derivedBand = deriveBand(derivedOverall, bandThresholds);
+const normalizedComponents = aiResult.score.components.map((c) => {
+  const configuredMax = weights[c.name];
+  return {
+    ...c,
+    max: configuredMax,
+    weight: configuredMax,
+    score: Math.max(0, Math.min(configuredMax, c.score)),
+  };
+});
+const derivedOverall = deriveOverallScore(normalizedComponents);
+const derivedBand = deriveBand(derivedOverall, bandThresholds);
 ```
 
 Then thread `normalizedComponents` into the `evidenceRows` build, the `insertMatchScore` / `upsertMatchPreview` `components` field, and the DTO mapper — exactly mirroring the profile path.
@@ -393,6 +403,7 @@ git commit -m "fix(scoring): normalize overall score and override AI maxes with 
 ### Task 7: Bump profile-scoring prompt to v1.1.0 with tightened rubric
 
 **Files:**
+
 - Modify: `apps/api/src/ai/prompts/score-profile.ts:1, 3-32`
 
 - [ ] **Step 1: Bump version + tighten ceiling language**
@@ -460,6 +471,7 @@ git commit -m "feat(ai): bump profile prompt to v1.1.0 with explicit ceiling rub
 ### Task 8: Hand-patch generated API client + OpenAPI spec
 
 **Files:**
+
 - Modify: `packages/shared/src/api-client/generated.ts:2094, 2180` (and any other lines referencing the old keys)
 - Modify: `packages/shared/openapi.json:7714, 7819` (and surrounding `required` blocks)
 
@@ -472,6 +484,7 @@ Expected: a list of lines spanning DTO interfaces and JSON schema blocks.
 - [ ] **Step 2: Replace keys 1:1**
 
 In both files, replace each occurrence:
+
 - `resume_quality` → `completeness`
 - `skills_breadth` → `skill_depth`
 - `experience_depth` → `experience_clarity`
@@ -544,6 +557,7 @@ Manual steps for the user:
 ## Self-Review
 
 **Spec coverage:**
+
 - Bug 1 (key mismatch) — Tasks 1, 2, 3, 4, 5, 8 ✓
 - Bug 2 (silent clamp) — Task 6 ✓
 - Bug 3 (over-generous rubric, 100/100) — Task 7 ✓

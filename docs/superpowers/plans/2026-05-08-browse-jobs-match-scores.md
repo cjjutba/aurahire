@@ -43,6 +43,7 @@ test -f apps/web/hooks/use-match-previews.ts && echo OK
 **Why first:** the score row and its tests both depend on these helpers. Extracting them as named exports up front lets the test file import them directly to assert correctness without rendering, and avoids inlining duplicate ternaries inside JSX later.
 
 **Files:**
+
 - Modify: `apps/web/components/jobs/job-card.tsx` (add helpers above the component)
 - Create: `apps/web/components/jobs/job-card.test.tsx`
 
@@ -161,6 +162,7 @@ git -C /Users/cjjutba/Projects/aurahire commit -m "feat(jobs): extract matchScor
 ## Task 2: Add `matchPreview` + `matchPreviewLoading` props and render the score row
 
 **Files:**
+
 - Modify: `apps/web/components/jobs/job-card.tsx` (extend `JobCardProps`, add score-row JSX)
 - Modify: `apps/web/components/jobs/job-card.test.tsx` (append render tests)
 
@@ -217,7 +219,9 @@ describe("JobCard score row", () => {
       <JobCard job={baseJob} href="/candidate/jobs/job-1" />,
     );
 
-    expect(screen.queryByText(/strong match|partial match|limited match/i)).toBeNull();
+    expect(
+      screen.queryByText(/strong match|partial match|limited match/i),
+    ).toBeNull();
     expect(
       container.querySelector("[data-testid='job-card-match-fill']"),
     ).toBeNull();
@@ -238,7 +242,9 @@ describe("JobCard score row", () => {
     expect(
       container.querySelector("[data-testid='job-card-match-skeleton']"),
     ).not.toBeNull();
-    expect(screen.queryByText(/strong match|partial match|limited match/i)).toBeNull();
+    expect(
+      screen.queryByText(/strong match|partial match|limited match/i),
+    ).toBeNull();
   });
 
   it("matchPreview wins over matchPreviewLoading (no skeleton when both set)", () => {
@@ -322,35 +328,41 @@ export function JobCard({
 Still in `apps/web/components/jobs/job-card.tsx`, locate the meta-chips block — the `<div className="flex flex-wrap items-center gap-1.5">` currently at line 80, which closes at the matching `</div>` (line 88). Immediately after that closing `</div>`, and **before** the footer `<div className="mt-auto space-y-1.5 border-t …` block, insert:
 
 ```tsx
-      {/* Match score row — only on candidate-facing usage that passes matchPreview */}
-      {matchPreview ? (
-        <div className="flex items-center gap-3">
-          <MatchBandChip band={matchPreview.band} />
-          <div
-            className="h-1.5 flex-1 overflow-hidden rounded-[var(--radius-pill)]"
-            style={{ backgroundColor: matchScoreColors(matchPreview.overallScore).track }}
-          >
-            <div
-              data-testid="job-card-match-fill"
-              className="h-full rounded-[var(--radius-pill)]"
-              style={{
-                width: `${matchPreview.overallScore}%`,
-                backgroundColor: matchScoreColors(matchPreview.overallScore).fill,
-              }}
-            />
-          </div>
-          <span className="font-mono text-xs text-[var(--color-ink)]">
-            {matchPreview.overallScore}
-            <span className="text-[var(--color-muted)]"> / 100</span>
-          </span>
-        </div>
-      ) : matchPreviewLoading ? (
+{
+  /* Match score row — only on candidate-facing usage that passes matchPreview */
+}
+{
+  matchPreview ? (
+    <div className="flex items-center gap-3">
+      <MatchBandChip band={matchPreview.band} />
+      <div
+        className="h-1.5 flex-1 overflow-hidden rounded-[var(--radius-pill)]"
+        style={{
+          backgroundColor: matchScoreColors(matchPreview.overallScore).track,
+        }}
+      >
         <div
-          data-testid="job-card-match-skeleton"
-          aria-hidden
-          className="h-1.5 w-full animate-pulse rounded-[var(--radius-pill)] bg-[var(--color-surface-soft)]"
+          data-testid="job-card-match-fill"
+          className="h-full rounded-[var(--radius-pill)]"
+          style={{
+            width: `${matchPreview.overallScore}%`,
+            backgroundColor: matchScoreColors(matchPreview.overallScore).fill,
+          }}
         />
-      ) : null}
+      </div>
+      <span className="font-mono text-xs text-[var(--color-ink)]">
+        {matchPreview.overallScore}
+        <span className="text-[var(--color-muted)]"> / 100</span>
+      </span>
+    </div>
+  ) : matchPreviewLoading ? (
+    <div
+      data-testid="job-card-match-skeleton"
+      aria-hidden
+      className="h-1.5 w-full animate-pulse rounded-[var(--radius-pill)] bg-[var(--color-surface-soft)]"
+    />
+  ) : null;
+}
 ```
 
 Add the `MatchBandChip` import at the top of the file. Locate the existing import block near line 1:
@@ -398,6 +410,7 @@ git -C /Users/cjjutba/Projects/aurahire commit -m "feat(jobs): JobCard renders m
 ## Task 3: Wire `useMyMatchPreviewsQuery` into Browse Jobs and pass previews to cards
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/jobs/_jobs-list-client.tsx`
 
 - [ ] **Step 1: Add the previews query and previews-by-job-id Map**
@@ -413,24 +426,24 @@ import { useMyMatchPreviewsQuery } from "@/hooks/use-match-previews";
 Inside the `CandidateJobsListClient` function, immediately after the existing line:
 
 ```tsx
-  const { data, isLoading, isError } = useCandidateJobsQuery(params);
+const { data, isLoading, isError } = useCandidateJobsQuery(params);
 ```
 
 (currently around line 38), add:
 
 ```tsx
-  const previews = useMyMatchPreviewsQuery();
+const previews = useMyMatchPreviewsQuery();
 
-  const previewsByJobId = useMemo(() => {
-    const map = new Map<
-      string,
-      { overallScore: number; band: "strong" | "partial" | "limited" }
-    >();
-    for (const p of previews.data?.data ?? []) {
-      map.set(p.jobId, { overallScore: p.overallScore, band: p.band });
-    }
-    return map;
-  }, [previews.data]);
+const previewsByJobId = useMemo(() => {
+  const map = new Map<
+    string,
+    { overallScore: number; band: "strong" | "partial" | "limited" }
+  >();
+  for (const p of previews.data?.data ?? []) {
+    map.set(p.jobId, { overallScore: p.overallScore, band: p.band });
+  }
+  return map;
+}, [previews.data]);
 ```
 
 Add `useMemo` to the React import at the top of the file. The current imports include hooks already (e.g. `Link` from `next/link`); add or extend a React import line:
@@ -446,16 +459,18 @@ Place this line near the other top-level imports (after `import Link from "next/
 Locate the existing `<JobCard ... />` block inside the rows map (around lines 89–95). Replace it with:
 
 ```tsx
-            {rows.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                href={`/candidate/jobs/${job.id}`}
-                applied={!!appliedJobMap[job.id]}
-                matchPreview={previewsByJobId.get(job.id)}
-                matchPreviewLoading={previews.isLoading}
-              />
-            ))}
+{
+  rows.map((job) => (
+    <JobCard
+      key={job.id}
+      job={job}
+      href={`/candidate/jobs/${job.id}`}
+      applied={!!appliedJobMap[job.id]}
+      matchPreview={previewsByJobId.get(job.id)}
+      matchPreviewLoading={previews.isLoading}
+    />
+  ));
+}
 ```
 
 - [ ] **Step 3: Type-check**
@@ -487,6 +502,7 @@ git -C /Users/cjjutba/Projects/aurahire commit -m "feat(candidate): pass precomp
 ## Task 4: Replace stale subtitle copy on Browse Jobs
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/jobs/_jobs-list-client.tsx`
 
 - [ ] **Step 1: Inspect current subtitle**
@@ -494,13 +510,13 @@ git -C /Users/cjjutba/Projects/aurahire commit -m "feat(candidate): pass precomp
 The current subtitle (line 71 region) reads:
 
 ```tsx
-        <p className="mt-2 text-sm text-[var(--color-body)]">
-          {isLoading
-            ? "—"
-            : meta.total === 0
-              ? "No jobs available"
-              : `${meta.total} job${meta.total === 1 ? "" : "s"} · match scoring arrives in a future slice`}
-        </p>
+<p className="mt-2 text-sm text-[var(--color-body)]">
+  {isLoading
+    ? "—"
+    : meta.total === 0
+      ? "No jobs available"
+      : `${meta.total} job${meta.total === 1 ? "" : "s"} · match scoring arrives in a future slice`}
+</p>
 ```
 
 - [ ] **Step 2: Replace the subtitle expression**
@@ -508,24 +524,24 @@ The current subtitle (line 71 region) reads:
 Replace the entire `<p>` block above with:
 
 ```tsx
-        <p className="mt-2 text-sm text-[var(--color-body)]">
-          {(() => {
-            if (isLoading) return "—";
-            if (meta.total === 0) return "No jobs available";
+<p className="mt-2 text-sm text-[var(--color-body)]">
+  {(() => {
+    if (isLoading) return "—";
+    if (meta.total === 0) return "No jobs available";
 
-            const base = `${meta.total} job${meta.total === 1 ? "" : "s"}`;
+    const base = `${meta.total} job${meta.total === 1 ? "" : "s"}`;
 
-            // Show the auto-scored nudge only once previews have loaded with
-            // at least one match. While previews are still loading, render
-            // just the count to avoid promising a feature that hasn't
-            // hydrated yet.
-            const previewCount = previews.data?.data?.length ?? 0;
-            if (!previews.isLoading && previewCount > 0) {
-              return `${base} · auto-scored against your resume`;
-            }
-            return base;
-          })()}
-        </p>
+    // Show the auto-scored nudge only once previews have loaded with
+    // at least one match. While previews are still loading, render
+    // just the count to avoid promising a feature that hasn't
+    // hydrated yet.
+    const previewCount = previews.data?.data?.length ?? 0;
+    if (!previews.isLoading && previewCount > 0) {
+      return `${base} · auto-scored against your resume`;
+    }
+    return base;
+  })()}
+</p>
 ```
 
 The IIFE keeps the subtitle as a single expression inside the `<p>` element so the surrounding JSX shape is unchanged.

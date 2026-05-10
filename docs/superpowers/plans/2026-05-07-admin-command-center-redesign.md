@@ -11,6 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-05-07-admin-command-center-redesign-design.md`
 
 **Hard rules (from `CLAUDE.md`):**
+
 - The implementer must NOT run any dev server, migration, or deploy command. Type-check and lint only.
 - The user runs `pnpm dev` themselves and verifies visual results in the browser.
 - Commits are written into the plan as steps, but agents must defer to CLAUDE.md's commit policy in the executing session — the user authorizes commits explicitly.
@@ -19,14 +20,14 @@
 
 ## File Structure
 
-| Path | Status | Responsibility |
-|---|---|---|
-| `apps/web/lib/audit/humanize-action.ts` | **Create** | Pure function that maps a known audit action code to a plain-English label, with a Title-Cased fallback for unknown codes. |
-| `apps/web/lib/audit/humanize-action.test.ts` | **Create** | vitest unit tests covering the lookup map, the fallback, and edge cases. |
-| `apps/web/app/(admin)/admin/_dashboard-client.tsx` | **Modify** | Replace the whole client with the new KpiTile + 2 KPI rows + 3 widgets layout. |
-| `apps/web/app/(admin)/admin/loading.tsx` | **Modify** | Adapt skeleton heights/grids to the new layout shape. |
-| `apps/web/app/(admin)/admin/audit/_audit-table-client.tsx` | **Modify** | Replace the `<code>` action cell with the humanized label; raw code stays as `title=`. |
-| `apps/web/app/(admin)/admin/audit/_audit-detail-sheet-client.tsx` | **Modify** | Sheet title becomes the humanized label; raw code shown as a muted mono sub-line. |
+| Path                                                              | Status     | Responsibility                                                                                                             |
+| ----------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/lib/audit/humanize-action.ts`                           | **Create** | Pure function that maps a known audit action code to a plain-English label, with a Title-Cased fallback for unknown codes. |
+| `apps/web/lib/audit/humanize-action.test.ts`                      | **Create** | vitest unit tests covering the lookup map, the fallback, and edge cases.                                                   |
+| `apps/web/app/(admin)/admin/_dashboard-client.tsx`                | **Modify** | Replace the whole client with the new KpiTile + 2 KPI rows + 3 widgets layout.                                             |
+| `apps/web/app/(admin)/admin/loading.tsx`                          | **Modify** | Adapt skeleton heights/grids to the new layout shape.                                                                      |
+| `apps/web/app/(admin)/admin/audit/_audit-table-client.tsx`        | **Modify** | Replace the `<code>` action cell with the humanized label; raw code stays as `title=`.                                     |
+| `apps/web/app/(admin)/admin/audit/_audit-detail-sheet-client.tsx` | **Modify** | Sheet title becomes the humanized label; raw code shown as a muted mono sub-line.                                          |
 
 Each task below produces self-contained, type-clean changes.
 
@@ -35,6 +36,7 @@ Each task below produces self-contained, type-clean changes.
 ## Task 1: Create the audit-action humanizer utility (TDD)
 
 **Files:**
+
 - Create: `apps/web/lib/audit/humanize-action.ts`
 - Test: `apps/web/lib/audit/humanize-action.test.ts`
 
@@ -274,7 +276,8 @@ const KNOWN_LABELS: Record<string, string> = {
   "cron.cleanup_unverified_accounts.executed": "Unverified account cleanup ran",
   "cron.interview_reminder.executed": "Interview reminder cron ran",
   "cron.offer_expiry_reminder.executed": "Offer expiry reminder cron ran",
-  "cron.interview_feedback_due.executed": "Interview feedback reminder cron ran",
+  "cron.interview_feedback_due.executed":
+    "Interview feedback reminder cron ran",
   "system.ai_scoring_failure_notified": "AI scoring failure notified",
 };
 
@@ -283,7 +286,9 @@ function titleCaseFallback(action: string): string {
     .split(".")
     .flatMap((segment) => segment.split("_"))
     .filter(Boolean)
-    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .map(
+      (token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase(),
+    )
     .join(" ");
 }
 
@@ -331,6 +336,7 @@ Spec: docs/superpowers/specs/2026-05-07-admin-command-center-redesign-design.md"
 ## Task 2: Redesign the Command Center dashboard client
 
 **Files:**
+
 - Modify: `apps/web/app/(admin)/admin/_dashboard-client.tsx` (full rewrite of file body)
 
 This task replaces the existing `DashboardClient`, `ScoreDistributionWidget`, `BiasFlagsWidget`, and `RecentAuditWidget` with the new layout. The existing imports for `useAdminStatsControllerOverviewV1`, `useRealtimeChannel`, `getAccessToken`, and `Skeleton` are reused; the existing `useAuthTokenReady` and `relativeTime` helpers are preserved verbatim.
@@ -447,10 +453,7 @@ function SectionHeader({
   return (
     <div className="mb-3 flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <Icon
-          className="h-3.5 w-3.5 text-[var(--color-muted)]"
-          aria-hidden
-        />
+        <Icon className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
         <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           {label}
         </span>
@@ -922,6 +925,7 @@ Spec: docs/superpowers/specs/2026-05-07-admin-command-center-redesign-design.md"
 ## Task 3: Adapt the Command Center loading skeleton
 
 **Files:**
+
 - Modify: `apps/web/app/(admin)/admin/loading.tsx`
 
 The skeleton must mirror the new layout: title block, two 3-up KPI rows, one 3-up snapshot row.
@@ -989,6 +993,7 @@ git commit -m "chore(admin): adapt Command Center skeleton to new 2x3 + snapshot
 ## Task 4: Humanize the audit table action cell
 
 **Files:**
+
 - Modify: `apps/web/app/(admin)/admin/audit/_audit-table-client.tsx`
 
 The action cell currently renders the raw code inside a monospace `<code>` pill. Replace with the humanized label, retaining the raw code as the cell's `title=` attribute for engineering grepping.
@@ -1006,24 +1011,21 @@ import { humanizeAuditAction } from "@/lib/audit/humanize-action";
 Find this block (around lines 85-89):
 
 ```tsx
-                <td className="p-3">
-                  <code className="rounded-[var(--radius-xs)] bg-[var(--color-surface-soft)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-ink)]">
-                    {r.action}
-                  </code>
-                </td>
+<td className="p-3">
+  <code className="rounded-[var(--radius-xs)] bg-[var(--color-surface-soft)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-ink)]">
+    {r.action}
+  </code>
+</td>
 ```
 
 Replace with:
 
 ```tsx
-                <td className="p-3">
-                  <span
-                    className="text-sm text-[var(--color-ink)]"
-                    title={r.action}
-                  >
-                    {humanizeAuditAction(r.action)}
-                  </span>
-                </td>
+<td className="p-3">
+  <span className="text-sm text-[var(--color-ink)]" title={r.action}>
+    {humanizeAuditAction(r.action)}
+  </span>
+</td>
 ```
 
 - [ ] **Step 3: Type-check**
@@ -1047,6 +1049,7 @@ title= for engineering grep."
 ## Task 5: Humanize the audit detail sheet header
 
 **Files:**
+
 - Modify: `apps/web/app/(admin)/admin/audit/_audit-detail-sheet-client.tsx`
 
 The sheet currently shows the raw action code as the title. Replace with the humanized label, and add the raw code as a muted monospace sub-line directly beneath so engineers can still match log lines.
@@ -1064,24 +1067,24 @@ import { humanizeAuditAction } from "@/lib/audit/humanize-action";
 Find this block (lines 90-92):
 
 ```tsx
-        <SheetHeader>
-          <SheetTitle>{detail?.action ?? "Loading…"}</SheetTitle>
-        </SheetHeader>
+<SheetHeader>
+  <SheetTitle>{detail?.action ?? "Loading…"}</SheetTitle>
+</SheetHeader>
 ```
 
 Replace with:
 
 ```tsx
-        <SheetHeader>
-          <SheetTitle>
-            {detail ? humanizeAuditAction(detail.action) : "Loading…"}
-          </SheetTitle>
-          {detail && (
-            <p className="mt-1 font-mono text-xs text-[var(--color-muted)]">
-              {detail.action}
-            </p>
-          )}
-        </SheetHeader>
+<SheetHeader>
+  <SheetTitle>
+    {detail ? humanizeAuditAction(detail.action) : "Loading…"}
+  </SheetTitle>
+  {detail && (
+    <p className="mt-1 font-mono text-xs text-[var(--color-muted)]">
+      {detail.action}
+    </p>
+  )}
+</SheetHeader>
 ```
 
 - [ ] **Step 3: Type-check**

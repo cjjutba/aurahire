@@ -32,7 +32,10 @@ function severityClass(severity: BiasHighlightFlag["severity"]): string {
   }
 }
 
-function buildDecorations(doc: PMNode, state: BiasHighlightState): DecorationSet {
+function buildDecorations(
+  doc: PMNode,
+  state: BiasHighlightState,
+): DecorationSet {
   if (state.flags.length === 0) return DecorationSet.empty;
 
   const decorations: Decoration[] = [];
@@ -117,17 +120,16 @@ export const BiasHighlightExtension = Extension.create({
   },
 });
 
-export function setBiasFlags(
-  editor: Editor,
-  flags: BiasHighlightFlag[],
-): void {
+export function setBiasFlags(editor: Editor, flags: BiasHighlightFlag[]): void {
   const { view } = editor;
   view.dispatch(view.state.tr.setMeta(biasHighlightPluginKey, { flags }));
 }
 
 export function flashBiasTerm(editor: Editor, term: string): void {
   const { view } = editor;
-  view.dispatch(view.state.tr.setMeta(biasHighlightPluginKey, { flashTerm: term }));
+  view.dispatch(
+    view.state.tr.setMeta(biasHighlightPluginKey, { flashTerm: term }),
+  );
   // Auto-clear the flash after the animation completes.
   window.setTimeout(() => {
     if (!editor.isDestroyed) {

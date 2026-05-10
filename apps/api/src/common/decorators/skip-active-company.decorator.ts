@@ -9,4 +9,5 @@ export const SKIP_ACTIVE_COMPANY_KEY = "skip_active_company";
  *
  * `ActiveCompanyGuard` reads this metadata and short-circuits.
  */
-export const SkipActiveCompany = () => SetMetadata(SKIP_ACTIVE_COMPANY_KEY, true);
+export const SkipActiveCompany = () =>
+  SetMetadata(SKIP_ACTIVE_COMPANY_KEY, true);

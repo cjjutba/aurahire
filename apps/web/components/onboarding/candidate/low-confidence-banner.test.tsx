@@ -7,7 +7,9 @@ describe("LowConfidenceBanner", () => {
   it("renders banner when confidence is 'low'", () => {
     render(<LowConfidenceBanner confidence="low" />);
     expect(screen.getByText(/low-confidence parse/i)).toBeInTheDocument();
-    expect(screen.getByText(/Double-check every prefilled field/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Double-check every prefilled field/i),
+    ).toBeInTheDocument();
   });
 
   it("renders nothing for 'high' confidence", () => {
@@ -26,7 +28,9 @@ describe("LowConfidenceBanner", () => {
   });
 
   it("renders nothing for undefined", () => {
-    const { container } = render(<LowConfidenceBanner confidence={undefined} />);
+    const { container } = render(
+      <LowConfidenceBanner confidence={undefined} />,
+    );
     expect(container).toBeEmptyDOMElement();
   });
 });

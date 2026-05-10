@@ -11,9 +11,11 @@ export default async function OnboardingLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const profile = (await getCurrentProfile()) as
-    | { id: string; role: string; profileCompleted: boolean }
-    | null;
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+    profileCompleted: boolean;
+  } | null;
   if (!profile) redirect("/login");
 
   // Candidates / recruiters who already finished onboarding never need to

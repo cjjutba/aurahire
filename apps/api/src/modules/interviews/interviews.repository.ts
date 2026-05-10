@@ -43,7 +43,10 @@ export class InterviewsRepository {
   constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient) {}
 
   async insert(data: NewInterview): Promise<Interview> {
-    const [row] = await this.db.insert(interviewsTable).values(data).returning();
+    const [row] = await this.db
+      .insert(interviewsTable)
+      .values(data)
+      .returning();
     if (!row) throw new Error("Interview insert failed");
     return row;
   }
@@ -78,7 +81,10 @@ export class InterviewsRepository {
         companyLogoUrl: companiesTable.logoUrl,
       })
       .from(interviewsTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, interviewsTable.applicationId),
+      )
       .leftJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
       .leftJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
       .where(eq(applicationsTable.candidateId, candidateId))
@@ -115,9 +121,15 @@ export class InterviewsRepository {
     const countRows = await this.db
       .select({ count: count() })
       .from(interviewsTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, interviewsTable.applicationId),
+      )
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .where(where);
     const total = countRows[0]?.count ?? 0;
 
@@ -145,9 +157,15 @@ export class InterviewsRepository {
         jobTitle: jobsTable.title,
       })
       .from(interviewsTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, interviewsTable.applicationId),
+      )
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .where(where)
       .orderBy(orderClause)
       .limit(options.limit)
@@ -176,7 +194,10 @@ export class InterviewsRepository {
     return row;
   }
 
-  async markRescheduled(id: string, tx?: DrizzleClient): Promise<{ id: string } | null> {
+  async markRescheduled(
+    id: string,
+    tx?: DrizzleClient,
+  ): Promise<{ id: string } | null> {
     const client = tx ?? this.db;
     const [row] = await client
       .update(interviewsTable)
@@ -191,7 +212,11 @@ export class InterviewsRepository {
     return row ?? null;
   }
 
-  async setRescheduledTo(originalId: string, newId: string, tx?: DrizzleClient): Promise<void> {
+  async setRescheduledTo(
+    originalId: string,
+    newId: string,
+    tx?: DrizzleClient,
+  ): Promise<void> {
     const client = tx ?? this.db;
     await client
       .update(interviewsTable)
@@ -249,8 +274,16 @@ export class InterviewsRepository {
           scheduledBy: interviewsTable.scheduledBy,
         })
         .from(interviewsTable)
-        .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
-        .where(and(...conditions, eq(applicationsTable.candidateId, args.candidateId)));
+        .innerJoin(
+          applicationsTable,
+          eq(applicationsTable.id, interviewsTable.applicationId),
+        )
+        .where(
+          and(
+            ...conditions,
+            eq(applicationsTable.candidateId, args.candidateId),
+          ),
+        );
     }
     // No filter combination supplied — return empty rather than scanning all interviews.
     return [];

@@ -21,19 +21,25 @@ export const updateApplicationStatusSchema = z.object({
   autoRejectOthers: z.boolean().optional(),
 });
 
-export type UpdateApplicationStatusInput = z.infer<typeof updateApplicationStatusSchema>;
+export type UpdateApplicationStatusInput = z.infer<
+  typeof updateApplicationStatusSchema
+>;
 
 export const updateApplicationNotesSchema = z.object({
   notes: z.string().max(5000).nullable(),
 });
 
-export type UpdateApplicationNotesInput = z.infer<typeof updateApplicationNotesSchema>;
+export type UpdateApplicationNotesInput = z.infer<
+  typeof updateApplicationNotesSchema
+>;
 
 export const recentApplicationsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(20).optional().default(6),
 });
 
-export type RecentApplicationsQuery = z.infer<typeof recentApplicationsQuerySchema>;
+export type RecentApplicationsQuery = z.infer<
+  typeof recentApplicationsQuerySchema
+>;
 
 export const recruiterStatsQuerySchema = z.object({
   range: z.enum(["7d", "30d", "90d", "all"]).optional().default("7d"),
@@ -47,7 +53,10 @@ export const shortlistQuerySchema = z.object({
   status: z.enum(APPLICATION_STATUS).optional(),
   jobId: uuidSchema.optional(),
   band: z.enum(["strong", "partial", "limited"]).optional(),
-  sort: z.enum(["recently-shortlisted", "highest-score", "earliest-applied"]).optional().default("recently-shortlisted"),
+  sort: z
+    .enum(["recently-shortlisted", "highest-score", "earliest-applied"])
+    .optional()
+    .default("recently-shortlisted"),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(25),
 });
@@ -71,4 +80,6 @@ export type RecruiterApplicationsListQuery = z.infer<
 export const withdrawApplicationSchema = z.object({
   reason: z.string().trim().max(500).nullable().optional(),
 });
-export type WithdrawApplicationInput = z.infer<typeof withdrawApplicationSchema>;
+export type WithdrawApplicationInput = z.infer<
+  typeof withdrawApplicationSchema
+>;

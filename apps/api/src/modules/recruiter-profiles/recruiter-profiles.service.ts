@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import type { AuthUser } from "@aurahire/shared";
 import type { Profile, RecruiterProfile, Company } from "@aurahire/db";
 
@@ -28,7 +32,10 @@ export class RecruiterProfilesService {
       this.repo.findRecruiterProfile(user.id),
     ]);
     if (!profile) {
-      throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
+      throw new NotFoundException({
+        code: "PROFILE_NOT_FOUND",
+        message: "Profile missing",
+      });
     }
     if (!recruiterProfile) {
       throw new NotFoundException({
@@ -46,7 +53,10 @@ export class RecruiterProfilesService {
     }
     const company = await this.repo.findCompanyById(activeCompanyId);
     if (!company) {
-      throw new NotFoundException({ code: "COMPANY_NOT_FOUND", message: "Company missing" });
+      throw new NotFoundException({
+        code: "COMPANY_NOT_FOUND",
+        message: "Company missing",
+      });
     }
 
     return this.toResponse(profile, recruiterProfile, company);
@@ -59,11 +69,12 @@ export class RecruiterProfilesService {
   ): Promise<RecruiterProfileMeDto> {
     this.assertRecruiter(user);
 
-    const { profile, recruiterProfile } = await this.repo.updateProfileAndRecruiterProfileTx(
-      user.id,
-      { fullName: dto.fullName, phone: dto.phone },
-      { jobTitle: dto.jobTitle ?? null, department: dto.department ?? null },
-    );
+    const { profile, recruiterProfile } =
+      await this.repo.updateProfileAndRecruiterProfileTx(
+        user.id,
+        { fullName: dto.fullName, phone: dto.phone },
+        { jobTitle: dto.jobTitle ?? null, department: dto.department ?? null },
+      );
 
     const activeCompanyId = profile.lastActiveCompanyId;
     if (!activeCompanyId) {
@@ -74,7 +85,10 @@ export class RecruiterProfilesService {
     }
     const company = await this.repo.findCompanyById(activeCompanyId);
     if (!company) {
-      throw new NotFoundException({ code: "COMPANY_NOT_FOUND", message: "Company missing" });
+      throw new NotFoundException({
+        code: "COMPANY_NOT_FOUND",
+        message: "Company missing",
+      });
     }
 
     void this.audit.log({
@@ -104,7 +118,10 @@ export class RecruiterProfilesService {
       this.repo.findRecruiterProfile(user.id),
     ]);
     if (!profile) {
-      throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
+      throw new NotFoundException({
+        code: "PROFILE_NOT_FOUND",
+        message: "Profile missing",
+      });
     }
     if (!recruiterProfile) {
       throw new NotFoundException({
@@ -160,7 +177,10 @@ export class RecruiterProfilesService {
       }),
     ]);
     if (!profile) {
-      throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
+      throw new NotFoundException({
+        code: "PROFILE_NOT_FOUND",
+        message: "Profile missing",
+      });
     }
 
     const activeCompanyId = profile.lastActiveCompanyId;
@@ -172,7 +192,10 @@ export class RecruiterProfilesService {
     }
     const company = await this.repo.findCompanyById(activeCompanyId);
     if (!company) {
-      throw new NotFoundException({ code: "COMPANY_NOT_FOUND", message: "Company missing" });
+      throw new NotFoundException({
+        code: "COMPANY_NOT_FOUND",
+        message: "Company missing",
+      });
     }
 
     void this.audit.log({
@@ -191,7 +214,10 @@ export class RecruiterProfilesService {
 
   private assertRecruiter(user: AuthUser): void {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
   }
 

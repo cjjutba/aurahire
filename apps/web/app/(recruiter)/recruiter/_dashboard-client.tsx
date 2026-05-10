@@ -55,50 +55,48 @@ function extractKpis(body: RecruiterStatsResponse): KpiData {
   };
 }
 
-const APP_STATUS: Record<
-  string,
-  { label: string; dot: string; text: string }
-> = {
-  applied: {
-    label: "Applied",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  screening: {
-    label: "Screening",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  interview: {
-    label: "Interview",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  offer: {
-    label: "Offer",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  hired: {
-    label: "Hired",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  rejected: {
-    label: "Rejected",
-    dot: "bg-[var(--color-status-danger)]",
-    text: "text-[var(--color-status-danger)]",
-  },
-  withdrawn: {
-    label: "Withdrawn",
-    dot: "bg-[var(--color-muted)]",
-    text: "text-[var(--color-muted)]",
-  },
-};
+const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    applied: {
+      label: "Applied",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    screening: {
+      label: "Screening",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    interview: {
+      label: "Interview",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    offer: {
+      label: "Offer",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    hired: {
+      label: "Hired",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    rejected: {
+      label: "Rejected",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    withdrawn: {
+      label: "Withdrawn",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
-const DEFAULT_APP_STATUS = APP_STATUS[
-  "applied"
-] as NonNullable<(typeof APP_STATUS)[string]>;
+const DEFAULT_APP_STATUS = APP_STATUS["applied"] as NonNullable<
+  (typeof APP_STATUS)[string]
+>;
 
 function getAppStatus(s: string): NonNullable<(typeof APP_STATUS)[string]> {
   return APP_STATUS[s] ?? DEFAULT_APP_STATUS;
@@ -153,7 +151,10 @@ function ApplicationsByStatusCard({
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
       <div className="mb-4 flex items-center gap-2">
-        <PieChart className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+        <PieChart
+          className="h-3.5 w-3.5 text-[var(--color-muted)]"
+          aria-hidden
+        />
         <h2 className="text-base font-semibold text-[var(--color-ink)]">
           Applications by Status
         </h2>
@@ -203,7 +204,10 @@ function TopJobsByVolumeCard({
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
       <div className="mb-4 flex items-center gap-2">
-        <TrendingUp className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+        <TrendingUp
+          className="h-3.5 w-3.5 text-[var(--color-muted)]"
+          aria-hidden
+        />
         <h2 className="text-base font-semibold text-[var(--color-ink)]">
           Top Jobs by Volume
         </h2>
@@ -274,7 +278,9 @@ function RecentAppRow({ app }: { app: RecentApp }) {
           </div>
           <div className="truncate text-xs text-[var(--color-muted)]">
             Applied to{" "}
-            <strong className="font-semibold">{app.job?.title ?? "(job)"}</strong>
+            <strong className="font-semibold">
+              {app.job?.title ?? "(job)"}
+            </strong>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -298,7 +304,10 @@ function RecentAppRow({ app }: { app: RecentApp }) {
 function EmptyAppsState({ hasJobs }: { hasJobs: boolean }) {
   return (
     <div className="px-4 py-12 text-center">
-      <Inbox className="mx-auto h-6 w-6 text-[var(--color-muted)]" aria-hidden />
+      <Inbox
+        className="mx-auto h-6 w-6 text-[var(--color-muted)]"
+        aria-hidden
+      />
       <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
         No applications yet
       </div>
@@ -320,8 +329,14 @@ function EmptyAppsState({ hasJobs }: { hasJobs: boolean }) {
   );
 }
 
-function FirstRunWelcomeCard({ recruiterName }: { recruiterName?: string | null }) {
-  const greeting = recruiterName ? `Welcome, ${recruiterName.split(" ")[0]}.` : "Welcome to AuraHire.";
+function FirstRunWelcomeCard({
+  recruiterName,
+}: {
+  recruiterName?: string | null;
+}) {
+  const greeting = recruiterName
+    ? `Welcome, ${recruiterName.split(" ")[0]}.`
+    : "Welcome to AuraHire.";
   return (
     <section className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-gradient-to-br from-[var(--color-primary-soft)]/40 to-[var(--color-canvas)] p-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -330,7 +345,9 @@ function FirstRunWelcomeCard({ recruiterName }: { recruiterName?: string | null 
             {greeting}
           </h2>
           <p className="mt-2 max-w-[640px] text-sm text-[var(--color-body)]">
-            You&apos;re all set. Post your first job to start matching with qualified candidates — AuraHire will score every application against your criteria and explain how each candidate matched.
+            You&apos;re all set. Post your first job to start matching with
+            qualified candidates — AuraHire will score every application against
+            your criteria and explain how each candidate matched.
           </p>
         </div>
         <Link
@@ -378,10 +395,14 @@ function KpiTile({
         </span>
         <Icon className="h-4 w-4 text-[var(--color-muted)]" aria-hidden />
       </div>
-      <div className={`mt-3 font-mono text-3xl font-medium ${loading ? "text-[var(--color-muted)]" : valueClass}`}>
+      <div
+        className={`mt-3 font-mono text-3xl font-medium ${loading ? "text-[var(--color-muted)]" : valueClass}`}
+      >
         {loading ? "—" : value}
       </div>
-      <div className="mt-1 text-xs text-[var(--color-muted)]">{description}</div>
+      <div className="mt-1 text-xs text-[var(--color-muted)]">
+        {description}
+      </div>
     </div>
   );
 }
@@ -409,7 +430,10 @@ export function RecruiterDashboardClient({
   };
 
   useRealtimeChannel(RealtimeEvent.ApplicationCreated, invalidateDashboard);
-  useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, invalidateDashboard);
+  useRealtimeChannel(
+    RealtimeEvent.ApplicationStatusChanged,
+    invalidateDashboard,
+  );
 
   const stats = useRecruiterStatsQuery(range);
   const analytics = useRecruiterAnalyticsQuery();
@@ -421,7 +445,12 @@ export function RecruiterDashboardClient({
       : { activeJobs: 0, totalApps: 0, pendingReview: 0, avgMatchScore: 0 };
 
   const analyticsData = analytics.data?.data ?? {
-    kpis: { activeJobs: 0, totalApplications: 0, pendingReviews: 0, avgMatchScore: 0 },
+    kpis: {
+      activeJobs: 0,
+      totalApplications: 0,
+      pendingReviews: 0,
+      avgMatchScore: 0,
+    },
     topJobs: [],
     applicationsByStatus: [],
   };
@@ -511,7 +540,10 @@ export function RecruiterDashboardClient({
       {/* Section 2: Pipeline Snapshot */}
       <section>
         <div className="mb-3 flex items-center gap-2">
-          <BarChart3 className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+          <BarChart3
+            className="h-3.5 w-3.5 text-[var(--color-muted)]"
+            aria-hidden
+          />
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
             Pipeline Snapshot
           </span>
@@ -526,7 +558,10 @@ export function RecruiterDashboardClient({
       <section>
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Inbox className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+            <Inbox
+              className="h-3.5 w-3.5 text-[var(--color-muted)]"
+              aria-hidden
+            />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
               Recent Applications
             </span>

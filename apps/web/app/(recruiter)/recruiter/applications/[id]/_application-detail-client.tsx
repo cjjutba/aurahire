@@ -15,15 +15,15 @@ import {
   type ScoreDashboardComponent,
 } from "@/components/score/score-dashboard";
 
-import { DecisionBarClient, type DecisionBarLatestOfferStatus } from "./_decision-bar-client";
+import {
+  DecisionBarClient,
+  type DecisionBarLatestOfferStatus,
+} from "./_decision-bar-client";
 import {
   RecruiterInterviewsSection,
   type InterviewRow,
 } from "./_interviews-section-client";
-import {
-  RecruiterOffersSection,
-  type OfferRow,
-} from "./_offers-section";
+import { RecruiterOffersSection, type OfferRow } from "./_offers-section";
 import { NotesSectionClient } from "./_notes-section-client";
 import { DecisionPanelClient } from "./_decision-panel-client";
 
@@ -34,16 +34,49 @@ const COMPONENT_LABELS: Record<string, string> = {
   cultural_fit: "Cultural Fit",
 };
 
-const APP_STATUS: Record<string, { label: string; dot: string; text: string }> = {
-  applied:        { label: "Applied",        dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  screening:      { label: "Screening",      dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  interview:      { label: "Interview",      dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  offer:          { label: "Offer",          dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
-  offer_accepted: { label: "Offer Accepted", dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  hired:          { label: "Hired",          dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  rejected:       { label: "Rejected",       dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
-  withdrawn:      { label: "Withdrawn",      dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
-};
+const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    applied: {
+      label: "Applied",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    screening: {
+      label: "Screening",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    interview: {
+      label: "Interview",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    offer: {
+      label: "Offer",
+      dot: "bg-[var(--color-status-warning)]",
+      text: "text-[var(--color-status-warning)]",
+    },
+    offer_accepted: {
+      label: "Offer Accepted",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    hired: {
+      label: "Hired",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    rejected: {
+      label: "Rejected",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    withdrawn: {
+      label: "Withdrawn",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
 export interface MatchEvidence {
   excerpt: string;
@@ -127,14 +160,16 @@ const STATUS_PRIORITY: Record<string, number> = {
 
 function findLatestInterview(interviews: InterviewRow[]): InterviewRow | null {
   if (!interviews.length) return null;
-  return [...interviews].sort((a, b) => {
-    const pa = STATUS_PRIORITY[a.status] ?? 99;
-    const pb = STATUS_PRIORITY[b.status] ?? 99;
-    if (pa !== pb) return pa - pb;
-    const ta = a.createdAt ?? a.scheduledAt;
-    const tb = b.createdAt ?? b.scheduledAt;
-    return new Date(tb).getTime() - new Date(ta).getTime();
-  })[0] ?? null;
+  return (
+    [...interviews].sort((a, b) => {
+      const pa = STATUS_PRIORITY[a.status] ?? 99;
+      const pb = STATUS_PRIORITY[b.status] ?? 99;
+      if (pa !== pb) return pa - pb;
+      const ta = a.createdAt ?? a.scheduledAt;
+      const tb = b.createdAt ?? b.scheduledAt;
+      return new Date(tb).getTime() - new Date(ta).getTime();
+    })[0] ?? null
+  );
 }
 
 export function RecruiterApplicationDetailClient({
@@ -146,7 +181,10 @@ export function RecruiterApplicationDetailClient({
   const status = APP_STATUS[app.status] ?? APP_STATUS["applied"]!;
   const candidateName = app.candidate?.fullName ?? "Unknown candidate";
   const initials = getInitials(candidateName);
-  const latestInterview = useMemo(() => findLatestInterview(interviews), [interviews]);
+  const latestInterview = useMemo(
+    () => findLatestInterview(interviews),
+    [interviews],
+  );
   const latestInterviewRecommendation = latestInterview?.recommendation ?? null;
   const showSchedulePrompt =
     app.status === "interview" && interviews.length === 0;
@@ -284,7 +322,9 @@ export function RecruiterApplicationDetailClient({
       currentStatus={app.status}
       shortlistedAt={app.shortlistedAt}
       latestInterviewRecommendation={latestInterviewRecommendation}
-      latestOfferStatus={(offers[0]?.status as DecisionBarLatestOfferStatus) ?? null}
+      latestOfferStatus={
+        (offers[0]?.status as DecisionBarLatestOfferStatus) ?? null
+      }
       siblingInflightCount={app.inflightSiblingsCount}
       candidateName={app.candidate?.fullName}
       jobTitle={app.job?.title}
@@ -342,7 +382,12 @@ export function RecruiterApplicationDetailClient({
         />
       }
       extraSections={
-        <ExtraSections app={app} interviews={interviews} offers={offers} latestInterview={latestInterview} />
+        <ExtraSections
+          app={app}
+          interviews={interviews}
+          offers={offers}
+          latestInterview={latestInterview}
+        />
       }
       fairness={
         score.redactedFields && score.promptVersion && score.modelUsed
@@ -394,7 +439,11 @@ function ExtraSections({
         <DecisionPanelClient interview={latestInterview} />
       )}
 
-      <RecruiterOffersSection applicationId={app.id} offers={offers} applicationStatus={app.status} />
+      <RecruiterOffersSection
+        applicationId={app.id}
+        offers={offers}
+        applicationStatus={app.status}
+      />
 
       <NotesSectionClient
         applicationId={app.id}

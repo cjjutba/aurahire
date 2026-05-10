@@ -5,7 +5,9 @@ export class AuthMessageDto {
 }
 
 export class VerifyEmailResponseDto {
-  @ApiProperty({ enum: ["candidate", "recruiter"] }) role!: "candidate" | "recruiter";
+  @ApiProperty({ enum: ["candidate", "recruiter"] }) role!:
+    | "candidate"
+    | "recruiter";
   @ApiProperty() email!: string;
   @ApiProperty({
     description:

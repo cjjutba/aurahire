@@ -58,9 +58,7 @@ export class AdminAuditService {
   }
 
   /** For CSV export. Returns the rows + a CSV string. */
-  async exportCsv(
-    query: Omit<ListAdminAuditQuery, "page" | "limit">,
-  ): Promise<{
+  async exportCsv(query: Omit<ListAdminAuditQuery, "page" | "limit">): Promise<{
     csv: string;
     filename: string;
     rowCount: number;

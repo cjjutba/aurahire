@@ -50,15 +50,15 @@ Ship a notification system that:
 
 ## Decisions locked
 
-| # | Decision | Choice | Rationale |
-|---|---|---|---|
-| 1 | Event taxonomy | Curated user-pivotal events (~20 types), not an `audit_logs` 1:1 mirror | Audit logs are forensic; notifications are for human attention. Mixing them turns the bell into a fire hose. |
-| 2 | In-app delivery | Polling via TanStack Query (`refetchInterval: 30_000`, paused when blurred) | No new dependencies; consistent with the rest of the data-fetching stack; sub-30s latency is acceptable when email handles urgent. Realtime upgrade path is a single-component change. |
-| 3 | Email cadence | Per-event-type configurable: Instant / Digest / Off | High-volume events (recruiter receiving applications) need batching; security/offer events need urgency; off is a real preference. |
-| 4 | Read-state UX | Click row → mark read + navigate; bell counts only `read_at IS NULL`; `99+` cap; "Mark all as read" button; soft-dismiss kept for retention | Matches Linear/GitHub/Gmail mental models. Cap is server-rendered for invariance across clients. |
-| 5 | Retention | Daily cron deletes rows older than 90 days | Audit logs are the immortal record; notifications are ephemeral. One cron, one rule. |
-| 6 | Admin scope | Personal + system events merged in one stream, separated via tab/filter | One bell to check; `scope` column distinguishes; same schema serves both. |
-| 7 | Settings UI | Grouped by category (Account/Apps/Interviews/Offers/Bias/System), 3-way segmented control per row, restore-defaults per category | Explicit and scannable; security events render as disabled rows with "Required for security" caption. |
+| #   | Decision        | Choice                                                                                                                                      | Rationale                                                                                                                                                                              |
+| --- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Event taxonomy  | Curated user-pivotal events (~20 types), not an `audit_logs` 1:1 mirror                                                                     | Audit logs are forensic; notifications are for human attention. Mixing them turns the bell into a fire hose.                                                                           |
+| 2   | In-app delivery | Polling via TanStack Query (`refetchInterval: 30_000`, paused when blurred)                                                                 | No new dependencies; consistent with the rest of the data-fetching stack; sub-30s latency is acceptable when email handles urgent. Realtime upgrade path is a single-component change. |
+| 3   | Email cadence   | Per-event-type configurable: Instant / Digest / Off                                                                                         | High-volume events (recruiter receiving applications) need batching; security/offer events need urgency; off is a real preference.                                                     |
+| 4   | Read-state UX   | Click row → mark read + navigate; bell counts only `read_at IS NULL`; `99+` cap; "Mark all as read" button; soft-dismiss kept for retention | Matches Linear/GitHub/Gmail mental models. Cap is server-rendered for invariance across clients.                                                                                       |
+| 5   | Retention       | Daily cron deletes rows older than 90 days                                                                                                  | Audit logs are the immortal record; notifications are ephemeral. One cron, one rule.                                                                                                   |
+| 6   | Admin scope     | Personal + system events merged in one stream, separated via tab/filter                                                                     | One bell to check; `scope` column distinguishes; same schema serves both.                                                                                                              |
+| 7   | Settings UI     | Grouped by category (Account/Apps/Interviews/Offers/Bias/System), 3-way segmented control per row, restore-defaults per category            | Explicit and scannable; security events render as disabled rows with "Required for security" caption.                                                                                  |
 
 ## Architecture
 
@@ -208,6 +208,7 @@ export const NOTIFICATION_SCOPE = ["personal", "system"] as const;
 ```
 
 Indexes:
+
 - `notifications_user_unread_idx` on `(userId, readAt, createdAt DESC)` — drives unread-count and Unread-tab queries
 - `notifications_user_created_idx` on `(userId, createdAt DESC)` — drives All-tab queries
 - `notifications_created_at_idx` on `(createdAt)` — drives retention cron
@@ -286,28 +287,28 @@ The backend writes via the service-role key, bypassing RLS for the create-fanout
 
 Each event type's title/body/link is rendered from a single source in `templates.ts`, used both for the in-app row insert and the email render. The link function takes the recipient's role because the same `applicationId` resolves to different routes per role.
 
-| Event type | Scope | Triggered from | Recipient resolver |
-|---|---|---|---|
-| `application_status_changed` | personal | `applications.service.changeStatus()` | `application.candidateId` |
-| `interview_scheduled` | personal | `interviews.service.schedule()` | `application.candidateId` |
-| `interview_reminder_24h` | personal | `InterviewReminderCron` (hourly) | `application.candidateId` |
-| `interview_cancelled` | personal | `interviews.service.cancel()` | `application.candidateId` |
-| `offer_received` | personal | `offers.service.create()` | `offer.candidateId` |
-| `offer_expiring_soon` | personal | `OfferExpiryReminderCron` (hourly) | `offer.candidateId` |
-| `new_application_received` | personal | `applications.service.apply()` | `job.ownerRecruiterId` (MVP) |
-| `candidate_withdrew` | personal | `applications.service.withdraw()` | `job.ownerRecruiterId` |
-| `interview_feedback_due` | personal | `InterviewFeedbackDueCron` (hourly) | `interview.recruiterId` |
-| `offer_accepted` | personal | `offers.service.accept()` | `offer.recruiterId` |
-| `offer_declined` | personal | `offers.service.decline()` | `offer.recruiterId` |
-| `bias_flag_raised` | personal | `bias.service.flag()` (post-publish) | `job.ownerRecruiterId` |
-| `team_invite_accepted` | personal | `invitations.service.accept()` | `invite.inviterId` |
-| `team_invite_declined` | personal | `invitations.service.decline()` | `invite.inviterId` |
-| `system_bias_flag_raised` | system | `bias.service.flag()` (also fires this) | all `admin` users (`emitMany`) |
-| `system_ai_scoring_failure` | system | catch block in the existing match-preview-precompute worker (`MatchPreviewQueueService`) | all `admin` users |
-| `system_moderation_queue_item` | system | `moderation.service.queue()` (see note below) | all `admin` users |
-| `account_password_reset` | personal | `auth.service.resetPassword()` | acting user |
-| `account_email_verified` | personal | `auth.service.verifyEmail()` | acting user |
-| `account_login_new_device` | personal | `auth.service.recordLogin()` (unseen fingerprint) | acting user |
+| Event type                     | Scope    | Triggered from                                                                           | Recipient resolver             |
+| ------------------------------ | -------- | ---------------------------------------------------------------------------------------- | ------------------------------ |
+| `application_status_changed`   | personal | `applications.service.changeStatus()`                                                    | `application.candidateId`      |
+| `interview_scheduled`          | personal | `interviews.service.schedule()`                                                          | `application.candidateId`      |
+| `interview_reminder_24h`       | personal | `InterviewReminderCron` (hourly)                                                         | `application.candidateId`      |
+| `interview_cancelled`          | personal | `interviews.service.cancel()`                                                            | `application.candidateId`      |
+| `offer_received`               | personal | `offers.service.create()`                                                                | `offer.candidateId`            |
+| `offer_expiring_soon`          | personal | `OfferExpiryReminderCron` (hourly)                                                       | `offer.candidateId`            |
+| `new_application_received`     | personal | `applications.service.apply()`                                                           | `job.ownerRecruiterId` (MVP)   |
+| `candidate_withdrew`           | personal | `applications.service.withdraw()`                                                        | `job.ownerRecruiterId`         |
+| `interview_feedback_due`       | personal | `InterviewFeedbackDueCron` (hourly)                                                      | `interview.recruiterId`        |
+| `offer_accepted`               | personal | `offers.service.accept()`                                                                | `offer.recruiterId`            |
+| `offer_declined`               | personal | `offers.service.decline()`                                                               | `offer.recruiterId`            |
+| `bias_flag_raised`             | personal | `bias.service.flag()` (post-publish)                                                     | `job.ownerRecruiterId`         |
+| `team_invite_accepted`         | personal | `invitations.service.accept()`                                                           | `invite.inviterId`             |
+| `team_invite_declined`         | personal | `invitations.service.decline()`                                                          | `invite.inviterId`             |
+| `system_bias_flag_raised`      | system   | `bias.service.flag()` (also fires this)                                                  | all `admin` users (`emitMany`) |
+| `system_ai_scoring_failure`    | system   | catch block in the existing match-preview-precompute worker (`MatchPreviewQueueService`) | all `admin` users              |
+| `system_moderation_queue_item` | system   | `moderation.service.queue()` (see note below)                                            | all `admin` users              |
+| `account_password_reset`       | personal | `auth.service.resetPassword()`                                                           | acting user                    |
+| `account_email_verified`       | personal | `auth.service.verifyEmail()`                                                             | acting user                    |
+| `account_login_new_device`     | personal | `auth.service.recordLogin()` (unseen fingerprint)                                        | acting user                    |
 
 > **Service-name verification (during plan execution).** `bias.service.flag()` and `moderation.service.queue()` are conceptual call sites — the actual file paths and method names are confirmed by reading the existing modules during plan execution. If the moderation module isn't built yet at implementation time, `system_moderation_queue_item` becomes a phase-2 hookup (the event type still ships in the enum but no producer wires it). Similarly for `auth.service.recordLogin()` device-fingerprinting: if device tracking isn't already implemented, `account_login_new_device` waits for that capability and the spec's three other security events still ship.
 
@@ -327,13 +328,13 @@ All routes live under the existing global guard chain (`SupabaseAuthGuard` then 
 
 ### `notifications.controller.ts`
 
-| Method | Path | Body / Query | Returns |
-|---|---|---|---|
-| `GET` | `/notifications` | `?tab=unread\|all&limit=20&cursor=<base64>` | `{ items: Notification[], nextCursor?: string }` |
-| `GET` | `/notifications/unread-count` | — | `{ count: number, displayCount: string }` |
-| `POST` | `/notifications/:id/read` | — | `{ unreadCount: number, displayCount: string }` |
-| `POST` | `/notifications/read-all` | — | `{ unreadCount: 0, displayCount: "0" }` |
-| `DELETE` | `/notifications/:id` | — | `{ unreadCount: number, displayCount: string }` |
+| Method   | Path                          | Body / Query                                | Returns                                          |
+| -------- | ----------------------------- | ------------------------------------------- | ------------------------------------------------ |
+| `GET`    | `/notifications`              | `?tab=unread\|all&limit=20&cursor=<base64>` | `{ items: Notification[], nextCursor?: string }` |
+| `GET`    | `/notifications/unread-count` | —                                           | `{ count: number, displayCount: string }`        |
+| `POST`   | `/notifications/:id/read`     | —                                           | `{ unreadCount: number, displayCount: string }`  |
+| `POST`   | `/notifications/read-all`     | —                                           | `{ unreadCount: 0, displayCount: "0" }`          |
+| `DELETE` | `/notifications/:id`          | —                                           | `{ unreadCount: number, displayCount: string }`  |
 
 - All queries scope `WHERE userId = req.user.id AND dismissedAt IS NULL`; RLS provides defense-in-depth.
 - Pagination is cursor-based on `(createdAt DESC, id)` — works with the `(userId, createdAt DESC)` index. Cursor is `base64(<createdAt>|<id>)`.
@@ -342,11 +343,11 @@ All routes live under the existing global guard chain (`SupabaseAuthGuard` then 
 
 ### `notification-preferences.controller.ts`
 
-| Method | Path | Body | Returns |
-|---|---|---|---|
-| `GET` | `/notification-preferences` | — | `Array<{ eventType, mode, isDefault, isSecurityLocked, category }>` |
-| `PUT` | `/notification-preferences` | `{ eventType, mode }` | `{ eventType, mode, isDefault: false }` |
-| `POST` | `/notification-preferences/restore-defaults` | `{ category?: 'applications'\|'interviews'\|'offers'\|'bias'\|'system'\|'all' }` | `{ deleted: number }` |
+| Method | Path                                         | Body                                                                             | Returns                                                             |
+| ------ | -------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `GET`  | `/notification-preferences`                  | —                                                                                | `Array<{ eventType, mode, isDefault, isSecurityLocked, category }>` |
+| `PUT`  | `/notification-preferences`                  | `{ eventType, mode }`                                                            | `{ eventType, mode, isDefault: false }`                             |
+| `POST` | `/notification-preferences/restore-defaults` | `{ category?: 'applications'\|'interviews'\|'offers'\|'bias'\|'system'\|'all' }` | `{ deleted: number }`                                               |
 
 - `GET` returns the **effective** view: every event type the user can toggle (filtered by role) plus security-locked rows. Security rows return `isSecurityLocked: true, mode: 'instant'`.
 - `PUT` rejects `eventType ∈ SECURITY_EVENTS` with HTTP 400.
@@ -541,6 +542,7 @@ The same posture applies in the email processor: a Resend timeout retries 3× th
 ### Backend integration
 
 `apps/api/test/notifications.e2e-spec.ts` — full HTTP path against a real Postgres test database:
+
 - Status change as recruiter → candidate's `GET /notifications` shows the row + bell count = 1
 - Mark read → bell count = 0
 - Set preference Off → repeat status change → no row appears

@@ -44,13 +44,18 @@ export function BiasOverrideModal({
   const [overridden, setOverridden] = useState<Record<string, boolean>>({});
   const [working, setWorking] = useState<Record<string, boolean>>({});
 
-  const allOverridden = flags.length > 0 && flags.every((f) => f.id && overridden[f.id]);
+  const allOverridden =
+    flags.length > 0 && flags.every((f) => f.id && overridden[f.id]);
   const remaining = flags.filter((f) => !(f.id && overridden[f.id]));
 
   async function overrideOne(flagId: string) {
     const reason = (reasons[flagId] ?? "").trim();
     if (reason.length < 10) {
-      toastApiError(null, "Check your input", "Please provide a justification of at least 10 characters before overriding.");
+      toastApiError(
+        null,
+        "Check your input",
+        "Please provide a justification of at least 10 characters before overriding.",
+      );
       return;
     }
     setWorking((p) => ({ ...p, [flagId]: true }));
@@ -81,8 +86,14 @@ export function BiasOverrideModal({
       );
 
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { message?: string };
-        toastApiError(null, "Couldn't save override", body.message ?? `HTTP ${res.status}`);
+        const body = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
+        toastApiError(
+          null,
+          "Couldn't save override",
+          body.message ?? `HTTP ${res.status}`,
+        );
         return;
       }
 
@@ -103,7 +114,8 @@ export function BiasOverrideModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            Bias Check — {flags.length} flag{flags.length === 1 ? "" : "s"} require attention
+            Bias Check — {flags.length} flag{flags.length === 1 ? "" : "s"}{" "}
+            require attention
           </DialogTitle>
           <DialogDescription>
             Each flag must be overridden with a written reason (≥10 chars), or
@@ -169,7 +181,9 @@ export function BiasOverrideModal({
                       className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 py-1 text-xs text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
                     >
                       {working[flag.id] && <ButtonSpinner />}
-                      {working[flag.id] ? "Saving..." : "Override with this reason"}
+                      {working[flag.id]
+                        ? "Saving..."
+                        : "Override with this reason"}
                     </Button>
                   </div>
                 )}

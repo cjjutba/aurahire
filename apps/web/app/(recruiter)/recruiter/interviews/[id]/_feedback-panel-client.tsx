@@ -256,9 +256,7 @@ export function FeedbackPanelClient({ interview }: Props) {
                 type="button"
                 role="radio"
                 aria-checked={isSelected}
-                onClick={() =>
-                  setRecommendation(isSelected ? null : opt.value)
-                }
+                onClick={() => setRecommendation(isSelected ? null : opt.value)}
                 title={opt.description}
                 className={`inline-flex h-8 items-center rounded-[var(--radius-pill)] border px-3 text-xs font-semibold transition ${
                   isSelected

@@ -21,8 +21,7 @@ const variantConfirmClass: Record<ConfirmVariant, string> = {
     "bg-[var(--color-status-danger)] text-[var(--color-on-primary)] hover:opacity-90 active:opacity-95",
   warning:
     "bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]",
-  info:
-    "bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]",
+  info: "bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]",
 };
 
 export interface ConfirmDialogProps {
@@ -62,9 +61,7 @@ export function ConfirmDialog({
     >
       <DialogContent className="max-w-md gap-0 p-6">
         <DialogHeader className="gap-2">
-          <DialogTitle className="text-base font-semibold">
-            {title}
-          </DialogTitle>
+          <DialogTitle className="text-base font-semibold">{title}</DialogTitle>
           {description ? (
             <DialogDescription className="text-sm leading-relaxed">
               {description}

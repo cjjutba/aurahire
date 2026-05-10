@@ -40,10 +40,13 @@ export function VerifyEmailClient() {
 
     void (async () => {
       try {
-        const result = await fetcher<VerifyResponse>("/api/v1/auth/verify-email", {
-          method: "POST",
-          body: JSON.stringify({ token }),
-        });
+        const result = await fetcher<VerifyResponse>(
+          "/api/v1/auth/verify-email",
+          {
+            method: "POST",
+            body: JSON.stringify({ token }),
+          },
+        );
 
         setStatus("signing-in");
 
@@ -56,7 +59,9 @@ export function VerifyEmailClient() {
         if (otpError) {
           toastSuccess("Email verified", "Please sign in to continue.");
           setStatus("success");
-          setErrorMessage("Your email is verified. Please sign in to continue.");
+          setErrorMessage(
+            "Your email is verified. Please sign in to continue.",
+          );
           setTimeout(() => router.push(`/login?verified=1`), 1500);
           return;
         }
@@ -78,7 +83,8 @@ export function VerifyEmailClient() {
         toastApiError(err, "Verification failed");
         setStatus("error");
         setErrorMessage(
-          body?.message ?? "Verification failed. The link may be invalid or expired.",
+          body?.message ??
+            "Verification failed. The link may be invalid or expired.",
         );
       }
     })();
@@ -87,7 +93,11 @@ export function VerifyEmailClient() {
   if (status === "verifying" || status === "signing-in") {
     return (
       <AuthShell
-        title={status === "verifying" ? "Verifying your email..." : "Signing you in..."}
+        title={
+          status === "verifying"
+            ? "Verifying your email..."
+            : "Signing you in..."
+        }
         subtitle="This will only take a moment."
       >
         <div className="flex justify-center py-2">

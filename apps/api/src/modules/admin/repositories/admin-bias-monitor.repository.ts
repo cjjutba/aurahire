@@ -84,7 +84,9 @@ export class AdminBiasMonitorRepository {
       .select({
         term: biasFlagsTable.term,
         count: sql<number>`count(*)::int`,
-        jobIds: sql<string[]>`array_agg(distinct ${biasFlagsTable.jobId}::text)`,
+        jobIds: sql<
+          string[]
+        >`array_agg(distinct ${biasFlagsTable.jobId}::text)`,
       })
       .from(biasFlagsTable)
       .where(
@@ -152,7 +154,10 @@ export class AdminBiasMonitorRepository {
       })
       .from(biasFlagsTable)
       .innerJoin(jobsTable, eq(jobsTable.id, biasFlagsTable.jobId))
-      .leftJoin(profilesTable, eq(profilesTable.id, biasFlagsTable.overriddenBy))
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, biasFlagsTable.overriddenBy),
+      )
       .where(
         and(
           eq(biasFlagsTable.status, "overridden"),

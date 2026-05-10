@@ -13,7 +13,10 @@ export class InterviewVenuesRepository {
       .select()
       .from(interviewVenuesTable)
       .where(eq(interviewVenuesTable.companyId, companyId))
-      .orderBy(desc(interviewVenuesTable.isDefault), asc(interviewVenuesTable.label));
+      .orderBy(
+        desc(interviewVenuesTable.isDefault),
+        asc(interviewVenuesTable.label),
+      );
   }
 
   async findById(id: string) {
@@ -34,7 +37,10 @@ export class InterviewVenuesRepository {
     return row;
   }
 
-  async update(id: string, patch: Partial<typeof interviewVenuesTable.$inferInsert>) {
+  async update(
+    id: string,
+    patch: Partial<typeof interviewVenuesTable.$inferInsert>,
+  ) {
     const [row] = await this.db
       .update(interviewVenuesTable)
       .set({ ...patch, updatedAt: new Date() })
@@ -45,10 +51,15 @@ export class InterviewVenuesRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.delete(interviewVenuesTable).where(eq(interviewVenuesTable.id, id));
+    await this.db
+      .delete(interviewVenuesTable)
+      .where(eq(interviewVenuesTable.id, id));
   }
 
-  async clearDefaultForCompany(companyId: string, exceptId?: string): Promise<void> {
+  async clearDefaultForCompany(
+    companyId: string,
+    exceptId?: string,
+  ): Promise<void> {
     const cond = exceptId
       ? and(
           eq(interviewVenuesTable.companyId, companyId),

@@ -19,10 +19,7 @@ import {
   setActiveCompanyOnServer,
   type Membership,
 } from "@/hooks/use-membership";
-import {
-  getActiveCompanyId,
-  setActiveCompanyId,
-} from "@/lib/active-company";
+import { getActiveCompanyId, setActiveCompanyId } from "@/lib/active-company";
 import { prefetchDashboardForCompany } from "@/lib/dashboard-prefetch";
 
 /**

@@ -41,8 +41,8 @@ export function MembersPageClient() {
         />
         <SettingsCard>
           <p className="text-sm text-[var(--color-body)]">
-            Only owners and admins can manage team members. Ask an admin if
-            you need to invite or remove someone.
+            Only owners and admins can manage team members. Ask an admin if you
+            need to invite or remove someone.
           </p>
           <div className="mt-4">
             <Link

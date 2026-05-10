@@ -228,7 +228,9 @@ export function ScheduleInterviewSheetClient({
   function validateMapUrl(value: string): string {
     const trimmed = value.trim();
     if (!trimmed) return "";
-    return /^https?:\/\//i.test(trimmed) ? "" : "Must start with http:// or https://";
+    return /^https?:\/\//i.test(trimmed)
+      ? ""
+      : "Must start with http:// or https://";
   }
 
   // ── Reset ─────────────────────────────────────────────────────────────────
@@ -269,7 +271,11 @@ export function ScheduleInterviewSheetClient({
       return;
     }
     if (saveAsTemplate && !templateLabel.trim()) {
-      toastApiError(null, "Check your input", "Enter a label for the saved venue.");
+      toastApiError(
+        null,
+        "Check your input",
+        "Enter a label for the saved venue.",
+      );
       return;
     }
 
@@ -280,7 +286,11 @@ export function ScheduleInterviewSheetClient({
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toastApiError(null, "Couldn't schedule interview", "Please sign in again.");
+        toastApiError(
+          null,
+          "Couldn't schedule interview",
+          "Please sign in again.",
+        );
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
@@ -558,7 +568,10 @@ export function ScheduleInterviewSheetClient({
           <Button
             onClick={submit}
             disabled={
-              working || !scheduledAt || !venueName.trim() || !addressLine.trim()
+              working ||
+              !scheduledAt ||
+              !venueName.trim() ||
+              !addressLine.trim()
             }
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
           >

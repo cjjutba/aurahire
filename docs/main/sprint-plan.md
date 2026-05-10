@@ -499,13 +499,13 @@ If any step fails: triage. Critical failures = fix immediately. Cosmetic = log f
 
 If at any checkpoint we're behind:
 
-| If behind by... | Cut these in this order |
-|---|---|
-| 1-2 hours | Skip polish slices (mobile, empty states for non-critical pages) |
-| 3-4 hours | Drop offer accept/decline UI (recruiter views status only) |
-| 5-6 hours | Drop interview management (replace with "Schedule via email" stub) |
-| 7-8 hours | Drop admin AI Config preview impact (keep weight save without preview) |
-| Catastrophic | Drop bias detection AI call (use hard-coded flagged-term list) |
+| If behind by... | Cut these in this order                                                |
+| --------------- | ---------------------------------------------------------------------- |
+| 1-2 hours       | Skip polish slices (mobile, empty states for non-critical pages)       |
+| 3-4 hours       | Drop offer accept/decline UI (recruiter views status only)             |
+| 5-6 hours       | Drop interview management (replace with "Schedule via email" stub)     |
+| 7-8 hours       | Drop admin AI Config preview impact (keep weight save without preview) |
+| Catastrophic    | Drop bias detection AI call (use hard-coded flagged-term list)         |
 
 **Never cut:** auth, profile scoring, match scoring, score breakdowns, evidence callouts, audit log, basic admin, BullMQ infrastructure (even if not heavily used), Redis caching (even if minimal).
 
@@ -516,17 +516,20 @@ These ARE the thesis.
 ## Daily Cadence
 
 ### Morning (start of each day)
+
 - 10 min: review yesterday's commits
 - 10 min: re-read this sprint plan
 - 10 min: re-read `ai-design.md` (Day 2) or relevant doc
 - Start slice 1
 
 ### Throughout the day
+
 - Type-check after every slice
 - Commit after every slice with descriptive message
 - Push to remote at lunch and end of day
 
 ### Evening (end of each day)
+
 - 10 min: smoke test the day's slices
 - 5 min: brief status note (what shipped, what's next)
 - Sleep.
@@ -536,6 +539,7 @@ These ARE the thesis.
 ## Success Criteria
 
 The sprint succeeds if:
+
 1. ✅ The 19-step demo path completes without faking
 2. ✅ Every AI surface displays evidence + breakdown
 3. ✅ Every consequential action writes to audit log

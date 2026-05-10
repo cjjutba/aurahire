@@ -18,7 +18,9 @@ const SAMPLE_PDF = join(__dirname, "fixtures", "sample-resume.pdf");
 test("mobile candidate uses slide-in resume sheet", async ({ page }) => {
   await page.goto("/onboarding/candidate");
   await page.locator('input[type="file"]').setInputFiles(SAMPLE_PDF);
-  await expect(page.getByText(/We've read your resume/i)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/We've read your resume/i)).toBeVisible({
+    timeout: 60_000,
+  });
   await page.getByRole("link", { name: /^Continue$/ }).click();
 
   await expect(page).toHaveURL(/\/onboarding\/candidate\/personal$/);
@@ -34,5 +36,7 @@ test("mobile candidate uses slide-in resume sheet", async ({ page }) => {
 
   // Close via Escape and verify focus returns.
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("button", { name: /View resume/i })).toBeFocused();
+  await expect(
+    page.getByRole("button", { name: /View resume/i }),
+  ).toBeFocused();
 });

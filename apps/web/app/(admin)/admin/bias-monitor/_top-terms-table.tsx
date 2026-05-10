@@ -20,9 +20,8 @@ export function TopTermsTable({ terms }: Props) {
         </h3>
         <p className="mt-1 text-xs text-[var(--color-body)]">
           The AI&apos;s most-flagged words and phrases this period. Recurring
-          terms suggest a default vocabulary worth coaching recruiters away
-          from — or, if the term is genuinely role-specific, worth the
-          override.
+          terms suggest a default vocabulary worth coaching recruiters away from
+          — or, if the term is genuinely role-specific, worth the override.
         </p>
       </header>
 

@@ -23,7 +23,8 @@ export function LowConfidenceBanner({ confidence }: LowConfidenceBannerProps) {
           Heads up — low-confidence parse
         </p>
         <p className="mt-0.5 text-sm text-[var(--color-body)]">
-          The AI wasn&apos;t sure about parts of this resume. Double-check every prefilled field before continuing.
+          The AI wasn&apos;t sure about parts of this resume. Double-check every
+          prefilled field before continuing.
         </p>
       </div>
     </div>

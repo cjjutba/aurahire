@@ -28,8 +28,7 @@ export function CompanySwitchOverlay() {
         <Spinner aria-label="Loading" />
         <p className="text-center text-sm text-[var(--color-body)]">
           Switching to{" "}
-          <span className="font-semibold text-[var(--color-ink)]">{name}</span>
-          …
+          <span className="font-semibold text-[var(--color-ink)]">{name}</span>…
         </p>
       </div>
     </div>

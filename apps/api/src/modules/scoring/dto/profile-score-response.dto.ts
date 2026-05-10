@@ -3,7 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 export class ScoreEvidenceDto {
   @ApiProperty() excerpt!: string;
   @ApiProperty() source!: string;
-  @ApiProperty({ enum: ["positive", "negative", "neutral"] }) relevance!: string;
+  @ApiProperty({ enum: ["positive", "negative", "neutral"] })
+  relevance!: string;
   @ApiPropertyOptional({ nullable: true, type: Number })
   contributionPoints!: number | null;
   @ApiPropertyOptional({ nullable: true, type: String })
@@ -12,7 +13,12 @@ export class ScoreEvidenceDto {
 
 export class ProfileComponentDto {
   @ApiProperty({
-    enum: ["completeness", "skill_depth", "experience_clarity", "education_quality"],
+    enum: [
+      "completeness",
+      "skill_depth",
+      "experience_clarity",
+      "education_quality",
+    ],
   })
   name!: string;
   @ApiProperty() score!: number;
@@ -40,7 +46,8 @@ export class ProfileScoreDto {
   @ApiProperty() id!: string;
   @ApiProperty() overallScore!: number;
   @ApiProperty({ enum: ["strong", "partial", "limited"] }) band!: string;
-  @ApiProperty({ type: [ProfileComponentDto] }) components!: ProfileComponentDto[];
+  @ApiProperty({ type: [ProfileComponentDto] })
+  components!: ProfileComponentDto[];
   @ApiProperty({ type: [ImprovementSuggestionDto] })
   improvementSuggestions!: ImprovementSuggestionDto[];
   @ApiProperty({ type: [String] }) redactedFields!: string[];

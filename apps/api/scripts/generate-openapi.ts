@@ -10,7 +10,10 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 import { NestFactory } from "@nestjs/core";
-import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from "@nestjs/platform-fastify";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { VersioningType } from "@nestjs/common";
 

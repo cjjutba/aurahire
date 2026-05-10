@@ -1,7 +1,4 @@
-import type {
-  NotificationEventType,
-  NotificationMode,
-} from "@aurahire/db";
+import type { NotificationEventType, NotificationMode } from "@aurahire/db";
 
 export const DEFAULT_MODES: Record<NotificationEventType, NotificationMode> = {
   application_status_changed: "instant",
@@ -171,11 +168,16 @@ export const EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
   candidate_withdrew:
     "A candidate withdrew their application from a job you own.",
   interview_feedback_due: "Feedback for an interview you ran is overdue.",
-  interview_feedback_shared: "A recruiter shared their interview feedback summary with you.",
-  interview_rescheduled: "A recruiter rescheduled your interview to a new time.",
-  interview_completed: "An interview you participated in has been marked as completed.",
-  interview_record_feedback: "An interview you conducted is awaiting your feedback submission.",
-  application_withdrawn: "A candidate withdrew their application from a job you own.",
+  interview_feedback_shared:
+    "A recruiter shared their interview feedback summary with you.",
+  interview_rescheduled:
+    "A recruiter rescheduled your interview to a new time.",
+  interview_completed:
+    "An interview you participated in has been marked as completed.",
+  interview_record_feedback:
+    "An interview you conducted is awaiting your feedback submission.",
+  application_withdrawn:
+    "A candidate withdrew their application from a job you own.",
   offer_accepted: "A candidate accepted your offer.",
   offer_declined: "A candidate declined your offer.",
   offer_expired: "A pending offer expired before it was responded to.",

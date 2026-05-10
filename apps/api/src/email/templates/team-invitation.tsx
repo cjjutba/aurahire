@@ -78,9 +78,11 @@ export function TeamInvitationEmail({
               margin: "0 0 16px 0",
             }}
           >
-            <strong style={{ color: "#0a0b0d" }}>{inviterName}</strong> invited you
-            to join <strong style={{ color: "#0a0b0d" }}>{companyName}</strong> on
-            AuraHire as a <strong style={{ color: "#0a0b0d" }}>{friendlyRole}</strong>.
+            <strong style={{ color: "#0a0b0d" }}>{inviterName}</strong> invited
+            you to join{" "}
+            <strong style={{ color: "#0a0b0d" }}>{companyName}</strong> on
+            AuraHire as a{" "}
+            <strong style={{ color: "#0a0b0d" }}>{friendlyRole}</strong>.
           </Text>
 
           <Text

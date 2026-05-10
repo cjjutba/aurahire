@@ -38,19 +38,36 @@ export class ScoringController {
   @Throttle({ profileCompute: { limit: 1, ttl: 60_000 } })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: "Compute the candidate's Profile Score from default resume + preferences",
+    summary:
+      "Compute the candidate's Profile Score from default resume + preferences",
     description:
       "Triggers a fresh AI scoring run. Rate-limited at TWO layers: ThrottlerGuard (1/60s per IP) + a per-user manual check on profile_scores.created_at (1/60s per user). Both layers are intentional — defense in depth. Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
   })
-  @ApiResponse({ status: 201, description: "Score computed", type: ProfileScoreEnvelopeDto })
-  @ApiResponse({ status: 400, description: "Missing prerequisite (resume, parse, or preferences)" })
-  @ApiResponse({ status: 429, description: "Rate-limited; try again in a minute" })
-  @ApiResponse({ status: 503, description: "AI service temporarily unavailable" })
+  @ApiResponse({
+    status: 201,
+    description: "Score computed",
+    type: ProfileScoreEnvelopeDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Missing prerequisite (resume, parse, or preferences)",
+  })
+  @ApiResponse({
+    status: 429,
+    description: "Rate-limited; try again in a minute",
+  })
+  @ApiResponse({
+    status: 503,
+    description: "AI service temporarily unavailable",
+  })
   async computeProfileScore(
     @CurrentUser() user: AuthUser,
     @Req() req: FastifyRequest,
   ): Promise<ProfileScoreEnvelopeDto> {
-    const data = await this.service.computeProfileScoreForUser(user, this.requestMeta(req));
+    const data = await this.service.computeProfileScoreForUser(
+      user,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -76,12 +93,16 @@ export class ScoringController {
   @Throttle({ matchPreview: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: "Compute or fetch a match preview for the candidate against this job",
+    summary:
+      "Compute or fetch a match preview for the candidate against this job",
     description:
       "Delegates to the on-view auto-compute path: idempotent per (candidate, job, current default resume), returns the cached preview if one already exists, and writes new rows with source = 'candidate_view'. Bounded by a per-UTC-day cap (returns 429 with code DAILY_AI_LIMIT when exhausted) in addition to the IP throttle (5/60s).",
   })
   @ApiResponse({ status: 201, type: MatchScorePreviewEnvelopeDto })
-  @ApiResponse({ status: 400, description: "Missing prerequisite (resume, parse, or job)" })
+  @ApiResponse({
+    status: 400,
+    description: "Missing prerequisite (resume, parse, or job)",
+  })
   @ApiResponse({
     status: 429,
     description:

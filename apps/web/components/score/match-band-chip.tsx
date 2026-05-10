@@ -6,7 +6,10 @@ interface MatchBandChipProps {
   className?: string;
 }
 
-const BAND_VARIANTS: Record<ScoreBand, { label: string; bg: string; text: string }> = {
+const BAND_VARIANTS: Record<
+  ScoreBand,
+  { label: string; bg: string; text: string }
+> = {
   strong: {
     label: "Strong Match",
     bg: "var(--color-score-high-soft)",

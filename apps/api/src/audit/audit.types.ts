@@ -81,8 +81,10 @@ export const AUDIT_ACTIONS = {
   JOB_ARCHIVED_BY_CRON: "job.archived_by_cron",
   USER_DELETED_UNVERIFIED_CLEANUP: "user.deleted_unverified_cleanup",
   CRON_EXPIRE_OFFERS_EXECUTED: "cron.expire_offers.executed",
-  CRON_ARCHIVE_PAST_DEADLINE_JOBS_EXECUTED: "cron.archive_past_deadline_jobs.executed",
-  CRON_CLEANUP_UNVERIFIED_ACCOUNTS_EXECUTED: "cron.cleanup_unverified_accounts.executed",
+  CRON_ARCHIVE_PAST_DEADLINE_JOBS_EXECUTED:
+    "cron.archive_past_deadline_jobs.executed",
+  CRON_CLEANUP_UNVERIFIED_ACCOUNTS_EXECUTED:
+    "cron.cleanup_unverified_accounts.executed",
   // Companies + memberships (Phase 2 multi-tenancy)
   COMPANY_CREATED: "company.created",
   COMPANY_UPDATED: "company.updated",
@@ -115,4 +117,6 @@ export const AUDIT_ACTIONS = {
   FEEDBACK_NOTE_UPDATED: "feedback.note_updated",
 } as const;
 
-export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS] | string;
+export type AuditAction =
+  | (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS]
+  | string;

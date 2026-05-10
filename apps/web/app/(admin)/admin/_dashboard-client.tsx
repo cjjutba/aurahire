@@ -97,10 +97,7 @@ function SectionHeader({
   return (
     <div className="mb-3 flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <Icon
-          className="h-3.5 w-3.5 text-[var(--color-muted)]"
-          aria-hidden
-        />
+        <Icon className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
         <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           {label}
         </span>

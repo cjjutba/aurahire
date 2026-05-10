@@ -9,7 +9,13 @@ import { NotificationsController } from "./notifications.controller";
 import { NotificationsService } from "./notifications.service";
 import { AuditService } from "../../audit/audit.service";
 
-const buildUser = (overrides: Partial<{ id: string; role: "candidate" | "recruiter" | "admin"; email: string }> = {}) => ({
+const buildUser = (
+  overrides: Partial<{
+    id: string;
+    role: "candidate" | "recruiter" | "admin";
+    email: string;
+  }> = {},
+) => ({
   id: "u1",
   email: "u@x.io",
   role: "candidate" as const,
@@ -54,25 +60,45 @@ describe("NotificationsController", () => {
 
   it("list passes user.id and query through to the service", async () => {
     service.listForUser.mockResolvedValue({ items: [], nextCursor: null });
-    await controller.list(buildUser() as any, { tab: "inbox", limit: 20 } as any);
-    expect(service.listForUser).toHaveBeenCalledWith("u1", { tab: "inbox", limit: 20 });
+    await controller.list(
+      buildUser() as any,
+      { tab: "inbox", limit: 20 } as any,
+    );
+    expect(service.listForUser).toHaveBeenCalledWith("u1", {
+      tab: "inbox",
+      limit: 20,
+    });
   });
 
   it("list forwards tab=archive verbatim to the service", async () => {
     service.listForUser.mockResolvedValue({ items: [], nextCursor: null });
-    await controller.list(buildUser() as any, { tab: "archive", limit: 20 } as any);
-    expect(service.listForUser).toHaveBeenCalledWith("u1", { tab: "archive", limit: 20 });
+    await controller.list(
+      buildUser() as any,
+      { tab: "archive", limit: 20 } as any,
+    );
+    expect(service.listForUser).toHaveBeenCalledWith("u1", {
+      tab: "archive",
+      limit: 20,
+    });
   });
 
   it("markRead delegates to service and does NOT audit-log per-row reads", async () => {
-    service.markRead.mockResolvedValue({ unreadCount: 4, count: 4, displayCount: "4" });
+    service.markRead.mockResolvedValue({
+      unreadCount: 4,
+      count: 4,
+      displayCount: "4",
+    });
     await controller.markRead(buildUser() as any, "n1");
     expect(service.markRead).toHaveBeenCalledWith("n1", "u1");
     expect(audit.log).not.toHaveBeenCalled();
   });
 
   it("markAllRead writes an audit log entry with the role as actorType", async () => {
-    service.markAllRead.mockResolvedValue({ unreadCount: 0, count: 0, displayCount: "0" });
+    service.markAllRead.mockResolvedValue({
+      unreadCount: 0,
+      count: 0,
+      displayCount: "0",
+    });
     await controller.markAllRead(buildUser({ role: "recruiter" }) as any);
     expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -86,7 +112,11 @@ describe("NotificationsController", () => {
   });
 
   it("archive delegates to the service and audit-logs NOTIFICATION_ARCHIVED", async () => {
-    service.archive.mockResolvedValue({ unreadCount: 4, count: 4, displayCount: "4" });
+    service.archive.mockResolvedValue({
+      unreadCount: 4,
+      count: 4,
+      displayCount: "4",
+    });
     const result = await controller.archive(buildUser() as any, "n1");
     expect(service.archive).toHaveBeenCalledWith("n1", "u1");
     expect(result).toEqual({ unreadCount: 4, count: 4, displayCount: "4" });
@@ -102,14 +132,24 @@ describe("NotificationsController", () => {
   });
 
   it("archive returns the capped displayCount when count exceeds 99", async () => {
-    service.archive.mockResolvedValue({ unreadCount: 150, count: 150, displayCount: "99+" });
+    service.archive.mockResolvedValue({
+      unreadCount: 150,
+      count: 150,
+      displayCount: "99+",
+    });
     const result = await controller.archive(buildUser() as any, "n1");
     expect(result.displayCount).toBe("99+");
   });
 
   it("archiveAll delegates to the service and audit-logs NOTIFICATIONS_ARCHIVED_ALL", async () => {
-    service.archiveAll.mockResolvedValue({ unreadCount: 0, count: 0, displayCount: "0" });
-    const result = await controller.archiveAll(buildUser({ role: "recruiter" }) as any);
+    service.archiveAll.mockResolvedValue({
+      unreadCount: 0,
+      count: 0,
+      displayCount: "0",
+    });
+    const result = await controller.archiveAll(
+      buildUser({ role: "recruiter" }) as any,
+    );
     expect(service.archiveAll).toHaveBeenCalledWith("u1");
     expect(result).toEqual({ unreadCount: 0, count: 0, displayCount: "0" });
     expect(audit.log).toHaveBeenCalledWith(
@@ -124,7 +164,11 @@ describe("NotificationsController", () => {
   });
 
   it("dismiss (deprecated DELETE :id) still delegates to service.dismiss for back-compat", async () => {
-    service.dismiss.mockResolvedValue({ unreadCount: 150, count: 150, displayCount: "99+" });
+    service.dismiss.mockResolvedValue({
+      unreadCount: 150,
+      count: 150,
+      displayCount: "99+",
+    });
     const result = await controller.dismiss(buildUser() as any, "n1");
     expect(service.dismiss).toHaveBeenCalledWith("n1", "u1");
     expect(result.displayCount).toBe("99+");
@@ -132,7 +176,11 @@ describe("NotificationsController", () => {
   });
 
   it("dismiss does NOT audit-log per-row dismissals", async () => {
-    service.dismiss.mockResolvedValue({ unreadCount: 3, count: 3, displayCount: "3" });
+    service.dismiss.mockResolvedValue({
+      unreadCount: 3,
+      count: 3,
+      displayCount: "3",
+    });
     await controller.dismiss(buildUser() as any, "n1");
     expect(audit.log).not.toHaveBeenCalled();
   });

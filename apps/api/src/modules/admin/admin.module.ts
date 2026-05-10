@@ -40,7 +40,13 @@ import { AdminCompaniesRepository } from "./repositories/admin-companies.reposit
 import { RescoreBatchProcessor } from "./processors/rescore-batch.processor";
 
 @Module({
-  imports: [JobsModule, BiasModule, ApplicationsModule, AuthModule, ScoringModule],
+  imports: [
+    JobsModule,
+    BiasModule,
+    ApplicationsModule,
+    AuthModule,
+    ScoringModule,
+  ],
   controllers: [
     AdminStatsController,
     AdminUsersController,

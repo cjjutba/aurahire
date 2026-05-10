@@ -88,11 +88,15 @@ function makeService(opts: MockRepoOptions = {}) {
 
   // findOverlapping is called twice in checkConflicts: once with recruiterId,
   // once with candidateId. We distinguish by inspecting the args.
-  const findOverlapping = jest.fn().mockImplementation((args: { recruiterId?: string; candidateId?: string }) => {
-    if (args.recruiterId) return Promise.resolve(opts.recruiterRows ?? []);
-    if (args.candidateId) return Promise.resolve(opts.candidateRows ?? []);
-    return Promise.resolve([]);
-  });
+  const findOverlapping = jest
+    .fn()
+    .mockImplementation(
+      (args: { recruiterId?: string; candidateId?: string }) => {
+        if (args.recruiterId) return Promise.resolve(opts.recruiterRows ?? []);
+        if (args.candidateId) return Promise.resolve(opts.candidateRows ?? []);
+        return Promise.resolve([]);
+      },
+    );
 
   const interviewsRepo = {
     findOverlapping,
@@ -112,7 +116,10 @@ function makeService(opts: MockRepoOptions = {}) {
   const profilesRepo = { findById: jest.fn() };
   const email = { send: jest.fn().mockResolvedValue(undefined) };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
-  const cacheService = { bustTags: jest.fn().mockResolvedValue(undefined), getOrSet: jest.fn() };
+  const cacheService = {
+    bustTags: jest.fn().mockResolvedValue(undefined),
+    getOrSet: jest.fn(),
+  };
   const events = {
     emitInterviewScheduled: jest.fn(),
     emitApplicationStatusChanged: jest.fn(),
@@ -154,16 +161,23 @@ describe("InterviewsService — conflict detection", () => {
       const candidate = { ...user, role: "candidate" } as unknown as AuthUser;
 
       await expect(
-        svc.checkConflictsForApplication(candidate, COMPANY_ID, APPLICATION_ID, {
-          scheduledAt: SCHEDULED_AT,
-          durationMinutes: DURATION,
-        }),
+        svc.checkConflictsForApplication(
+          candidate,
+          COMPANY_ID,
+          APPLICATION_ID,
+          {
+            scheduledAt: SCHEDULED_AT,
+            durationMinutes: DURATION,
+          },
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
     it("throws NotFoundException when application does not exist in company", async () => {
       const { svc, applicationsRepo } = makeService();
-      applicationsRepo.findApplicationContextForCompany.mockResolvedValueOnce(null);
+      applicationsRepo.findApplicationContextForCompany.mockResolvedValueOnce(
+        null,
+      );
 
       await expect(
         svc.checkConflictsForApplication(user, COMPANY_ID, APPLICATION_ID, {
@@ -177,15 +191,24 @@ describe("InterviewsService — conflict detection", () => {
       const conflictRow = makeConflictRow(INTERVIEW_ID_A);
       const { svc } = makeService({ recruiterRows: [conflictRow] });
 
-      const result = await svc.checkConflictsForApplication(user, COMPANY_ID, APPLICATION_ID, {
-        scheduledAt: SCHEDULED_AT,
-        durationMinutes: DURATION,
-      });
+      const result = await svc.checkConflictsForApplication(
+        user,
+        COMPANY_ID,
+        APPLICATION_ID,
+        {
+          scheduledAt: SCHEDULED_AT,
+          durationMinutes: DURATION,
+        },
+      );
 
       expect(result.recruiterConflicts).toHaveLength(1);
       expect(result.recruiterConflicts[0]!.id).toBe(INTERVIEW_ID_A);
-      expect(result.recruiterConflicts[0]!.scheduledAt).toBe(conflictRow.scheduledAt.toISOString());
-      expect(result.recruiterConflicts[0]!.durationMinutes).toBe(conflictRow.durationMinutes);
+      expect(result.recruiterConflicts[0]!.scheduledAt).toBe(
+        conflictRow.scheduledAt.toISOString(),
+      );
+      expect(result.recruiterConflicts[0]!.durationMinutes).toBe(
+        conflictRow.durationMinutes,
+      );
       expect(result.candidateConflicts).toHaveLength(0);
     });
 
@@ -193,10 +216,15 @@ describe("InterviewsService — conflict detection", () => {
       const conflictRow = makeConflictRow(INTERVIEW_ID_B);
       const { svc } = makeService({ candidateRows: [conflictRow] });
 
-      const result = await svc.checkConflictsForApplication(user, COMPANY_ID, APPLICATION_ID, {
-        scheduledAt: SCHEDULED_AT,
-        durationMinutes: DURATION,
-      });
+      const result = await svc.checkConflictsForApplication(
+        user,
+        COMPANY_ID,
+        APPLICATION_ID,
+        {
+          scheduledAt: SCHEDULED_AT,
+          durationMinutes: DURATION,
+        },
+      );
 
       expect(result.candidateConflicts).toHaveLength(1);
       expect(result.candidateConflicts[0]!.id).toBe(INTERVIEW_ID_B);
@@ -207,10 +235,15 @@ describe("InterviewsService — conflict detection", () => {
       // Both recruiterRows and candidateRows default to [] — simulates no overlap
       const { svc } = makeService();
 
-      const result = await svc.checkConflictsForApplication(user, COMPANY_ID, APPLICATION_ID, {
-        scheduledAt: SCHEDULED_AT,
-        durationMinutes: DURATION,
-      });
+      const result = await svc.checkConflictsForApplication(
+        user,
+        COMPANY_ID,
+        APPLICATION_ID,
+        {
+          scheduledAt: SCHEDULED_AT,
+          durationMinutes: DURATION,
+        },
+      );
 
       expect(result.recruiterConflicts).toHaveLength(0);
       expect(result.candidateConflicts).toHaveLength(0);
@@ -246,9 +279,15 @@ describe("InterviewsService — conflict detection", () => {
 
       expect(interviewsRepo.findOverlapping).toHaveBeenCalledTimes(2);
 
-      const calls = interviewsRepo.findOverlapping.mock.calls as Array<[{ recruiterId?: string; candidateId?: string }]>;
-      const recruiterCall = calls.find((c) => c[0].recruiterId === RECRUITER_ID);
-      const candidateCall = calls.find((c) => c[0].candidateId === CANDIDATE_ID);
+      const calls = interviewsRepo.findOverlapping.mock.calls as Array<
+        [{ recruiterId?: string; candidateId?: string }]
+      >;
+      const recruiterCall = calls.find(
+        (c) => c[0].recruiterId === RECRUITER_ID,
+      );
+      const candidateCall = calls.find(
+        (c) => c[0].candidateId === CANDIDATE_ID,
+      );
 
       expect(recruiterCall).toBeDefined();
       expect(candidateCall).toBeDefined();

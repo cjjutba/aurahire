@@ -26,7 +26,14 @@ export class InterviewDto {
   @ApiProperty({ enum: ["phone", "video", "in-person"] }) format!: string;
   @ApiPropertyOptional({ nullable: true }) locationOrLink!: string | null;
   @ApiProperty({
-    enum: ["scheduled", "completed", "cancelled", "no-show", "rescheduled", "no-show"],
+    enum: [
+      "scheduled",
+      "completed",
+      "cancelled",
+      "no-show",
+      "rescheduled",
+      "no-show",
+    ],
   })
   status!: string;
   @ApiPropertyOptional({ nullable: true }) feedback!: string | null;
@@ -39,7 +46,11 @@ export class InterviewDto {
   @ApiProperty({ type: String, nullable: true })
   candidateSummary!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, description: "ISO timestamp of when feedback was shared with candidate" })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "ISO timestamp of when feedback was shared with candidate",
+  })
   sharedWithCandidateAt!: string | null;
 
   // Venue fields
@@ -47,7 +58,9 @@ export class InterviewDto {
   @ApiPropertyOptional({ nullable: true }) addressLine?: string | null;
   @ApiPropertyOptional({ nullable: true }) roomOrFloor?: string | null;
   @ApiPropertyOptional({ nullable: true }) mapUrl?: string | null;
-  @ApiPropertyOptional({ nullable: true }) reportingInstructions?: string | null;
+  @ApiPropertyOptional({ nullable: true }) reportingInstructions?:
+    | string
+    | null;
   @ApiPropertyOptional({ nullable: true }) whatToBring?: string | null;
   @ApiPropertyOptional({ nullable: true }) interviewerName?: string | null;
   @ApiPropertyOptional({ nullable: true }) interviewerTitle?: string | null;

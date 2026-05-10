@@ -13,7 +13,8 @@ export class CompanyMemberResponseDto {
   @ApiPropertyOptional({ nullable: true }) userId!: string | null;
   @ApiProperty() email!: string;
   @ApiProperty({ enum: ["owner", "admin", "recruiter"] }) role!: string;
-  @ApiProperty({ enum: ["invited", "active", "suspended", "left"] }) status!: string;
+  @ApiProperty({ enum: ["invited", "active", "suspended", "left"] })
+  status!: string;
   @ApiPropertyOptional({ nullable: true }) invitationToken!: string | null;
   @ApiPropertyOptional({ nullable: true }) invitationExpiresAt!: string | null;
   @ApiPropertyOptional({ nullable: true }) invitedBy!: string | null;

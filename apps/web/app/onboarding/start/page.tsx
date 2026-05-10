@@ -29,9 +29,10 @@ export default async function OnboardingStartPage() {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
-  const profile = (await getCurrentProfile()) as
-    | { id: string; role: string }
-    | null;
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+  } | null;
   if (!profile) redirect("/login");
 
   if (profile.role === "candidate") redirect("/onboarding/candidate");
@@ -53,9 +54,7 @@ export default async function OnboardingStartPage() {
   if (pendingToken) {
     const preview = await fetchInvitationPreview(pendingToken);
     if (preview && !preview.isExpired && preview.status === "invited") {
-      redirect(
-        `/onboarding/invite?token=${encodeURIComponent(pendingToken)}`,
-      );
+      redirect(`/onboarding/invite?token=${encodeURIComponent(pendingToken)}`);
     }
     // Stale cookie — do nothing here; /onboarding/invite is the page that
     // owns clearing it. Surfacing the chooser is the right fallback.
@@ -91,10 +90,7 @@ export default async function OnboardingStartPage() {
         <ChoiceCard
           href="/onboarding/invite"
           icon={
-            <Mail
-              className="h-6 w-6 text-[var(--color-primary)]"
-              aria-hidden
-            />
+            <Mail className="h-6 w-6 text-[var(--color-primary)]" aria-hidden />
           }
           title="Join my team"
           description="You have an invitation token from a teammate or email link. Paste it on the next step."

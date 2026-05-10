@@ -52,10 +52,16 @@ export class InterviewAutocompleteCron {
         candidateName: profilesTable.fullName,
       })
       .from(interviewsTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, interviewsTable.applicationId),
+      )
       .leftJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
       .leftJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
-      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .where(
         and(
           eq(interviewsTable.status, "scheduled"),

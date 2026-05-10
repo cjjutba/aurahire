@@ -9,7 +9,9 @@ export const matchPreviewCreatedPayloadSchema = z.object({
   band: z.enum(["strong", "partial", "limited"]),
   createdAt: z.string().datetime(),
 });
-export type MatchPreviewCreatedPayload = z.infer<typeof matchPreviewCreatedPayloadSchema>;
+export type MatchPreviewCreatedPayload = z.infer<
+  typeof matchPreviewCreatedPayloadSchema
+>;
 
 export const profileScoreUpdatedPayloadSchema = z.object({
   candidateId: z.string().uuid(),
@@ -25,4 +27,6 @@ export const profileScoreUpdatedPayloadSchema = z.object({
   ]),
   updatedAt: z.string().datetime(),
 });
-export type ProfileScoreUpdatedPayload = z.infer<typeof profileScoreUpdatedPayloadSchema>;
+export type ProfileScoreUpdatedPayload = z.infer<
+  typeof profileScoreUpdatedPayloadSchema
+>;

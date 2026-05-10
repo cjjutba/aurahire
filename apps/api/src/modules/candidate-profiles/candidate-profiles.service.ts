@@ -13,7 +13,11 @@ import {
   preferencesCompleteSchema,
   reviewCompleteSchema,
 } from "@aurahire/shared";
-import { profileScoresTable, type Profile, type CandidateProfile } from "@aurahire/db";
+import {
+  profileScoresTable,
+  type Profile,
+  type CandidateProfile,
+} from "@aurahire/db";
 
 import { AuditService } from "../../audit";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
@@ -59,7 +63,10 @@ export class CandidateProfilesService {
       this.repo.findCandidateProfile(user.id),
     ]);
     if (!profile) {
-      throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
+      throw new NotFoundException({
+        code: "PROFILE_NOT_FOUND",
+        message: "Profile missing",
+      });
     }
     if (!candidateProfile) {
       throw new NotFoundException({
@@ -91,10 +98,12 @@ export class CandidateProfilesService {
    *      enqueueing would produce a worker no-op).
    */
   async enqueueProfileScoreIfMissing(candidateId: string): Promise<void> {
-    const hasCurrent = await this.scoringRepo.hasCurrentProfileScore(candidateId);
+    const hasCurrent =
+      await this.scoringRepo.hasCurrentProfileScore(candidateId);
     if (hasCurrent) return;
 
-    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(candidateId);
+    const defaultResume =
+      await this.resumesRepo.findDefaultByCandidateId(candidateId);
     if (!defaultResume) return;
 
     await this.profileScoreQueue.enqueueRecompute(
@@ -120,17 +129,18 @@ export class CandidateProfilesService {
   ): Promise<CandidateProfileMeDto> {
     this.assertCandidate(user);
 
-    const { profile, candidateProfile } = await this.repo.updateProfileAndCandidateProfileTx(
-      user.id,
-      { fullName: dto.fullName, phone: dto.phone },
-      {
-        headline: dto.headline ?? null,
-        summary: dto.summary ?? null,
-        locationCity: dto.locationCity ?? null,
-        locationRegion: dto.locationRegion ?? null,
-        locationCountry: dto.locationCountry ?? null,
-      },
-    );
+    const { profile, candidateProfile } =
+      await this.repo.updateProfileAndCandidateProfileTx(
+        user.id,
+        { fullName: dto.fullName, phone: dto.phone },
+        {
+          headline: dto.headline ?? null,
+          summary: dto.summary ?? null,
+          locationCity: dto.locationCity ?? null,
+          locationRegion: dto.locationRegion ?? null,
+          locationCountry: dto.locationCountry ?? null,
+        },
+      );
 
     void this.audit.log({
       actorId: user.id,
@@ -164,14 +174,19 @@ export class CandidateProfilesService {
         desiredRoles: dto.desiredRoles,
         desiredSeniority: dto.desiredSeniority ?? null,
         openTo: dto.openTo,
-        desiredSalaryMin: dto.desiredSalaryMin != null ? String(dto.desiredSalaryMin) : null,
-        desiredSalaryMax: dto.desiredSalaryMax != null ? String(dto.desiredSalaryMax) : null,
+        desiredSalaryMin:
+          dto.desiredSalaryMin != null ? String(dto.desiredSalaryMin) : null,
+        desiredSalaryMax:
+          dto.desiredSalaryMax != null ? String(dto.desiredSalaryMax) : null,
         desiredCurrency: dto.desiredCurrency,
         availableStartDate: dto.availableStartDate ?? null,
       }),
     ]);
     if (!profile) {
-      throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
+      throw new NotFoundException({
+        code: "PROFILE_NOT_FOUND",
+        message: "Profile missing",
+      });
     }
 
     void this.audit.log({
@@ -201,7 +216,10 @@ export class CandidateProfilesService {
       this.repo.updateCandidateProfile(user.id, { profileCompleted: true }),
     ]);
     if (!profile) {
-      throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
+      throw new NotFoundException({
+        code: "PROFILE_NOT_FOUND",
+        message: "Profile missing",
+      });
     }
 
     void this.audit.log({
@@ -238,7 +256,10 @@ export class CandidateProfilesService {
       action: "user.onboarding.skipped_analyzing",
       entityType: "candidate_profile",
       entityId: user.id,
-      details: { scoreReady: payload.scoreReady, previewsReady: payload.previewsReady },
+      details: {
+        scoreReady: payload.scoreReady,
+        previewsReady: payload.previewsReady,
+      },
       ...requestMeta,
     });
   }
@@ -280,7 +301,10 @@ export class CandidateProfilesService {
       this.repo.findCandidateProfile(user.id),
     ]);
     if (!profile) {
-      throw new NotFoundException({ code: "PROFILE_NOT_FOUND", message: "Profile missing" });
+      throw new NotFoundException({
+        code: "PROFILE_NOT_FOUND",
+        message: "Profile missing",
+      });
     }
     if (!candidateProfile) {
       throw new NotFoundException({
@@ -304,7 +328,9 @@ export class CandidateProfilesService {
     // candidate's default resume's parsed data (resumes are the source of
     // truth for these arrays; there is no separate `candidate_experiences`
     // table). Mirrors the read pattern used in ScoringService.
-    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(user.id);
+    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(
+      user.id,
+    );
     const parsed =
       defaultResume?.parseStatus === "parsed" && defaultResume.parsedData
         ? (defaultResume.parsedData as unknown as ParsedResume)
@@ -342,9 +368,12 @@ export class CandidateProfilesService {
     // Score compute below throws, the candidate must NOT be trapped in
     // onboarding limbo — the AI failure is surfaced in the response body
     // and a recompute job is enqueued for retry.
-    const updatedCandidateProfile = await this.repo.updateCandidateProfile(user.id, {
-      profileCompleted: true,
-    });
+    const updatedCandidateProfile = await this.repo.updateCandidateProfile(
+      user.id,
+      {
+        profileCompleted: true,
+      },
+    );
 
     void this.audit.log({
       actorId: user.id,
@@ -405,7 +434,9 @@ export class CandidateProfilesService {
       profileCompleted: true,
       profileScore,
       precomputeJobId,
-      ...(profileScoreError ? { errors: { profileScore: profileScoreError } } : {}),
+      ...(profileScoreError
+        ? { errors: { profileScore: profileScoreError } }
+        : {}),
     };
   }
 
@@ -427,7 +458,8 @@ export class CandidateProfilesService {
     candidateId: string,
     reason: ProfileScoreRecomputeReason,
   ): Promise<void> {
-    const defaultResume = await this.resumesRepo.findDefaultByCandidateId(candidateId);
+    const defaultResume =
+      await this.resumesRepo.findDefaultByCandidateId(candidateId);
     if (!defaultResume) return;
 
     try {
@@ -458,11 +490,17 @@ export class CandidateProfilesService {
 
   private assertCandidate(user: AuthUser): void {
     if (user.role !== "candidate") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Candidate role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
     }
   }
 
-  private toResponse(profile: Profile, candidateProfile: CandidateProfile): CandidateProfileMeDto {
+  private toResponse(
+    profile: Profile,
+    candidateProfile: CandidateProfile,
+  ): CandidateProfileMeDto {
     return {
       id: profile.id,
       email: profile.email,

@@ -10,7 +10,13 @@ import { NotificationPreferencesController } from "./notification-preferences.co
 import { NotificationPreferencesService } from "./notification-preferences.service";
 import { AuditService } from "../../audit/audit.service";
 
-const buildUser = (overrides: Partial<{ id: string; role: "candidate" | "recruiter" | "admin"; email: string }> = {}) => ({
+const buildUser = (
+  overrides: Partial<{
+    id: string;
+    role: "candidate" | "recruiter" | "admin";
+    email: string;
+  }> = {},
+) => ({
   id: "u1",
   email: "u@x.io",
   role: "candidate" as const,
@@ -51,7 +57,10 @@ describe("NotificationPreferencesController", () => {
 
   it("upsert audits the change with old and new mode", async () => {
     service.getEffectiveMode.mockResolvedValue("instant");
-    service.upsert.mockResolvedValue({ eventType: "application_status_changed", mode: "off" });
+    service.upsert.mockResolvedValue({
+      eventType: "application_status_changed",
+      mode: "off",
+    });
     await controller.upsert(
       buildUser() as any,
       { eventType: "application_status_changed", mode: "off" } as any,
@@ -60,7 +69,11 @@ describe("NotificationPreferencesController", () => {
       expect.objectContaining({
         actorType: "user",
         action: expect.stringContaining("notification_preference.updated"),
-        details: { eventType: "application_status_changed", oldMode: "instant", newMode: "off" },
+        details: {
+          eventType: "application_status_changed",
+          oldMode: "instant",
+          newMode: "off",
+        },
       }),
     );
   });
@@ -77,7 +90,10 @@ describe("NotificationPreferencesController", () => {
 
   it("upsert returns isDefault: false on the response", async () => {
     service.getEffectiveMode.mockResolvedValue("instant");
-    service.upsert.mockResolvedValue({ eventType: "application_status_changed", mode: "off" });
+    service.upsert.mockResolvedValue({
+      eventType: "application_status_changed",
+      mode: "off",
+    });
     const result = await controller.upsert(
       buildUser() as any,
       { eventType: "application_status_changed", mode: "off" } as any,
@@ -91,7 +107,10 @@ describe("NotificationPreferencesController", () => {
 
   it("restoreDefaults audits the reset with category and deleted count", async () => {
     service.restoreDefaults.mockResolvedValue({ deleted: 3 });
-    await controller.restoreDefaults(buildUser() as any, { category: "applications" } as any);
+    await controller.restoreDefaults(
+      buildUser() as any,
+      { category: "applications" } as any,
+    );
     expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({
         actorType: "user",

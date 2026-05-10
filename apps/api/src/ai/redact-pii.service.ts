@@ -145,9 +145,7 @@ export class RedactPiiService {
           : undefined,
       });
 
-      const byId = new Map(
-        result.data.items.map((it) => [it.id, it.scrubbed]),
-      );
+      const byId = new Map(result.data.items.map((it) => [it.id, it.scrubbed]));
 
       for (const task of tasks) {
         const scrubbed = byId.get(task.path);

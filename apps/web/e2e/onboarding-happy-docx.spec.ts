@@ -18,7 +18,9 @@ test("candidate completes onboarding via DOCX resume upload (LibreOffice convers
 }) => {
   await page.goto("/onboarding/candidate");
   await page.locator('input[type="file"]').setInputFiles(SAMPLE_DOCX);
-  await expect(page.getByText(/We've read your resume/i)).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText(/We've read your resume/i)).toBeVisible({
+    timeout: 90_000,
+  });
   await page.getByRole("link", { name: /^Continue$/ }).click();
 
   await expect(page).toHaveURL(/\/onboarding\/candidate\/personal$/);

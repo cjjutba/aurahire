@@ -29,7 +29,11 @@ interface CandidateJobRow {
 }
 
 interface CandidateJobsListClientProps {
-  params: CandidateJobsListParams & { page: number; limit: number; sort: string };
+  params: CandidateJobsListParams & {
+    page: number;
+    limit: number;
+    sort: string;
+  };
   appliedJobMap?: Record<string, string>;
 }
 
@@ -107,7 +111,11 @@ export function CandidateJobsListClient({
 
       {/* Grid or empty state */}
       {!isLoading && rows.length === 0 ? (
-        filtersActive ? <EmptyFiltered /> : <EmptyJobs />
+        filtersActive ? (
+          <EmptyFiltered />
+        ) : (
+          <EmptyJobs />
+        )
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -127,7 +135,9 @@ export function CandidateJobsListClient({
               page: meta.page,
               limit: meta.limit,
               total: meta.total,
-              totalPages: meta.totalPages ?? Math.max(1, Math.ceil(meta.total / meta.limit)),
+              totalPages:
+                meta.totalPages ??
+                Math.max(1, Math.ceil(meta.total / meta.limit)),
             }}
             searchParams={{
               q: params.q,
@@ -145,7 +155,9 @@ export function CandidateJobsListClient({
 function EmptyJobs() {
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
-      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">No jobs available</div>
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
+        No jobs available
+      </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
         New openings appear here as soon as recruiters publish them.
       </div>
@@ -156,7 +168,9 @@ function EmptyJobs() {
 function EmptyFiltered() {
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
-      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">No jobs match your filters</div>
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
+        No jobs match your filters
+      </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
         Try different search terms or clear the filters.
       </div>

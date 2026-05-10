@@ -37,7 +37,11 @@ function extractApiErrorMessage(err: unknown): string | null {
   }
   if (err && typeof err === "object" && "message" in err) {
     const msg = (err as { message?: unknown }).message;
-    if (typeof msg === "string" && msg.length > 0 && msg !== "Failed to fetch") {
+    if (
+      typeof msg === "string" &&
+      msg.length > 0 &&
+      msg !== "Failed to fetch"
+    ) {
       return msg;
     }
   }

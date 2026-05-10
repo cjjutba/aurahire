@@ -39,15 +39,44 @@ interface Props {
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
-const APP_STATUS: Record<string, { label: string; dot: string; text: string }> = {
-  applied:    { label: "Applied",    dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  screening:  { label: "Screening",  dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
-  interview:  { label: "Interview",  dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  offer:      { label: "Offer",      dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  hired:      { label: "Hired",      dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  rejected:   { label: "Rejected",   dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
-  withdrawn:  { label: "Withdrawn",  dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
-};
+const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    applied: {
+      label: "Applied",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    screening: {
+      label: "Screening",
+      dot: "bg-[var(--color-status-warning)]",
+      text: "text-[var(--color-status-warning)]",
+    },
+    interview: {
+      label: "Interview",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    offer: {
+      label: "Offer",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    hired: {
+      label: "Hired",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    rejected: {
+      label: "Rejected",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    withdrawn: {
+      label: "Withdrawn",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
 const DEFAULT_APP_STATUS = APP_STATUS["applied"]!;
 
@@ -68,7 +97,8 @@ export function ApplicationsTableClient({ rows, meta }: Props) {
 
   function handleRowClick(e: MouseEvent<HTMLTableRowElement>, id: string) {
     if (e.defaultPrevented) return;
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
+      return;
     const target = e.target as HTMLElement;
     if (target.closest(INTERACTIVE_SELECTOR)) return;
     setOpenId(id);
@@ -136,7 +166,10 @@ export function ApplicationsTableClient({ rows, meta }: Props) {
                     </p>
                     <p className="truncate text-xs text-[var(--color-muted)]">
                       {r.job.companyName}
-                      <span className="text-[var(--color-muted-soft)]"> · </span>
+                      <span className="text-[var(--color-muted-soft)]">
+                        {" "}
+                        ·{" "}
+                      </span>
                       {r.job.recruiterName}
                     </p>
                   </td>
@@ -150,7 +183,9 @@ export function ApplicationsTableClient({ rows, meta }: Props) {
                         />
                         <span className="font-mono text-sm text-[var(--color-ink)]">
                           {r.overallScore}
-                          <span className="text-[var(--color-muted)]">/100</span>
+                          <span className="text-[var(--color-muted)]">
+                            /100
+                          </span>
                         </span>
                       </div>
                     ) : (
@@ -163,7 +198,9 @@ export function ApplicationsTableClient({ rows, meta }: Props) {
                     {r.band ? (
                       <MatchBandChip band={r.band} />
                     ) : (
-                      <span className="text-xs text-[var(--color-muted)]">—</span>
+                      <span className="text-xs text-[var(--color-muted)]">
+                        —
+                      </span>
                     )}
                   </td>
                   <td className="px-4 py-3">

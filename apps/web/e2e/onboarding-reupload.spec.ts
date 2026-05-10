@@ -20,7 +20,9 @@ const SAMPLE_PDF = join(__dirname, "fixtures", "sample-resume.pdf");
 test("candidate can re-upload resume mid-flow", async ({ page }) => {
   await page.goto("/onboarding/candidate");
   await page.locator('input[type="file"]').setInputFiles(SAMPLE_PDF);
-  await expect(page.getByText(/We've read your resume/i)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/We've read your resume/i)).toBeVisible({
+    timeout: 60_000,
+  });
   await page.getByRole("link", { name: /^Continue$/ }).click();
   await expect(page).toHaveURL(/\/onboarding\/candidate\/personal$/);
 
@@ -36,5 +38,7 @@ test("candidate can re-upload resume mid-flow", async ({ page }) => {
   //   - the dirty "Custom Headline" field is preserved
   //   - other fields refresh from new AI suggestions
   // For now, this spec asserts only the basic edit-and-stay-on-step behavior.
-  await expect(page.getByLabel(/headline/i)).toHaveValue("Custom Headline I Edited");
+  await expect(page.getByLabel(/headline/i)).toHaveValue(
+    "Custom Headline I Edited",
+  );
 });

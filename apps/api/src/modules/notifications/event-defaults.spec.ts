@@ -47,8 +47,12 @@ describe("event-defaults", () => {
   });
 
   it("ROLE_VISIBLE_EVENTS lists the events each role's settings page can toggle", () => {
-    expect(ROLE_VISIBLE_EVENTS.candidate).toContain("application_status_changed");
-    expect(ROLE_VISIBLE_EVENTS.candidate).not.toContain("new_application_received");
+    expect(ROLE_VISIBLE_EVENTS.candidate).toContain(
+      "application_status_changed",
+    );
+    expect(ROLE_VISIBLE_EVENTS.candidate).not.toContain(
+      "new_application_received",
+    );
     expect(ROLE_VISIBLE_EVENTS.recruiter).toContain("new_application_received");
     expect(ROLE_VISIBLE_EVENTS.admin).toContain("system_bias_flag_raised");
   });

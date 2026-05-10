@@ -81,7 +81,10 @@ interface LoginInputs {
  * The dest depends on the user's role+profileCompleted; we accept any portal
  * landing URL.
  */
-async function loginViaUi(page: Page, { email, password }: LoginInputs): Promise<void> {
+async function loginViaUi(
+  page: Page,
+  { email, password }: LoginInputs,
+): Promise<void> {
   await page.goto("/login");
   await page.getByLabel(/email address/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
@@ -150,22 +153,18 @@ test.describe("proactive system — notification round-trip", () => {
     }).toPass({ timeout: 5_000 });
 
     // The unread dot should now be present.
-    await expect(
-      candidatePage.getByTestId("bell-unread-dot"),
-    ).toBeVisible({ timeout: 2_000 });
+    await expect(candidatePage.getByTestId("bell-unread-dot")).toBeVisible({
+      timeout: 2_000,
+    });
 
     // ─── Open popover, find the new notification ─────────────────────────
     await bell.click();
 
     // The popover lazily renders rows for the inbox tab (default tab). The
     // new notification ("Application moved to screening") is at the top.
-    const firstRow = candidatePage
-      .getByTestId("notification-row")
-      .first();
+    const firstRow = candidatePage.getByTestId("notification-row").first();
     await expect(firstRow).toBeVisible({ timeout: 5_000 });
-    await expect(firstRow).toHaveText(
-      /Application moved to screening/i,
-    );
+    await expect(firstRow).toHaveText(/Application moved to screening/i);
 
     // ─── Click the row → navigate to /candidate/applications/<id> ────────
     await firstRow.click();

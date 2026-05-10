@@ -79,10 +79,7 @@ export class MatchPreviewPrecomputeProcessor extends WorkerHost {
             : undefined,
         ),
       )
-      .orderBy(
-        desc(jobsTable.publishedAt),
-        desc(jobsTable.createdAt),
-      )
+      .orderBy(desc(jobsTable.publishedAt), desc(jobsTable.createdAt))
       .limit(MATCH_PREVIEW_TOP_N);
 
     let computed = 0;
@@ -125,9 +122,7 @@ export class MatchPreviewPrecomputeProcessor extends WorkerHost {
         failed++;
       }
 
-      await job.updateProgress(
-        Math.round(((i + 1) / candidates.length) * 100),
-      );
+      await job.updateProgress(Math.round(((i + 1) / candidates.length) * 100));
     }
 
     const durationMs = Date.now() - startedAt;

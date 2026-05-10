@@ -27,8 +27,10 @@ export class RecentAuditEntryDto {
 }
 
 export class AdminStatsOverviewDto {
-  @ApiProperty({ type: () => AdminStatBlockDto }) totalUsers!: AdminStatBlockDto;
-  @ApiProperty({ type: () => AdminStatBlockDto }) activeJobs!: AdminStatBlockDto;
+  @ApiProperty({ type: () => AdminStatBlockDto })
+  totalUsers!: AdminStatBlockDto;
+  @ApiProperty({ type: () => AdminStatBlockDto })
+  activeJobs!: AdminStatBlockDto;
   @ApiProperty({ type: () => AdminStatBlockDto })
   applicationsToday!: AdminStatBlockDto;
   @ApiProperty({ type: () => AdminStatBlockDto })

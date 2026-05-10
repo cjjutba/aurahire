@@ -5,7 +5,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { WithdrawApplicationModal } from "@/components/interview/withdraw-application-modal";
 
-export function WithdrawButtonClient({ applicationId }: { applicationId: string }) {
+export function WithdrawButtonClient({
+  applicationId,
+}: {
+  applicationId: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (

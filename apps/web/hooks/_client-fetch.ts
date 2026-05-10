@@ -35,10 +35,10 @@ export async function clientApiFetch<T>(
     method: init.method ?? "GET",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(activeCompanyId
-        ? { "X-Active-Company-Id": activeCompanyId }
+      ...(activeCompanyId ? { "X-Active-Company-Id": activeCompanyId } : {}),
+      ...(init.body !== undefined
+        ? { "content-type": "application/json" }
         : {}),
-      ...(init.body !== undefined ? { "content-type": "application/json" } : {}),
     },
     body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     credentials: "include",
@@ -49,7 +49,11 @@ export async function clientApiFetch<T>(
     try {
       body = await res.json();
     } catch {}
-    const err = new ClientApiError(res.status, body, `API ${res.status} for ${url.pathname}`);
+    const err = new ClientApiError(
+      res.status,
+      body,
+      `API ${res.status} for ${url.pathname}`,
+    );
     (err as { response?: unknown }).response = { status: res.status, body };
     throw err;
   }

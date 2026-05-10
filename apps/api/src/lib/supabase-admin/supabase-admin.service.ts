@@ -60,9 +60,11 @@ export class SupabaseAdminService {
   }
 
   /** Look up a Supabase user by email. Returns null if not found. */
-  async findUserByEmail(
-    email: string,
-  ): Promise<{ id: string; email: string; emailConfirmedAt: string | null } | null> {
+  async findUserByEmail(email: string): Promise<{
+    id: string;
+    email: string;
+    emailConfirmedAt: string | null;
+  } | null> {
     // Admin listUsers supports a filter via the email query string in newer
     // SDKs; fallback path below uses a paginated scan as a defensive measure
     // for older API surfaces. Single-page lookups handle the sprint volume.
@@ -72,7 +74,9 @@ export class SupabaseAdminService {
     });
     if (error) throw error;
     const lower = email.toLowerCase();
-    const match = data.users.find((u) => (u.email ?? "").toLowerCase() === lower);
+    const match = data.users.find(
+      (u) => (u.email ?? "").toLowerCase() === lower,
+    );
     if (!match) return null;
     return {
       id: match.id,
@@ -98,9 +102,7 @@ export class SupabaseAdminService {
     const cutoff = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000);
     return data.users
       .filter(
-        (u) =>
-          (u.email_confirmed_at == null) &&
-          new Date(u.created_at) < cutoff,
+        (u) => u.email_confirmed_at == null && new Date(u.created_at) < cutoff,
       )
       .map((u) => ({
         id: u.id,

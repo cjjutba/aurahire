@@ -61,7 +61,9 @@ export async function serverApiFetch<T>(
     method: init.method ?? "GET",
     headers: {
       Authorization: `Bearer ${session.access_token}`,
-      ...(init.body !== undefined ? { "content-type": "application/json" } : {}),
+      ...(init.body !== undefined
+        ? { "content-type": "application/json" }
+        : {}),
     },
     body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     cache: init.cache ?? "no-store",
@@ -75,7 +77,11 @@ export async function serverApiFetch<T>(
     } catch {
       // body may not be JSON; ignore.
     }
-    throw new ServerApiError(res.status, body, `API ${res.status} for ${url.pathname}`);
+    throw new ServerApiError(
+      res.status,
+      body,
+      `API ${res.status} for ${url.pathname}`,
+    );
   }
 
   if (res.status === 204) return undefined as T;

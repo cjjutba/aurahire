@@ -37,7 +37,9 @@ interface ListBody {
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
-export default async function AdminApplicationsPage({ searchParams }: PageProps) {
+export default async function AdminApplicationsPage({
+  searchParams,
+}: PageProps) {
   const sp = await searchParams;
   const session = await getCurrentSession();
   if (!session) redirect("/login");

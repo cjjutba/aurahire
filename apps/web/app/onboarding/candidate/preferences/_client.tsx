@@ -9,7 +9,10 @@ import {
   CandidatePreferencesForm,
   type PreferencesFormValues,
 } from "@/components/onboarding/candidate/preferences-form";
-import { ONBOARDING_STEPS, type CandidateProfileMe } from "@/app/onboarding/candidate/_steps";
+import {
+  ONBOARDING_STEPS,
+  type CandidateProfileMe,
+} from "@/app/onboarding/candidate/_steps";
 import type { SaveStatus } from "@/components/onboarding/save-status-indicator";
 
 interface ExperienceLike {
@@ -49,7 +52,9 @@ export function PreferencesStepClient({
         saveStatus={saveStatus}
         rightPane={rightPaneContent}
         mobileRightPaneToggle={
-          <ResumeSheet triggerLabel="View preview">{rightPaneContent}</ResumeSheet>
+          <ResumeSheet triggerLabel="View preview">
+            {rightPaneContent}
+          </ResumeSheet>
         }
         title="Job preferences"
         subtitle="What kind of role are you looking for?"

@@ -14,37 +14,38 @@
 
 ## File Structure
 
-| File | Role |
-|---|---|
-| `packages/db/src/enums.ts` | Adds `offer_declined` to `APPLICATION_STATUS` |
-| `packages/db/drizzle/0013_offer_declined_status.sql` | Migration record (no DDL — Drizzle uses TS-side enum) |
-| `packages/shared/src/schemas/applications.ts` | Extend `updateApplicationStatusSchema` with `autoRejectOthers` |
-| `apps/api/src/audit/audit.types.ts` | Add three new audit action constants |
-| `apps/api/src/modules/applications/state-machine.ts` | Extend `VALID_TRANSITIONS`; export `STATUSES_REQUIRING_ACCEPTED_OFFER` |
-| `apps/api/src/modules/applications/state-machine.spec.ts` | Tests for new edges |
-| `apps/api/src/modules/applications/applications.repository.ts` | Add `ApplicationsTx`, `findByIdForUpdate`, `findInflightByJobId` |
-| `apps/api/src/modules/offers/offers.repository.ts` | Add `findLatestByApplicationId` |
-| `apps/api/src/modules/applications/applications.service.ts` | `transitionFromSystem(tx?)`, `updateStatus` guard, new `hire()` method |
-| `apps/api/src/modules/applications/applications.service.hire.spec.ts` | New unit spec for `hire()` |
-| `apps/api/src/modules/applications/applications.controller.ts` | Branch on `newStatus === "hired"` to call `hire()` |
-| `apps/api/src/modules/offers/offers.service.ts` | Wrap `accept` and `decline` in transactions; trigger auto-transition |
-| `apps/api/src/modules/offers/offers.service.spec.ts` (extend if exists, else create) | Unit tests for new flow |
-| `apps/api/src/cron/expire-offers.cron.ts` | Per-offer transaction + auto-transition |
-| `apps/api/src/cron/expire-offers.cron.spec.ts` | Extend with auto-transition assertion |
-| `apps/api/src/email/templates/position-filled.tsx` | New email template |
-| `apps/web/app/(candidate)/candidate/applications/[id]/_application-detail-client.tsx` | Add `ClosedOfferCard` variant |
-| `apps/web/app/(candidate)/candidate/applications/[id]/_offer-actions-client.tsx` | Update copy; render closed state already partly handled |
-| `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx` | Pipeline stage list, disabled Mark Hired, offer-declined actions, modal launch |
-| `apps/web/app/(recruiter)/recruiter/applications/[id]/_hire-confirmation-modal-client.tsx` | New modal |
-| `apps/web/app/(recruiter)/recruiter/applications/_applications-toolbar-client.tsx` | Add `offer_declined` filter option |
-| `apps/web/app/(candidate)/candidate/applications/_applications-toolbar-client.tsx` | Add `offer_declined` filter option |
-| `apps/web/app/(admin)/admin/applications/_filters-client.tsx` | Add `offer_declined` filter option |
+| File                                                                                       | Role                                                                           |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `packages/db/src/enums.ts`                                                                 | Adds `offer_declined` to `APPLICATION_STATUS`                                  |
+| `packages/db/drizzle/0013_offer_declined_status.sql`                                       | Migration record (no DDL — Drizzle uses TS-side enum)                          |
+| `packages/shared/src/schemas/applications.ts`                                              | Extend `updateApplicationStatusSchema` with `autoRejectOthers`                 |
+| `apps/api/src/audit/audit.types.ts`                                                        | Add three new audit action constants                                           |
+| `apps/api/src/modules/applications/state-machine.ts`                                       | Extend `VALID_TRANSITIONS`; export `STATUSES_REQUIRING_ACCEPTED_OFFER`         |
+| `apps/api/src/modules/applications/state-machine.spec.ts`                                  | Tests for new edges                                                            |
+| `apps/api/src/modules/applications/applications.repository.ts`                             | Add `ApplicationsTx`, `findByIdForUpdate`, `findInflightByJobId`               |
+| `apps/api/src/modules/offers/offers.repository.ts`                                         | Add `findLatestByApplicationId`                                                |
+| `apps/api/src/modules/applications/applications.service.ts`                                | `transitionFromSystem(tx?)`, `updateStatus` guard, new `hire()` method         |
+| `apps/api/src/modules/applications/applications.service.hire.spec.ts`                      | New unit spec for `hire()`                                                     |
+| `apps/api/src/modules/applications/applications.controller.ts`                             | Branch on `newStatus === "hired"` to call `hire()`                             |
+| `apps/api/src/modules/offers/offers.service.ts`                                            | Wrap `accept` and `decline` in transactions; trigger auto-transition           |
+| `apps/api/src/modules/offers/offers.service.spec.ts` (extend if exists, else create)       | Unit tests for new flow                                                        |
+| `apps/api/src/cron/expire-offers.cron.ts`                                                  | Per-offer transaction + auto-transition                                        |
+| `apps/api/src/cron/expire-offers.cron.spec.ts`                                             | Extend with auto-transition assertion                                          |
+| `apps/api/src/email/templates/position-filled.tsx`                                         | New email template                                                             |
+| `apps/web/app/(candidate)/candidate/applications/[id]/_application-detail-client.tsx`      | Add `ClosedOfferCard` variant                                                  |
+| `apps/web/app/(candidate)/candidate/applications/[id]/_offer-actions-client.tsx`           | Update copy; render closed state already partly handled                        |
+| `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx`            | Pipeline stage list, disabled Mark Hired, offer-declined actions, modal launch |
+| `apps/web/app/(recruiter)/recruiter/applications/[id]/_hire-confirmation-modal-client.tsx` | New modal                                                                      |
+| `apps/web/app/(recruiter)/recruiter/applications/_applications-toolbar-client.tsx`         | Add `offer_declined` filter option                                             |
+| `apps/web/app/(candidate)/candidate/applications/_applications-toolbar-client.tsx`         | Add `offer_declined` filter option                                             |
+| `apps/web/app/(admin)/admin/applications/_filters-client.tsx`                              | Add `offer_declined` filter option                                             |
 
 ---
 
 ## Task 1: Add `offer_declined` enum value
 
 **Files:**
+
 - Modify: `packages/db/src/enums.ts`
 - Modify: `packages/shared/src/enums/index.ts` (verify re-export already covers)
 
@@ -53,11 +54,13 @@
 ```bash
 sed -n '8,17p' packages/db/src/enums.ts
 ```
+
 Expected: shows `APPLICATION_STATUS` array with 7 values, `offer` at index 3, `hired` at 4.
 
 - [ ] **Step 2: Edit `packages/db/src/enums.ts` to insert the new value between `offer` and `hired`**
 
 Replace:
+
 ```ts
 export const APPLICATION_STATUS = [
   "applied",
@@ -71,6 +74,7 @@ export const APPLICATION_STATUS = [
 ```
 
 With:
+
 ```ts
 export const APPLICATION_STATUS = [
   "applied",
@@ -89,6 +93,7 @@ export const APPLICATION_STATUS = [
 ```bash
 grep -n "APPLICATION_STATUS\|export \* from" packages/shared/src/enums/index.ts
 ```
+
 Expected: shows a re-export from `@aurahire/db` or an explicit import that pulls the same constant. If the shared package defines its own copy, mirror the change there too.
 
 - [ ] **Step 4: Type-check both packages**
@@ -97,6 +102,7 @@ Expected: shows a re-export from `@aurahire/db` or an explicit import that pulls
 pnpm -F @aurahire/db tsc --noEmit
 pnpm -F @aurahire/shared tsc --noEmit
 ```
+
 Expected: no errors.
 
 - [ ] **Step 5: Commit**
@@ -111,6 +117,7 @@ git commit -m "feat(db): add offer_declined application status enum value"
 ## Task 2: Create migration file (record only)
 
 **Files:**
+
 - Create: `packages/db/drizzle/0013_offer_declined_status.sql`
 
 `applications.status` is currently `text` (no Postgres `enum` constraint, no CHECK). Drizzle enforces the enum at write time. The migration file documents the bump for the migration history; it has no DDL.
@@ -131,6 +138,7 @@ SELECT 1; -- no-op
 ```bash
 cat packages/db/drizzle/0013_offer_declined_status.sql
 ```
+
 Expected: file exists with the comment + no-op SELECT.
 
 - [ ] **Step 3: Commit**
@@ -145,6 +153,7 @@ git commit -m "chore(db): record migration for offer_declined enum bump"
 ## Task 3: Extend state machine — add `offer_declined` row + edges
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/state-machine.ts`
 - Modify: `apps/api/src/modules/applications/state-machine.spec.ts`
 
@@ -153,34 +162,34 @@ git commit -m "chore(db): record migration for offer_declined enum bump"
 Append these test blocks after the existing "disallows transitions out of terminal states" test:
 
 ```ts
-  it("allows offer → offer_declined (system-initiated)", () => {
-    expect(canTransition("offer", "offer_declined")).toBe(true);
-  });
+it("allows offer → offer_declined (system-initiated)", () => {
+  expect(canTransition("offer", "offer_declined")).toBe(true);
+});
 
-  it("allows offer_declined → offer (recruiter re-extend)", () => {
-    expect(canTransition("offer_declined", "offer")).toBe(true);
-  });
+it("allows offer_declined → offer (recruiter re-extend)", () => {
+  expect(canTransition("offer_declined", "offer")).toBe(true);
+});
 
-  it("allows offer_declined → rejected | withdrawn", () => {
-    expect(canTransition("offer_declined", "rejected")).toBe(true);
-    expect(canTransition("offer_declined", "withdrawn")).toBe(true);
-  });
+it("allows offer_declined → rejected | withdrawn", () => {
+  expect(canTransition("offer_declined", "rejected")).toBe(true);
+  expect(canTransition("offer_declined", "withdrawn")).toBe(true);
+});
 
-  it("disallows offer_declined → hired (must re-extend + accept first)", () => {
-    expect(canTransition("offer_declined", "hired")).toBe(false);
-  });
+it("disallows offer_declined → hired (must re-extend + accept first)", () => {
+  expect(canTransition("offer_declined", "hired")).toBe(false);
+});
 
-  it("disallows offer_declined → applied | screening | interview", () => {
-    expect(canTransition("offer_declined", "applied")).toBe(false);
-    expect(canTransition("offer_declined", "screening")).toBe(false);
-    expect(canTransition("offer_declined", "interview")).toBe(false);
-  });
+it("disallows offer_declined → applied | screening | interview", () => {
+  expect(canTransition("offer_declined", "applied")).toBe(false);
+  expect(canTransition("offer_declined", "screening")).toBe(false);
+  expect(canTransition("offer_declined", "interview")).toBe(false);
+});
 
-  it("exports STATUSES_REQUIRING_ACCEPTED_OFFER containing 'hired'", () => {
-    // Imported lazily so the failing test guards the export shape too.
-    const sm = require("./state-machine") as typeof import("./state-machine");
-    expect(sm.STATUSES_REQUIRING_ACCEPTED_OFFER).toContain("hired");
-  });
+it("exports STATUSES_REQUIRING_ACCEPTED_OFFER containing 'hired'", () => {
+  // Imported lazily so the failing test guards the export shape too.
+  const sm = require("./state-machine") as typeof import("./state-machine");
+  expect(sm.STATUSES_REQUIRING_ACCEPTED_OFFER).toContain("hired");
+});
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -188,6 +197,7 @@ Append these test blocks after the existing "disallows transitions out of termin
 ```bash
 pnpm -F @aurahire/api vitest run src/modules/applications/state-machine.spec.ts
 ```
+
 Expected: 6 failing tests; among them "Cannot read property 'STATUSES_REQUIRING_ACCEPTED_OFFER' of undefined" or similar.
 
 - [ ] **Step 3: Implement the state-machine changes in `state-machine.ts`**
@@ -197,15 +207,18 @@ Replace the file contents with:
 ```ts
 import type { ApplicationStatus } from "@aurahire/shared";
 
-const VALID_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
-  applied:        ["screening", "interview", "rejected", "withdrawn"],
-  screening:      ["interview",              "rejected", "withdrawn"],
-  interview:      ["offer",                  "rejected", "withdrawn"],
-  offer:          ["hired", "offer_declined", "rejected", "withdrawn"],
-  offer_declined: ["offer",                   "rejected", "withdrawn"],
-  hired:          [],
-  rejected:       [],
-  withdrawn:      [],
+const VALID_TRANSITIONS: Record<
+  ApplicationStatus,
+  readonly ApplicationStatus[]
+> = {
+  applied: ["screening", "interview", "rejected", "withdrawn"],
+  screening: ["interview", "rejected", "withdrawn"],
+  interview: ["offer", "rejected", "withdrawn"],
+  offer: ["hired", "offer_declined", "rejected", "withdrawn"],
+  offer_declined: ["offer", "rejected", "withdrawn"],
+  hired: [],
+  rejected: [],
+  withdrawn: [],
 };
 
 /**
@@ -236,6 +249,7 @@ export function getNextStatuses(
 ```bash
 pnpm -F @aurahire/api vitest run src/modules/applications/state-machine.spec.ts
 ```
+
 Expected: all tests pass (original 5 + new 6).
 
 - [ ] **Step 5: Commit**
@@ -250,11 +264,13 @@ git commit -m "feat(applications): state-machine support for offer_declined + ac
 ## Task 4: Extend `updateApplicationStatusSchema` DTO
 
 **Files:**
+
 - Modify: `packages/shared/src/schemas/applications.ts`
 
 - [ ] **Step 1: Edit the schema**
 
 Replace:
+
 ```ts
 export const updateApplicationStatusSchema = z.object({
   newStatus: z.enum(APPLICATION_STATUS),
@@ -263,6 +279,7 @@ export const updateApplicationStatusSchema = z.object({
 ```
 
 With:
+
 ```ts
 export const updateApplicationStatusSchema = z.object({
   newStatus: z.enum(APPLICATION_STATUS),
@@ -281,6 +298,7 @@ export const updateApplicationStatusSchema = z.object({
 ```bash
 pnpm -F @aurahire/shared tsc --noEmit
 ```
+
 Expected: no errors.
 
 - [ ] **Step 3: Commit**
@@ -295,6 +313,7 @@ git commit -m "feat(shared): updateApplicationStatusSchema accepts autoRejectOth
 ## Task 5: Add new audit action constants
 
 **Files:**
+
 - Modify: `apps/api/src/audit/audit.types.ts`
 
 - [ ] **Step 1: Edit `AUDIT_ACTIONS` block — append to the Offers section**
@@ -316,6 +335,7 @@ After the line `OFFER_EXPIRED: "offer.expired",` insert:
 ```bash
 pnpm -F @aurahire/api tsc --noEmit
 ```
+
 Expected: no errors.
 
 - [ ] **Step 3: Commit**
@@ -330,6 +350,7 @@ git commit -m "feat(audit): action constants for offer_declined / position_fille
 ## Task 6: Add `OffersRepository.findLatestByApplicationId`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/offers/offers.repository.ts`
 
 - [ ] **Step 1: Add the method below `findPendingByApplicationId`**
@@ -356,6 +377,7 @@ git commit -m "feat(audit): action constants for offer_declined / position_fille
 ```bash
 pnpm -F @aurahire/api tsc --noEmit
 ```
+
 Expected: no errors.
 
 - [ ] **Step 3: Commit**
@@ -370,6 +392,7 @@ git commit -m "feat(offers): repo method findLatestByApplicationId"
 ## Task 7: Add `ApplicationsTx`, `findByIdForUpdate`, `findInflightByJobId`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.repository.ts`
 
 - [ ] **Step 1: Add imports + Tx type at top of file**
@@ -439,18 +462,30 @@ type Executor = DrizzleClient | ApplicationsTx;
 - [ ] **Step 4: Add the missing `ne` import to the existing drizzle-orm import line**
 
 Locate the existing line:
+
 ```ts
 import { and, count, desc, eq, isNotNull, sql, type SQL } from "drizzle-orm";
 ```
 
 Replace with:
+
 ```ts
-import { and, count, desc, eq, isNotNull, ne, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  isNotNull,
+  ne,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 ```
 
 - [ ] **Step 5: Add overload to `update()` so it accepts an optional tx executor**
 
 Replace the existing `update` method:
+
 ```ts
   async update(id: string, patch: Partial<NewApplication>): Promise<Application> {
     const [row] = await this.db
@@ -464,6 +499,7 @@ Replace the existing `update` method:
 ```
 
 With:
+
 ```ts
   async update(
     id: string,
@@ -486,6 +522,7 @@ With:
 ```bash
 pnpm -F @aurahire/api tsc --noEmit
 ```
+
 Expected: no errors. (Existing call sites of `update(id, patch)` keep working — the tx param is optional.)
 
 - [ ] **Step 7: Commit**
@@ -500,6 +537,7 @@ git commit -m "feat(applications): repo methods findByIdForUpdate, findInflightB
 ## Task 8: `ApplicationsService.transitionFromSystem` accepts optional tx
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.service.ts`
 
 - [ ] **Step 1: Import `ApplicationsTx` at the top of the file**
@@ -513,6 +551,7 @@ import type { ApplicationsTx } from "./applications.repository";
 - [ ] **Step 2: Update the method signature + DB call**
 
 Replace the existing signature (line ~731):
+
 ```ts
   async transitionFromSystem(
     actor: AuthUser,
@@ -524,6 +563,7 @@ Replace the existing signature (line ~731):
 ```
 
 With:
+
 ```ts
   async transitionFromSystem(
     actor: AuthUser | null,
@@ -540,30 +580,33 @@ The `actor` parameter is widened to `AuthUser | null` so the cron (system actor)
 - [ ] **Step 3: Use `tx` when updating the row**
 
 Find the call:
+
 ```ts
-    await this.repo.update(id, {
-      status: newStatus,
-      statusUpdatedAt: new Date(),
-      recruiterNotes: this.appendNote(app.recruiterNotes, note),
-    });
+await this.repo.update(id, {
+  status: newStatus,
+  statusUpdatedAt: new Date(),
+  recruiterNotes: this.appendNote(app.recruiterNotes, note),
+});
 ```
 
 Replace with:
+
 ```ts
-    await this.repo.update(
-      id,
-      {
-        status: newStatus,
-        statusUpdatedAt: new Date(),
-        recruiterNotes: this.appendNote(app.recruiterNotes, note),
-      },
-      tx,
-    );
+await this.repo.update(
+  id,
+  {
+    status: newStatus,
+    statusUpdatedAt: new Date(),
+    recruiterNotes: this.appendNote(app.recruiterNotes, note),
+  },
+  tx,
+);
 ```
 
 - [ ] **Step 4: Update the audit + notification calls to handle null actor**
 
 Find:
+
 ```ts
     await this.audit.log({
       actorId: actor.id,
@@ -571,6 +614,7 @@ Find:
 ```
 
 Replace with:
+
 ```ts
     await this.audit.log({
       actorId: actor?.id ?? null,
@@ -578,12 +622,14 @@ Replace with:
 ```
 
 Find further down in the same method:
+
 ```ts
         actorId: actor.id,
         metadata: {
 ```
 
 Replace with:
+
 ```ts
         actorId: actor?.id ?? null,
         metadata: {
@@ -594,6 +640,7 @@ Replace with:
 ```bash
 pnpm -F @aurahire/api tsc --noEmit
 ```
+
 Expected: no errors. Existing callers passing an `AuthUser` continue to work; the cron (Task 14) and decline/accept flows (Task 12, 13) will pass `null` and `tx`.
 
 - [ ] **Step 6: Commit**
@@ -608,6 +655,7 @@ git commit -m "feat(applications): transitionFromSystem accepts optional tx + nu
 ## Task 9: Add accepted-offer guard to `ApplicationsService.updateStatus`
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.service.ts`
 
 This task adds the guard but does NOT yet branch hire to a separate method — that happens in Task 10. Putting the guard in `updateStatus` first means it covers all callers immediately.
@@ -617,7 +665,10 @@ This task adds the guard but does NOT yet branch hire to a separate method — t
 Update the imports near the top:
 
 ```ts
-import { canTransition, STATUSES_REQUIRING_ACCEPTED_OFFER } from "./state-machine";
+import {
+  canTransition,
+  STATUSES_REQUIRING_ACCEPTED_OFFER,
+} from "./state-machine";
 ```
 
 Add to the constructor signature an `OffersRepository`:
@@ -639,6 +690,7 @@ Open `apps/api/src/modules/applications/applications.module.ts` and add `OffersR
 ```bash
 grep -n "imports\|providers" apps/api/src/modules/applications/applications.module.ts
 ```
+
 Expected: shows the module's `imports` and `providers` arrays. Pattern-match the existing approach (most modules expose their repository via `exports` so a sibling module imports the whole module).
 
 If `OffersModule` already exports `OffersRepository`, add `forwardRef(() => OffersModule)` to `ApplicationsModule.imports` and to `OffersModule.imports` (already cycles).
@@ -646,27 +698,28 @@ If `OffersModule` already exports `OffersRepository`, add `forwardRef(() => Offe
 - [ ] **Step 3: In `updateStatus`, after the state-machine check, add the guard**
 
 Find:
+
 ```ts
-    if (!canTransition(app.status as ApplicationStatus, dto.newStatus)) {
-      throw new BadRequestException({
-        code: "INVALID_STATUS_TRANSITION",
-        message: `Cannot transition from ${app.status} to ${dto.newStatus}`,
-      });
-    }
+if (!canTransition(app.status as ApplicationStatus, dto.newStatus)) {
+  throw new BadRequestException({
+    code: "INVALID_STATUS_TRANSITION",
+    message: `Cannot transition from ${app.status} to ${dto.newStatus}`,
+  });
+}
 ```
 
 After that block insert:
+
 ```ts
-    if (STATUSES_REQUIRING_ACCEPTED_OFFER.includes(dto.newStatus)) {
-      const latestOffer = await this.offersRepo.findLatestByApplicationId(id);
-      if (!latestOffer || latestOffer.status !== "accepted") {
-        throw new BadRequestException({
-          code: "OFFER_NOT_ACCEPTED",
-          message:
-            "Cannot mark hired — candidate has not accepted an offer.",
-        });
-      }
-    }
+if (STATUSES_REQUIRING_ACCEPTED_OFFER.includes(dto.newStatus)) {
+  const latestOffer = await this.offersRepo.findLatestByApplicationId(id);
+  if (!latestOffer || latestOffer.status !== "accepted") {
+    throw new BadRequestException({
+      code: "OFFER_NOT_ACCEPTED",
+      message: "Cannot mark hired — candidate has not accepted an offer.",
+    });
+  }
+}
 ```
 
 - [ ] **Step 4: Type-check**
@@ -674,6 +727,7 @@ After that block insert:
 ```bash
 pnpm -F @aurahire/api tsc --noEmit
 ```
+
 Expected: no errors. If `OffersRepository` injection complains about a circular dep, see Step 2 — use `forwardRef`.
 
 - [ ] **Step 5: Commit**
@@ -688,6 +742,7 @@ git commit -m "feat(applications): updateStatus blocks hire without accepted off
 ## Task 10: Implement `ApplicationsService.hire()` with cascade + transaction
 
 **Files:**
+
 - Modify: `apps/api/src/modules/applications/applications.service.ts`
 - Modify: `apps/api/src/modules/applications/applications.controller.ts`
 - Create: `apps/api/src/modules/applications/applications.service.hire.spec.ts`
@@ -697,6 +752,7 @@ This is the largest task; it pulls hire out of `updateStatus` so it can run in a
 - [ ] **Step 1: Inject the Drizzle client into ApplicationsService**
 
 Add to the existing imports:
+
 ```ts
 import { Inject } from "@nestjs/common";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
@@ -706,6 +762,7 @@ import { AUDIT_ACTIONS } from "../../audit/audit.types";
 (`AUDIT_ACTIONS` may already be re-exported via `../../audit`. Pattern-match the file's existing import style.)
 
 In the constructor add:
+
 ```ts
     @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
 ```
@@ -731,7 +788,12 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { DRIZZLE_CLIENT } from "../../db/db.module";
 import { BadRequestException } from "@nestjs/common";
 
-const noopRepo = { findById: jest.fn(), update: jest.fn(), findByIdForUpdate: jest.fn(), findInflightByJobId: jest.fn() };
+const noopRepo = {
+  findById: jest.fn(),
+  update: jest.fn(),
+  findByIdForUpdate: jest.fn(),
+  findInflightByJobId: jest.fn(),
+};
 const noopJobs = { findById: jest.fn() };
 const noopOffers = { findLatestByApplicationId: jest.fn() };
 const noopAudit = { log: jest.fn() };
@@ -746,7 +808,11 @@ function fakeDb() {
   };
 }
 
-const recruiter = { id: "rec-1", role: "recruiter" as const, email: "r@x" } as any;
+const recruiter = {
+  id: "rec-1",
+  role: "recruiter" as const,
+  email: "r@x",
+} as any;
 
 describe("ApplicationsService.hire()", () => {
   let svc: ApplicationsService;
@@ -755,7 +821,13 @@ describe("ApplicationsService.hire()", () => {
   let jobs: typeof noopJobs;
 
   beforeEach(async () => {
-    repo = { ...noopRepo, findById: jest.fn(), update: jest.fn(), findByIdForUpdate: jest.fn(), findInflightByJobId: jest.fn() };
+    repo = {
+      ...noopRepo,
+      findById: jest.fn(),
+      update: jest.fn(),
+      findByIdForUpdate: jest.fn(),
+      findInflightByJobId: jest.fn(),
+    };
     offers = { ...noopOffers, findLatestByApplicationId: jest.fn() };
     jobs = { ...noopJobs, findById: jest.fn() };
 
@@ -783,8 +855,17 @@ describe("ApplicationsService.hire()", () => {
   });
 
   it("rejects when latest offer is not accepted", async () => {
-    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer", jobId: "j-1", candidateId: "c-1" });
-    jobs.findById.mockResolvedValue({ id: "j-1", companyId: "co-1", recruiterId: "rec-1" });
+    repo.findByIdForUpdate.mockResolvedValue({
+      id: "a-1",
+      status: "offer",
+      jobId: "j-1",
+      candidateId: "c-1",
+    });
+    jobs.findById.mockResolvedValue({
+      id: "j-1",
+      companyId: "co-1",
+      recruiterId: "rec-1",
+    });
     offers.findLatestByApplicationId.mockResolvedValue({ status: "pending" });
 
     await expect(
@@ -793,13 +874,29 @@ describe("ApplicationsService.hire()", () => {
   });
 
   it("hires the candidate when offer is accepted, no cascade", async () => {
-    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer", jobId: "j-1", candidateId: "c-1", recruiterNotes: null });
-    jobs.findById.mockResolvedValue({ id: "j-1", companyId: "co-1", recruiterId: "rec-1" });
+    repo.findByIdForUpdate.mockResolvedValue({
+      id: "a-1",
+      status: "offer",
+      jobId: "j-1",
+      candidateId: "c-1",
+      recruiterNotes: null,
+    });
+    jobs.findById.mockResolvedValue({
+      id: "j-1",
+      companyId: "co-1",
+      recruiterId: "rec-1",
+    });
     offers.findLatestByApplicationId.mockResolvedValue({ status: "accepted" });
     repo.findInflightByJobId.mockResolvedValue([]);
     repo.update.mockResolvedValue({ id: "a-1", status: "hired" });
 
-    const result = await svc.hire(recruiter, "co-1", "a-1", { autoRejectOthers: false }, {});
+    const result = await svc.hire(
+      recruiter,
+      "co-1",
+      "a-1",
+      { autoRejectOthers: false },
+      {},
+    );
 
     expect(repo.update).toHaveBeenCalledWith(
       "a-1",
@@ -810,8 +907,18 @@ describe("ApplicationsService.hire()", () => {
   });
 
   it("cascades — auto-rejects in-flight siblings when autoRejectOthers=true", async () => {
-    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer", jobId: "j-1", candidateId: "c-1", recruiterNotes: null });
-    jobs.findById.mockResolvedValue({ id: "j-1", companyId: "co-1", recruiterId: "rec-1" });
+    repo.findByIdForUpdate.mockResolvedValue({
+      id: "a-1",
+      status: "offer",
+      jobId: "j-1",
+      candidateId: "c-1",
+      recruiterNotes: null,
+    });
+    jobs.findById.mockResolvedValue({
+      id: "j-1",
+      companyId: "co-1",
+      recruiterId: "rec-1",
+    });
     offers.findLatestByApplicationId.mockResolvedValue({ status: "accepted" });
     repo.findInflightByJobId.mockResolvedValue([
       { id: "a-2", candidateId: "c-2", recruiterNotes: null },
@@ -819,7 +926,13 @@ describe("ApplicationsService.hire()", () => {
     ]);
     repo.update.mockResolvedValue({ id: "a-1", status: "hired" });
 
-    const result = await svc.hire(recruiter, "co-1", "a-1", { autoRejectOthers: true }, {});
+    const result = await svc.hire(
+      recruiter,
+      "co-1",
+      "a-1",
+      { autoRejectOthers: true },
+      {},
+    );
 
     // 1 hire UPDATE + 2 cascade UPDATEs = 3 total
     expect(repo.update).toHaveBeenCalledTimes(3);
@@ -827,13 +940,31 @@ describe("ApplicationsService.hire()", () => {
   });
 
   it("does not touch siblings when autoRejectOthers=false", async () => {
-    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer", jobId: "j-1", candidateId: "c-1", recruiterNotes: null });
-    jobs.findById.mockResolvedValue({ id: "j-1", companyId: "co-1", recruiterId: "rec-1" });
+    repo.findByIdForUpdate.mockResolvedValue({
+      id: "a-1",
+      status: "offer",
+      jobId: "j-1",
+      candidateId: "c-1",
+      recruiterNotes: null,
+    });
+    jobs.findById.mockResolvedValue({
+      id: "j-1",
+      companyId: "co-1",
+      recruiterId: "rec-1",
+    });
     offers.findLatestByApplicationId.mockResolvedValue({ status: "accepted" });
-    repo.findInflightByJobId.mockResolvedValue([{ id: "a-2", candidateId: "c-2" }]);
+    repo.findInflightByJobId.mockResolvedValue([
+      { id: "a-2", candidateId: "c-2" },
+    ]);
     repo.update.mockResolvedValue({ id: "a-1", status: "hired" });
 
-    const result = await svc.hire(recruiter, "co-1", "a-1", { autoRejectOthers: false }, {});
+    const result = await svc.hire(
+      recruiter,
+      "co-1",
+      "a-1",
+      { autoRejectOthers: false },
+      {},
+    );
 
     expect(repo.update).toHaveBeenCalledTimes(1);
     expect(result.otherApplicationsRejected).toBe(0);
@@ -846,6 +977,7 @@ describe("ApplicationsService.hire()", () => {
 ```bash
 pnpm -F @aurahire/api vitest run src/modules/applications/applications.service.hire.spec.ts
 ```
+
 Expected: tests fail because `svc.hire` does not exist.
 
 - [ ] **Step 4: Implement `hire()` in `applications.service.ts`**
@@ -1080,6 +1212,7 @@ Add this method directly above `updateStatus` (around line 583):
 ```
 
 Add the import of the new template at the top:
+
 ```ts
 import { PositionFilledEmail } from "../../email/templates/position-filled";
 ```
@@ -1127,6 +1260,7 @@ In `applications.controller.ts`, replace the `updateStatus` handler body (line ~
 ```bash
 pnpm -F @aurahire/api vitest run src/modules/applications/applications.service.hire.spec.ts
 ```
+
 Expected: 4 passing tests.
 
 - [ ] **Step 7: Run the full applications module specs to catch regressions**
@@ -1134,6 +1268,7 @@ Expected: 4 passing tests.
 ```bash
 pnpm -F @aurahire/api vitest run src/modules/applications
 ```
+
 Expected: green.
 
 - [ ] **Step 8: Commit**
@@ -1148,6 +1283,7 @@ git commit -m "feat(applications): hire() with cascade + transactional accepted-
 ## Task 11: Position-filled email template
 
 **Files:**
+
 - Create: `apps/api/src/email/templates/position-filled.tsx`
 
 - [ ] **Step 1: Create the template**
@@ -1202,7 +1338,9 @@ export function PositionFilledEmail({
           }}
         >
           <EmailBrandHeader company={company} />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             Update on your application
           </Heading>
           <Section>
@@ -1248,6 +1386,7 @@ export function PositionFilledEmail({
 ```bash
 pnpm -F @aurahire/api tsc --noEmit
 ```
+
 Expected: no errors.
 
 - [ ] **Step 3: Commit**
@@ -1262,11 +1401,13 @@ git commit -m "feat(email): position-filled template for cascade auto-reject"
 ## Task 12: `OffersService.accept` — wrap in transaction with FOR UPDATE
 
 **Files:**
+
 - Modify: `apps/api/src/modules/offers/offers.service.ts`
 
 - [ ] **Step 1: Inject the Drizzle client**
 
 Add imports:
+
 ```ts
 import { Inject } from "@nestjs/common";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
@@ -1274,6 +1415,7 @@ import type { ApplicationsTx } from "../applications/applications.repository";
 ```
 
 In the constructor add:
+
 ```ts
     @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
 ```
@@ -1298,6 +1440,7 @@ Also expose an `update` overload on `OffersRepository` that accepts an optional 
 ```
 
 Add the `ApplicationsTx` import to the offers repository:
+
 ```ts
 import type { ApplicationsTx } from "../applications/applications.repository";
 ```
@@ -1419,6 +1562,7 @@ Replace the body of `accept` (after the existing role check + initial offer/appl
 ```bash
 pnpm -F @aurahire/api vitest run src/modules/offers
 ```
+
 Expected: green. If existing notifications spec mocks the offers service's `db` field, add a stub for `db.transaction` that calls the inner fn directly with `{}`.
 
 - [ ] **Step 4: Commit**
@@ -1433,6 +1577,7 @@ git commit -m "feat(offers): accept() runs in transaction with FOR UPDATE on app
 ## Task 13: `OffersService.decline` — transaction + auto-transition app
 
 **Files:**
+
 - Modify: `apps/api/src/modules/offers/offers.service.ts`
 
 - [ ] **Step 1: Replace the `decline` method**
@@ -1557,6 +1702,7 @@ git commit -m "feat(offers): accept() runs in transaction with FOR UPDATE on app
 ```bash
 pnpm -F @aurahire/api vitest run src/modules/offers
 ```
+
 Expected: green.
 
 - [ ] **Step 3: Commit**
@@ -1571,18 +1717,24 @@ git commit -m "feat(offers): decline() auto-transitions application to offer_dec
 ## Task 14: Expire-offers cron — auto-transition application
 
 **Files:**
+
 - Modify: `apps/api/src/cron/expire-offers.cron.ts`
 - Modify: `apps/api/src/cron/expire-offers.cron.spec.ts`
 
 - [ ] **Step 1: Inject `ApplicationsService` + repo into the cron**
 
 Add imports at the top:
+
 ```ts
 import { ApplicationsService } from "../modules/applications/applications.service";
-import { ApplicationsRepository, type ApplicationsTx } from "../modules/applications/applications.repository";
+import {
+  ApplicationsRepository,
+  type ApplicationsTx,
+} from "../modules/applications/applications.repository";
 ```
 
 Add to the `constructor`:
+
 ```ts
     private readonly applicationsService: ApplicationsService,
     private readonly applicationsRepo: ApplicationsRepository,
@@ -1595,39 +1747,39 @@ Verify the cron's owning module (likely `cron.module.ts`) imports `ApplicationsM
 Locate the existing per-offer side-effect loop (`for (const c of candidates)`). After the in-app notify section but inside the same `try` block, add:
 
 ```ts
-          // Auto-advance the application to offer_declined so it leaves the
-          // recruiter's offer pipeline. Wrapped in its own transaction with
-          // FOR UPDATE so a race with a recruiter action serialises.
-          await this.db.transaction(async (tx) => {
-            const lockedApp = await this.applicationsRepo.findByIdForUpdate(
-              tx as ApplicationsTx,
-              c.applicationId,
-            );
-            if (!lockedApp || lockedApp.status !== "offer") return;
+// Auto-advance the application to offer_declined so it leaves the
+// recruiter's offer pipeline. Wrapped in its own transaction with
+// FOR UPDATE so a race with a recruiter action serialises.
+await this.db.transaction(async (tx) => {
+  const lockedApp = await this.applicationsRepo.findByIdForUpdate(
+    tx as ApplicationsTx,
+    c.applicationId,
+  );
+  if (!lockedApp || lockedApp.status !== "offer") return;
 
-            await this.applicationsService.transitionFromSystem(
-              null,
-              c.applicationId,
-              "offer_declined",
-              "Offer expired without response",
-              {},
-              tx as ApplicationsTx,
-            );
-          });
+  await this.applicationsService.transitionFromSystem(
+    null,
+    c.applicationId,
+    "offer_declined",
+    "Offer expired without response",
+    {},
+    tx as ApplicationsTx,
+  );
+});
 
-          // Distinct audit row so reports separate decline vs expiry causes.
-          await this.audit.log({
-            actorId: null,
-            actorType: "system",
-            action: AUDIT_ACTIONS.APPLICATION_AUTO_TRANSITION_OFFER_EXPIRED,
-            entityType: "application",
-            entityId: c.applicationId,
-            details: {
-              offerId: c.offerId,
-              jobId: c.jobId,
-              expiredAt: new Date().toISOString(),
-            },
-          });
+// Distinct audit row so reports separate decline vs expiry causes.
+await this.audit.log({
+  actorId: null,
+  actorType: "system",
+  action: AUDIT_ACTIONS.APPLICATION_AUTO_TRANSITION_OFFER_EXPIRED,
+  entityType: "application",
+  entityId: c.applicationId,
+  details: {
+    offerId: c.offerId,
+    jobId: c.jobId,
+    expiredAt: new Date().toISOString(),
+  },
+});
 ```
 
 - [ ] **Step 3: Update the cron spec**
@@ -1637,24 +1789,24 @@ Open `expire-offers.cron.spec.ts`. Add an assertion that when an expired offer i
 Skeleton of new test (append after existing tests):
 
 ```ts
-  it("auto-transitions the application to offer_declined", async () => {
-    // Arrange: one expired offer, app still at offer
-    setupExpiredOffer({ applicationStatus: "offer" });
-    const transitionSpy = jest.spyOn(applicationsService, "transitionFromSystem");
+it("auto-transitions the application to offer_declined", async () => {
+  // Arrange: one expired offer, app still at offer
+  setupExpiredOffer({ applicationStatus: "offer" });
+  const transitionSpy = jest.spyOn(applicationsService, "transitionFromSystem");
 
-    // Act
-    await cron.execute();
+  // Act
+  await cron.execute();
 
-    // Assert
-    expect(transitionSpy).toHaveBeenCalledWith(
-      null,
-      expect.any(String),
-      "offer_declined",
-      "Offer expired without response",
-      {},
-      expect.anything(), // tx handle
-    );
-  });
+  // Assert
+  expect(transitionSpy).toHaveBeenCalledWith(
+    null,
+    expect.any(String),
+    "offer_declined",
+    "Offer expired without response",
+    {},
+    expect.anything(), // tx handle
+  );
+});
 ```
 
 (Use the existing helpers in the spec; if they don't exist, write a minimal `setupExpiredOffer` against the same mocks the file already uses.)
@@ -1664,6 +1816,7 @@ Skeleton of new test (append after existing tests):
 ```bash
 pnpm -F @aurahire/api vitest run src/cron/expire-offers.cron.spec.ts
 ```
+
 Expected: green.
 
 - [ ] **Step 5: Commit**
@@ -1678,6 +1831,7 @@ git commit -m "feat(cron): expire-offers transitions application to offer_declin
 ## Task 15: Recruiter pipeline — add `offer_declined` stage + filter chip
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx`
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/_applications-toolbar-client.tsx`
 - Modify: `apps/web/app/(candidate)/candidate/applications/_applications-toolbar-client.tsx`
@@ -1698,11 +1852,12 @@ const PIPELINE_STAGES: Array<{ key: string; label: string }> = [
 ];
 ```
 
-Update `TERMINAL_STATUSES` (no change needed — `offer_declined` is *not* terminal because re-extending is allowed; the UI handles its actions explicitly in Task 16).
+Update `TERMINAL_STATUSES` (no change needed — `offer_declined` is _not_ terminal because re-extending is allowed; the UI handles its actions explicitly in Task 16).
 
 - [ ] **Step 2: Recruiter list toolbar — add `Offer Declined` to the status dropdown**
 
 In `_applications-toolbar-client.tsx`, replace:
+
 ```ts
 const STATUS_OPTIONS = [
   { value: "all", label: "All Statuses" },
@@ -1717,6 +1872,7 @@ const STATUS_OPTIONS = [
 ```
 
 With:
+
 ```ts
 const STATUS_OPTIONS = [
   { value: "all", label: "All Statuses" },
@@ -1744,6 +1900,7 @@ Open `apps/web/app/(admin)/admin/applications/_filters-client.tsx` and pattern-m
 ```bash
 pnpm -F @aurahire/web tsc --noEmit
 ```
+
 Expected: no errors. (TypeScript will likely surface any switch statement that exhausts `ApplicationStatus` and now needs an `offer_declined` arm — fix each by adding the new case with a sensible label/color.)
 
 - [ ] **Step 6: Commit**
@@ -1758,6 +1915,7 @@ git commit -m "feat(web): pipeline + filter UI surfaces offer_declined status"
 ## Task 16: Decision bar — accepted-offer guard + offer_declined actions
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx`
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/page.tsx` (or its data-fetching parent — needs to pass `latestOffer.status` + `siblingInflightCount` down)
 
@@ -1797,6 +1955,7 @@ Add the repo method (one line) — `countInflightOnJob(jobId, excludeId)` — ru
 Then pass `siblingInflightCount` through the DTO chain into the page component, then into `<DecisionBarClient>`.
 
 If extending the DTO is too disruptive, add a small dedicated endpoint:
+
 - `GET /api/v1/applications/:id/sibling-count` returning `{ data: { count: number } }`
 - Fetched client-side from the page; default render uses 0 until it loads.
 
@@ -1807,32 +1966,33 @@ Choose whichever requires fewer file changes. Prefer the DTO approach (one trip,
 Inside `nextActions?.map(...)` (the action button render block), after detecting Mark Hired (`action.status === "hired"`):
 
 ```tsx
-            const isMarkHired = action.status === "hired";
-            const isHireBlocked =
-              isMarkHired && latestOfferStatus !== "accepted";
+const isMarkHired = action.status === "hired";
+const isHireBlocked = isMarkHired && latestOfferStatus !== "accepted";
 
-            if (isMarkHired) {
-              return (
-                <button
-                  key={action.status}
-                  type="button"
-                  disabled={isPending || isHireBlocked}
-                  title={
-                    isHireBlocked
-                      ? "Waiting for candidate to accept the offer."
-                      : undefined
-                  }
-                  onClick={() => {
-                    if (isHireBlocked) return;
-                    setHireConfirmOpen(true);
-                  }}
-                  className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:opacity-50`}
-                >
-                  {pending === actionKey ? <ButtonSpinner /> : <Check className="h-4 w-4" aria-hidden />}
-                  <span>{action.label}</span>
-                </button>
-              );
-            }
+if (isMarkHired) {
+  return (
+    <button
+      key={action.status}
+      type="button"
+      disabled={isPending || isHireBlocked}
+      title={
+        isHireBlocked ? "Waiting for candidate to accept the offer." : undefined
+      }
+      onClick={() => {
+        if (isHireBlocked) return;
+        setHireConfirmOpen(true);
+      }}
+      className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:opacity-50`}
+    >
+      {pending === actionKey ? (
+        <ButtonSpinner />
+      ) : (
+        <Check className="h-4 w-4" aria-hidden />
+      )}
+      <span>{action.label}</span>
+    </button>
+  );
+}
 ```
 
 (The `setHireConfirmOpen` state + the modal itself are added in Task 17.)
@@ -1842,40 +2002,42 @@ Inside `nextActions?.map(...)` (the action button render block), after detecting
 Right before the `nextActions?.map(...)` call, add:
 
 ```tsx
-          {currentStatus === "offer_declined" && (
-            <>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() =>
-                  router.push(`/recruiter/offers/new?applicationId=${applicationId}`)
-                }
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60"
-              >
-                <Check className="h-4 w-4" aria-hidden />
-                <span>Re-extend Offer</span>
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={async () => {
-                  const ok = await confirm({
-                    title: "Close as Rejected?",
-                    description:
-                      "The application will be marked as rejected and removed from your active pipeline.",
-                    confirmLabel: "Close",
-                    variant: "destructive",
-                  });
-                  if (!ok) return;
-                  await changeStatus("rejected", "reject");
-                }}
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-status-danger)] bg-[var(--color-canvas)] px-3 text-sm font-medium text-[var(--color-status-danger)] transition hover:bg-[var(--color-status-danger)] hover:text-[var(--color-on-primary)] disabled:opacity-60"
-              >
-                <X className="h-4 w-4" aria-hidden />
-                <span>Close as Rejected</span>
-              </button>
-            </>
-          )}
+{
+  currentStatus === "offer_declined" && (
+    <>
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={() =>
+          router.push(`/recruiter/offers/new?applicationId=${applicationId}`)
+        }
+        className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60"
+      >
+        <Check className="h-4 w-4" aria-hidden />
+        <span>Re-extend Offer</span>
+      </button>
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={async () => {
+          const ok = await confirm({
+            title: "Close as Rejected?",
+            description:
+              "The application will be marked as rejected and removed from your active pipeline.",
+            confirmLabel: "Close",
+            variant: "destructive",
+          });
+          if (!ok) return;
+          await changeStatus("rejected", "reject");
+        }}
+        className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-status-danger)] bg-[var(--color-canvas)] px-3 text-sm font-medium text-[var(--color-status-danger)] transition hover:bg-[var(--color-status-danger)] hover:text-[var(--color-on-primary)] disabled:opacity-60"
+      >
+        <X className="h-4 w-4" aria-hidden />
+        <span>Close as Rejected</span>
+      </button>
+    </>
+  );
+}
 ```
 
 Also update `NEXT_POSITIVE` so `offer_declined` doesn't render the default Mark Hired pair:
@@ -1891,6 +2053,7 @@ And make sure `TERMINAL_STATUSES` is not used to hide the new buttons — `offer
 ```bash
 pnpm -F @aurahire/web tsc --noEmit
 ```
+
 Expected: no errors.
 
 - [ ] **Step 6: Commit**
@@ -1905,6 +2068,7 @@ git commit -m "feat(web): decision bar enforces accepted-offer guard + offer_dec
 ## Task 17: Hire confirmation modal
 
 **Files:**
+
 - Create: `apps/web/app/(recruiter)/recruiter/applications/[id]/_hire-confirmation-modal-client.tsx`
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx`
 
@@ -1943,7 +2107,9 @@ export function HireConfirmationModalClient({
   siblingInflightCount,
   onConfirm,
 }: Props) {
-  const [autoReject, setAutoReject] = useState<boolean>(siblingInflightCount > 0);
+  const [autoReject, setAutoReject] = useState<boolean>(
+    siblingInflightCount > 0,
+  );
   const [working, setWorking] = useState(false);
 
   async function handleConfirm() {
@@ -1987,7 +2153,8 @@ export function HireConfirmationModalClient({
               Auto-reject the {siblingInflightCount} other open applicant
               {siblingInflightCount === 1 ? "" : "s"} on this job.
               <span className="mt-1 block text-xs text-[var(--color-muted)]">
-                Auto-rejected candidates receive a "Position has been filled" email.
+                Auto-rejected candidates receive a "Position has been filled"
+                email.
               </span>
             </span>
           </label>
@@ -2028,6 +2195,7 @@ import { HireConfirmationModalClient } from "./_hire-confirmation-modal-client";
 ```
 
 Add state near the other `useState` declarations:
+
 ```tsx
 const [hireConfirmOpen, setHireConfirmOpen] = useState(false);
 ```
@@ -2093,6 +2261,7 @@ Render at the bottom of the component:
 ```bash
 pnpm -F @aurahire/web tsc --noEmit
 ```
+
 Expected: no errors.
 
 - [ ] **Step 4: Commit**
@@ -2107,13 +2276,21 @@ git commit -m "feat(web): hire confirmation modal with cascade auto-reject opt-i
 ## Task 18: Candidate "Offer Closed" card variant
 
 **Files:**
+
 - Modify: `apps/web/app/(candidate)/candidate/applications/[id]/_application-detail-client.tsx`
 
 - [ ] **Step 1: Add a `ClosedOfferCard` component below the existing `PendingOfferCard`**
 
 ```tsx
-function ClosedOfferCard({ offer, applicationStatus }: { offer: OfferRow; applicationStatus: string }) {
-  const isDeclined = offer.status === "declined" || applicationStatus === "offer_declined";
+function ClosedOfferCard({
+  offer,
+  applicationStatus,
+}: {
+  offer: OfferRow;
+  applicationStatus: string;
+}) {
+  const isDeclined =
+    offer.status === "declined" || applicationStatus === "offer_declined";
   const isExpired = offer.status === "expired";
 
   let footerLine: string | null = null;
@@ -2139,14 +2316,20 @@ function ClosedOfferCard({ offer, applicationStatus }: { offer: OfferRow; applic
       </header>
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <div>
-          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Salary</dt>
+          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+            Salary
+          </dt>
           <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">
             {formatSalary(offer.salary, offer.salaryCurrency)}
           </dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Start date</dt>
-          <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">{offer.startDate}</dd>
+          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+            Start date
+          </dt>
+          <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">
+            {offer.startDate}
+          </dd>
         </div>
       </dl>
       {footerLine && (
@@ -2162,11 +2345,13 @@ function ClosedOfferCard({ offer, applicationStatus }: { offer: OfferRow; applic
 Find where `<PendingOfferCard offer={offer} />` is rendered. Replace with:
 
 ```tsx
-{offer.status === "pending" ? (
-  <PendingOfferCard offer={offer} />
-) : (
-  <ClosedOfferCard offer={offer} applicationStatus={application.status} />
-)}
+{
+  offer.status === "pending" ? (
+    <PendingOfferCard offer={offer} />
+  ) : (
+    <ClosedOfferCard offer={offer} applicationStatus={application.status} />
+  );
+}
 ```
 
 (The `offer` object must include `respondedAt`. If the existing fetch doesn't surface it, extend the `OfferRow` type + the API response shape — Drizzle's `Offer` already carries it.)
@@ -2176,6 +2361,7 @@ Find where `<PendingOfferCard offer={offer} />` is rendered. Replace with:
 ```bash
 pnpm -F @aurahire/web tsc --noEmit
 ```
+
 Expected: no errors.
 
 - [ ] **Step 4: Commit**
@@ -2198,6 +2384,7 @@ The agent does NOT start the dev server. Wait for the human to confirm both `app
 - [ ] **Step 2: Walkthrough A — Decline path**
 
 Human steps:
+
 1. Recruiter sends an offer to a candidate on a published job.
 2. Candidate opens `/candidate/applications/[id]`, clicks **Decline**, optionally enters a reason.
 3. Verify the candidate page now shows "Offer Closed" + decline date.
@@ -2206,6 +2393,7 @@ Human steps:
 - [ ] **Step 3: Walkthrough B — Mark Hired guard**
 
 Human steps:
+
 1. Recruiter sends an offer; candidate does NOT respond.
 2. Recruiter opens the application; verify **Mark Hired** is disabled with tooltip "Waiting for candidate to accept the offer."
 3. Candidate accepts.
@@ -2216,6 +2404,7 @@ Human steps:
 - [ ] **Step 4: Walkthrough C — Expiry**
 
 Human steps:
+
 1. Recruiter sends an offer with `expiresAt` in the past (or wait for the hourly cron).
 2. After cron runs, verify candidate sees "Offer Closed — expired" and recruiter sees `Offer Declined` stage.
 
@@ -2229,15 +2418,15 @@ Document any UX gaps in a follow-up task list. No commit required for this task.
 
 The plan covers each spec section:
 
-| Spec § | Covered by tasks |
-|---|---|
-| §3.1 Schema enum | Tasks 1, 2 |
-| §3.2 State machine | Task 3 |
-| §3.3 Backend service changes | Tasks 5–13 |
-| §3.4 Concurrency | Tasks 7, 8, 10, 12, 13, 14 |
-| §3.5 Frontend changes | Tasks 15, 16, 17, 18 |
-| §3.6 Audit + notifications | Tasks 5, 10, 14, 11 |
-| §5 Tests | Tasks 3, 10, 14 (state machine, hire(), cron) |
-| §6 Migration & rollout | Task 2 |
+| Spec §                       | Covered by tasks                              |
+| ---------------------------- | --------------------------------------------- |
+| §3.1 Schema enum             | Tasks 1, 2                                    |
+| §3.2 State machine           | Task 3                                        |
+| §3.3 Backend service changes | Tasks 5–13                                    |
+| §3.4 Concurrency             | Tasks 7, 8, 10, 12, 13, 14                    |
+| §3.5 Frontend changes        | Tasks 15, 16, 17, 18                          |
+| §3.6 Audit + notifications   | Tasks 5, 10, 14, 11                           |
+| §5 Tests                     | Tasks 3, 10, 14 (state machine, hire(), cron) |
+| §6 Migration & rollout       | Task 2                                        |
 
 No `TBD`, `TODO`, or "implement later" placeholders remain. All code blocks are concrete. Type names are consistent across tasks: `ApplicationsTx` (Task 7) is referenced verbatim in Tasks 8, 10, 12, 13, 14. `STATUSES_REQUIRING_ACCEPTED_OFFER` (Task 3) is referenced verbatim in Task 9. `findByIdForUpdate` / `findInflightByJobId` / `findLatestByApplicationId` are used with the same signatures everywhere they appear.

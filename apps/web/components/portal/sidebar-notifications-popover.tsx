@@ -97,7 +97,8 @@ export function SidebarNotificationsPopoverBody({
       >
         {inbox.length === 0 ? (
           <EmptyState>
-            No new notifications. We&rsquo;ll let you know when something happens.
+            No new notifications. We&rsquo;ll let you know when something
+            happens.
           </EmptyState>
         ) : (
           inbox.map((n) => (

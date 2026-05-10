@@ -67,42 +67,42 @@ This document is the high-level technical blueprint of AuraHire's split frontend
 
 ### Frontend (`apps/web`)
 
-| Layer | Folder | Role |
-|---|---|---|
-| Routes | `app/` | App Router routes, layouts, server components, page-level data fetching |
-| Components | `components/` | Reusable UI (shadcn primitives + feature components) |
-| API Client | `packages/shared/api-client/` (auto-generated) | Typed REST client with TanStack Query hooks |
-| Forms | `components/<feature>/*-form.tsx` | RHF + Zod schemas from `packages/shared/` |
-| Auth | `lib/auth/` | Supabase client (browser + server) for login/register/session |
-| Utilities | `lib/utils/` | Helpers (`cn`, formatters) |
+| Layer      | Folder                                         | Role                                                                    |
+| ---------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
+| Routes     | `app/`                                         | App Router routes, layouts, server components, page-level data fetching |
+| Components | `components/`                                  | Reusable UI (shadcn primitives + feature components)                    |
+| API Client | `packages/shared/api-client/` (auto-generated) | Typed REST client with TanStack Query hooks                             |
+| Forms      | `components/<feature>/*-form.tsx`              | RHF + Zod schemas from `packages/shared/`                               |
+| Auth       | `lib/auth/`                                    | Supabase client (browser + server) for login/register/session           |
+| Utilities  | `lib/utils/`                                   | Helpers (`cn`, formatters)                                              |
 
 ### Backend (`apps/api`)
 
-| Layer | Folder | Role |
-|---|---|---|
-| Modules | `src/modules/<feature>/` | NestJS modules (one per feature) |
-| Controllers | `src/modules/<feature>/<feature>.controller.ts` | REST endpoints, Swagger decorators, DTOs |
-| Services | `src/modules/<feature>/<feature>.service.ts` | Business logic |
-| Repositories | `src/modules/<feature>/<feature>.repository.ts` | DB access via Drizzle |
-| Guards | `src/common/guards/` | `SupabaseAuthGuard`, `RolesGuard` |
-| Interceptors | `src/common/interceptors/` | Logging, audit, response shaping |
-| AI | `src/ai/` | Prompts, schemas, parser/scorer/bias services |
-| Queue | `src/queue/` | BullMQ workers + processors |
-| Cron | `src/cron/` | Scheduled tasks |
-| Email | `src/email/` | Nodemailer (dev) + Resend (prod) transport |
-| Storage | `src/storage/` | Supabase Storage helpers |
-| Audit | `src/audit/` | Audit log service |
-| Config | `src/config/` | Env-typed config module |
+| Layer        | Folder                                          | Role                                          |
+| ------------ | ----------------------------------------------- | --------------------------------------------- |
+| Modules      | `src/modules/<feature>/`                        | NestJS modules (one per feature)              |
+| Controllers  | `src/modules/<feature>/<feature>.controller.ts` | REST endpoints, Swagger decorators, DTOs      |
+| Services     | `src/modules/<feature>/<feature>.service.ts`    | Business logic                                |
+| Repositories | `src/modules/<feature>/<feature>.repository.ts` | DB access via Drizzle                         |
+| Guards       | `src/common/guards/`                            | `SupabaseAuthGuard`, `RolesGuard`             |
+| Interceptors | `src/common/interceptors/`                      | Logging, audit, response shaping              |
+| AI           | `src/ai/`                                       | Prompts, schemas, parser/scorer/bias services |
+| Queue        | `src/queue/`                                    | BullMQ workers + processors                   |
+| Cron         | `src/cron/`                                     | Scheduled tasks                               |
+| Email        | `src/email/`                                    | Nodemailer (dev) + Resend (prod) transport    |
+| Storage      | `src/storage/`                                  | Supabase Storage helpers                      |
+| Audit        | `src/audit/`                                    | Audit log service                             |
+| Config       | `src/config/`                                   | Env-typed config module                       |
 
 ### Shared (`packages/shared`)
 
-| Folder | Role |
-|---|---|
-| `schemas/` | Zod schemas (auth, jobs, applications, etc.) — used by both apps |
-| `enums/` | Discriminated string union enums (UserRole, ApplicationStatus, etc.) |
-| `constants/` | Numeric thresholds, score-band cutoffs, sizes |
+| Folder        | Role                                                                                   |
+| ------------- | -------------------------------------------------------------------------------------- |
+| `schemas/`    | Zod schemas (auth, jobs, applications, etc.) — used by both apps                       |
+| `enums/`      | Discriminated string union enums (UserRole, ApplicationStatus, etc.)                   |
+| `constants/`  | Numeric thresholds, score-band cutoffs, sizes                                          |
 | `api-client/` | Auto-generated TS client + TanStack Query hooks (built from `apps/api`'s OpenAPI spec) |
-| `types/` | Common TS types (AuthUser, Pagination) |
+| `types/`      | Common TS types (AuthUser, Pagination)                                                 |
 
 ### Database (`packages/db`)
 
@@ -259,11 +259,11 @@ async canActivate(context: ExecutionContext): Promise<boolean> {
 ### RBAC
 
 ```ts
-@Controller('jobs')
+@Controller("jobs")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 export class JobsController {
   @Post()
-  @Roles('recruiter')
+  @Roles("recruiter")
   create(@Body() dto: CreateJobDto, @CurrentUser() user: AuthUser) {
     return this.jobsService.create(dto, user);
   }
@@ -341,9 +341,11 @@ NestJS module: `@nestjs/bullmq`. Redis runs as a Docker container on the same Di
 ### Worker pattern
 
 ```ts
-@Processor('rescore-batch')
+@Processor("rescore-batch")
 export class RescoreBatchProcessor extends WorkerHost {
-  constructor(private scoringService: ScoringService) { super(); }
+  constructor(private scoringService: ScoringService) {
+    super();
+  }
   async process(job: Job<{ configId: string }>): Promise<void> {
     const applications = await this.applicationsService.findRecent(100);
     for (const app of applications) {
@@ -358,10 +360,10 @@ Worker runs **inside the same NestJS process** as the API. For sprint scale, thi
 
 ### Jobs in sprint scope
 
-| Job | Trigger | Purpose |
-|---|---|---|
-| `rescore-batch` | Admin clicks "Apply weights to last 100 apps" | Re-scores applications with new weights |
-| `digest-recruiter` | Cron-triggered | Weekly summary email to active recruiters |
+| Job                | Trigger                                       | Purpose                                   |
+| ------------------ | --------------------------------------------- | ----------------------------------------- |
+| `rescore-batch`    | Admin clicks "Apply weights to last 100 apps" | Re-scores applications with new weights   |
+| `digest-recruiter` | Cron-triggered                                | Weekly summary email to active recruiters |
 
 ---
 
@@ -374,17 +376,17 @@ Decorator-based:
 ```ts
 @Injectable()
 export class CleanupCron {
-  @Cron('0 2 * * *')  // daily 02:00 UTC
+  @Cron("0 2 * * *") // daily 02:00 UTC
   async expireOffers() {
     await this.offersService.expirePastDate();
   }
 
-  @Cron('0 3 * * *')
+  @Cron("0 3 * * *")
   async archivePastDeadlineJobs() {
     await this.jobsService.archivePastDeadline();
   }
 
-  @Cron('0 4 * * 0')  // weekly Sunday 04:00 UTC
+  @Cron("0 4 * * 0") // weekly Sunday 04:00 UTC
   async cleanupUnverifiedAccounts() {
     await this.usersService.deleteUnverifiedOlderThan(7);
   }
@@ -410,7 +412,7 @@ Cron jobs run inside the main NestJS process. For sprint scale, sufficient.
 ```ts
 @Injectable()
 export class AnalyticsService {
-  @Cacheable({ ttl: 300 })  // 5 minutes
+  @Cacheable({ ttl: 300 }) // 5 minutes
   async getSystemAnalytics() {
     return this.repo.aggregateAll();
   }
@@ -419,13 +421,13 @@ export class AnalyticsService {
 
 ### Cached surfaces
 
-| Surface | TTL | Reason |
-|---|---|---|
-| Public job listings (homepage) | 60s | Reduce DB load on hot reads |
-| Admin analytics aggregations | 300s | Heavy SQL, infrequent change |
-| Bias monitor metrics | 300s | Same |
-| Job detail public page | 60s | Cache-able by job_id |
-| Scoring config (active row) | 600s | Changes rarely; invalidated on admin save |
+| Surface                        | TTL  | Reason                                    |
+| ------------------------------ | ---- | ----------------------------------------- |
+| Public job listings (homepage) | 60s  | Reduce DB load on hot reads               |
+| Admin analytics aggregations   | 300s | Heavy SQL, infrequent change              |
+| Bias monitor metrics           | 300s | Same                                      |
+| Job detail public page         | 60s  | Cache-able by job_id                      |
+| Scoring config (active row)    | 600s | Changes rarely; invalidated on admin save |
 
 Cache invalidation: explicit `cacheManager.del(key)` in services that mutate data.
 
@@ -446,17 +448,17 @@ Cache invalidation: explicit `cacheManager.del(key)` in services that mutate dat
 export class EmailService {
   private transport: Transporter;
 
-  constructor(@Inject('CONFIG') private config: AppConfig) {
-    if (config.NODE_ENV === 'production') {
+  constructor(@Inject("CONFIG") private config: AppConfig) {
+    if (config.NODE_ENV === "production") {
       // Resend via API
       this.transport = createResendTransport({ apiKey: config.RESEND_API_KEY });
     } else {
       // Nodemailer SMTP → Mailpit
       this.transport = nodemailer.createTransport({
-        host: config.SMTP_HOST,    // localhost
-        port: config.SMTP_PORT,    // 1025
+        host: config.SMTP_HOST, // localhost
+        port: config.SMTP_PORT, // 1025
         secure: false,
-        auth: undefined,           // Mailpit accepts no-auth
+        auth: undefined, // Mailpit accepts no-auth
       });
     }
   }
@@ -537,6 +539,7 @@ GitHub repo (main branch)
 Both Redis and Mailpit bind to **`127.0.0.1` only** — never reachable from the public internet. Caddy is the only listener on `0.0.0.0`.
 
 For local dev:
+
 ```
 Mac (pnpm dev at root)
     ├──► apps/web on localhost:3000
@@ -567,17 +570,17 @@ For Phase 2: Sentry for errors, PostHog for product analytics, OpenTelemetry for
 
 ### Defense in depth
 
-| Layer | Control |
-|---|---|
-| 1. Network | HTTPS via Vercel (auto TLS) on frontend; Caddy + Let's Encrypt (auto-renew) on the DO Droplet for the API. Redis + Mailpit are localhost-only, never publicly reachable |
-| 2. Frontend middleware | Auth-required redirects, role-based URL gating |
-| 3. CORS | Backend allows only `${NEXT_PUBLIC_APP_URL}` origin |
-| 4. Backend Helmet | Security headers (X-Content-Type, CSP, HSTS) |
-| 5. Backend Guards | `SupabaseAuthGuard` + `RolesGuard` on every protected controller |
-| 6. Backend DTO validation | Zod via nestjs-zod at every endpoint |
-| 7. Backend authorization checks | Per-resource ownership checks in services |
-| 8. Database RLS | Postgres policies enforce row-level access |
-| 9. Audit log | Forensic trail of every consequential action |
+| Layer                           | Control                                                                                                                                                                 |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Network                      | HTTPS via Vercel (auto TLS) on frontend; Caddy + Let's Encrypt (auto-renew) on the DO Droplet for the API. Redis + Mailpit are localhost-only, never publicly reachable |
+| 2. Frontend middleware          | Auth-required redirects, role-based URL gating                                                                                                                          |
+| 3. CORS                         | Backend allows only `${NEXT_PUBLIC_APP_URL}` origin                                                                                                                     |
+| 4. Backend Helmet               | Security headers (X-Content-Type, CSP, HSTS)                                                                                                                            |
+| 5. Backend Guards               | `SupabaseAuthGuard` + `RolesGuard` on every protected controller                                                                                                        |
+| 6. Backend DTO validation       | Zod via nestjs-zod at every endpoint                                                                                                                                    |
+| 7. Backend authorization checks | Per-resource ownership checks in services                                                                                                                               |
+| 8. Database RLS                 | Postgres policies enforce row-level access                                                                                                                              |
+| 9. Audit log                    | Forensic trail of every consequential action                                                                                                                            |
 
 ### Secret management
 
@@ -660,25 +663,25 @@ Frontend: render Score Breakdown + Evidence + raw output drawer
 
 ## Architectural Decisions Log
 
-| Decision | Rationale |
-|---|---|
-| Split frontend (Next.js) + backend (NestJS) | User experience: prior pure-Next.js attempt struggled with smoothness/perf; split allows long-running worker process for jobs/cron + cleaner separation of concerns |
-| NestJS over Express/Fastify | Decorator-based modular architecture matches features; first-party plugins for queue/cron/cache/throttle/swagger; thesis-defensible |
-| Fastify adapter under NestJS | 2× perf vs Express baseline at no DX cost |
-| REST + Swagger over tRPC/GraphQL | Industry-standard, auto-documented, language-agnostic; thesis can hand examiner a Swagger URL |
-| Turborepo + pnpm workspaces | Shared `packages/shared` for Zod schemas; cached builds; industry default |
-| Digital Ocean Droplet for backend hosting | Explicit, demo-defensible infrastructure for a thesis: every moving part (Node + PM2 + Docker Redis + Caddy) is visible and editable. Redis runs on the same host (localhost = zero network latency). No PaaS magic to explain to a panel |
-| Vercel for frontend hosting | Native Next.js; preview URLs |
-| BullMQ for jobs | Mature; first-party NestJS support |
-| `@nestjs/schedule` for cron | Decorator-based; trivial to add scheduled tasks |
-| `@nestjs/cache-manager` + Redis | Decorator-based caching; works for HTTP and service layers |
-| `@nestjs/throttler` + Redis | Persistent rate limiting; per-route control |
-| Mailpit (dev) + Resend (prod) | Standard pattern; no real emails sent in dev; React Email templates work in both |
-| Frontend Supabase Auth + Backend JWT validation | Reuses Supabase email flows; backend stays stateless |
-| Backend-only AI calls | Security (key not in browser); rate limiting; audit logging |
-| `gpt-4o-mini` model | Cost + speed sufficient for thesis scope |
-| Direct LLM scoring (no embeddings) | LLM handles synonym matching natively; saves pgvector complexity |
-| Single-process worker (vs separate `apps/api-worker/`) | Sprint scale doesn't need split process; can refactor in Phase 2 |
+| Decision                                               | Rationale                                                                                                                                                                                                                                 |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Split frontend (Next.js) + backend (NestJS)            | User experience: prior pure-Next.js attempt struggled with smoothness/perf; split allows long-running worker process for jobs/cron + cleaner separation of concerns                                                                       |
+| NestJS over Express/Fastify                            | Decorator-based modular architecture matches features; first-party plugins for queue/cron/cache/throttle/swagger; thesis-defensible                                                                                                       |
+| Fastify adapter under NestJS                           | 2× perf vs Express baseline at no DX cost                                                                                                                                                                                                 |
+| REST + Swagger over tRPC/GraphQL                       | Industry-standard, auto-documented, language-agnostic; thesis can hand examiner a Swagger URL                                                                                                                                             |
+| Turborepo + pnpm workspaces                            | Shared `packages/shared` for Zod schemas; cached builds; industry default                                                                                                                                                                 |
+| Digital Ocean Droplet for backend hosting              | Explicit, demo-defensible infrastructure for a thesis: every moving part (Node + PM2 + Docker Redis + Caddy) is visible and editable. Redis runs on the same host (localhost = zero network latency). No PaaS magic to explain to a panel |
+| Vercel for frontend hosting                            | Native Next.js; preview URLs                                                                                                                                                                                                              |
+| BullMQ for jobs                                        | Mature; first-party NestJS support                                                                                                                                                                                                        |
+| `@nestjs/schedule` for cron                            | Decorator-based; trivial to add scheduled tasks                                                                                                                                                                                           |
+| `@nestjs/cache-manager` + Redis                        | Decorator-based caching; works for HTTP and service layers                                                                                                                                                                                |
+| `@nestjs/throttler` + Redis                            | Persistent rate limiting; per-route control                                                                                                                                                                                               |
+| Mailpit (dev) + Resend (prod)                          | Standard pattern; no real emails sent in dev; React Email templates work in both                                                                                                                                                          |
+| Frontend Supabase Auth + Backend JWT validation        | Reuses Supabase email flows; backend stays stateless                                                                                                                                                                                      |
+| Backend-only AI calls                                  | Security (key not in browser); rate limiting; audit logging                                                                                                                                                                               |
+| `gpt-4o-mini` model                                    | Cost + speed sufficient for thesis scope                                                                                                                                                                                                  |
+| Direct LLM scoring (no embeddings)                     | LLM handles synonym matching natively; saves pgvector complexity                                                                                                                                                                          |
+| Single-process worker (vs separate `apps/api-worker/`) | Sprint scale doesn't need split process; can refactor in Phase 2                                                                                                                                                                          |
 
 ---
 
@@ -699,6 +702,7 @@ These are deliberate omissions. Adding them now dilutes focus from the thesis de
 ## Iteration Guide
 
 When making architectural changes:
+
 1. Update this doc first
 2. Discuss in PR description
 3. Add an entry to the decisions log above

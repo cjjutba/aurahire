@@ -68,8 +68,6 @@ export default async function RecruiterInterviewDetailPage({
   }
 
   return (
-    <RecruiterInterviewDetailClient
-      interview={{ ...interview, siblings }}
-    />
+    <RecruiterInterviewDetailClient interview={{ ...interview, siblings }} />
   );
 }

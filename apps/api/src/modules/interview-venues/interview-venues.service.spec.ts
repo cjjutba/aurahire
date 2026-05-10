@@ -122,7 +122,12 @@ describe("InterviewVenuesService", () => {
     repo.insert.mockResolvedValue(venueRow);
     repo.list.mockResolvedValue([venueRow]);
 
-    const created = await service.create(recruiterUser, COMPANY_ID, VALID_INPUT, {});
+    const created = await service.create(
+      recruiterUser,
+      COMPANY_ID,
+      VALID_INPUT,
+      {},
+    );
 
     // ID matches the inserted row
     expect(created.id).toBe(VENUE_ID);
@@ -180,7 +185,10 @@ describe("InterviewVenuesService", () => {
     const result = await service.setDefault(recruiterUser, VENUE_ID, {});
 
     // clearDefaultForCompany must be called with exceptId = VENUE_ID
-    expect(repo.clearDefaultForCompany).toHaveBeenCalledWith(COMPANY_ID, VENUE_ID);
+    expect(repo.clearDefaultForCompany).toHaveBeenCalledWith(
+      COMPANY_ID,
+      VENUE_ID,
+    );
 
     // update must set isDefault to true on the target venue
     expect(repo.update).toHaveBeenCalledWith(VENUE_ID, { isDefault: true });
@@ -241,21 +249,27 @@ describe("InterviewVenuesService", () => {
   // ── Test 6: forbidden for non-recruiter/admin ──────────────────────────────
 
   it("list throws ForbiddenException when user is candidate", async () => {
-    await expect(service.list(candidateUser, COMPANY_ID)).rejects.toThrow(ForbiddenException);
-  });
-
-  it("create throws ForbiddenException when user is candidate", async () => {
-    await expect(service.create(candidateUser, COMPANY_ID, VALID_INPUT, {})).rejects.toThrow(
+    await expect(service.list(candidateUser, COMPANY_ID)).rejects.toThrow(
       ForbiddenException,
     );
   });
 
+  it("create throws ForbiddenException when user is candidate", async () => {
+    await expect(
+      service.create(candidateUser, COMPANY_ID, VALID_INPUT, {}),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
   it("remove throws ForbiddenException when user is candidate", async () => {
-    await expect(service.remove(candidateUser, VENUE_ID, {})).rejects.toThrow(ForbiddenException);
+    await expect(service.remove(candidateUser, VENUE_ID, {})).rejects.toThrow(
+      ForbiddenException,
+    );
   });
 
   it("setDefault throws ForbiddenException when user is candidate", async () => {
-    await expect(service.setDefault(candidateUser, VENUE_ID, {})).rejects.toThrow(ForbiddenException);
+    await expect(
+      service.setDefault(candidateUser, VENUE_ID, {}),
+    ).rejects.toThrow(ForbiddenException);
   });
 
   // ── Bonus: 404 for unknown venueId ────────────────────────────────────────
@@ -263,12 +277,19 @@ describe("InterviewVenuesService", () => {
   it("update throws NotFoundException for unknown venueId", async () => {
     repo.findById.mockResolvedValue(null);
     await expect(
-      service.update(recruiterUser, uuid(999), { label: "New Label" } as any, {}),
+      service.update(
+        recruiterUser,
+        uuid(999),
+        { label: "New Label" } as any,
+        {},
+      ),
     ).rejects.toThrow(NotFoundException);
   });
 
   it("setDefault throws NotFoundException for unknown venueId", async () => {
     repo.findById.mockResolvedValue(null);
-    await expect(service.setDefault(recruiterUser, uuid(999), {})).rejects.toThrow(NotFoundException);
+    await expect(
+      service.setDefault(recruiterUser, uuid(999), {}),
+    ).rejects.toThrow(NotFoundException);
   });
 });

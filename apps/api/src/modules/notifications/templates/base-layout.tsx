@@ -19,7 +19,12 @@ interface BaseLayoutProps {
   appOrigin: string;
 }
 
-export function BaseLayout({ preview, children, unsubscribePath, appOrigin }: BaseLayoutProps) {
+export function BaseLayout({
+  preview,
+  children,
+  unsubscribePath,
+  appOrigin,
+}: BaseLayoutProps) {
   return (
     <Html>
       <Head />
@@ -27,7 +32,8 @@ export function BaseLayout({ preview, children, unsubscribePath, appOrigin }: Ba
       <Body
         style={{
           backgroundColor: "#f7f7f7",
-          fontFamily: "Inter, -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif",
+          fontFamily:
+            "Inter, -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif",
           color: "#0a0b0d",
           margin: 0,
           padding: 0,
@@ -56,10 +62,20 @@ export function BaseLayout({ preview, children, unsubscribePath, appOrigin }: Ba
             </Heading>
           </Section>
           {children}
-          <Hr style={{ border: 0, borderTop: "1px solid #dee1e6", margin: "32px 0 16px" }} />
+          <Hr
+            style={{
+              border: 0,
+              borderTop: "1px solid #dee1e6",
+              margin: "32px 0 16px",
+            }}
+          />
           <Text style={{ fontSize: 12, color: "#7c828a", lineHeight: 1.5 }}>
-            You&apos;re receiving this because of your AuraHire notification preferences.{" "}
-            <Link href={`${appOrigin}${unsubscribePath}`} style={{ color: "#2563eb" }}>
+            You&apos;re receiving this because of your AuraHire notification
+            preferences.{" "}
+            <Link
+              href={`${appOrigin}${unsubscribePath}`}
+              style={{ color: "#2563eb" }}
+            >
               Manage notification settings
             </Link>
           </Text>

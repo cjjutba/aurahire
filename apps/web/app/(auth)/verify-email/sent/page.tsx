@@ -18,13 +18,16 @@ export default async function VerifyEmailSentPage({ searchParams }: PageProps) {
       subtitle={
         <>
           We&apos;ve sent a verification link to{" "}
-          <span className="font-semibold text-[var(--color-ink)]">{email ?? "your inbox"}</span>.
+          <span className="font-semibold text-[var(--color-ink)]">
+            {email ?? "your inbox"}
+          </span>
+          .
         </>
       }
     >
       <p className="mx-auto mb-8 max-w-[320px] text-center text-sm leading-relaxed text-[var(--color-body)]">
-        Click the link in the email to activate your account. The link expires in 24 hours.
-        Don&apos;t see it? Check your spam folder.
+        Click the link in the email to activate your account. The link expires
+        in 24 hours. Don&apos;t see it? Check your spam folder.
       </p>
       {email ? (
         <>

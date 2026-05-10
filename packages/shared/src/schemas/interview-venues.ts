@@ -23,4 +23,6 @@ export const interviewVenueInputSchema = z.object({
 export type InterviewVenueInput = z.infer<typeof interviewVenueInputSchema>;
 
 export const interviewVenuePartialSchema = interviewVenueInputSchema.partial();
-export type InterviewVenuePartialInput = z.infer<typeof interviewVenuePartialSchema>;
+export type InterviewVenuePartialInput = z.infer<
+  typeof interviewVenuePartialSchema
+>;

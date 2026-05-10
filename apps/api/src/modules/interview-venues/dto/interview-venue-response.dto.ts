@@ -9,10 +9,16 @@ export class InterviewVenueDto {
   @ApiProperty() addressLine!: string;
   @ApiProperty({ type: String, nullable: true }) roomOrFloor!: string | null;
   @ApiProperty({ type: String, nullable: true }) mapUrl!: string | null;
-  @ApiProperty({ type: String, nullable: true }) reportingInstructions!: string | null;
+  @ApiProperty({ type: String, nullable: true }) reportingInstructions!:
+    | string
+    | null;
   @ApiProperty({ type: String, nullable: true }) whatToBring!: string | null;
-  @ApiProperty({ type: String, nullable: true }) interviewerName!: string | null;
-  @ApiProperty({ type: String, nullable: true }) interviewerTitle!: string | null;
+  @ApiProperty({ type: String, nullable: true }) interviewerName!:
+    | string
+    | null;
+  @ApiProperty({ type: String, nullable: true }) interviewerTitle!:
+    | string
+    | null;
   @ApiProperty() isDefault!: boolean;
   @ApiProperty() createdAt!: string;
   @ApiProperty() updatedAt!: string;

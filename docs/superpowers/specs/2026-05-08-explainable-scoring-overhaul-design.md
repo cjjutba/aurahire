@@ -6,14 +6,14 @@
 
 ## Problem
 
-The thesis angle is *"Explainable and Fair AI-Powered Recruitment: A Transparent Resume Scoring Platform with Bias Mitigation."* Two scoring engines deliver this promise: profile scoring and match scoring. Today neither delivers the transparency the thesis claims.
+The thesis angle is _"Explainable and Fair AI-Powered Recruitment: A Transparent Resume Scoring Platform with Bias Mitigation."_ Two scoring engines deliver this promise: profile scoring and match scoring. Today neither delivers the transparency the thesis claims.
 
 ### Concrete defects observed in production-mode dev
 
 **Profile score breakdown (`/candidate/profile`, score 85/100):**
 
-- `Completeness 25/25`, `Experience Clarity 30/30` — both at ceiling, contradicting the prompt's own anchor at `apps/api/src/ai/prompts/score-profile.ts:18`: *"A complete-but-generic resume should top out around 75–85% of the component weight, NOT the ceiling."*
-- `Skill Depth 25/30` — explanation text says *"lacks evidence of mastery for some skills, could benefit from more modern technologies"*, yet **all three evidence rows are marked HELPED**. The −5 deduction is invisible at the evidence layer.
+- `Completeness 25/25`, `Experience Clarity 30/30` — both at ceiling, contradicting the prompt's own anchor at `apps/api/src/ai/prompts/score-profile.ts:18`: _"A complete-but-generic resume should top out around 75–85% of the component weight, NOT the ceiling."_
+- `Skill Depth 25/30` — explanation text says _"lacks evidence of mastery for some skills, could benefit from more modern technologies"_, yet **all three evidence rows are marked HELPED**. The −5 deduction is invisible at the evidence layer.
 - `Education Quality 5/15` — only the education component shows a HURT row. Asymmetric vs. how the other components surface their deductions (i.e. they don't).
 - **Profile evidence schema has no `contribution_points` at all.** The candidate sees only a binary HELPED / HURT chip with no quantified justification.
 
@@ -24,15 +24,15 @@ The thesis angle is *"Explainable and Fair AI-Powered Recruitment: A Transparent
 - `Cultural Fit 5/10`. Evidence: −5 architectural decisions gap, +5 mentorship strength. **Sum = 0. Component score = 5. Does not reconcile.**
 - `Education 15/15`. Evidence: BS in CS +15. **Sum = 15. Score = 15. Reconciles.**
 
-The match prompt at `apps/api/src/ai/prompts/score-match.ts:38` says contribution points should sum *"approximately"* to (score − max). The engine never enforces it. The result: visible point chips that look authoritative but are arithmetically incoherent.
+The match prompt at `apps/api/src/ai/prompts/score-match.ts:38` says contribution points should sum _"approximately"_ to (score − max). The engine never enforces it. The result: visible point chips that look authoritative but are arithmetically incoherent.
 
 **Copy defect:**
 
-The evidence callout footer reads `"Contributes -10 points"` for negative contributions. *Contributing* means adding to a total — using it for deductions is semantically wrong. A negative number being introduced by the verb "contributes" reads as a typo or as system confusion to anyone scanning quickly.
+The evidence callout footer reads `"Contributes -10 points"` for negative contributions. _Contributing_ means adding to a total — using it for deductions is semantically wrong. A negative number being introduced by the verb "contributes" reads as a typo or as system confusion to anyone scanning quickly.
 
 ### Why this matters for the thesis
 
-A thesis defended on "explainable scoring" must survive the question: *"Why is this candidate's score 75 and not 80?"* The current system answers with hand-waving — the components reconcile to the headline (engine-enforced), but the evidence does not reconcile to the components. A reviewer who adds the visible numbers and gets a different total has just disproved the explainability claim.
+A thesis defended on "explainable scoring" must survive the question: _"Why is this candidate's score 75 and not 80?"_ The current system answers with hand-waving — the components reconcile to the headline (engine-enforced), but the evidence does not reconcile to the components. A reviewer who adds the visible numbers and gets a different total has just disproved the explainability claim.
 
 ## Goal
 
@@ -119,10 +119,7 @@ The AI's `overall_score` field continues to be discarded server-side; the engine
 //   scoredEvidenceSchema — extends with contribution_points; used by BOTH profile and match components
 
 export const scoredEvidenceSchema = evidenceSchema.extend({
-  contribution_points: z
-    .number()
-    .int()
-    .multipleOf(5),  // NEW: enforce 5-point quantization at the schema layer
+  contribution_points: z.number().int().multipleOf(5), // NEW: enforce 5-point quantization at the schema layer
 });
 
 // matchEvidenceSchema becomes a deprecated alias for one PR cycle, then removed.
@@ -130,12 +127,17 @@ export const matchEvidenceSchema = scoredEvidenceSchema; // transitional
 
 // profileComponentSchema.evidence now uses scoredEvidenceSchema
 export const profileComponentSchema = z.object({
-  name: z.enum(["completeness", "skill_depth", "experience_clarity", "education_quality"]),
-  score: z.number().int().min(0).multipleOf(5),  // NEW: quantized
+  name: z.enum([
+    "completeness",
+    "skill_depth",
+    "experience_clarity",
+    "education_quality",
+  ]),
+  score: z.number().int().min(0).multipleOf(5), // NEW: quantized
   max: z.number().int().multipleOf(5),
   weight: z.number().int().multipleOf(5),
   explanation: z.string(),
-  evidence: z.array(scoredEvidenceSchema),         // CHANGED from evidenceSchema
+  evidence: z.array(scoredEvidenceSchema), // CHANGED from evidenceSchema
 });
 
 // matchComponentSchema.evidence already uses scoredEvidenceSchema (via the renamed alias)
@@ -151,8 +153,9 @@ New pure function in `apps/api/src/modules/scoring/scoring.service.ts`, called f
 ```ts
 interface ReconciliationResult<C> {
   component: C;
-  residual: number;                               // ai_score - derived_score
-  quantizationDeltas: Array<{                     // per-evidence rounding adjustments
+  residual: number; // ai_score - derived_score
+  quantizationDeltas: Array<{
+    // per-evidence rounding adjustments
     evidenceIndex: number;
     original: number;
     quantized: number;
@@ -164,7 +167,10 @@ function reconcileEvidenceContributions<
     name: string;
     score: number;
     max: number;
-    evidence: Array<{ contribution_points: number; relevance: "positive" | "negative" | "neutral" }>;
+    evidence: Array<{
+      contribution_points: number;
+      relevance: "positive" | "negative" | "neutral";
+    }>;
   },
 >(component: C): ReconciliationResult<C> {
   const aiScore = component.score;
@@ -181,7 +187,10 @@ function reconcileEvidenceContributions<
     return { ...ev, contribution_points: quantized, relevance };
   });
 
-  const derivedRaw = reconciled.reduce((sum, ev) => sum + ev.contribution_points, 0);
+  const derivedRaw = reconciled.reduce(
+    (sum, ev) => sum + ev.contribution_points,
+    0,
+  );
   const derived = Math.max(0, Math.min(component.max, derivedRaw));
 
   return {
@@ -205,22 +214,26 @@ Properties:
 New helper, also called from each compute path:
 
 ```ts
-function detectCalibrationWarnings<C extends {
-  name: string;
-  score: number;
-  max: number;
-  evidence: Array<{
-    contribution_points: number;
-    relevance: "positive" | "negative" | "neutral";
-    excerpt: string;
-  }>;
-}>(component: C): Array<{ componentName: string; reason: string }> {
+function detectCalibrationWarnings<
+  C extends {
+    name: string;
+    score: number;
+    max: number;
+    evidence: Array<{
+      contribution_points: number;
+      relevance: "positive" | "negative" | "neutral";
+      excerpt: string;
+    }>;
+  },
+>(component: C): Array<{ componentName: string; reason: string }> {
   const warnings: Array<{ componentName: string; reason: string }> = [];
 
   // Component at ceiling but no negative evidence — model didn't surface what the candidate would need
   // to BEAT this score (the prompt's "complete-but-generic should top at 75-85%" anchor was ignored).
   if (component.score === component.max) {
-    const positives = component.evidence.filter((e) => e.relevance === "positive");
+    const positives = component.evidence.filter(
+      (e) => e.relevance === "positive",
+    );
     if (positives.length < 2) {
       warnings.push({
         componentName: component.name,
@@ -231,7 +244,9 @@ function detectCalibrationWarnings<C extends {
 
   // Component below ceiling but no negative evidence — the deduction has no visible justification.
   if (component.score < component.max) {
-    const negatives = component.evidence.filter((e) => e.relevance === "negative");
+    const negatives = component.evidence.filter(
+      (e) => e.relevance === "negative",
+    );
     if (negatives.length === 0) {
       warnings.push({
         componentName: component.name,
@@ -318,26 +333,30 @@ system prompt CHANGES:
 Current footer (lines 65–70):
 
 ```tsx
-{typeof contributionPoints === "number" && contributionPoints !== 0 && (
-  <p className="mt-3 text-xs text-[var(--color-muted)]">
-    Contributes {contributionPoints > 0 ? "+" : ""}
-    <span className="font-mono">{contributionPoints}</span> points
-  </p>
-)}
+{
+  typeof contributionPoints === "number" && contributionPoints !== 0 && (
+    <p className="mt-3 text-xs text-[var(--color-muted)]">
+      Contributes {contributionPoints > 0 ? "+" : ""}
+      <span className="font-mono">{contributionPoints}</span> points
+    </p>
+  );
+}
 ```
 
 New footer:
 
 ```tsx
-{typeof contributionPoints === "number" && contributionPoints !== 0 && (
-  <p
-    className="mt-3 text-xs font-mono font-semibold"
-    style={{ color: variant.iconColor }}
-  >
-    {contributionPoints > 0 ? "+" : "−"}
-    {Math.abs(contributionPoints)} points
-  </p>
-)}
+{
+  typeof contributionPoints === "number" && contributionPoints !== 0 && (
+    <p
+      className="mt-3 text-xs font-mono font-semibold"
+      style={{ color: variant.iconColor }}
+    >
+      {contributionPoints > 0 ? "+" : "−"}
+      {Math.abs(contributionPoints)} points
+    </p>
+  );
+}
 ```
 
 Changes:
@@ -458,14 +477,14 @@ After 24 hours of `1.2.0` traffic, the human pulls `/admin/bias-monitor` and con
 
 ## Risks & mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| `gpt-4o-mini` fails to honor strict-sum after prompt update | Engine reconciles regardless; AI's `score` field is silently overwritten. Audit `score_residuals` surfaces the gap so we can iterate on the prompt without breaking users. |
+| Risk                                                                                                     | Mitigation                                                                                                                                                                                                                                |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gpt-4o-mini` fails to honor strict-sum after prompt update                                              | Engine reconciles regardless; AI's `score` field is silently overwritten. Audit `score_residuals` surfaces the gap so we can iterate on the prompt without breaking users.                                                                |
 | Model produces fewer or no negative evidence items, causing components below ceiling to look unjustified | Prompt v1.2.0 makes negative evidence required when score < max. `detectCalibrationWarnings` flags violations. Engine does NOT inject synthetic negative items — that would be dishonest; the warning surfaces the case for human review. |
-| Quantization loses signal for fine-grained scoring | Acceptable; 5-point granularity matches the user's stated requirement and the band-threshold grid (70 / 40). False precision was the larger problem. |
-| Existing recruiter / admin views render legacy rows differently from new rows | Both render correctly because `contributionPoints` was already optional in the props. Visual difference (chips present vs. absent) is desirable — it signals which scores were computed under the new transparent regime. |
-| Frontend caching serves stale `evidence-callout` markup | Vercel deploy invalidates the bundle; no client-side persistence of the component HTML. Non-issue. |
-| Cache (`ai:score-profile:<hash>` / `ai:score-match:<hash>`) returns pre-v1.2.0 outputs after deploy | The hash includes `promptVersion`. Bumping to `1.2.0` invalidates all old keys naturally. No manual flush needed. |
+| Quantization loses signal for fine-grained scoring                                                       | Acceptable; 5-point granularity matches the user's stated requirement and the band-threshold grid (70 / 40). False precision was the larger problem.                                                                                      |
+| Existing recruiter / admin views render legacy rows differently from new rows                            | Both render correctly because `contributionPoints` was already optional in the props. Visual difference (chips present vs. absent) is desirable — it signals which scores were computed under the new transparent regime.                 |
+| Frontend caching serves stale `evidence-callout` markup                                                  | Vercel deploy invalidates the bundle; no client-side persistence of the component HTML. Non-issue.                                                                                                                                        |
+| Cache (`ai:score-profile:<hash>` / `ai:score-match:<hash>`) returns pre-v1.2.0 outputs after deploy      | The hash includes `promptVersion`. Bumping to `1.2.0` invalidates all old keys naturally. No manual flush needed.                                                                                                                         |
 
 ## Open questions
 

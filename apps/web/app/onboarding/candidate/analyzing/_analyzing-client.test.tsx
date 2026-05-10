@@ -16,7 +16,11 @@ describe("analyzingReducer", () => {
       { kind: "computingProfileScore" },
       { type: "PROFILE_SCORE_OK", score: SCORE, now: NOW },
     );
-    expect(next).toEqual({ kind: "profileScoreReady", score: SCORE, readyAt: NOW });
+    expect(next).toEqual({
+      kind: "profileScoreReady",
+      score: SCORE,
+      readyAt: NOW,
+    });
   });
 
   it("transitions to profileScoreDegraded when PROFILE_SCORE_DEGRADED dispatches from initial state", () => {
@@ -46,13 +50,21 @@ describe("analyzingReducer", () => {
   });
 
   it("ignores PROFILE_SCORE_DEGRADED once the state has moved past computing", () => {
-    const ready: AnalyzingState = { kind: "profileScoreReady", score: SCORE, readyAt: NOW };
+    const ready: AnalyzingState = {
+      kind: "profileScoreReady",
+      score: SCORE,
+      readyAt: NOW,
+    };
     const next = analyzingReducer(ready, { type: "PROFILE_SCORE_DEGRADED" });
     expect(next).toBe(ready);
   });
 
   it("PREVIEW_TICK from profileScoreReady transitions to streamingPreviews with previewCount=1", () => {
-    const ready: AnalyzingState = { kind: "profileScoreReady", score: SCORE, readyAt: NOW };
+    const ready: AnalyzingState = {
+      kind: "profileScoreReady",
+      score: SCORE,
+      readyAt: NOW,
+    };
     const next = analyzingReducer(ready, { type: "PREVIEW_TICK" });
     expect(next).toEqual({
       kind: "streamingPreviews",
@@ -87,19 +99,28 @@ describe("analyzingReducer", () => {
     expect(analyzingReducer(errored, { type: "PREVIEW_TICK" })).toBe(errored);
 
     const redirecting: AnalyzingState = { kind: "redirecting" };
-    expect(analyzingReducer(redirecting, { type: "PREVIEW_TICK" })).toBe(redirecting);
+    expect(analyzingReducer(redirecting, { type: "PREVIEW_TICK" })).toBe(
+      redirecting,
+    );
   });
 
   it("REDIRECT collapses any state to redirecting", () => {
     const cases: AnalyzingState[] = [
       { kind: "computingProfileScore" },
       { kind: "profileScoreReady", score: SCORE, readyAt: NOW },
-      { kind: "streamingPreviews", score: SCORE, readyAt: NOW, previewCount: 3 },
+      {
+        kind: "streamingPreviews",
+        score: SCORE,
+        readyAt: NOW,
+        previewCount: 3,
+      },
       { kind: "profileScoreDegraded" },
       { kind: "error", message: "x" },
     ];
     for (const c of cases) {
-      expect(analyzingReducer(c, { type: "REDIRECT" }).kind).toBe("redirecting");
+      expect(analyzingReducer(c, { type: "REDIRECT" }).kind).toBe(
+        "redirecting",
+      );
     }
   });
 });

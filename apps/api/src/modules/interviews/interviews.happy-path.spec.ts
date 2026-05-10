@@ -26,7 +26,11 @@
  */
 
 import { Test } from "@nestjs/testing";
-import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from "@nestjs/common";
 
 import { InterviewsService } from "./interviews.service";
 import { InterviewsRepository } from "./interviews.repository";
@@ -216,7 +220,9 @@ describe("Interview v2 — happy-path integration", () => {
         email: "recruiter@example.com",
         phone: null,
       }),
-      findCandidateProfile: jest.fn().mockResolvedValue({ headline: "Software Engineer" }),
+      findCandidateProfile: jest
+        .fn()
+        .mockResolvedValue({ headline: "Software Engineer" }),
     } as any;
 
     emailService = { send: jest.fn().mockResolvedValue(undefined) } as any;
@@ -255,7 +261,10 @@ describe("Interview v2 — happy-path integration", () => {
         { provide: EventsService, useValue: events },
         { provide: NotificationsService, useValue: notifications },
         { provide: InterviewVenuesService, useValue: { create: jest.fn() } },
-        { provide: ResumesRepository, useValue: { findById: jest.fn(), findByUserId: jest.fn() } },
+        {
+          provide: ResumesRepository,
+          useValue: { findById: jest.fn(), findByUserId: jest.fn() },
+        },
         {
           provide: ScoringService,
           useValue: {
@@ -264,12 +273,22 @@ describe("Interview v2 — happy-path integration", () => {
           },
         },
         { provide: StorageService, useValue: { getSignedUrl: jest.fn() } },
-        { provide: MatchScoreQueueService, useValue: { enqueue: jest.fn().mockResolvedValue(undefined) } },
-        { provide: OffersRepository, useValue: { findLatestByApplicationId: jest.fn().mockResolvedValue(null) } },
+        {
+          provide: MatchScoreQueueService,
+          useValue: { enqueue: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: OffersRepository,
+          useValue: {
+            findLatestByApplicationId: jest.fn().mockResolvedValue(null),
+          },
+        },
         {
           provide: DRIZZLE_CLIENT,
           useValue: {
-            transaction: jest.fn(async <T,>(fn: (tx: unknown) => Promise<T>) => fn({})),
+            transaction: jest.fn(async <T>(fn: (tx: unknown) => Promise<T>) =>
+              fn({}),
+            ),
           },
         },
       ],
@@ -284,9 +303,14 @@ describe("Interview v2 — happy-path integration", () => {
   it("Step 1: schedules interview from 'applied' — status advances to 'interview', interview row created with venue fields", async () => {
     const appliedApp = makeApplication("applied");
 
-    applicationsRepo.findApplicationContextForCompany.mockResolvedValue(appliedApp);
+    applicationsRepo.findApplicationContextForCompany.mockResolvedValue(
+      appliedApp,
+    );
     applicationsRepo.findById.mockResolvedValue(appliedApp);
-    applicationsRepo.update.mockResolvedValue({ ...appliedApp, status: "interview" } as any);
+    applicationsRepo.update.mockResolvedValue({
+      ...appliedApp,
+      status: "interview",
+    } as any);
     interviewsRepo.insert.mockResolvedValue(makeInterview());
 
     const result = await interviewsService.schedule(
@@ -332,11 +356,17 @@ describe("Interview v2 — happy-path integration", () => {
       (c) => c[0].action === "application.status_changed",
     );
     expect(statusAudit).toBeDefined();
-    expect(statusAudit![0].details).toMatchObject({ from: "applied", to: "interview" });
+    expect(statusAudit![0].details).toMatchObject({
+      from: "applied",
+      to: "interview",
+    });
 
     // emitInterviewScheduled fired
     expect(events.emitInterviewScheduled).toHaveBeenCalledWith(
-      expect.objectContaining({ interviewId: INTERVIEW_ID, applicationId: APPLICATION_ID }),
+      expect.objectContaining({
+        interviewId: INTERVIEW_ID,
+        applicationId: APPLICATION_ID,
+      }),
     );
 
     expect(result.id).toBe(INTERVIEW_ID);
@@ -346,7 +376,10 @@ describe("Interview v2 — happy-path integration", () => {
   // ── Step 2 ─────────────────────────────────────────────────────────────────
 
   it("Step 2: recruiter sets feedback + recommendation — FEEDBACK_SUBMITTED + RECOMMENDATION_SET audited, realtime event emitted", async () => {
-    const scheduledInterview = makeInterview({ status: "completed", recommendation: null });
+    const scheduledInterview = makeInterview({
+      status: "completed",
+      recommendation: null,
+    });
 
     interviewsRepo.findById.mockResolvedValue(scheduledInterview);
     applicationsRepo.findApplicationContextForCompany.mockResolvedValue({
@@ -407,7 +440,8 @@ describe("Interview v2 — happy-path integration", () => {
   // ── Step 3 ─────────────────────────────────────────────────────────────────
 
   it("Step 3: recruiter shares candidate-facing summary — candidateSummary + sharedWithCandidateAt persisted, notification + realtime + audit fired", async () => {
-    const summary = "You demonstrated strong technical skills and a collaborative mindset.";
+    const summary =
+      "You demonstrated strong technical skills and a collaborative mindset.";
     const completedInterview = makeInterview({
       status: "completed",
       feedback: "Strong technical skills.",
@@ -504,7 +538,10 @@ describe("Interview v2 — happy-path integration", () => {
     interviewsRepo.findById.mockResolvedValue(sharedInterview);
     applicationsRepo.findById.mockResolvedValue(makeApplication("interview"));
 
-    const result = await interviewsService.getByIdForCandidate(candidateUser, INTERVIEW_ID);
+    const result = await interviewsService.getByIdForCandidate(
+      candidateUser,
+      INTERVIEW_ID,
+    );
 
     // Candidate-safe fields
     expect(result.candidateSummary).toBe("You did great!");
@@ -533,7 +570,9 @@ describe("Interview v2 — happy-path integration", () => {
       companyId: COMPANY_ID,
     } as any);
     applicationsRepo.findById.mockResolvedValue(makeApplication("interview"));
-    interviewsRepo.markRescheduled.mockResolvedValue({ id: INTERVIEW_ID } as any);
+    interviewsRepo.markRescheduled.mockResolvedValue({
+      id: INTERVIEW_ID,
+    } as any);
     interviewsRepo.insert.mockResolvedValue(
       makeInterview({
         id: NEW_INTERVIEW_ID,
@@ -549,7 +588,9 @@ describe("Interview v2 — happy-path integration", () => {
       COMPANY_ID,
       INTERVIEW_ID,
       {
-        scheduledAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        scheduledAt: new Date(
+          Date.now() + 14 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
         durationMinutes: 60,
         venueName: "New Office",
         addressLine: "456 New Ave",
@@ -571,7 +612,10 @@ describe("Interview v2 — happy-path integration", () => {
     );
 
     // Forward link wired
-    expect(interviewsRepo.setRescheduledTo).toHaveBeenCalledWith(INTERVIEW_ID, NEW_INTERVIEW_ID);
+    expect(interviewsRepo.setRescheduledTo).toHaveBeenCalledWith(
+      INTERVIEW_ID,
+      NEW_INTERVIEW_ID,
+    );
 
     // Audit
     const rescheduledAudit = audit.log.mock.calls.find(
@@ -619,7 +663,12 @@ describe("Interview v2 — happy-path integration", () => {
     } as any);
 
     // Use ApplicationsService.withdraw
-    await applicationsService.withdraw(candidateUser, APPLICATION_ID, { reason: "Found another role" }, {});
+    await applicationsService.withdraw(
+      candidateUser,
+      APPLICATION_ID,
+      { reason: "Found another role" },
+      {},
+    );
 
     // Status updated to withdrawn
     expect(applicationsRepo.update).toHaveBeenCalledWith(
@@ -684,7 +733,10 @@ describe("Interview v2 — happy-path integration", () => {
     interviewsRepo.findById.mockResolvedValue(unsharedInterview);
     applicationsRepo.findById.mockResolvedValue(makeApplication("interview"));
 
-    const result = await interviewsService.getByIdForCandidate(candidateUser, INTERVIEW_ID);
+    const result = await interviewsService.getByIdForCandidate(
+      candidateUser,
+      INTERVIEW_ID,
+    );
 
     // Even though candidateSummary is stored in DB, it must not leak to candidate
     expect(result.candidateSummary).toBeNull();

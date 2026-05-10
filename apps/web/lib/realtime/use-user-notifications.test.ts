@@ -292,7 +292,9 @@ describe("useUserNotifications", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/notifications",
-      expect.objectContaining({ query: expect.objectContaining({ tab: "archive" }) }),
+      expect.objectContaining({
+        query: expect.objectContaining({ tab: "archive" }),
+      }),
     );
     await waitFor(() => {
       expect(result.current.archive).toHaveLength(1);
@@ -310,7 +312,11 @@ describe("useUserNotifications", () => {
     });
 
     fetchMock.mockClear();
-    fetchMock.mockResolvedValue({ count: 0, displayCount: "0", unreadCount: 0 });
+    fetchMock.mockResolvedValue({
+      count: 0,
+      displayCount: "0",
+      unreadCount: 0,
+    });
 
     await act(async () => {
       await result.current.markReadAsync(NOTIFICATION_ID);
@@ -333,7 +339,11 @@ describe("useUserNotifications", () => {
     });
 
     fetchMock.mockClear();
-    fetchMock.mockResolvedValue({ count: 0, displayCount: "0", unreadCount: 0 });
+    fetchMock.mockResolvedValue({
+      count: 0,
+      displayCount: "0",
+      unreadCount: 0,
+    });
 
     await act(async () => {
       await result.current.archiveOneAsync(NOTIFICATION_ID);
@@ -356,7 +366,11 @@ describe("useUserNotifications", () => {
     });
 
     fetchMock.mockClear();
-    fetchMock.mockResolvedValue({ count: 0, displayCount: "0", unreadCount: 0 });
+    fetchMock.mockResolvedValue({
+      count: 0,
+      displayCount: "0",
+      unreadCount: 0,
+    });
 
     await act(async () => {
       await result.current.archiveAllAsync();

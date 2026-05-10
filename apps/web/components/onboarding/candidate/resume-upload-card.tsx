@@ -24,7 +24,11 @@ interface Props {
 
 type Stage = "idle" | "uploading" | "done" | "failed";
 
-export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false }: Props) {
+export function ResumeUploadCard({
+  latestResume,
+  accessToken,
+  forceIdle = false,
+}: Props) {
   const router = useRouter();
   const goToPersonal = useCallback(
     () => router.push("/onboarding/candidate/personal"),
@@ -189,8 +193,12 @@ export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false 
         }}
       >
         <UploadCloud className="h-10 w-10 text-[var(--color-muted)]" />
-        <p className="mt-3 text-sm font-semibold">Drop your resume here, or click to browse</p>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">PDF or DOCX · 10MB max</p>
+        <p className="mt-3 text-sm font-semibold">
+          Drop your resume here, or click to browse
+        </p>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          PDF or DOCX · 10MB max
+        </p>
         <input
           type="file"
           accept={ACCEPT}
@@ -201,7 +209,11 @@ export function ResumeUploadCard({ latestResume, accessToken, forceIdle = false 
           }}
         />
       </label>
-      {error && <p className="mt-3 text-sm text-[var(--color-status-danger)]">{error}</p>}
+      {error && (
+        <p className="mt-3 text-sm text-[var(--color-status-danger)]">
+          {error}
+        </p>
+      )}
       <button
         onClick={() => router.push("/onboarding/candidate/personal")}
         className="mt-5 text-sm text-[var(--color-muted)] underline transition-colors hover:text-[var(--color-ink)]"

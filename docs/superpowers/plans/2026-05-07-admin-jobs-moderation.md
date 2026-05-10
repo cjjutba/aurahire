@@ -11,12 +11,14 @@
 **Spec:** `docs/superpowers/specs/2026-05-07-admin-jobs-moderation-design.md`
 
 **Hard rules (from `CLAUDE.md`):**
+
 - The implementer must NOT run any dev server, migration, or deploy command. Type-check and lint only.
 - The user runs `pnpm dev` themselves and verifies the visual result in the browser.
 - The implementer must NOT run destructive git commands. Commits are written into the plan as steps, but the executing session defers to `CLAUDE.md`'s commit policy and asks the user before committing.
 - Backend tweak in Task 1 cannot be exercised end-to-end without the running stack, so it is verified by the user from the browser; the plan also calls out a pure shape-check via type-check.
 
 **Testing posture:** This change is primarily visual. There is no precedent in `apps/api/src/modules/jobs` or `apps/api/src/modules/admin` for repository-level unit tests, and the frontend changes are pure markup/styling refactors. The plan therefore relies on:
+
 - Per-task type-checks via `pnpm tsc --noEmit` to catch contract drift,
 - Per-task lint via `pnpm lint` to catch unused imports and accessibility regressions,
 - A final user-driven visual verification pass against the acceptance criteria in the spec.
@@ -25,15 +27,15 @@
 
 ## File Structure
 
-| Path | Status | Responsibility |
-|---|---|---|
-| `apps/api/src/modules/jobs/jobs.repository.ts` | **Modify** (lines 258-262) | Replace the truthy `hasBiasFlags` block with a tri-state branch. |
-| `apps/web/app/(admin)/admin/jobs/_filters-client.tsx` | **Delete** | Old boxed filter form with Apply/Reset. Superseded by `_jobs-toolbar-client.tsx`. |
-| `apps/web/app/(admin)/admin/jobs/_jobs-toolbar-client.tsx` | **Create** | Pill toolbar with debounced search, Status dropdown, Bias dropdown. Live-applies via `router.push` inside `startTransition`. Preserves unmanaged URL params (e.g. `recruiterId`). |
-| `apps/web/app/(admin)/admin/jobs/_jobs-pagination.tsx` | **Create** | Numbered pagination component routed at `/admin/jobs`, mirror of recruiter pagination. |
-| `apps/web/app/(admin)/admin/jobs/_jobs-table-client.tsx` | **Replace** | Surface-soft header band, dot+label status pills, mono Bias/Apps cells, clickable-row a11y pattern that opens the existing detail sheet. Drops the embedded pagination block. |
-| `apps/web/app/(admin)/admin/jobs/page.tsx` | **Modify** | `text-3xl` → `text-2xl` h1, swap `<FiltersClient>` for `<JobsToolbarClient>`, render `<JobsPagination>` as a sibling of `<JobsTableClient>`, branch empty state on `q || status || hasBiasFlags || recruiterId`. |
-| `apps/web/app/(admin)/admin/jobs/loading.tsx` | **Replace** | Skeleton mirrors final layout: header (no CTA), toolbar pills, table grid `2fr_1fr_1fr_0.9fr_0.5fr_0.5fr_1fr_40px` with header band + 8 row skeletons. |
+| Path                                                       | Status                     | Responsibility                                                                                                                                                                    |
+| ---------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ------ | --- | ------------ | --- | ------------- |
+| `apps/api/src/modules/jobs/jobs.repository.ts`             | **Modify** (lines 258-262) | Replace the truthy `hasBiasFlags` block with a tri-state branch.                                                                                                                  |
+| `apps/web/app/(admin)/admin/jobs/_filters-client.tsx`      | **Delete**                 | Old boxed filter form with Apply/Reset. Superseded by `_jobs-toolbar-client.tsx`.                                                                                                 |
+| `apps/web/app/(admin)/admin/jobs/_jobs-toolbar-client.tsx` | **Create**                 | Pill toolbar with debounced search, Status dropdown, Bias dropdown. Live-applies via `router.push` inside `startTransition`. Preserves unmanaged URL params (e.g. `recruiterId`). |
+| `apps/web/app/(admin)/admin/jobs/_jobs-pagination.tsx`     | **Create**                 | Numbered pagination component routed at `/admin/jobs`, mirror of recruiter pagination.                                                                                            |
+| `apps/web/app/(admin)/admin/jobs/_jobs-table-client.tsx`   | **Replace**                | Surface-soft header band, dot+label status pills, mono Bias/Apps cells, clickable-row a11y pattern that opens the existing detail sheet. Drops the embedded pagination block.     |
+| `apps/web/app/(admin)/admin/jobs/page.tsx`                 | **Modify**                 | `text-3xl` → `text-2xl` h1, swap `<FiltersClient>` for `<JobsToolbarClient>`, render `<JobsPagination>` as a sibling of `<JobsTableClient>`, branch empty state on `q             |     | status |     | hasBiasFlags |     | recruiterId`. |
+| `apps/web/app/(admin)/admin/jobs/loading.tsx`              | **Replace**                | Skeleton mirrors final layout: header (no CTA), toolbar pills, table grid `2fr_1fr_1fr_0.9fr_0.5fr_0.5fr_1fr_40px` with header band + 8 row skeletons.                            |
 
 The detail sheet (`_job-detail-sheet-client.tsx`) is **not** modified.
 
@@ -42,6 +44,7 @@ The detail sheet (`_job-detail-sheet-client.tsx`) is **not** modified.
 ## Task 1: Backend — tri-state `hasBiasFlags` filter
 
 **Files:**
+
 - Modify: `apps/api/src/modules/jobs/jobs.repository.ts:258-262`
 
 The current implementation only branches on truthy `hasBiasFlags`, so the new "Bias = Clean" filter has no way to express "no flags on record". Add a `false` branch using `NOT EXISTS` against the same correlated subquery.
@@ -53,28 +56,29 @@ The Zod schema at `packages/shared/src/schemas/admin.ts:43` already accepts `z.c
 Open `apps/api/src/modules/jobs/jobs.repository.ts` and locate the block at line 258:
 
 ```ts
-    if (filters.hasBiasFlags) {
-      conditions.push(
-        sql`EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
-      );
-    }
+if (filters.hasBiasFlags) {
+  conditions.push(
+    sql`EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
+  );
+}
 ```
 
 Replace it with:
 
 ```ts
-    if (filters.hasBiasFlags === true) {
-      conditions.push(
-        sql`EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
-      );
-    } else if (filters.hasBiasFlags === false) {
-      conditions.push(
-        sql`NOT EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
-      );
-    }
+if (filters.hasBiasFlags === true) {
+  conditions.push(
+    sql`EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
+  );
+} else if (filters.hasBiasFlags === false) {
+  conditions.push(
+    sql`NOT EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
+  );
+}
 ```
 
 Behavior:
+
 - `undefined` → no condition added (returns the full set, unchanged).
 - `true` → `EXISTS` correlated subquery (unchanged from today).
 - `false` → new `NOT EXISTS` correlated subquery returns jobs with zero rows in `bias_flags`.
@@ -103,6 +107,7 @@ git commit -m "feat(api): tri-state hasBiasFlags filter for admin jobs list"
 ## Task 2: Create the pagination component
 
 **Files:**
+
 - Create: `apps/web/app/(admin)/admin/jobs/_jobs-pagination.tsx`
 
 A near-clone of `apps/web/app/(recruiter)/recruiter/jobs/_jobs-pagination.tsx`. The only differences are the route prefix (`/admin/jobs`) and the explicit shape of the forwarded query keys (`q`, `status`, `hasBiasFlags`).
@@ -141,8 +146,7 @@ export function JobsPagination({ meta, searchParams }: Props) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
       <div className="text-xs text-[var(--color-muted)]">
-        Showing{" "}
-        <span className="font-mono">{start}</span>–
+        Showing <span className="font-mono">{start}</span>–
         <span className="font-mono">{end}</span> of{" "}
         <span className="font-mono">{meta.total}</span>
       </div>
@@ -217,10 +221,7 @@ function PageLink({
   );
 }
 
-function pageWindow(
-  current: number,
-  total: number,
-): Array<number | "..."> {
+function pageWindow(current: number, total: number): Array<number | "..."> {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   const out: Array<number | "..."> = [1];
   if (current > 4) out.push("...");
@@ -255,6 +256,7 @@ git commit -m "feat(web): admin jobs pagination component"
 ## Task 3: Create the toolbar component
 
 **Files:**
+
 - Create: `apps/web/app/(admin)/admin/jobs/_jobs-toolbar-client.tsx`
 
 Pill toolbar with debounced search, Status dropdown, Bias dropdown. Live-applies via `router.push` inside `startTransition`. Mirrors the recruiter `_jobs-toolbar-client.tsx` pattern but with admin-specific options and no Sort dropdown.
@@ -439,6 +441,7 @@ function FilterDropdown({
 ```
 
 Notes for the implementer:
+
 - The toolbar starts every URL mutation from `new URLSearchParams(searchParams.toString())`, so any param it does not surface (today: `recruiterId`) round-trips through filter changes.
 - The Bias dropdown maps three labels to two URL states: `flagged` → `hasBiasFlags=true`, `clean` → `hasBiasFlags=false`, `all` → param deleted.
 - `pushParams` always deletes `page` so any filter mutation drops the user back to page 1 — same behavior as recruiter.
@@ -473,6 +476,7 @@ git commit -m "feat(web): admin jobs pill toolbar with debounced search and drop
 ## Task 4: Replace `_jobs-table-client.tsx`
 
 **Files:**
+
 - Modify: `apps/web/app/(admin)/admin/jobs/_jobs-table-client.tsx`
 
 Refactor the table to the recruiter-style markup: surface-soft header band, dot+label status pills, mono right-aligned Bias and Apps cells, formatted Posted, accessible row that opens the existing detail sheet. Strip the inline pagination block — pagination is rendered by the parent now.
@@ -512,31 +516,29 @@ interface Props {
   rows: JobRow[];
 }
 
-const JOB_STATUS: Record<
-  string,
-  { label: string; dot: string; text: string }
-> = {
-  draft: {
-    label: "Draft",
-    dot: "bg-[var(--color-muted)]",
-    text: "text-[var(--color-muted)]",
-  },
-  published: {
-    label: "Published",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  closed: {
-    label: "Closed",
-    dot: "bg-[var(--color-status-danger)]",
-    text: "text-[var(--color-status-danger)]",
-  },
-  archived: {
-    label: "Archived",
-    dot: "bg-[var(--color-muted)]",
-    text: "text-[var(--color-muted)]",
-  },
-};
+const JOB_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    draft: {
+      label: "Draft",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+    published: {
+      label: "Published",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    closed: {
+      label: "Closed",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    archived: {
+      label: "Archived",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
 const DEFAULT_STATUS = JOB_STATUS["draft"]!;
 
@@ -705,6 +707,7 @@ export function JobsTableClient({ rows }: Props) {
 ```
 
 Notes:
+
 - The `Props` interface drops `meta` — pagination moves to the parent. The parent (`page.tsx`) will be updated in Task 5 to render `<JobsPagination>` as a sibling.
 - The interactive selector mirrors `apps/web/components/ui/clickable-row.tsx:14`. Inline rather than wrapping `ClickableRow` because that component navigates via `router.push(href)`, while this row opens a state-controlled sheet.
 - The actions cell uses `e.stopPropagation()` on the trigger button so a click on the kebab does not also fire the row's `onClick`.
@@ -731,6 +734,7 @@ git commit -m "refactor(web): rebuild admin jobs table to match recruiter patter
 ## Task 5: Wire the new pieces into `page.tsx`
 
 **Files:**
+
 - Modify: `apps/web/app/(admin)/admin/jobs/page.tsx`
 
 Step the h1 down to `text-2xl`, replace `<FiltersClient>` with `<JobsToolbarClient>`, render `<JobsPagination>` as a sibling of `<JobsTableClient>`, and branch the empty state on whether any filter param is present (`q || status || hasBiasFlags || recruiterId`).
@@ -896,6 +900,7 @@ function EmptyFiltered() {
 ```
 
 Notes:
+
 - `hasBiasFlags` is forwarded to the backend as the literal `sp.hasBiasFlags` string (`"true"` / `"false"`) — Zod's `z.coerce.boolean()` parses both. The previous code only forwarded the param when it equalled `"true"`; that branch is no longer correct because the new "Clean" filter sends `"false"`.
 - `recruiterId` is now part of the `filtersActive` check so deep links from elsewhere in the admin portal (e.g., a future "see this recruiter's jobs" link) display the filtered empty state instead of the bare "No jobs to moderate yet" copy.
 - The wrapper `mx-auto max-w-[1280px] space-y-6` is unchanged from the previous implementation.
@@ -930,6 +935,7 @@ git commit -m "feat(web): wire admin jobs page to new toolbar and pagination"
 ## Task 6: Delete the old filters component
 
 **Files:**
+
 - Delete: `apps/web/app/(admin)/admin/jobs/_filters-client.tsx`
 
 `page.tsx` no longer imports `FiltersClient`; nothing else does either.
@@ -974,6 +980,7 @@ git commit -m "chore(web): remove obsolete admin jobs FiltersClient"
 ## Task 7: Rebuild the loading skeleton
 
 **Files:**
+
 - Modify: `apps/web/app/(admin)/admin/jobs/loading.tsx`
 
 Replace the three-block placeholder with a layout that traces the final markup. Use the same column hint grid as the table (`2fr_1fr_1fr_0.9fr_0.5fr_0.5fr_1fr_40px`) so the column widths animate into the real data without a layout shift.
@@ -1061,6 +1068,7 @@ git commit -m "feat(web): admin jobs loading skeleton matches final layout"
 ## Task 8: Final verification
 
 **Files:**
+
 - Read-only across the touched paths.
 
 A consolidated check before handing back to the user.
@@ -1126,7 +1134,7 @@ After writing this plan, the spec was checked section by section:
 - §9 Backend tri-state filter → Task 1.
 - §10 Acceptance criteria → Task 8 step 4.
 - §11 File-by-file change list → matches the File Structure table.
-- §12 Risks and edge cases → the *Bias = Clean* SQL semantics are noted in Task 1; the inline a11y rationale is noted in Task 4.
+- §12 Risks and edge cases → the _Bias = Clean_ SQL semantics are noted in Task 1; the inline a11y rationale is noted in Task 4.
 
 Placeholder scan: no TBDs or TODOs. Every code step contains the actual code.
 

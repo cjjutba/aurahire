@@ -16,7 +16,7 @@
 
 ## Non-Goals (explicit, defer to a later slice)
 
-- The other five recruiter pages: Jobs, Shortlist, Interviews, Analytics, Settings. Their *shell* updates automatically; their *page contents* do not change in this slice.
+- The other five recruiter pages: Jobs, Shortlist, Interviews, Analytics, Settings. Their _shell_ updates automatically; their _page contents_ do not change in this slice.
 - Candidate and admin portals. Same shell components, but applying the same redesign there is a separate slice.
 - Multi-tenant tenant-switching behavior. The tenant chip is geometric only — clicking it is a no-op for now.
 - Detail pages (e.g., `/recruiter/jobs/[id]`). They currently rely on the breadcrumb for back-navigation; replacing that with a leading `← Back to …` link is deferred to slice 2.
@@ -26,18 +26,18 @@
 
 ## Files In Scope
 
-| Path                                                      | Change                                                                |
-| --------------------------------------------------------- | --------------------------------------------------------------------- |
-| `apps/web/components/layout/portal-shell.tsx`             | Drop `<PortalTopbar>`. Drop `<PortalFooter>` (or move into sidebar bottom). Background flips from `surface-soft` to `canvas`. |
-| `apps/web/components/layout/portal-sidebar.tsx`           | Major restructure: brand wordmark, tenant chip, sectioned nav, sticky bottom (Docs + user chip dropdown). Drop right-edge border. |
-| `apps/web/components/layout/portal-topbar.tsx`            | **Delete.** Sign-out / user-info functionality migrates into the sidebar's bottom user chip dropdown. |
-| `apps/web/components/layout/portal-footer.tsx`            | **Delete.** AutoSend has no marketing-style footer in the portal. |
-| `apps/web/components/layout/breadcrumb.tsx`               | **Delete** (or stop importing). Page H1 replaces it. |
-| `apps/web/app/(recruiter)/recruiter/page.tsx`             | Full rewrite: 3-section dashboard (Active Jobs / Pipeline Analytics / Recent Applications). |
-| `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx` *(new)* | Client component for the date-range filter on Pipeline Analytics. |
-| `apps/api/src/modules/jobs/jobs.controller.ts` (+ service / repo) | Extend `GET /api/v1/jobs/mine` with `?include=stats` returning per-job aggregates in one query. |
-| `apps/api/src/modules/applications/applications.controller.ts` (+ service / repo) | Extend `GET /api/v1/applications/recruiter-stats` with `?range=7d|30d|90d|all` + add 4 more metrics (`inInterview`, `offered`, `hired`, `biasFlags`). Add new `GET /api/v1/applications/recent?limit=6`. |
-| `packages/shared/src/api-client/generated.ts` (+ openapi.json) | Regenerated from updated OpenAPI spec. |
+| Path                                                                              | Change                                                                                                                            |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --- | --- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `apps/web/components/layout/portal-shell.tsx`                                     | Drop `<PortalTopbar>`. Drop `<PortalFooter>` (or move into sidebar bottom). Background flips from `surface-soft` to `canvas`.     |
+| `apps/web/components/layout/portal-sidebar.tsx`                                   | Major restructure: brand wordmark, tenant chip, sectioned nav, sticky bottom (Docs + user chip dropdown). Drop right-edge border. |
+| `apps/web/components/layout/portal-topbar.tsx`                                    | **Delete.** Sign-out / user-info functionality migrates into the sidebar's bottom user chip dropdown.                             |
+| `apps/web/components/layout/portal-footer.tsx`                                    | **Delete.** AutoSend has no marketing-style footer in the portal.                                                                 |
+| `apps/web/components/layout/breadcrumb.tsx`                                       | **Delete** (or stop importing). Page H1 replaces it.                                                                              |
+| `apps/web/app/(recruiter)/recruiter/page.tsx`                                     | Full rewrite: 3-section dashboard (Active Jobs / Pipeline Analytics / Recent Applications).                                       |
+| `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx` _(new)_                | Client component for the date-range filter on Pipeline Analytics.                                                                 |
+| `apps/api/src/modules/jobs/jobs.controller.ts` (+ service / repo)                 | Extend `GET /api/v1/jobs/mine` with `?include=stats` returning per-job aggregates in one query.                                   |
+| `apps/api/src/modules/applications/applications.controller.ts` (+ service / repo) | Extend `GET /api/v1/applications/recruiter-stats` with `?range=7d                                                                 | 30d | 90d | all` + add 4 more metrics (`inInterview`, `offered`, `hired`, `biasFlags`). Add new `GET /api/v1/applications/recent?limit=6`. |
+| `packages/shared/src/api-client/generated.ts` (+ openapi.json)                    | Regenerated from updated OpenAPI spec.                                                                                            |
 
 ---
 
@@ -61,7 +61,7 @@
    - **Nav items:** 36px height, 12px horizontal padding, 12px gap between icon and label. 18px Lucide icon + 14px / 500 label.
      - **Default:** `--color-body` text, transparent bg.
      - **Hover:** `--color-surface-strong` bg, `--color-ink` text.
-     - **Active:** `--color-primary-soft` bg + `--color-primary` text + 600 weight + same-color icon. (Preserved from current — borrowing AutoSend's *density*, not its grayscale active state.)
+     - **Active:** `--color-primary-soft` bg + `--color-primary` text + 600 weight + same-color icon. (Preserved from current — borrowing AutoSend's _density_, not its grayscale active state.)
    - **Section content:**
      - `MAIN`: Dashboard (`LayoutDashboard` icon, `/recruiter`)
      - `PIPELINE`: Jobs (`Briefcase`, `/recruiter/jobs`) · Shortlist (`Star`, `/recruiter/shortlist`) · Interviews (`Calendar`, `/recruiter/interviews`)
@@ -107,6 +107,7 @@ The topbar (`<PortalTopbar>`) is deleted. Each page's first DOM element is its o
 ## Section 3 — Dashboard / Active Jobs
 
 **Section header** (above the card list):
+
 - Leading 14px `Briefcase` icon (`--color-muted`).
 - Label `ACTIVE JOBS` in `caption-strong` (12px / 600 / 0.04em uppercase, `--color-muted`).
 - Right-aligned link: `View all jobs →` in `--color-primary` (`body-sm`, no underline, hover underlines). Routes to `/recruiter/jobs`.
@@ -139,6 +140,7 @@ The topbar (`<PortalTopbar>`) is deleted. Each page's first DOM element is its o
   - **`AVG SCORE` value color:** band-colored — `< 40` `--color-score-low`, `40–69` `--color-score-mid`, `>= 70` `--color-score-high`. Only place the score-band colors appear in this section.
 
 **Empty state:** if the recruiter has zero jobs, replace the card list with a single centered card (same container styling, 64px vertical padding):
+
 - Muted Briefcase icon (24px).
 - "No active jobs" (`body-md` / 500 / `--color-ink`).
 - "Post your first opening to start collecting candidates." (`caption` / `--color-muted`).
@@ -149,6 +151,7 @@ The topbar (`<PortalTopbar>`) is deleted. Each page's first DOM element is its o
 ## Section 4 — Dashboard / Pipeline Analytics
 
 **Section header:**
+
 - Leading 14px `BarChart3` icon (`--color-muted`).
 - Label `PIPELINE ANALYTICS` in `caption-strong` uppercase muted.
 - (No right-aligned link; the bottom-of-card CTA serves that role.)
@@ -186,6 +189,7 @@ The topbar (`<PortalTopbar>`) is deleted. Each page's first DOM element is its o
   - Centered link: `View applications →` in `--color-primary` `body-sm` / 500. Routes to `/recruiter/applications` (or fallback `/recruiter/jobs` if the index page does not exist yet — see Non-Goals).
 
 **Tooltip copy** (one sentence per metric, written terse):
+
 - `ACTIVE JOBS`: "Jobs currently published and accepting applications."
 - `TOTAL APPS`: "Applications received in the selected range, across all your jobs."
 - `PENDING REVIEW`: "Applications still in `applied` status — not yet screened."
@@ -200,6 +204,7 @@ The topbar (`<PortalTopbar>`) is deleted. Each page's first DOM element is its o
 ## Section 5 — Dashboard / Recent Applications
 
 **Section header:**
+
 - Leading 14px `Inbox` icon (`--color-muted`).
 - Label `RECENT APPLICATIONS` in `caption-strong` uppercase muted.
 - Right-aligned link: `View all →` in `--color-primary` (`body-sm`). Routes to `/recruiter/applications` (with the same fallback noted above).
@@ -230,6 +235,7 @@ The topbar (`<PortalTopbar>`) is deleted. Each page's first DOM element is its o
      - Applied date: `5/4/2026` (locale-formatted) in `caption` muted.
 
 **Empty state:** centered inside the card, 48px vertical padding:
+
 - Muted `Inbox` icon (24px).
 - "No applications yet" (`body-md` / 500 / `--color-ink`).
 - "Once candidates apply to your jobs, they'll appear here." (`caption` / `--color-muted`).
@@ -245,18 +251,19 @@ The topbar (`<PortalTopbar>`) is deleted. Each page's first DOM element is its o
 **New query param:** `include` — comma-separated values, currently supports `stats`. Other values are ignored (forward-compat).
 
 **Response shape addition** (when `include=stats` present):
+
 ```ts
 type JobWithStats = Job & {
   stats: {
-    candidates: number;     // total apps for this job
-    new: number;            // applied
-    shortlisted: number;    // shortlisted
-    interviewed: number;    // interview
-    offered: number;        // offer
-    hired: number;          // hired
-    avgScore: number;       // round(avg(match_scores.overall_score)), 0 if no apps
+    candidates: number; // total apps for this job
+    new: number; // applied
+    shortlisted: number; // shortlisted
+    interviewed: number; // interview
+    offered: number; // offer
+    hired: number; // hired
+    avgScore: number; // round(avg(match_scores.overall_score)), 0 if no apps
   };
-}
+};
 ```
 
 **Implementation:** single Drizzle query with `LEFT JOIN applications ON job_id` + `LEFT JOIN match_scores ON application_id`, grouped by job, aggregated with `COUNT(CASE WHEN status = 'applied' THEN 1 END)` etc. and `AVG(match_scores.overall_score)`. **Avoids the N+1 the current dashboard suffers** (5 sequential `by-job/[id]` calls + manual flatten/sort).
@@ -272,16 +279,17 @@ type JobWithStats = Job & {
 **New query param:** `range` — one of `7d` | `30d` | `90d` | `all`. Default `7d` if absent (preserves current dashboard which reads "this week").
 
 **Response shape change:**
+
 ```ts
 type RecruiterStats = {
-  activeJobs: number;        // existing
-  totalApps: number;         // renamed from totalApplications (field rename — handle both during transition)
-  pendingReview: number;     // renamed from pendingReviews
-  inInterview: number;       // NEW
-  offered: number;           // NEW
-  hired: number;             // NEW
-  avgMatchScore: number;     // existing
-  biasFlags: number;         // NEW — count of unresolved bias_detection rows on this recruiter's jobs
+  activeJobs: number; // existing
+  totalApps: number; // renamed from totalApplications (field rename — handle both during transition)
+  pendingReview: number; // renamed from pendingReviews
+  inInterview: number; // NEW
+  offered: number; // NEW
+  hired: number; // NEW
+  avgMatchScore: number; // existing
+  biasFlags: number; // NEW — count of unresolved bias_detection rows on this recruiter's jobs
 };
 ```
 
@@ -296,14 +304,15 @@ type RecruiterStats = {
 **Query params:** `limit` (default 6, max 20).
 
 **Response shape:**
+
 ```ts
 type RecentApplication = {
   id: string;
   status: ApplicationStatus;
-  appliedAt: string;             // ISO 8601
+  appliedAt: string; // ISO 8601
   candidate: { fullName: string; email: string } | null;
   job: { id: string; title: string } | null;
-  matchScore: { band: 'low' | 'mid' | 'high'; overallScore: number } | null;
+  matchScore: { band: "low" | "mid" | "high"; overallScore: number } | null;
 };
 ```
 
@@ -328,11 +337,13 @@ After the backend changes ship, regenerate `packages/shared/openapi.json` and `p
 ## Testing & Verification
 
 **Unit / integration:**
+
 - New repo methods get integration tests against the seeded DB (existing pattern under `apps/api/test/`).
 - Range filter (`7d` / `30d` / `90d` / `all`) verified against fixture data with applications spanning multiple time windows.
 - N+1 fix verified by query-count assertion (the new `?include=stats` issues 1 query, not N+1).
 
 **Manual / visual (human-run, since Claude does not run dev servers per `CLAUDE.md` § Hard Rules):**
+
 - Sign in as the seeded recruiter (`recruiter@gmail.com`). Verify the sidebar renders with the company chip, sectioned nav, and bottom user chip.
 - Verify the topbar is gone, no breadcrumb, no avatar dropdown at the top of `<main>`.
 - Verify the three dashboard sections render with the correct data, status pill colors, score-band colors, and JetBrains Mono numbers.
@@ -341,6 +352,7 @@ After the backend changes ship, regenerate `packages/shared/openapi.json` and `p
 - Verify Sign out from the new bottom user chip dropdown still calls `supabase.auth.signOut()` and clears the session-only marker.
 
 **Accessibility:**
+
 - The user chip dropdown trigger remains a `<button>` with proper `aria-haspopup` / `aria-expanded` (preserved from the relocated topbar logic).
 - All interactive nav items keep `focus-visible` rings using `--color-primary`.
 - Tooltips on metric cells must be keyboard-accessible (focus on the `Info` icon should reveal them, not just hover).

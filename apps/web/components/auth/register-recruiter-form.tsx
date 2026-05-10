@@ -53,13 +53,17 @@ export function RegisterRecruiterForm() {
       });
 
       toastSuccess("Account created", "Check your email to verify.");
-      router.push(`/verify-email/sent?email=${encodeURIComponent(values.email)}`);
+      router.push(
+        `/verify-email/sent?email=${encodeURIComponent(values.email)}`,
+      );
     } catch (err) {
       const status = (err as { status?: number }).status;
       const body = (err as { body?: { code?: string; message?: string } }).body;
       if (status === 409 && body?.code === "EMAIL_ALREADY_REGISTERED") {
         setError("email", {
-          message: body.message ?? "This email is already registered. Sign in instead?",
+          message:
+            body.message ??
+            "This email is already registered. Sign in instead?",
         });
       } else {
         toastApiError(err, "Couldn't create account");
@@ -111,7 +115,8 @@ export function RegisterRecruiterForm() {
         {...register("confirmPassword")}
       />
       <p className="px-2 pt-1 text-center text-xs leading-relaxed text-[var(--color-muted)]">
-        By creating an account you agree to the AuraHire Terms and Privacy Policy.
+        By creating an account you agree to the AuraHire Terms and Privacy
+        Policy.
       </p>
       <Button
         type="submit"

@@ -32,12 +32,12 @@
 
 Routes under `apps/web/app/onboarding/candidate/`:
 
-| New route | Step | Replaces |
-|---|---|---|
-| `/onboarding/candidate` | 1 · Resume (upload + parse) | unchanged route, redesigned content |
-| `/onboarding/candidate/personal` | 2 · Personal | unchanged route, redesigned |
-| `/onboarding/candidate/review` | 3 · Review (Education + Experience + Skills as accordion sections) | replaces `/education` + `/experience` + `/skills` |
-| `/onboarding/candidate/preferences` | 4 · Preferences | unchanged route, redesigned |
+| New route                           | Step                                                               | Replaces                                          |
+| ----------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------- |
+| `/onboarding/candidate`             | 1 · Resume (upload + parse)                                        | unchanged route, redesigned content               |
+| `/onboarding/candidate/personal`    | 2 · Personal                                                       | unchanged route, redesigned                       |
+| `/onboarding/candidate/review`      | 3 · Review (Education + Experience + Skills as accordion sections) | replaces `/education` + `/experience` + `/skills` |
+| `/onboarding/candidate/preferences` | 4 · Preferences                                                    | unchanged route, redesigned                       |
 
 The three deleted routes (`/education`, `/experience`, `/skills`) get removed; their components fold into the Review page. No redirects required — these were not externally linked.
 
@@ -96,10 +96,10 @@ The right pane is collapsed; the left pane is wide and centered. The whole conte
 On upload:
 
 1. Frontend posts the file to `POST /resumes/upload` and awaits the response. The existing service runs parse synchronously inside the upload request, so the response carries the final `parseStatus` (no polling needed in the happy path).
-2. While the request is in flight: dropzone replaced by a "parsing" card — `ai-shimmer` band with a caption that cycles every 1.5s through *"Reading your resume… → Extracting experience… → Detecting skills… → Almost done…"*
-3. On response with `parseStatus = "parsed"`: layout transitions into the two-pane view. Left pane shows a success card — *"Found N items"* with chips for `5 work experiences · 1 school · 12 skills · 1 cert` — plus a primary "Continue" pill. Right pane fades in the rendered PDF with **all** highlights visible at once (no per-step filter on this step).
+2. While the request is in flight: dropzone replaced by a "parsing" card — `ai-shimmer` band with a caption that cycles every 1.5s through _"Reading your resume… → Extracting experience… → Detecting skills… → Almost done…"_
+3. On response with `parseStatus = "parsed"`: layout transitions into the two-pane view. Left pane shows a success card — _"Found N items"_ with chips for `5 work experiences · 1 school · 12 skills · 1 cert` — plus a primary "Continue" pill. Right pane fades in the rendered PDF with **all** highlights visible at once (no per-step filter on this step).
 4. On response with `parseStatus = "failed"`: error card with two CTAs — `Try again` (re-runs `POST /resumes/:id/reparse`) and `Continue without parsing` (routes to step 2 with empty defaults).
-5. **Recovery from a stale `parsing` row**: if `fetchLatestParsedResume()` on page-load returns a row with `parseStatus = "parsing"` (user closed tab mid-upload, server crashed mid-parse), step 1 renders a recovery card: *"A previous upload didn't complete"* + `Retry parse` (calls `POST /resumes/:id/reparse`) and `Upload a different file` (returns to dropzone).
+5. **Recovery from a stale `parsing` row**: if `fetchLatestParsedResume()` on page-load returns a row with `parseStatus = "parsing"` (user closed tab mid-upload, server crashed mid-parse), step 1 renders a recovery card: _"A previous upload didn't complete"_ + `Retry parse` (calls `POST /resumes/:id/reparse`) and `Upload a different file` (returns to dropzone).
 
 ### Step 2 · Personal (`/onboarding/candidate/personal`)
 
@@ -137,6 +137,7 @@ Expanded (click → edit mode):
 State machine: `collapsed → click → expanded(editing) → Save (PATCH) → collapsed | Cancel → collapsed (revert)`.
 
 **Skills** — chip cloud + typeahead:
+
 - Each chip: `primary-soft` bg, `primary` text, X on hover.
 - Below the cloud: `<input>` with autocomplete sourced from `packages/shared/skills-taxonomy.ts` plus skills already on the profile.
 - Enter or click suggestion → adds chip. X on chip → removes. Both trigger debounced 300ms PATCH.
@@ -187,12 +188,14 @@ Right: right pane swaps to `ProfilePreviewPane` showing the recruiter view — a
 ```
 
 **Top bar** (`64px` height):
+
 - AuraHire wordmark left, links to `/`.
 - Center: `OnboardingProgress` — 4 horizontal segments, `12px` circles connected by `2px` rules. Each circle: completed = `primary` fill with check; current = `primary` ring on `canvas`; upcoming = `hairline` fill. Labels below segments at `≥ 1024px`. Current label in `primary`, others in `muted`.
 - Right: `SaveStatusIndicator` + JetBrains-Mono `2 / 4` counter.
 - 1px `hairline-soft` bottom border.
 
 **Body**:
+
 - 1280px max content width on `≥ 1280px`; full bleed below.
 - Two-pane CSS grid: `grid-template-columns: 1.3fr 1fr` at `≥ 1024px`; single column below.
 - Form pane: `padding: 32px`. Resume pane: `padding: 24px`, `bg: surface-soft`, `border-left: 1px solid hairline`.
@@ -205,6 +208,7 @@ Right: right pane swaps to `ProfilePreviewPane` showing the recruiter view — a
 **Library:** `pdfjs-dist` (PDF.js), worker mode, lazy-loaded only on onboarding pages via `next/dynamic` so it doesn't bloat the rest of the app.
 
 **Render pipeline:**
+
 1. Backend returns a signed download URL for the canonical PDF (original PDF or LibreOffice-converted PDF). Frontend never branches on file type.
 2. PDF.js renders each page to a `<canvas>` plus a transparent text layer (DOM `<span>` elements positioned exactly over their characters).
 3. A separate **highlight overlay layer** sits between canvas and text layer (`z-index: 1`), absolutely positioned per page.
@@ -212,14 +216,19 @@ Right: right pane swaps to `ProfilePreviewPane` showing the recruiter view — a
 **Highlight data shape:**
 
 ```ts
-type HighlightCategory = "contact" | "summary" | "experience" | "education" | "skill";
+type HighlightCategory =
+  | "contact"
+  | "summary"
+  | "experience"
+  | "education"
+  | "skill";
 
 type Highlight = {
-  id: string;                  // stable, used for hover linking — e.g. "experience.0.title"
+  id: string; // stable, used for hover linking — e.g. "experience.0.title"
   category: HighlightCategory;
-  source: string;              // verbatim text from resume to find in the PDF
-  fieldRef: string;            // form field id to focus on click
-  pageHint?: number;           // optional, narrows search if backend learns positions later
+  source: string; // verbatim text from resume to find in the PDF
+  fieldRef: string; // form field id to focus on click
+  pageHint?: number; // optional, narrows search if backend learns positions later
 };
 ```
 
@@ -245,6 +254,7 @@ Whitespace-tolerant, case-insensitive, accent-insensitive (NFD-normalized). Mult
 **Per-step filter:** `activeCategories: HighlightCategory[]` prop drives the opacity. On step 3 (Review), the active categories follow the section currently in view via `IntersectionObserver` on section headers.
 
 **Bidirectional hover linking** (`highlight-context.tsx`):
+
 - A React Context exposes `{ hoveredFieldId, setHoveredFieldId, focusField }`.
 - Each form input gets `onMouseEnter / onFocus → setHoveredFieldId('experience.0.title')`.
 - The pane subscribes; on change, finds matching highlight, scrolls it into view via `scrollIntoView({ block: 'center' })`, applies a 600ms pulse animation (CSS keyframe).
@@ -311,7 +321,7 @@ certifications: Array<{ name: string; name_source: string; year: number | null; 
 parse_confidence: number;
 ```
 
-Prompt instruction (added to system message): *"For every extracted value, also return its verbatim source string exactly as it appears in the resume. The source string must be a substring of the raw text, character-for-character. Do not paraphrase, normalize, or fix typos in source strings. If a value is null, the corresponding source string is null."*
+Prompt instruction (added to system message): _"For every extracted value, also return its verbatim source string exactly as it appears in the resume. The source string must be a substring of the raw text, character-for-character. Do not paraphrase, normalize, or fix typos in source strings. If a value is null, the corresponding source string is null."_
 
 OpenAI structured-output JSON schema enforces these as required (with `null` allowed where the value itself is null).
 
@@ -368,12 +378,15 @@ Nullable. `null` for PDF uploads (frontend uses `storage_path` directly); popula
 
 ```ts
 // Before:
-{ signedUrl: string; expiresAt: string }
+{
+  signedUrl: string;
+  expiresAt: string;
+}
 
 // After:
 {
-  signedUrl: string;        // original (for download button)
-  signedPdfUrl: string;     // canonical PDF (for ResumePreviewPane) — same as signedUrl for PDF uploads
+  signedUrl: string; // original (for download button)
+  signedPdfUrl: string; // canonical PDF (for ResumePreviewPane) — same as signedUrl for PDF uploads
   expiresAt: string;
 }
 ```
@@ -394,13 +407,13 @@ Resumes already parsed with the old prompt will not have `*_source` fields. The 
 
 ## Form Behavior
 
-| Step | Save trigger | Endpoint | Behavior |
-|---|---|---|---|
-| 2 · Personal | Field `onBlur`, debounced 500ms | `PATCH /candidate-profiles/me` | Single-field patch payload |
-| 3 · Review (cards) | "Save" button inside expanded card | `PATCH /candidate-profiles/me` | Sends the full updated `experience[]` / `education[]` array — atomic per section |
-| 3 · Review (skills) | Chip add/remove | `PATCH /candidate-profiles/me` | Sends full updated `skills[]` array, debounced 300ms to coalesce rapid edits |
-| 4 · Preferences | Field `onBlur`, debounced 500ms | `PATCH /candidate-profiles/me` | Single-field patch |
-| Step transition (Continue) | Click | flushes pending debounce, then routes | — |
+| Step                       | Save trigger                       | Endpoint                              | Behavior                                                                         |
+| -------------------------- | ---------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
+| 2 · Personal               | Field `onBlur`, debounced 500ms    | `PATCH /candidate-profiles/me`        | Single-field patch payload                                                       |
+| 3 · Review (cards)         | "Save" button inside expanded card | `PATCH /candidate-profiles/me`        | Sends the full updated `experience[]` / `education[]` array — atomic per section |
+| 3 · Review (skills)        | Chip add/remove                    | `PATCH /candidate-profiles/me`        | Sends full updated `skills[]` array, debounced 300ms to coalesce rapid edits     |
+| 4 · Preferences            | Field `onBlur`, debounced 500ms    | `PATCH /candidate-profiles/me`        | Single-field patch                                                               |
+| Step transition (Continue) | Click                              | flushes pending debounce, then routes | —                                                                                |
 
 **Inline edit state machine** (each card):
 
@@ -436,6 +449,7 @@ Missing required field → Continue button disabled with tooltip "Add your full 
 **`AI_SUGGESTED` chip lifecycle:** Field starts with chip if value came from parsing. On first user keystroke (`formState.dirtyFields[name] === true`), chip flips to `EDITED` (`muted` text, no icon). Reset to original value flips back. Pure local state — not persisted.
 
 **Save status indicator** — single global indicator in the top bar:
+
 - `idle` → "All changes saved" with check icon
 - `saving` → "Saving…" with spinner
 - `error` → "Couldn't save — Retry" link
@@ -443,25 +457,27 @@ Missing required field → Continue button disabled with tooltip "Add your full 
 **Tab-close protection:** `beforeunload` listener triggers when any RHF form has been dirty for > 750ms (avoids prompts during normal typing). Inline edit cards count: closing while a card is expanded with unsaved edits also triggers.
 
 **Failure handling:**
+
 - Network error → in-flight Save retries 1× silently, then surfaces inline retry button.
 - 401 (token expired) → toast + redirect to `/login?next=/onboarding/candidate/<step>`.
 - Validation error from server → field-level error mapping; if no field can be matched, generic banner.
-- 409 (conflict, second tab saved) → non-blocking banner: *"Profile changed in another window — refresh to see the latest"* + Refresh link.
+- 409 (conflict, second tab saved) → non-blocking banner: _"Profile changed in another window — refresh to see the latest"_ + Refresh link.
 
 ---
 
 ## Responsive Behavior
 
-| Range | Treatment |
-|---|---|
-| ≥ 1280px | Wide: max content cap 1280px, two-pane 1.3 : 1 |
-| 1024 – 1280px | Desktop: full two-pane, same ratio |
-| 640 – 1024px | Tablet: single column, resume → slide-in sheet, form fields stay 2-col where space allows |
-| < 640px | Phone: single column, resume → slide-in sheet, all form fields stack 1-col |
+| Range         | Treatment                                                                                 |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| ≥ 1280px      | Wide: max content cap 1280px, two-pane 1.3 : 1                                            |
+| 1024 – 1280px | Desktop: full two-pane, same ratio                                                        |
+| 640 – 1024px  | Tablet: single column, resume → slide-in sheet, form fields stay 2-col where space allows |
+| < 640px       | Phone: single column, resume → slide-in sheet, all form fields stack 1-col                |
 
 **Top bar at < 1024px:** wordmark + step counter only. The 4-segment progress collapses to a single slim 4px progress bar that spans the full viewport width directly under the header.
 
 **Resume → slide-in sheet** (`mobile/resume-sheet.tsx`):
+
 - Pinned pill button "View resume" with paperclip icon in the top bar (right side). Label changes to "View preview" on Preferences step.
 - Tap → Radix Dialog with `data-side="right"`. Width 85vw, max 480px on tablet. Semi-opaque scrim backdrop; tap-out / X / Esc / swipe-right to dismiss.
 - Drawer renders the same `ResumePreviewPane`. Per-step highlight filtering, hover linking (touch: tap a highlight → drawer auto-closes + form field focuses), and pinch-zoom all work unchanged.
@@ -485,37 +501,38 @@ Missing required field → Continue button disabled with tooltip "Add your full 
 
 ### A. Upload errors (Step 1)
 
-| Cause | UX |
-|---|---|
-| File > 10MB | Inline dropzone error: "File exceeds 10MB. Try compressing or use a different file." |
-| Unsupported format | "Only PDF and DOCX files are accepted." |
-| Network drop during upload | Auto-retry 1× silently. Then banner + retry + "Continue without resume" link. |
-| Storage upload failure | Same banner. Audit log captures error. |
+| Cause                      | UX                                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| File > 10MB                | Inline dropzone error: "File exceeds 10MB. Try compressing or use a different file." |
+| Unsupported format         | "Only PDF and DOCX files are accepted."                                              |
+| Network drop during upload | Auto-retry 1× silently. Then banner + retry + "Continue without resume" link.        |
+| Storage upload failure     | Same banner. Audit log captures error.                                               |
 
 ### B. AI parse failures (Step 1, after upload)
 
-| Cause | UX |
-|---|---|
-| Parse timeout (> 60s) | Loading caption changes to "Parse is taking too long" → CTAs surface: **Try again** + **Continue without parsing**. |
+| Cause                                   | UX                                                                                                                                                           |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Parse timeout (> 60s)                   | Loading caption changes to "Parse is taking too long" → CTAs surface: **Try again** + **Continue without parsing**.                                          |
 | Parse error (invalid JSON, OpenAI down) | `parseStatus = 'failed'`. Banner with retry. Subsequent steps still navigable; right pane shows "Couldn't parse this resume" empty state with re-parse link. |
-| `parse_confidence < 0.4` | Soft warning above step-2 form: "We had a hard time reading this resume — please double-check the prefilled values." |
+| `parse_confidence < 0.4`                | Soft warning above step-2 form: "We had a hard time reading this resume — please double-check the prefilled values."                                         |
 
 ### C. PDF render failures (`ResumePreviewPane`)
 
-| Cause | UX |
-|---|---|
-| Image-only PDF (text layer < 50 chars) | Auto-fallback to `LinearizedResumeView`. Caption: "Showing a text version of your resume." |
-| DOCX → PDF conversion failed | Backend left `canonical_pdf_path = null`. Frontend falls through to linearized fallback. |
-| PDF.js bundle/CDN error | Pane shows: "Couldn't load resume preview." + download link. Form fully functional. Telemetry. |
-| Highlight `_source` not found in text layer | Highlight silently skipped. Telemetry event `highlight_miss` with field + source string. |
+| Cause                                       | UX                                                                                             |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Image-only PDF (text layer < 50 chars)      | Auto-fallback to `LinearizedResumeView`. Caption: "Showing a text version of your resume."     |
+| DOCX → PDF conversion failed                | Backend left `canonical_pdf_path = null`. Frontend falls through to linearized fallback.       |
+| PDF.js bundle/CDN error                     | Pane shows: "Couldn't load resume preview." + download link. Form fully functional. Telemetry. |
+| Highlight `_source` not found in text layer | Highlight silently skipped. Telemetry event `highlight_miss` with field + source string.       |
 
 ### D. Skip / no resume
 
-A small "Skip — I'll fill in manually" text link at the bottom of step 1. Routes to step 2. Right pane on subsequent steps shows: *"No resume uploaded yet — your prefill suggestions will be more accurate with one"* + small upload button.
+A small "Skip — I'll fill in manually" text link at the bottom of step 1. Routes to step 2. Right pane on subsequent steps shows: _"No resume uploaded yet — your prefill suggestions will be more accurate with one"_ + small upload button.
 
 ### E. Re-upload mid-flow
 
 Right-pane header has an inline "Replace resume" link visible on every step ≥ 2. Triggers same upload flow as step 1. On successful re-parse:
+
 - **Pristine fields** (form value matches old prefill) get refreshed; `AI_SUGGESTED` chip pulses briefly.
 - **Dirty fields** (user edited them) keep the user's value untouched. A "New AI suggestion available — apply?" indicator appears.
 - New parsed arrays (experience, education, skills) merge into existing arrays via id-stable diff: items the user added/edited preserved, AI re-extractions added as new entries.
@@ -524,20 +541,20 @@ Right-pane header has an inline "Replace resume" link visible on every step ≥ 
 
 Review step renders an empty state per section (rather than hiding):
 
-| Section | Empty state |
-|---|---|
+| Section    | Empty state                                                        |
+| ---------- | ------------------------------------------------------------------ |
 | Experience | "No work experience parsed from your resume." + `+ Add experience` |
-| Education | "No education parsed." + `+ Add education` |
-| Skills | "No skills found." + typeahead input prefilled and focused |
+| Education  | "No education parsed." + `+ Add education`                         |
+| Skills     | "No skills found." + typeahead input prefilled and focused         |
 
 ### G. Direct-URL access guards (`apps/web/middleware.ts`)
 
-| URL accessed | Condition | Result |
-|---|---|---|
-| Any `/onboarding/candidate/*` | `profileCompleted = true` | Redirect to `/candidate` |
-| `/personal` | No upload + no profile data | Allowed (skip path) |
-| `/review` | Personal full-name missing | Redirect to `/personal` |
-| `/preferences` | Review-complete schema fails | Redirect to `/review` |
+| URL accessed                  | Condition                    | Result                   |
+| ----------------------------- | ---------------------------- | ------------------------ |
+| Any `/onboarding/candidate/*` | `profileCompleted = true`    | Redirect to `/candidate` |
+| `/personal`                   | No upload + no profile data  | Allowed (skip path)      |
+| `/review`                     | Personal full-name missing   | Redirect to `/personal`  |
+| `/preferences`                | Review-complete schema fails | Redirect to `/review`    |
 
 Backend always validates final completion at `PATCH /complete-onboarding`.
 
@@ -547,16 +564,16 @@ Supabase token expires after 1h; refresh happens silently via `@supabase/ssr`. I
 
 ### I. Telemetry events
 
-| Event | Fields |
-|---|---|
-| `resume.uploaded` | mime, size, isFirst |
-| `resume.parsed` | promptVersion, modelUsed, latencyMs, confidence, sourceFieldCoverage |
-| `resume.parse_failed` | error, retryCount |
-| `resume.reparsed` | resumeId, promptVersion, dirtyFieldsPreserved |
-| `onboarding.step_completed` | step, durationMs |
-| `onboarding.field_edited` | field, wasAiSuggested |
-| `resume.highlight_miss` | field, sourceString (truncated to 80 chars) |
-| `onboarding.completed` | totalDurationMs, stepsCompleted |
+| Event                       | Fields                                                               |
+| --------------------------- | -------------------------------------------------------------------- |
+| `resume.uploaded`           | mime, size, isFirst                                                  |
+| `resume.parsed`             | promptVersion, modelUsed, latencyMs, confidence, sourceFieldCoverage |
+| `resume.parse_failed`       | error, retryCount                                                    |
+| `resume.reparsed`           | resumeId, promptVersion, dirtyFieldsPreserved                        |
+| `onboarding.step_completed` | step, durationMs                                                     |
+| `onboarding.field_edited`   | field, wasAiSuggested                                                |
+| `resume.highlight_miss`     | field, sourceString (truncated to 80 chars)                          |
+| `onboarding.completed`      | totalDurationMs, stepsCompleted                                      |
 
 ---
 
@@ -565,6 +582,7 @@ Supabase token expires after 1h; refresh happens silently via `@supabase/ssr`. I
 ### Unit tests (`vitest`)
 
 **Frontend:**
+
 - `OnboardingProgress`: completed / current / upcoming states; label collapse < 1024px; ARIA roles.
 - `ResumePreviewPane.findTextSpans()`: verbatim, whitespace-tolerant, multi-line, case-insensitive, accent-insensitive, not-found returns null.
 - Inline edit state machine: transitions correct; dirty-state preserved across edits.
@@ -573,6 +591,7 @@ Supabase token expires after 1h; refresh happens silently via `@supabase/ssr`. I
 - Save status indicator: idle → saving → idle / error states.
 
 **Backend:**
+
 - `DocxToPdfService.convert()`: mock LibreOffice spawn, buffer in/out, error path on non-zero exit, 30s timeout.
 - `parse-resume.service`: mocked OpenAI, structured output validation, `*_source` substring verification.
 - `ResumesService.upload()` for both PDF and DOCX paths, audit logs written.
@@ -588,6 +607,7 @@ Supabase token expires after 1h; refresh happens silently via `@supabase/ssr`. I
 ### E2E tests (Playwright, against the dev stack the human runs)
 
 Five flows that must pass:
+
 1. **Happy path PDF**: upload → parse → all 4 steps → dashboard.
 2. **Happy path DOCX**: same; verifies LibreOffice path renders in pane.
 3. **Skip resume**: skip → manual fill → complete.
@@ -600,12 +620,12 @@ A **golden corpus** of 15 fixture resumes at `apps/api/test/fixtures/resumes/`, 
 
 `pnpm test:ai-parse` runs the new prompt against the corpus and asserts:
 
-| Metric | Threshold |
-|---|---|
-| Contact precision/recall | ≥ 0.95 / ≥ 0.95 |
-| Experience entries (count match) | exact |
-| Skills (Jaccard with expected) | ≥ 0.85 |
-| `source_field_coverage` | ≥ 0.90 |
+| Metric                                                                    | Threshold          |
+| ------------------------------------------------------------------------- | ------------------ |
+| Contact precision/recall                                                  | ≥ 0.95 / ≥ 0.95    |
+| Experience entries (count match)                                          | exact              |
+| Skills (Jaccard with expected)                                            | ≥ 0.85             |
+| `source_field_coverage`                                                   | ≥ 0.90             |
 | **Source-string hallucination rate** (sources not substring of `rawText`) | **0% — hard fail** |
 
 Prompt-version bumps cannot land unless the corpus passes. Result CSV attached to the PR for review.
@@ -625,6 +645,7 @@ Playwright screenshots checked into the repo for each step at 1280px / 768px / 3
 ### Manual verification (the human runs this)
 
 Before sign-off:
+
 1. Upload 5 real resumes (mixed PDF/DOCX, different layouts) — confirm highlights land on correct text.
 2. Verify per-step filter visually re-focuses highlights on each step transition.
 3. Hover form fields → confirm corresponding resume highlight pulses; click highlights → confirm form field focuses.

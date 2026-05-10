@@ -1,5 +1,14 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, desc, eq, isNotNull, isNull, lt, sql, inArray } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  isNotNull,
+  isNull,
+  lt,
+  sql,
+  inArray,
+} from "drizzle-orm";
 import {
   notificationsTable,
   type NewNotification,
@@ -12,7 +21,10 @@ export class NotificationsRepository {
   constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient) {}
 
   async insertOne(input: NewNotification): Promise<Notification> {
-    const [row] = await this.db.insert(notificationsTable).values(input).returning();
+    const [row] = await this.db
+      .insert(notificationsTable)
+      .values(input)
+      .returning();
     if (!row) throw new Error("Notification insert failed");
     return row;
   }
@@ -80,7 +92,9 @@ export class NotificationsRepository {
     const last = items[items.length - 1];
     const nextCursor =
       hasMore && last
-        ? Buffer.from(`${last.createdAt.toISOString()}|${last.id}`).toString("base64")
+        ? Buffer.from(`${last.createdAt.toISOString()}|${last.id}`).toString(
+            "base64",
+          )
         : null;
     return { items, nextCursor };
   }
@@ -89,7 +103,12 @@ export class NotificationsRepository {
     await this.db
       .update(notificationsTable)
       .set({ readAt: new Date() })
-      .where(and(eq(notificationsTable.id, id), eq(notificationsTable.userId, userId)));
+      .where(
+        and(
+          eq(notificationsTable.id, id),
+          eq(notificationsTable.userId, userId),
+        ),
+      );
     const unreadCount = await this.countUnread(userId);
     return { unreadCount };
   }
@@ -125,7 +144,12 @@ export class NotificationsRepository {
         dismissedAt: new Date(),
         readAt: sql`COALESCE(${notificationsTable.readAt}, NOW())`,
       })
-      .where(and(eq(notificationsTable.id, id), eq(notificationsTable.userId, userId)));
+      .where(
+        and(
+          eq(notificationsTable.id, id),
+          eq(notificationsTable.userId, userId),
+        ),
+      );
     const unreadCount = await this.countUnread(userId);
     return { unreadCount };
   }
@@ -176,7 +200,9 @@ export class NotificationsRepository {
       .where(eq(notificationsTable.id, id));
   }
 
-  async findDigestPendingByUser(): Promise<Array<{ userId: string; ids: string[] }>> {
+  async findDigestPendingByUser(): Promise<
+    Array<{ userId: string; ids: string[] }>
+  > {
     const rows = await this.db
       .select({ id: notificationsTable.id, userId: notificationsTable.userId })
       .from(notificationsTable)
@@ -187,7 +213,10 @@ export class NotificationsRepository {
       arr.push(row.id);
       grouped.set(row.userId, arr);
     }
-    return Array.from(grouped.entries()).map(([userId, ids]) => ({ userId, ids }));
+    return Array.from(grouped.entries()).map(([userId, ids]) => ({
+      userId,
+      ids,
+    }));
   }
 
   async clearDigestPending(ids: string[]): Promise<void> {

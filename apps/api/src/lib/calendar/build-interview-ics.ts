@@ -19,7 +19,10 @@ interface BuildIcsInput {
 }
 
 const formatIcsDate = (d: Date): string =>
-  d.toISOString().replace(/\.\d{3}/, "").replace(/[-:]/g, "");
+  d
+    .toISOString()
+    .replace(/\.\d{3}/, "")
+    .replace(/[-:]/g, "");
 
 const escapeText = (s: string): string =>
   s
@@ -50,7 +53,9 @@ export function buildInterviewIcs(input: BuildIcsInput): string {
 
   const start = formatIcsDate(interview.scheduledAt);
   const end = formatIcsDate(
-    new Date(interview.scheduledAt.getTime() + interview.durationMinutes * 60_000),
+    new Date(
+      interview.scheduledAt.getTime() + interview.durationMinutes * 60_000,
+    ),
   );
   const dtstamp = formatIcsDate(new Date());
 
@@ -59,7 +64,9 @@ export function buildInterviewIcs(input: BuildIcsInput): string {
   const uid = `interview-${uidId}@aurahire.site`;
 
   // Build LOCATION: "Venue, Address (Room)" — commas come BEFORE escaping.
-  const locationParts = [interview.venueName, interview.addressLine].filter(Boolean);
+  const locationParts = [interview.venueName, interview.addressLine].filter(
+    Boolean,
+  );
   let locationRaw = locationParts.join(", ");
   if (interview.roomOrFloor) locationRaw += ` (${interview.roomOrFloor})`;
   const location = escapeText(locationRaw);
@@ -67,7 +74,9 @@ export function buildInterviewIcs(input: BuildIcsInput): string {
   // Build DESCRIPTION as a single escaped string with \n separators.
   const descParts: string[] = [];
   if (interview.interviewerName) {
-    const title = interview.interviewerTitle ? ` (${interview.interviewerTitle})` : "";
+    const title = interview.interviewerTitle
+      ? ` (${interview.interviewerTitle})`
+      : "";
     descParts.push(`Interviewer: ${interview.interviewerName}${title}`);
   }
   if (interview.reportingInstructions) {

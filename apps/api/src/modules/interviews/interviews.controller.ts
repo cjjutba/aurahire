@@ -11,7 +11,12 @@ import {
   Req,
   Res,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
@@ -44,7 +49,9 @@ export class InterviewsController {
   @Post("applications/:applicationId/interviews/check-conflicts")
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Soft-check overlapping interviews for recruiter and candidate" })
+  @ApiOperation({
+    summary: "Soft-check overlapping interviews for recruiter and candidate",
+  })
   async checkConflicts(
     @CurrentUser() user: AuthUser,
     @ActiveCompany() activeCompany: ActiveCompanyContext,
@@ -52,8 +59,16 @@ export class InterviewsController {
     @Body() dto: InterviewConflictsDto,
   ): Promise<{
     data: {
-      recruiterConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
-      candidateConflicts: Array<{ id: string; scheduledAt: string; durationMinutes: number }>;
+      recruiterConflicts: Array<{
+        id: string;
+        scheduledAt: string;
+        durationMinutes: number;
+      }>;
+      candidateConflicts: Array<{
+        id: string;
+        scheduledAt: string;
+        durationMinutes: number;
+      }>;
     };
   }> {
     const data = await this.service.checkConflictsForApplication(
@@ -94,14 +109,18 @@ export class InterviewsController {
   @Roles("candidate")
   @ApiOperation({ summary: "List candidate's own interviews" })
   @ApiResponse({ status: 200, type: InterviewListEnvelopeDto })
-  async listMine(@CurrentUser() user: AuthUser): Promise<InterviewListEnvelopeDto> {
+  async listMine(
+    @CurrentUser() user: AuthUser,
+  ): Promise<InterviewListEnvelopeDto> {
     const data = await this.service.listMine(user);
     return { data };
   }
 
   @Get("me/interviews/:id")
   @Roles("candidate")
-  @ApiOperation({ summary: "Get a single interview for the authenticated candidate" })
+  @ApiOperation({
+    summary: "Get a single interview for the authenticated candidate",
+  })
   @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
   async getMineById(
     @CurrentUser() user: AuthUser,
@@ -122,7 +141,10 @@ export class InterviewsController {
   ): Promise<void> {
     const ics = await this.service.getIcs(user, id);
     res.header("Content-Type", "text/calendar; charset=utf-8");
-    res.header("Content-Disposition", `attachment; filename="interview-${id}.ics"`);
+    res.header(
+      "Content-Disposition",
+      `attachment; filename="interview-${id}.ics"`,
+    );
     void res.send(ics);
   }
 
@@ -155,14 +177,20 @@ export class InterviewsController {
 
   @Get("interviews/:id")
   @Roles("recruiter", "admin")
-  @ApiOperation({ summary: "Get a single interview (recruiter must belong to the company)" })
+  @ApiOperation({
+    summary: "Get a single interview (recruiter must belong to the company)",
+  })
   @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
   async getById(
     @CurrentUser() user: AuthUser,
     @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("id") id: string,
   ): Promise<InterviewEnvelopeDto> {
-    const data = await this.service.getByIdForCompany(user, activeCompany.companyId, id);
+    const data = await this.service.getByIdForCompany(
+      user,
+      activeCompany.companyId,
+      id,
+    );
     return { data };
   }
 
@@ -177,7 +205,11 @@ export class InterviewsController {
   ): Promise<InterviewListEnvelopeDto> {
     const reqWithCtx = req as FastifyRequest & { activeCompanyId?: string };
     const companyId = reqWithCtx.activeCompanyId ?? null;
-    const data = await this.service.listForApplication(user, companyId, applicationId);
+    const data = await this.service.listForApplication(
+      user,
+      companyId,
+      applicationId,
+    );
     return { data };
   }
 
@@ -206,7 +238,9 @@ export class InterviewsController {
   @Post("interviews/:id/share-feedback")
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Share interview feedback (candidateSummary) with the candidate" })
+  @ApiOperation({
+    summary: "Share interview feedback (candidateSummary) with the candidate",
+  })
   @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
   async shareFeedback(
     @CurrentUser() user: AuthUser,
@@ -253,7 +287,10 @@ export class InterviewsController {
   @Patch("interviews/:id/no-show")
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Mark interview as no-show (only valid from scheduled or completed)" })
+  @ApiOperation({
+    summary:
+      "Mark interview as no-show (only valid from scheduled or completed)",
+  })
   @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
   async markNoShow(
     @CurrentUser() user: AuthUser,
@@ -273,7 +310,9 @@ export class InterviewsController {
   @Patch("interviews/:id/status")
   @Roles("recruiter")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Change interview status (cancel / mark completed / no-show)" })
+  @ApiOperation({
+    summary: "Change interview status (cancel / mark completed / no-show)",
+  })
   @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
   async updateStatus(
     @CurrentUser() user: AuthUser,

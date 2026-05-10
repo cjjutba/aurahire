@@ -54,9 +54,9 @@ const NEXT_POSITIVE: Record<string, AdvanceAction[] | null> = {
       href: (id) => `/recruiter/offers/new?applicationId=${id}`,
     },
   ],
-  offer: null,                                  // wait for candidate response
+  offer: null, // wait for candidate response
   offer_accepted: [{ status: "hired", label: "Mark Hired" }],
-  offer_declined: null,                         // handled by separate UI block
+  offer_declined: null, // handled by separate UI block
   hired: null,
   rejected: null,
   withdrawn: null,
@@ -113,9 +113,13 @@ export function DecisionBarClient({
 
   // Soft-confirm modal state (Task 35)
   const [softConfirmOpen, setSoftConfirmOpen] = useState(false);
-  const [softConfirmAction, setSoftConfirmAction] = useState<"offer" | "reject">("offer");
+  const [softConfirmAction, setSoftConfirmAction] = useState<
+    "offer" | "reject"
+  >("offer");
   // Deferred callback to execute after soft-confirm is accepted
-  const [softConfirmCallback, setSoftConfirmCallback] = useState<(() => void) | null>(null);
+  const [softConfirmCallback, setSoftConfirmCallback] = useState<
+    (() => void) | null
+  >(null);
 
   /**
    * Returns true when the soft-confirm gate should fire:
@@ -125,9 +129,14 @@ export function DecisionBarClient({
    */
   function needsSoftConfirm(): boolean {
     if (currentStatus !== "interview") return false;
-    if (latestInterviewRecommendation !== null && latestInterviewRecommendation !== undefined) return false;
+    if (
+      latestInterviewRecommendation !== null &&
+      latestInterviewRecommendation !== undefined
+    )
+      return false;
     const warnKey = `interview-feedback-warn:${applicationId}`;
-    if (typeof window !== "undefined" && sessionStorage.getItem(warnKey)) return false;
+    if (typeof window !== "undefined" && sessionStorage.getItem(warnKey))
+      return false;
     return true;
   }
 
@@ -169,10 +178,7 @@ export function DecisionBarClient({
     });
   }
 
-  async function changeStatus(
-    newStatus: string,
-    mode: PendingAction,
-  ) {
+  async function changeStatus(newStatus: string, mode: PendingAction) {
     setPending(mode);
     try {
       const res = await authedFetch(
@@ -192,9 +198,7 @@ export function DecisionBarClient({
       // which auto-opens the schedule modal on `?schedule=1`. The query param
       // survives router.refresh() so the modal pops without lifting state.
       if (newStatus === "interview") {
-        router.replace(
-          `/recruiter/applications/${applicationId}?schedule=1`,
-        );
+        router.replace(`/recruiter/applications/${applicationId}?schedule=1`);
       }
       router.refresh();
     } finally {
@@ -214,7 +218,9 @@ export function DecisionBarClient({
         },
       );
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        const body = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
         toastApiError(null, "Couldn't hire candidate", body.message);
         return;
       }
@@ -283,7 +289,11 @@ export function DecisionBarClient({
               <button
                 type="button"
                 disabled={isPending}
-                onClick={() => router.push(`/recruiter/offers/new?applicationId=${applicationId}`)}
+                onClick={() =>
+                  router.push(
+                    `/recruiter/offers/new?applicationId=${applicationId}`,
+                  )
+                }
                 className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60"
               >
                 <Check className="h-4 w-4" aria-hidden />
@@ -328,7 +338,11 @@ export function DecisionBarClient({
                   onClick={() => setHireConfirmOpen(true)}
                   className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60"
                 >
-                  {pending === actionKey ? <ButtonSpinner /> : <Check className="h-4 w-4" aria-hidden />}
+                  {pending === actionKey ? (
+                    <ButtonSpinner />
+                  ) : (
+                    <Check className="h-4 w-4" aria-hidden />
+                  )}
                   <span>{action.label}</span>
                 </button>
               );
@@ -392,8 +406,12 @@ export function DecisionBarClient({
             <button
               type="button"
               onClick={async () => {
-                const rejectLabel = currentStatus === "offer_accepted" ? "Not Hired" : "Reject";
-                const rejectConfirmTitle = currentStatus === "offer_accepted" ? "Don't hire this candidate?" : "Reject this application?";
+                const rejectLabel =
+                  currentStatus === "offer_accepted" ? "Not Hired" : "Reject";
+                const rejectConfirmTitle =
+                  currentStatus === "offer_accepted"
+                    ? "Don't hire this candidate?"
+                    : "Reject this application?";
                 const rejectConfirmDesc =
                   currentStatus === "offer_accepted"
                     ? "The candidate accepted but you've decided not to hire. They'll be notified the offer is being rescinded."
@@ -409,7 +427,9 @@ export function DecisionBarClient({
                   await changeStatus("rejected", "reject");
                 };
                 if (needsSoftConfirm()) {
-                  openSoftConfirm("reject", () => { void doReject(); });
+                  openSoftConfirm("reject", () => {
+                    void doReject();
+                  });
                 } else {
                   await doReject();
                 }
@@ -422,7 +442,9 @@ export function DecisionBarClient({
               ) : (
                 <X className="h-4 w-4" aria-hidden />
               )}
-              <span>{currentStatus === "offer_accepted" ? "Not Hired" : "Reject"}</span>
+              <span>
+                {currentStatus === "offer_accepted" ? "Not Hired" : "Reject"}
+              </span>
             </button>
           )}
         </div>
@@ -521,8 +543,12 @@ function PipelinePath({ currentStatus }: { currentStatus: string }) {
               {stage.label}
               {showOutcome && (
                 <>
-                  <span aria-hidden className="mx-1 text-[var(--color-muted)]">·</span>
-                  <span className={offerOutcome!.className}>{offerOutcome!.label}</span>
+                  <span aria-hidden className="mx-1 text-[var(--color-muted)]">
+                    ·
+                  </span>
+                  <span className={offerOutcome!.className}>
+                    {offerOutcome!.label}
+                  </span>
                 </>
               )}
             </span>

@@ -49,7 +49,9 @@ export interface UseUserNotificationsResult {
   isLoadingArchive: boolean;
   isLoadingUnreadCount: boolean;
   /** Lazily fetch (or refetch) the archive tab. Returns the query result for ergonomics. */
-  fetchArchive: () => Promise<UseQueryResult<ListNotificationsResponse>["data"]>;
+  fetchArchive: () => Promise<
+    UseQueryResult<ListNotificationsResponse>["data"]
+  >;
   /** Mark a single notification as read. */
   markRead: (id: string) => void;
   markReadAsync: (id: string) => Promise<void>;
@@ -110,9 +112,12 @@ export function useUserNotifications(
   const unreadCount = useQuery({
     queryKey: unreadKey(enabledUserId),
     queryFn: ({ signal }) =>
-      clientApiFetch<UnreadCountResponse>(`${NOTIFICATIONS_PATH}/unread-count`, {
-        signal,
-      }),
+      clientApiFetch<UnreadCountResponse>(
+        `${NOTIFICATIONS_PATH}/unread-count`,
+        {
+          signal,
+        },
+      ),
     enabled: Boolean(userId),
     staleTime: 30_000,
   });
@@ -151,9 +156,7 @@ export function useUserNotifications(
       qc.setQueryData<ListNotificationsResponse | undefined>(
         inboxKey(userId),
         (old) =>
-          old
-            ? { ...old, items: old.items.filter((n) => n.id !== id) }
-            : old,
+          old ? { ...old, items: old.items.filter((n) => n.id !== id) } : old,
       );
     },
   });
@@ -172,7 +175,8 @@ export function useUserNotifications(
       } satisfies UnreadCountResultRelaxed);
       qc.setQueryData<ListNotificationsResponse | undefined>(
         inboxKey(userId),
-        (old) => (old ? { ...old, items: [] } : { items: [], nextCursor: null }),
+        (old) =>
+          old ? { ...old, items: [] } : { items: [], nextCursor: null },
       );
     },
   });
@@ -300,7 +304,8 @@ export function useUserNotifications(
       } satisfies UnreadCountResultRelaxed);
       qc.setQueryData<ListNotificationsResponse | undefined>(
         inboxKey(current),
-        (old) => (old ? { ...old, items: [] } : { items: [], nextCursor: null }),
+        (old) =>
+          old ? { ...old, items: [] } : { items: [], nextCursor: null },
       );
       qc.invalidateQueries({ queryKey: archiveKey(current) });
     },

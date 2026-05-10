@@ -29,19 +29,28 @@ describe("onboardingSkippedAnalyzingSchema", () => {
 
   it("rejects previewsReady > 5", () => {
     expect(() =>
-      onboardingSkippedAnalyzingSchema.parse({ scoreReady: true, previewsReady: 6 }),
+      onboardingSkippedAnalyzingSchema.parse({
+        scoreReady: true,
+        previewsReady: 6,
+      }),
     ).toThrow();
   });
 
   it("rejects negative previewsReady", () => {
     expect(() =>
-      onboardingSkippedAnalyzingSchema.parse({ scoreReady: true, previewsReady: -1 }),
+      onboardingSkippedAnalyzingSchema.parse({
+        scoreReady: true,
+        previewsReady: -1,
+      }),
     ).toThrow();
   });
 
   it("rejects non-integer previewsReady", () => {
     expect(() =>
-      onboardingSkippedAnalyzingSchema.parse({ scoreReady: true, previewsReady: 2.5 }),
+      onboardingSkippedAnalyzingSchema.parse({
+        scoreReady: true,
+        previewsReady: 2.5,
+      }),
     ).toThrow();
   });
 

@@ -53,7 +53,9 @@ export class RescoreBatchProcessor extends WorkerHost {
   async process(job: Job<RescoreBatchPayload>): Promise<RescoreBatchResult> {
     const startedAt = Date.now();
     const { sampleSize, enqueuedBy } = job.data;
-    this.logger.log(`[job ${job.id}] starting rescore-batch sampleSize=${sampleSize}`);
+    this.logger.log(
+      `[job ${job.id}] starting rescore-batch sampleSize=${sampleSize}`,
+    );
 
     const config = await this.scoringRepo.getActiveConfig();
     if (!config) {
@@ -93,13 +95,17 @@ export class RescoreBatchProcessor extends WorkerHost {
 
       try {
         if (resume.parseStatus !== "parsed" || !resume.parsedData) {
-          this.logger.warn(`[job ${job.id}] skipping app ${application.id}: resume not parsed`);
+          this.logger.warn(
+            `[job ${job.id}] skipping app ${application.id}: resume not parsed`,
+          );
           skippedCount++;
           continue;
         }
 
         if (jobRow.status === "archived") {
-          this.logger.warn(`[job ${job.id}] skipping app ${application.id}: job archived`);
+          this.logger.warn(
+            `[job ${job.id}] skipping app ${application.id}: job archived`,
+          );
           skippedCount++;
           continue;
         }
@@ -172,7 +178,10 @@ export class RescoreBatchProcessor extends WorkerHost {
             resumeId: application.resumeId,
             overallScore: derivedOverall,
             band: derivedBand,
-            components: reconciledComponents as unknown as Record<string, unknown>,
+            components: reconciledComponents as unknown as Record<
+              string,
+              unknown
+            >,
             redactedFields: aiResult.redactedFields,
             weightsUsed: weights as unknown as Record<string, unknown>,
             promptVersion: aiResult.promptVersion,

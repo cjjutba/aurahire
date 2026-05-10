@@ -10,13 +10,14 @@ The current loading state on `/onboarding/candidate` (after a candidate uploads 
 
 1. The header copy "Reading your resume…" duplicates the first cycling caption inside the shimmer card — both render simultaneously.
 2. Captions cycle on a wall-clock interval, completely disconnected from any real stage. A 4-second parse will never display "Almost done…"; a 14-second parse will display each caption ~2× without progressing.
-3. No file context shown — the candidate has no acknowledgement that *their* file (filename, size, format) is the one being processed.
+3. No file context shown — the candidate has no acknowledgement that _their_ file (filename, size, format) is the one being processed.
 
 The component also under-uses the brand: no JetBrains Mono on the file size, no editorial elevation, no use of the "explainable AI shows its work" thesis angle that the rest of the product leans into.
 
 ## Goal
 
 Replace `ParsingShimmer` with a stepped progress stack that:
+
 - shows the file being processed (icon + filename + size in JetBrains Mono),
 - carries a thin AuraHire-Blue indeterminate progress bar at the top,
 - displays four named stages with a pulsing dot → checkmark transition driven by a time curve,
@@ -28,12 +29,14 @@ The redesign is presentation-only: no API, schema, or backend change.
 ## Scope
 
 **In scope:**
+
 - New `ParsingProgressCard` component (replaces `ParsingShimmer`).
 - Wire `ResumeUploadCard` to pass the uploaded `File` (name, size, type) into the new card.
 - Remove the duplicated `<p>Reading your resume…</p>` header above the shimmer.
 - Use existing brand tokens; no new color or typography tokens.
 
 **Out of scope:**
+
 - Backend streaming progress (SSE/long-poll). Stages are time-curve estimates client-side. (This is the same fidelity as the current shimmer — the redesign does not regress honesty; if anything it's clearer that the timing is approximate.)
 - Animating into the success card (handled separately by `ParseSuccessCard`).
 - Stale-parse recovery card (`ResumeStaleRecoveryCard`) — not in this scope.
@@ -71,6 +74,7 @@ A single card (`{rounded.lg}` 16 px, `bg-canvas`, 1 px hairline border, padding 
 ### Stage rows
 
 Four stages (constants):
+
 1. `upload` — "Uploading file" — duration: 800 ms.
 2. `extract` — "Extracting text" — duration: 3500 ms.
 3. `identify` — "Identifying experience & skills" — duration: 4500 ms.
@@ -82,13 +86,14 @@ State machine: client-side timer advances `currentStageIndex` based on elapsed t
 
 Three states, from left to right: status glyph (16 px, fixed-width column) → label → trailing icon (16 px, fixed-width column).
 
-| State    | Status glyph                                      | Label color           | Trailing icon                                  |
-|----------|---------------------------------------------------|-----------------------|------------------------------------------------|
-| done     | filled circle, `{colors.score-high}` (#10b981)    | `{colors.body}`       | `Check` (Lucide), `{colors.score-high}`        |
-| active   | filled circle, `{colors.primary}`, animate-pulse  | `{colors.ink}`, 600   | `Loader2` (Lucide), `{colors.primary}`, spin   |
-| pending  | hollow circle, `{colors.hairline}`                | `{colors.muted-soft}` | small middle-dot, `{colors.muted-soft}`        |
+| State   | Status glyph                                     | Label color           | Trailing icon                                |
+| ------- | ------------------------------------------------ | --------------------- | -------------------------------------------- |
+| done    | filled circle, `{colors.score-high}` (#10b981)   | `{colors.body}`       | `Check` (Lucide), `{colors.score-high}`      |
+| active  | filled circle, `{colors.primary}`, animate-pulse | `{colors.ink}`, 600   | `Loader2` (Lucide), `{colors.primary}`, spin |
+| pending | hollow circle, `{colors.hairline}`               | `{colors.muted-soft}` | small middle-dot, `{colors.muted-soft}`      |
 
 Transitions:
+
 - Active → done: 200 ms ease-out — glyph color cross-fades, trailing icon swaps Loader2 → Check with a 150 ms scale 0.8 → 1.0.
 - Pending → active: 200 ms ease-out — same fade.
 

@@ -2,8 +2,12 @@ import { sanitizeMapUrl } from "./sanitize-map-url";
 
 describe("sanitizeMapUrl", () => {
   it("accepts http and https URLs", () => {
-    expect(sanitizeMapUrl("http://maps.google.com/?q=foo")).toBe("http://maps.google.com/?q=foo");
-    expect(sanitizeMapUrl("https://maps.google.com/?q=foo")).toBe("https://maps.google.com/?q=foo");
+    expect(sanitizeMapUrl("http://maps.google.com/?q=foo")).toBe(
+      "http://maps.google.com/?q=foo",
+    );
+    expect(sanitizeMapUrl("https://maps.google.com/?q=foo")).toBe(
+      "https://maps.google.com/?q=foo",
+    );
   });
   it("rejects javascript:, data:, file:, mailto:, ftp:", () => {
     for (const bad of [

@@ -9,7 +9,8 @@ export class InvitationPreviewDto {
   @ApiProperty() email!: string;
   @ApiProperty() invitedAt!: string;
   @ApiPropertyOptional({ nullable: true }) expiresAt!: string | null;
-  @ApiProperty({ enum: ["invited", "active", "suspended", "left"] }) status!: string;
+  @ApiProperty({ enum: ["invited", "active", "suspended", "left"] })
+  status!: string;
   @ApiProperty() isExpired!: boolean;
 }
 

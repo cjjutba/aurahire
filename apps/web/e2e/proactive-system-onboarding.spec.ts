@@ -71,7 +71,9 @@ async function loginIfCredentialsPresent(page: Page): Promise<void> {
   // Either lands on /candidate (already onboarded — should not happen for this spec)
   // or /onboarding/candidate. Accept either; the test will fail loudly if the
   // candidate has already finished onboarding.
-  await page.waitForURL(/\/(candidate|onboarding\/candidate)/, { timeout: 15_000 });
+  await page.waitForURL(/\/(candidate|onboarding\/candidate)/, {
+    timeout: 15_000,
+  });
 }
 
 test.describe("proactive system — onboarding to dashboard", () => {
@@ -119,9 +121,9 @@ test.describe("proactive system — onboarding to dashboard", () => {
 
     // The reducer's first kind is "computingProfileScore" → renders an AiShimmer
     // with caption "Computing your Profile Score…". The ellipsis is U+2026.
-    await expect(
-      page.getByText(/Computing your Profile Score/i),
-    ).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText(/Computing your Profile Score/i)).toBeVisible({
+      timeout: 5_000,
+    });
 
     // ─── Dashboard ───────────────────────────────────────────────────────
     // ANALYZING_SCREEN_WALLCLOCK_MS bounds the analyzing screen; the redirect
@@ -140,16 +142,16 @@ test.describe("proactive system — onboarding to dashboard", () => {
     // Heading is the "Recommended for You" section label; presence of *the
     // section* is the minimum required. If the precompute queue has produced
     // at least one match preview, a "/100" score chip is visible too.
-    await expect(
-      page.getByText(/Recommended for You/i),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Recommended for You/i)).toBeVisible({
+      timeout: 15_000,
+    });
 
     if (REQUIRE_RECS) {
       // Each recommended job card surfaces its score as `<NN> / 100` in mono.
       // Targeting the "/ 100" label keeps the assertion stable across re-renders.
-      await expect(
-        page.locator("text=/ 100").first(),
-      ).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator("text=/ 100").first()).toBeVisible({
+        timeout: 15_000,
+      });
     }
   });
 });

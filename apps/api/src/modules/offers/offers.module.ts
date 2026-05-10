@@ -10,7 +10,12 @@ import { OffersRepository } from "./offers.repository";
 import { OffersService } from "./offers.service";
 
 @Module({
-  imports: [forwardRef(() => ApplicationsModule), JobsModule, NotificationsModule, ProfilesModule],
+  imports: [
+    forwardRef(() => ApplicationsModule),
+    JobsModule,
+    NotificationsModule,
+    ProfilesModule,
+  ],
   controllers: [OffersController],
   providers: [OffersService, OffersRepository],
   exports: [OffersService, OffersRepository],

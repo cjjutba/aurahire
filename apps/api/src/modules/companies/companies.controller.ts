@@ -30,15 +30,9 @@ import { SkipActiveCompany } from "../../common/decorators/skip-active-company.d
 
 import { CompaniesService } from "./companies.service";
 import { CreateCompanyDto } from "./dto/create-company.dto";
-import {
-  DeleteCompanyDto,
-  UpdateCompanyDto,
-} from "./dto/update-company.dto";
+import { DeleteCompanyDto, UpdateCompanyDto } from "./dto/update-company.dto";
 import { InviteMemberDto } from "./dto/invite-member.dto";
-import {
-  TransferOwnershipDto,
-  UpdateMemberDto,
-} from "./dto/update-member.dto";
+import { TransferOwnershipDto, UpdateMemberDto } from "./dto/update-member.dto";
 import {
   CompanyEnvelopeDto,
   CompanyResponseDto,

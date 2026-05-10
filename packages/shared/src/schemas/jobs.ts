@@ -36,7 +36,9 @@ export const createJobSchema = z
   })
   .refine(
     (data) =>
-      data.salaryMin == null || data.salaryMax == null || data.salaryMax >= data.salaryMin,
+      data.salaryMin == null ||
+      data.salaryMax == null ||
+      data.salaryMax >= data.salaryMin,
     { message: "salaryMax must be >= salaryMin", path: ["salaryMax"] },
   );
 
@@ -63,7 +65,9 @@ export const updateJobSchema = z
   })
   .refine(
     (data) =>
-      data.salaryMin == null || data.salaryMax == null || data.salaryMax >= data.salaryMin,
+      data.salaryMin == null ||
+      data.salaryMax == null ||
+      data.salaryMax >= data.salaryMin,
     { message: "salaryMax must be >= salaryMin", path: ["salaryMax"] },
   );
 

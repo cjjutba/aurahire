@@ -138,7 +138,9 @@ export class ScoringRepository {
     });
   }
 
-  async findMatchScoreByApplicationId(applicationId: string): Promise<MatchScore | null> {
+  async findMatchScoreByApplicationId(
+    applicationId: string,
+  ): Promise<MatchScore | null> {
     const [row] = await this.db
       .select()
       .from(matchScoresTable)

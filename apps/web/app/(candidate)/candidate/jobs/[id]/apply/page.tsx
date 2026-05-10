@@ -88,7 +88,9 @@ export default async function ApplyPage({ params }: PageProps) {
   const resumesBody = (await resumesRes.json()) as { data: ResumeRow[] };
 
   const job = jobBody.data;
-  const parsedResumes = resumesBody.data.filter((r) => r.parseStatus === "parsed");
+  const parsedResumes = resumesBody.data.filter(
+    (r) => r.parseStatus === "parsed",
+  );
 
   let preview: ApplyMatchPreview | null = null;
   if (previewRes.ok) {
@@ -214,10 +216,12 @@ export default async function ApplyPage({ params }: PageProps) {
             </h2>
             <ol className="mt-4 space-y-3 text-xs">
               <NextStep n={1}>
-                Your resume is matched against the role&apos;s required skills with a transparent breakdown.
+                Your resume is matched against the role&apos;s required skills
+                with a transparent breakdown.
               </NextStep>
               <NextStep n={2}>
-                The recruiter reviews your application and reaches out if there&apos;s a fit.
+                The recruiter reviews your application and reaches out if
+                there&apos;s a fit.
               </NextStep>
               <NextStep n={3}>
                 You can track the application&apos;s status anytime from{" "}
@@ -278,7 +282,8 @@ function NoResumesCard() {
         No parsed resumes yet
       </h2>
       <p className="mt-1.5 text-sm text-[var(--color-body)]">
-        Upload a resume to start applying. We&apos;ll parse it before you submit.
+        Upload a resume to start applying. We&apos;ll parse it before you
+        submit.
       </p>
       <Link
         href="/candidate/resume"

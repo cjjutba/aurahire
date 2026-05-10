@@ -23,7 +23,10 @@ interface Props {
   };
 }
 
-const STATUS_STYLE: Record<FeedbackStatus, { dot: string; text: string; label: string }> = {
+const STATUS_STYLE: Record<
+  FeedbackStatus,
+  { dot: string; text: string; label: string }
+> = {
   new: {
     dot: "bg-[var(--color-status-info)]",
     text: "text-[var(--color-status-info)]",
@@ -50,8 +53,7 @@ const TYPE_STYLE: Record<FeedbackType, string> = {
   bug: "bg-[var(--color-score-low-soft)] text-[var(--color-score-low)]",
   suggestion: "bg-[var(--color-primary-soft)] text-[var(--color-primary)]",
   praise: "bg-[var(--color-score-high-soft)] text-[var(--color-score-high)]",
-  question:
-    "bg-[var(--color-score-mid-soft)] text-[var(--color-score-mid)]",
+  question: "bg-[var(--color-score-mid-soft)] text-[var(--color-score-mid)]",
   other: "bg-[var(--color-surface-strong)] text-[var(--color-body)]",
 };
 
@@ -257,10 +259,7 @@ function PageNav({
     "inline-flex h-9 min-w-9 items-center justify-center rounded-[var(--radius-md)] px-2 text-sm transition text-[var(--color-body)] hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]";
   if (disabled) {
     return (
-      <span
-        className={`${className} pointer-events-none opacity-40`}
-        {...rest}
-      >
+      <span className={`${className} pointer-events-none opacity-40`} {...rest}>
         {children}
       </span>
     );

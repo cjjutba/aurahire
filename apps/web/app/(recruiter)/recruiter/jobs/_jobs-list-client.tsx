@@ -37,12 +37,29 @@ interface JobWithStats {
   };
 }
 
-const JOB_STATUS: Record<string, { label: string; dot: string; text: string }> = {
-  draft:     { label: "Draft",     dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
-  published: { label: "Published", dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  closed:    { label: "Closed",    dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
-  archived:  { label: "Archived",  dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
-};
+const JOB_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    draft: {
+      label: "Draft",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+    published: {
+      label: "Published",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    closed: {
+      label: "Closed",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    archived: {
+      label: "Archived",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
 const DEFAULT_JOB_STATUS = JOB_STATUS["draft"]!;
 
@@ -55,17 +72,27 @@ function formatSalary(value: number | null): string {
   return value.toLocaleString();
 }
 
-function formatSalaryRange(min: number | null, max: number | null, currency: string | null) {
-  if (min == null && max == null) return <span className="text-[var(--color-muted)]">—</span>;
+function formatSalaryRange(
+  min: number | null,
+  max: number | null,
+  currency: string | null,
+) {
+  if (min == null && max == null)
+    return <span className="text-[var(--color-muted)]">—</span>;
   const cur = currency ?? "USD";
-  if (min != null && max != null) return `${formatSalary(min)}–${formatSalary(max)} ${cur}`;
+  if (min != null && max != null)
+    return `${formatSalary(min)}–${formatSalary(max)} ${cur}`;
   if (min != null) return `From ${formatSalary(min)} ${cur}`;
   return `Up to ${formatSalary(max)} ${cur}`;
 }
 
 function formatLocation(city: string | null, country: string | null) {
   const parts = [city, country].filter(Boolean);
-  return parts.length === 0 ? <span className="text-[var(--color-muted)]">—</span> : parts.join(", ");
+  return parts.length === 0 ? (
+    <span className="text-[var(--color-muted)]">—</span>
+  ) : (
+    parts.join(", ")
+  );
 }
 
 function formatDate(iso: string): string {
@@ -77,7 +104,11 @@ function formatDate(iso: string): string {
 }
 
 interface JobsListClientProps {
-  params: RecruiterJobsListParams & { page: number; limit: number; sort: string };
+  params: RecruiterJobsListParams & {
+    page: number;
+    limit: number;
+    sort: string;
+  };
 }
 
 export function JobsListClient({ params }: JobsListClientProps) {
@@ -100,16 +131,25 @@ export function JobsListClient({ params }: JobsListClientProps) {
     total: 0,
     totalPages: 1,
   };
-  const filtersActive = !!(params.q || params.status || params.mode || params.experienceLevel);
+  const filtersActive = !!(
+    params.q ||
+    params.status ||
+    params.mode ||
+    params.experienceLevel
+  );
 
   return (
     <div className="mx-auto max-w-[1280px] space-y-6">
       {/* Header */}
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">My Jobs</h1>
+          <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
+            My Jobs
+          </h1>
           <p className="mt-2 text-sm text-[var(--color-body)]">
-            {meta.total === 0 ? "No jobs yet" : `${meta.total} job${meta.total === 1 ? "" : "s"}`}
+            {meta.total === 0
+              ? "No jobs yet"
+              : `${meta.total} job${meta.total === 1 ? "" : "s"}`}
           </p>
         </div>
         <Link
@@ -132,20 +172,38 @@ export function JobsListClient({ params }: JobsListClientProps) {
 
       {/* Table or empty state */}
       {rows.length === 0 ? (
-        filtersActive ? <EmptyFiltered /> : <EmptyJobs />
+        filtersActive ? (
+          <EmptyFiltered />
+        ) : (
+          <EmptyJobs />
+        )
       ) : (
         <>
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)]">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-soft)]">
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Title</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Status</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Type / Mode</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Location</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Salary</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Apps</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Updated</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Title
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Type / Mode
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Location
+                  </th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Salary
+                  </th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Apps
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Updated
+                  </th>
                   <th className="w-10 px-2"></th>
                 </tr>
               </thead>
@@ -161,7 +219,9 @@ export function JobsListClient({ params }: JobsListClientProps) {
               page: meta.page,
               limit: meta.limit,
               total: meta.total,
-              totalPages: meta.totalPages ?? Math.max(1, Math.ceil(meta.total / meta.limit)),
+              totalPages:
+                meta.totalPages ??
+                Math.max(1, Math.ceil(meta.total / meta.limit)),
             }}
             searchParams={{
               q: params.q,
@@ -194,8 +254,13 @@ function JobRow({ job }: { job: JobWithStats }) {
         </Link>
       </td>
       <td className="px-4 py-3">
-        <span className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}>
-          <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+            aria-hidden
+          />
           {status.label}
         </span>
       </td>
@@ -210,8 +275,12 @@ function JobRow({ job }: { job: JobWithStats }) {
       <td className="px-4 py-3 text-right font-mono text-[var(--color-body)]">
         {formatSalaryRange(job.salaryMin, job.salaryMax, job.salaryCurrency)}
       </td>
-      <td className="px-4 py-3 text-right font-mono text-[var(--color-ink)]">{apps}</td>
-      <td className="px-4 py-3 text-[var(--color-muted)]">{formatDate(job.updatedAt)}</td>
+      <td className="px-4 py-3 text-right font-mono text-[var(--color-ink)]">
+        {apps}
+      </td>
+      <td className="px-4 py-3 text-[var(--color-muted)]">
+        {formatDate(job.updatedAt)}
+      </td>
       <td className="px-2 py-3 text-right">
         <JobRowActionsClient jobId={job.id} status={job.status} />
       </td>
@@ -222,7 +291,9 @@ function JobRow({ job }: { job: JobWithStats }) {
 function EmptyJobs() {
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
-      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">No jobs yet</div>
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
+        No jobs yet
+      </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
         Post your first opening to start collecting candidates.
       </div>
@@ -239,7 +310,9 @@ function EmptyJobs() {
 function EmptyFiltered() {
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
-      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">No jobs match your filters</div>
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
+        No jobs match your filters
+      </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
         Try different search terms or clear the filters.
       </div>

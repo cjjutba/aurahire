@@ -54,8 +54,18 @@ describe("InterviewFeedbackDueCron", () => {
 
   it("emits feedback-due notification and marks the dedup flag for each due row", async () => {
     const due: DueRow[] = [
-      { interviewId: "i1", recruiterId: "r1", candidateName: "Alex", jobTitle: "Engineer" },
-      { interviewId: "i2", recruiterId: "r2", candidateName: "Bo", jobTitle: "PM" },
+      {
+        interviewId: "i1",
+        recruiterId: "r1",
+        candidateName: "Alex",
+        jobTitle: "Engineer",
+      },
+      {
+        interviewId: "i2",
+        recruiterId: "r2",
+        candidateName: "Bo",
+        jobTitle: "PM",
+      },
     ];
     const { db } = await setup(due);
 
@@ -79,7 +89,14 @@ describe("InterviewFeedbackDueCron", () => {
   });
 
   it("audit-logs the run with notified and scanned counts", async () => {
-    await setup([{ interviewId: "i1", recruiterId: "r1", candidateName: "X", jobTitle: "T" }]);
+    await setup([
+      {
+        interviewId: "i1",
+        recruiterId: "r1",
+        candidateName: "X",
+        jobTitle: "T",
+      },
+    ]);
     await cron.execute();
     expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -100,11 +117,23 @@ describe("InterviewFeedbackDueCron", () => {
 
   it("continues processing other rows when one notification.emit fails", async () => {
     const due: DueRow[] = [
-      { interviewId: "i1", recruiterId: "r1", candidateName: "X", jobTitle: "T" },
-      { interviewId: "i2", recruiterId: "r2", candidateName: "Y", jobTitle: "T" },
+      {
+        interviewId: "i1",
+        recruiterId: "r1",
+        candidateName: "X",
+        jobTitle: "T",
+      },
+      {
+        interviewId: "i2",
+        recruiterId: "r2",
+        candidateName: "Y",
+        jobTitle: "T",
+      },
     ];
     const { db } = await setup(due);
-    notifications.emit.mockRejectedValueOnce(new Error("boom")).mockResolvedValue(undefined);
+    notifications.emit
+      .mockRejectedValueOnce(new Error("boom"))
+      .mockResolvedValue(undefined);
     const result = await cron.execute();
     expect(notifications.emit).toHaveBeenCalledTimes(2);
     expect(db.update).toHaveBeenCalledTimes(1);

@@ -55,13 +55,15 @@ export const candidateHowItWorks: HowItWorksContent = {
       },
       {
         label: "Review",
-        description: "A human recruiter reviews you with the same evidence you see.",
+        description:
+          "A human recruiter reviews you with the same evidence you see.",
         icon: Eye,
         targetId: "recruiter-review",
       },
       {
         label: "Outcome",
-        description: "Interview, offer, or polite decline — always with a reason.",
+        description:
+          "Interview, offer, or polite decline — always with a reason.",
         icon: Award,
         targetId: "outcomes",
       },
@@ -340,7 +342,11 @@ export const candidateHowItWorks: HowItWorksContent = {
                 ["Photo / avatar", "Optional, your choice", "No (never)"],
                 ["Work history (employers, dates, titles)", "Yes", "Yes"],
                 ["Skills, education, certifications", "Yes", "Yes"],
-                ["Resume bullets & narrative", "Yes", "Yes (redacted of identifiers)"],
+                [
+                  "Resume bullets & narrative",
+                  "Yes",
+                  "Yes (redacted of identifiers)",
+                ],
                 ["Demographic data", "Never collected", "Never collected"],
                 ["Salary expectations", "Yes", "No (filter only, not scored)"],
               ],
@@ -624,12 +630,36 @@ export const candidateHowItWorks: HowItWorksContent = {
               kind: "matrix",
               head: ["Step", "AI does", "Human does"],
               rows: [
-                ["Profile parsing", "Extract structured fields from your resume.", "Review and edit any value before applying."],
-                ["PII redaction", "Strip identifiers before scoring.", "Set what counts as PII (admin policy)."],
-                ["Score computation", "Run the rule and AI components, sum to a final score.", "Configure weights; review and override scores."],
-                ["Triage", "Sort applications by score.", "Decide who advances, declines, or pauses."],
-                ["Bias check on jobs", "Flag potentially biased language in postings.", "Approve, edit, or override the flag."],
-                ["Hiring decision", "Nothing.", "Owns the decision end-to-end."],
+                [
+                  "Profile parsing",
+                  "Extract structured fields from your resume.",
+                  "Review and edit any value before applying.",
+                ],
+                [
+                  "PII redaction",
+                  "Strip identifiers before scoring.",
+                  "Set what counts as PII (admin policy).",
+                ],
+                [
+                  "Score computation",
+                  "Run the rule and AI components, sum to a final score.",
+                  "Configure weights; review and override scores.",
+                ],
+                [
+                  "Triage",
+                  "Sort applications by score.",
+                  "Decide who advances, declines, or pauses.",
+                ],
+                [
+                  "Bias check on jobs",
+                  "Flag potentially biased language in postings.",
+                  "Approve, edit, or override the flag.",
+                ],
+                [
+                  "Hiring decision",
+                  "Nothing.",
+                  "Owns the decision end-to-end.",
+                ],
               ],
             },
             {
@@ -678,6 +708,9 @@ export const candidateHowItWorks: HowItWorksContent = {
     title: "Still wondering how something works?",
     body: "We'd rather over-explain than leave you guessing. If a specific part of the platform isn't clear, write to us — a human reads and responds.",
     email: "cjjutbaofficial@gmail.com",
-    secondaryLink: { label: "Open the candidate help center", href: "/candidate/help" },
+    secondaryLink: {
+      label: "Open the candidate help center",
+      href: "/candidate/help",
+    },
   },
 };

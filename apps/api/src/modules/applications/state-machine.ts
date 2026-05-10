@@ -1,19 +1,22 @@
 import type { ApplicationStatus } from "@aurahire/shared";
 
-const VALID_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
-  applied:        ["screening", "interview", "rejected", "withdrawn"],
-  screening:      ["interview",              "rejected", "withdrawn"],
-  interview:      ["offer",                  "rejected", "withdrawn"],
+const VALID_TRANSITIONS: Record<
+  ApplicationStatus,
+  readonly ApplicationStatus[]
+> = {
+  applied: ["screening", "interview", "rejected", "withdrawn"],
+  screening: ["interview", "rejected", "withdrawn"],
+  interview: ["offer", "rejected", "withdrawn"],
   // Recruiter waits for the candidate at "offer". The recruiter can still
   // reject or the candidate can withdraw. Direct offer → hired is removed
   // because the candidate decision must precede the recruiter decision.
-  offer:          ["offer_accepted", "offer_declined", "rejected", "withdrawn"],
+  offer: ["offer_accepted", "offer_declined", "rejected", "withdrawn"],
   // Candidate accepted; recruiter now decides Hired vs Not Hired.
   offer_accepted: ["hired", "rejected", "withdrawn"],
-  offer_declined: ["offer",                            "rejected", "withdrawn"],
-  hired:          [],
-  rejected:       [],
-  withdrawn:      [],
+  offer_declined: ["offer", "rejected", "withdrawn"],
+  hired: [],
+  rejected: [],
+  withdrawn: [],
 };
 
 /**

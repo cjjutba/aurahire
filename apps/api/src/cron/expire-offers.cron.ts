@@ -16,7 +16,10 @@ import { EmailService } from "../email/email.service";
 import { OfferExpiredEmail } from "../email/templates/offer-expired";
 import { NotificationsService } from "../modules/notifications/notifications.service";
 import { ApplicationsService } from "../modules/applications/applications.service";
-import { ApplicationsRepository, type ApplicationsTx } from "../modules/applications/applications.repository";
+import {
+  ApplicationsRepository,
+  type ApplicationsTx,
+} from "../modules/applications/applications.repository";
 
 const CRON_NAME = "expire-offers";
 // audit_logs.entity_id is NOT NULL UUID; sentinel for cron-level entries.
@@ -65,7 +68,10 @@ export class ExpireOffersCron {
           applicationsTable,
           eq(applicationsTable.id, offersTable.applicationId),
         )
-        .innerJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+        .innerJoin(
+          profilesTable,
+          eq(profilesTable.id, applicationsTable.candidateId),
+        )
         .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
         .innerJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
         .where(
@@ -96,7 +102,8 @@ export class ExpireOffersCron {
         .set({ status: "expired", updatedAt: new Date() })
         .where(sql`${offersTable.id} = ANY(${offerIds}::uuid[])`);
 
-      const appUrl = this.config.get<string>("APP_URL") ?? "http://localhost:3000";
+      const appUrl =
+        this.config.get<string>("APP_URL") ?? "http://localhost:3000";
 
       // Per-offer audit + email + in-app notify (both candidate and recruiter)
       // — best-effort; one failure doesn't fail the cron.

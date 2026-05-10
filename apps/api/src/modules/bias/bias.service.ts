@@ -105,7 +105,10 @@ export class BiasService {
 
     const job = await this.jobsRepo.findById(jobId);
     if (!job || job.companyId !== companyId) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
 
     const customTerms = await this.loadCustomFlaggedTerms();
@@ -193,12 +196,18 @@ export class BiasService {
 
     const job = await this.jobsRepo.findById(jobId);
     if (!job || job.companyId !== companyId) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
 
     const flag = await this.biasRepo.findById(flagId);
     if (!flag || flag.jobId !== jobId) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Flag not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Flag not found",
+      });
     }
 
     if (flag.status !== "flagged") {
@@ -247,12 +256,18 @@ export class BiasService {
 
     const job = await this.jobsRepo.findById(jobId);
     if (!job) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
     // Recruiters scope to their active company; admins (companyId === null)
     // bypass the tenant check since they act across tenants.
     if (user.role === "recruiter" && job.companyId !== companyId) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
 
     const rows = await this.biasRepo.findByJobId(jobId);

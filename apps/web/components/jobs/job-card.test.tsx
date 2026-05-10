@@ -82,7 +82,9 @@ describe("JobCard score row", () => {
       <JobCard job={baseJob} href="/candidate/jobs/job-1" />,
     );
 
-    expect(screen.queryByText(/strong match|partial match|limited match/i)).toBeNull();
+    expect(
+      screen.queryByText(/strong match|partial match|limited match/i),
+    ).toBeNull();
     expect(
       container.querySelector("[data-testid='job-card-match-fill']"),
     ).toBeNull();
@@ -103,7 +105,9 @@ describe("JobCard score row", () => {
     expect(
       container.querySelector("[data-testid='job-card-match-skeleton']"),
     ).not.toBeNull();
-    expect(screen.queryByText(/strong match|partial match|limited match/i)).toBeNull();
+    expect(
+      screen.queryByText(/strong match|partial match|limited match/i),
+    ).toBeNull();
   });
 
   it("matchPreview wins over matchPreviewLoading (no skeleton when both set)", () => {

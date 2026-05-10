@@ -127,7 +127,9 @@ export class JobsRepository {
     return { ...row.job, company: row.company };
   }
 
-  async list(filters: ListJobsFilters): Promise<{ rows: JobWithCompany[]; total: number }> {
+  async list(
+    filters: ListJobsFilters,
+  ): Promise<{ rows: JobWithCompany[]; total: number }> {
     const where = this.buildWhere(filters);
     const orderBy = this.buildOrder(filters.sort);
     const offset = (filters.page - 1) * filters.limit;
@@ -187,7 +189,9 @@ export class JobsRepository {
         interviewed: sql<number>`count(distinct ${applicationsTable.id}) filter (where ${applicationsTable.status} = 'interview')::int`,
         offered: sql<number>`count(distinct ${applicationsTable.id}) filter (where ${applicationsTable.status} = 'offer')::int`,
         hired: sql<number>`count(distinct ${applicationsTable.id}) filter (where ${applicationsTable.status} = 'hired')::int`,
-        avgScore: sql<number | null>`avg(${matchScoresTable.overallScore})::float`,
+        avgScore: sql<
+          number | null
+        >`avg(${matchScoresTable.overallScore})::float`,
       })
       .from(jobsTable)
       .innerJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))

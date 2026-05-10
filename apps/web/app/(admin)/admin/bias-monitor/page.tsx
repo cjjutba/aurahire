@@ -174,7 +174,10 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
           This view surfaces aggregate flag counts + override decisions. It does
           NOT compute disparate-impact tests against demographic groups — by
           design, the system does not collect protected-class data (PII
-          redaction, see <code className="rounded bg-[var(--color-canvas)] px-1 font-mono">/admin/ai-config</code>
+          redaction, see{" "}
+          <code className="rounded bg-[var(--color-canvas)] px-1 font-mono">
+            /admin/ai-config
+          </code>
           ). For the methodology, see{" "}
           <code className="rounded bg-[var(--color-canvas)] px-1 font-mono">
             docs/main/ai-design.md

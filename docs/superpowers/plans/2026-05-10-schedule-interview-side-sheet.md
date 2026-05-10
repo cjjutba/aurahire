@@ -15,15 +15,19 @@
 ## File Structure
 
 ### New file
+
 - `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-sheet-client.tsx` — sheet-shelled Schedule Interview form. Replaces the modal version.
 
 ### Modified file
+
 - `apps/web/app/(recruiter)/recruiter/applications/[id]/_interviews-section-client.tsx` — single import + JSX symbol update (`ScheduleInterviewModalClient` → `ScheduleInterviewSheetClient`).
 
 ### Deleted file
+
 - `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx` — superseded by the sheet client.
 
 ### Untouched (intentionally)
+
 - `apps/web/components/ui/sheet.tsx` — primitive is already correct; the per-usage width override goes on `<SheetContent>`'s `className`, not on the primitive.
 - `apps/web/components/ui/dialog.tsx` — still used elsewhere (Reject confirm, reschedule modal, other dialogs).
 - `apps/web/components/interview/reschedule-modal-client.tsx` — different flow, untouched.
@@ -33,6 +37,7 @@
 - `packages/shared/**` and `packages/db/**` — unchanged.
 
 ### No new files beyond the one above
+
 The sheet width override is local to one usage; we are not extracting a shared "wide sheet" component (YAGNI per spec).
 
 ---
@@ -51,6 +56,7 @@ The sheet width override is local to one usage; we are not extracting a shared "
 ## Task 1: Create `_schedule-interview-sheet-client.tsx`
 
 **Files:**
+
 - Create: `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-sheet-client.tsx`
 
 **What:** Writes the new sheet-shelled component. Same prop contract, same form fields, same logic, except: (a) outer shell uses `Sheet`/`SheetContent`/etc. instead of `Dialog`/`DialogContent`/etc.; (b) the `submit()` function no longer calls `confirm()`; (c) the save-as-template area is a flat checkbox; (d) the content has a sticky header / scrollable body / sticky footer layout.
@@ -58,12 +64,15 @@ The sheet width override is local to one usage; we are not extracting a shared "
 - [ ] **Step 1: Confirm starting state of the modal file**
 
 Run:
+
 ```bash
 wc -l apps/web/app/\(recruiter\)/recruiter/applications/\[id\]/_schedule-interview-modal-client.tsx
 ```
+
 Expected: `565 apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx` (or close; confirms you're working from the same starting point as this plan). If the line count differs by more than ±20, stop and reconcile with the spec before continuing — the modal may have been modified since the spec was written.
 
 Read the imports block (lines 1–32) and the prop interface (line 59–63). The `Props` interface should be:
+
 ```ts
 interface Props {
   applicationId: string;
@@ -71,6 +80,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 ```
+
 If it differs, stop.
 
 - [ ] **Step 2: Create the new file with the sheet implementation**
@@ -298,7 +308,9 @@ export function ScheduleInterviewSheetClient({
   function validateMapUrl(value: string): string {
     const trimmed = value.trim();
     if (!trimmed) return "";
-    return /^https?:\/\//i.test(trimmed) ? "" : "Must start with http:// or https://";
+    return /^https?:\/\//i.test(trimmed)
+      ? ""
+      : "Must start with http:// or https://";
   }
 
   // ── Reset ─────────────────────────────────────────────────────────────────
@@ -339,7 +351,11 @@ export function ScheduleInterviewSheetClient({
       return;
     }
     if (saveAsTemplate && !templateLabel.trim()) {
-      toastApiError(null, "Check your input", "Enter a label for the saved venue.");
+      toastApiError(
+        null,
+        "Check your input",
+        "Enter a label for the saved venue.",
+      );
       return;
     }
 
@@ -350,7 +366,11 @@ export function ScheduleInterviewSheetClient({
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toastApiError(null, "Couldn't schedule interview", "Please sign in again.");
+        toastApiError(
+          null,
+          "Couldn't schedule interview",
+          "Please sign in again.",
+        );
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
@@ -627,7 +647,10 @@ export function ScheduleInterviewSheetClient({
           <Button
             onClick={submit}
             disabled={
-              working || !scheduledAt || !venueName.trim() || !addressLine.trim()
+              working ||
+              !scheduledAt ||
+              !venueName.trim() ||
+              !addressLine.trim()
             }
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
           >
@@ -644,10 +667,13 @@ export function ScheduleInterviewSheetClient({
 - [ ] **Step 3: Type-check the new file**
 
 Run:
+
 ```bash
 pnpm --filter web tsc --noEmit
 ```
+
 Expected: clean exit, zero errors. The new file should type-check against existing imports and hooks. If you see errors, the most likely causes are:
+
 - A wrong import path on `Sheet` (must be `@/components/ui/sheet`, lower-case file name).
 - A renamed icon export from `lucide-react` (none of `AlertTriangle`, `Building2` were renamed).
 - The `clientApiFetch` import path (must be `@/hooks/_client-fetch`).
@@ -657,9 +683,11 @@ Fix and re-run until clean.
 - [ ] **Step 4: Lint the new file**
 
 Run:
+
 ```bash
 pnpm --filter web lint
 ```
+
 Expected: clean exit. If `react-hooks/exhaustive-deps` warns on the seed-interviewer `useEffect` (because the IIFE inside has no deps tracking), that's the same warning the old modal had (or the same eslint-disable comment). Match the existing modal's behavior — do not add new disable comments unless the old file already had them.
 
 - [ ] **Step 5: Commit Task 1**
@@ -683,9 +711,11 @@ EOF
 ```
 
 Verify:
+
 ```bash
 git status
 ```
+
 Expected: working tree clean (or only the upcoming task's changes pending).
 
 ---
@@ -693,6 +723,7 @@ Expected: working tree clean (or only the upcoming task's changes pending).
 ## Task 2: Switch the import in `_interviews-section-client.tsx`
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/applications/[id]/_interviews-section-client.tsx`
 
 **What:** Updates the single import + JSX usage from the modal name to the sheet name. Two lines change.
@@ -700,10 +731,13 @@ Expected: working tree clean (or only the upcoming task's changes pending).
 - [ ] **Step 1: Locate the current import and usage**
 
 Run:
+
 ```bash
 grep -n "ScheduleInterviewModalClient" apps/web/app/\(recruiter\)/recruiter/applications/\[id\]/_interviews-section-client.tsx
 ```
+
 Expected output (exact line numbers may differ if the file changed since plan-write — match by content):
+
 ```
 19:import { ScheduleInterviewModalClient } from "./_schedule-interview-modal-client";
 453:      <ScheduleInterviewModalClient
@@ -712,10 +746,13 @@ Expected output (exact line numbers may differ if the file changed since plan-wr
 - [ ] **Step 2: Edit line 19 — update the import**
 
 Replace:
+
 ```tsx
 import { ScheduleInterviewModalClient } from "./_schedule-interview-modal-client";
 ```
+
 With:
+
 ```tsx
 import { ScheduleInterviewSheetClient } from "./_schedule-interview-sheet-client";
 ```
@@ -723,42 +760,51 @@ import { ScheduleInterviewSheetClient } from "./_schedule-interview-sheet-client
 - [ ] **Step 3: Edit line 453 — update the JSX symbol**
 
 Replace:
+
 ```tsx
-      <ScheduleInterviewModalClient
-        applicationId={applicationId}
-        open={scheduleOpen}
-        onOpenChange={setScheduleOpen}
-      />
+<ScheduleInterviewModalClient
+  applicationId={applicationId}
+  open={scheduleOpen}
+  onOpenChange={setScheduleOpen}
+/>
 ```
+
 With:
+
 ```tsx
-      <ScheduleInterviewSheetClient
-        applicationId={applicationId}
-        open={scheduleOpen}
-        onOpenChange={setScheduleOpen}
-      />
+<ScheduleInterviewSheetClient
+  applicationId={applicationId}
+  open={scheduleOpen}
+  onOpenChange={setScheduleOpen}
+/>
 ```
 
 - [ ] **Step 4: Verify no stale references remain**
 
 Run:
+
 ```bash
 grep -rn "ScheduleInterviewModalClient" apps/web
 ```
+
 Expected: no output (zero matches). If any line still references the old name, repeat Step 2 / Step 3 for those files. (Spec confirms there is only the one consumer; if `grep` finds anything else, stop and reconcile with the spec.)
 
 Run:
+
 ```bash
 grep -rn "_schedule-interview-modal-client" apps/web
 ```
+
 Expected: only `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx` itself (the file we're about to delete in Task 3).
 
 - [ ] **Step 5: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter web tsc --noEmit
 ```
+
 Expected: clean exit. If TS complains that the import path doesn't exist, you forgot to do Task 1 Step 2 first — go back.
 
 - [ ] **Step 6: Commit Task 2**
@@ -781,6 +827,7 @@ EOF
 ## Task 3: Delete the old modal file
 
 **Files:**
+
 - Delete: `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx`
 
 **What:** Removes the superseded modal client. Nothing imports it anymore (verified in Task 2 Step 4).
@@ -788,15 +835,19 @@ EOF
 - [ ] **Step 1: Final guard — confirm no references**
 
 Run:
+
 ```bash
 grep -rn "_schedule-interview-modal-client" apps/web packages
 ```
+
 Expected: only the file itself. If anything else matches, stop, fix that consumer, return.
 
 Run:
+
 ```bash
 grep -rn "ScheduleInterviewModalClient" apps/web packages
 ```
+
 Expected: no matches.
 
 - [ ] **Step 2: Delete the file**
@@ -808,17 +859,21 @@ rm apps/web/app/\(recruiter\)/recruiter/applications/\[id\]/_schedule-interview-
 - [ ] **Step 3: Type-check**
 
 Run:
+
 ```bash
 pnpm --filter web tsc --noEmit
 ```
+
 Expected: clean exit. If TS now complains about a missing module, you missed an import — restore the file (`git checkout HEAD -- <path>`) and find/fix the import you missed, then redo Steps 1–2.
 
 - [ ] **Step 4: Lint**
 
 Run:
+
 ```bash
 pnpm --filter web lint
 ```
+
 Expected: clean exit.
 
 - [ ] **Step 5: Commit Task 3**
@@ -848,25 +903,31 @@ EOF
 - [ ] **Step 1: Type-check the entire web app**
 
 Run:
+
 ```bash
 pnpm --filter web tsc --noEmit
 ```
+
 Expected: clean exit, zero errors.
 
 - [ ] **Step 2: Lint the entire web app**
 
 Run:
+
 ```bash
 pnpm --filter web lint
 ```
+
 Expected: clean exit.
 
 - [ ] **Step 3: Build verification (optional but recommended)**
 
 Run:
+
 ```bash
 pnpm --filter web build
 ```
+
 Expected: build completes successfully. Skipping is acceptable if the human prefers to manually smoke-test instead.
 
 - [ ] **Step 4: Request human smoke-test**

@@ -4,15 +4,20 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-interface AuthInputProps
-  extends Omit<React.ComponentProps<"input">, "placeholder"> {
+interface AuthInputProps extends Omit<
+  React.ComponentProps<"input">,
+  "placeholder"
+> {
   id: string;
   label: string;
   error?: string;
 }
 
 export const AuthInput = React.forwardRef<HTMLInputElement, AuthInputProps>(
-  function AuthInput({ id, label, error, className, type = "text", ...rest }, ref) {
+  function AuthInput(
+    { id, label, error, className, type = "text", ...rest },
+    ref,
+  ) {
     const errorId = error ? `${id}-error` : undefined;
     return (
       <div className="w-full">

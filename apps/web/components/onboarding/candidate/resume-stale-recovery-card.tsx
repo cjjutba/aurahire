@@ -65,7 +65,9 @@ export function ResumeStaleRecoveryCard({
         </button>
       </div>
       {error && (
-        <p className="mt-3 text-sm text-[var(--color-status-danger)]">{error}</p>
+        <p className="mt-3 text-sm text-[var(--color-status-danger)]">
+          {error}
+        </p>
       )}
     </div>
   );

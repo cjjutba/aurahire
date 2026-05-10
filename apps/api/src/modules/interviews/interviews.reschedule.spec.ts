@@ -220,7 +220,10 @@ describe("InterviewsService.reschedule", () => {
     );
 
     // Forward link set.
-    expect(repo.setRescheduledTo).toHaveBeenCalledWith(INTERVIEW_ID, NEW_INTERVIEW_ID);
+    expect(repo.setRescheduledTo).toHaveBeenCalledWith(
+      INTERVIEW_ID,
+      NEW_INTERVIEW_ID,
+    );
 
     // Audit action logged.
     const auditActions = audit.log.mock.calls.map((c) => c[0].action);
@@ -277,7 +280,10 @@ describe("InterviewsService.reschedule", () => {
 
     expect(repo.markRescheduled).toHaveBeenCalledWith(INTERVIEW_ID);
     expect(repo.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ rescheduledFromId: INTERVIEW_ID, status: "scheduled" }),
+      expect.objectContaining({
+        rescheduledFromId: INTERVIEW_ID,
+        status: "scheduled",
+      }),
     );
     expect(events.emitInterviewRescheduled).toHaveBeenCalled();
     expect(result.id).toBe(NEW_INTERVIEW_ID);
@@ -295,13 +301,27 @@ describe("InterviewsService.reschedule", () => {
       } as any);
 
       await expect(
-        service.reschedule(recruiterUser, COMPANY_ID, INTERVIEW_ID, makeRescheduleDto(), {}),
+        service.reschedule(
+          recruiterUser,
+          COMPANY_ID,
+          INTERVIEW_ID,
+          makeRescheduleDto(),
+          {},
+        ),
       ).rejects.toThrow(BadRequestException);
 
       await expect(
-        service.reschedule(recruiterUser, COMPANY_ID, INTERVIEW_ID, makeRescheduleDto(), {}),
+        service.reschedule(
+          recruiterUser,
+          COMPANY_ID,
+          INTERVIEW_ID,
+          makeRescheduleDto(),
+          {},
+        ),
       ).rejects.toMatchObject({
-        response: expect.objectContaining({ code: "INVALID_STATUS_TRANSITION" }),
+        response: expect.objectContaining({
+          code: "INVALID_STATUS_TRANSITION",
+        }),
       });
 
       expect(repo.markRescheduled).not.toHaveBeenCalled();
@@ -321,11 +341,23 @@ describe("InterviewsService.reschedule", () => {
     const pastIso = new Date(Date.now() - 60_000).toISOString();
 
     await expect(
-      service.reschedule(recruiterUser, COMPANY_ID, INTERVIEW_ID, makeRescheduleDto(pastIso), {}),
+      service.reschedule(
+        recruiterUser,
+        COMPANY_ID,
+        INTERVIEW_ID,
+        makeRescheduleDto(pastIso),
+        {},
+      ),
     ).rejects.toThrow(BadRequestException);
 
     await expect(
-      service.reschedule(recruiterUser, COMPANY_ID, INTERVIEW_ID, makeRescheduleDto(pastIso), {}),
+      service.reschedule(
+        recruiterUser,
+        COMPANY_ID,
+        INTERVIEW_ID,
+        makeRescheduleDto(pastIso),
+        {},
+      ),
     ).rejects.toMatchObject({
       response: expect.objectContaining({ code: "PAST_DATE" }),
     });

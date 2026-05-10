@@ -34,7 +34,8 @@ export const adminHowItWorks: HowItWorksContent = {
       },
       {
         label: "Publish",
-        description: "Roll out versioned changes; old scores stay attributable.",
+        description:
+          "Roll out versioned changes; old scores stay attributable.",
         icon: GitBranch,
         targetId: "versioning",
       },
@@ -127,12 +128,32 @@ export const adminHowItWorks: HowItWorksContent = {
               kind: "matrix",
               head: ["Component", "Engine", "Default weight", "Editable?"],
               rows: [
-                ["Must-have skills", "Deterministic matcher", "35%", "Yes — per role and globally"],
+                [
+                  "Must-have skills",
+                  "Deterministic matcher",
+                  "35%",
+                  "Yes — per role and globally",
+                ],
                 ["Nice-to-have skills", "Deterministic matcher", "15%", "Yes"],
-                ["Years of experience", "Deterministic comparator", "15%", "Yes"],
-                ["Education / certifications", "Deterministic comparator", "10%", "Yes"],
+                [
+                  "Years of experience",
+                  "Deterministic comparator",
+                  "15%",
+                  "Yes",
+                ],
+                [
+                  "Education / certifications",
+                  "Deterministic comparator",
+                  "10%",
+                  "Yes",
+                ],
                 ["Role-fit narrative", "Generative (AI model)", "20%", "Yes"],
-                ["Calibration adjustment", "Statistical, system-controlled", "5%", "Off by default"],
+                [
+                  "Calibration adjustment",
+                  "Statistical, system-controlled",
+                  "5%",
+                  "Off by default",
+                ],
               ],
             },
             {
@@ -239,13 +260,43 @@ export const adminHowItWorks: HowItWorksContent = {
             },
             {
               kind: "matrix",
-              head: ["Artifact", "Versioned by", "Old versions kept?", "Re-score on update?"],
+              head: [
+                "Artifact",
+                "Versioned by",
+                "Old versions kept?",
+                "Re-score on update?",
+              ],
               rows: [
-                ["Scoring weights", "Admin save action", "Yes, indefinitely", "Optional, deliberate"],
-                ["AI prompts", "Promote-from-draft", "Yes, indefinitely", "Optional, deliberate"],
-                ["Bias dictionaries", "Per-entry version", "Yes, indefinitely", "No (flags reference entry version)"],
-                ["Decline reasons", "Taxonomy save action", "Yes, indefinitely", "No (decisions reference taxonomy version)"],
-                ["Role criteria", "Per-role save action", "Yes, indefinitely", "Optional, per-role"],
+                [
+                  "Scoring weights",
+                  "Admin save action",
+                  "Yes, indefinitely",
+                  "Optional, deliberate",
+                ],
+                [
+                  "AI prompts",
+                  "Promote-from-draft",
+                  "Yes, indefinitely",
+                  "Optional, deliberate",
+                ],
+                [
+                  "Bias dictionaries",
+                  "Per-entry version",
+                  "Yes, indefinitely",
+                  "No (flags reference entry version)",
+                ],
+                [
+                  "Decline reasons",
+                  "Taxonomy save action",
+                  "Yes, indefinitely",
+                  "No (decisions reference taxonomy version)",
+                ],
+                [
+                  "Role criteria",
+                  "Per-role save action",
+                  "Yes, indefinitely",
+                  "Optional, per-role",
+                ],
               ],
             },
             {
@@ -351,14 +402,46 @@ export const adminHowItWorks: HowItWorksContent = {
               kind: "matrix",
               head: ["Event", "Who", "What's captured"],
               rows: [
-                ["Score computed", "System", "Application id, prompt version, model, latency, redacted fields, weights version, final score + breakdown."],
-                ["Stage moved", "Recruiter", "Application id, from stage, to stage, recruiter, timestamp, optional note."],
-                ["Identity revealed", "Recruiter", "Application id, recruiter, timestamp."],
-                ["Override applied", "Recruiter", "Application id, recruiter, override type, optional reason."],
-                ["Outcome sent", "Recruiter", "Application id, outcome type, decline reason category (if any), recruiter, timestamp."],
-                ["Bias flag overridden", "Recruiter", "Job id, flagged term, recruiter, timestamp, reason category."],
-                ["Config changed", "Admin", "Artifact (weights / prompt / dictionary), version delta, admin, timestamp, reason."],
-                ["Audit exported", "Admin", "Query parameters, row count, admin, timestamp, destination (file id)."],
+                [
+                  "Score computed",
+                  "System",
+                  "Application id, prompt version, model, latency, redacted fields, weights version, final score + breakdown.",
+                ],
+                [
+                  "Stage moved",
+                  "Recruiter",
+                  "Application id, from stage, to stage, recruiter, timestamp, optional note.",
+                ],
+                [
+                  "Identity revealed",
+                  "Recruiter",
+                  "Application id, recruiter, timestamp.",
+                ],
+                [
+                  "Override applied",
+                  "Recruiter",
+                  "Application id, recruiter, override type, optional reason.",
+                ],
+                [
+                  "Outcome sent",
+                  "Recruiter",
+                  "Application id, outcome type, decline reason category (if any), recruiter, timestamp.",
+                ],
+                [
+                  "Bias flag overridden",
+                  "Recruiter",
+                  "Job id, flagged term, recruiter, timestamp, reason category.",
+                ],
+                [
+                  "Config changed",
+                  "Admin",
+                  "Artifact (weights / prompt / dictionary), version delta, admin, timestamp, reason.",
+                ],
+                [
+                  "Audit exported",
+                  "Admin",
+                  "Query parameters, row count, admin, timestamp, destination (file id).",
+                ],
               ],
             },
             {
@@ -445,12 +528,36 @@ export const adminHowItWorks: HowItWorksContent = {
               kind: "matrix",
               head: ["Layer", "What it does", "How admins interact"],
               rows: [
-                ["Web (Next.js)", "Recruiter & candidate UI; admin tools.", "Direct: every admin action is a UI surface."],
-                ["API (NestJS)", "All DB writes, AI calls, queue work, cron, secrets.", "Indirect: admin UI calls the API; you observe via /admin/system-health."],
-                ["Database (Supabase Postgres)", "Source of truth for everything: applications, scores, audit logs.", "Indirect: queries through the API. RLS enforces tenant isolation."],
-                ["Redis + BullMQ", "Job queue (scoring, exports, emails) and short-term cache.", "Indirect: queue depth visible on /admin/system-health."],
-                ["OpenAI", "All AI calls (parsing, scoring narrative, bias check) — backend-only.", "Indirect: prompt versions and model selection live in /admin/prompts."],
-                ["Email (Mailpit dev / Resend prod)", "Transactional notifications.", "Indirect: deliverability metrics on /admin/system-health."],
+                [
+                  "Web (Next.js)",
+                  "Recruiter & candidate UI; admin tools.",
+                  "Direct: every admin action is a UI surface.",
+                ],
+                [
+                  "API (NestJS)",
+                  "All DB writes, AI calls, queue work, cron, secrets.",
+                  "Indirect: admin UI calls the API; you observe via /admin/system-health.",
+                ],
+                [
+                  "Database (Supabase Postgres)",
+                  "Source of truth for everything: applications, scores, audit logs.",
+                  "Indirect: queries through the API. RLS enforces tenant isolation.",
+                ],
+                [
+                  "Redis + BullMQ",
+                  "Job queue (scoring, exports, emails) and short-term cache.",
+                  "Indirect: queue depth visible on /admin/system-health.",
+                ],
+                [
+                  "OpenAI",
+                  "All AI calls (parsing, scoring narrative, bias check) — backend-only.",
+                  "Indirect: prompt versions and model selection live in /admin/prompts.",
+                ],
+                [
+                  "Email (Mailpit dev / Resend prod)",
+                  "Transactional notifications.",
+                  "Indirect: deliverability metrics on /admin/system-health.",
+                ],
               ],
             },
             {
@@ -478,31 +585,38 @@ export const adminHowItWorks: HowItWorksContent = {
               entries: [
                 {
                   term: "Strict-sum reconciliation",
-                  definition: "The rule that the final score equals the sum of weighted criterion scores; no opaque adjustment. Quantization to 5-point bands is applied last.",
+                  definition:
+                    "The rule that the final score equals the sum of weighted criterion scores; no opaque adjustment. Quantization to 5-point bands is applied last.",
                 },
                 {
                   term: "Calibration warning",
-                  definition: "A chip beside a score indicating low confidence — usually because resume input was sparse or the AI rationale flagged uncertainty.",
+                  definition:
+                    "A chip beside a score indicating low confidence — usually because resume input was sparse or the AI rationale flagged uncertainty.",
                 },
                 {
                   term: "Drift",
-                  definition: "A statistically significant change in a measured pattern over time (e.g., score distribution by cohort drifting from baseline). The bias monitor surfaces drift.",
+                  definition:
+                    "A statistically significant change in a measured pattern over time (e.g., score distribution by cohort drifting from baseline). The bias monitor surfaces drift.",
                 },
                 {
                   term: "Override",
-                  definition: "A recruiter action that contradicts the AI's score-based recommendation: advancing a low-scored candidate, declining a high-scored one, manually adjusting a score.",
+                  definition:
+                    "A recruiter action that contradicts the AI's score-based recommendation: advancing a low-scored candidate, declining a high-scored one, manually adjusting a score.",
                 },
                 {
                   term: "Eval set",
-                  definition: "A curated set of representative inputs used to sandbox prompt or weight changes before promotion to production.",
+                  definition:
+                    "A curated set of representative inputs used to sandbox prompt or weight changes before promotion to production.",
                 },
                 {
                   term: "Audit export",
-                  definition: "A queued job that produces a signed CSV / JSON of audit events matching a query, with a manifest documenting the query and the export action.",
+                  definition:
+                    "A queued job that produces a signed CSV / JSON of audit events matching a query, with a manifest documenting the query and the export action.",
                 },
                 {
                   term: "Anonymization",
-                  definition: "The post-deletion process that removes personal identifiers from audit log entries while preserving the structural record of what happened.",
+                  definition:
+                    "The post-deletion process that removes personal identifiers from audit log entries while preserving the structural record of what happened.",
                 },
               ],
             },
@@ -519,14 +633,46 @@ export const adminHowItWorks: HowItWorksContent = {
               kind: "matrix",
               head: ["Concern", "System does", "Admin does"],
               rows: [
-                ["Run scoring", "Yes (every application, automatic).", "Configure weights and components."],
-                ["Apply PII redaction", "Yes (always, before AI scoring).", "Define what counts as PII (rare changes)."],
-                ["Run bias check on jobs", "Yes (at publish, on every edit).", "Curate the bias dictionary, tune severity."],
-                ["Decide hiring outcomes", "Never.", "Not in admin scope — recruiters own decisions."],
-                ["Re-score historical applications", "No.", "Triggered explicitly per pipeline."],
-                ["Emit calibration warnings", "Yes (real-time).", "Tune thresholds and review patterns."],
-                ["Detect bias drift", "Yes (per collection window).", "Configure cohorts, set significance thresholds."],
-                ["Export audit log", "Indexes data for query.", "Issues the export with a query and reason."],
+                [
+                  "Run scoring",
+                  "Yes (every application, automatic).",
+                  "Configure weights and components.",
+                ],
+                [
+                  "Apply PII redaction",
+                  "Yes (always, before AI scoring).",
+                  "Define what counts as PII (rare changes).",
+                ],
+                [
+                  "Run bias check on jobs",
+                  "Yes (at publish, on every edit).",
+                  "Curate the bias dictionary, tune severity.",
+                ],
+                [
+                  "Decide hiring outcomes",
+                  "Never.",
+                  "Not in admin scope — recruiters own decisions.",
+                ],
+                [
+                  "Re-score historical applications",
+                  "No.",
+                  "Triggered explicitly per pipeline.",
+                ],
+                [
+                  "Emit calibration warnings",
+                  "Yes (real-time).",
+                  "Tune thresholds and review patterns.",
+                ],
+                [
+                  "Detect bias drift",
+                  "Yes (per collection window).",
+                  "Configure cohorts, set significance thresholds.",
+                ],
+                [
+                  "Export audit log",
+                  "Indexes data for query.",
+                  "Issues the export with a query and reason.",
+                ],
               ],
             },
             {

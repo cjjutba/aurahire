@@ -83,11 +83,7 @@ function StarRating({
   const [hovered, setHovered] = useState<number | null>(null);
 
   return (
-    <div
-      className="flex items-center gap-0.5"
-      role="group"
-      aria-label="Rating"
-    >
+    <div className="flex items-center gap-0.5" role="group" aria-label="Rating">
       {[1, 2, 3, 4, 5].map((star) => {
         const filled = (hovered ?? value ?? 0) >= star;
         return (
@@ -220,7 +216,11 @@ export function DecisionPanelClient({ interview }: Props) {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           Recommendation
         </p>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Recommendation">
+        <div
+          className="flex flex-wrap gap-2"
+          role="radiogroup"
+          aria-label="Recommendation"
+        >
           {RECOMMENDATION_OPTIONS.map((opt) => {
             const isSelected = recommendation === opt.value;
             const ringColor =
@@ -242,9 +242,7 @@ export function DecisionPanelClient({ interview }: Props) {
                 type="button"
                 role="radio"
                 aria-checked={isSelected}
-                onClick={() =>
-                  setRecommendation(isSelected ? null : opt.value)
-                }
+                onClick={() => setRecommendation(isSelected ? null : opt.value)}
                 title={opt.description}
                 className={`inline-flex h-8 items-center rounded-[var(--radius-pill)] border px-3 text-xs font-semibold transition ${
                   isSelected

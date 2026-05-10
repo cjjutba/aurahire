@@ -154,10 +154,7 @@ export function UsersTableClient({
                   </td>
                   <td className="px-2 py-3 text-right">
                     {!isSelf && u.status !== "deleted" ? (
-                      <UserRowActions
-                        user={u}
-                        onAction={setPendingAction}
-                      />
+                      <UserRowActions user={u} onAction={setPendingAction} />
                     ) : null}
                   </td>
                 </tr>
@@ -167,10 +164,7 @@ export function UsersTableClient({
         </table>
       </div>
 
-      <UsersPagination
-        meta={meta}
-        searchParams={searchParams}
-      />
+      <UsersPagination meta={meta} searchParams={searchParams} />
 
       <ActionModalsClient
         action={pendingAction}
@@ -202,9 +196,7 @@ function UserRowActions({
       />
       <DropdownMenuContent align="end" side="bottom">
         {user.status === "active" && (
-          <DropdownMenuItem
-            onClick={() => onAction({ kind: "suspend", user })}
-          >
+          <DropdownMenuItem onClick={() => onAction({ kind: "suspend", user })}>
             Suspend
           </DropdownMenuItem>
         )}

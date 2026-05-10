@@ -38,11 +38,17 @@ function makeDb(rows: ExpiredRow[]) {
 
   // transaction: execute the callback with a fake tx object so the cron's
   // inner db.transaction(async tx => { ... }) path is exercised.
-  const transaction = jest.fn().mockImplementation((cb: (tx: unknown) => Promise<void>) =>
-    cb({}),
-  );
+  const transaction = jest
+    .fn()
+    .mockImplementation((cb: (tx: unknown) => Promise<void>) => cb({}));
 
-  return { select, update, transaction, _updateSet: updateSet, _updateWhere: updateWhere };
+  return {
+    select,
+    update,
+    transaction,
+    _updateSet: updateSet,
+    _updateWhere: updateWhere,
+  };
 }
 
 describe("ExpireOffersCron", () => {
@@ -50,8 +56,12 @@ describe("ExpireOffersCron", () => {
   let audit: jest.Mocked<Pick<AuditService, "log">>;
   let email: jest.Mocked<Pick<EmailService, "send">>;
   let notifications: jest.Mocked<Pick<NotificationsService, "emit">>;
-  let applicationsServiceMock: jest.Mocked<Pick<ApplicationsService, "transitionFromSystem">>;
-  let applicationsRepoMock: jest.Mocked<Pick<ApplicationsRepository, "findByIdForUpdate">>;
+  let applicationsServiceMock: jest.Mocked<
+    Pick<ApplicationsService, "transitionFromSystem">
+  >;
+  let applicationsRepoMock: jest.Mocked<
+    Pick<ApplicationsRepository, "findByIdForUpdate">
+  >;
   let db: ReturnType<typeof makeDb>;
 
   async function setup(rows: ExpiredRow[]) {
@@ -59,7 +69,9 @@ describe("ExpireOffersCron", () => {
     audit = { log: jest.fn() };
     email = { send: jest.fn().mockResolvedValue(undefined) };
     notifications = { emit: jest.fn() };
-    applicationsServiceMock = { transitionFromSystem: jest.fn().mockResolvedValue({}) };
+    applicationsServiceMock = {
+      transitionFromSystem: jest.fn().mockResolvedValue({}),
+    };
     applicationsRepoMock = { findByIdForUpdate: jest.fn() };
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -76,7 +88,9 @@ describe("ExpireOffersCron", () => {
     cron = moduleRef.get(ExpireOffersCron);
   }
 
-  const makeRow = (overrides: Partial<ExpiredRow> & Pick<ExpiredRow, "offerId">): ExpiredRow => ({
+  const makeRow = (
+    overrides: Partial<ExpiredRow> & Pick<ExpiredRow, "offerId">,
+  ): ExpiredRow => ({
     applicationId: `app-${overrides.offerId}`,
     candidateId: `cand-${overrides.offerId}`,
     candidateEmail: `cand-${overrides.offerId}@example.com`,
@@ -148,10 +162,7 @@ describe("ExpireOffersCron", () => {
   });
 
   it("a per-row side-effect failure (email) does not abort the rest of the run", async () => {
-    await setup([
-      makeRow({ offerId: "o1" }),
-      makeRow({ offerId: "o2" }),
-    ]);
+    await setup([makeRow({ offerId: "o1" }), makeRow({ offerId: "o2" })]);
     (email.send as jest.Mock)
       .mockRejectedValueOnce(new Error("email boom"))
       .mockResolvedValue(undefined);

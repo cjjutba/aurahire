@@ -51,6 +51,7 @@ Phase 1 is testable end-to-end via existing `scoring.service.spec.ts` plus new u
 **Goal:** Profile and match component evidence both use a single schema that requires `contribution_points` as a multiple of 5. Component scores also become multiples of 5.
 
 **Files:**
+
 - Modify: `packages/shared/src/schemas/score.ts:7-79`
 
 ### Steps
@@ -204,6 +205,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 **Goal:** Pure function that quantizes contributions to nearest 5, computes derived score = clamp(sum, 0, max), forces relevance from sign, and returns reconciliation metadata.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts:91-126` (add helper near existing `normalizeComponentsToWeights`)
 - Modify: `apps/api/src/modules/scoring/scoring.service.spec.ts` (add new describe block)
 
@@ -226,17 +228,19 @@ import {
 } from "./scoring.service";
 
 describe("reconcileEvidenceContributions", () => {
-  function buildComponent(overrides: Partial<{
-    name: string;
-    score: number;
-    max: number;
-    evidence: Array<{
-      excerpt: string;
-      source: string;
-      relevance: "positive" | "negative" | "neutral";
-      contribution_points: number;
-    }>;
-  }> = {}) {
+  function buildComponent(
+    overrides: Partial<{
+      name: string;
+      score: number;
+      max: number;
+      evidence: Array<{
+        excerpt: string;
+        source: string;
+        relevance: "positive" | "negative" | "neutral";
+        contribution_points: number;
+      }>;
+    }> = {},
+  ) {
     return {
       name: "skills",
       score: 0,
@@ -253,9 +257,24 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 25,
         evidence: [
-          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "PG", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "Docker", source: "skills", relevance: "positive", contribution_points: 5 },
+          {
+            excerpt: "TS",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "PG",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "Docker",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 5,
+          },
         ],
       }),
     );
@@ -269,9 +288,24 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 30, // AI claimed 30
         evidence: [
-          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "PG", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "Docker", source: "skills", relevance: "positive", contribution_points: 5 },
+          {
+            excerpt: "TS",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "PG",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "Docker",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 5,
+          },
         ],
       }),
     );
@@ -284,8 +318,18 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 15,
         evidence: [
-          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 7 },
-          { excerpt: "b", source: "skills", relevance: "positive", contribution_points: 8 },
+          {
+            excerpt: "a",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 7,
+          },
+          {
+            excerpt: "b",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 8,
+          },
         ],
       }),
     );
@@ -305,8 +349,18 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 10,
         evidence: [
-          { excerpt: "gap1", source: "req", relevance: "negative", contribution_points: -15 },
-          { excerpt: "gap2", source: "req", relevance: "negative", contribution_points: -15 },
+          {
+            excerpt: "gap1",
+            source: "req",
+            relevance: "negative",
+            contribution_points: -15,
+          },
+          {
+            excerpt: "gap2",
+            source: "req",
+            relevance: "negative",
+            contribution_points: -15,
+          },
         ],
       }),
     );
@@ -320,8 +374,18 @@ describe("reconcileEvidenceContributions", () => {
         score: 20,
         max: 15,
         evidence: [
-          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 10 },
-          { excerpt: "b", source: "skills", relevance: "positive", contribution_points: 10 },
+          {
+            excerpt: "a",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
+          {
+            excerpt: "b",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
         ],
       }),
     );
@@ -335,7 +399,12 @@ describe("reconcileEvidenceContributions", () => {
         score: 0,
         evidence: [
           // AI mislabeled a -10 as positive — engine forces it back to negative.
-          { excerpt: "no Go", source: "req", relevance: "positive", contribution_points: -10 },
+          {
+            excerpt: "no Go",
+            source: "req",
+            relevance: "positive",
+            contribution_points: -10,
+          },
         ],
       }),
     );
@@ -347,7 +416,12 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 0,
         evidence: [
-          { excerpt: "context", source: "summary", relevance: "neutral", contribution_points: 0 },
+          {
+            excerpt: "context",
+            source: "summary",
+            relevance: "neutral",
+            contribution_points: 0,
+          },
         ],
       }),
     );
@@ -396,10 +470,18 @@ export function reconcileEvidenceContributions<
 ): {
   component: C;
   residual: number;
-  quantizationDeltas: Array<{ evidenceIndex: number; original: number; quantized: number }>;
+  quantizationDeltas: Array<{
+    evidenceIndex: number;
+    original: number;
+    quantized: number;
+  }>;
 } {
   const aiScore = component.score;
-  const quantizationDeltas: Array<{ evidenceIndex: number; original: number; quantized: number }> = [];
+  const quantizationDeltas: Array<{
+    evidenceIndex: number;
+    original: number;
+    quantized: number;
+  }> = [];
 
   const reconciled = component.evidence.map((ev, evidenceIndex) => {
     const original = Number(ev.contribution_points) || 0;
@@ -412,7 +494,10 @@ export function reconcileEvidenceContributions<
     return { ...ev, contribution_points: quantized, relevance };
   });
 
-  const derivedRaw = reconciled.reduce((sum, ev) => sum + ev.contribution_points, 0);
+  const derivedRaw = reconciled.reduce(
+    (sum, ev) => sum + ev.contribution_points,
+    0,
+  );
   const derived = Math.max(0, Math.min(component.max, derivedRaw));
 
   return {
@@ -455,6 +540,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 **Goal:** Surface known model-misbehavior patterns (ceiling with thin evidence, deduction without negative evidence) as audit warnings — without auto-adjusting the score.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts` (add helper next to `reconcileEvidenceContributions`)
 - Modify: `apps/api/src/modules/scoring/scoring.service.spec.ts` (add second new describe block)
 
@@ -466,17 +552,19 @@ In `apps/api/src/modules/scoring/scoring.service.spec.ts`, add a new `describe` 
 
 ```ts
 describe("detectCalibrationWarnings", () => {
-  function buildComponent(overrides: Partial<{
-    name: string;
-    score: number;
-    max: number;
-    evidence: Array<{
-      excerpt: string;
-      source: string;
-      relevance: "positive" | "negative" | "neutral";
-      contribution_points: number;
-    }>;
-  }> = {}) {
+  function buildComponent(
+    overrides: Partial<{
+      name: string;
+      score: number;
+      max: number;
+      evidence: Array<{
+        excerpt: string;
+        source: string;
+        relevance: "positive" | "negative" | "neutral";
+        contribution_points: number;
+      }>;
+    }> = {},
+  ) {
     return {
       name: "skills",
       score: 0,
@@ -494,7 +582,12 @@ describe("detectCalibrationWarnings", () => {
         score: 40,
         max: 40,
         evidence: [
-          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 40 },
+          {
+            excerpt: "TS",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 40,
+          },
         ],
       }),
     );
@@ -509,8 +602,18 @@ describe("detectCalibrationWarnings", () => {
         score: 40,
         max: 40,
         evidence: [
-          { excerpt: "TS", source: "skills", relevance: "positive", contribution_points: 20 },
-          { excerpt: "PG", source: "skills", relevance: "positive", contribution_points: 20 },
+          {
+            excerpt: "TS",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 20,
+          },
+          {
+            excerpt: "PG",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 20,
+          },
         ],
       }),
     );
@@ -523,13 +626,26 @@ describe("detectCalibrationWarnings", () => {
         score: 25,
         max: 30,
         evidence: [
-          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 15 },
-          { excerpt: "b", source: "skills", relevance: "positive", contribution_points: 10 },
+          {
+            excerpt: "a",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 15,
+          },
+          {
+            excerpt: "b",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 10,
+          },
         ],
       }),
     );
     expect(warnings).toEqual([
-      { componentName: "skills", reason: "deduction_without_negative_evidence" },
+      {
+        componentName: "skills",
+        reason: "deduction_without_negative_evidence",
+      },
     ]);
   });
 
@@ -539,8 +655,18 @@ describe("detectCalibrationWarnings", () => {
         score: 25,
         max: 30,
         evidence: [
-          { excerpt: "a", source: "skills", relevance: "positive", contribution_points: 30 },
-          { excerpt: "gap", source: "req", relevance: "negative", contribution_points: -5 },
+          {
+            excerpt: "a",
+            source: "skills",
+            relevance: "positive",
+            contribution_points: 30,
+          },
+          {
+            excerpt: "gap",
+            source: "req",
+            relevance: "negative",
+            contribution_points: -5,
+          },
         ],
       }),
     );
@@ -553,7 +679,12 @@ describe("detectCalibrationWarnings", () => {
         score: 0,
         max: 40,
         evidence: [
-          { excerpt: "no match", source: "req", relevance: "negative", contribution_points: -40 },
+          {
+            excerpt: "no match",
+            source: "req",
+            relevance: "negative",
+            contribution_points: -40,
+          },
         ],
       }),
     );
@@ -586,21 +717,25 @@ In `apps/api/src/modules/scoring/scoring.service.ts`, immediately after `reconci
  *      evidence row carries a negative contribution. The deduction has no
  *      visible justification.
  */
-export function detectCalibrationWarnings<C extends {
-  name: string;
-  score: number;
-  max: number;
-  evidence: Array<{
-    excerpt: string;
-    source: string;
-    relevance: "positive" | "negative" | "neutral";
-    contribution_points: number;
-  }>;
-}>(component: C): Array<{ componentName: string; reason: string }> {
+export function detectCalibrationWarnings<
+  C extends {
+    name: string;
+    score: number;
+    max: number;
+    evidence: Array<{
+      excerpt: string;
+      source: string;
+      relevance: "positive" | "negative" | "neutral";
+      contribution_points: number;
+    }>;
+  },
+>(component: C): Array<{ componentName: string; reason: string }> {
   const warnings: Array<{ componentName: string; reason: string }> = [];
 
   if (component.score === component.max) {
-    const positives = component.evidence.filter((e) => e.relevance === "positive");
+    const positives = component.evidence.filter(
+      (e) => e.relevance === "positive",
+    );
     if (positives.length < 2) {
       warnings.push({
         componentName: component.name,
@@ -610,7 +745,9 @@ export function detectCalibrationWarnings<C extends {
   }
 
   if (component.score < component.max) {
-    const negatives = component.evidence.filter((e) => e.relevance === "negative");
+    const negatives = component.evidence.filter(
+      (e) => e.relevance === "negative",
+    );
     if (negatives.length === 0) {
       warnings.push({
         componentName: component.name,
@@ -648,6 +785,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 **Goal:** Profile scoring path runs reconciliation + calibration warnings before persisting. Replaces the hardcoded `contributionPoints: null` at line 289 with the AI-supplied + reconciled value.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts:218-360`
 
 ### Steps
@@ -749,7 +887,10 @@ const { profileScore } = await this.scoringRepo.insertProfileScore(
     resumeId: resume.id,
     overallScore: derivedOverall,
     band: derivedBand,
-    components: normalizedProfileComponents as unknown as Record<string, unknown>,
+    components: normalizedProfileComponents as unknown as Record<
+      string,
+      unknown
+    >,
     improvementSuggestions: aiResult.score
       .improvement_suggestions as unknown as Record<string, unknown>,
     redactedFields: aiResult.redactedFields,
@@ -772,7 +913,10 @@ const { profileScore } = await this.scoringRepo.insertProfileScore(
     resumeId: resume.id,
     overallScore: derivedOverall,
     band: derivedBand,
-    components: reconciledProfileComponents as unknown as Record<string, unknown>,
+    components: reconciledProfileComponents as unknown as Record<
+      string,
+      unknown
+    >,
     improvementSuggestions: aiResult.score
       .improvement_suggestions as unknown as Record<string, unknown>,
     redactedFields: aiResult.redactedFields,
@@ -872,6 +1016,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 **Goal:** Full match-score path (used when an application is created) runs the same reconciliation as profile.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts:460-620` (the `computeMatchScore` method)
 
 ### Steps
@@ -1012,6 +1157,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 **Goal:** Match-preview path (candidate clicks "See my match", or system precomputes top-N) runs identical reconciliation. Persists to `match_score_previews` (no separate `evidence_excerpts` rows for previews — evidence lives in `components` jsonb).
 
 **Files:**
+
 - Modify: `apps/api/src/modules/scoring/scoring.service.ts:820-920` (the `computeMatchPreviewInternal` method)
 
 ### Steps
@@ -1042,7 +1188,9 @@ const normalizedPreviewComponents = normalizeComponentsToWeights(
 const previewReconciliations = normalizedPreviewComponents.map((c) =>
   reconcileEvidenceContributions(c),
 );
-const reconciledPreviewComponents = previewReconciliations.map((r) => r.component);
+const reconciledPreviewComponents = previewReconciliations.map(
+  (r) => r.component,
+);
 const previewScoreResiduals = previewReconciliations
   .filter((r) => r.residual !== 0)
   .map((r) => ({
@@ -1050,13 +1198,14 @@ const previewScoreResiduals = previewReconciliations
     aiScore: r.component.score + r.residual,
     derivedScore: r.component.score,
   }));
-const previewEvidenceQuantizationResiduals = previewReconciliations.flatMap((r) =>
-  r.quantizationDeltas.map((d) => ({
-    componentName: r.component.name,
-    evidenceIndex: d.evidenceIndex,
-    original: d.original,
-    quantized: d.quantized,
-  })),
+const previewEvidenceQuantizationResiduals = previewReconciliations.flatMap(
+  (r) =>
+    r.quantizationDeltas.map((d) => ({
+      componentName: r.component.name,
+      evidenceIndex: d.evidenceIndex,
+      original: d.original,
+      quantized: d.quantized,
+    })),
 );
 const previewCalibrationWarnings = reconciledPreviewComponents.flatMap((c) =>
   detectCalibrationWarnings(c),
@@ -1107,6 +1256,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 **Goal:** Admin-driven batch rescores produce the same reconciled scores as candidate-driven ones. Without this, manual rescores would silently bypass the entire transparency pipeline.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/admin/processors/rescore-batch.processor.ts:90-150`
 
 ### Steps
@@ -1254,9 +1404,11 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 **Goal:** Profile prompt version bumps; new instructions force the model to populate `contribution_points`, surface negative evidence when below ceiling, and require quantified-or-senior signals at ceiling.
 
 **Files:**
+
 - Modify: `apps/api/src/ai/prompts/score-profile.ts:1-65`
 
 > ⚠️ **STOP.** Per `CLAUDE.md` § "When to ask vs proceed":
+>
 > > Changing the AI prompts (versions matter — bumping a prompt is a thesis-defensible event, not a casual edit) — Ask first.
 >
 > Before completing this task, present the diff to the human and wait for explicit approval. The implementing agent must surface the full before/after content of `score-profile.ts` in its message.
@@ -1361,6 +1513,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 **Goal:** Match prompt version bumps; replaces `"approximately"` with strict equality, adds 5-point quantization, adds calibration rule.
 
 **Files:**
+
 - Modify: `apps/api/src/ai/prompts/score-match.ts:1-92`
 
 > ⚠️ **STOP.** Same gate as Task 8. Surface the diff and wait for human approval before proceeding.
@@ -1482,6 +1635,7 @@ Phase 2 is purely cosmetic. The backend now writes `contribution_points` into bo
 **Goal:** Replace `"Contributes ±N points"` with a signed-integer chip rendered in score-band color, using Unicode minus.
 
 **Files:**
+
 - Modify: `apps/web/components/score/evidence-callout.tsx:65-70`
 
 ### Steps
@@ -1491,29 +1645,34 @@ Phase 2 is purely cosmetic. The backend now writes `contribution_points` into bo
 Replace:
 
 ```tsx
-{typeof contributionPoints === "number" && contributionPoints !== 0 && (
-  <p className="mt-3 text-xs text-[var(--color-muted)]">
-    Contributes {contributionPoints > 0 ? "+" : ""}
-    <span className="font-mono">{contributionPoints}</span> points
-  </p>
-)}
+{
+  typeof contributionPoints === "number" && contributionPoints !== 0 && (
+    <p className="mt-3 text-xs text-[var(--color-muted)]">
+      Contributes {contributionPoints > 0 ? "+" : ""}
+      <span className="font-mono">{contributionPoints}</span> points
+    </p>
+  );
+}
 ```
 
 with:
 
 ```tsx
-{typeof contributionPoints === "number" && contributionPoints !== 0 && (
-  <p
-    className="mt-3 text-xs font-mono font-semibold"
-    style={{ color: variant.iconColor }}
-  >
-    {contributionPoints > 0 ? "+" : "−"}
-    {Math.abs(contributionPoints)} points
-  </p>
-)}
+{
+  typeof contributionPoints === "number" && contributionPoints !== 0 && (
+    <p
+      className="mt-3 text-xs font-mono font-semibold"
+      style={{ color: variant.iconColor }}
+    >
+      {contributionPoints > 0 ? "+" : "−"}
+      {Math.abs(contributionPoints)} points
+    </p>
+  );
+}
 ```
 
 Three changes vs. the old footer:
+
 - Drop the "Contributes" verb (semantically wrong for negatives, redundant with the HELPED / HURT chip in the header).
 - Use Unicode minus `−` (U+2212), not ASCII hyphen `-` — typographically correct + matches existing `−5 pts to perfect` copy on the same page.
 - Color the chip per relevance (`var(--color-score-high)` for positive, `var(--color-score-low)` for negative) instead of always-muted gray. The number itself becomes a glanceable signal.
@@ -1558,6 +1717,7 @@ Navigate to `/candidate/profile`, click **Recompute**. Wait for the AI shimmer t
 - [ ] **Step 3: Verify each component sums correctly**
 
 For each of the four components (Completeness, Skill Depth, Experience Clarity, Education Quality):
+
 - Click the component to expand its evidence panel.
 - Add the visible point chips (`+10 points`, `−5 points`, etc.) in your head.
 - The sum must equal the displayed component score (e.g. `Skill Depth 25/30` ⇒ visible chips sum to +25).
@@ -1594,6 +1754,7 @@ Phase 3 surfaces the calibration warnings collected by Phases 1–2 in `/admin/b
 **Goal:** Add a repository method that aggregates `audit_logs.details.calibrationWarnings` over a date range, optionally filtered by `prompt_version`.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/admin/repositories/admin-bias-monitor.repository.ts`
 
 ### Steps
@@ -1716,6 +1877,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 **Goal:** Add `scoringQuality` block to the bias-monitor response and `promptVersionMin` to the query DTO.
 
 **Files:**
+
 - Modify: `apps/api/src/modules/admin/dto/bias-monitor-query.dto.ts`
 - Modify: `apps/api/src/modules/admin/dto/bias-monitor-response.dto.ts`
 - Modify: `apps/api/src/modules/admin/services/admin-bias-monitor.service.ts`
@@ -1804,6 +1966,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 **Goal:** Render the scoring-quality data in `/admin/bias-monitor`. Add a prompt-version filter alongside the existing date range filter.
 
 **Files:**
+
 - Modify: `apps/web/app/(admin)/admin/bias-monitor/page.tsx`
 - Create: `apps/web/app/(admin)/admin/bias-monitor/_scoring-quality-panel.tsx`
 
@@ -1825,7 +1988,7 @@ scoringQuality: {
     promptVersion: string;
     createdAt: string;
   }>;
-};
+}
 ```
 
 - [ ] **Step 2: Create the panel client component**
@@ -1913,7 +2076,9 @@ export function ScoringQualityPanel({
                 <span className="text-[var(--color-body)]">
                   {REASON_LABELS[r.reason] ?? r.reason}
                 </span>
-                <span className="font-mono text-[var(--color-ink)]">{r.count}</span>
+                <span className="font-mono text-[var(--color-ink)]">
+                  {r.count}
+                </span>
               </li>
             ))}
           </ul>
@@ -1929,7 +2094,9 @@ export function ScoringQualityPanel({
                 <span className="text-[var(--color-body)]">
                   {COMPONENT_LABELS[c.componentName] ?? c.componentName}
                 </span>
-                <span className="font-mono text-[var(--color-ink)]">{c.count}</span>
+                <span className="font-mono text-[var(--color-ink)]">
+                  {c.count}
+                </span>
               </li>
             ))}
           </ul>
@@ -2026,6 +2193,7 @@ Open the admin bias-monitor page in a browser logged in as an admin.
 - [ ] **Step 3: Confirm the Scoring Quality panel renders below the existing KPI section**
 
 Check:
+
 - The header reads "Scoring Quality" with a sparkle icon.
 - If warnings exist, "By reason" and "By component" lists populate.
 - The "Recent" list shows the latest warnings with timestamps and prompt versions (`v1.2.0`).

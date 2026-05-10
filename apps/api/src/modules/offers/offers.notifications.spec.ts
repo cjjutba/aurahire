@@ -184,7 +184,9 @@ describe("OffersService — accept/decline notifications", () => {
 
   it("accept() emits 'offer_accepted' to the recruiter team via emitMany", async () => {
     repo.findById.mockResolvedValue(makeOffer({ status: "pending" }));
-    repo.update.mockResolvedValue(makeOffer({ status: "accepted", respondedAt: new Date() }));
+    repo.update.mockResolvedValue(
+      makeOffer({ status: "accepted", respondedAt: new Date() }),
+    );
 
     await service.accept(candidateUser, OFFER_ID);
 
@@ -214,9 +216,13 @@ describe("OffersService — accept/decline notifications", () => {
 
   it("decline() emits 'offer_declined' to the recruiter team via emitMany", async () => {
     repo.findById.mockResolvedValue(makeOffer({ status: "pending" }));
-    repo.update.mockResolvedValue(makeOffer({ status: "declined", respondedAt: new Date() }));
+    repo.update.mockResolvedValue(
+      makeOffer({ status: "declined", respondedAt: new Date() }),
+    );
 
-    await service.decline(candidateUser, OFFER_ID, { reason: "Other offer" } as any);
+    await service.decline(candidateUser, OFFER_ID, {
+      reason: "Other offer",
+    } as any);
 
     expect(notifications.emitMany).toHaveBeenCalledWith(
       expect.arrayContaining([RECRUITER_ID]),

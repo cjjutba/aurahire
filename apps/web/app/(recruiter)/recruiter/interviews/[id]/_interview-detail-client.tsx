@@ -238,7 +238,9 @@ export function RecruiterInterviewDetailClient({ interview: iv }: Props) {
       const res = await fetch(`${apiUrl}/api/v1/interviews/${iv.id}/ics`, {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
-          ...(activeCompanyId ? { "X-Active-Company-Id": activeCompanyId } : {}),
+          ...(activeCompanyId
+            ? { "X-Active-Company-Id": activeCompanyId }
+            : {}),
         },
       });
       if (!res.ok) return;

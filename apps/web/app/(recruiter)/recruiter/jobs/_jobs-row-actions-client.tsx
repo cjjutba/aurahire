@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Eye, Pencil, Send, Archive, Loader2 } from "lucide-react";
+import {
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  Send,
+  Archive,
+  Loader2,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +27,10 @@ interface JobRowActionsClientProps {
   status: string;
 }
 
-export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps) {
+export function JobRowActionsClient({
+  jobId,
+  status,
+}: JobRowActionsClientProps) {
   const router = useRouter();
   const confirm = useConfirm();
   const [busy, setBusy] = useState(false);

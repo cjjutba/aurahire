@@ -48,8 +48,14 @@ export class InterviewFeedbackDueCron {
         jobTitle: jobsTable.title,
       })
       .from(interviewsTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
-      .innerJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, interviewsTable.applicationId),
+      )
+      .innerJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
       .where(
         and(
@@ -99,7 +105,9 @@ export class InterviewFeedbackDueCron {
       entityId: CRON_ENTITY_SENTINEL,
       details: { notified, scanned: due.length, durationMs },
     });
-    this.logger.log(`[${CRON_NAME}] notified ${notified}/${due.length} recruiters in ${durationMs}ms`);
+    this.logger.log(
+      `[${CRON_NAME}] notified ${notified}/${due.length} recruiters in ${durationMs}ms`,
+    );
     return { notified, durationMs };
   }
 }

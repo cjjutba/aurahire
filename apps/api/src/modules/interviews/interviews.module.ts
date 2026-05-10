@@ -11,7 +11,13 @@ import { InterviewsRepository } from "./interviews.repository";
 import { InterviewsService } from "./interviews.service";
 
 @Module({
-  imports: [ApplicationsModule, InterviewVenuesModule, JobsModule, NotificationsModule, ProfilesModule],
+  imports: [
+    ApplicationsModule,
+    InterviewVenuesModule,
+    JobsModule,
+    NotificationsModule,
+    ProfilesModule,
+  ],
   controllers: [InterviewsController],
   providers: [InterviewsService, InterviewsRepository],
   exports: [InterviewsService, InterviewsRepository],

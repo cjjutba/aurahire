@@ -26,7 +26,12 @@ import { DRIZZLE_CLIENT, type DrizzleClient } from "../db/db.module";
 interface SocketData {
   user?: AuthUser;
 }
-type AuthSocket = Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, SocketData>;
+type AuthSocket = Socket<
+  DefaultEventsMap,
+  DefaultEventsMap,
+  DefaultEventsMap,
+  SocketData
+>;
 
 /**
  * Single Socket.io entry point for the API.
@@ -75,13 +80,19 @@ export class RealtimeGateway
     // observes. Doing the check inside handleConnection (post-connect) would
     // not surface it that way.
     server.use(async (socket, next) => {
-      const handshakeAuth = socket.handshake.auth as { token?: unknown } | undefined;
+      const handshakeAuth = socket.handshake.auth as
+        | { token?: unknown }
+        | undefined;
       const rawToken = handshakeAuth?.token;
       const token = typeof rawToken === "string" ? rawToken : undefined;
       const user = await this.jwt.authenticate(token);
       if (!user) {
-        this.logger.warn(`WS handshake rejected (auth) for client ${socket.id}`);
-        const err: Error & { data?: { code: string } } = new Error("UNAUTHORIZED");
+        this.logger.warn(
+          `WS handshake rejected (auth) for client ${socket.id}`,
+        );
+        const err: Error & { data?: { code: string } } = new Error(
+          "UNAUTHORIZED",
+        );
         err.data = { code: "UNAUTHORIZED" };
         next(err);
         return;
@@ -209,7 +220,9 @@ export class RealtimeGateway
         const rows = await this.db
           .select({ id: jobsTable.id })
           .from(jobsTable)
-          .where(and(eq(jobsTable.id, msg.id), eq(jobsTable.recruiterId, user.id)))
+          .where(
+            and(eq(jobsTable.id, msg.id), eq(jobsTable.recruiterId, user.id)),
+          )
           .limit(1);
         return rows.length === 1;
       }

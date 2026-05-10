@@ -116,7 +116,8 @@ const KNOWN_LABELS: Record<string, string> = {
   "cron.cleanup_unverified_accounts.executed": "Unverified account cleanup ran",
   "cron.interview_reminder.executed": "Interview reminder cron ran",
   "cron.offer_expiry_reminder.executed": "Offer expiry reminder cron ran",
-  "cron.interview_feedback_due.executed": "Interview feedback reminder cron ran",
+  "cron.interview_feedback_due.executed":
+    "Interview feedback reminder cron ran",
   "cron.interview_autocomplete.executed": "Interview auto-complete cron ran",
   "system.ai_scoring_failure_notified": "AI scoring failure notified",
 };
@@ -126,7 +127,9 @@ function titleCaseFallback(action: string): string {
     .split(".")
     .flatMap((segment) => segment.split("_"))
     .filter(Boolean)
-    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .map(
+      (token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase(),
+    )
     .join(" ");
 }
 

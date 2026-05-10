@@ -23,13 +23,21 @@ describe("buildInterviewIcs", () => {
   it("contains stable UID and required RFC-5545 fields", () => {
     const ics = buildInterviewIcs(fixture);
     expect(ics).toContain("BEGIN:VCALENDAR");
-    expect(ics).toContain("UID:interview-11111111-1111-1111-1111-111111111111@aurahire.site");
+    expect(ics).toContain(
+      "UID:interview-11111111-1111-1111-1111-111111111111@aurahire.site",
+    );
     expect(ics).toContain("DTSTART:20260601T100000Z");
     expect(ics).toContain("DTEND:20260601T113000Z");
     expect(ics).toContain("SUMMARY:Interview: Software Engineer at Acme Corp");
-    expect(ics).toContain("LOCATION:JRMSU Main Campus\\, Dapitan City\\, Zamboanga del Norte\\, PH (ICT Building\\, Room 305)");
-    expect(ics).toContain("ORGANIZER;CN=Acme Corp:mailto:recruiter@acme.example");
-    expect(ics).toContain("ATTENDEE;CN=Juan Dela Cruz;RSVP=TRUE:mailto:juan@example.com");
+    expect(ics).toContain(
+      "LOCATION:JRMSU Main Campus\\, Dapitan City\\, Zamboanga del Norte\\, PH (ICT Building\\, Room 305)",
+    );
+    expect(ics).toContain(
+      "ORGANIZER;CN=Acme Corp:mailto:recruiter@acme.example",
+    );
+    expect(ics).toContain(
+      "ATTENDEE;CN=Juan Dela Cruz;RSVP=TRUE:mailto:juan@example.com",
+    );
     expect(ics).toContain("END:VCALENDAR");
   });
 
@@ -60,7 +68,11 @@ describe("buildInterviewIcs", () => {
         rescheduledFromId: "11111111-1111-1111-1111-111111111111",
       },
     });
-    expect(aliased).toContain("UID:interview-11111111-1111-1111-1111-111111111111@aurahire.site");
-    expect(aliased).not.toContain("UID:interview-22222222-2222-2222-2222-222222222222");
+    expect(aliased).toContain(
+      "UID:interview-11111111-1111-1111-1111-111111111111@aurahire.site",
+    );
+    expect(aliased).not.toContain(
+      "UID:interview-22222222-2222-2222-2222-222222222222",
+    );
   });
 });

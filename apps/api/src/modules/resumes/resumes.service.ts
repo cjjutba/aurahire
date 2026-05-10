@@ -56,7 +56,12 @@ export class ResumesService {
 
   async upload(
     user: AuthUser,
-    file: { filename: string; mimeType: string; buffer: Buffer; sizeBytes: number },
+    file: {
+      filename: string;
+      mimeType: string;
+      buffer: Buffer;
+      sizeBytes: number;
+    },
     requestMeta: RequestMeta = {},
   ): Promise<ResumeResponseDto> {
     if (user.role !== "candidate") {
@@ -81,7 +86,8 @@ export class ResumesService {
     }
 
     const ext =
-      extname(file.filename) || (file.mimeType === "application/pdf" ? ".pdf" : ".docx");
+      extname(file.filename) ||
+      (file.mimeType === "application/pdf" ? ".pdf" : ".docx");
     const storagePath = `${user.id}/${randomUUID()}${ext}`;
 
     const hadResumes = await this.repo.hasResumes(user.id);
@@ -221,10 +227,16 @@ export class ResumesService {
   ): Promise<ResumeResponseDto> {
     const resume = await this.repo.findById(id);
     if (!resume || resume.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
     if (user.role !== "candidate") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Candidate role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
     }
 
     await this.repo.update(id, { parseStatus: "parsing", parseError: null });
@@ -314,13 +326,22 @@ export class ResumesService {
   async getById(user: AuthUser, id: string): Promise<ResumeResponseDto> {
     const resume = await this.repo.findById(id);
     if (!resume) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
     if (user.role === "candidate" && resume.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
     if (user.role === "recruiter") {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
     return this.toResponse(resume);
   }
@@ -332,7 +353,10 @@ export class ResumesService {
   ): Promise<ResumeResponseDto> {
     const resume = await this.repo.findById(id);
     if (!resume || resume.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
 
     // Wrap the DB writes (default-flag flip + profile_scores stale_at) in a
@@ -361,7 +385,9 @@ export class ResumesService {
       action: "resume.set_default",
       entityType: "resume",
       entityId: id,
-      details: previousDefault ? { previousResumeId: previousDefault.id } : undefined,
+      details: previousDefault
+        ? { previousResumeId: previousDefault.id }
+        : undefined,
       ...requestMeta,
     });
 
@@ -376,7 +402,10 @@ export class ResumesService {
   ): Promise<void> {
     const resume = await this.repo.findById(id);
     if (!resume || resume.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
 
     if (resume.isDefault) {
@@ -391,7 +420,10 @@ export class ResumesService {
         });
       }
 
-      await this.storage.delete({ bucket: RESUMES_BUCKET, path: resume.storagePath });
+      await this.storage.delete({
+        bucket: RESUMES_BUCKET,
+        path: resume.storagePath,
+      });
 
       await this.applyDefaultChange({
         candidateId: user.id,
@@ -423,7 +455,10 @@ export class ResumesService {
     }
 
     // Non-default resume — straight delete, no cascade.
-    await this.storage.delete({ bucket: RESUMES_BUCKET, path: resume.storagePath });
+    await this.storage.delete({
+      bucket: RESUMES_BUCKET,
+      path: resume.storagePath,
+    });
     await this.repo.delete(id);
 
     await this.audit.log({
@@ -443,14 +478,23 @@ export class ResumesService {
   ): Promise<{ signedUrl: string; signedPdfUrl: string; expiresAt: string }> {
     const resume = await this.repo.findById(id);
     if (!resume) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
 
     if (user.role === "candidate" && resume.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
     if (user.role === "recruiter") {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Resume not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Resume not found",
+      });
     }
 
     const expiresIn = 60 * 60;
@@ -498,7 +542,12 @@ export class ResumesService {
     previousResumeIdToCancel: string | null;
     flipDefaultInTx: (tx: ResumesTx) => Promise<void>;
   }): Promise<void> {
-    const { candidateId, newResumeId, previousResumeIdToCancel, flipDefaultInTx } = opts;
+    const {
+      candidateId,
+      newResumeId,
+      previousResumeIdToCancel,
+      flipDefaultInTx,
+    } = opts;
 
     if (previousResumeIdToCancel) {
       try {

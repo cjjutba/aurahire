@@ -26,9 +26,9 @@ export default async function JobApplicationsPage({ params }: PageProps) {
     );
   }
 
-  const jobBody = (await jobRes.json()) as { data: { id: string; title: string } };
+  const jobBody = (await jobRes.json()) as {
+    data: { id: string; title: string };
+  };
 
-  return (
-    <ApplicationsClient jobId={jobId} jobTitle={jobBody.data.title} />
-  );
+  return <ApplicationsClient jobId={jobId} jobTitle={jobBody.data.title} />;
 }

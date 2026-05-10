@@ -71,7 +71,9 @@ export function JobCard({
   matchPreview,
   matchPreviewLoading,
 }: JobCardProps) {
-  const location = [job.locationCity, job.locationCountry].filter(Boolean).join(", ");
+  const location = [job.locationCity, job.locationCountry]
+    .filter(Boolean)
+    .join(", ");
   const hasSalary = job.salaryMin !== null && job.salaryMax !== null;
 
   return (
@@ -118,7 +120,9 @@ export function JobCard({
           {job.title}
         </h3>
         {job.department && (
-          <p className="mt-1 truncate text-xs text-[var(--color-muted)]">{job.department}</p>
+          <p className="mt-1 truncate text-xs text-[var(--color-muted)]">
+            {job.department}
+          </p>
         )}
       </div>
 
@@ -149,7 +153,9 @@ export function JobCard({
         {hasSalary ? (
           <div className="font-mono text-[var(--color-ink)]">
             {job.salaryMin!.toLocaleString()}–{job.salaryMax!.toLocaleString()}{" "}
-            <span className="text-[var(--color-muted)]">{job.salaryCurrency}</span>
+            <span className="text-[var(--color-muted)]">
+              {job.salaryCurrency}
+            </span>
           </div>
         ) : (
           <div className="text-[var(--color-muted)]">Salary not disclosed</div>
@@ -163,7 +169,10 @@ function JobCardMatchRow({
   matchPreview,
   matchPreviewLoading,
 }: {
-  matchPreview?: { overallScore: number; band: "strong" | "partial" | "limited" };
+  matchPreview?: {
+    overallScore: number;
+    band: "strong" | "partial" | "limited";
+  };
   matchPreviewLoading?: boolean;
 }) {
   if (matchPreview) {

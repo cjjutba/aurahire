@@ -3,17 +3,17 @@
 **Date:** 2026-05-08
 **Owner:** Candidate scoring + notifications + sidebar shell across all three portals (candidate, recruiter, admin)
 **Status:** approved (extended scope — folds in audit findings F1–F13 and the Vercel-style sidebar bottom rail)
-**Supersedes:** prior narrower scope titled *"Onboarding Auto-Score + Buttonless Match Compute"* in this same file. All of that content is preserved; new sections extend it.
+**Supersedes:** prior narrower scope titled _"Onboarding Auto-Score + Buttonless Match Compute"_ in this same file. All of that content is preserved; new sections extend it.
 
 ---
 
 ## Problem
 
-The candidate journey, the recruiter journey, and all three portals' shells share a single root pattern of friction: *the system has all the data to react to a lifecycle event automatically, but the UI sits there until a user clicks something or refreshes the page.*
+The candidate journey, the recruiter journey, and all three portals' shells share a single root pattern of friction: _the system has all the data to react to a lifecycle event automatically, but the UI sits there until a user clicks something or refreshes the page._
 
 This shows up as four concrete classes of friction:
 
-1. **Manual scoring buttons** the candidate sees even when the system has already (or could already) compute the result. *"Compute my score"* on the dashboard, *"See my match"* on the job detail page. Both render a button that hides a result that's either cached or one OpenAI call away.
+1. **Manual scoring buttons** the candidate sees even when the system has already (or could already) compute the result. _"Compute my score"_ on the dashboard, _"See my match"_ on the job detail page. Both render a button that hides a result that's either cached or one OpenAI call away.
 
 2. **Missing automatic recomputes when source data changes.** Profile edits don't refresh the Profile Score. Default-resume changes leave previews stale until a manual click. The system knows the inputs changed but doesn't act on it.
 
@@ -21,11 +21,11 @@ This shows up as four concrete classes of friction:
 
 4. **No surface in the portal shell where notifications live.** All three portal sidebars end with the user info and a logout/settings affordance — no entry point for notifications, no unread badge that reflects reality, no popover to review activity.
 
-The pattern across all four classes: AuraHire feels like *AI with manual switches* instead of *AI that's already on*. This contradicts the thesis story ("transparent, explainable AI that works for the candidate") and degrades the experience for recruiters (who need real-time visibility) and admins (who need governance signals).
+The pattern across all four classes: AuraHire feels like _AI with manual switches_ instead of _AI that's already on_. This contradicts the thesis story ("transparent, explainable AI that works for the candidate") and degrades the experience for recruiters (who need real-time visibility) and admins (who need governance signals).
 
 ## Goal
 
-Make the entire system *proactive*. Every lifecycle event that can produce a downstream computation, a notification, or a UI update — does, automatically, with realtime delivery to whoever should know. Manual buttons survive only at three deliberate gates: deliberate user commitments (apply, accept, withdraw), fairness-critical justifications (bias-flag override), and recompute affordances on inputs the user controls (re-parse a resume).
+Make the entire system _proactive_. Every lifecycle event that can produce a downstream computation, a notification, or a UI update — does, automatically, with realtime delivery to whoever should know. Manual buttons survive only at three deliberate gates: deliberate user commitments (apply, accept, withdraw), fairness-critical justifications (bias-flag override), and recompute affordances on inputs the user controls (re-parse a resume).
 
 Concretely:
 
@@ -45,8 +45,9 @@ The end-state: a candidate, recruiter, or admin opening AuraHire feels the syste
 ### Area A — Candidate scoring (original slice)
 
 Backend (`apps/api`)
+
 - Extend `PATCH /candidate-profiles/me/complete-onboarding` to compute Profile Score inline, enqueue match-preview precompute, and return the score in the response.
-- New `ScoringService.computeMatchPreviewOnView(candidateId, jobId)` wrapping the existing preview compute with a per-candidate per-day Redis rate limit. Writes with `source = candidate_view` (new enum value). The existing `POST /api/v1/scoring/match-preview/:jobId` controller delegates to this method; the prior `source = candidate` write path is removed since the manual *"See my match"* button is gone. Existing rows with `source = candidate` remain as historical data.
+- New `ScoringService.computeMatchPreviewOnView(candidateId, jobId)` wrapping the existing preview compute with a per-candidate per-day Redis rate limit. Writes with `source = candidate_view` (new enum value). The existing `POST /api/v1/scoring/match-preview/:jobId` controller delegates to this method; the prior `source = candidate` write path is removed since the manual _"See my match"_ button is gone. Existing rows with `source = candidate` remain as historical data.
 - Add `match_preview_source = 'candidate_view'` enum value.
 - Add `profile_scores.stale_at TIMESTAMPTZ NULL` column + partial index for "current score per candidate."
 - Default-resume change handler: cancel in-flight BullMQ jobs scoped to the old `resume_id`, mark `profile_scores` stale, enqueue Profile Score recompute + match-preview re-precompute.
@@ -54,23 +55,24 @@ Backend (`apps/api`)
 - Server-side guard `enqueueProfileScoreIfMissing` invoked on candidate-portal entry to backfill legacy candidates who completed onboarding before this change.
 
 Frontend (`apps/web`)
-- New page `app/onboarding/candidate/analyzing/page.tsx` — the *"AI is analyzing your profile"* screen with a state machine that waits on the API response then on Socket.IO events.
+
+- New page `app/onboarding/candidate/analyzing/page.tsx` — the _"AI is analyzing your profile"_ screen with a state machine that waits on the API response then on Socket.IO events.
 - Preferences final step (`/onboarding/candidate/preferences`) redirects to `/onboarding/candidate/analyzing` instead of `/candidate`.
-- Remove the *"Compute my score"* button from `profile-score-card-client.tsx`. Render the latest score directly. When `stale_at IS NOT NULL` and no recompute is in flight, show a small *"Recompute"* affordance. When a recompute is in flight, overlay `AiShimmer` on the existing score number until the `profile-score.updated` event arrives.
-- Remove the *"See my match"* button from `_match-preview-client.tsx`. Auto-compute on mount when no cached preview. Render `AiShimmer` during compute. On `429 DAILY_AI_LIMIT`, show a banner instead of a button — *"Daily AI compute limit reached. Apply to score this match as part of your application."* with a link to the apply page. No manual compute trigger remains in the UI.
+- Remove the _"Compute my score"_ button from `profile-score-card-client.tsx`. Render the latest score directly. When `stale_at IS NOT NULL` and no recompute is in flight, show a small _"Recompute"_ affordance. When a recompute is in flight, overlay `AiShimmer` on the existing score number until the `profile-score.updated` event arrives.
+- Remove the _"See my match"_ button from `_match-preview-client.tsx`. Auto-compute on mount when no cached preview. Render `AiShimmer` during compute. On `429 DAILY_AI_LIMIT`, show a banner instead of a button — _"Daily AI compute limit reached. Apply to score this match as part of your application."_ with a link to the apply page. No manual compute trigger remains in the UI.
 - Dashboard `RecommendedForYouSection`: render shimmer slots while `previews.length < 5`; subscribe to `match-preview.created` events to fill them in. Graceful empty state on precompute failure.
 
 ### Area B — Profile edit triggers Profile Score recompute (F1)
 
 - `CandidateProfilesService.updatePersonal(candidateId, dto)` and any other "candidate identity" mutation (headline, summary, current title) — emit a `candidate.profile_changed` event.
 - New `ProfileScoreRecomputeOnProfileChangeHandler` listens, marks `profile_scores.stale_at = NOW()`, enqueues `ProfileScoreRecomputeJob(currentDefaultResumeId)`. Same flow as preferences-edit.
-- Frontend Profile Score card on dashboard subscribes to `profile-score.updated` (already in scope) and shows shimmer with caption *"Updating with your profile changes…"*.
+- Frontend Profile Score card on dashboard subscribes to `profile-score.updated` (already in scope) and shows shimmer with caption _"Updating with your profile changes…"_.
 
 ### Area C — Default-resume UX improvements (F2, F3)
 
-- Remove the *"Set as default resume?"* confirmation modal at `_resume-client.tsx:840-846`. Instead: optimistic update + post-success toast *"Set X as default. [Undo]"* with a 6-second undo affordance. Click Undo → revert via `PATCH /resumes/:id/set-default`.
-- New backend behavior on `DELETE /resumes/:id` when `id` is the default: transactional auto-promote of the most-recently-uploaded remaining resume (`updated_at DESC`, fall back to `created_at DESC`) to default. Emit `resume.default_changed` event with the new default's `id`. UI toast on the candidate's next page load: *"X is now your default resume."*
-- If the deletion would leave the candidate with zero resumes: block the delete with `409 LAST_RESUME_PROTECTED`. UI surfaces *"You can't delete your last resume — upload another first."*
+- Remove the _"Set as default resume?"_ confirmation modal at `_resume-client.tsx:840-846`. Instead: optimistic update + post-success toast _"Set X as default. [Undo]"_ with a 6-second undo affordance. Click Undo → revert via `PATCH /resumes/:id/set-default`.
+- New backend behavior on `DELETE /resumes/:id` when `id` is the default: transactional auto-promote of the most-recently-uploaded remaining resume (`updated_at DESC`, fall back to `created_at DESC`) to default. Emit `resume.default_changed` event with the new default's `id`. UI toast on the candidate's next page load: _"X is now your default resume."_
+- If the deletion would leave the candidate with zero resumes: block the delete with `409 LAST_RESUME_PROTECTED`. UI surfaces _"You can't delete your last resume — upload another first."_
 
 ### Area D — Notification system completeness (F4–F8)
 
@@ -80,14 +82,14 @@ Audit shows the notification system is wired (queue, processor, in-app feed tabl
 - **F5 — Offer accept/decline.** `OffersService.accept()` and `OffersService.decline()` emit `offer_accepted` / `offer_declined` to the recruiter who created the offer (and to other members of the hiring team via the role-visible-events filter).
 - **F6 — New application events.** `ApplicationsService.create()` emits `new_application_received` to the recruiter who owns the job (and the hiring team).
 - **F7 — Bell badge realtime updates.** New realtime event `notification.created` broadcast to room `user:{userId}` whenever a `notifications` row is inserted. Frontend bell subscribes, increments unread count, and (per user preference) optionally shows a brief inline toast.
-- **F8 — Interview reschedule + share-feedback emails.** Recent commits (`5a4c481` reschedule, `df48d0b` share-feedback) explicitly left email TODOs. Plumb the existing `notification-email.processor.ts` through both code paths so the in-app notification *and* the email both fire.
+- **F8 — Interview reschedule + share-feedback emails.** Recent commits (`5a4c481` reschedule, `df48d0b` share-feedback) explicitly left email TODOs. Plumb the existing `notification-email.processor.ts` through both code paths so the in-app notification _and_ the email both fire.
 
 ### Area E — Scheduled jobs (F9–F13)
 
 Five new cron jobs wired through `@nestjs/schedule` and emitting events that the existing notification queue handles.
 
 - **F9 — Interview reminder cron.** Schedule: `0 5 * * *` UTC (every day, 00:05 UTC). Query: interviews with `status = 'scheduled'` and `scheduled_at` ∈ `[now+23h, now+24h]`. Emit `interview_reminder_24h` to the candidate.
-- **F10 — Offer expiration cron.** Schedule: `10 0 * * *` UTC. Two passes: (a) offers with `status = 'pending'` and `expires_at` ∈ `[now, now+24h]` → emit `offer_expiring_soon` to the candidate; (b) offers with `status = 'pending'` and `expires_at < now` → transactional update to `status = 'expired'` + emit `offer_expired` to candidate *and* recruiter.
+- **F10 — Offer expiration cron.** Schedule: `10 0 * * *` UTC. Two passes: (a) offers with `status = 'pending'` and `expires_at` ∈ `[now, now+24h]` → emit `offer_expiring_soon` to the candidate; (b) offers with `status = 'pending'` and `expires_at < now` → transactional update to `status = 'expired'` + emit `offer_expired` to candidate _and_ recruiter.
 - **F11 — Job deadline auto-archive cron.** Schedule: `15 0 * * *` UTC. Query: jobs with `status = 'published'` and `application_deadline < now`. Update to `status = 'archived'`. Emit `job_archived_by_deadline` to the recruiter who owns the job. Audit log entry per archive.
 - **F12 — Interview feedback due reminder cron.** Schedule: `0 */6 * * *` (every 6 hours). Query: interviews with `status = 'completed'`, `feedback_id IS NULL`, `completed_at < now - 24h`, `feedback_reminder_sent_at IS NULL`. Emit `interview_feedback_due` to the recruiter who scheduled the interview. Set `feedback_reminder_sent_at = NOW()` to prevent duplicates. (A second reminder at 47 h from completion is folded in via the same cron — track `feedback_reminder_sent_at` as `last_sent` and check elapsed.)
 - **F13 — Notification digest cron.** Schedule: `0 9 * * *` UTC. Query: notifications with `digest_pending = true` grouped by `user_id`. For each user, enqueue a `digest-email` job to the existing `NotificationEmailProcessor` (already implemented at `apps/api/src/modules/notifications/notification-email.processor.ts:69-98`). Reset `digest_pending = false` on emission.
@@ -114,7 +116,7 @@ The portal sidebar already exists at `apps/web/components/portal/sidebar.tsx` (o
 ```
 
 - Avatar + name area is a single clickable region that opens the profile dropdown popover. Padding `{spacing.sm}`. Hover state: background `{colors.surface-strong}`.
-- The `⋯` button is a 32×32 circle, background `{colors.surface-strong}`, opens the *same* profile dropdown popover (alternate affordance, matching Vercel).
+- The `⋯` button is a 32×32 circle, background `{colors.surface-strong}`, opens the _same_ profile dropdown popover (alternate affordance, matching Vercel).
 - The bell button is a 32×32 circle, background `{colors.surface-strong}`. When `unreadCount > 0`, a 6×6 `{colors.primary}` (AuraHire Blue) circle overlays the top-right of the bell icon.
 - Both buttons use Lucide React icons (`MoreHorizontal`, `Bell`).
 - The bell button opens the notifications popover.
@@ -125,17 +127,17 @@ Anchored above the avatar/name region (Vercel anchors above; Radix UI Popover wi
 
 Content (top to bottom), adapted from Vercel's pattern to AuraHire's surfaces:
 
-| Slot | Element | Behavior |
-|---|---|---|
-| Header | Avatar (40 px, `{rounded.full}`) + name `{typography.title-md}` + email `{typography.caption}` muted + small gear icon button right-aligned | Gear → `/settings` (role-appropriate route — `/candidate/settings`, `/recruiter/settings`, `/admin/settings`) |
-| Action | *"Send feedback"* with smile icon | `mailto:cjjutbaofficial@gmail.com?subject=AuraHire feedback` (stub for thesis; can become a modal in a follow-up) |
-| Theme picker | *"Theme"* label + three pill icons: System / Light / Dark | Persisted in user preferences via existing settings (or `localStorage` if no theme persistence yet — verify) |
-| Action | *"How it works"* with book icon | `/how-it-works` — the explainability docs page (thesis-aligned) |
-| Action | *"Help"* with help-circle icon | `/help` (existing page) |
-| Action | *"Log out"* with log-out icon | Existing logout flow |
-| Footer status pill | *"AI Status — All systems normal"* (or *"AI Status — Degraded"* on failure) with a `{colors.score-high}` / `{colors.score-mid}` dot | Polled from `GET /api/v1/health/ai` on popover open. Click → `/status` (out of scope — link is a no-op for this slice). |
+| Slot               | Element                                                                                                                                     | Behavior                                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Header             | Avatar (40 px, `{rounded.full}`) + name `{typography.title-md}` + email `{typography.caption}` muted + small gear icon button right-aligned | Gear → `/settings` (role-appropriate route — `/candidate/settings`, `/recruiter/settings`, `/admin/settings`)           |
+| Action             | _"Send feedback"_ with smile icon                                                                                                           | `mailto:cjjutbaofficial@gmail.com?subject=AuraHire feedback` (stub for thesis; can become a modal in a follow-up)       |
+| Theme picker       | _"Theme"_ label + three pill icons: System / Light / Dark                                                                                   | Persisted in user preferences via existing settings (or `localStorage` if no theme persistence yet — verify)            |
+| Action             | _"How it works"_ with book icon                                                                                                             | `/how-it-works` — the explainability docs page (thesis-aligned)                                                         |
+| Action             | _"Help"_ with help-circle icon                                                                                                              | `/help` (existing page)                                                                                                 |
+| Action             | _"Log out"_ with log-out icon                                                                                                               | Existing logout flow                                                                                                    |
+| Footer status pill | _"AI Status — All systems normal"_ (or _"AI Status — Degraded"_ on failure) with a `{colors.score-high}` / `{colors.score-mid}` dot         | Polled from `GET /api/v1/health/ai` on popover open. Click → `/status` (out of scope — link is a no-op for this slice). |
 
-Items deliberately *not* included from the Vercel pattern: *"Home Page"*, *"Changelog"*, *"Docs"*, *"Upgrade to Pro"* — none have a thesis-relevant analogue.
+Items deliberately _not_ included from the Vercel pattern: _"Home Page"_, _"Changelog"_, _"Docs"_, _"Upgrade to Pro"_ — none have a thesis-relevant analogue.
 
 The component is a single file `apps/web/components/portal/sidebar-profile-popover.tsx`. It receives `user` (id, name, email, avatarUrl, role) as a prop. Role-conditional rendering is minimal (the `Settings` link target differs).
 
@@ -144,10 +146,12 @@ The component is a single file `apps/web/components/portal/sidebar-profile-popov
 Anchored above the bell button. Width 380 px. Same radius / shadow / typography tokens as the profile popover. Padding `{spacing.lg}` for the header, `0` for the list (rows manage their own padding).
 
 Header bar:
-- Tabs: *Inbox* (with unread count badge) / *Archive* — left-aligned, underline-on-active per `DESIGN.md` chip patterns
+
+- Tabs: _Inbox_ (with unread count badge) / _Archive_ — left-aligned, underline-on-active per `DESIGN.md` chip patterns
 - Settings gear icon, right-aligned → `/settings/notifications` (existing page)
 
 Body — list of notification rows, vertically scrollable to ~80 vh max:
+
 - Avatar / icon (32×32, `{rounded.full}`) showing the event type icon (alert-triangle for warnings, check-circle for confirmations, calendar for interviews, briefcase for jobs, etc. — mapped from notification `kind`)
 - Title + 1–2 line body, `{typography.body-sm}` for body
 - Timestamp (`{typography.caption}` muted) — relative ("19h ago", "Apr 25")
@@ -156,24 +160,25 @@ Body — list of notification rows, vertically scrollable to ~80 vh max:
 - Hover: `{colors.surface-soft}` background
 
 Empty state per tab:
-- Inbox empty: *"No new notifications. We'll let you know when something happens."*
-- Archive empty: *"No archived notifications yet."*
 
-Footer (Inbox tab only): *"Archive all"* button (`button-secondary-light`, full-width). Click → `POST /api/v1/notifications/archive-all` → optimistic clear of inbox list, refresh archive on next tab switch.
+- Inbox empty: _"No new notifications. We'll let you know when something happens."_
+- Archive empty: _"No archived notifications yet."_
+
+Footer (Inbox tab only): _"Archive all"_ button (`button-secondary-light`, full-width). Click → `POST /api/v1/notifications/archive-all` → optimistic clear of inbox list, refresh archive on next tab switch.
 
 Component file: `apps/web/components/portal/sidebar-notifications-popover.tsx`.
 
 #### F.4 Per-portal notification feeds
 
-The notifications query is already user-scoped (`notifications.user_id = me`), so no new filtering is required at the API layer. What differs per portal is *which event kinds* a user typically receives, governed by `event-defaults.ts` + `notification_preferences`:
+The notifications query is already user-scoped (`notifications.user_id = me`), so no new filtering is required at the API layer. What differs per portal is _which event kinds_ a user typically receives, governed by `event-defaults.ts` + `notification_preferences`:
 
-| Portal | Typical event kinds in the feed |
-|---|---|
+| Portal    | Typical event kinds in the feed                                                                                                                                                                                                                                                                                            |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Candidate | `application_status_changed`, `interview_scheduled`, `interview_rescheduled`, `interview_reminder_24h`, `offer_received`, `offer_expiring_soon`, `offer_expired`, `match_preview_ready` (optional, via realtime stream — see below), `profile_score_updated` (optional), `account_password_reset`, account-security events |
-| Recruiter | `new_application_received`, `application_status_changed` (subset — only role-relevant), `offer_accepted`, `offer_declined`, `interview_rescheduled` (when candidate reschedules), `interview_feedback_due`, `job_archived_by_deadline`, `bias_flag_raised` (on their jobs), `system_ai_scoring_failure` (their org only) |
-| Admin | `system_moderation_queue_item`, `system_ai_scoring_failure` (system-wide), security events, governance signals |
+| Recruiter | `new_application_received`, `application_status_changed` (subset — only role-relevant), `offer_accepted`, `offer_declined`, `interview_rescheduled` (when candidate reschedules), `interview_feedback_due`, `job_archived_by_deadline`, `bias_flag_raised` (on their jobs), `system_ai_scoring_failure` (their org only)   |
+| Admin     | `system_moderation_queue_item`, `system_ai_scoring_failure` (system-wide), security events, governance signals                                                                                                                                                                                                             |
 
-Whether `match_preview_ready` and `profile_score_updated` appear in the bell feed is a deliberate design choice. *Recommendation:* they appear in the realtime stream (used by the dashboard to fill shimmer slots) but **do not** create persistent notification rows — otherwise the bell becomes noisy on a high-volume precompute day. Stream-only events live for the duration of the WebSocket connection and don't accumulate in the bell.
+Whether `match_preview_ready` and `profile_score_updated` appear in the bell feed is a deliberate design choice. _Recommendation:_ they appear in the realtime stream (used by the dashboard to fill shimmer slots) but **do not** create persistent notification rows — otherwise the bell becomes noisy on a high-volume precompute day. Stream-only events live for the duration of the WebSocket connection and don't accumulate in the bell.
 
 #### F.5 Bell badge realtime updates
 
@@ -215,6 +220,7 @@ The frontend `useUserNotifications()` hook (new, in `apps/web/lib/realtime/use-u
 #### F.6 Mark-as-read, archive, archive-all
 
 API surface (extending the existing notifications module):
+
 - `GET /api/v1/notifications?tab=inbox|archive&limit=50` — paginated list
 - `PATCH /api/v1/notifications/:id/read` — mark single as read
 - `PATCH /api/v1/notifications/:id/archive` — archive single
@@ -260,6 +266,7 @@ ALTER TABLE jobs
 ```
 
 `scoring_config` (existing JSON document) gets new keys:
+
 ```jsonc
 {
   // ...existing keys...
@@ -268,7 +275,7 @@ ALTER TABLE jobs
   "analyzing_screen_wallclock_ms": 10000,
   "interview_reminder_lead_hours": 24,
   "offer_expiry_warning_lead_hours": 24,
-  "feedback_reminder_lead_hours": 24
+  "feedback_reminder_lead_hours": 24,
 }
 ```
 
@@ -339,11 +346,11 @@ Every new feature in this spec is one of: a new lifecycle event emission, a new 
 
 ### A.1 The three computations
 
-| Computation | Storage | Source values | Triggered by |
-|---|---|---|---|
-| Profile Score | `profile_scores` | (single concept) | End of onboarding (blocking, ~3–5 s); default-resume change; preferences edit; **profile-personal edit (F1)**; legacy backfill guard |
-| Top-N match precompute | `match_score_previews` | `system` | Resume parse complete (existing trigger, kept); default-resume change |
-| On-view match compute | `match_score_previews` | `candidate_view` (new) | First open of a non-recommended job's detail page; rate-limited |
+| Computation            | Storage                | Source values          | Triggered by                                                                                                                         |
+| ---------------------- | ---------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Profile Score          | `profile_scores`       | (single concept)       | End of onboarding (blocking, ~3–5 s); default-resume change; preferences edit; **profile-personal edit (F1)**; legacy backfill guard |
+| Top-N match precompute | `match_score_previews` | `system`               | Resume parse complete (existing trigger, kept); default-resume change                                                                |
+| On-view match compute  | `match_score_previews` | `candidate_view` (new) | First open of a non-recommended job's detail page; rate-limited                                                                      |
 
 ### A.2 Trigger model — onboarding completion
 
@@ -394,41 +401,44 @@ Wall-clock cap on streaming: 10 s after `profileScoreReady`. Worst-case ceiling 
 ### A.3 Steady-state surfaces
 
 **Job detail page mount** (`apps/web/app/(candidate)/candidate/jobs/[id]/page.tsx`):
+
 1. SSR: fetch job + `GET /scoring/match-preview/:jobId` (cache read; returns null if no row exists for `(candidate, job, defaultResumeId)`).
 2. If preview exists in response → render Score Ring inline; done.
 3. If no preview → client-side `useEffect` on mount fires `POST /scoring/match-preview/:jobId`.
-   - UI: `AiShimmer` with caption *"Computing your match for this role…"*
+   - UI: `AiShimmer` with caption _"Computing your match for this role…"_
    - On success → render Score Ring.
-   - On `429 DAILY_AI_LIMIT` → render banner *"Daily AI compute limit reached. Apply to score this match as part of your application."* with a CTA link to `/candidate/jobs/[id]/apply`. No manual compute button.
-   - On `500` → inline error: *"Couldn't compute your match. [Try again]"*. Retry on AI failure is allowed; the cap doesn't apply because the previous attempt didn't produce a row.
-   - On `422 MISSING_RESUME` → *"Upload a resume to see your match"* + link to `/candidate/profile/resumes`.
+   - On `429 DAILY_AI_LIMIT` → render banner _"Daily AI compute limit reached. Apply to score this match as part of your application."_ with a CTA link to `/candidate/jobs/[id]/apply`. No manual compute button.
+   - On `500` → inline error: _"Couldn't compute your match. [Try again]"_. Retry on AI failure is allowed; the cap doesn't apply because the previous attempt didn't produce a row.
+   - On `422 MISSING_RESUME` → _"Upload a resume to see your match"_ + link to `/candidate/profile/resumes`.
 
 **Default-resume change** (`PATCH /resumes/:id/set-default`):
+
 1. Backend transaction:
    - Update default flag on resumes.
    - Look up in-flight BullMQ jobs by `data.resumeId = OLD_RESUME_ID`; remove them.
    - `UPDATE profile_scores SET stale_at = NOW() WHERE candidate_id = ? AND stale_at IS NULL`.
    - Enqueue `ProfileScoreRecomputeJob(newResumeId)` and `MatchPreviewPrecomputeJob(newResumeId)`.
 2. Frontend dashboard:
-   - Optimistic banner: *"Refreshing your scores with your new resume…"*
+   - Optimistic banner: _"Refreshing your scores with your new resume…"_
    - Profile Score card: shimmer over the existing number until `profile-score.updated` event arrives.
    - Recommendations section: existing previews stay visible (still useful as a fallback view) until new `system`-source previews arrive. Old previews are not deleted, just no longer queried.
 
 **Preferences edit** and **profile-personal edit (F1)** (`PATCH /candidate-profiles/preferences`, `PATCH /candidate-profiles/personal`):
+
 1. Backend: update row, mark `profile_scores.stale_at = NOW()`, enqueue `ProfileScoreRecomputeJob(currentDefaultResumeId)`. No match-preview action.
-2. Frontend: shimmer over Profile Score card with caption *"Updating with your latest profile…"*. On `profile-score.updated` event → render new score.
+2. Frontend: shimmer over Profile Score card with caption _"Updating with your latest profile…"_. On `profile-score.updated` event → render new score.
 
 ### A.4 State machine — `/onboarding/candidate/analyzing`
 
-| State | Visible copy / UI | Transition out |
-|---|---|---|
-| `mounting` | brief skeleton | on mount → `computingProfileScore` |
-| `computingProfileScore` | `AiShimmer` + *"Computing your Profile Score…"* | API response: profileScore present → `profileScoreReady`; profileScore null → `profileScoreDegraded`; network error → `error` |
-| `error` | inline error + *"Try again"* button | click retry → `computingProfileScore` |
-| `profileScoreDegraded` | *"We're still working on your score — taking you to your dashboard now."* | 2 s elapsed → `redirecting` (with `?profileScoreRetry=1` query) |
-| `profileScoreReady` | Score Ring renders + *"✓ Profile Score ready. Finding your top matches…"* | open Socket.IO subscription → `streamingPreviews` |
-| `streamingPreviews` | counter: *"N of 5 matches ready"*; visualized as filling-pip indicator | counter ≥ 5 OR 10 s elapsed → `redirecting` |
-| `redirecting` | brief fade | `router.push('/candidate')` |
+| State                   | Visible copy / UI                                                         | Transition out                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `mounting`              | brief skeleton                                                            | on mount → `computingProfileScore`                                                                                            |
+| `computingProfileScore` | `AiShimmer` + _"Computing your Profile Score…"_                           | API response: profileScore present → `profileScoreReady`; profileScore null → `profileScoreDegraded`; network error → `error` |
+| `error`                 | inline error + _"Try again"_ button                                       | click retry → `computingProfileScore`                                                                                         |
+| `profileScoreDegraded`  | _"We're still working on your score — taking you to your dashboard now."_ | 2 s elapsed → `redirecting` (with `?profileScoreRetry=1` query)                                                               |
+| `profileScoreReady`     | Score Ring renders + _"✓ Profile Score ready. Finding your top matches…"_ | open Socket.IO subscription → `streamingPreviews`                                                                             |
+| `streamingPreviews`     | counter: _"N of 5 matches ready"_; visualized as filling-pip indicator    | counter ≥ 5 OR 10 s elapsed → `redirecting`                                                                                   |
+| `redirecting`           | brief fade                                                                | `router.push('/candidate')`                                                                                                   |
 
 Implemented as a `useReducer` in the client component. Single file, ~200 lines.
 
@@ -511,16 +521,18 @@ No new API surface; all changes are within the existing `updatePersonal` handler
 ### C.1 F2 — Switch default — instant + undo toast
 
 Frontend (`_resume-client.tsx`):
+
 - Remove the confirmation modal at lines 840–846.
-- Click *"Set as default"* → immediate `PATCH /resumes/:id/set-default` (optimistic UI update).
-- On success, render an undo toast at the bottom: *"Set X as default. [Undo]"* — 6-second auto-dismiss.
+- Click _"Set as default"_ → immediate `PATCH /resumes/:id/set-default` (optimistic UI update).
+- On success, render an undo toast at the bottom: _"Set X as default. [Undo]"_ — 6-second auto-dismiss.
 - Undo click → `PATCH /resumes/:previousDefaultId/set-default` (reverts).
 
-The recompute chain triggered by the original switch *also* runs for the undo (predictably — it's the same code path). Net effect of an undone switch: two recompute cycles, but the user ends up with the score for the resume they originally had. Cost is acceptable given the rarity of undos.
+The recompute chain triggered by the original switch _also_ runs for the undo (predictably — it's the same code path). Net effect of an undone switch: two recompute cycles, but the user ends up with the score for the resume they originally had. Cost is acceptable given the rarity of undos.
 
 ### C.2 F3 — Delete default — auto-promote next resume
 
 Backend (`ResumesService.delete()`):
+
 1. Determine if the resume being deleted is the candidate's current default.
 2. If yes, find the most-recently-uploaded remaining resume (`updated_at DESC` then `created_at DESC`).
 3. If a remaining resume exists, transactionally:
@@ -531,8 +543,9 @@ Backend (`ResumesService.delete()`):
 4. If no remaining resume, return `409 LAST_RESUME_PROTECTED` — refuse the delete.
 
 Frontend:
-- On `409 LAST_RESUME_PROTECTED`, show inline error: *"You can't delete your last resume — upload another first."*
-- On success of a delete-of-default, show toast: *"Deleted X. Y is now your default resume."*
+
+- On `409 LAST_RESUME_PROTECTED`, show inline error: _"You can't delete your last resume — upload another first."_
+- On success of a delete-of-default, show toast: _"Deleted X. Y is now your default resume."_
 - Background: dashboard updates as recompute lands (existing flow).
 
 ---
@@ -560,25 +573,32 @@ Frontend:
 ### D.2 F5 — Offer accept/decline events
 
 Inside `OffersService.accept()` and `OffersService.decline()`:
+
 ```ts
 await this.notifications.emit(
-  status === 'accepted' ? 'offer_accepted' : 'offer_declined',
-  { offerId, applicationId, candidateId, recruiterUserIds, occurredAt }
+  status === "accepted" ? "offer_accepted" : "offer_declined",
+  { offerId, applicationId, candidateId, recruiterUserIds, occurredAt },
 );
 ```
 
 ### D.3 F6 — New application events
 
 Inside `ApplicationsService.create()`:
+
 ```ts
-await this.notifications.emit('new_application_received', {
-  applicationId, jobId, candidateId, recruiterUserIds, occurredAt
+await this.notifications.emit("new_application_received", {
+  applicationId,
+  jobId,
+  candidateId,
+  recruiterUserIds,
+  occurredAt,
 });
 ```
 
 ### D.4 F8 — Plumb interview reschedule + share-feedback emails
 
 Recent commits explicitly punted email sends. Inside the existing `InterviewsService.reschedule()` and `InterviewsService.shareFeedback()`:
+
 - After the in-app notification emit (already wired), enqueue an email job via `notification-email.processor.ts`. The processor is implemented; it just needs to be invoked.
 - Email templates: reuse the existing interview email templates (or add new ones if reschedule doesn't have one — verify `apps/api/src/email/templates/`).
 
@@ -594,16 +614,17 @@ The mark-read, archive, and archive-all endpoints (Area F.6) emit their respecti
 
 All five crons live in a new module `apps/api/src/modules/notifications/notifications.scheduler.ts` (or split per-domain if cleaner during implementation). Each is a `@Cron` decorated method using `CronExpression` constants.
 
-| Cron | Schedule (UTC) | Query | Action |
-|---|---|---|---|
-| F9 — interview reminder | `0 5 * * *` (00:05) | `interviews WHERE status='scheduled' AND scheduled_at BETWEEN NOW()+'23h' AND NOW()+'24h'` | Emit `interview_reminder_24h` to candidate |
-| F10a — offer expiring soon | `10 0 * * *` (00:10) | `offers WHERE status='pending' AND expires_at BETWEEN NOW() AND NOW()+'24h'` | Emit `offer_expiring_soon` to candidate |
-| F10b — offer expired | `10 0 * * *` (same job, second pass) | `offers WHERE status='pending' AND expires_at < NOW()` | UPDATE to `status='expired'`, emit `offer_expired` to candidate + recruiter |
-| F11 — job deadline auto-archive | `15 0 * * *` (00:15) | `jobs WHERE status='published' AND application_deadline < NOW()` | UPDATE to `status='archived'`, set `archived_reason='deadline_passed'`, emit `job_archived_by_deadline` to recruiter |
-| F12 — interview feedback due | `0 */6 * * *` (every 6h) | `interviews WHERE status='completed' AND feedback_id IS NULL AND completed_at < NOW()-'24h' AND (feedback_reminder_sent_at IS NULL OR feedback_reminder_sent_at < NOW()-'24h')` | Emit `interview_feedback_due` to recruiter, set `feedback_reminder_sent_at = NOW()` |
-| F13 — notification digest | `0 9 * * *` (09:00) | `notifications WHERE digest_pending = true GROUP BY user_id` | For each user, enqueue digest-email job to existing processor; reset `digest_pending = false` |
+| Cron                            | Schedule (UTC)                       | Query                                                                                                                                                                           | Action                                                                                                               |
+| ------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| F9 — interview reminder         | `0 5 * * *` (00:05)                  | `interviews WHERE status='scheduled' AND scheduled_at BETWEEN NOW()+'23h' AND NOW()+'24h'`                                                                                      | Emit `interview_reminder_24h` to candidate                                                                           |
+| F10a — offer expiring soon      | `10 0 * * *` (00:10)                 | `offers WHERE status='pending' AND expires_at BETWEEN NOW() AND NOW()+'24h'`                                                                                                    | Emit `offer_expiring_soon` to candidate                                                                              |
+| F10b — offer expired            | `10 0 * * *` (same job, second pass) | `offers WHERE status='pending' AND expires_at < NOW()`                                                                                                                          | UPDATE to `status='expired'`, emit `offer_expired` to candidate + recruiter                                          |
+| F11 — job deadline auto-archive | `15 0 * * *` (00:15)                 | `jobs WHERE status='published' AND application_deadline < NOW()`                                                                                                                | UPDATE to `status='archived'`, set `archived_reason='deadline_passed'`, emit `job_archived_by_deadline` to recruiter |
+| F12 — interview feedback due    | `0 */6 * * *` (every 6h)             | `interviews WHERE status='completed' AND feedback_id IS NULL AND completed_at < NOW()-'24h' AND (feedback_reminder_sent_at IS NULL OR feedback_reminder_sent_at < NOW()-'24h')` | Emit `interview_feedback_due` to recruiter, set `feedback_reminder_sent_at = NOW()`                                  |
+| F13 — notification digest       | `0 9 * * *` (09:00)                  | `notifications WHERE digest_pending = true GROUP BY user_id`                                                                                                                    | For each user, enqueue digest-email job to existing processor; reset `digest_pending = false`                        |
 
 All crons:
+
 - Run inside a try/catch with audit-log entry on failure (so a failure once doesn't kill the cron silently).
 - Use `LIMIT 500` per pass to avoid memory blowup on large datasets — re-run on next tick if more remain.
 - Skip work if the relevant table is empty (cheap query; no side effects).
@@ -625,6 +646,7 @@ All crons:
 ### F.8 Sidebar wiring per portal
 
 Each existing portal sidebar adds the new bottom rail in place of its current bottom anchor:
+
 - `apps/web/components/portal/candidate-sidebar.tsx` (verify exact path)
 - `apps/web/components/portal/recruiter-sidebar.tsx`
 - `apps/web/components/portal/admin-sidebar.tsx`
@@ -651,14 +673,14 @@ The existing `event-defaults.ts` and `notification_preferences` already determin
 
 All events are scoped to a Socket.IO room. Frontend hooks subscribe on mount, unsubscribe on unmount.
 
-| Event | Room | Emitted by | Payload | Frontend subscriber |
-|---|---|---|---|---|
-| `match-preview.created` | `candidate:{candidateId}` | `ScoringService` after preview row insert | candidateId, jobId, resumeId, source, overallScore, band, createdAt | analyzing screen + dashboard `RecommendedForYouSection` |
-| `profile-score.updated` | `candidate:{candidateId}` | `ScoringService` after Profile Score insert | candidateId, resumeId, overallScore, band, reason, updatedAt | dashboard `ProfileScoreCard` |
-| `notification.created` | `user:{userId}` | `NotificationsService` after row insert | id, userId, kind, title, bodyExcerpt, linkUrl, createdAt, unreadCount | sidebar bell badge + notifications popover (all portals) |
-| `notification.read` | `user:{userId}` | `NotificationsService` on mark-read | id, unreadCount | sidebar bell badge |
-| `notification.archived` | `user:{userId}` | `NotificationsService` on archive | id, unreadCount | sidebar bell + popover lists |
-| `notification.archive_all` | `user:{userId}` | `NotificationsService` on archive-all | unreadCount: 0 | sidebar bell + popover lists |
+| Event                      | Room                      | Emitted by                                  | Payload                                                               | Frontend subscriber                                      |
+| -------------------------- | ------------------------- | ------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------- |
+| `match-preview.created`    | `candidate:{candidateId}` | `ScoringService` after preview row insert   | candidateId, jobId, resumeId, source, overallScore, band, createdAt   | analyzing screen + dashboard `RecommendedForYouSection`  |
+| `profile-score.updated`    | `candidate:{candidateId}` | `ScoringService` after Profile Score insert | candidateId, resumeId, overallScore, band, reason, updatedAt          | dashboard `ProfileScoreCard`                             |
+| `notification.created`     | `user:{userId}`           | `NotificationsService` after row insert     | id, userId, kind, title, bodyExcerpt, linkUrl, createdAt, unreadCount | sidebar bell badge + notifications popover (all portals) |
+| `notification.read`        | `user:{userId}`           | `NotificationsService` on mark-read         | id, unreadCount                                                       | sidebar bell badge                                       |
+| `notification.archived`    | `user:{userId}`           | `NotificationsService` on archive           | id, unreadCount                                                       | sidebar bell + popover lists                             |
+| `notification.archive_all` | `user:{userId}`           | `NotificationsService` on archive-all       | unreadCount: 0                                                        | sidebar bell + popover lists                             |
 
 All payloads are validated through Zod schemas in `packages/shared/realtime/`. Emitter validates outgoing; subscriber parses incoming. Single source of truth.
 
@@ -666,21 +688,21 @@ All payloads are validated through Zod schemas in `packages/shared/realtime/`. E
 
 ## H. Error handling matrix
 
-| Trigger | API behavior | UI behavior |
-|---|---|---|
-| Profile Score AI fails during onboarding | `200` with `profileScore: null`, `errors.profileScore: "transient"`. Profile Score retry job enqueued (BullMQ, 3 attempts, exponential backoff). | Analyzing page → `profileScoreDegraded` for 2 s → redirect to `/candidate?profileScoreRetry=1`. Dashboard score card shows shimmer; resolves when retry succeeds. |
-| Profile Score retry exhausts (3 attempts) | Audit log written; `profile_scores` row remains absent. | Dashboard score card transitions from shimmer to inline error: *"We couldn't compute your score. [Try again]"* — manual retry only. |
-| `complete-onboarding` PATCH itself errors (DB / network) | `5xx` | Analyzing page shows error with *"Try again"* button. No auto-redirect; candidate isn't trapped. |
-| Match precompute job fails (3 retries) | Audit log written. | Dashboard recommendations section shows graceful empty state with retry button. |
-| On-view compute AI failure | `5xx` | Job detail page: shimmer → inline error: *"Couldn't compute your match. [Try again]"* |
-| On-view compute hits daily cap | `429 DAILY_AI_LIMIT` | Banner: *"Daily AI compute limit reached. Apply to score this match as part of your application."* with CTA link. **No manual compute button** — would bypass the cap. |
-| Default resume missing when on-view requested | `422 MISSING_RESUME` | Job detail page: *"Upload a resume to see your match"* — links to `/candidate/profile/resumes`. |
-| Delete-default with no remaining resume | `409 LAST_RESUME_PROTECTED` | Inline error in resume list: *"You can't delete your last resume — upload another first."* |
-| Notification emit fails (DB error or queue full) | Domain action still succeeds; failure logged via audit_logs. Realtime event not sent. | Bell badge eventually catches up via the next list refetch on mount. Notifications are best-effort delivery; the source-of-truth is the database. |
-| Email send fails (Resend/Mailpit error) | BullMQ retries 3× with exponential backoff. After exhaustion, audit_logs entry. | No user-visible error (email is async; user sees the in-app notification). |
-| Cron query times out | Cron entry catches, logs, returns. Next tick re-attempts. | No user-visible effect — at most a slightly delayed notification. |
-| Socket.IO disconnects | n/a (client-side) | Hook reconnects on its own; React Query refetch on focus pulls authoritative state from the database. **Realtime is an acceleration, not a correctness requirement.** |
-| Candidate already has `profile_completed = true` but no `profile_scores` row (legacy state) | First candidate-portal page load triggers a server-side `enqueueProfileScoreIfMissing` guard. Idempotent — if a row exists or a job is already queued, no-op. | Transparent to the candidate. Score card shows shimmer until the job lands. |
+| Trigger                                                                                     | API behavior                                                                                                                                                  | UI behavior                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Profile Score AI fails during onboarding                                                    | `200` with `profileScore: null`, `errors.profileScore: "transient"`. Profile Score retry job enqueued (BullMQ, 3 attempts, exponential backoff).              | Analyzing page → `profileScoreDegraded` for 2 s → redirect to `/candidate?profileScoreRetry=1`. Dashboard score card shows shimmer; resolves when retry succeeds.      |
+| Profile Score retry exhausts (3 attempts)                                                   | Audit log written; `profile_scores` row remains absent.                                                                                                       | Dashboard score card transitions from shimmer to inline error: _"We couldn't compute your score. [Try again]"_ — manual retry only.                                    |
+| `complete-onboarding` PATCH itself errors (DB / network)                                    | `5xx`                                                                                                                                                         | Analyzing page shows error with _"Try again"_ button. No auto-redirect; candidate isn't trapped.                                                                       |
+| Match precompute job fails (3 retries)                                                      | Audit log written.                                                                                                                                            | Dashboard recommendations section shows graceful empty state with retry button.                                                                                        |
+| On-view compute AI failure                                                                  | `5xx`                                                                                                                                                         | Job detail page: shimmer → inline error: _"Couldn't compute your match. [Try again]"_                                                                                  |
+| On-view compute hits daily cap                                                              | `429 DAILY_AI_LIMIT`                                                                                                                                          | Banner: _"Daily AI compute limit reached. Apply to score this match as part of your application."_ with CTA link. **No manual compute button** — would bypass the cap. |
+| Default resume missing when on-view requested                                               | `422 MISSING_RESUME`                                                                                                                                          | Job detail page: _"Upload a resume to see your match"_ — links to `/candidate/profile/resumes`.                                                                        |
+| Delete-default with no remaining resume                                                     | `409 LAST_RESUME_PROTECTED`                                                                                                                                   | Inline error in resume list: _"You can't delete your last resume — upload another first."_                                                                             |
+| Notification emit fails (DB error or queue full)                                            | Domain action still succeeds; failure logged via audit_logs. Realtime event not sent.                                                                         | Bell badge eventually catches up via the next list refetch on mount. Notifications are best-effort delivery; the source-of-truth is the database.                      |
+| Email send fails (Resend/Mailpit error)                                                     | BullMQ retries 3× with exponential backoff. After exhaustion, audit_logs entry.                                                                               | No user-visible error (email is async; user sees the in-app notification).                                                                                             |
+| Cron query times out                                                                        | Cron entry catches, logs, returns. Next tick re-attempts.                                                                                                     | No user-visible effect — at most a slightly delayed notification.                                                                                                      |
+| Socket.IO disconnects                                                                       | n/a (client-side)                                                                                                                                             | Hook reconnects on its own; React Query refetch on focus pulls authoritative state from the database. **Realtime is an acceleration, not a correctness requirement.**  |
+| Candidate already has `profile_completed = true` but no `profile_scores` row (legacy state) | First candidate-portal page load triggers a server-side `enqueueProfileScoreIfMissing` guard. Idempotent — if a row exists or a job is already queued, no-op. | Transparent to the candidate. Score card shows shimmer until the job lands.                                                                                            |
 
 ---
 
@@ -689,28 +711,34 @@ All payloads are validated through Zod schemas in `packages/shared/realtime/`. E
 **Backend (Jest + supertest)**
 
 Area A — Scoring
+
 - `CandidateProfilesService.completeOnboarding` happy/AI-failure/DB-error paths.
 - `ScoringService.computeMatchPreviewOnView` below-cap/at-cap/cache-hit.
 - Default-resume-change handler: cancel-old, mark stale, enqueue-new.
 
 Area B — Profile edit recompute (F1)
+
 - `updatePersonal()` marks stale + enqueues recompute job.
 
 Area C — Resume UX (F2, F3)
+
 - Delete-default with multiple resumes → auto-promote.
 - Delete-default with one remaining resume → returns 409.
 
 Area D — Notification emissions (F4–F8)
+
 - Application status transitions emit `application_status_changed`.
 - `OffersService.accept/decline` emit corresponding events.
 - `ApplicationsService.create` emits `new_application_received`.
 - Realtime: `notification.created` payload validated against shared Zod schema.
 
 Area E — Crons (F9–F13)
+
 - Each cron's `runOnce()` against a seeded fixture asserts: correct rows are picked up, correct events emitted, side-effect columns updated (e.g., `feedback_reminder_sent_at`).
 - Cron error handling: a thrown error inside the handler is caught + logged + doesn't break the schedule.
 
 Area F — Sidebar / notifications API
+
 - `GET /notifications?tab=inbox|archive` returns correct rows.
 - Mark-read / archive / archive-all endpoints update DB + emit realtime.
 - Audit_logs entry per mutation.
@@ -746,6 +774,7 @@ Area F — Sidebar / notifications API
 Three PRs to keep review tractable. Each is independently shippable.
 
 **PR 1 — Backend foundation: scoring + crons + notifications emissions** (no user-visible change yet, except the existing CRUD endpoints become slightly more capable)
+
 1. DB migration (Area G).
 2. Drizzle schema mirror.
 3. Extend `complete-onboarding` response (additive).
@@ -760,6 +789,7 @@ Three PRs to keep review tractable. Each is independently shippable.
 12. Backend tests.
 
 **PR 2 — Realtime infrastructure: rooms + events + notification API**
+
 1. New `notification.created` / `notification.read` / `notification.archived` / `notification.archive_all` events.
 2. `match-preview.created` and `profile-score.updated` events (F7 from the Area F realtime list).
 3. `GET /notifications/unread-count`, mark-read, archive, archive-all endpoints.
@@ -767,6 +797,7 @@ Three PRs to keep review tractable. Each is independently shippable.
 5. Backend tests.
 
 **PR 3 — Frontend cutover: analyzing screen + sidebar rail + buttonless surfaces**
+
 1. New `/onboarding/candidate/analyzing` page + state machine.
 2. Preferences final step redirects to `/onboarding/candidate/analyzing` instead of `/candidate`.
 3. Remove "Compute my score" button from `profile-score-card-client.tsx`.
@@ -779,6 +810,7 @@ Three PRs to keep review tractable. Each is independently shippable.
 10. Frontend + E2E tests.
 
 **Post-deploy verification:**
+
 - One-shot report: count candidates with `profile_completed = true AND no current profile_scores row`. Backfill with batched Profile Score recompute jobs.
 - Watch `audit_logs` for AI failure rate during the first 48 h. Investigate if it spikes above ~2 %.
 - Spot-check that each of the five new crons fires on schedule (look at audit_logs the morning after deploy).
@@ -796,25 +828,25 @@ When a candidate applies, the existing match-preview-to-match-score promotion pa
 
 The new sidebar rail and popovers are the primary new visual surfaces. They map to existing `DESIGN.md` tokens:
 
-| Element | Token |
-|---|---|
-| Sidebar background | `{colors.surface-soft}` (`#f7f7f7`) |
-| Bottom rail divider | `{colors.hairline}` |
-| Avatar (40 px) | `{rounded.full}` |
-| Name | `{typography.title-md}` |
-| Email | `{typography.caption}` (muted) |
-| Settings gear / `⋯` / bell buttons | 32×32 circles, `{colors.surface-strong}` background, hover darken 4–8 % |
-| Unread indicator dot on bell | 6×6 `{rounded.full}`, `{colors.primary}` (AuraHire Blue) |
-| Profile dropdown popover | `{rounded.lg}` (16 px) radius, soft-drop shadow tier, padding `{spacing.lg}` (24 px), width 320 px |
-| Notifications popover | same tokens; width 380 px |
-| Tab labels (Inbox / Archive) | `{typography.nav-link}`, active state underline 2 px `{colors.ink}` |
-| Notification row title | `{typography.body-sm}` strong (600) |
-| Notification row body | `{typography.body-sm}` muted |
-| Timestamp | `{typography.caption}` muted |
-| Inline notification unread dot | 8×8 `{rounded.full}`, `{colors.primary}` |
-| Empty state copy | `{typography.body-sm}`, `{colors.muted}` |
-| Archive-all button | `button-secondary-light` from `DESIGN.md` |
-| Status pill in profile popover | small inline row, dot + label, dot color = `{colors.score-high}` (normal) or `{colors.score-mid}` (degraded) |
+| Element                            | Token                                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Sidebar background                 | `{colors.surface-soft}` (`#f7f7f7`)                                                                          |
+| Bottom rail divider                | `{colors.hairline}`                                                                                          |
+| Avatar (40 px)                     | `{rounded.full}`                                                                                             |
+| Name                               | `{typography.title-md}`                                                                                      |
+| Email                              | `{typography.caption}` (muted)                                                                               |
+| Settings gear / `⋯` / bell buttons | 32×32 circles, `{colors.surface-strong}` background, hover darken 4–8 %                                      |
+| Unread indicator dot on bell       | 6×6 `{rounded.full}`, `{colors.primary}` (AuraHire Blue)                                                     |
+| Profile dropdown popover           | `{rounded.lg}` (16 px) radius, soft-drop shadow tier, padding `{spacing.lg}` (24 px), width 320 px           |
+| Notifications popover              | same tokens; width 380 px                                                                                    |
+| Tab labels (Inbox / Archive)       | `{typography.nav-link}`, active state underline 2 px `{colors.ink}`                                          |
+| Notification row title             | `{typography.body-sm}` strong (600)                                                                          |
+| Notification row body              | `{typography.body-sm}` muted                                                                                 |
+| Timestamp                          | `{typography.caption}` muted                                                                                 |
+| Inline notification unread dot     | 8×8 `{rounded.full}`, `{colors.primary}`                                                                     |
+| Empty state copy                   | `{typography.body-sm}`, `{colors.muted}`                                                                     |
+| Archive-all button                 | `button-secondary-light` from `DESIGN.md`                                                                    |
+| Status pill in profile popover     | small inline row, dot + label, dot color = `{colors.score-high}` (normal) or `{colors.score-mid}` (degraded) |
 
 Animations: popover enter 200 ms (matches `DESIGN.md` modal-enter timing). Bell badge transition on increment: a 1-frame scale 1 → 1.15 → 1.0 over 200 ms (subtle pulse — explicit because the Vercel pattern uses one).
 

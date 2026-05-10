@@ -28,7 +28,9 @@ export default async function CandidateJobsPage({ searchParams }: PageProps) {
     q: sp.q?.trim() || undefined,
     mode: sp.mode && sp.mode !== "all" ? sp.mode : undefined,
     experienceLevel:
-      sp.experienceLevel && sp.experienceLevel !== "all" ? sp.experienceLevel : undefined,
+      sp.experienceLevel && sp.experienceLevel !== "all"
+        ? sp.experienceLevel
+        : undefined,
     sort: sp.sort ?? "recent",
     page: sp.page ? Math.max(1, Number(sp.page)) : 1,
     limit: 12,
