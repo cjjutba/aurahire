@@ -68,6 +68,13 @@ export const AUDIT_ACTIONS = {
   OFFER_DECLINED: "offer.declined",
   OFFER_WITHDRAWN: "offer.withdrawn",
   OFFER_EXPIRED: "offer.expired",
+  // Application auto-transitions driven by offer events
+  APPLICATION_AUTO_TRANSITION_OFFER_DECLINED:
+    "application.auto_transition_offer_declined",
+  APPLICATION_AUTO_TRANSITION_OFFER_EXPIRED:
+    "application.auto_transition_offer_expired",
+  APPLICATION_AUTO_REJECTED_POSITION_FILLED:
+    "application.auto_rejected_position_filled",
   // Cron-driven housekeeping
   JOB_ARCHIVED_BY_CRON: "job.archived_by_cron",
   USER_DELETED_UNVERIFIED_CLEANUP: "user.deleted_unverified_cleanup",
