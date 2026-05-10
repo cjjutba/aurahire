@@ -123,6 +123,25 @@ export class ApplicationsRepository {
       );
   }
 
+  /**
+   * Count of in-flight applications on a job (excluding the one passed).
+   * Used by the recruiter detail view to surface cascade impact in the
+   * Hire confirmation modal.
+   */
+  async countInflightOnJob(jobId: string, excludeId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ value: count() })
+      .from(applicationsTable)
+      .where(
+        and(
+          eq(applicationsTable.jobId, jobId),
+          ne(applicationsTable.id, excludeId),
+          sql`${applicationsTable.status} NOT IN ('hired', 'rejected', 'withdrawn', 'offer_declined')`,
+        ),
+      );
+    return Number(row?.value ?? 0);
+  }
+
   async findExisting(candidateId: string, jobId: string): Promise<Application | null> {
     const [row] = await this.db
       .select()

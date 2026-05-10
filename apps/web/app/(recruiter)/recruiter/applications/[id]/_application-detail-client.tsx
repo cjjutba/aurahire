@@ -15,7 +15,7 @@ import {
   type ScoreDashboardComponent,
 } from "@/components/score/score-dashboard";
 
-import { DecisionBarClient } from "./_decision-bar-client";
+import { DecisionBarClient, type DecisionBarLatestOfferStatus } from "./_decision-bar-client";
 import {
   RecruiterInterviewsSection,
   type InterviewRow,
@@ -89,6 +89,7 @@ export interface AppDetail {
   job: { id: string; title: string; company: { name: string } } | null;
   matchScore: MatchScoreData | null;
   shortlistedAt: string | null;
+  inflightSiblingsCount: number;
 }
 
 interface Props {
@@ -274,6 +275,10 @@ export function RecruiterApplicationDetailClient({
       currentStatus={app.status}
       shortlistedAt={app.shortlistedAt}
       latestInterviewRecommendation={latestInterviewRecommendation}
+      latestOfferStatus={(offers[0]?.status as DecisionBarLatestOfferStatus) ?? null}
+      siblingInflightCount={app.inflightSiblingsCount}
+      candidateName={app.candidate?.fullName}
+      jobTitle={app.job?.title}
     />
   );
 

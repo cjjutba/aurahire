@@ -83,6 +83,11 @@ export class ApplicationDto {
   candidate!: ApplicationCandidateDto | null;
   @ApiPropertyOptional({ type: () => ApplicationJobDto, nullable: true })
   job!: ApplicationJobDto | null;
+  @ApiProperty({
+    description:
+      "Count of other in-flight applications on the same job (not yet hired/rejected/withdrawn/offer_declined). Used by the Hire confirmation modal to surface cascade impact.",
+  })
+  inflightSiblingsCount!: number;
 }
 
 export class ApplicationEnvelopeDto {

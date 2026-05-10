@@ -404,6 +404,7 @@ export class ApplicationsService {
       matchScore: null,
       candidate: null,
       job: null,
+      inflightSiblingsCount: 0,
     };
   }
 
@@ -449,6 +450,7 @@ export class ApplicationsService {
       matchScore: null,
       candidate: null,
       job: null,
+      inflightSiblingsCount: 0,
     };
   }
 
@@ -1210,6 +1212,11 @@ export class ApplicationsService {
         }
       : null;
 
+    const inflightSiblingsCount = await this.repo.countInflightOnJob(
+      app.jobId,
+      app.id,
+    );
+
     return {
       id: app.id,
       jobId: app.jobId,
@@ -1225,6 +1232,7 @@ export class ApplicationsService {
       matchScore,
       candidate,
       job,
+      inflightSiblingsCount,
     };
   }
 
@@ -1298,6 +1306,7 @@ export class ApplicationsService {
             }),
           })
         : null,
+      inflightSiblingsCount: 0,
     };
   }
 

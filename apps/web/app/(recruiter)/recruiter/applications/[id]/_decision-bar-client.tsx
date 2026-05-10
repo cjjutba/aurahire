@@ -43,12 +43,21 @@ const NEXT_POSITIVE: Record<string, AdvanceAction[] | null> = {
     },
   ],
   offer: [{ status: "hired", label: "Mark Hired" }],
+  offer_declined: null,
   hired: null,
   rejected: null,
   withdrawn: null,
 };
 
 const TERMINAL_STATUSES = new Set(["hired", "rejected", "withdrawn"]);
+
+export type DecisionBarLatestOfferStatus =
+  | "pending"
+  | "accepted"
+  | "declined"
+  | "expired"
+  | "withdrawn"
+  | null;
 
 interface DecisionBarProps {
   applicationId: string;
@@ -60,6 +69,13 @@ interface DecisionBarProps {
    * Drives highlight rings on advance / reject CTAs.
    */
   latestInterviewRecommendation?: "proceed" | "hold" | "reject" | null;
+  /** Status of the most recently sent offer for this application, or null if no offer exists. */
+  latestOfferStatus?: DecisionBarLatestOfferStatus;
+  /** Number of other in-flight applications on the same job (for cascade modal). */
+  siblingInflightCount?: number;
+  /** Used by the hire confirmation modal in Task 17. */
+  candidateName?: string;
+  jobTitle?: string;
 }
 
 type PendingAction = "download" | `advance-${number}` | "reject";
@@ -69,11 +85,20 @@ export function DecisionBarClient({
   currentStatus,
   shortlistedAt,
   latestInterviewRecommendation,
+  latestOfferStatus,
+  siblingInflightCount,
+  candidateName,
+  jobTitle,
 }: DecisionBarProps) {
   const router = useRouter();
   const confirm = useConfirm();
   const [pending, setPending] = useState<PendingAction | null>(null);
   const isPending = pending !== null;
+
+  // Hire confirmation modal state (Task 17 will replace the window.confirm below)
+  const [hireConfirmOpen, setHireConfirmOpen] = useState(false);
+  void hireConfirmOpen; // consumed by Task 17's modal
+  void siblingInflightCount; // forwarded to Task 17's modal
 
   // Soft-confirm modal state (Task 35)
   const [softConfirmOpen, setSoftConfirmOpen] = useState(false);
@@ -209,11 +234,74 @@ export function DecisionBarClient({
             <span>Resume</span>
           </button>
 
+          {/* offer_declined: special action set replaces the normal advance buttons */}
+          {currentStatus === "offer_declined" && (
+            <>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => router.push(`/recruiter/offers/new?applicationId=${applicationId}`)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:opacity-60"
+              >
+                <Check className="h-4 w-4" aria-hidden />
+                <span>Re-extend Offer</span>
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "Close as Rejected?",
+                    description:
+                      "The application will be marked as rejected and removed from your active pipeline.",
+                    confirmLabel: "Close",
+                    variant: "destructive",
+                  });
+                  if (!ok) return;
+                  await changeStatus("rejected", "reject");
+                }}
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-status-danger)] bg-[var(--color-canvas)] px-3 text-sm font-medium text-[var(--color-status-danger)] transition hover:bg-[var(--color-status-danger)] hover:text-[var(--color-on-primary)] disabled:opacity-60"
+              >
+                <X className="h-4 w-4" aria-hidden />
+                <span>Close as Rejected</span>
+              </button>
+            </>
+          )}
+
           {nextActions?.map((action, idx) => {
             const actionKey = `advance-${idx}` as const;
             const isSendOffer = action.label === "Send Offer";
             const showOfferRing =
               isSendOffer && latestInterviewRecommendation === "proceed";
+
+            const isMarkHired = action.status === "hired";
+            const isHireBlocked = isMarkHired && latestOfferStatus !== "accepted";
+
+            if (isMarkHired) {
+              return (
+                <button
+                  key={action.status}
+                  type="button"
+                  disabled={isPending || isHireBlocked}
+                  title={isHireBlocked ? "Waiting for candidate to accept the offer." : undefined}
+                  onClick={() => {
+                    if (isHireBlocked) return;
+                    // Temporary until Task 17 adds the proper modal
+                    if (
+                      window.confirm(
+                        `Hire ${candidateName ?? "this candidate"}?\n\nThis will mark them as hired for ${jobTitle ?? "this position"}.`,
+                      )
+                    ) {
+                      void changeStatus("hired", actionKey);
+                    }
+                  }}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {pending === actionKey ? <ButtonSpinner /> : <Check className="h-4 w-4" aria-hidden />}
+                  <span>{action.label}</span>
+                </button>
+              );
+            }
 
             if (action.href) {
               const targetHref = action.href(applicationId);
@@ -269,7 +357,7 @@ export function DecisionBarClient({
             );
           })}
 
-          {!isTerminal && (
+          {!isTerminal && currentStatus !== "offer_declined" && (
             <button
               type="button"
               onClick={async () => {
