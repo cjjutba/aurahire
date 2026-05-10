@@ -338,7 +338,8 @@ describe("InterviewsService.reschedule", () => {
       companyId: COMPANY_ID,
     } as any);
 
-    const pastIso = new Date(Date.now() - 60_000).toISOString();
+    // 2 minutes in the past — well beyond the 60s grace window in the service.
+    const pastIso = new Date(Date.now() - 120_000).toISOString();
 
     await expect(
       service.reschedule(
