@@ -23,14 +23,15 @@ const COMPONENT_LABELS: Record<string, string> = {
 };
 
 const APP_STATUS: Record<string, { label: string; dot: string; text: string }> = {
-  applied:    { label: "Applied",    dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  screening:  { label: "Screening",  dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  interview:  { label: "Interview",  dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  offer:         { label: "Offer",        dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
-  offer_declined: { label: "Offer Closed", dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
-  hired:         { label: "Hired",        dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  rejected:   { label: "Rejected",   dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
-  withdrawn:  { label: "Withdrawn",  dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
+  applied:        { label: "Applied",        dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
+  screening:      { label: "Screening",      dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
+  interview:      { label: "Interview",      dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
+  offer:          { label: "Offer",          dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
+  offer_accepted: { label: "Offer Accepted", dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
+  offer_declined: { label: "Offer Closed",   dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
+  hired:          { label: "Hired",          dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
+  rejected:       { label: "Rejected",       dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
+  withdrawn:      { label: "Withdrawn",      dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
 };
 
 const INTERVIEW_FORMAT_LABELS: Record<string, string> = {
@@ -331,6 +332,11 @@ export function ApplicationDetailClient({
       extraSections={
         <>
           {pendingOffer && <PendingOfferCard offer={pendingOffer} />}
+          {!pendingOffer && app.status === "offer_accepted" && (() => {
+            const sorted = [...pastOffers].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+            const latest = sorted[0];
+            return latest ? <AcceptedOfferCard offer={latest} /> : null;
+          })()}
           {!pendingOffer && app.status === "offer_declined" && (() => {
             const sorted = [...pastOffers].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
             const latest = sorted[0];
@@ -468,6 +474,36 @@ function SummaryDisclosure({
         )}
       </div>
     </details>
+  );
+}
+
+function AcceptedOfferCard({ offer }: { offer: OfferRow }) {
+  return (
+    <section className="space-y-4 rounded-[var(--radius-lg)] border-2 border-[var(--color-status-success)] bg-[var(--color-score-high-soft)] p-6">
+      <header>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-status-success)]">
+          Offer Accepted
+        </h2>
+        <p className="mt-2 text-xl font-semibold text-[var(--color-ink)]">
+          {offer.title}
+        </p>
+      </header>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <div>
+          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Salary</dt>
+          <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">
+            {formatSalary(offer.salary, offer.salaryCurrency)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Start date</dt>
+          <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">{offer.startDate}</dd>
+        </div>
+      </dl>
+      <p className="text-sm text-[var(--color-body)]">
+        You accepted this offer{offer.respondedAt ? ` on ${new Date(offer.respondedAt).toLocaleDateString()}` : ""}. Your recruiter will reach out shortly to confirm next steps.
+      </p>
+    </section>
   );
 }
 

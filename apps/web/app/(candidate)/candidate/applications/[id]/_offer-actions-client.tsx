@@ -64,7 +64,7 @@ export function OfferActionsClient({ offer }: Props) {
     const ok = await confirm({
       title: "Accept this offer?",
       description:
-        "Your application status will move to Hired and the recruiter will be notified.",
+        "Your application status will move to Offer Accepted. Your recruiter will then confirm the hire.",
       confirmLabel: "Accept offer",
       variant: "info",
     });
@@ -77,7 +77,7 @@ export function OfferActionsClient({ offer }: Props) {
         toastApiError(null, "Couldn't accept offer", body.message);
         return;
       }
-      toastSuccess("Offer accepted", "Welcome aboard.");
+      toastSuccess("Offer accepted", "Your recruiter will be in touch shortly to confirm next steps.");
       router.refresh();
     } finally {
       setWorking(false);
