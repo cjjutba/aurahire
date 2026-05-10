@@ -26,8 +26,9 @@ const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
   applied:    { label: "Applied",    dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
   screening:  { label: "Screening",  dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
   interview:  { label: "Interview",  dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  offer:      { label: "Offer",      dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
-  hired:      { label: "Hired",      dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
+  offer:         { label: "Offer",        dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
+  offer_declined: { label: "Offer Closed", dot: "bg-[var(--color-status-warning)]", text: "text-[var(--color-status-warning)]" },
+  hired:         { label: "Hired",        dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
   rejected:   { label: "Rejected",   dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
   withdrawn:  { label: "Withdrawn",  dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
 };
@@ -330,6 +331,11 @@ export function ApplicationDetailClient({
       extraSections={
         <>
           {pendingOffer && <PendingOfferCard offer={pendingOffer} />}
+          {!pendingOffer && app.status === "offer_declined" && (() => {
+            const sorted = [...pastOffers].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+            const latest = sorted[0];
+            return latest ? <ClosedOfferCard offer={latest} applicationStatus={app.status} /> : null;
+          })()}
           {pastOffers.length > 0 && (
             <section>
               <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
@@ -462,6 +468,50 @@ function SummaryDisclosure({
         )}
       </div>
     </details>
+  );
+}
+
+function ClosedOfferCard({ offer, applicationStatus }: { offer: OfferRow; applicationStatus: string }) {
+  const isDeclined = offer.status === "declined" || applicationStatus === "offer_declined";
+  const isExpired = offer.status === "expired";
+
+  let footerLine: string | null = null;
+  if (isExpired) {
+    footerLine = offer.expiresAt
+      ? `This offer expired on ${new Date(offer.expiresAt).toLocaleDateString()} without a response.`
+      : "This offer expired without a response.";
+  } else if (isDeclined) {
+    footerLine = offer.respondedAt
+      ? `You declined this offer on ${new Date(offer.respondedAt).toLocaleDateString()}.`
+      : "You declined this offer.";
+  }
+
+  return (
+    <section className="space-y-4 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-6">
+      <header>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+          Offer Closed
+        </h2>
+        <p className="mt-2 text-xl font-semibold text-[var(--color-ink)]">
+          {offer.title}
+        </p>
+      </header>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <div>
+          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Salary</dt>
+          <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">
+            {formatSalary(offer.salary, offer.salaryCurrency)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Start date</dt>
+          <dd className="mt-1 font-mono text-base text-[var(--color-ink)]">{offer.startDate}</dd>
+        </div>
+      </dl>
+      {footerLine && (
+        <p className="text-sm text-[var(--color-body)]">{footerLine}</p>
+      )}
+    </section>
   );
 }
 
