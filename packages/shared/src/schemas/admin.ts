@@ -227,6 +227,7 @@ export const biasMonitorQuerySchema = z
   .object({
     dateFrom: z.string().datetime().optional(),
     dateTo: z.string().datetime().optional(),
+    promptVersionMin: z.string().optional(),
   })
   .refine(
     (data) => {

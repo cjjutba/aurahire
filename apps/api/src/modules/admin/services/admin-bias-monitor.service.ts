@@ -14,6 +14,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TOP_TERMS_LIMIT = 10;
 const RECENT_OVERRIDES_LIMIT = 10;
+const DEFAULT_PROMPT_VERSION_MIN = "1.2.0";
 
 @Injectable()
 export class AdminBiasMonitorService {
@@ -28,7 +29,9 @@ export class AdminBiasMonitorService {
       ? new Date(query.dateFrom)
       : new Date(to.getTime() - 30 * DAY_MS);
 
-    const cacheKey = `admin:bias-monitor:${from.toISOString()}|${to.toISOString()}`;
+    const promptVersionMin = query.promptVersionMin ?? DEFAULT_PROMPT_VERSION_MIN;
+
+    const cacheKey = `admin:bias-monitor:${from.toISOString()}|${to.toISOString()}|${promptVersionMin}`;
     const cached = await this.cache.get<BiasMonitorBundleDto>(cacheKey);
     if (cached) return cached;
 
@@ -40,6 +43,7 @@ export class AdminBiasMonitorService {
       scoreDistRaw,
       overrides,
       sampleSize,
+      scoringQuality,
     ] = await Promise.all([
       this.repo.countFlagsInRange(from, to),
       this.repo.countPublishedJobsInRange(from, to),
@@ -48,6 +52,7 @@ export class AdminBiasMonitorService {
       this.repo.scoreDistributionByBand(from, to),
       this.repo.recentOverrides(from, to, RECENT_OVERRIDES_LIMIT),
       this.repo.sampleSize(from, to),
+      this.repo.getCalibrationWarnings({ from, to, promptVersionMin }),
     ]);
 
     const total = flagCounts.total;
@@ -104,6 +109,7 @@ export class AdminBiasMonitorService {
       scoreDistributionByBand,
       recentOverrides,
       sampleSize,
+      scoringQuality,
     };
 
     await this.cache.set(cacheKey, bundle, CACHE_TTL_MS);

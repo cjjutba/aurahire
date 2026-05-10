@@ -63,9 +63,12 @@ export function EvidenceCallout({
         &ldquo;{excerpt}&rdquo;
       </blockquote>
       {typeof contributionPoints === "number" && contributionPoints !== 0 && (
-        <p className="mt-3 text-xs text-[var(--color-muted)]">
-          Contributes {contributionPoints > 0 ? "+" : ""}
-          <span className="font-mono">{contributionPoints}</span> points
+        <p
+          className="mt-3 font-mono text-xs font-semibold"
+          style={{ color: variant.iconColor }}
+        >
+          {contributionPoints > 0 ? "+" : "−"}
+          {Math.abs(contributionPoints)} points
         </p>
       )}
     </article>

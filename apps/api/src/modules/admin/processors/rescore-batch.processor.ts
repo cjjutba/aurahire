@@ -12,6 +12,13 @@ import type { ParsedResume } from "@aurahire/shared";
 
 import { ScoreMatchService } from "../../../ai/score-match.service";
 import { ScoringRepository } from "../../scoring/scoring.repository";
+import {
+  reconcileEvidenceContributions,
+  detectCalibrationWarnings,
+  normalizeComponentsToWeights,
+  deriveOverallScore,
+  deriveBand,
+} from "../../scoring/scoring.service";
 import { AuditService } from "../../../audit";
 import { AUDIT_ACTIONS } from "../../../audit/audit.types";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../../db/db.module";
@@ -58,6 +65,10 @@ export class RescoreBatchProcessor extends WorkerHost {
       experience: number;
       education: number;
       cultural_fit: number;
+    };
+    const bandThresholds = config.bandThresholds as {
+      strong: number;
+      partial: number;
     };
 
     const rows = await this.db
@@ -114,7 +125,36 @@ export class RescoreBatchProcessor extends WorkerHost {
           requestId: `rescore-batch:${job.id}:${application.id}`,
         });
 
-        const evidenceRows = aiResult.score.components.flatMap((comp) =>
+        const normalizedComponents = normalizeComponentsToWeights(
+          aiResult.score.components,
+          weights as unknown as Record<string, number>,
+        );
+        const reconciliations = normalizedComponents.map((c) =>
+          reconcileEvidenceContributions(c),
+        );
+        const reconciledComponents = reconciliations.map((r) => r.component);
+        const scoreResiduals = reconciliations
+          .filter((r) => r.residual !== 0)
+          .map((r) => ({
+            componentName: r.component.name,
+            aiScore: r.component.score + r.residual,
+            derivedScore: r.component.score,
+          }));
+        const evidenceQuantizationResiduals = reconciliations.flatMap((r) =>
+          r.quantizationDeltas.map((d) => ({
+            componentName: r.component.name,
+            evidenceIndex: d.evidenceIndex,
+            original: d.original,
+            quantized: d.quantized,
+          })),
+        );
+        const calibrationWarnings = reconciledComponents.flatMap((c) =>
+          detectCalibrationWarnings(c),
+        );
+        const derivedOverall = deriveOverallScore(reconciledComponents);
+        const derivedBand = deriveBand(derivedOverall, bandThresholds);
+
+        const evidenceRows = reconciledComponents.flatMap((comp) =>
           comp.evidence.map((ev) => ({
             componentName: comp.name,
             excerptText: ev.excerpt,
@@ -130,9 +170,9 @@ export class RescoreBatchProcessor extends WorkerHost {
             candidateId: application.candidateId,
             jobId: application.jobId,
             resumeId: application.resumeId,
-            overallScore: aiResult.score.overall_score,
-            band: aiResult.score.band,
-            components: aiResult.score.components as unknown as Record<string, unknown>,
+            overallScore: derivedOverall,
+            band: derivedBand,
+            components: reconciledComponents as unknown as Record<string, unknown>,
             redactedFields: aiResult.redactedFields,
             weightsUsed: weights as unknown as Record<string, unknown>,
             promptVersion: aiResult.promptVersion,
@@ -168,6 +208,9 @@ export class RescoreBatchProcessor extends WorkerHost {
               band: matchScore.band,
               weightsUsed: weights,
             },
+            scoreResiduals,
+            evidenceQuantizationResiduals,
+            calibrationWarnings,
           },
         });
 

@@ -88,7 +88,7 @@ interface RequestMeta {
  * deviation from the configured maxes and prevents silent clamping when
  * sums overflow.
  */
-function deriveOverallScore(
+export function deriveOverallScore(
   components: ReadonlyArray<{ score: number; max: number }>,
 ): number {
   const maxSum = components.reduce((acc, c) => acc + (Number(c.max) || 0), 0);
@@ -108,7 +108,7 @@ function deriveOverallScore(
  * configured-weights contract before persistence so the breakdown always
  * reconciles with the headline.
  */
-function normalizeComponentsToWeights<
+export function normalizeComponentsToWeights<
   C extends { name: string; score: number; max: number; weight: number },
 >(
   components: ReadonlyArray<C>,
@@ -125,7 +125,121 @@ function normalizeComponentsToWeights<
   });
 }
 
-function deriveBand(
+/**
+ * Strict-sum reconciliation: derive component.score from the sum of evidence
+ * contribution_points, quantizing each to the nearest 5 and clamping to
+ * [0, component.max]. Forces evidence.relevance to match the sign of the
+ * (quantized) contribution.
+ *
+ * Returns the reconciled component plus residuals for audit:
+ *   - residual = ai_score - derived_score (zero when AI was honest)
+ *   - quantizationDeltas: per-evidence deltas where the AI's number was rounded
+ *
+ * The AI's `score` field is discarded by the engine; only `derived` ships.
+ */
+export function reconcileEvidenceContributions<
+  C extends {
+    name: string;
+    score: number;
+    max: number;
+    evidence: Array<{
+      excerpt: string;
+      source: string;
+      relevance: "positive" | "negative" | "neutral";
+      contribution_points: number;
+    }>;
+  },
+>(
+  component: C,
+): {
+  component: C;
+  residual: number;
+  quantizationDeltas: Array<{ evidenceIndex: number; original: number; quantized: number }>;
+} {
+  const aiScore = component.score;
+  const quantizationDeltas: Array<{ evidenceIndex: number; original: number; quantized: number }> = [];
+
+  const reconciled = component.evidence.map((ev, evidenceIndex) => {
+    const original = Number(ev.contribution_points) || 0;
+    const quantized = Math.round(original / 5) * 5;
+    if (quantized !== original) {
+      quantizationDeltas.push({ evidenceIndex, original, quantized });
+    }
+    const relevance: "positive" | "negative" | "neutral" =
+      quantized > 0 ? "positive" : quantized < 0 ? "negative" : "neutral";
+    return { ...ev, contribution_points: quantized, relevance };
+  });
+
+  const derivedRaw = reconciled.reduce((sum, ev) => sum + ev.contribution_points, 0);
+  const derived = Math.max(0, Math.min(component.max, derivedRaw));
+
+  return {
+    component: { ...component, score: derived, evidence: reconciled },
+    residual: aiScore - derived,
+    quantizationDeltas,
+  };
+}
+
+/**
+ * Closed set of audit-log identifiers for calibration warnings.
+ * Tasks 12-14 read this union exhaustively from the bias-monitor
+ * aggregator; widening here is a deliberate vocabulary change.
+ */
+export type CalibrationWarningReason =
+  | "ceiling_with_thin_evidence"
+  | "deduction_without_negative_evidence";
+
+/**
+ * Surface known model-misbehavior patterns as advisory warnings.
+ * Warnings do NOT auto-adjust the score — they're written to the audit
+ * row's `details.calibrationWarnings` array and aggregated in
+ * /admin/bias-monitor's "Scoring Quality" panel for human review.
+ *
+ * Two heuristics:
+ *   1. ceiling_with_thin_evidence — Component scored at max but the model
+ *      only cited one positive evidence item. The prompt v1.2.0 rule
+ *      requires at least two positives at ceiling.
+ *   2. deduction_without_negative_evidence — Component below max but no
+ *      evidence row carries a negative contribution. The deduction has no
+ *      visible justification.
+ */
+export function detectCalibrationWarnings<C extends {
+  name: string;
+  score: number;
+  max: number;
+  evidence: Array<{
+    excerpt: string;
+    source: string;
+    relevance: "positive" | "negative" | "neutral";
+    contribution_points: number;
+  }>;
+}>(component: C): Array<{ componentName: string; reason: CalibrationWarningReason }> {
+  const warnings: Array<{ componentName: string; reason: CalibrationWarningReason }> = [];
+
+  if (component.score === component.max) {
+    const positives = component.evidence.filter((e) => e.relevance === "positive");
+    if (positives.length < 2) {
+      warnings.push({
+        componentName: component.name,
+        reason: "ceiling_with_thin_evidence",
+      });
+    }
+  }
+
+  if (component.score < component.max) {
+    const negatives = component.evidence.filter((e) => e.relevance === "negative");
+    if (negatives.length === 0) {
+      warnings.push({
+        componentName: component.name,
+        reason: "deduction_without_negative_evidence",
+      });
+    }
+  }
+
+  return warnings;
+}
+
+export function deriveBand(
   score: number,
   thresholds: BandThresholds,
 ): "strong" | "partial" | "limited" {
@@ -277,16 +391,43 @@ export class ScoringService {
       aiResult.score.components,
       weights as unknown as Record<string, number>,
     );
-    const derivedOverall = deriveOverallScore(normalizedProfileComponents);
+
+    // Strict-sum reconciliation: component.score becomes the (quantized, clamped)
+    // sum of evidence contribution_points. The AI's score field is discarded;
+    // residuals + quantization deltas + calibration warnings flow into the audit row.
+    const reconciliations = normalizedProfileComponents.map((c) =>
+      reconcileEvidenceContributions(c),
+    );
+    const reconciledProfileComponents = reconciliations.map((r) => r.component);
+    const scoreResiduals = reconciliations
+      .filter((r) => r.residual !== 0)
+      .map((r) => ({
+        componentName: r.component.name,
+        aiScore: r.component.score + r.residual,
+        derivedScore: r.component.score,
+      }));
+    const evidenceQuantizationResiduals = reconciliations.flatMap((r) =>
+      r.quantizationDeltas.map((d) => ({
+        componentName: r.component.name,
+        evidenceIndex: d.evidenceIndex,
+        original: d.original,
+        quantized: d.quantized,
+      })),
+    );
+    const calibrationWarnings = reconciledProfileComponents.flatMap((c) =>
+      detectCalibrationWarnings(c),
+    );
+
+    const derivedOverall = deriveOverallScore(reconciledProfileComponents);
     const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
-    const evidenceRows = normalizedProfileComponents.flatMap((comp) =>
+    const evidenceRows = reconciledProfileComponents.flatMap((comp) =>
       comp.evidence.map((ev) => ({
         componentName: comp.name,
         excerptText: ev.excerpt,
         excerptSource: ev.source,
         relevance: ev.relevance,
-        contributionPoints: null,
+        contributionPoints: ev.contribution_points,
       })),
     );
 
@@ -296,7 +437,7 @@ export class ScoringService {
         resumeId: resume.id,
         overallScore: derivedOverall,
         band: derivedBand,
-        components: normalizedProfileComponents as unknown as Record<string, unknown>,
+        components: reconciledProfileComponents as unknown as Record<string, unknown>,
         improvementSuggestions: aiResult.score
           .improvement_suggestions as unknown as Record<string, unknown>,
         redactedFields: aiResult.redactedFields,
@@ -324,6 +465,9 @@ export class ScoringService {
         latencyMs: aiResult.latencyMs,
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
+        scoreResiduals,
+        evidenceQuantizationResiduals,
+        calibrationWarnings,
       },
       ...requestMeta,
     });
@@ -351,7 +495,7 @@ export class ScoringService {
       profileScore.id,
       {
         ...aiResult.score,
-        components: normalizedProfileComponents,
+        components: reconciledProfileComponents,
       } as ProfileScoreOutput,
       aiResult,
       profileScore.createdAt,
@@ -535,10 +679,38 @@ export class ScoringService {
       aiResult.score.components,
       weights as unknown as Record<string, number>,
     );
-    const derivedOverall = deriveOverallScore(normalizedMatchComponents);
+
+    // Strict-sum reconciliation — mirrors the pattern in computeProfileScore.
+    // component.score becomes the (quantized, clamped) sum of evidence
+    // contribution_points; AI's score is discarded; residuals + warnings
+    // flow into the audit row.
+    const matchReconciliations = normalizedMatchComponents.map((c) =>
+      reconcileEvidenceContributions(c),
+    );
+    const reconciledMatchComponents = matchReconciliations.map((r) => r.component);
+    const matchScoreResiduals = matchReconciliations
+      .filter((r) => r.residual !== 0)
+      .map((r) => ({
+        componentName: r.component.name,
+        aiScore: r.component.score + r.residual,
+        derivedScore: r.component.score,
+      }));
+    const matchEvidenceQuantizationResiduals = matchReconciliations.flatMap((r) =>
+      r.quantizationDeltas.map((d) => ({
+        componentName: r.component.name,
+        evidenceIndex: d.evidenceIndex,
+        original: d.original,
+        quantized: d.quantized,
+      })),
+    );
+    const matchCalibrationWarnings = reconciledMatchComponents.flatMap((c) =>
+      detectCalibrationWarnings(c),
+    );
+
+    const derivedOverall = deriveOverallScore(reconciledMatchComponents);
     const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
-    const evidenceRows = normalizedMatchComponents.flatMap((comp) =>
+    const evidenceRows = reconciledMatchComponents.flatMap((comp) =>
       comp.evidence.map((ev) => ({
         componentName: comp.name,
         excerptText: ev.excerpt,
@@ -556,7 +728,7 @@ export class ScoringService {
         resumeId,
         overallScore: derivedOverall,
         band: derivedBand,
-        components: normalizedMatchComponents as unknown as Record<string, unknown>,
+        components: reconciledMatchComponents as unknown as Record<string, unknown>,
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
         promptVersion: aiResult.promptVersion,
@@ -586,6 +758,9 @@ export class ScoringService {
         redactedFields: aiResult.redactedFields,
         weightsUsed: weights as unknown as Record<string, unknown>,
         promotedFromPreviewId,
+        scoreResiduals: matchScoreResiduals,
+        evidenceQuantizationResiduals: matchEvidenceQuantizationResiduals,
+        calibrationWarnings: matchCalibrationWarnings,
       },
       ...requestMeta,
     });
@@ -598,7 +773,7 @@ export class ScoringService {
       matchScore.id,
       {
         ...aiResult.score,
-        components: normalizedMatchComponents,
+        components: reconciledMatchComponents,
       } as MatchScoreOutput,
       aiResult,
       matchScore.createdAt,
@@ -893,7 +1068,34 @@ export class ScoringService {
       aiResult.score.components,
       weights as unknown as Record<string, number>,
     );
-    const derivedOverall = deriveOverallScore(normalizedPreviewComponents);
+
+    // Strict-sum reconciliation — same pattern as computeProfileScore /
+    // computeMatchScore. component.score becomes the (quantized, clamped)
+    // sum of evidence contribution_points; AI's score is discarded.
+    const previewReconciliations = normalizedPreviewComponents.map((c) =>
+      reconcileEvidenceContributions(c),
+    );
+    const reconciledPreviewComponents = previewReconciliations.map((r) => r.component);
+    const previewScoreResiduals = previewReconciliations
+      .filter((r) => r.residual !== 0)
+      .map((r) => ({
+        componentName: r.component.name,
+        aiScore: r.component.score + r.residual,
+        derivedScore: r.component.score,
+      }));
+    const previewEvidenceQuantizationResiduals = previewReconciliations.flatMap((r) =>
+      r.quantizationDeltas.map((d) => ({
+        componentName: r.component.name,
+        evidenceIndex: d.evidenceIndex,
+        original: d.original,
+        quantized: d.quantized,
+      })),
+    );
+    const previewCalibrationWarnings = reconciledPreviewComponents.flatMap((c) =>
+      detectCalibrationWarnings(c),
+    );
+
+    const derivedOverall = deriveOverallScore(reconciledPreviewComponents);
     const derivedBand = deriveBand(derivedOverall, bandThresholds);
 
     const preview = await this.scoringRepo.upsertMatchPreview({
@@ -902,7 +1104,7 @@ export class ScoringService {
       resumeId: defaultResume.id,
       overallScore: derivedOverall,
       band: derivedBand,
-      components: normalizedPreviewComponents as unknown as Record<string, unknown>,
+      components: reconciledPreviewComponents as unknown as Record<string, unknown>,
       redactedFields: aiResult.redactedFields,
       weightsUsed: weights as unknown as Record<string, unknown>,
       promptVersion: aiResult.promptVersion,
@@ -948,6 +1150,9 @@ export class ScoringService {
         promptVersion: aiResult.promptVersion,
         latencyMs: aiResult.latencyMs,
         source,
+        scoreResiduals: previewScoreResiduals,
+        evidenceQuantizationResiduals: previewEvidenceQuantizationResiduals,
+        calibrationWarnings: previewCalibrationWarnings,
       },
     });
 
