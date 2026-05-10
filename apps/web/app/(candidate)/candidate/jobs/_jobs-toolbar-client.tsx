@@ -15,6 +15,7 @@ interface ToolbarProps {
   mode: string;
   experienceLevel: string;
   sort: string;
+  excludeApplied: boolean;
 }
 
 const MODE_OPTIONS = [
@@ -47,6 +48,7 @@ export function CandidateJobsToolbarClient({
   mode,
   experienceLevel,
   sort,
+  excludeApplied,
 }: ToolbarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -127,6 +129,34 @@ export function CandidateJobsToolbarClient({
         options={EXPERIENCE_OPTIONS}
         onSelect={(v) => updateParam("experienceLevel", v)}
       />
+
+      {/* Hide applied toggle */}
+      <button
+        type="button"
+        onClick={() => updateParam("excludeApplied", excludeApplied ? null : "1")}
+        className={`inline-flex h-10 items-center gap-2 rounded-[var(--radius-pill)] px-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
+          excludeApplied
+            ? "bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
+            : "bg-[var(--color-surface-strong)] text-[var(--color-ink)] hover:bg-[var(--color-hairline-soft)]"
+        }`}
+        aria-pressed={excludeApplied}
+      >
+        <span
+          aria-hidden
+          className={`flex h-3.5 w-3.5 items-center justify-center rounded-[3px] border ${
+            excludeApplied
+              ? "border-[var(--color-on-primary)] bg-[var(--color-on-primary)]"
+              : "border-[var(--color-muted)] bg-transparent"
+          }`}
+        >
+          {excludeApplied && (
+            <svg className="h-2.5 w-2.5 text-[var(--color-primary)]" viewBox="0 0 12 12" fill="none">
+              <path d="M2.5 6.5l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </span>
+        <span>Hide applied</span>
+      </button>
 
       {/* Spacer */}
       <div className="flex-1" />
