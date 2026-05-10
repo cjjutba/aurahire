@@ -1,5 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, count, desc, eq, isNotNull, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, ne, sql, type SQL } from "drizzle-orm";
+import type { ExtractTablesWithRelations } from "drizzle-orm";
+import type { PgTransaction } from "drizzle-orm/pg-core";
+import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
+import * as schema from "@aurahire/db";
 import {
   applicationsTable,
   companyMembersTable,
@@ -14,6 +18,14 @@ import type { ApplicationStatus } from "@aurahire/shared";
 
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 
+export type ApplicationsTx = PgTransaction<
+  PostgresJsQueryResultHKT,
+  typeof schema,
+  ExtractTablesWithRelations<typeof schema>
+>;
+
+type Executor = DrizzleClient | ApplicationsTx;
+
 @Injectable()
 export class ApplicationsRepository {
   constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient) {}
@@ -24,8 +36,13 @@ export class ApplicationsRepository {
     return row;
   }
 
-  async update(id: string, patch: Partial<NewApplication>): Promise<Application> {
-    const [row] = await this.db
+  async update(
+    id: string,
+    patch: Partial<NewApplication>,
+    tx?: ApplicationsTx,
+  ): Promise<Application> {
+    const exec: Executor = tx ?? this.db;
+    const [row] = await exec
       .update(applicationsTable)
       .set({ ...patch, updatedAt: new Date() })
       .where(eq(applicationsTable.id, id))
@@ -39,6 +56,21 @@ export class ApplicationsRepository {
       .select()
       .from(applicationsTable)
       .where(eq(applicationsTable.id, id))
+      .limit(1);
+    return row ?? null;
+  }
+
+  /**
+   * Lock the row for the duration of the surrounding transaction. Used by
+   * the offer accept / decline / hire flows to serialise writers so that
+   * the application's status + the latest offer's status stay consistent.
+   */
+  async findByIdForUpdate(tx: ApplicationsTx, id: string): Promise<Application | null> {
+    const [row] = await tx
+      .select()
+      .from(applicationsTable)
+      .where(eq(applicationsTable.id, id))
+      .for("update")
       .limit(1);
     return row ?? null;
   }
@@ -67,6 +99,28 @@ export class ApplicationsRepository {
         desc(applicationsTable.appliedAt),
       );
     return rows.map((r) => ({ ...r.application, matchScore: r.matchScore }));
+  }
+
+  /**
+   * In-flight applications on a job — used by the cascade auto-reject when
+   * another candidate is hired. Excludes the just-hired application (passed
+   * as `excludeId`) and any already-terminal application.
+   */
+  async findInflightByJobId(
+    tx: ApplicationsTx,
+    jobId: string,
+    excludeId: string,
+  ): Promise<Application[]> {
+    return tx
+      .select()
+      .from(applicationsTable)
+      .where(
+        and(
+          eq(applicationsTable.jobId, jobId),
+          ne(applicationsTable.id, excludeId),
+          sql`${applicationsTable.status} NOT IN ('hired', 'rejected', 'withdrawn', 'offer_declined')`,
+        ),
+      );
   }
 
   async findExisting(candidateId: string, jobId: string): Promise<Application | null> {
