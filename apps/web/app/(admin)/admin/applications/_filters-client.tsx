@@ -29,6 +29,7 @@ const STATUS_OPTIONS = [
   { value: "screening", label: "Screening" },
   { value: "interview", label: "Interview" },
   { value: "offer", label: "Offer" },
+  { value: "offer_declined", label: "Offer Declined" },
   { value: "hired", label: "Hired" },
   { value: "rejected", label: "Rejected" },
   { value: "withdrawn", label: "Withdrawn" },

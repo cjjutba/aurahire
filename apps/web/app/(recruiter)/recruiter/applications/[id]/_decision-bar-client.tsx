@@ -18,6 +18,7 @@ const PIPELINE_STAGES: Array<{ key: string; label: string }> = [
   { key: "screening", label: "Screening" },
   { key: "interview", label: "Interview" },
   { key: "offer", label: "Offer" },
+  { key: "offer_declined", label: "Offer Declined" },
   { key: "hired", label: "Hired" },
 ];
 
