@@ -12,6 +12,7 @@ import { useConfirm } from "@/components/providers/confirm-provider";
 
 import { ShortlistButtonClient } from "./_shortlist-button-client";
 import { OfferConfirmModalClient } from "./_offer-confirm-modal-client";
+import { HireConfirmationModalClient } from "./_hire-confirmation-modal-client";
 
 const PIPELINE_STAGES: Array<{ key: string; label: string }> = [
   { key: "applied", label: "Applied" },
@@ -95,10 +96,8 @@ export function DecisionBarClient({
   const [pending, setPending] = useState<PendingAction | null>(null);
   const isPending = pending !== null;
 
-  // Hire confirmation modal state (Task 17 will replace the window.confirm below)
+  // Hire confirmation modal state
   const [hireConfirmOpen, setHireConfirmOpen] = useState(false);
-  void hireConfirmOpen; // consumed by Task 17's modal
-  void siblingInflightCount; // forwarded to Task 17's modal
 
   // Soft-confirm modal state (Task 35)
   const [softConfirmOpen, setSoftConfirmOpen] = useState(false);
@@ -185,6 +184,38 @@ export function DecisionBarClient({
           `/recruiter/applications/${applicationId}?schedule=1`,
         );
       }
+      router.refresh();
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function hireWithCascade(autoRejectOthers: boolean) {
+    setPending("advance-0");
+    try {
+      const res = await authedFetch(
+        `/api/v1/applications/${applicationId}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newStatus: "hired", autoRejectOthers }),
+        },
+      );
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        toastApiError(null, "Couldn't hire candidate", body.message);
+        return;
+      }
+      const json = (await res.json()) as {
+        otherApplicationsRejected?: number;
+      };
+      const rejected = json.otherApplicationsRejected ?? 0;
+      toastSuccess(
+        "Hired",
+        rejected > 0
+          ? `${rejected} other applicant${rejected === 1 ? "" : "s"} auto-rejected.`
+          : undefined,
+      );
       router.refresh();
     } finally {
       setPending(null);
@@ -286,14 +317,7 @@ export function DecisionBarClient({
                   title={isHireBlocked ? "Waiting for candidate to accept the offer." : undefined}
                   onClick={() => {
                     if (isHireBlocked) return;
-                    // Temporary until Task 17 adds the proper modal
-                    if (
-                      window.confirm(
-                        `Hire ${candidateName ?? "this candidate"}?\n\nThis will mark them as hired for ${jobTitle ?? "this position"}.`,
-                      )
-                    ) {
-                      void changeStatus("hired", actionKey);
-                    }
+                    setHireConfirmOpen(true);
                   }}
                   className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -398,6 +422,15 @@ export function DecisionBarClient({
         onOpenChange={setSoftConfirmOpen}
         action={softConfirmAction}
         onConfirm={handleSoftConfirm}
+      />
+
+      <HireConfirmationModalClient
+        open={hireConfirmOpen}
+        onOpenChange={setHireConfirmOpen}
+        candidateName={candidateName ?? "this candidate"}
+        jobTitle={jobTitle ?? "this position"}
+        siblingInflightCount={siblingInflightCount ?? 0}
+        onConfirm={hireWithCascade}
       />
     </div>
   );
