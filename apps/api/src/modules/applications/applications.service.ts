@@ -2,9 +2,11 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
+  forwardRef,
 } from "@nestjs/common";
 import type {
   AuthUser,
@@ -28,7 +30,8 @@ import { ScoringService } from "../scoring/scoring.service";
 import { StorageService } from "../../storage/storage.service";
 import { ApplicationsRepository } from "./applications.repository";
 import type { ApplicationsTx } from "./applications.repository";
-import { canTransition } from "./state-machine";
+import { canTransition, STATUSES_REQUIRING_ACCEPTED_OFFER } from "./state-machine";
+import { OffersRepository } from "../offers/offers.repository";
 import type {
   ApplicationDto,
   ApplicationCandidateDto,
@@ -55,6 +58,7 @@ export class ApplicationsService {
   constructor(
     private readonly repo: ApplicationsRepository,
     private readonly jobsRepo: JobsRepository,
+    @Inject(forwardRef(() => OffersRepository)) private readonly offersRepo: OffersRepository,
     private readonly profilesRepo: ProfilesRepository,
     private readonly resumesRepo: ResumesRepository,
     private readonly scoringService: ScoringService,
@@ -611,6 +615,16 @@ export class ApplicationsService {
         code: "INVALID_STATUS_TRANSITION",
         message: `Cannot transition from ${app.status} to ${dto.newStatus}`,
       });
+    }
+
+    if (STATUSES_REQUIRING_ACCEPTED_OFFER.includes(dto.newStatus)) {
+      const latestOffer = await this.offersRepo.findLatestByApplicationId(id);
+      if (!latestOffer || latestOffer.status !== "accepted") {
+        throw new BadRequestException({
+          code: "OFFER_NOT_ACCEPTED",
+          message: "Cannot mark hired — candidate has not accepted an offer.",
+        });
+      }
     }
 
     await this.repo.update(id, {

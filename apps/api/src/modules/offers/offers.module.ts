@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 
 import { ApplicationsModule } from "../applications/applications.module";
 import { JobsModule } from "../jobs/jobs.module";
@@ -10,7 +10,7 @@ import { OffersRepository } from "./offers.repository";
 import { OffersService } from "./offers.service";
 
 @Module({
-  imports: [ApplicationsModule, JobsModule, NotificationsModule, ProfilesModule],
+  imports: [forwardRef(() => ApplicationsModule), JobsModule, NotificationsModule, ProfilesModule],
   controllers: [OffersController],
   providers: [OffersService, OffersRepository],
   exports: [OffersService, OffersRepository],
