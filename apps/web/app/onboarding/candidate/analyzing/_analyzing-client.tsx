@@ -143,6 +143,26 @@ export function analyzingReducer(
 }
 
 /**
+ * Pure derivation: should the manual "Skip to dashboard" link be visible
+ * for this reducer state?
+ *
+ *  - Hidden during `computingProfileScore` because the `complete-onboarding`
+ *    PATCH may not have committed `profileCompleted=true` yet; bailing now
+ *    risks a layout-guard bounce on the dashboard side.
+ *  - Hidden during `error` and `validationError` because those have their
+ *    own remediation surfaces (Try again / Go back to step).
+ *  - Hidden during `redirecting` so a fast double-click can't fire two
+ *    navigations or two telemetry calls.
+ */
+export function canSkip(state: AnalyzingState): boolean {
+  return (
+    state.kind === "profileScoreReady" ||
+    state.kind === "streamingPreviews" ||
+    state.kind === "profileScoreDegraded"
+  );
+}
+
+/**
  * Wire shape of `PATCH /candidate-profiles/me/complete-onboarding`. The
  * backend returns the full Profile Score DTO; we keep our local view narrow
  * to avoid coupling the screen to fields it does not display.

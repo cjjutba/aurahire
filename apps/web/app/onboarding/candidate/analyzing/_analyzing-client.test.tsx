@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   analyzingReducer,
+  canSkip,
   type AnalyzingProfileScore,
   type AnalyzingState,
 } from "./_analyzing-client";
@@ -100,5 +101,51 @@ describe("analyzingReducer", () => {
     for (const c of cases) {
       expect(analyzingReducer(c, { type: "REDIRECT" }).kind).toBe("redirecting");
     }
+  });
+});
+
+describe("canSkip", () => {
+  it("is false during the initial computing state", () => {
+    expect(canSkip({ kind: "computingProfileScore" })).toBe(false);
+  });
+
+  it("is true once the Profile Score is ready", () => {
+    expect(
+      canSkip({ kind: "profileScoreReady", score: SCORE, readyAt: NOW }),
+    ).toBe(true);
+  });
+
+  it("is true while match previews are streaming", () => {
+    expect(
+      canSkip({
+        kind: "streamingPreviews",
+        score: SCORE,
+        readyAt: NOW,
+        previewCount: 2,
+      }),
+    ).toBe(true);
+  });
+
+  it("is true on the degraded path so the candidate can leave the spinner", () => {
+    expect(canSkip({ kind: "profileScoreDegraded" })).toBe(true);
+  });
+
+  it("is false in the unrecoverable error state", () => {
+    expect(canSkip({ kind: "error", message: "Network down" })).toBe(false);
+  });
+
+  it("is false in the validation-error state — the user must fix the wizard step", () => {
+    expect(
+      canSkip({
+        kind: "validationError",
+        message: "Add a desired role first",
+        backToStep: "/onboarding/candidate/preferences",
+        backLabel: "Go back to Preferences",
+      }),
+    ).toBe(false);
+  });
+
+  it("is false once a redirect is already in flight (no double-fire)", () => {
+    expect(canSkip({ kind: "redirecting" })).toBe(false);
   });
 });
