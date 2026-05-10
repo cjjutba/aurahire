@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Eye, Pencil, Send, Archive } from "lucide-react";
+import {
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  Send,
+  Archive,
+  Loader2,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,14 +19,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { getActiveCompanyId } from "@/lib/active-company";
+import { useConfirm } from "@/components/providers/confirm-provider";
 
 interface JobRowActionsClientProps {
   jobId: string;
   status: string;
 }
 
-export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps) {
+export function JobRowActionsClient({
+  jobId,
+  status,
+}: JobRowActionsClientProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
 
   async function getToken(): Promise<string | null> {
@@ -31,6 +44,14 @@ export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps)
   }
 
   async function handlePublish() {
+    const ok = await confirm({
+      title: "Publish this job?",
+      description:
+        "Candidates will be able to see and apply to this job. You can archive it later if needed.",
+      confirmLabel: "Publish job",
+      variant: "info",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const token = await getToken();
@@ -39,9 +60,15 @@ export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps)
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const activeCompanyId = getActiveCompanyId();
       const res = await fetch(`${apiUrl}/api/v1/jobs/${jobId}/publish`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(activeCompanyId
+            ? { "X-Active-Company-Id": activeCompanyId }
+            : {}),
+        },
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as {
@@ -64,6 +91,14 @@ export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps)
   }
 
   async function handleArchive() {
+    const ok = await confirm({
+      title: "Archive this job?",
+      description:
+        "Candidates will no longer see it. You can unarchive it later from your job list.",
+      confirmLabel: "Archive job",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const token = await getToken();
@@ -72,9 +107,15 @@ export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps)
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const activeCompanyId = getActiveCompanyId();
       const res = await fetch(`${apiUrl}/api/v1/jobs/${jobId}/archive`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(activeCompanyId
+            ? { "X-Active-Company-Id": activeCompanyId }
+            : {}),
+        },
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as {
@@ -103,12 +144,17 @@ export function JobRowActionsClient({ jobId, status }: JobRowActionsClientProps)
           <button
             type="button"
             disabled={busy}
-            aria-label="Job actions"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-40"
+            aria-label={busy ? "Working..." : "Job actions"}
+            aria-busy={busy}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
           />
         }
       >
-        <MoreHorizontal className="h-4 w-4" aria-hidden />
+        {busy ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        ) : (
+          <MoreHorizontal className="h-4 w-4" aria-hidden />
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="bottom">
         <DropdownMenuItem

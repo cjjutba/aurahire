@@ -14,12 +14,6 @@ export type {
   ScoreProfileInput,
   ScoreProfileOutput,
 } from "./score-profile.service";
-export type {
-  ScoreMatchInput,
-  ScoreMatchOutput,
-} from "./score-match.service";
-export type {
-  DetectBiasInput,
-  DetectBiasOutput,
-} from "./detect-bias.service";
+export type { ScoreMatchInput, ScoreMatchOutput } from "./score-match.service";
+export type { DetectBiasInput, DetectBiasOutput } from "./detect-bias.service";
 export type { RedactionResult } from "./redact-pii.service";

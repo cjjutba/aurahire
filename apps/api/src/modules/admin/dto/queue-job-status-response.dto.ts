@@ -20,15 +20,29 @@ export class RescoreBatchResultDto {
 export class QueueJobStatusDataDto {
   @ApiProperty() queueJobId!: string;
   @ApiProperty({
-    enum: ["waiting", "active", "completed", "failed", "delayed", "paused", "unknown"],
+    enum: [
+      "waiting",
+      "active",
+      "completed",
+      "failed",
+      "delayed",
+      "paused",
+      "unknown",
+    ],
   })
   state!: string;
   @ApiProperty() progress!: number;
-  @ApiPropertyOptional({ nullable: true, type: String }) processedOn!: string | null;
-  @ApiPropertyOptional({ nullable: true, type: String }) finishedOn!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) processedOn!:
+    | string
+    | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) finishedOn!:
+    | string
+    | null;
   @ApiPropertyOptional({ nullable: true, type: () => RescoreBatchResultDto })
   result!: RescoreBatchResultDto | null;
-  @ApiPropertyOptional({ nullable: true, type: String }) failedReason!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) failedReason!:
+    | string
+    | null;
 }
 
 export class QueueJobStatusResponseDto {

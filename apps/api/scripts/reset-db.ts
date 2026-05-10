@@ -140,7 +140,7 @@ async function main(): Promise<void> {
 
 main().catch((err: unknown) => {
   process.stderr.write(
-    `reset-db failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`,
+    `reset-db failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
   );
   process.exit(1);
 });

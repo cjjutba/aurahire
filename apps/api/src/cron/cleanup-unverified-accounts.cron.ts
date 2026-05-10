@@ -27,12 +27,15 @@ export class CleanupUnverifiedAccountsCron {
     const startedAt = Date.now();
 
     try {
-      const candidates =
-        await this.supabaseAdmin.listUnconfirmedOlderThan(UNVERIFIED_THRESHOLD_DAYS);
+      const candidates = await this.supabaseAdmin.listUnconfirmedOlderThan(
+        UNVERIFIED_THRESHOLD_DAYS,
+      );
 
       if (candidates.length === 0) {
         const durationMs = Date.now() - startedAt;
-        this.logger.log(`[${CRON_NAME}] no unverified accounts older than ${UNVERIFIED_THRESHOLD_DAYS} days`);
+        this.logger.log(
+          `[${CRON_NAME}] no unverified accounts older than ${UNVERIFIED_THRESHOLD_DAYS} days`,
+        );
         await this.audit.log({
           actorId: null,
           actorType: "system",
@@ -76,7 +79,11 @@ export class CleanupUnverifiedAccountsCron {
         action: AUDIT_ACTIONS.CRON_CLEANUP_UNVERIFIED_ACCOUNTS_EXECUTED,
         entityType: "cron",
         entityId: CRON_ENTITY_SENTINEL,
-        details: { affectedRows: deletedCount, durationMs, candidatesScanned: candidates.length },
+        details: {
+          affectedRows: deletedCount,
+          durationMs,
+          candidatesScanned: candidates.length,
+        },
       });
 
       this.logger.log(

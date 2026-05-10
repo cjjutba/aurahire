@@ -6,25 +6,40 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type {
+  ApplicationStatus,
   AuthUser,
   InterviewStatus,
   RecruiterInterviewsQuery,
+  RescheduleInterviewInput,
   ScheduleInterviewInput,
+  ShareInterviewFeedbackInput,
   UpdateInterviewFeedbackInput,
   UpdateInterviewStatusInput,
 } from "@aurahire/shared";
 
 import { AuditService } from "../../audit";
 import { AUDIT_ACTIONS } from "../../audit/audit.types";
+import { canTransition } from "../applications/state-machine";
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { EmailService } from "../../email/email.service";
+import { EventsService } from "../../realtime";
 import { ApplicationsRepository } from "../applications/applications.repository";
 import { JobsRepository } from "../jobs/jobs.repository";
+import { NotificationsService } from "../notifications/notifications.service";
 import { ProfilesRepository } from "../profiles/profiles.repository";
-import { InterviewsRepository, type RecruiterInterviewRow } from "./interviews.repository";
+import {
+  InterviewsRepository,
+  type CandidateInterviewRow,
+  type RecruiterInterviewRow,
+} from "./interviews.repository";
 import type { InterviewDto } from "./dto/interview-response.dto";
 import { InterviewScheduledEmail } from "../../email/templates/interview-scheduled";
 import { InterviewCancelledEmail } from "../../email/templates/interview-cancelled";
+import { InterviewRescheduledEmail } from "../../email/templates/interview-rescheduled";
+import { InterviewFeedbackSharedEmail } from "../../email/templates/interview-feedback-shared";
+import { buildInterviewIcs } from "../../lib/calendar/build-interview-ics";
+import { InterviewVenuesService } from "../interview-venues/interview-venues.service";
+import { sanitizeMapUrl } from "./lib/sanitize-map-url";
 
 interface RequestMeta {
   ipAddress?: string | null;
@@ -43,24 +58,35 @@ export class InterviewsService {
     private readonly email: EmailService,
     private readonly audit: AuditService,
     private readonly cacheService: CacheService,
+    private readonly events: EventsService,
+    private readonly notifications: NotificationsService,
+    private readonly venuesService: InterviewVenuesService,
   ) {}
 
   async schedule(
     user: AuthUser,
+    companyId: string,
     applicationId: string,
     dto: ScheduleInterviewInput,
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
 
-    const application = await this.applicationsRepo.findApplicationContextForRecruiter(
-      applicationId,
-      user.id,
-    );
+    const application =
+      await this.applicationsRepo.findApplicationContextForCompany(
+        applicationId,
+        companyId,
+      );
     if (!application) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     const scheduledAt = new Date(dto.scheduledAt);
@@ -70,11 +96,65 @@ export class InterviewsService {
         message: "scheduledAt is not a valid date",
       });
     }
-    if (scheduledAt < new Date()) {
+    // 60s grace window absorbs clock skew and form-submit latency so a user
+    // who picks a near-now time isn't rejected by the time the request lands.
+    const PAST_GRACE_MS = 60_000;
+    if (scheduledAt.getTime() < Date.now() - PAST_GRACE_MS) {
       throw new BadRequestException({
         code: "PAST_DATE",
         message: "Interview cannot be scheduled in the past",
       });
+    }
+
+    // Auto-advance application status: applied | screening → interview.
+    // Applications already in interview (multi-round), offer, or later states
+    // are left unchanged.
+    const currentStatus = application.status as ApplicationStatus;
+    if (currentStatus === "applied" || currentStatus === "screening") {
+      if (!canTransition(currentStatus, "interview")) {
+        throw new BadRequestException({
+          code: "INVALID_STATUS_TRANSITION",
+          message: `Cannot advance from ${currentStatus} to interview`,
+        });
+      }
+      await this.applicationsRepo.update(applicationId, {
+        status: "interview",
+        statusUpdatedAt: new Date(),
+      });
+      await this.audit.log({
+        actorId: user.id,
+        actorType: "user",
+        action: "application.status_changed",
+        entityType: "application",
+        entityId: applicationId,
+        companyId,
+        details: {
+          from: currentStatus,
+          to: "interview",
+          system: false,
+          viaSchedule: true,
+        },
+        ...requestMeta,
+      });
+      this.events.emitApplicationStatusChanged({
+        applicationId,
+        candidateId: application.candidateId,
+        jobId: application.jobId,
+        recruiterId: user.id,
+        previousStatus: currentStatus,
+        status: "interview",
+        changedAt: new Date().toISOString(),
+      });
+    }
+
+    // mapUrl is optional — sanitizer throws if non-http/https scheme is supplied.
+    const sanitizedMapUrl = dto.mapUrl ? sanitizeMapUrl(dto.mapUrl) : null;
+
+    // Default interviewerName to the scheduling recruiter's full name when not provided.
+    let resolvedInterviewerName: string | null = dto.interviewerName ?? null;
+    if (!resolvedInterviewerName) {
+      const recruiter = await this.profilesRepo.findById(user.id);
+      resolvedInterviewerName = recruiter?.fullName ?? null;
     }
 
     const interview = await this.repo.insert({
@@ -82,10 +162,44 @@ export class InterviewsService {
       scheduledBy: user.id,
       scheduledAt,
       durationMinutes: dto.durationMinutes,
-      format: dto.format,
-      locationOrLink: dto.locationOrLink ?? null,
+      format: dto.format ?? "in-person",
+      locationOrLink: dto.locationOrLink ?? null, // legacy field, retained for back-compat reads
+      venueName: dto.venueName,
+      addressLine: dto.addressLine,
+      roomOrFloor: dto.roomOrFloor ?? null,
+      mapUrl: sanitizedMapUrl,
+      reportingInstructions: dto.reportingInstructions ?? null,
+      whatToBring: dto.whatToBring ?? null,
+      interviewerName: resolvedInterviewerName,
+      interviewerTitle: dto.interviewerTitle ?? null,
       status: "scheduled",
     });
+
+    if (dto.saveAsTemplate && dto.templateLabel) {
+      try {
+        await this.venuesService.create(
+          user,
+          companyId,
+          {
+            label: dto.templateLabel,
+            venueName: dto.venueName,
+            addressLine: dto.addressLine,
+            roomOrFloor: dto.roomOrFloor ?? null,
+            mapUrl: dto.mapUrl ?? null,
+            reportingInstructions: dto.reportingInstructions ?? null,
+            whatToBring: dto.whatToBring ?? null,
+            interviewerName: resolvedInterviewerName,
+            interviewerTitle: dto.interviewerTitle ?? null,
+            isDefault: false,
+          },
+          requestMeta,
+        );
+      } catch (err) {
+        this.logger.warn(
+          `saveAsTemplate failed for schedule of ${interview.id}: ${(err as Error).message}`,
+        );
+      }
+    }
 
     await this.audit.log({
       actorId: user.id,
@@ -93,6 +207,7 @@ export class InterviewsService {
       action: AUDIT_ACTIONS.INTERVIEW_SCHEDULED,
       entityType: "interview",
       entityId: interview.id,
+      companyId,
       details: {
         applicationId,
         scheduledAt: interview.scheduledAt.toISOString(),
@@ -102,10 +217,20 @@ export class InterviewsService {
     });
 
     await this.cacheService.bustTags([
-      TAGS.interviewsRecruiter(user.id),
+      TAGS.companyInterviews(companyId),
       TAGS.interviewsCandidate(application.candidateId),
-      TAGS.dashboardRecruiter(user.id),
+      TAGS.companyDashboard(companyId),
     ]);
+
+    this.events.emitInterviewScheduled({
+      interviewId: interview.id,
+      applicationId: interview.applicationId,
+      jobId: application.jobId,
+      recruiterId: user.id,
+      candidateId: application.candidateId,
+      scheduledFor: interview.scheduledAt.toISOString(),
+      format: interview.format,
+    });
 
     void this.notifyCandidateScheduled(interview.id).catch((err) => {
       this.logger.warn(`Notify candidate failed: ${(err as Error).message}`);
@@ -116,26 +241,109 @@ export class InterviewsService {
 
   async updateFeedback(
     user: AuthUser,
+    companyId: string,
     interviewId: string,
     dto: UpdateInterviewFeedbackInput,
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
-    const interview = await this.requireRecruiterOwnership(user, interviewId);
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
+
+    const previousRecommendation = interview.recommendation ?? null;
+    const newRecommendation = dto.recommendation ?? null;
 
     const updated = await this.repo.update(interviewId, {
       feedback: dto.feedback,
       rating: dto.rating ?? null,
+      recommendation: newRecommendation,
     });
 
     await this.audit.log({
       actorId: user.id,
       actorType: "user",
-      action: AUDIT_ACTIONS.INTERVIEW_FEEDBACK_UPDATED,
+      action: AUDIT_ACTIONS.INTERVIEW_FEEDBACK_SUBMITTED,
       entityType: "interview",
       entityId: interviewId,
+      companyId,
       details: {
         applicationId: interview.applicationId,
         rating: dto.rating ?? null,
+        hasRecommendation: newRecommendation !== null,
+      },
+      ...requestMeta,
+    });
+
+    if (newRecommendation !== previousRecommendation) {
+      await this.audit.log({
+        actorId: user.id,
+        actorType: "user",
+        action: AUDIT_ACTIONS.INTERVIEW_RECOMMENDATION_SET,
+        entityType: "interview",
+        entityId: interviewId,
+        companyId,
+        details: {
+          applicationId: interview.applicationId,
+          from: previousRecommendation,
+          to: newRecommendation,
+        },
+        ...requestMeta,
+      });
+
+      if (newRecommendation) {
+        this.events.emitApplicationRecommendationSet({
+          applicationId: interview.applicationId,
+          interviewId,
+          recruiterId: user.id,
+          recommendation: newRecommendation as "proceed" | "hold" | "reject",
+        });
+      }
+    }
+
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (app) {
+      await this.cacheService.bustTags([
+        TAGS.companyInterviews(companyId),
+        TAGS.interviewsCandidate(app.candidateId),
+        TAGS.companyDashboard(companyId),
+      ]);
+    }
+
+    return this.toDto(updated);
+  }
+
+  async shareFeedback(
+    user: AuthUser,
+    companyId: string,
+    interviewId: string,
+    dto: ShareInterviewFeedbackInput,
+    requestMeta: RequestMeta = {},
+  ): Promise<InterviewDto> {
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
+    const sharedAt = new Date();
+
+    const updated = await this.repo.update(interviewId, {
+      candidateSummary: dto.candidateSummary,
+      sharedWithCandidateAt: sharedAt,
+    });
+
+    await this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: AUDIT_ACTIONS.INTERVIEW_FEEDBACK_SHARED,
+      entityType: "interview",
+      entityId: interviewId,
+      companyId,
+      details: {
+        applicationId: interview.applicationId,
+        length: dto.candidateSummary.length,
+        isUpdate: interview.sharedWithCandidateAt !== null,
       },
       ...requestMeta,
     });
@@ -143,22 +351,254 @@ export class InterviewsService {
     const app = await this.applicationsRepo.findById(interview.applicationId);
     if (app) {
       await this.cacheService.bustTags([
-        TAGS.interviewsRecruiter(user.id),
+        TAGS.companyInterviews(companyId),
         TAGS.interviewsCandidate(app.candidateId),
-        TAGS.dashboardRecruiter(user.id),
       ]);
+
+      // In-app notification to candidate. Resolve the job + company so the
+      // body renders "Your recruiter shared their feedback summary for the
+      // <jobTitle> interview" instead of the template's generic fallback.
+      const feedbackJobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
+      void this.notifications
+        .emit({
+          userId: app.candidateId,
+          eventType: "interview_feedback_shared",
+          entityType: "interview",
+          entityId: interviewId,
+          metadata: {
+            interviewId,
+            applicationId: interview.applicationId,
+            jobTitle: feedbackJobRow?.title ?? null,
+            companyName: feedbackJobRow?.company.name ?? null,
+          },
+        })
+        .catch((err) => {
+          this.logger.warn(
+            `Notify candidate (feedback shared) failed: ${(err as Error).message}`,
+          );
+        });
+
+      // Realtime event
+      this.events.emitInterviewFeedbackShared({
+        interviewId,
+        applicationId: interview.applicationId,
+        candidateId: app.candidateId,
+        recruiterId: user.id,
+        sharedAt: sharedAt.toISOString(),
+      });
+
+      void this.notifyCandidateFeedbackShared(interviewId).catch((err) => {
+        this.logger.warn(
+          `Feedback-shared email failed: ${(err as Error).message}`,
+        );
+      });
     }
 
     return this.toDto(updated);
   }
 
+  async markNoShow(
+    user: AuthUser,
+    companyId: string,
+    interviewId: string,
+    requestMeta: RequestMeta = {},
+  ): Promise<InterviewDto> {
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
+
+    if (!["scheduled", "completed"].includes(interview.status)) {
+      throw new BadRequestException({
+        code: "INVALID_STATUS_TRANSITION",
+        message: `Cannot mark no-show from ${interview.status}`,
+      });
+    }
+
+    const updated = await this.repo.update(interviewId, { status: "no-show" });
+
+    await this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: AUDIT_ACTIONS.INTERVIEW_NO_SHOW_MARKED,
+      entityType: "interview",
+      entityId: interviewId,
+      companyId,
+      details: {
+        from: interview.status,
+        applicationId: interview.applicationId,
+      },
+      ...requestMeta,
+    });
+
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (app) {
+      await this.cacheService.bustTags([
+        TAGS.companyInterviews(companyId),
+        TAGS.interviewsCandidate(app.candidateId),
+      ]);
+      this.events.emitInterviewStatusChanged({
+        interviewId,
+        applicationId: interview.applicationId,
+        recruiterId: user.id,
+        candidateId: app.candidateId,
+        previousStatus: interview.status as InterviewStatus,
+        status: "no-show",
+        changedAt: new Date().toISOString(),
+      });
+    }
+
+    return this.toDto(updated);
+  }
+
+  async reschedule(
+    user: AuthUser,
+    companyId: string,
+    interviewId: string,
+    dto: RescheduleInterviewInput,
+    requestMeta: RequestMeta = {},
+  ): Promise<InterviewDto> {
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
+
+    if (!["scheduled", "no-show"].includes(interview.status)) {
+      throw new BadRequestException({
+        code: "INVALID_STATUS_TRANSITION",
+        message: `Cannot reschedule from ${interview.status}`,
+      });
+    }
+
+    const scheduledAt = new Date(dto.scheduledAt);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      throw new BadRequestException({
+        code: "INVALID_DATE",
+        message: "scheduledAt is not a valid date",
+      });
+    }
+    // 60s grace window absorbs clock skew and form-submit latency.
+    if (scheduledAt.getTime() < Date.now() - 60_000) {
+      throw new BadRequestException({
+        code: "PAST_DATE",
+        message: "Reschedule cannot be in the past",
+      });
+    }
+
+    const sanitizedMapUrl = dto.mapUrl ? sanitizeMapUrl(dto.mapUrl) : null;
+
+    // Mark original as rescheduled (guard prevents race with autocomplete cron).
+    const marked = await this.repo.markRescheduled(interview.id);
+    if (!marked) {
+      throw new BadRequestException({
+        code: "RACE_LOST",
+        message: "Interview status changed concurrently",
+      });
+    }
+
+    // Insert new linked interview.
+    const newInterview = await this.repo.insert({
+      applicationId: interview.applicationId,
+      scheduledBy: user.id,
+      scheduledAt,
+      durationMinutes: dto.durationMinutes,
+      format: "in-person",
+      venueName: dto.venueName,
+      addressLine: dto.addressLine,
+      roomOrFloor: dto.roomOrFloor ?? null,
+      mapUrl: sanitizedMapUrl,
+      reportingInstructions: dto.reportingInstructions ?? null,
+      whatToBring: dto.whatToBring ?? null,
+      interviewerName: dto.interviewerName ?? null,
+      interviewerTitle: dto.interviewerTitle ?? null,
+      status: "scheduled",
+      rescheduledFromId: interview.id,
+    });
+
+    // Wire forward link.
+    await this.repo.setRescheduledTo(interview.id, newInterview.id);
+
+    // Audit
+    await this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: AUDIT_ACTIONS.INTERVIEW_RESCHEDULED,
+      entityType: "interview",
+      entityId: newInterview.id,
+      companyId,
+      details: {
+        previousInterviewId: interview.id,
+        previousScheduledAt: interview.scheduledAt.toISOString(),
+        newScheduledAt: scheduledAt.toISOString(),
+        applicationId: interview.applicationId,
+      },
+      ...requestMeta,
+    });
+
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (app) {
+      this.events.emitInterviewRescheduled({
+        oldInterviewId: interview.id,
+        newInterviewId: newInterview.id,
+        applicationId: interview.applicationId,
+        candidateId: app.candidateId,
+        recruiterId: user.id,
+        scheduledFor: scheduledAt.toISOString(),
+      });
+      await this.cacheService.bustTags([
+        TAGS.companyInterviews(companyId),
+        TAGS.interviewsCandidate(app.candidateId),
+      ]);
+
+      // In-app notification to candidate.
+      // event-defaults.ts marks interview_rescheduled as `instant` so emit() also
+      // enqueues a notification email job — the dedicated rich email below carries
+      // the ICS attachment and full venue details that the generic queue email omits.
+      const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
+      void this.notifications
+        .emit({
+          userId: app.candidateId,
+          eventType: "interview_rescheduled",
+          entityType: "interview",
+          entityId: newInterview.id,
+          metadata: {
+            interviewId: newInterview.id,
+            applicationId: interview.applicationId,
+            jobTitle: jobRow?.title ?? "your role",
+            newStartTime: scheduledAt.toISOString(),
+          },
+        })
+        .catch((err) =>
+          this.logger.warn(
+            `Notify candidate (rescheduled) failed: ${(err as Error).message}`,
+          ),
+        );
+
+      void this.notifyCandidateRescheduled(
+        newInterview.id,
+        interview.scheduledAt,
+      ).catch((err) =>
+        this.logger.warn(`Reschedule notify failed: ${(err as Error).message}`),
+      );
+    }
+
+    return this.toDto(newInterview);
+  }
+
   async updateStatus(
     user: AuthUser,
+    companyId: string,
     interviewId: string,
     dto: UpdateInterviewStatusInput,
     requestMeta: RequestMeta = {},
   ): Promise<InterviewDto> {
-    const interview = await this.requireRecruiterOwnership(user, interviewId);
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
 
     if (interview.status !== "scheduled") {
       throw new BadRequestException({
@@ -177,6 +617,7 @@ export class InterviewsService {
       action: AUDIT_ACTIONS.INTERVIEW_STATUS_CHANGED,
       entityType: "interview",
       entityId: interviewId,
+      companyId,
       details: { from: interview.status, to: dto.newStatus },
       ...requestMeta,
     });
@@ -184,10 +625,20 @@ export class InterviewsService {
     const app = await this.applicationsRepo.findById(interview.applicationId);
     if (app) {
       await this.cacheService.bustTags([
-        TAGS.interviewsRecruiter(user.id),
+        TAGS.companyInterviews(companyId),
         TAGS.interviewsCandidate(app.candidateId),
-        TAGS.dashboardRecruiter(user.id),
+        TAGS.companyDashboard(companyId),
       ]);
+
+      this.events.emitInterviewStatusChanged({
+        interviewId,
+        applicationId: interview.applicationId,
+        recruiterId: user.id,
+        candidateId: app.candidateId,
+        previousStatus: interview.status,
+        status: dto.newStatus,
+        changedAt: new Date().toISOString(),
+      });
     }
 
     if (dto.newStatus === "cancelled") {
@@ -201,7 +652,10 @@ export class InterviewsService {
 
   async listMine(user: AuthUser): Promise<InterviewDto[]> {
     if (user.role !== "candidate") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Candidate role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
     }
     return this.cacheService.getOrSet<InterviewDto[]>({
       key: `interviews:candidate:${user.id}:list`,
@@ -210,24 +664,37 @@ export class InterviewsService {
       telemetryName: "interviews:candidate:list",
       load: async () => {
         const rows = await this.repo.findByCandidateId(user.id);
-        return rows.map((r) => this.toDto(r));
+        return rows.map((r) => this.toCandidateDto(r));
       },
     });
   }
 
-  async listForApplication(user: AuthUser, applicationId: string): Promise<InterviewDto[]> {
+  async listForApplication(
+    user: AuthUser,
+    companyId: string | null,
+    applicationId: string,
+  ): Promise<InterviewDto[]> {
     const app = await this.applicationsRepo.findById(applicationId);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     if (user.role === "candidate" && app.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
-      if (!job || job.recruiterId !== user.id) {
-        throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      if (!job || job.companyId !== companyId) {
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Application not found",
+        });
       }
     }
 
@@ -237,15 +704,22 @@ export class InterviewsService {
 
   async listForRecruiter(
     user: AuthUser,
+    companyId: string,
     query: RecruiterInterviewsQuery,
   ): Promise<{
     data: InterviewDto[];
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
-    const { rows, total } = await this.repo.listForRecruiterPaginated(user.id, query);
+    const { rows, total } = await this.repo.listForCompanyPaginated(
+      companyId,
+      query,
+    );
     return {
       data: rows.map((row) => this.toDtoFromRecruiterRow(row)),
       meta: {
@@ -257,12 +731,224 @@ export class InterviewsService {
     };
   }
 
+  async checkConflicts(input: {
+    scheduledAt: Date;
+    durationMinutes: number;
+    recruiterId: string;
+    candidateId: string;
+    excludeInterviewId?: string;
+  }): Promise<{
+    recruiterConflicts: Array<{
+      id: string;
+      scheduledAt: string;
+      durationMinutes: number;
+    }>;
+    candidateConflicts: Array<{
+      id: string;
+      scheduledAt: string;
+      durationMinutes: number;
+    }>;
+  }> {
+    const startsAt = new Date(input.scheduledAt);
+    const endsAt = new Date(
+      startsAt.getTime() + input.durationMinutes * 60_000,
+    );
+
+    const [recruiterRows, candidateRows] = await Promise.all([
+      this.repo.findOverlapping({
+        startsAt,
+        endsAt,
+        recruiterId: input.recruiterId,
+        excludeInterviewId: input.excludeInterviewId,
+      }),
+      this.repo.findOverlapping({
+        startsAt,
+        endsAt,
+        candidateId: input.candidateId,
+        excludeInterviewId: input.excludeInterviewId,
+      }),
+    ]);
+
+    const toSummary = (r: {
+      id: string;
+      scheduledAt: Date;
+      durationMinutes: number;
+    }) => ({
+      id: r.id,
+      scheduledAt: r.scheduledAt.toISOString(),
+      durationMinutes: r.durationMinutes,
+    });
+
+    return {
+      recruiterConflicts: recruiterRows.map(toSummary),
+      candidateConflicts: candidateRows.map(toSummary),
+    };
+  }
+
+  async checkConflictsForApplication(
+    user: AuthUser,
+    companyId: string,
+    applicationId: string,
+    dto: {
+      scheduledAt: string;
+      durationMinutes: number;
+      excludeInterviewId?: string;
+    },
+  ): Promise<{
+    recruiterConflicts: Array<{
+      id: string;
+      scheduledAt: string;
+      durationMinutes: number;
+    }>;
+    candidateConflicts: Array<{
+      id: string;
+      scheduledAt: string;
+      durationMinutes: number;
+    }>;
+  }> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
+    }
+    const application =
+      await this.applicationsRepo.findApplicationContextForCompany(
+        applicationId,
+        companyId,
+      );
+    if (!application) {
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
+    }
+    return this.checkConflicts({
+      scheduledAt: new Date(dto.scheduledAt),
+      durationMinutes: dto.durationMinutes,
+      recruiterId: user.id,
+      candidateId: application.candidateId,
+      excludeInterviewId: dto.excludeInterviewId,
+    });
+  }
+
+  async getByIdForCompany(
+    user: AuthUser,
+    companyId: string,
+    interviewId: string,
+  ): Promise<InterviewDto> {
+    const interview = await this.requireCompanyOwnership(
+      user,
+      companyId,
+      interviewId,
+    );
+    return this.toDto(interview);
+  }
+
+  async getByIdForCandidate(
+    user: AuthUser,
+    interviewId: string,
+  ): Promise<InterviewDto> {
+    if (user.role !== "candidate") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
+    }
+    const interview = await this.repo.findById(interviewId);
+    if (!interview) {
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
+    }
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (!app || app.candidateId !== user.id) {
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
+    }
+    return this.toCandidateSingleDto(interview);
+  }
+
+  async getIcs(user: AuthUser, interviewId: string): Promise<string> {
+    const interview = await this.repo.findById(interviewId);
+    if (!interview) {
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
+    }
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (!app) {
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
+    }
+
+    // Candidate must own the application; recruiter must belong to the company that owns the job.
+    if (user.role === "candidate" && app.candidateId !== user.id) {
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
+    }
+    if (user.role === "recruiter") {
+      const ownership =
+        await this.applicationsRepo.findApplicationContextForCompanyByUser(
+          interview.applicationId,
+          user.id,
+        );
+      if (!ownership) {
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Interview not found",
+        });
+      }
+    }
+
+    const candidate = await this.profilesRepo.findById(app.candidateId);
+    const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
+    if (!candidate || !jobRow) {
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
+    }
+
+    return buildInterviewIcs({
+      interview: {
+        id: interview.id,
+        rescheduledFromId: interview.rescheduledFromId ?? null,
+        scheduledAt: interview.scheduledAt,
+        durationMinutes: interview.durationMinutes,
+        venueName: interview.venueName ?? "",
+        addressLine: interview.addressLine ?? "",
+        roomOrFloor: interview.roomOrFloor ?? null,
+        reportingInstructions: interview.reportingInstructions ?? null,
+        whatToBring: interview.whatToBring ?? null,
+        interviewerName: interview.interviewerName ?? null,
+        interviewerTitle: interview.interviewerTitle ?? null,
+        mapUrl: interview.mapUrl ?? null,
+      },
+      candidate: { fullName: candidate.fullName, email: candidate.email },
+      job: { title: jobRow.title },
+      company: {
+        name: jobRow.company.name,
+        recruiterEmail: "no-reply@aurahire.site",
+      },
+    });
+  }
+
   // -----------------------------------------------------------------
   // PRIVATE
   // -----------------------------------------------------------------
 
-  private async requireRecruiterOwnership(
+  private async requireCompanyOwnership(
     user: AuthUser,
+    companyId: string,
     interviewId: string,
   ): Promise<{
     id: string;
@@ -275,22 +961,35 @@ export class InterviewsService {
     status: string;
     feedback: string | null;
     rating: number | null;
+    recommendation: string | null;
+    candidateSummary: string | null;
+    sharedWithCandidateAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
   }> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
     const interview = await this.repo.findById(interviewId);
     if (!interview) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
     }
-    const ownership = await this.applicationsRepo.findApplicationContextForRecruiter(
-      interview.applicationId,
-      user.id,
-    );
+    const ownership =
+      await this.applicationsRepo.findApplicationContextForCompany(
+        interview.applicationId,
+        companyId,
+      );
     if (!ownership) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Interview not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Interview not found",
+      });
     }
     return interview;
   }
@@ -304,7 +1003,31 @@ export class InterviewsService {
     const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     if (!candidate || !jobRow) return;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+
+    const ics = buildInterviewIcs({
+      interview: {
+        id: interview.id,
+        rescheduledFromId: interview.rescheduledFromId ?? null,
+        scheduledAt: interview.scheduledAt,
+        durationMinutes: interview.durationMinutes,
+        venueName: interview.venueName ?? "",
+        addressLine: interview.addressLine ?? "",
+        roomOrFloor: interview.roomOrFloor ?? null,
+        reportingInstructions: interview.reportingInstructions ?? null,
+        whatToBring: interview.whatToBring ?? null,
+        interviewerName: interview.interviewerName ?? null,
+        interviewerTitle: interview.interviewerTitle ?? null,
+        mapUrl: interview.mapUrl ?? null,
+      },
+      candidate: { fullName: candidate.fullName, email: candidate.email },
+      job: { title: jobRow.title },
+      company: {
+        name: jobRow.company.name,
+        recruiterEmail: "no-reply@aurahire.site",
+      },
+    });
+
     await this.email.send({
       to: candidate.email,
       subject: `Interview scheduled: ${jobRow.title}`,
@@ -315,8 +1038,119 @@ export class InterviewsService {
         scheduledAt: interview.scheduledAt.toISOString(),
         durationMinutes: interview.durationMinutes,
         format: interview.format,
-        locationOrLink: interview.locationOrLink,
+        locationOrLink: interview.locationOrLink ?? null,
+        venueName: interview.venueName ?? null,
+        addressLine: interview.addressLine ?? null,
+        roomOrFloor: interview.roomOrFloor ?? null,
+        reportingInstructions: interview.reportingInstructions ?? null,
+        whatToBring: interview.whatToBring ?? null,
+        interviewerName: interview.interviewerName ?? null,
+        interviewerTitle: interview.interviewerTitle ?? null,
+        mapUrl: interview.mapUrl ?? null,
         applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
+      }),
+      attachments: [
+        {
+          filename: "interview.ics",
+          content: Buffer.from(ics).toString("base64"),
+          contentType: "text/calendar",
+        },
+      ],
+    });
+  }
+
+  private async notifyCandidateRescheduled(
+    newInterviewId: string,
+    previousScheduledAt: Date,
+  ): Promise<void> {
+    const interview = await this.repo.findById(newInterviewId);
+    if (!interview) return;
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (!app) return;
+    const candidate = await this.profilesRepo.findById(app.candidateId);
+    const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
+    if (!candidate || !jobRow) return;
+
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+
+    const ics = buildInterviewIcs({
+      interview: {
+        id: interview.id,
+        rescheduledFromId: interview.rescheduledFromId ?? null,
+        scheduledAt: interview.scheduledAt,
+        durationMinutes: interview.durationMinutes,
+        venueName: interview.venueName ?? "",
+        addressLine: interview.addressLine ?? "",
+        roomOrFloor: interview.roomOrFloor ?? null,
+        reportingInstructions: interview.reportingInstructions ?? null,
+        whatToBring: interview.whatToBring ?? null,
+        interviewerName: interview.interviewerName ?? null,
+        interviewerTitle: interview.interviewerTitle ?? null,
+        mapUrl: interview.mapUrl ?? null,
+      },
+      candidate: { fullName: candidate.fullName, email: candidate.email },
+      job: { title: jobRow.title },
+      company: {
+        name: jobRow.company.name,
+        recruiterEmail: "no-reply@aurahire.site",
+      },
+    });
+
+    await this.email.send({
+      to: candidate.email,
+      subject: `Interview rescheduled: ${jobRow.title}`,
+      template: InterviewRescheduledEmail({
+        candidateName: candidate.fullName,
+        jobTitle: jobRow.title,
+        companyName: jobRow.company.name,
+        previousScheduledAt: previousScheduledAt.toISOString(),
+        newScheduledAt: interview.scheduledAt.toISOString(),
+        durationMinutes: interview.durationMinutes,
+        format: interview.format,
+        venueName: interview.venueName ?? null,
+        addressLine: interview.addressLine ?? null,
+        roomOrFloor: interview.roomOrFloor ?? null,
+        reportingInstructions: interview.reportingInstructions ?? null,
+        whatToBring: interview.whatToBring ?? null,
+        interviewerName: interview.interviewerName ?? null,
+        interviewerTitle: interview.interviewerTitle ?? null,
+        mapUrl: interview.mapUrl ?? null,
+        applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
+      }),
+      attachments: [
+        {
+          filename: "interview.ics",
+          content: Buffer.from(ics).toString("base64"),
+          contentType: "text/calendar",
+        },
+      ],
+    });
+  }
+
+  private async notifyCandidateFeedbackShared(
+    interviewId: string,
+  ): Promise<void> {
+    const interview = await this.repo.findById(interviewId);
+    if (!interview || !interview.candidateSummary) return;
+    const app = await this.applicationsRepo.findById(interview.applicationId);
+    if (!app) return;
+    const candidate = await this.profilesRepo.findById(app.candidateId);
+    const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
+    if (!candidate || !jobRow) return;
+
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+    await this.email.send({
+      to: candidate.email,
+      subject: `Feedback from your interview at ${jobRow.company.name}`,
+      template: InterviewFeedbackSharedEmail({
+        candidateName: candidate.fullName,
+        jobTitle: jobRow.title,
+        companyName: jobRow.company.name,
+        candidateSummary: interview.candidateSummary,
+        applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
     });
   }
@@ -330,7 +1164,7 @@ export class InterviewsService {
     const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     if (!candidate || !jobRow) return;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
     await this.email.send({
       to: candidate.email,
       subject: `Interview cancelled: ${jobRow.title}`,
@@ -340,6 +1174,7 @@ export class InterviewsService {
         companyName: jobRow.company.name,
         scheduledAt: interview.scheduledAt.toISOString(),
         applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
     });
   }
@@ -355,6 +1190,20 @@ export class InterviewsService {
     status: string;
     feedback: string | null;
     rating: number | null;
+    recommendation?: string | null;
+    candidateSummary?: string | null;
+    sharedWithCandidateAt?: Date | null;
+    // Optional venue fields (present on full Interview rows)
+    venueName?: string | null;
+    addressLine?: string | null;
+    roomOrFloor?: string | null;
+    mapUrl?: string | null;
+    reportingInstructions?: string | null;
+    whatToBring?: string | null;
+    interviewerName?: string | null;
+    interviewerTitle?: string | null;
+    rescheduledFromId?: string | null;
+    rescheduledToId?: string | null;
     createdAt: Date;
     updatedAt: Date;
   }): InterviewDto {
@@ -369,6 +1218,104 @@ export class InterviewsService {
       status: i.status,
       feedback: i.feedback,
       rating: i.rating,
+      recommendation: (i.recommendation ?? null) as
+        | "proceed"
+        | "hold"
+        | "reject"
+        | null,
+      candidateSummary: i.candidateSummary ?? null,
+      sharedWithCandidateAt: i.sharedWithCandidateAt?.toISOString() ?? null,
+      venueName: i.venueName ?? null,
+      addressLine: i.addressLine ?? null,
+      roomOrFloor: i.roomOrFloor ?? null,
+      mapUrl: i.mapUrl ?? null,
+      reportingInstructions: i.reportingInstructions ?? null,
+      whatToBring: i.whatToBring ?? null,
+      interviewerName: i.interviewerName ?? null,
+      interviewerTitle: i.interviewerTitle ?? null,
+      rescheduledFromId: i.rescheduledFromId ?? null,
+      rescheduledToId: i.rescheduledToId ?? null,
+      createdAt: i.createdAt.toISOString(),
+      updatedAt: i.updatedAt.toISOString(),
+    };
+  }
+
+  private toCandidateDto(row: CandidateInterviewRow): InterviewDto {
+    return {
+      ...this.toDto(row),
+      job:
+        row.jobId && row.jobTitle
+          ? { id: row.jobId, title: row.jobTitle }
+          : null,
+      company:
+        row.companyId && row.companyName
+          ? {
+              id: row.companyId,
+              name: row.companyName,
+              logoUrl: row.companyLogoUrl,
+            }
+          : null,
+    };
+  }
+
+  /**
+   * Returns a candidate-safe DTO for a single interview fetched by candidateId ownership.
+   * Internal fields (feedback, rating, recommendation) are omitted.
+   * candidateSummary is included only when sharedWithCandidateAt is set.
+   */
+  private toCandidateSingleDto(i: {
+    id: string;
+    applicationId: string;
+    scheduledBy: string;
+    scheduledAt: Date;
+    durationMinutes: number;
+    format: string;
+    locationOrLink: string | null;
+    status: string;
+    venueName?: string | null;
+    addressLine?: string | null;
+    roomOrFloor?: string | null;
+    mapUrl?: string | null;
+    reportingInstructions?: string | null;
+    whatToBring?: string | null;
+    interviewerName?: string | null;
+    interviewerTitle?: string | null;
+    candidateSummary?: string | null;
+    sharedWithCandidateAt?: Date | null;
+    rescheduledFromId?: string | null;
+    rescheduledToId?: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): InterviewDto {
+    const hasSharedFeedback = !!i.sharedWithCandidateAt;
+    return {
+      id: i.id,
+      applicationId: i.applicationId,
+      scheduledBy: i.scheduledBy,
+      scheduledAt: i.scheduledAt.toISOString(),
+      durationMinutes: i.durationMinutes,
+      format: i.format,
+      locationOrLink: i.locationOrLink,
+      status: i.status,
+      // Internal fields omitted from candidate view
+      feedback: null,
+      rating: null,
+      recommendation: null,
+      // Feedback visible only when explicitly shared
+      candidateSummary: hasSharedFeedback ? (i.candidateSummary ?? null) : null,
+      sharedWithCandidateAt: hasSharedFeedback
+        ? (i.sharedWithCandidateAt?.toISOString() ?? null)
+        : null,
+      venueName: i.venueName ?? null,
+      addressLine: i.addressLine ?? null,
+      roomOrFloor: i.roomOrFloor ?? null,
+      mapUrl: i.mapUrl ?? null,
+      reportingInstructions: i.reportingInstructions ?? null,
+      whatToBring: i.whatToBring ?? null,
+      interviewerName: i.interviewerName ?? null,
+      interviewerTitle: i.interviewerTitle ?? null,
+      rescheduledFromId: i.rescheduledFromId ?? null,
+      rescheduledToId: i.rescheduledToId ?? null,
       createdAt: i.createdAt.toISOString(),
       updatedAt: i.updatedAt.toISOString(),
     };

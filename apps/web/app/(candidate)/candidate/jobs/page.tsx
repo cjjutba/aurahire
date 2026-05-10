@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { getCurrentSession } from "@/lib/auth/session";
 import { makeQueryClient, PrefetchedHydration, queryKeys } from "@/lib/query";
-import { serverQueries } from "@/lib/query/server";
+import { serverApiFetch, serverQueries } from "@/lib/query/server";
 
 import { CandidateJobsListClient } from "./_jobs-list-client";
 
@@ -13,7 +13,9 @@ interface PageProps {
     q?: string;
     mode?: string;
     experienceLevel?: string;
+    sort?: string;
     page?: string;
+    excludeApplied?: string;
   }>;
 }
 
@@ -23,26 +25,48 @@ export default async function CandidateJobsPage({ searchParams }: PageProps) {
 
   const sp = await searchParams;
   const params = {
-    q: sp.q,
-    mode: sp.mode,
-    experienceLevel: sp.experienceLevel,
-    page: sp.page ? Number(sp.page) : undefined,
+    q: sp.q?.trim() || undefined,
+    mode: sp.mode && sp.mode !== "all" ? sp.mode : undefined,
+    experienceLevel:
+      sp.experienceLevel && sp.experienceLevel !== "all"
+        ? sp.experienceLevel
+        : undefined,
+    sort: sp.sort ?? "recent",
+    page: sp.page ? Math.max(1, Number(sp.page)) : 1,
+    limit: 12,
+    excludeApplied: sp.excludeApplied === "1" || sp.excludeApplied === "true",
   };
 
   const queryClient = makeQueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: queryKeys.candidateJobs.list(params),
-    queryFn: () => serverQueries.candidateJobsList(params),
-  });
+  // Prefetch match-previews server-side so the score chips render on first
+  // paint after a hard refresh. Without this, the client query would race
+  // AuthTokenProvider's useEffect: the bearer token is null on mount, the
+  // call returns 401, and the query's no-retry-on-401 policy locks it into
+  // the error state — leaving Browse Jobs scoreless until a manual refresh.
+  const [, , appsResult] = await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.candidateJobs.list(params),
+      queryFn: () => serverQueries.candidateJobsList(params),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.matchPreviews.list(),
+      queryFn: () => serverQueries.myMatchPreviews(),
+    }),
+    serverApiFetch<{ data: Array<{ id: string; jobId: string }> }>(
+      "/api/v1/applications/mine",
+    ).catch(() => null),
+  ]);
+
+  const appliedJobMap: Record<string, string> = {};
+  if (appsResult) {
+    for (const a of appsResult.data) {
+      appliedJobMap[a.jobId] = a.id;
+    }
+  }
 
   return (
     <PrefetchedHydration queryClient={queryClient}>
-      <CandidateJobsListClient
-        q={params.q}
-        mode={params.mode}
-        experienceLevel={params.experienceLevel}
-        page={params.page}
-      />
+      <CandidateJobsListClient params={params} appliedJobMap={appliedJobMap} />
     </PrefetchedHydration>
   );
 }

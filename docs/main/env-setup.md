@@ -42,11 +42,12 @@ Sign up for **four accounts** before starting — verification can take time.
 - Sign up at https://platform.openai.com
 - **Add $10–20 in billing credits** (free trial credits expire fast)
 
-### 4. Railway (Backend Hosting)
+### 4. Digital Ocean (Backend Hosting)
 
-- Sign up at https://railway.app
-- Free $5 trial; pay-as-you-go after
-- We deploy `apps/api` here + Redis addon
+- Sign up at https://cloud.digitalocean.com
+- Provision a Basic Droplet (Ubuntu 22.04 LTS, 2 vCPU / 2GB RAM is sufficient for thesis-scale traffic).
+- We deploy `apps/api` directly on the Droplet under PM2; Redis + Mailpit run as Docker containers via `deploy/docker-compose.prod.yml` on the same host. Caddy terminates TLS in front.
+- An A-record (`api.<your-domain>`) on a domain you control should point at the Droplet's public IPv4 — Caddy uses it to fetch a Let's Encrypt cert.
 
 (Vercel signup deferred until Day 4 deployment.)
 
@@ -68,6 +69,7 @@ pnpm list --depth -1
 ```
 
 ### Expected layout after install
+
 ```
 aurahire/
 ├── apps/
@@ -101,11 +103,13 @@ If the monorepo isn't yet scaffolded (this guide is read **before** Day 1's mono
 ### 2b. Collect Supabase credentials
 
 Project Settings → **API** → copy:
+
 - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
 - `anon public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` *(⚠ secret)*
+- `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` _(⚠ secret)_
 
 Project Settings → **Database** → **Connection string** (URI mode, pooler port 6543):
+
 - `Connection string` → `DATABASE_URL` (replace `[YOUR-PASSWORD]` with the password from 2a)
 
 Example: `postgresql://postgres.xxxxx:YourPassword@aws-0-region.pooler.supabase.com:6543/postgres`
@@ -113,10 +117,12 @@ Example: `postgresql://postgres.xxxxx:YourPassword@aws-0-region.pooler.supabase.
 ### 2c. Configure Auth settings
 
 Authentication → **Providers**:
+
 - **Email:** enabled (default)
 - **Confirm email:** enabled
 
 Authentication → **URL Configuration**:
+
 - **Site URL:** `http://localhost:3000` (frontend)
 - **Redirect URLs:** add `http://localhost:3000/**` and `http://localhost:3000/verify-email` and `http://localhost:3000/reset-password`
 
@@ -125,6 +131,7 @@ Authentication → **URL Configuration**:
 ### 2d. Create Storage buckets
 
 Storage → **New bucket**:
+
 - `resumes` — Public: OFF (private)
 - `avatars` — Public: ON
 - `company-logos` — Public: ON
@@ -167,6 +174,7 @@ docker compose -f docker-compose.dev.yml up -d
 ```
 
 This starts:
+
 - **Mailpit** — SMTP server on `localhost:1025`, web UI on http://localhost:8025
 - **Redis 7-alpine** — `localhost:6379`, with persistent volume + LRU eviction at 256MB
 
@@ -205,9 +213,9 @@ docker compose -f docker-compose.dev.yml restart redis
 - **Reproducible** — exact same Mailpit + Redis versions across all dev environments
 - **Cleanup-friendly** — `docker compose down -v` resets state; no leftover system services
 - **No system pollution** — nothing installed via `brew`/`apt` for these services
-- **Production parity** — Railway runs containerized Redis too; behavior matches
+- **Production parity** — the production Droplet runs the same `redis:7-alpine` and `axllent/mailpit` images via `deploy/docker-compose.prod.yml`; behavior matches.
 
-For production, Mailpit is replaced by Resend, and Redis is provisioned as a Railway addon — but the `apps/api` code targets the same `REDIS_URL` and SMTP environment variables in both environments.
+In production, real outbound email goes through **Resend** (`NODE_ENV=production` switches the transport), but the same Mailpit container is also kept on the Droplet bound to localhost as an internal SMTP fallback / inspector. `apps/api` targets the same `REDIS_URL` and SMTP environment variable shape in both environments.
 
 ---
 
@@ -289,6 +297,7 @@ This pushes the schema to your Supabase Postgres dev project. Verify in Supabase
 ```
 
 Verify RLS:
+
 ```sql
 SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
 ```
@@ -324,6 +333,7 @@ apps/api:dev:   - Swagger UI:   http://localhost:3333/api/docs
 ```
 
 Open in browser:
+
 - **Frontend:** http://localhost:3000
 - **Backend API docs:** http://localhost:3333/api/docs
 - **Mailpit inbox:** http://localhost:8025
@@ -334,14 +344,14 @@ Open in browser:
 
 Manual end-to-end check after Day 1:
 
-| Test | Expected |
-|---|---|
-| Visit http://localhost:3000 | Marketing landing renders |
-| **Get Started** → register a candidate | Form submits |
-| Check Mailpit (http://localhost:8025) | Verification email present |
-| Click verify link from Mailpit | Redirected to onboarding |
-| Open backend Swagger: http://localhost:3333/api/docs | Endpoints listed |
-| Visit `/candidate` while logged out | Middleware redirects to `/login` |
+| Test                                                 | Expected                         |
+| ---------------------------------------------------- | -------------------------------- |
+| Visit http://localhost:3000                          | Marketing landing renders        |
+| **Get Started** → register a candidate               | Form submits                     |
+| Check Mailpit (http://localhost:8025)                | Verification email present       |
+| Click verify link from Mailpit                       | Redirected to onboarding         |
+| Open backend Swagger: http://localhost:3333/api/docs | Endpoints listed                 |
+| Visit `/candidate` while logged out                  | Middleware redirects to `/login` |
 
 If anything fails, see Troubleshooting.
 
@@ -359,29 +369,50 @@ If anything fails, see Troubleshooting.
    - **Build Command:** (default)
    - **Output Directory:** (default)
    - **Install Command:** `pnpm install` (Vercel auto-detects monorepo + pnpm)
-4. Environment variables: paste contents of `apps/web/.env.local` (replace `NEXT_PUBLIC_API_URL` with Railway URL once known)
+4. Environment variables: paste contents of `apps/web/.env.local` (replace `NEXT_PUBLIC_API_URL` with the Droplet's public API URL once known, e.g. `https://api.<your-domain>`)
 5. Deploy
 
-### Backend → Railway
+### Backend → Digital Ocean Droplet
 
-1. Sign up / log in at https://railway.app
-2. **New Project** → **Deploy from GitHub repo**
-3. Configure:
-   - **Root Directory:** `apps/api`
-   - **Build Command:** `pnpm install --frozen-lockfile && pnpm --filter @aurahire/api build`
-   - **Start Command:** `pnpm --filter @aurahire/api start:prod`
-4. Add Redis addon: **+ New** → **Database** → **Add Redis**. Railway auto-injects `REDIS_URL`.
-5. Environment variables: paste `apps/api/.env` (replace localhost values with production Supabase + Redis URLs; `NODE_ENV=production` to switch email transport to Resend)
-6. Configure custom domain later if needed
-7. Note the public URL (e.g. `aurahire-api.up.railway.app`)
+The backend deploy is **manual SSH + PM2 + Docker Compose** — no PaaS, no auto-deploy from GitHub. This is intentional for the thesis (every moving part is visible and editable; nothing hidden behind a control plane).
+
+1. **Create the Droplet:** at https://cloud.digitalocean.com → **Create → Droplets** → Ubuntu 22.04 LTS, Basic plan (2 vCPU / 2GB RAM), region closest to your users, SSH key auth (no password).
+2. **DNS:** point `api.<your-domain>` (A-record) at the Droplet's public IPv4. Caddy needs the hostname resolvable to fetch a Let's Encrypt cert.
+3. **First-time host setup** (run as root once, then create a `deploy` user):
+   - `apt update && apt upgrade -y`
+   - Install Node 20: `curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt install -y nodejs`
+   - Install pnpm 9: `corepack enable && corepack prepare pnpm@9 --activate`
+   - Install Docker Engine + Compose plugin (https://docs.docker.com/engine/install/ubuntu/)
+   - Install Caddy (https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
+   - Install PM2: `npm install -g pm2`
+   - Create non-root `deploy` user, add to `docker` group, copy SSH key
+   - UFW firewall: allow `22, 80, 443` only — Redis (6379) and Mailpit (1025/8025) stay inside the host
+4. **Clone the repo** as `deploy@<droplet>` to `/home/deploy/aurahire`.
+5. **Create `deploy/.env`** with production values (DATABASE_URL Supabase pooler, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY, REDIS_PASSWORD, REDIS_URL=`redis://:${REDIS_PASSWORD}@127.0.0.1:6379`, SMTP_HOST=127.0.0.1, SMTP_PORT=1025, NODE_ENV=production, NEXT_PUBLIC_APP_URL=`https://aurahire.vercel.app`, ALLOWED_ORIGINS=`https://aurahire.vercel.app`). `chmod 600 deploy/.env`.
+6. **Bring up Redis + Mailpit:** `docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d`
+7. **Build the API:** `pnpm install --frozen-lockfile && pnpm --filter @aurahire/api build`
+8. **Run via PM2:** `pm2 start apps/api/dist/main.js --name aurahire-api --time` then `pm2 save && pm2 startup` so it survives reboots.
+9. **Caddyfile** (at `/etc/caddy/Caddyfile`):
+   ```
+   api.<your-domain> {
+     reverse_proxy 127.0.0.1:3333
+     encode gzip
+   }
+   ```
+   Then `systemctl reload caddy`. Caddy auto-fetches the TLS cert.
+10. **Verify:** `curl https://api.<your-domain>/api/health` → `{ "status": "ok", ... }`.
+
+For subsequent deploys: `git pull && pnpm install --frozen-lockfile && pnpm --filter @aurahire/api build && pm2 reload aurahire-api`.
 
 ### Wire Frontend to Backend
 
 In Vercel project settings:
-- Update `NEXT_PUBLIC_API_URL` to your Railway URL: `https://aurahire-api.up.railway.app`
+
+- Update `NEXT_PUBLIC_API_URL` to your Droplet API URL: `https://api.<your-domain>`
 - Trigger redeploy
 
 In Supabase Auth:
+
 - Add Vercel URL to allowed redirect URLs
 
 ---
@@ -409,6 +440,7 @@ pnpm format
 ```
 
 Stop dev:
+
 - `Ctrl+C` in the `pnpm dev` terminal
 - Optional: `docker compose -f docker-compose.dev.yml down` to stop Mailpit + Redis (or leave them running across sessions — they persist data via volumes)
 
@@ -417,19 +449,23 @@ Stop dev:
 ## Troubleshooting
 
 ### `pnpm dev` only starts one app
+
 - Check `turbo.json` has `dev` task with `persistent: true`
 - Check both `apps/web/package.json` and `apps/api/package.json` have a `dev` script
 
 ### Backend can't connect to Postgres
+
 - Verify `DATABASE_URL` uses pooler port `6543` (transaction mode)
 - Verify `[YOUR-PASSWORD]` was replaced
 
 ### Frontend can't reach backend
+
 - Verify `NEXT_PUBLIC_API_URL=http://localhost:3333` in `apps/web/.env.local`
 - Verify backend is running (look for `[Nest]` log lines in `pnpm dev` output)
 - Verify CORS: backend `ALLOWED_ORIGINS` includes `http://localhost:3000`
 
 ### Mailpit not catching emails
+
 - Verify Docker Desktop is running
 - Verify container is up: `docker compose -f docker-compose.dev.yml ps`
 - Verify backend `.env` has `SMTP_HOST=localhost SMTP_PORT=1025`
@@ -437,6 +473,7 @@ Stop dev:
 - Try restarting: `docker compose -f docker-compose.dev.yml restart mailpit`
 
 ### Redis connection refused
+
 - Verify Docker Desktop is running
 - Verify Redis container: `docker compose -f docker-compose.dev.yml ps`
 - Test connection: `docker exec aurahire-redis redis-cli ping` should return `PONG`
@@ -444,22 +481,27 @@ Stop dev:
 - Try restarting: `docker compose -f docker-compose.dev.yml restart redis`
 
 ### Docker Compose: port already in use
+
 - Another process is bound to 1025/8025/6379 — find and stop it: `lsof -i :6379`
 - Or change the host port in `docker-compose.dev.yml` (e.g. `"6380:6379"`) and update `REDIS_URL` accordingly
 
 ### Backend `Row-level security policy violated`
+
 - Service role client should be used for system operations (audit log, admin queries) — verify the right Supabase client is used
 - Verify RLS policies match the operation being performed
 
 ### Resume parsing fails
+
 - Verify OpenAI API key has billing balance
 - Check backend logs: `apps/api:dev:` lines should show parse attempts
 
 ### `pnpm install` fails
+
 - Verify Node 20+ and pnpm 9+
 - Try `rm -rf node_modules pnpm-lock.yaml && pnpm install`
 
 ### Storage upload fails
+
 - Verify `resumes` bucket exists in Supabase
 - Verify backend uses service-role client for uploads (not anon)
 
@@ -468,10 +510,11 @@ Stop dev:
 ## Phase 2 / Production Hardening (Out of Sprint)
 
 For later:
-- Custom domain on Vercel + Railway
-- Verified Resend sender domain (e.g. `mail.aurahire.com`)
+
+- Custom domain on Vercel; bare-domain (apex) DNS for `api.<your-domain>` already covered above
+- Verified Resend sender domain (`aurahire.site` — already DNS-verified on GoDaddy)
 - Sentry for error tracking
-- Upstash QStash if scaling beyond Railway worker capacity
+- Upstash QStash (or moving to a larger Droplet / horizontal-scale via DOKS) if BullMQ throughput on a single Droplet becomes the bottleneck
 - DNS records (SPF/DKIM/DMARC) for email deliverability
 - GitHub Actions CI
 
@@ -480,6 +523,7 @@ For later:
 ## Sanity-Save Routine
 
 End of every dev session:
+
 1. `Ctrl+C` to stop `pnpm dev`
 2. `git add . && git commit -m "WIP: <slice description>"`
 3. Push to remote

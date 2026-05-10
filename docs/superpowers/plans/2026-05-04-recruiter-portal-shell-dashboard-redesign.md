@@ -5,10 +5,12 @@
 **Goal:** Adopt an AutoSend-inspired all-white shell (sidebar dissolves into content, no topbar, no breadcrumb) and rebuild the recruiter Dashboard page as three dense sections — Active Jobs cards with inline metric strips, Pipeline Analytics with date filter, Recent Applications with leading status pills.
 
 **Architecture:**
+
 - Backend extends two existing endpoints (`GET /api/v1/applications/recruiter-stats` with `?range`, `GET /api/v1/jobs/mine` with `?include=stats`) and adds one new (`GET /api/v1/applications/recent`). Each delivers its data in one query — replaces the dashboard's current N+1 fan-out.
 - Frontend replaces `PortalTopbar` + `PortalFooter` + breadcrumb with a self-contained `PortalSidebar` that carries brand wordmark + tenant chip + sectioned nav + sticky-bottom user chip dropdown (which absorbs the sign-out flow). Dashboard `page.tsx` is rewritten in three sections; a small client component handles the Pipeline Analytics date filter.
 
 **Tech Stack:**
+
 - **Backend:** NestJS 10 + Drizzle ORM (Postgres), `nestjs-zod` for DTOs, `@nestjs/swagger` for the OpenAPI spec.
 - **Frontend:** Next.js 16 App Router (Server Components by default), Tailwind v4 with CSS-variable design tokens (`var(--color-*)`), Lucide React icons, the auto-generated React Query client in `packages/shared/src/api-client/generated.ts`, `@radix-ui` primitives (already wrapped in `apps/web/components/ui/`).
 - **Verification:** No automated test harness exists in this repo (no `*.spec.ts`, no `test` script). Verification per task = `pnpm type-check` passes + `pnpm lint` passes + a manual smoke checklist the human runs at the end.
@@ -23,28 +25,28 @@ The authoritative spec is `docs/superpowers/specs/2026-05-04-recruiter-portal-sh
 
 ## File Structure
 
-| Path | Role | Touch |
-|---|---|---|
-| `apps/api/src/modules/applications/applications.repository.ts` | New repo methods for `recruiter-stats` w/ range + `recentForRecruiter` | Modify |
-| `apps/api/src/modules/applications/applications.service.ts` | Service-layer wrappers + new ranged stats type | Modify |
-| `apps/api/src/modules/applications/applications.controller.ts` | New `GET /recent` route + `?range` on `/recruiter-stats` | Modify |
-| `apps/api/src/modules/applications/dto/recruiter-stats-query.dto.ts` | New DTO for `?range` query param | Create |
-| `apps/api/src/modules/applications/dto/recent-applications-query.dto.ts` | New DTO for `?limit` on `/recent` | Create |
-| `apps/api/src/modules/jobs/jobs.repository.ts` | New `listMineWithStats` repo method | Modify |
-| `apps/api/src/modules/jobs/jobs.service.ts` | `listMine` accepts `include` flag and dispatches | Modify |
-| `apps/api/src/modules/jobs/jobs.controller.ts` | Document `?include=stats` query param | Modify |
-| `apps/api/src/modules/jobs/dto/list-jobs-query.dto.ts` | Re-export same Zod schema (schema gets new optional field) | Modify |
-| `packages/shared/src/schemas/jobs.ts` | Add `include` optional field to `listJobsQuerySchema` | Modify |
-| `packages/shared/openapi.json` | Regenerated after backend changes | Regenerate |
-| `packages/shared/src/api-client/generated.ts` | Regenerated React Query hooks | Regenerate |
-| `apps/web/app/(recruiter)/layout.tsx` | Pull `company.name` from profile and pass to PortalShell | Modify |
-| `apps/web/components/layout/portal-shell.tsx` | Drop topbar + footer, accept `companyName`, flip bg to canvas | Modify |
-| `apps/web/components/layout/portal-sidebar.tsx` | Major restructure: wordmark + tenant chip + sections + sticky bottom (Docs + user chip dropdown w/ sign-out) | Modify |
-| `apps/web/components/layout/portal-topbar.tsx` | **Delete** | Delete |
-| `apps/web/components/layout/portal-footer.tsx` | **Delete** | Delete |
-| `apps/web/components/layout/breadcrumb.tsx` | **Delete** (no longer imported anywhere) | Delete |
-| `apps/web/app/(recruiter)/recruiter/page.tsx` | Full rewrite into 3-section dashboard | Modify |
-| `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx` | New client component: Pipeline Analytics card with date-range filter | Create |
+| Path                                                                     | Role                                                                                                         | Touch      |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ---------- |
+| `apps/api/src/modules/applications/applications.repository.ts`           | New repo methods for `recruiter-stats` w/ range + `recentForRecruiter`                                       | Modify     |
+| `apps/api/src/modules/applications/applications.service.ts`              | Service-layer wrappers + new ranged stats type                                                               | Modify     |
+| `apps/api/src/modules/applications/applications.controller.ts`           | New `GET /recent` route + `?range` on `/recruiter-stats`                                                     | Modify     |
+| `apps/api/src/modules/applications/dto/recruiter-stats-query.dto.ts`     | New DTO for `?range` query param                                                                             | Create     |
+| `apps/api/src/modules/applications/dto/recent-applications-query.dto.ts` | New DTO for `?limit` on `/recent`                                                                            | Create     |
+| `apps/api/src/modules/jobs/jobs.repository.ts`                           | New `listMineWithStats` repo method                                                                          | Modify     |
+| `apps/api/src/modules/jobs/jobs.service.ts`                              | `listMine` accepts `include` flag and dispatches                                                             | Modify     |
+| `apps/api/src/modules/jobs/jobs.controller.ts`                           | Document `?include=stats` query param                                                                        | Modify     |
+| `apps/api/src/modules/jobs/dto/list-jobs-query.dto.ts`                   | Re-export same Zod schema (schema gets new optional field)                                                   | Modify     |
+| `packages/shared/src/schemas/jobs.ts`                                    | Add `include` optional field to `listJobsQuerySchema`                                                        | Modify     |
+| `packages/shared/openapi.json`                                           | Regenerated after backend changes                                                                            | Regenerate |
+| `packages/shared/src/api-client/generated.ts`                            | Regenerated React Query hooks                                                                                | Regenerate |
+| `apps/web/app/(recruiter)/layout.tsx`                                    | Pull `company.name` from profile and pass to PortalShell                                                     | Modify     |
+| `apps/web/components/layout/portal-shell.tsx`                            | Drop topbar + footer, accept `companyName`, flip bg to canvas                                                | Modify     |
+| `apps/web/components/layout/portal-sidebar.tsx`                          | Major restructure: wordmark + tenant chip + sections + sticky bottom (Docs + user chip dropdown w/ sign-out) | Modify     |
+| `apps/web/components/layout/portal-topbar.tsx`                           | **Delete**                                                                                                   | Delete     |
+| `apps/web/components/layout/portal-footer.tsx`                           | **Delete**                                                                                                   | Delete     |
+| `apps/web/components/layout/breadcrumb.tsx`                              | **Delete** (no longer imported anywhere)                                                                     | Delete     |
+| `apps/web/app/(recruiter)/recruiter/page.tsx`                            | Full rewrite into 3-section dashboard                                                                        | Modify     |
+| `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx`               | New client component: Pipeline Analytics card with date-range filter                                         | Create     |
 
 ---
 
@@ -53,6 +55,7 @@ The authoritative spec is `docs/superpowers/specs/2026-05-04-recruiter-portal-sh
 Adds the recruiter's most recent applications across all owned jobs in a single query. Replaces the dashboard's current N+1 fan-out (5 sequential `by-job/[id]` calls + manual flatten/sort).
 
 **Files:**
+
 - Create: `apps/api/src/modules/applications/dto/recent-applications-query.dto.ts`
 - Modify: `apps/api/src/modules/applications/applications.repository.ts` (add `listRecentForRecruiter`)
 - Modify: `apps/api/src/modules/applications/applications.service.ts` (add `recentForRecruiter`)
@@ -69,7 +72,9 @@ export const recentApplicationsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(20).optional().default(6),
 });
 
-export type RecentApplicationsQuery = z.infer<typeof recentApplicationsQuerySchema>;
+export type RecentApplicationsQuery = z.infer<
+  typeof recentApplicationsQuerySchema
+>;
 ```
 
 Make sure `z` is imported (already is). Then export the schema from the package barrel `packages/shared/src/index.ts` — find the line that re-exports the other application schemas and add `recentApplicationsQuerySchema` and `RecentApplicationsQuery` to that block. (Pattern: `export * from "./schemas/applications"` likely already covers it; if not, add a named re-export.)
@@ -82,7 +87,9 @@ Create `apps/api/src/modules/applications/dto/recent-applications-query.dto.ts`:
 import { createZodDto } from "nestjs-zod";
 import { recentApplicationsQuerySchema } from "@aurahire/shared";
 
-export class RecentApplicationsQueryDto extends createZodDto(recentApplicationsQuerySchema) {}
+export class RecentApplicationsQueryDto extends createZodDto(
+  recentApplicationsQuerySchema,
+) {}
 ```
 
 - [ ] **Step 3: Add the repository method**
@@ -135,7 +142,7 @@ import {
   applicationsTable,
   jobsTable,
   matchScoresTable,
-  profilesTable,        // ← add this line
+  profilesTable, // ← add this line
   type Application,
   type NewApplication,
   type MatchScore,
@@ -232,7 +239,7 @@ Now add the `toDashboardDto` private helper at the bottom of the class (above th
   }
 ```
 
-This deliberately returns a *trimmed* `ApplicationDto` — the dashboard only renders name, email, job title, score, status, and date. The full `MatchScoreDto` shape is preserved in the type signature (so the API client doesn't need parallel types) but irrelevant fields are zero-valued. This is the same trimming the existing `recruiterTopJobsByApplications` does.
+This deliberately returns a _trimmed_ `ApplicationDto` — the dashboard only renders name, email, job title, score, status, and date. The full `MatchScoreDto` shape is preserved in the type signature (so the API client doesn't need parallel types) but irrelevant fields are zero-valued. This is the same trimming the existing `recruiterTopJobsByApplications` does.
 
 The `ApplicationStatus` type already comes in via the existing `import type { ApplicationStatus }` line — verify; if not present add it to the import block.
 
@@ -296,6 +303,7 @@ applied-at."
 Adds `?range=7d|30d|90d|all` (default `7d`) and four new metrics: `inInterview`, `offered`, `hired`, `biasFlags`. Existing fields (`activeJobs`, `totalApplications`, `pendingReviews`, `avgMatchScore`) keep their old names for one release as aliases so old callers don't break.
 
 **Files:**
+
 - Create: `apps/api/src/modules/applications/dto/recruiter-stats-query.dto.ts`
 - Modify: `packages/shared/src/schemas/applications.ts` (add `recruiterStatsQuerySchema`)
 - Modify: `apps/api/src/modules/applications/applications.repository.ts` (rewrite `recruiterStats`)
@@ -325,7 +333,9 @@ Create `apps/api/src/modules/applications/dto/recruiter-stats-query.dto.ts`:
 import { createZodDto } from "nestjs-zod";
 import { recruiterStatsQuerySchema } from "@aurahire/shared";
 
-export class RecruiterStatsQueryDto extends createZodDto(recruiterStatsQuerySchema) {}
+export class RecruiterStatsQueryDto extends createZodDto(
+  recruiterStatsQuerySchema,
+) {}
 ```
 
 - [ ] **Step 3: Rewrite the repository method**
@@ -432,7 +442,7 @@ In `apps/api/src/modules/applications/applications.repository.ts`, replace the e
 ```ts
 import {
   applicationsTable,
-  biasFlagsTable,        // ← add this line
+  biasFlagsTable, // ← add this line
   jobsTable,
   matchScoresTable,
   profilesTable,
@@ -579,6 +589,7 @@ shorter forms (totalApps, pendingReview)."
 Adds an opt-in per-job stats payload so the dashboard can render Active Jobs cards with one query instead of five.
 
 **Files:**
+
 - Modify: `packages/shared/src/schemas/jobs.ts` (add `include` field to `listJobsQuerySchema`)
 - Modify: `apps/api/src/modules/jobs/jobs.repository.ts` (add `listMineWithStats`)
 - Modify: `apps/api/src/modules/jobs/jobs.service.ts` (dispatch on `include`)
@@ -779,7 +790,12 @@ In `apps/api/src/modules/jobs/jobs.service.ts`, replace the `listMine` method:
 Add the import for `JobStats`:
 
 ```ts
-import { JobsRepository, type JobWithCompany, type ListJobsFilters, type JobStats } from "./jobs.repository";
+import {
+  JobsRepository,
+  type JobWithCompany,
+  type ListJobsFilters,
+  type JobStats,
+} from "./jobs.repository";
 ```
 
 - [ ] **Step 4: Document the new query param in the controller**
@@ -836,6 +852,7 @@ sort option for ordering by most recent applied-at."
 After the three backend changes, regenerate the spec and the frontend client so the new shapes are typed end-to-end.
 
 **Files:**
+
 - Modify: `packages/shared/openapi.json` (regenerated)
 - Modify: `packages/shared/src/api-client/generated.ts` (regenerated)
 
@@ -862,6 +879,7 @@ If the script name is different, look in `packages/shared/package.json` under `s
 If no codegen script exists, the regenerated TypeScript file likely needs manual sync — but inspect the file's header to see whether it's auto-generated. The header on existing `generated.ts` will say so. If the header indicates a tool, run that tool.
 
 Expected: `packages/shared/src/api-client/generated.ts` updated with new hooks:
+
 - `useApplicationsControllerRecentV1` (or similar — the exact name follows the existing naming pattern)
 - Updated signature for `useApplicationsControllerRecruiterStatsV1` (now accepts `range` query)
 - Updated signature for `useJobsControllerListMineV1` (now accepts `include` query)
@@ -892,6 +910,7 @@ git commit -m "chore(shared): regenerate openapi spec + client for recruiter das
 `PortalShell` and `PortalSidebar` need `companyName` to render the tenant chip. The data already exists on the recruiter profile under `company.name` — it just isn't being threaded through.
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/layout.tsx`
 - Modify: `apps/web/components/layout/portal-shell.tsx`
 
@@ -911,16 +930,14 @@ export default async function RecruiterLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const profile = (await getCurrentProfile()) as
-    | {
-        id: string;
-        role: string;
-        fullName: string;
-        email: string;
-        profileCompleted: boolean;
-        company: { id: string; name: string } | null;
-      }
-    | null;
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+    fullName: string;
+    email: string;
+    profileCompleted: boolean;
+    company: { id: string; name: string } | null;
+  } | null;
 
   if (!profile) redirect("/login");
   if (profile.role !== "recruiter" && profile.role !== "admin") {
@@ -973,7 +990,12 @@ export function PortalShell({
 }: PortalShellProps) {
   return (
     <div className="flex min-h-screen bg-[var(--color-canvas)]">
-      <PortalSidebar role={role} fullName={fullName} email={email} companyName={companyName} />
+      <PortalSidebar
+        role={role}
+        fullName={fullName}
+        email={email}
+        companyName={companyName}
+      />
       <div className="flex min-h-screen flex-1 flex-col">
         <PortalTopbar fullName={fullName} email={email} role={role} />
         <main className="flex-1 bg-[var(--color-surface-soft)] px-4 py-6 md:px-6 md:py-8">
@@ -1008,7 +1030,12 @@ interface PortalSidebarContentProps {
   onNavClick?: () => void;
 }
 
-export function PortalSidebar({ role, fullName, email, companyName }: PortalSidebarProps) {
+export function PortalSidebar({
+  role,
+  fullName,
+  email,
+  companyName,
+}: PortalSidebarProps) {
   return (
     <aside className="hidden w-64 shrink-0 border-r border-[var(--color-hairline)] bg-[var(--color-surface-soft)] lg:flex lg:flex-col">
       <PortalSidebarContent
@@ -1035,6 +1062,7 @@ pnpm --filter @aurahire/web type-check
 Expected: exit 0. If the candidate or admin layouts also call `<PortalShell>`, they now need the `companyName` prop. Search and update:
 
 ```bash
+
 ```
 
 Run a Grep for `<PortalShell` to find all callers, and add `companyName={null}` to candidate and admin layouts (they don't have a tenant — or do they? Per the spec, candidate gets "AuraHire" / "My Workspace" and admin gets "Admin Console" — but those mappings are slice-2 work; for now, passing `null` is fine and the sidebar will fall back to the AuraHire wordmark only).
@@ -1058,6 +1086,7 @@ No behavioral change yet — sidebar restructure in next commit will consume it.
 Major rewrite of the sidebar: brand wordmark + tenant chip + section labels + sectioned nav + sticky-bottom Docs link + user chip dropdown (which absorbs the sign-out flow currently in the topbar).
 
 **Files:**
+
 - Modify: `apps/web/components/layout/portal-sidebar.tsx` (full rewrite)
 
 ### Steps
@@ -1129,7 +1158,11 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
     {
       label: "Pipeline",
       items: [
-        { href: "/candidate/applications", label: "Applications", icon: FileText },
+        {
+          href: "/candidate/applications",
+          label: "Applications",
+          icon: FileText,
+        },
         { href: "/candidate/interviews", label: "Interviews", icon: Calendar },
       ],
     },
@@ -1145,7 +1178,9 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
   recruiter: [
     {
       label: "Main",
-      items: [{ href: "/recruiter", label: "Dashboard", icon: LayoutDashboard }],
+      items: [
+        { href: "/recruiter", label: "Dashboard", icon: LayoutDashboard },
+      ],
     },
     {
       label: "Pipeline",
@@ -1166,7 +1201,9 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
   admin: [
     {
       label: "Main",
-      items: [{ href: "/admin", label: "Command Center", icon: LayoutDashboard }],
+      items: [
+        { href: "/admin", label: "Command Center", icon: LayoutDashboard },
+      ],
     },
     {
       label: "Operations",
@@ -1182,7 +1219,11 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
         { href: "/admin/ai-config", label: "AI Config", icon: Sliders },
         { href: "/admin/audit", label: "Audit Log", icon: ScrollText },
         { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-        { href: "/admin/bias-monitor", label: "Bias Monitor", icon: ShieldAlert },
+        {
+          href: "/admin/bias-monitor",
+          label: "Bias Monitor",
+          icon: ShieldAlert,
+        },
       ],
     },
   ],
@@ -1195,7 +1236,12 @@ interface PortalSidebarProps {
   companyName: string | null;
 }
 
-export function PortalSidebar({ role, fullName, email, companyName }: PortalSidebarProps) {
+export function PortalSidebar({
+  role,
+  fullName,
+  email,
+  companyName,
+}: PortalSidebarProps) {
   return (
     <aside className="hidden w-64 shrink-0 bg-[var(--color-canvas)] lg:flex lg:flex-col">
       <PortalSidebarContent
@@ -1265,7 +1311,10 @@ export function PortalSidebarContent({
           <span className="flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
             {companyName ?? "Workspace"}
           </span>
-          <ChevronsUpDown className="h-4 w-4 text-[var(--color-muted)]" aria-hidden />
+          <ChevronsUpDown
+            className="h-4 w-4 text-[var(--color-muted)]"
+            aria-hidden
+          />
         </button>
       </div>
 
@@ -1279,7 +1328,8 @@ export function PortalSidebarContent({
             <div className="space-y-1">
               {section.items.map((item) => {
                 const isActive =
-                  pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  pathname === item.href ||
+                  pathname.startsWith(`${item.href}/`);
                 const Icon = item.icon;
                 return (
                   <Link
@@ -1312,7 +1362,10 @@ export function PortalSidebarContent({
         >
           <BookOpen className="h-[18px] w-[18px]" />
           <span className="flex-1">Docs</span>
-          <ExternalLink className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+          <ExternalLink
+            className="h-3.5 w-3.5 text-[var(--color-muted)]"
+            aria-hidden
+          />
         </Link>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -1331,13 +1384,20 @@ export function PortalSidebarContent({
             <span className="flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
               {fullName}
             </span>
-            <ChevronsUpDown className="h-4 w-4 text-[var(--color-muted)]" aria-hidden />
+            <ChevronsUpDown
+              className="h-4 w-4 text-[var(--color-muted)]"
+              aria-hidden
+            />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" side="top" className="w-56">
             <DropdownMenuGroup>
               <DropdownMenuLabel>
-                <div className="font-semibold text-[var(--color-ink)]">{fullName}</div>
-                <div className="text-xs font-normal text-[var(--color-muted)]">{email}</div>
+                <div className="font-semibold text-[var(--color-ink)]">
+                  {fullName}
+                </div>
+                <div className="text-xs font-normal text-[var(--color-muted)]">
+                  {email}
+                </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -1365,6 +1425,7 @@ function getInitials(name: string): string {
 ```
 
 Key things in this rewrite:
+
 - The `border-r` on the `<aside>` is gone (sidebar dissolves into content).
 - Background flips from `--color-surface-soft` to `--color-canvas`.
 - `NAV_ITEMS` becomes `NAV_SECTIONS` with `Main` / `Pipeline` / `Account` groupings (Operations / Insights for admin).
@@ -1406,6 +1467,7 @@ type-broken state. Task 7 deletes the topbar and completes the migration."
 Deletes `PortalTopbar`, `PortalFooter`, `breadcrumb.tsx`. Adds a mobile hamburger button to `<main>` so the drawer is still reachable on `< lg` viewports.
 
 **Files:**
+
 - Modify: `apps/web/components/layout/portal-shell.tsx`
 - Delete: `apps/web/components/layout/portal-topbar.tsx`
 - Delete: `apps/web/components/layout/portal-footer.tsx`
@@ -1445,7 +1507,12 @@ export function PortalShell({
 
   return (
     <div className="flex min-h-screen bg-[var(--color-canvas)]">
-      <PortalSidebar role={role} fullName={fullName} email={email} companyName={companyName} />
+      <PortalSidebar
+        role={role}
+        fullName={fullName}
+        email={email}
+        companyName={companyName}
+      />
       <main className="relative flex-1 px-4 py-6 md:px-8 md:py-8">
         <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
           <SheetTrigger
@@ -1454,7 +1521,10 @@ export function PortalShell({
           >
             <Menu className="h-5 w-5" />
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 bg-[var(--color-canvas)] p-0">
+          <SheetContent
+            side="left"
+            className="w-72 bg-[var(--color-canvas)] p-0"
+          >
             <PortalSidebarContent
               role={role}
               fullName={fullName}
@@ -1486,6 +1556,7 @@ git rm apps/web/components/layout/breadcrumb.tsx
 - [ ] **Step 3: Find and remove any lingering imports**
 
 ```bash
+
 ```
 
 Run a Grep across `apps/web/` for `PortalTopbar`, `PortalFooter`, and `Breadcrumb` to find any remaining import sites. The candidate and admin layouts should already be using `<PortalShell>` (which no longer references these), so they should not have direct imports — but verify. If anything still imports `breadcrumb.tsx`, remove that usage.
@@ -1520,6 +1591,7 @@ user-chip dropdown after the previous commit."
 Replace the four-tile + recent-list dashboard with: Active Jobs cards (using `?include=stats`), Pipeline Analytics card with date filter (using `?range`), Recent Applications rows (using `/applications/recent`).
 
 **Files:**
+
 - Modify: `apps/web/app/(recruiter)/recruiter/page.tsx` (full rewrite)
 - Create: `apps/web/app/(recruiter)/recruiter/_dashboard-client.tsx`
 
@@ -1590,7 +1662,10 @@ export function PipelineAnalyticsCard({
   return (
     <section>
       <div className="mb-3 flex items-center gap-2">
-        <BarChart3 className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+        <BarChart3
+          className="h-3.5 w-3.5 text-[var(--color-muted)]"
+          aria-hidden
+        />
         <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           Pipeline Analytics
         </span>
@@ -1624,22 +1699,47 @@ export function PipelineAnalyticsCard({
         </div>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-4">
-          <MetricCell label="Active Jobs" value={data.activeJobs} dot="muted" tip="Jobs currently published and accepting applications." />
-          <MetricCell label="Total Apps" value={data.totalApps} dot="muted" tip="Applications received in the selected range, across all your jobs." />
+          <MetricCell
+            label="Active Jobs"
+            value={data.activeJobs}
+            dot="muted"
+            tip="Jobs currently published and accepting applications."
+          />
+          <MetricCell
+            label="Total Apps"
+            value={data.totalApps}
+            dot="muted"
+            tip="Applications received in the selected range, across all your jobs."
+          />
           <MetricCell
             label="Pending Review"
             value={data.pendingReview}
             dot={data.pendingReview > 0 ? "amber" : "muted"}
             tip="Applications still in 'applied' status — not yet screened."
           />
-          <MetricCell label="In Interview" value={data.inInterview} dot="info" tip="Candidates scheduled for or completed interviews." />
+          <MetricCell
+            label="In Interview"
+            value={data.inInterview}
+            dot="info"
+            tip="Candidates scheduled for or completed interviews."
+          />
         </div>
 
         <div className="my-4 border-t border-[var(--color-hairline-soft)]" />
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-4">
-          <MetricCell label="Offered" value={data.offered} dot="muted" tip="Candidates with an active offer extended." />
-          <MetricCell label="Hired" value={data.hired} dot="success" tip="Candidates whose application reached 'hired' status." />
+          <MetricCell
+            label="Offered"
+            value={data.offered}
+            dot="muted"
+            tip="Candidates with an active offer extended."
+          />
+          <MetricCell
+            label="Hired"
+            value={data.hired}
+            dot="success"
+            tip="Candidates whose application reached 'hired' status."
+          />
           <MetricCell
             label="Avg Match Score"
             value={data.avgMatchScore}
@@ -1700,7 +1800,10 @@ function MetricCell({
   return (
     <div>
       <div className="flex items-center gap-1.5">
-        <span className={`h-2 w-2 rounded-full ${DOT_CLASS[dot]}`} aria-hidden />
+        <span
+          className={`h-2 w-2 rounded-full ${DOT_CLASS[dot]}`}
+          aria-hidden
+        />
         <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           {label}
         </span>
@@ -1717,6 +1820,7 @@ function MetricCell({
 ```
 
 Notes on this component:
+
 - Uses native `title` attribute for tooltip (keyboard-accessible via focus). If the project has a `<Tooltip>` component, swap it in — but `title` is acceptable for sprint scope.
 - The `fetchForRange` callback is provided by the server parent — keeps the API call in the parent's scope, avoids re-implementing token handling here.
 - `MetricCell` is internal — reused twice for the two-row grid.
@@ -1729,7 +1833,10 @@ Replace `apps/web/app/(recruiter)/recruiter/page.tsx` entirely:
 import { redirect } from "next/navigation";
 import { Briefcase, Inbox, MoreHorizontal } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth/session";
-import { PipelineAnalyticsCard, type PipelineAnalyticsData } from "./_dashboard-client";
+import {
+  PipelineAnalyticsCard,
+  type PipelineAnalyticsData,
+} from "./_dashboard-client";
 
 export const metadata = { title: "Recruiter Dashboard" };
 
@@ -1764,72 +1871,68 @@ interface RecentApp {
   matchScore: { band: string; overallScore: number } | null;
 }
 
-const APP_STATUS: Record<
-  string,
-  { label: string; dot: string; text: string }
-> = {
-  applied: {
-    label: "Applied",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  screening: {
-    label: "Screening",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  interview: {
-    label: "Interview",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  offer: {
-    label: "Offer",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  hired: {
-    label: "Hired",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  rejected: {
-    label: "Rejected",
-    dot: "bg-[var(--color-status-danger)]",
-    text: "text-[var(--color-status-danger)]",
-  },
-  withdrawn: {
-    label: "Withdrawn",
-    dot: "bg-[var(--color-muted)]",
-    text: "text-[var(--color-muted)]",
-  },
-};
+const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    applied: {
+      label: "Applied",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    screening: {
+      label: "Screening",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    interview: {
+      label: "Interview",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    offer: {
+      label: "Offer",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    hired: {
+      label: "Hired",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    rejected: {
+      label: "Rejected",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    withdrawn: {
+      label: "Withdrawn",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
-const JOB_STATUS: Record<
-  string,
-  { label: string; dot: string; text: string }
-> = {
-  published: {
-    label: "Published",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  draft: {
-    label: "Draft",
-    dot: "bg-[var(--color-muted)]",
-    text: "text-[var(--color-muted)]",
-  },
-  closed: {
-    label: "Closed",
-    dot: "bg-[var(--color-status-danger)]",
-    text: "text-[var(--color-status-danger)]",
-  },
-  archived: {
-    label: "Archived",
-    dot: "bg-[var(--color-muted)]",
-    text: "text-[var(--color-muted)]",
-  },
-};
+const JOB_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    published: {
+      label: "Published",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    draft: {
+      label: "Draft",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+    closed: {
+      label: "Closed",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    archived: {
+      label: "Archived",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
 function scoreBandColor(score: number): string {
   if (score === 0) return "text-[var(--color-muted)]";
@@ -1905,14 +2008,19 @@ export default async function RecruiterDashboard() {
         <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           Recruiter Dashboard
         </h1>
-        <p className="mt-2 text-sm text-[var(--color-body)]">Pipeline at a glance.</p>
+        <p className="mt-2 text-sm text-[var(--color-body)]">
+          Pipeline at a glance.
+        </p>
       </header>
 
       {/* Section 1: Active Jobs */}
       <section>
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Briefcase className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+            <Briefcase
+              className="h-3.5 w-3.5 text-[var(--color-muted)]"
+              aria-hidden
+            />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
               Active Jobs
             </span>
@@ -1946,7 +2054,10 @@ export default async function RecruiterDashboard() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Inbox className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+            <Inbox
+              className="h-3.5 w-3.5 text-[var(--color-muted)]"
+              aria-hidden
+            />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
               Recent Applications
             </span>
@@ -1998,7 +2109,10 @@ function JobCard({ job }: { job: JobWithStats }) {
             <span
               className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
             >
-              <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+                aria-hidden
+              />
               {status.label}
             </span>
             {job.publishedAt && (
@@ -2057,7 +2171,9 @@ function Metric({
       <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
         {label}
       </div>
-      <div className={`mt-1 font-mono text-base font-medium ${valueClass ?? "text-[var(--color-ink)]"}`}>
+      <div
+        className={`mt-1 font-mono text-base font-medium ${valueClass ?? "text-[var(--color-ink)]"}`}
+      >
         {value}
       </div>
     </div>
@@ -2075,7 +2191,10 @@ function RecentAppRow({ app }: { app: RecentApp }) {
         <span
           className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
         >
-          <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+            aria-hidden
+          />
           {status.label}
         </span>
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface-strong)] text-xs font-semibold text-[var(--color-ink)]">
@@ -2086,7 +2205,10 @@ function RecentAppRow({ app }: { app: RecentApp }) {
             {app.candidate?.fullName ?? "(unknown candidate)"}
           </div>
           <div className="truncate text-xs text-[var(--color-muted)]">
-            Applied to <strong className="font-semibold">{app.job?.title ?? "(job)"}</strong>
+            Applied to{" "}
+            <strong className="font-semibold">
+              {app.job?.title ?? "(job)"}
+            </strong>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -2110,8 +2232,13 @@ function RecentAppRow({ app }: { app: RecentApp }) {
 function EmptyJobsState() {
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
-      <Briefcase className="mx-auto h-6 w-6 text-[var(--color-muted)]" aria-hidden />
-      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">No active jobs</div>
+      <Briefcase
+        className="mx-auto h-6 w-6 text-[var(--color-muted)]"
+        aria-hidden
+      />
+      <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
+        No active jobs
+      </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
         Post your first opening to start collecting candidates.
       </div>
@@ -2128,7 +2255,10 @@ function EmptyJobsState() {
 function EmptyAppsState() {
   return (
     <div className="px-4 py-12 text-center">
-      <Inbox className="mx-auto h-6 w-6 text-[var(--color-muted)]" aria-hidden />
+      <Inbox
+        className="mx-auto h-6 w-6 text-[var(--color-muted)]"
+        aria-hidden
+      />
       <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
         No applications yet
       </div>
@@ -2158,6 +2288,7 @@ function getInitials(name: string): string {
 ```
 
 Notes:
+
 - The `fetchStats` function is marked `"use server"` so the client component can invoke it as a Server Action. This keeps the access token server-side and uses the existing session.
 - All scoring colors are confined to score values (`scoreBandColor`). All status pills use `--color-status-*` tokens — no scoring colors leak into lifecycle states.
 - Numbers in JetBrains Mono via `font-mono` (the design tokens map this to JetBrains Mono).
@@ -2193,28 +2324,29 @@ Score-band colors confined to score values only."
 
 **Spec coverage:**
 
-| Spec section | Implementing task | OK? |
-|---|---|---|
-| Goals 1 (all-white shell, no topbar) | Task 7 | ✓ |
-| Goals 2 (brand discipline preserved) | Tasks 6 + 8 | ✓ |
-| Goals 3 (3-section dashboard) | Task 8 | ✓ |
-| Goals 4 (page-header pattern) | Task 8 (applied to dashboard); other pages deferred per spec Non-Goals | ✓ |
-| Section 1: Sidebar | Tasks 5 + 6 | ✓ |
-| Section 2: Page header pattern | Task 8 (24px H1, no max-width cap, sub) | ✓ |
-| Section 3: Active Jobs | Task 8 (`JobCard`, 7-column metric strip, status pill, More menu trigger) | ✓ |
-| Section 4: Pipeline Analytics | Task 8 (`PipelineAnalyticsCard` in `_dashboard-client.tsx`, date filter, 8-cell grid, tooltips, bottom CTA) | ✓ |
-| Section 5: Recent Applications | Task 8 (`RecentAppRow`, leading status pill, score colored by band, applied date) | ✓ |
-| Backend: `?include=stats` on `/jobs/mine` | Task 3 | ✓ |
-| Backend: `?range` on `/recruiter-stats` + 4 new metrics + alias | Task 2 | ✓ |
-| Backend: `GET /applications/recent` | Task 1 | ✓ |
-| Codegen | Task 4 | ✓ |
-| Status pill tokens (Option b: neutral bg + colored dot + text) | Task 8 (`JOB_STATUS` and `APP_STATUS` maps both use `--color-surface-strong` bg + `--color-status-*` colors) | ✓ |
-| Score band only on score values | Task 8 (`scoreBandColor` only used on `Metric` valueClass for AVG SCORE and on RecentAppRow score) | ✓ |
-| Mobile drawer behavior | Task 7 (relocated hamburger to `<main>` absolute, opens `<Sheet>`) | ✓ |
-| Sign-out from new user chip | Task 6 (`handleSignOut` in sidebar) | ✓ |
-| Backend audit/RLS preserved | Tasks 1–3 (existing `@Roles` decorators kept; SQL `WHERE recruiter_id = current_user.id` enforced) | ✓ |
+| Spec section                                                    | Implementing task                                                                                            | OK? |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --- |
+| Goals 1 (all-white shell, no topbar)                            | Task 7                                                                                                       | ✓   |
+| Goals 2 (brand discipline preserved)                            | Tasks 6 + 8                                                                                                  | ✓   |
+| Goals 3 (3-section dashboard)                                   | Task 8                                                                                                       | ✓   |
+| Goals 4 (page-header pattern)                                   | Task 8 (applied to dashboard); other pages deferred per spec Non-Goals                                       | ✓   |
+| Section 1: Sidebar                                              | Tasks 5 + 6                                                                                                  | ✓   |
+| Section 2: Page header pattern                                  | Task 8 (24px H1, no max-width cap, sub)                                                                      | ✓   |
+| Section 3: Active Jobs                                          | Task 8 (`JobCard`, 7-column metric strip, status pill, More menu trigger)                                    | ✓   |
+| Section 4: Pipeline Analytics                                   | Task 8 (`PipelineAnalyticsCard` in `_dashboard-client.tsx`, date filter, 8-cell grid, tooltips, bottom CTA)  | ✓   |
+| Section 5: Recent Applications                                  | Task 8 (`RecentAppRow`, leading status pill, score colored by band, applied date)                            | ✓   |
+| Backend: `?include=stats` on `/jobs/mine`                       | Task 3                                                                                                       | ✓   |
+| Backend: `?range` on `/recruiter-stats` + 4 new metrics + alias | Task 2                                                                                                       | ✓   |
+| Backend: `GET /applications/recent`                             | Task 1                                                                                                       | ✓   |
+| Codegen                                                         | Task 4                                                                                                       | ✓   |
+| Status pill tokens (Option b: neutral bg + colored dot + text)  | Task 8 (`JOB_STATUS` and `APP_STATUS` maps both use `--color-surface-strong` bg + `--color-status-*` colors) | ✓   |
+| Score band only on score values                                 | Task 8 (`scoreBandColor` only used on `Metric` valueClass for AVG SCORE and on RecentAppRow score)           | ✓   |
+| Mobile drawer behavior                                          | Task 7 (relocated hamburger to `<main>` absolute, opens `<Sheet>`)                                           | ✓   |
+| Sign-out from new user chip                                     | Task 6 (`handleSignOut` in sidebar)                                                                          | ✓   |
+| Backend audit/RLS preserved                                     | Tasks 1–3 (existing `@Roles` decorators kept; SQL `WHERE recruiter_id = current_user.id` enforced)           | ✓   |
 
 **Gaps caught during review:**
+
 - The spec's "View applications →" link routes to `/recruiter/applications`. The plan's Task 8 uses that path. If the index page doesn't exist yet it will 404 — acceptable per spec Non-Goals.
 - The spec mentioned `/help` for Docs link. Plan's Task 6 routes there. May 404 — acceptable per spec Open Decisions.
 - Bias flag column name was flagged in Task 2 Step 3 as a "verify before committing" — that's the right pattern (don't invent column names).
@@ -2224,6 +2356,7 @@ Score-band colors confined to score values only."
 **Placeholder scan:** no TBD/TODO markers, all code shown explicitly, exact paths everywhere, exact commit messages provided.
 
 **Type consistency:**
+
 - `RecentApp` shape in `page.tsx` matches what `applications/recent` returns (Task 1 Step 4 builds the trimmed `ApplicationDto`).
 - `JobWithStats` shape in `page.tsx` matches what `jobs/mine?include=stats` returns (Task 3 Step 2 builds the per-job aggregates with same field names: `candidates`, `new`, `shortlisted`, `interviewed`, `offered`, `hired`, `avgScore`).
 - `PipelineAnalyticsData` shape in `_dashboard-client.tsx` matches the `recruiterStats` repo return shape (Task 2 Step 3): both use `totalApps`, `pendingReview`, `inInterview`, `offered`, `hired`, `avgMatchScore`, `biasFlags`, `activeJobs`. Old aliases (`totalApplications`, `pendingReviews`) exist on the API response but the client only reads the new names.

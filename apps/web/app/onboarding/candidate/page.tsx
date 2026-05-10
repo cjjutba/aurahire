@@ -1,22 +1,48 @@
+// apps/web/app/onboarding/candidate/page.tsx
 import { redirect } from "next/navigation";
-import { WizardShell } from "@/components/onboarding/wizard-shell";
-import { ResumeUpload } from "@/components/onboarding/candidate/resume-upload";
-import { fetchCandidateProfileMe, ONBOARDING_STEPS } from "./_data";
+import { OnboardingShell } from "@/components/onboarding/onboarding-shell";
+import { ResumeUploadCard } from "@/components/onboarding/candidate/resume-upload-card";
+import { fetchCandidateProfileMe, fetchLatestParsedResume } from "./_data";
+import { ONBOARDING_STEPS } from "./_steps";
+import { getCurrentSession } from "@/lib/auth/session";
 
 export const metadata = { title: "Upload Resume — Onboarding" };
 
-export default async function Step1Page() {
+export default async function Step1Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ replace?: string }>;
+}) {
+  const { replace } = await searchParams;
+  const isReplaceFlow = replace === "1";
+
   const me = await fetchCandidateProfileMe();
   if (me.profileCompleted) redirect("/candidate");
 
+  const session = await getCurrentSession();
+  if (!session) redirect("/login");
+
+  const latestResume = await fetchLatestParsedResume();
+
+  // Auto-advance returning users with a parsed resume on file, unless they
+  // explicitly want to replace it.
+  if (latestResume?.parseStatus === "parsed" && !isReplaceFlow) {
+    redirect("/onboarding/candidate/personal");
+  }
+
   return (
-    <WizardShell
+    <OnboardingShell
+      steps={ONBOARDING_STEPS}
+      currentStepId="resume"
+      saveStatus="idle"
       title="Upload your resume"
-      description="We'll extract your contact info, experience, education, and skills automatically. The AI takes 5–15 seconds."
-      steps={[...ONBOARDING_STEPS]}
-      currentStep={1}
+      subtitle="We'll extract your contact info, experience, education, and skills automatically. The AI takes 5–15 seconds."
     >
-      <ResumeUpload />
-    </WizardShell>
+      <ResumeUploadCard
+        latestResume={latestResume}
+        accessToken={session.access_token}
+        forceIdle={isReplaceFlow}
+      />
+    </OnboardingShell>
   );
 }

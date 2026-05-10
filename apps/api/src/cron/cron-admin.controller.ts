@@ -7,16 +7,27 @@ import {
   Param,
   Post,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 
 import { Roles } from "../common/decorators/roles.decorator";
 
 import { ExpireOffersCron } from "./expire-offers.cron";
 import { ArchivePastDeadlineJobsCron } from "./archive-past-deadline-jobs.cron";
 import { CleanupUnverifiedAccountsCron } from "./cleanup-unverified-accounts.cron";
+import { DigestEmailCron } from "./digest-email.cron";
+import { NotificationsRetentionCron } from "./notifications-retention.cron";
+import { InterviewReminderCron } from "./interview-reminder.cron";
+import { OfferExpiryReminderCron } from "./offer-expiry-reminder.cron";
+import { InterviewAutocompleteCron } from "./interview-autocomplete.cron";
+import { InterviewFeedbackDueCron } from "./interview-feedback-due.cron";
 
 interface CronRunResultDto {
-  data: { affectedRows: number; durationMs: number };
+  data: Record<string, unknown>;
 }
 
 /**
@@ -32,6 +43,12 @@ export class CronAdminController {
     private readonly expireOffers: ExpireOffersCron,
     private readonly archiveJobs: ArchivePastDeadlineJobsCron,
     private readonly cleanupUnverified: CleanupUnverifiedAccountsCron,
+    private readonly digestEmail: DigestEmailCron,
+    private readonly interviewAutocomplete: InterviewAutocompleteCron,
+    private readonly notificationsRetention: NotificationsRetentionCron,
+    private readonly interviewReminder: InterviewReminderCron,
+    private readonly offerExpiryReminder: OfferExpiryReminderCron,
+    private readonly interviewFeedbackDue: InterviewFeedbackDueCron,
   ) {}
 
   @Post("run/:cronName")
@@ -39,7 +56,7 @@ export class CronAdminController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified.",
+      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, interview-autocomplete, notifications-retention, interview-reminder, offer-expiry-reminder, interview-feedback-due.",
   })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 403, description: "Disabled in production" })
@@ -52,7 +69,7 @@ export class CronAdminController {
       });
     }
 
-    let result: { affectedRows: number; durationMs: number };
+    let result: Record<string, unknown>;
     switch (cronName) {
       case "expire-offers":
         result = await this.expireOffers.execute();
@@ -65,11 +82,39 @@ export class CronAdminController {
       case "cleanup-unverified-accounts":
         result = await this.cleanupUnverified.execute();
         break;
+      case "digest-email":
+        result = await this.digestEmail.execute();
+        break;
+      case "notifications-retention":
+        result = await this.notificationsRetention.execute();
+        break;
+      case "interview-reminder":
+        result = await this.interviewReminder.execute();
+        break;
+      case "offer-expiry-reminder":
+        result = await this.offerExpiryReminder.execute();
+        break;
+      case "interview-autocomplete":
+        result = await this.interviewAutocomplete.execute();
+        break;
+      case "interview-feedback-due":
+        result = await this.interviewFeedbackDue.execute();
+        break;
       default:
         throw new NotFoundException({
           code: "UNKNOWN_CRON",
           message: `Unknown cron name: ${cronName}`,
-          available: ["expire-offers", "archive-jobs", "cleanup-unverified"],
+          available: [
+            "expire-offers",
+            "archive-jobs",
+            "cleanup-unverified",
+            "digest-email",
+            "interview-autocomplete",
+            "notifications-retention",
+            "interview-reminder",
+            "offer-expiry-reminder",
+            "interview-feedback-due",
+          ],
         });
     }
 

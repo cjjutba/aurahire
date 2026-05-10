@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Briefcase,
@@ -16,43 +16,28 @@ import {
   ShieldAlert,
   ScrollText,
   SlidersHorizontal,
-  BookOpen,
-  ChevronsUpDown,
-  LogOut,
+  MessageSquare,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { UserRole } from "@aurahire/shared";
-import { createSupabaseBrowserClient } from "@/lib/auth/client";
-import { setSessionOnlyMarker } from "@/lib/auth/cookie-persistence.client";
-import { toastSuccess, toastApiError } from "@/lib/toast";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
+import { CompanySwitcher } from "@/components/layout/company-switcher";
+import { SidebarBottomRail } from "@/components/portal/sidebar-bottom-rail";
 
 interface NavItem {
   href: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
+  // Path prefix for active-state matching when it differs from `href`. Lets
+  // Settings link straight to `/settings/profile` while still highlighting
+  // on every `/settings/*` sub-page.
+  matchPrefix?: string;
 }
 
 interface NavSection {
   label: string;
   items: NavItem[];
 }
-
-const HELP_HREF: Record<UserRole, string> = {
-  candidate: "/candidate/help",
-  recruiter: "/recruiter/help",
-  admin: "/admin/help",
-};
 
 const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
   candidate: [
@@ -66,7 +51,11 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
     {
       label: "Pipeline",
       items: [
-        { href: "/candidate/applications", label: "Applications", icon: FileText },
+        {
+          href: "/candidate/applications",
+          label: "Applications",
+          icon: FileText,
+        },
         { href: "/candidate/interviews", label: "Interviews", icon: Calendar },
       ],
     },
@@ -75,19 +64,31 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
       items: [
         { href: "/candidate/profile", label: "Profile", icon: User },
         { href: "/candidate/resume", label: "Resume", icon: FileText },
-        { href: "/candidate/settings", label: "Settings", icon: Settings },
+        {
+          href: "/candidate/settings/profile",
+          label: "Settings",
+          icon: Settings,
+          matchPrefix: "/candidate/settings",
+        },
       ],
     },
   ],
   recruiter: [
     {
       label: "Main",
-      items: [{ href: "/recruiter", label: "Dashboard", icon: LayoutDashboard }],
+      items: [
+        { href: "/recruiter", label: "Dashboard", icon: LayoutDashboard },
+      ],
     },
     {
       label: "Pipeline",
       items: [
         { href: "/recruiter/jobs", label: "Jobs", icon: Briefcase },
+        {
+          href: "/recruiter/applications",
+          label: "Applications",
+          icon: FileText,
+        },
         { href: "/recruiter/shortlist", label: "Shortlist", icon: Star },
         { href: "/recruiter/interviews", label: "Interviews", icon: Calendar },
       ],
@@ -96,30 +97,47 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
       label: "Account",
       items: [
         { href: "/recruiter/analytics", label: "Analytics", icon: BarChart3 },
-        { href: "/recruiter/settings", label: "Settings", icon: Settings },
+        {
+          href: "/recruiter/settings/profile",
+          label: "Settings",
+          icon: Settings,
+          matchPrefix: "/recruiter/settings",
+        },
       ],
     },
   ],
   admin: [
     {
       label: "Main",
-      items: [{ href: "/admin", label: "Command Center", icon: LayoutDashboard }],
+      items: [
+        { href: "/admin", label: "Command Center", icon: LayoutDashboard },
+      ],
     },
     {
       label: "Operations",
       items: [
         { href: "/admin/users", label: "Users", icon: Users },
-        { href: "/admin/jobs", label: "Job Moderation", icon: Building2 },
+        { href: "/admin/companies", label: "Companies", icon: Building2 },
+        { href: "/admin/jobs", label: "Job Moderation", icon: Briefcase },
         { href: "/admin/applications", label: "Applications", icon: FileText },
       ],
     },
     {
       label: "Insights",
       items: [
-        { href: "/admin/ai-config", label: "AI Config", icon: SlidersHorizontal },
+        {
+          href: "/admin/ai-config",
+          label: "AI Config",
+          icon: SlidersHorizontal,
+        },
         { href: "/admin/audit", label: "Audit Log", icon: ScrollText },
         { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-        { href: "/admin/bias-monitor", label: "Bias Monitor", icon: ShieldAlert },
+        {
+          href: "/admin/bias-monitor",
+          label: "Bias Monitor",
+          icon: ShieldAlert,
+        },
+        { href: "/admin/feedback", label: "Feedback", icon: MessageSquare },
       ],
     },
   ],
@@ -127,19 +145,27 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
 
 interface PortalSidebarProps {
   role: UserRole;
+  userId: string;
   fullName: string;
   email: string;
-  companyName: string | null;
+  avatarUrl: string | null;
 }
 
-export function PortalSidebar({ role, fullName, email, companyName }: PortalSidebarProps) {
+export function PortalSidebar({
+  role,
+  userId,
+  fullName,
+  email,
+  avatarUrl,
+}: PortalSidebarProps) {
   return (
     <aside className="hidden w-64 shrink-0 bg-[var(--color-canvas)] lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:self-start">
       <PortalSidebarContent
         role={role}
+        userId={userId}
         fullName={fullName}
         email={email}
-        companyName={companyName}
+        avatarUrl={avatarUrl}
       />
     </aside>
   );
@@ -147,68 +173,38 @@ export function PortalSidebar({ role, fullName, email, companyName }: PortalSide
 
 interface PortalSidebarContentProps {
   role: UserRole;
+  userId: string;
   fullName: string;
   email: string;
-  companyName: string | null;
+  avatarUrl: string | null;
   onNavClick?: () => void;
 }
 
 export function PortalSidebarContent({
   role,
+  userId,
   fullName,
   email,
-  companyName,
+  avatarUrl,
   onNavClick,
 }: PortalSidebarContentProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const sections = NAV_SECTIONS[role];
-  const initials = getInitials(fullName);
-  const tenantInitials = companyName ? getInitials(companyName) : "AH";
-  const activeHref = resolveActiveHref(pathname, [
-    ...sections.flatMap((s) => s.items.map((i) => i.href)),
-    HELP_HREF[role],
-  ]);
-
-  async function handleSignOut() {
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toastApiError(error, "Sign out failed");
-      return;
-    }
-    setSessionOnlyMarker(false);
-    toastSuccess("Signed out");
-    router.push("/");
-    router.refresh();
-  }
+  const activeHref = resolveActiveHref(
+    pathname,
+    sections.flatMap((s) =>
+      s.items.map((i) => ({ href: i.href, prefix: i.matchPrefix ?? i.href })),
+    ),
+  );
 
   return (
     <div className="flex h-full flex-col">
       {/* Top: brand wordmark + tenant chip */}
       <div className="px-6 pt-6 pb-4">
-        <Link
-          href="/"
-          onClick={onNavClick}
-          aria-label="AuraHire home"
-        >
+        <Link href="/" onClick={onNavClick} aria-label="AuraHire home">
           <BrandWordmark size="md" />
         </Link>
-        <button
-          type="button"
-          className="mt-4 flex w-full items-center gap-2 text-left cursor-default"
-          aria-label="Workspace"
-        >
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-[var(--color-surface-strong)] text-xs font-semibold text-[var(--color-ink)]">
-              {tenantInitials}
-            </AvatarFallback>
-          </Avatar>
-          <span className="flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
-            {companyName ?? "Workspace"}
-          </span>
-          <ChevronsUpDown className="h-4 w-4 text-[var(--color-muted)]" aria-hidden />
-        </button>
+        {role === "recruiter" ? <CompanySwitcher /> : null}
       </div>
 
       {/* Sections */}
@@ -244,78 +240,34 @@ export function PortalSidebarContent({
         ))}
       </nav>
 
-      {/* Bottom block: Help + user chip */}
-      <div className="border-t border-[var(--color-hairline-soft)] p-3">
-        <Link
-          href={HELP_HREF[role]}
-          onClick={onNavClick}
-          className={[
-            "flex h-9 items-center gap-3 rounded-[var(--radius-md)] px-3 text-sm transition",
-            activeHref === HELP_HREF[role]
-              ? "bg-[var(--color-primary-soft)] font-semibold text-[var(--color-primary)]"
-              : "text-[var(--color-body)] hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]",
-          ].join(" ")}
-        >
-          <BookOpen className="h-[18px] w-[18px]" />
-          <span className="flex-1">Help &amp; Docs</span>
-        </Link>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <button
-                type="button"
-                className="mt-1 flex h-12 w-full items-center gap-2 rounded-[var(--radius-md)] px-3 text-left transition hover:bg-[var(--color-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
-              />
-            }
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-[var(--color-surface-strong)] text-xs font-semibold text-[var(--color-ink)]">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <span className="flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
-              {fullName}
-            </span>
-            <ChevronsUpDown className="h-4 w-4 text-[var(--color-muted)]" aria-hidden />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" side="top" className="w-56">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>
-                <div className="font-semibold text-[var(--color-ink)]">{fullName}</div>
-                <div className="text-xs font-normal text-[var(--color-muted)]">{email}</div>
-              </DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {/* Bottom rail: avatar + name + three-dot + bell. Replaces the legacy
+       * Help link + sign-out dropdown — Help, Settings, theme, and sign-out
+       * now live inside the profile popover surfaced by the rail. */}
+      <SidebarBottomRail
+        user={{
+          id: userId,
+          name: fullName,
+          email,
+          avatarUrl,
+          role,
+        }}
+      />
     </div>
   );
 }
 
-function resolveActiveHref(pathname: string, hrefs: string[]): string | null {
-  let best: string | null = null;
-  for (const href of hrefs) {
-    const matches = pathname === href || pathname.startsWith(`${href}/`);
+function resolveActiveHref(
+  pathname: string,
+  items: { href: string; prefix: string }[],
+): string | null {
+  let best: { href: string; prefix: string } | null = null;
+  for (const item of items) {
+    const matches =
+      pathname === item.prefix || pathname.startsWith(`${item.prefix}/`);
     if (!matches) continue;
-    if (best === null || href.length > best.length) {
-      best = href;
+    if (best === null || item.prefix.length > best.prefix.length) {
+      best = item;
     }
   }
-  return best;
-}
-
-function getInitials(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? "")
-      .join("") || "?"
-  );
+  return best?.href ?? null;
 }

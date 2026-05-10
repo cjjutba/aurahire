@@ -4,9 +4,11 @@ import { CalendarClock } from "lucide-react";
 
 import { getCurrentSession } from "@/lib/auth/session";
 import { EmptyState } from "@/components/empty-state";
+import { ClickableRow } from "@/components/ui/clickable-row";
 
 import { InterviewsToolbarClient } from "./_interviews-toolbar-client";
 import { InterviewsPagination } from "./_interviews-pagination";
+import { RecruiterInterviewRowActionsClient } from "./_row-actions-client";
 
 export const metadata = { title: "Interviews" };
 
@@ -136,7 +138,9 @@ interface PageProps {
   }>;
 }
 
-export default async function RecruiterInterviewsPage({ searchParams }: PageProps) {
+export default async function RecruiterInterviewsPage({
+  searchParams,
+}: PageProps) {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
@@ -207,7 +211,12 @@ export default async function RecruiterInterviewsPage({ searchParams }: PageProp
       </header>
 
       {/* Toolbar */}
-      <InterviewsToolbarClient q={q} status={status} format={format} sort={sort} />
+      <InterviewsToolbarClient
+        q={q}
+        status={status}
+        format={format}
+        sort={sort}
+      />
 
       {/* Table or empty state */}
       {rows.length === 0 ? (
@@ -269,9 +278,11 @@ export default async function RecruiterInterviewsPage({ searchParams }: PageProp
                 const candidateInitials = initials(candidateName);
                 const when = formatDateLine(row.scheduledAt);
                 return (
-                  <tr
+                  <ClickableRow
                     key={row.id}
-                    className={`border-b border-[var(--color-hairline-soft)] transition hover:bg-[var(--color-surface-soft)] ${
+                    href={`/recruiter/applications/${row.applicationId}`}
+                    ariaLabel={`Open application for ${candidateName}'s interview`}
+                    className={`border-b border-[var(--color-hairline-soft)] ${
                       idx === rows.length - 1 ? "border-b-0" : ""
                     }`}
                   >
@@ -285,12 +296,9 @@ export default async function RecruiterInterviewsPage({ searchParams }: PageProp
                           {candidateInitials}
                         </div>
                         <div className="min-w-0">
-                          <Link
-                            href={`/recruiter/applications/${row.applicationId}`}
-                            className="block truncate font-medium text-[var(--color-ink)] hover:text-[var(--color-primary)]"
-                          >
+                          <span className="block truncate font-medium text-[var(--color-ink)]">
                             {candidateName}
-                          </Link>
+                          </span>
                           {row.candidate?.email && (
                             <p className="truncate text-xs text-[var(--color-muted)]">
                               {row.candidate.email}
@@ -328,21 +336,21 @@ export default async function RecruiterInterviewsPage({ searchParams }: PageProp
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-hairline-soft)] bg-[var(--color-surface-soft)] px-2.5 py-1 text-xs font-medium ${statusStyle.text}`}
                       >
-                        <span className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`} />
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`}
+                        />
                         {statusStyle.label}
                       </span>
                     </td>
 
-                    {/* Action link */}
+                    {/* Actions */}
                     <td className="px-2 py-3 text-right">
-                      <Link
-                        href={`/recruiter/applications/${row.applicationId}`}
-                        className="inline-flex items-center rounded-[var(--radius-pill)] px-2 py-1 text-xs text-[var(--color-primary)] hover:underline"
-                      >
-                        View →
-                      </Link>
+                      <RecruiterInterviewRowActionsClient
+                        applicationId={row.applicationId}
+                        jobId={row.job?.id ?? null}
+                      />
                     </td>
-                  </tr>
+                  </ClickableRow>
                 );
               })}
             </tbody>

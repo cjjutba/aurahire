@@ -9,6 +9,7 @@ import { CandidateDashboardClient } from "./_dashboard-client";
 export const metadata = { title: "Candidate Dashboard" };
 
 interface ProfileMe {
+  id: string;
   fullName: string;
 }
 
@@ -31,11 +32,22 @@ export default async function CandidateDashboard() {
       queryKey: queryKeys.candidateApplications.list({}),
       queryFn: () => serverQueries.candidateApplications({}),
     }),
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.candidateInterviews.list({}),
+      queryFn: () => serverQueries.candidateInterviews({}),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.matchPreviews.list(),
+      queryFn: () => serverQueries.myMatchPreviews(),
+    }),
   ]);
 
   return (
     <PrefetchedHydration queryClient={queryClient}>
-      <CandidateDashboardClient fullName={profile?.fullName ?? null} />
+      <CandidateDashboardClient
+        fullName={profile?.fullName ?? null}
+        candidateId={profile?.id ?? null}
+      />
     </PrefetchedHydration>
   );
 }

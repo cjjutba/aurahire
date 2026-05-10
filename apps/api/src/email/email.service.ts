@@ -13,13 +13,20 @@ export interface SendEmailOptions {
   text?: string;
   /** Optional reply-to. */
   replyTo?: string;
+  /** Optional file attachments (base64-encoded content). */
+  attachments?: Array<{
+    filename: string;
+    content: string; // base64-encoded file contents
+    contentType: string; // e.g. "text/calendar"
+  }>;
 }
 
 /**
  * Transport-switching email service.
  *
- * - Development (NODE_ENV !== 'production'): Nodemailer SMTP → Mailpit (localhost:1025)
- * - Production (NODE_ENV === 'production'): Resend SDK
+ * Driven by USE_RESEND env flag (string "true" / "false"):
+ * - USE_RESEND=true  → Resend SDK (production default; dev opt-in for real-send testing)
+ * - USE_RESEND=false → Nodemailer SMTP → Mailpit (dev default; never reaches real inboxes)
  *
  * Templates are React Email components rendered to HTML at send time.
  * Failures are LOGGED, NEVER THROWN — email send must not break user flows.
@@ -28,21 +35,24 @@ export interface SendEmailOptions {
 export class EmailService implements OnModuleInit {
   private readonly logger = new Logger(EmailService.name);
   private readonly fromEmail: string;
-  private readonly isProd: boolean;
+  private readonly useResend: boolean;
 
   private smtpTransport: Transporter | null = null;
   private resendClient: Resend | null = null;
 
   constructor(private readonly config: ConfigService) {
-    this.fromEmail = config.get<string>("FROM_EMAIL") ?? "onboarding@resend.dev";
-    this.isProd = config.get<string>("NODE_ENV") === "production";
+    this.fromEmail =
+      config.get<string>("FROM_EMAIL") ?? "onboarding@resend.dev";
+    this.useResend = config.get<string>("USE_RESEND") === "true";
   }
 
   onModuleInit(): void {
-    if (this.isProd) {
+    if (this.useResend) {
       const apiKey = this.config.get<string>("RESEND_API_KEY");
       if (!apiKey) {
-        this.logger.error("RESEND_API_KEY missing — email sending will fail in production");
+        this.logger.error(
+          "USE_RESEND=true but RESEND_API_KEY missing — email sending disabled",
+        );
         return;
       }
       this.resendClient = new Resend(apiKey);
@@ -56,17 +66,20 @@ export class EmailService implements OnModuleInit {
         secure: false,
         ignoreTLS: true,
       });
-      this.logger.log(`Email transport: SMTP ${host}:${port} (Mailpit) from ${this.fromEmail}`);
+      this.logger.log(
+        `Email transport: SMTP ${host}:${port} (Mailpit) from ${this.fromEmail}`,
+      );
     }
   }
 
   async send(opts: SendEmailOptions): Promise<void> {
     try {
       const html = await render(opts.template);
-      const text = opts.text ?? (await render(opts.template, { plainText: true }));
+      const text =
+        opts.text ?? (await render(opts.template, { plainText: true }));
       const recipients = Array.isArray(opts.to) ? opts.to : [opts.to];
 
-      if (this.isProd && this.resendClient) {
+      if (this.resendClient) {
         const { error } = await this.resendClient.emails.send({
           from: this.fromEmail,
           to: recipients,
@@ -74,6 +87,14 @@ export class EmailService implements OnModuleInit {
           html,
           text,
           replyTo: opts.replyTo,
+          ...(opts.attachments && opts.attachments.length > 0
+            ? {
+                attachments: opts.attachments.map((a) => ({
+                  filename: a.filename,
+                  content: a.content,
+                })),
+              }
+            : {}),
         });
         if (error) {
           this.logger.error(
@@ -88,6 +109,16 @@ export class EmailService implements OnModuleInit {
           html,
           text,
           replyTo: opts.replyTo,
+          ...(opts.attachments && opts.attachments.length > 0
+            ? {
+                attachments: opts.attachments.map((a) => ({
+                  filename: a.filename,
+                  content: a.content,
+                  encoding: "base64",
+                  contentType: a.contentType,
+                })),
+              }
+            : {}),
         });
       } else {
         this.logger.warn(

@@ -7,7 +7,12 @@ import {
   Patch,
   Req,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import type { FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
@@ -28,10 +33,14 @@ export class RecruiterProfilesController {
 
   @Get("me")
   @Roles("recruiter")
-  @ApiOperation({ summary: "Get the authenticated recruiter's full profile + company" })
+  @ApiOperation({
+    summary: "Get the authenticated recruiter's full profile + company",
+  })
   @ApiResponse({ status: 200, type: RecruiterProfileEnvelopeDto })
   @ApiResponse({ status: 403, description: "Not a recruiter" })
-  async getMe(@CurrentUser() user: AuthUser): Promise<RecruiterProfileEnvelopeDto> {
+  async getMe(
+    @CurrentUser() user: AuthUser,
+  ): Promise<RecruiterProfileEnvelopeDto> {
     const data = await this.service.getMe(user);
     return { data };
   }
@@ -46,7 +55,11 @@ export class RecruiterProfilesController {
     @Body() dto: UpdateRecruiterAboutDto,
     @Req() req: FastifyRequest,
   ): Promise<RecruiterProfileEnvelopeDto> {
-    const data = await this.service.updateAbout(user, dto, this.requestMeta(req));
+    const data = await this.service.updateAbout(
+      user,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -60,7 +73,11 @@ export class RecruiterProfilesController {
     @Body() dto: UpdateRecruiterCompanyDto,
     @Req() req: FastifyRequest,
   ): Promise<RecruiterProfileEnvelopeDto> {
-    const data = await this.service.updateCompany(user, dto, this.requestMeta(req));
+    const data = await this.service.updateCompany(
+      user,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 
@@ -68,7 +85,8 @@ export class RecruiterProfilesController {
   @HttpCode(HttpStatus.OK)
   @Roles("recruiter")
   @ApiOperation({
-    summary: "Onboarding step 3 (final): hiring focus — flips profile_completed=true",
+    summary:
+      "Onboarding step 3 (final): hiring focus — flips profile_completed=true",
   })
   @ApiResponse({ status: 200, type: RecruiterProfileEnvelopeDto })
   async updateFocus(
@@ -76,7 +94,11 @@ export class RecruiterProfilesController {
     @Body() dto: UpdateRecruiterFocusDto,
     @Req() req: FastifyRequest,
   ): Promise<RecruiterProfileEnvelopeDto> {
-    const data = await this.service.updateFocus(user, dto, this.requestMeta(req));
+    const data = await this.service.updateFocus(
+      user,
+      dto,
+      this.requestMeta(req),
+    );
     return { data };
   }
 

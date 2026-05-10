@@ -41,7 +41,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const exRes = exception.getResponse();
       if (typeof exRes === "object" && exRes !== null) {
         const body = exRes as Record<string, unknown>;
-        code = (body.code as string | undefined) ?? this.codeFromStatus(statusCode);
+        code =
+          (body.code as string | undefined) ?? this.codeFromStatus(statusCode);
         message = (body.message as string | undefined) ?? exception.message;
         if (Array.isArray(body.errors)) {
           errors = body.errors as ApiErrorResponse["errors"];
@@ -58,7 +59,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       message = exception.message || message;
-      this.logger.error(`Unhandled error: ${exception.stack ?? exception.message}`);
+      this.logger.error(
+        `Unhandled error: ${exception.stack ?? exception.message}`,
+      );
     } else {
       this.logger.error(`Unknown exception: ${JSON.stringify(exception)}`);
     }

@@ -1,32 +1,47 @@
 import { redirect } from "next/navigation";
-import { WizardShell } from "@/components/onboarding/wizard-shell";
-import { CandidatePreferencesForm } from "@/components/onboarding/candidate/preferences-form";
-import { fetchCandidateProfileMe, ONBOARDING_STEPS } from "../_data";
+import { PreferencesStepClient } from "./_client";
+import { fetchCandidateProfileMe, fetchLatestParsedResume } from "../_data";
+import { getCurrentSession } from "@/lib/auth/session";
 
 export const metadata = { title: "Job Preferences — Onboarding" };
 
-export default async function Step6Page() {
+export default async function Step4Page() {
   const me = await fetchCandidateProfileMe();
   if (me.profileCompleted) redirect("/candidate");
+  if (!me.fullName?.trim()) redirect("/onboarding/candidate/personal");
+
+  const session = await getCurrentSession();
+  if (!session) redirect("/login");
+
+  const latestResume = await fetchLatestParsedResume();
+  const parsed = latestResume?.parsed ?? null;
+
+  const experience = (parsed?.experience ?? []).map((e) => ({
+    title: e.title,
+    company: e.company,
+    start_date: e.start_date,
+    end_date: e.end_date,
+    is_current: e.is_current,
+  }));
+  const skills = (parsed?.skills ?? []).map((s) => s.name);
+
+  const defaults = {
+    desiredRoles: (me.desiredRoles ?? []).join(", "),
+    desiredSeniority: me.desiredSeniority ?? "",
+    openTo: me.openTo ?? [],
+    desiredSalaryMin: me.desiredSalaryMin?.toString() ?? "",
+    desiredSalaryMax: me.desiredSalaryMax?.toString() ?? "",
+    desiredCurrency: me.desiredCurrency ?? "USD",
+    availableStartDate: me.availableStartDate ?? "",
+  };
 
   return (
-    <WizardShell
-      title="Job preferences"
-      description="What kind of role are you looking for?"
-      steps={[...ONBOARDING_STEPS]}
-      currentStep={6}
-    >
-      <CandidatePreferencesForm
-        defaults={{
-          desiredRoles: me.desiredRoles,
-          desiredSeniority: me.desiredSeniority,
-          openTo: me.openTo,
-          desiredSalaryMin: me.desiredSalaryMin,
-          desiredSalaryMax: me.desiredSalaryMax,
-          desiredCurrency: me.desiredCurrency,
-          availableStartDate: me.availableStartDate,
-        }}
-      />
-    </WizardShell>
+    <PreferencesStepClient
+      defaults={defaults}
+      accessToken={session.access_token}
+      me={me}
+      experience={experience}
+      skills={skills}
+    />
   );
 }

@@ -133,11 +133,7 @@ export class AdminUsersController {
     @Param("id") id: string,
     @Req() req: FastifyRequest,
   ): Promise<AdminUserEnvelopeDto> {
-    const updated = await this.service.delete(
-      actor,
-      id,
-      this.requestMeta(req),
-    );
+    const updated = await this.service.delete(actor, id, this.requestMeta(req));
     return { data: { ...updated, auditEntryCount: 0 } };
   }
 

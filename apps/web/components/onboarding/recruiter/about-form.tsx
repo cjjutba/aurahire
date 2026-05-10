@@ -33,7 +33,10 @@ export function RecruiterAboutForm({ defaults }: AboutFormProps) {
 
   const updateAbout = useRecruiterProfilesControllerUpdateAboutV1({
     mutation: {
-      onSuccess: () => router.push("/onboarding/recruiter/company"),
+      // Phase 4: company step is no longer in the wizard (it's resolved by
+      // the create-vs-join fork at /onboarding/start), so About → Focus
+      // directly.
+      onSuccess: () => router.push("/onboarding/recruiter/focus"),
       onError: (err) => toastApiError(err, "Couldn't save about info"),
     },
   });
@@ -42,17 +45,26 @@ export function RecruiterAboutForm({ defaults }: AboutFormProps) {
     await updateAbout.mutateAsync({ data: values });
   }
 
+  const inputCls =
+    "h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-4 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus-visible:border-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/20";
+  const labelCls = "text-sm font-semibold text-[var(--color-ink)]";
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <FormField
           control={form.control}
           name="fullName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel className={labelCls}>Full Name *</FormLabel>
               <FormControl>
-                <Input autoComplete="name" {...field} />
+                <Input
+                  className={inputCls}
+                  placeholder="Your full name"
+                  autoComplete="name"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -63,9 +75,15 @@ export function RecruiterAboutForm({ defaults }: AboutFormProps) {
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel className={labelCls}>Phone *</FormLabel>
               <FormControl>
-                <Input type="tel" autoComplete="tel" {...field} />
+                <Input
+                  className={inputCls}
+                  type="tel"
+                  placeholder="+1 (555) 000-0000"
+                  autoComplete="tel"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -76,9 +94,10 @@ export function RecruiterAboutForm({ defaults }: AboutFormProps) {
           name="jobTitle"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Job Title</FormLabel>
+              <FormLabel className={labelCls}>Job Title</FormLabel>
               <FormControl>
                 <Input
+                  className={inputCls}
                   placeholder="e.g. Talent Acquisition Manager"
                   {...field}
                   value={field.value ?? ""}
@@ -93,10 +112,11 @@ export function RecruiterAboutForm({ defaults }: AboutFormProps) {
           name="department"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Department</FormLabel>
+              <FormLabel className={labelCls}>Department</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g. Engineering"
+                  className={inputCls}
+                  placeholder="e.g. Engineering, People Operations"
                   {...field}
                   value={field.value ?? ""}
                 />
@@ -105,14 +125,22 @@ export function RecruiterAboutForm({ defaults }: AboutFormProps) {
             </FormItem>
           )}
         />
-        <div className="flex justify-end pt-4">
+        <div className="mt-2 flex items-center justify-between gap-3 border-t border-[var(--color-hairline-soft)] pt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/onboarding/recruiter/company-create")}
+            className="h-11 rounded-[var(--radius-pill)] border-[var(--color-hairline)] bg-[var(--color-surface-strong)] px-8 text-sm font-semibold text-[var(--color-ink)] transition-colors hover:bg-[var(--color-hairline)]"
+          >
+            Back
+          </Button>
           <Button
             type="submit"
             disabled={updateAbout.isPending}
-            className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 hover:bg-[var(--color-primary-active)]"
+            className="h-11 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 text-sm font-semibold text-[var(--color-on-primary)] transition-colors hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
           >
             {updateAbout.isPending && <ButtonSpinner />}
-            {updateAbout.isPending ? "Saving..." : "Next"}
+            {updateAbout.isPending ? "Saving…" : "Continue"}
           </Button>
         </div>
       </form>

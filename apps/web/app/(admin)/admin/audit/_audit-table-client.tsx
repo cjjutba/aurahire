@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Eye, MoreHorizontal } from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AuditDetailSheetClient } from "./_audit-detail-sheet-client";
+import { humanizeAuditAction } from "@/lib/audit/humanize-action";
 
 interface Row {
   id: string;
@@ -14,6 +23,7 @@ interface Row {
     email: string;
     role: string | null;
   } | null;
+  company: { id: string; name: string; logoUrl: string | null } | null;
   entityType: string;
   entityId: string;
   detailsSnippet: string;
@@ -44,7 +54,9 @@ export function AuditTableClient({ rows, meta }: Props) {
               <th className="p-3">Actor</th>
               <th className="p-3">Action</th>
               <th className="p-3">Entity</th>
+              <th className="p-3">Company</th>
               <th className="p-3">Details</th>
+              <th className="w-12 p-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -72,9 +84,12 @@ export function AuditTableClient({ rows, meta }: Props) {
                   </div>
                 </td>
                 <td className="p-3">
-                  <code className="rounded-[var(--radius-xs)] bg-[var(--color-surface-soft)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-ink)]">
-                    {r.action}
-                  </code>
+                  <span
+                    className="text-sm text-[var(--color-ink)]"
+                    title={r.action}
+                  >
+                    {humanizeAuditAction(r.action)}
+                  </span>
                 </td>
                 <td className="p-3 text-xs">
                   <span className="text-[var(--color-body)]">
@@ -84,8 +99,56 @@ export function AuditTableClient({ rows, meta }: Props) {
                     #{r.entityId.slice(0, 8)}
                   </span>
                 </td>
+                <td className="p-3 text-xs">
+                  {r.company ? (
+                    <div className="flex items-center gap-2">
+                      {r.company.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={r.company.logoUrl}
+                          alt=""
+                          className="h-5 w-5 shrink-0 rounded-[var(--radius-xs)] object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-xs)] bg-[var(--color-surface-strong)] text-[10px] font-semibold uppercase text-[var(--color-muted)]">
+                          {r.company.name.charAt(0)}
+                        </span>
+                      )}
+                      <span className="truncate text-[var(--color-body)]">
+                        {r.company.name}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-[var(--color-muted-soft)]">—</span>
+                  )}
+                </td>
                 <td className="max-w-[400px] truncate p-3 font-mono text-xs text-[var(--color-muted)]">
                   {r.detailsSnippet}
+                </td>
+                <td className="p-3 text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <button
+                          type="button"
+                          aria-label="Audit entry actions"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        />
+                      }
+                    >
+                      <MoreHorizontal className="h-4 w-4" aria-hidden />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" side="bottom">
+                      <DropdownMenuItem
+                        onClick={() => setOpenId(r.id)}
+                        className="flex cursor-pointer items-center gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Details
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </td>
               </tr>
             ))}

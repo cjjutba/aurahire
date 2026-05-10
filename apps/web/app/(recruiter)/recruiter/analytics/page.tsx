@@ -82,7 +82,10 @@ export default async function RecruiterAnalyticsPage() {
         <p className="mt-1 text-sm text-[var(--color-body)]">
           Performance summary across all your jobs and applications. For
           system-wide analytics see{" "}
-          <Link href="/admin/analytics" className="text-[var(--color-primary)] hover:underline">
+          <Link
+            href="/admin/analytics"
+            className="text-[var(--color-primary)] hover:underline"
+          >
             /admin/analytics
           </Link>{" "}
           (admin role only).
@@ -120,7 +123,9 @@ export default async function RecruiterAnalyticsPage() {
             Where every candidate sits in your pipeline right now.
           </p>
           {totalForBar === 0 ? (
-            <p className="text-sm text-[var(--color-muted)]">No applications yet.</p>
+            <p className="text-sm text-[var(--color-muted)]">
+              No applications yet.
+            </p>
           ) : (
             <div className="space-y-3">
               {applicationsByStatus.map((entry) => {
@@ -140,7 +145,8 @@ export default async function RecruiterAnalyticsPage() {
                         className="h-2 rounded-[var(--radius-pill)] transition-all duration-300"
                         style={{
                           width: `${pct}%`,
-                          backgroundColor: STATUS_COLOR[entry.status] ?? "var(--color-muted)",
+                          backgroundColor:
+                            STATUS_COLOR[entry.status] ?? "var(--color-muted)",
                         }}
                       />
                     </div>
@@ -162,7 +168,10 @@ export default async function RecruiterAnalyticsPage() {
           {topJobs.length === 0 ? (
             <p className="text-sm text-[var(--color-muted)]">
               No jobs posted yet.{" "}
-              <Link href="/recruiter/jobs/new" className="text-[var(--color-primary)] hover:underline">
+              <Link
+                href="/recruiter/jobs/new"
+                className="text-[var(--color-primary)] hover:underline"
+              >
                 Create your first job →
               </Link>
             </p>
@@ -175,8 +184,12 @@ export default async function RecruiterAnalyticsPage() {
                     className="flex items-baseline justify-between gap-3 text-sm hover:opacity-80"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-[var(--color-ink)]">{j.title}</p>
-                      <p className="text-xs text-[var(--color-muted)]">{j.status}</p>
+                      <p className="truncate font-medium text-[var(--color-ink)]">
+                        {j.title}
+                      </p>
+                      <p className="text-xs text-[var(--color-muted)]">
+                        {j.status}
+                      </p>
                     </div>
                     <div className="flex items-center gap-3 text-xs">
                       <span className="font-mono text-[var(--color-ink)]">

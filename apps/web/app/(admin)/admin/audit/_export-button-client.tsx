@@ -22,11 +22,14 @@ export function ExportButtonClient({ currentParams }: Props) {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        toastApiError(null, "Couldn't export audit log", "Please sign in again.");
+        toastApiError(
+          null,
+          "Couldn't export audit log",
+          "Please sign in again.",
+        );
         return;
       }
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
 
       const params = new URLSearchParams(currentParams);
       params.delete("page");
@@ -40,7 +43,11 @@ export function ExportButtonClient({ currentParams }: Props) {
       );
 
       if (res.status === 413) {
-        toastApiError(null, "Couldn't export audit log", "Narrow filters and try again.");
+        toastApiError(
+          null,
+          "Couldn't export audit log",
+          "Narrow filters and try again.",
+        );
         return;
       }
       if (!res.ok) {
@@ -51,7 +58,8 @@ export function ExportButtonClient({ currentParams }: Props) {
       const cd = res.headers.get("content-disposition") ?? "";
       const match = /filename="?([^";]+)"?/i.exec(cd);
       const filename =
-        match?.[1] ?? `audit-export-${new Date().toISOString().slice(0, 10)}.csv`;
+        match?.[1] ??
+        `audit-export-${new Date().toISOString().slice(0, 10)}.csv`;
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);

@@ -9,7 +9,8 @@
 #   - Mailpit:  SMTP catcher for transactional email in dev
 #   - Redis:    cache + queue + throttle store for apps/api
 #
-# Production uses managed services instead (Resend for email, Railway Redis addon).
+# Production uses Resend for email and a Redis container on the Digital Ocean Droplet
+# (see deploy/docker-compose.prod.yml).
 # Docker Desktop must be running.
 
 name: aurahire-dev
@@ -20,8 +21,8 @@ services:
     container_name: aurahire-mailpit
     restart: unless-stopped
     ports:
-      - "1025:1025"   # SMTP — apps/api connects here in dev (NODE_ENV=development)
-      - "8025:8025"   # Web UI — open http://localhost:8025 to view captured emails
+      - "1025:1025" # SMTP — apps/api connects here in dev (NODE_ENV=development)
+      - "8025:8025" # Web UI — open http://localhost:8025 to view captured emails
     environment:
       MP_MAX_MESSAGES: "5000"
       MP_DATABASE: "/data/mailpit.db"
@@ -30,7 +31,15 @@ services:
     volumes:
       - mailpit-data:/data
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8025/api/v1/info"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8025/api/v1/info",
+        ]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -40,8 +49,17 @@ services:
     container_name: aurahire-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"   # apps/api connects here as REDIS_URL=redis://localhost:6379
-    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+      - "6379:6379" # apps/api connects here as REDIS_URL=redis://localhost:6379
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--maxmemory",
+        "256mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+      ]
     volumes:
       - redis-data:/data
     healthcheck:

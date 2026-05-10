@@ -2,7 +2,9 @@
 // on thrown errors; Drizzle re-throws the underlying error unchanged.
 export const PG_UNIQUE_VIOLATION = "23505";
 
-export function isPgError(err: unknown): err is { code: string; constraint_name?: string } {
+export function isPgError(
+  err: unknown,
+): err is { code: string; constraint_name?: string } {
   return (
     typeof err === "object" &&
     err !== null &&

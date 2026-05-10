@@ -3,9 +3,12 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 export class MatchEvidenceDto {
   @ApiProperty() excerpt!: string;
   @ApiProperty() source!: string;
-  @ApiProperty({ enum: ["positive", "negative", "neutral"] }) relevance!: string;
+  @ApiProperty({ enum: ["positive", "negative", "neutral"] })
+  relevance!: string;
   @ApiPropertyOptional({ nullable: true, type: Number })
   contributionPoints!: number | null;
+  @ApiPropertyOptional({ nullable: true, type: String })
+  reasoning!: string | null;
 }
 
 export class MatchComponentDto {
@@ -18,10 +21,19 @@ export class MatchComponentDto {
   @ApiProperty({ type: [MatchEvidenceDto] }) evidence!: MatchEvidenceDto[];
 }
 
+export class CalibrationWarningDto {
+  @ApiProperty() componentName!: string;
+  @ApiProperty({
+    enum: ["ceiling_with_thin_evidence", "deduction_without_negative_evidence"],
+  })
+  reason!: "ceiling_with_thin_evidence" | "deduction_without_negative_evidence";
+}
+
 export class MatchScoreDto {
   @ApiProperty() id!: string;
   @ApiProperty() overallScore!: number;
-  @ApiProperty({ enum: ["strong", "partial", "limited"] }) band!: string;
+  @ApiProperty({ enum: ["strong", "partial", "limited"] })
+  band!: "strong" | "partial" | "limited";
   @ApiProperty({ type: [MatchComponentDto] }) components!: MatchComponentDto[];
   @ApiProperty() summary!: string;
   @ApiProperty({ nullable: true, type: [String] }) redFlags!: string[] | null;
@@ -31,6 +43,8 @@ export class MatchScoreDto {
   @ApiProperty() modelUsed!: string;
   @ApiProperty() latencyMs!: number;
   @ApiProperty() createdAt!: string;
+  @ApiProperty({ type: [CalibrationWarningDto] })
+  calibrationWarnings!: CalibrationWarningDto[];
 }
 
 export class ApplicationCandidateDto {
@@ -44,6 +58,7 @@ export class ApplicationCandidateDto {
 export class ApplicationCompanyDto {
   @ApiProperty() id!: string;
   @ApiProperty() name!: string;
+  @ApiPropertyOptional({ nullable: true }) logoUrl!: string | null;
 }
 
 export class ApplicationJobDto {
@@ -52,7 +67,8 @@ export class ApplicationJobDto {
   @ApiPropertyOptional({ nullable: true }) department!: string | null;
   @ApiProperty() employmentType!: string;
   @ApiProperty() workMode!: string;
-  @ApiProperty({ type: () => ApplicationCompanyDto }) company!: ApplicationCompanyDto;
+  @ApiProperty({ type: () => ApplicationCompanyDto })
+  company!: ApplicationCompanyDto;
 }
 
 export class ApplicationDto {
@@ -62,9 +78,23 @@ export class ApplicationDto {
   @ApiProperty() resumeId!: string;
   @ApiPropertyOptional({ nullable: true }) coverLetter!: string | null;
   @ApiProperty({
-    enum: ["applied", "screening", "interview", "offer", "hired", "rejected", "withdrawn"],
+    enum: [
+      "applied",
+      "screening",
+      "interview",
+      "offer",
+      "hired",
+      "rejected",
+      "withdrawn",
+    ],
   })
   status!: string;
+  @ApiProperty({
+    enum: ["computing", "completed", "failed"],
+    description:
+      "Lifecycle of the AI match-score: 'computing' while the worker runs, 'completed' once the score row is persisted, 'failed' after retries exhausted.",
+  })
+  scoreStatus!: "computing" | "completed" | "failed";
   @ApiPropertyOptional({ nullable: true }) recruiterNotes!: string | null;
   @ApiProperty() appliedAt!: string;
   @ApiProperty() statusUpdatedAt!: string;
@@ -75,6 +105,11 @@ export class ApplicationDto {
   candidate!: ApplicationCandidateDto | null;
   @ApiPropertyOptional({ type: () => ApplicationJobDto, nullable: true })
   job!: ApplicationJobDto | null;
+  @ApiProperty({
+    description:
+      "Count of other in-flight applications on the same job (not yet hired/rejected/withdrawn/offer_declined). Used by the Hire confirmation modal to surface cascade impact.",
+  })
+  inflightSiblingsCount!: number;
 }
 
 export class ApplicationEnvelopeDto {
@@ -103,10 +138,16 @@ export class ShortlistListEnvelopeDto {
 
 export class RecruiterStatsResultDto {
   @ApiProperty() activeJobs!: number;
-  @ApiProperty({ description: "Deprecated alias for totalApps. Will be removed in a future release." })
+  @ApiProperty({
+    description:
+      "Deprecated alias for totalApps. Will be removed in a future release.",
+  })
   totalApplications!: number;
   @ApiProperty() totalApps!: number;
-  @ApiProperty({ description: "Deprecated alias for pendingReview. Will be removed in a future release." })
+  @ApiProperty({
+    description:
+      "Deprecated alias for pendingReview. Will be removed in a future release.",
+  })
   pendingReviews!: number;
   @ApiProperty() pendingReview!: number;
   @ApiProperty() inInterview!: number;
@@ -144,9 +185,12 @@ export class RecruiterAnalyticsKpisDto {
 }
 
 export class RecruiterAnalyticsResultDto {
-  @ApiProperty({ type: () => RecruiterAnalyticsKpisDto }) kpis!: RecruiterAnalyticsKpisDto;
-  @ApiProperty({ type: [RecruiterAnalyticsTopJobDto] }) topJobs!: RecruiterAnalyticsTopJobDto[];
-  @ApiProperty({ type: [RecruiterAnalyticsStatusBreakdownDto] }) applicationsByStatus!: RecruiterAnalyticsStatusBreakdownDto[];
+  @ApiProperty({ type: () => RecruiterAnalyticsKpisDto })
+  kpis!: RecruiterAnalyticsKpisDto;
+  @ApiProperty({ type: [RecruiterAnalyticsTopJobDto] })
+  topJobs!: RecruiterAnalyticsTopJobDto[];
+  @ApiProperty({ type: [RecruiterAnalyticsStatusBreakdownDto] })
+  applicationsByStatus!: RecruiterAnalyticsStatusBreakdownDto[];
 }
 
 export class RecruiterAnalyticsEnvelopeDto {

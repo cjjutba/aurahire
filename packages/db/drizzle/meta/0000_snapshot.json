@@ -148,12 +148,8 @@
           "name": "applications_job_id_jobs_id_fk",
           "tableFrom": "applications",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -161,12 +157,8 @@
           "name": "applications_candidate_id_profiles_id_fk",
           "tableFrom": "applications",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "candidate_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidate_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -174,12 +166,8 @@
           "name": "applications_resume_id_resumes_id_fk",
           "tableFrom": "applications",
           "tableTo": "resumes",
-          "columnsFrom": [
-            "resume_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["resume_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -189,10 +177,7 @@
         "applications_unique_candidate_job": {
           "name": "applications_unique_candidate_job",
           "nullsNotDistinct": false,
-          "columns": [
-            "candidate_id",
-            "job_id"
-          ]
+          "columns": ["candidate_id", "job_id"]
         }
       },
       "policies": {},
@@ -346,12 +331,8 @@
           "name": "audit_logs_actor_id_profiles_id_fk",
           "tableFrom": "audit_logs",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "actor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -527,12 +508,8 @@
           "name": "bias_flags_job_id_jobs_id_fk",
           "tableFrom": "bias_flags",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -540,12 +517,8 @@
           "name": "bias_flags_overridden_by_profiles_id_fk",
           "tableFrom": "bias_flags",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "overridden_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["overridden_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -691,12 +664,8 @@
           "name": "candidate_profiles_id_profiles_id_fk",
           "tableFrom": "candidate_profiles",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -818,12 +787,8 @@
           "name": "companies_created_by_profiles_id_fk",
           "tableFrom": "companies",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1044,12 +1009,8 @@
           "name": "interviews_application_id_applications_id_fk",
           "tableFrom": "interviews",
           "tableTo": "applications",
-          "columnsFrom": [
-            "application_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["application_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1057,12 +1018,8 @@
           "name": "interviews_scheduled_by_profiles_id_fk",
           "tableFrom": "interviews",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "scheduled_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["scheduled_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1301,12 +1258,8 @@
           "name": "jobs_recruiter_id_profiles_id_fk",
           "tableFrom": "jobs",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "recruiter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["recruiter_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1314,12 +1267,8 @@
           "name": "jobs_company_id_companies_id_fk",
           "tableFrom": "jobs",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1487,12 +1436,8 @@
           "name": "match_scores_application_id_applications_id_fk",
           "tableFrom": "match_scores",
           "tableTo": "applications",
-          "columnsFrom": [
-            "application_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["application_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1500,12 +1445,8 @@
           "name": "match_scores_candidate_id_profiles_id_fk",
           "tableFrom": "match_scores",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "candidate_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidate_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1513,12 +1454,8 @@
           "name": "match_scores_job_id_jobs_id_fk",
           "tableFrom": "match_scores",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1526,12 +1463,8 @@
           "name": "match_scores_resume_id_resumes_id_fk",
           "tableFrom": "match_scores",
           "tableTo": "resumes",
-          "columnsFrom": [
-            "resume_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["resume_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1541,9 +1474,7 @@
         "match_scores_application_id_unique": {
           "name": "match_scores_application_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "application_id"
-          ]
+          "columns": ["application_id"]
         }
       },
       "policies": {},
@@ -1684,12 +1615,8 @@
           "name": "offers_application_id_applications_id_fk",
           "tableFrom": "offers",
           "tableTo": "applications",
-          "columnsFrom": [
-            "application_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["application_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1697,12 +1624,8 @@
           "name": "offers_sent_by_profiles_id_fk",
           "tableFrom": "offers",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "sent_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sent_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1712,9 +1635,7 @@
         "offers_application_id_unique": {
           "name": "offers_application_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "application_id"
-          ]
+          "columns": ["application_id"]
         }
       },
       "policies": {},
@@ -1858,12 +1779,8 @@
           "name": "profile_scores_candidate_id_profiles_id_fk",
           "tableFrom": "profile_scores",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "candidate_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidate_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1871,12 +1788,8 @@
           "name": "profile_scores_resume_id_resumes_id_fk",
           "tableFrom": "profile_scores",
           "tableTo": "resumes",
-          "columnsFrom": [
-            "resume_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["resume_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2013,9 +1926,7 @@
         "profiles_email_unique": {
           "name": "profiles_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -2107,12 +2018,8 @@
           "name": "recruiter_profiles_id_profiles_id_fk",
           "tableFrom": "recruiter_profiles",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2120,12 +2027,8 @@
           "name": "recruiter_profiles_company_id_companies_id_fk",
           "tableFrom": "recruiter_profiles",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2267,12 +2170,8 @@
           "name": "resumes_candidate_id_profiles_id_fk",
           "tableFrom": "resumes",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "candidate_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidate_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2390,12 +2289,8 @@
           "name": "scoring_config_updated_by_profiles_id_fk",
           "tableFrom": "scoring_config",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "updated_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

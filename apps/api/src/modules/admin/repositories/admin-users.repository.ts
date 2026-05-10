@@ -1,10 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { and, desc, eq, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
-import {
-  auditLogsTable,
-  profilesTable,
-  type Profile,
-} from "@aurahire/db";
+import { auditLogsTable, profilesTable, type Profile } from "@aurahire/db";
 
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../../db/db.module";
 
@@ -33,7 +29,8 @@ export class AdminUsersRepository {
     const offset = (filters.page - 1) * filters.limit;
     const conditions: SQL[] = [];
     if (filters.role) conditions.push(eq(profilesTable.role, filters.role));
-    if (filters.status) conditions.push(eq(profilesTable.status, filters.status));
+    if (filters.status)
+      conditions.push(eq(profilesTable.status, filters.status));
     if (filters.q) {
       const pattern = `%${filters.q}%`;
       const orClause = or(

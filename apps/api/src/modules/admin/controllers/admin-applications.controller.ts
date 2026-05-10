@@ -24,8 +24,7 @@ export class AdminApplicationsController {
   @Get()
   @Roles("admin")
   @ApiOperation({
-    summary:
-      "Filter + list all applications across the system (cached 30s)",
+    summary: "Filter + list all applications across the system (cached 30s)",
   })
   @ApiResponse({ status: 200, type: AdminApplicationListEnvelopeDto })
   async list(

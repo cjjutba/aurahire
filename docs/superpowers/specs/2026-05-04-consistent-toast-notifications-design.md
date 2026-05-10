@@ -32,10 +32,12 @@ The user reported this after noticing no toast on successful login.
 ## Scope rules (what fires a toast)
 
 A toast fires **only** when:
+
 - The current user initiated the action via a UI interaction in this session (form submit, button click, link click that triggers a mutation).
 - The action has a discrete result (success or failure) that the user is waiting on.
 
 A toast does **not** fire for:
+
 - Background jobs (cron, BullMQ workers, scheduled rescores).
 - State changes caused by other users (e.g., a recruiter changing the status of an application the candidate happens to be viewing — no surprise toast).
 - Polling-driven server-state updates that the current user did not trigger.
@@ -47,6 +49,7 @@ A toast does **not** fire for:
 Intermediate onboarding steps stay silent on success. The user clicking "Continue" and landing on the next step is sufficient feedback. Only the **final** step in each role's onboarding fires a success toast (`"Onboarding complete"`), because the destination dashboard is generic and the user benefits from explicit confirmation.
 
 Exceptions to the exception:
+
 - **Resume upload** is the first candidate onboarding step but takes 3–8s and produces a discrete result (parsed fields). It fires a success toast (`"Resume processed"`) because the user is waiting on a real action result, not a navigation.
 - Error toasts fire on every step's failure (intermediate or final).
 
@@ -80,7 +83,8 @@ function extractApiErrorMessage(err: unknown): string | null {
   }
   if (err && typeof err === "object" && "message" in err) {
     const msg = (err as { message?: unknown }).message;
-    if (typeof msg === "string" && msg.length > 0 && msg !== "Failed to fetch") return msg;
+    if (typeof msg === "string" && msg.length > 0 && msg !== "Failed to fetch")
+      return msg;
   }
   return null;
 }
@@ -123,78 +127,78 @@ The em-dash and wording rules above apply to **our** literals (titles and descri
 
 ### Auth (12 toasts across 7 sites)
 
-| Action | Title | Description |
-|---|---|---|
-| Sign in success | `Signed in` | — |
-| Sign in error | `Sign in failed` | API msg or fallback |
-| Register success (candidate or recruiter) | `Account created` | `Check your email to verify.` |
-| Register error | `Couldn't create account` | API msg |
-| Sign out success | `Signed out` | — |
-| Sign out error | `Sign out failed` | API msg |
-| Verify email success | `Email verified` | `Redirecting to your dashboard.` |
-| Verify email error | `Verification failed` | API msg |
-| Forgot password success | `Reset link sent` | `Check your inbox.` |
-| Forgot password error | `Couldn't send reset link` | API msg |
-| Reset password success | `Password updated` | `Please sign in.` |
-| Reset password error | `Couldn't reset password` | API msg |
+| Action                                    | Title                      | Description                      |
+| ----------------------------------------- | -------------------------- | -------------------------------- |
+| Sign in success                           | `Signed in`                | —                                |
+| Sign in error                             | `Sign in failed`           | API msg or fallback              |
+| Register success (candidate or recruiter) | `Account created`          | `Check your email to verify.`    |
+| Register error                            | `Couldn't create account`  | API msg                          |
+| Sign out success                          | `Signed out`               | —                                |
+| Sign out error                            | `Sign out failed`          | API msg                          |
+| Verify email success                      | `Email verified`           | `Redirecting to your dashboard.` |
+| Verify email error                        | `Verification failed`      | API msg                          |
+| Forgot password success                   | `Reset link sent`          | `Check your inbox.`              |
+| Forgot password error                     | `Couldn't send reset link` | API msg                          |
+| Reset password success                    | `Password updated`         | `Please sign in.`                |
+| Reset password error                      | `Couldn't reset password`  | API msg                          |
 
 ### Onboarding (final-step toast only)
 
-| Action | Title | Description |
-|---|---|---|
-| Resume parsed (candidate step 1) | `Resume processed` | `Review the prefilled fields before continuing.` |
-| Resume upload error | `Couldn't process resume` | API msg |
-| Candidate onboarding complete | `Onboarding complete` | `Welcome to AuraHire.` |
-| Recruiter onboarding complete | `Onboarding complete` | `Welcome to AuraHire.` |
-| Intermediate step saves (personal-info, education, experience, skills, about, company) | **silent on success** | — |
-| Intermediate step errors | site-specific title (e.g. `Couldn't save personal info`) | API msg |
+| Action                                                                                 | Title                                                    | Description                                      |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------ |
+| Resume parsed (candidate step 1)                                                       | `Resume processed`                                       | `Review the prefilled fields before continuing.` |
+| Resume upload error                                                                    | `Couldn't process resume`                                | API msg                                          |
+| Candidate onboarding complete                                                          | `Onboarding complete`                                    | `Welcome to AuraHire.`                           |
+| Recruiter onboarding complete                                                          | `Onboarding complete`                                    | `Welcome to AuraHire.`                           |
+| Intermediate step saves (personal-info, education, experience, skills, about, company) | **silent on success**                                    | —                                                |
+| Intermediate step errors                                                               | site-specific title (e.g. `Couldn't save personal info`) | API msg                                          |
 
 ### Candidate portal
 
-| Action | Title | Description |
-|---|---|---|
-| Update profile settings | `Profile updated` | — |
-| Recompute profile score | `Score recalculated` | — |
-| Apply to job | `Application sent` | `We'll notify you when there's an update.` |
-| Withdraw application | `Application withdrawn` | — |
-| Accept offer | `Offer accepted` | `Welcome aboard.` |
-| Decline offer | `Offer declined` | — |
+| Action                  | Title                   | Description                                |
+| ----------------------- | ----------------------- | ------------------------------------------ |
+| Update profile settings | `Profile updated`       | —                                          |
+| Recompute profile score | `Score recalculated`    | —                                          |
+| Apply to job            | `Application sent`      | `We'll notify you when there's an update.` |
+| Withdraw application    | `Application withdrawn` | —                                          |
+| Accept offer            | `Offer accepted`        | `Welcome aboard.`                          |
+| Decline offer           | `Offer declined`        | —                                          |
 
 ### Recruiter portal
 
-| Action | Title | Description |
-|---|---|---|
-| Update profile settings | `Profile updated` | — |
-| Create job | `Job created` | — |
-| Update job | `Job updated` | — |
-| Publish job | `Job published` | — |
-| Archive job | `Job archived` | — |
-| Change application status | `Status updated` | `` Now in ${newStatus}. `` |
-| Save application notes | `Notes saved` | — |
-| Schedule interview | `Interview scheduled` | `Candidate notified.` |
-| Send offer | `Offer sent` | `Candidate notified.` |
+| Action                    | Title                 | Description            |
+| ------------------------- | --------------------- | ---------------------- |
+| Update profile settings   | `Profile updated`     | —                      |
+| Create job                | `Job created`         | —                      |
+| Update job                | `Job updated`         | —                      |
+| Publish job               | `Job published`       | —                      |
+| Archive job               | `Job archived`        | —                      |
+| Change application status | `Status updated`      | `Now in ${newStatus}.` |
+| Save application notes    | `Notes saved`         | —                      |
+| Schedule interview        | `Interview scheduled` | `Candidate notified.`  |
+| Send offer                | `Offer sent`          | `Candidate notified.`  |
 
 ### Admin portal
 
-| Action | Title | Description |
-|---|---|---|
-| Suspend user | `User suspended` | — |
-| Reactivate user | `User reactivated` | — |
-| Change user role | `User role changed` | `` Now ${newRole}. `` |
-| Delete user | `User deleted` | — |
-| Force password reset (temp password mode) | `Reset link sent` | `Temporary credentials copied to clipboard.` |
-| Force password reset (email-only mode) | `Reset link sent` | — |
-| Save AI config | `Configuration saved` | — |
-| Apply config to existing | `Rescore complete` | `` ${n} applications updated. `` (when polling completes) |
-| Archive job | `Job archived` | — |
-| Export audit log | `Audit log exported` | `Download started.` |
-| Bias override saved | `Override saved` | — |
-| Copy to clipboard | `Copied to clipboard` | — |
+| Action                                    | Title                 | Description                                           |
+| ----------------------------------------- | --------------------- | ----------------------------------------------------- |
+| Suspend user                              | `User suspended`      | —                                                     |
+| Reactivate user                           | `User reactivated`    | —                                                     |
+| Change user role                          | `User role changed`   | `Now ${newRole}.`                                     |
+| Delete user                               | `User deleted`        | —                                                     |
+| Force password reset (temp password mode) | `Reset link sent`     | `Temporary credentials copied to clipboard.`          |
+| Force password reset (email-only mode)    | `Reset link sent`     | —                                                     |
+| Save AI config                            | `Configuration saved` | —                                                     |
+| Apply config to existing                  | `Rescore complete`    | `${n} applications updated.` (when polling completes) |
+| Archive job                               | `Job archived`        | —                                                     |
+| Export audit log                          | `Audit log exported`  | `Download started.`                                   |
+| Bias override saved                       | `Override saved`      | —                                                     |
+| Copy to clipboard                         | `Copied to clipboard` | —                                                     |
 
 ### Validation (Zod schema fail before submit)
 
-| Action | Title | Description |
-|---|---|---|
+| Action                          | Title              | Description                     |
+| ------------------------------- | ------------------ | ------------------------------- |
 | Client-side Zod validation fail | `Check your input` | comma-joined Zod field messages |
 
 ## Files affected
@@ -202,9 +206,11 @@ The em-dash and wording rules above apply to **our** literals (titles and descri
 **1 new file** + **~32 file edits**.
 
 ### New
+
 - `apps/web/lib/toast.ts`
 
 ### Auth (7)
+
 - `apps/web/components/auth/login-form.tsx` — migrate 5 errors; add success toast.
 - `apps/web/components/auth/register-candidate-form.tsx` — migrate; add success toast.
 - `apps/web/components/auth/register-recruiter-form.tsx` — migrate; add success toast.
@@ -214,6 +220,7 @@ The em-dash and wording rules above apply to **our** literals (titles and descri
 - `apps/web/components/layout/portal-topbar.tsx` — migrate logout error; add success toast.
 
 ### Onboarding (6 confirmed)
+
 - `apps/web/components/onboarding/candidate/resume-upload.tsx` — migrate; restandardize wording.
 - `apps/web/components/onboarding/candidate/personal-info-form.tsx` — migrate error only; intermediate step stays silent on success.
 - `apps/web/components/onboarding/candidate/preferences-form.tsx` — migrate errors; add success toast on `completeOnboarding`.
@@ -222,12 +229,15 @@ The em-dash and wording rules above apply to **our** literals (titles and descri
 - `apps/web/components/onboarding/recruiter/focus-form.tsx` — migrate errors; add success toast on `completeOnboarding`.
 
 ### Onboarding pages — first action of implementation plan: confirm shape
+
 The implementation plan's first task includes reading `apps/web/app/onboarding/candidate/education/page.tsx`, `experience/page.tsx`, and `skills/page.tsx` (plus any client components they render) to determine whether they contain client-side mutations. Apply this rule per file:
+
 - If the file contains a mutation handler (form submit calling an API): add error-only toast (no success toast — intermediate step).
 - If the file is a server component or a thin wrapper with no mutation: do not modify.
-The file count above (32) does not include these three; whether they are touched is data-dependent and resolved during implementation, not now.
+  The file count above (32) does not include these three; whether they are touched is data-dependent and resolved during implementation, not now.
 
 ### Recruiter portal (6)
+
 - `apps/web/app/(recruiter)/recruiter/settings/_settings-form-client.tsx`
 - `apps/web/app/(recruiter)/recruiter/jobs/[id]/job-actions.tsx`
 - `apps/web/app/(recruiter)/recruiter/applications/[id]/_actions-client.tsx` — rewrite `"Moved to ${newStatus}"` to use new convention.
@@ -236,6 +246,7 @@ The file count above (32) does not include these three; whether they are touched
 - `apps/web/components/jobs/job-form.tsx` — distinguish `"Job created"` vs `"Job updated"`.
 
 ### Candidate portal (6)
+
 - `apps/web/app/(candidate)/candidate/settings/_settings-form-client.tsx`
 - `apps/web/app/(candidate)/candidate/profile/_recompute-button-client.tsx`
 - `apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx`
@@ -244,6 +255,7 @@ The file count above (32) does not include these three; whether they are touched
 - `apps/web/app/(candidate)/candidate/jobs/[id]/apply/_apply-form-client.tsx`
 
 ### Admin portal (5)
+
 - `apps/web/app/(admin)/admin/users/_action-modals-client.tsx` — rewrite `"Role changed to ${newRole}"` to use new convention.
 - `apps/web/app/(admin)/admin/ai-config/_apply-to-existing-client.tsx`
 - `apps/web/app/(admin)/admin/ai-config/_config-editor-client.tsx`
@@ -251,10 +263,12 @@ The file count above (32) does not include these three; whether they are touched
 - `apps/web/app/(admin)/admin/jobs/_job-detail-sheet-client.tsx`
 
 ### Other (2)
+
 - `apps/web/components/bias/bias-override-modal.tsx`
 - `apps/web/components/admin/raw-output-json-viewer.tsx`
 
 ### Not changing
+
 - `apps/web/components/ui/sonner.tsx`
 - `apps/web/app/layout.tsx`
 - `package.json` (no version bump)
@@ -275,6 +289,7 @@ The file count above (32) does not include these three; whether they are touched
 ## Open questions
 
 None. All four clarifying questions resolved during brainstorming:
+
 - Q1 scope: maximalist except intermediate onboarding steps; user-initiated only.
 - Q2 centralization: thin helper at `lib/toast.ts`.
 - Q3 wording: terse past-tense, no emojis/exclamations/em-dashes, user-friendly.
@@ -283,6 +298,7 @@ None. All four clarifying questions resolved during brainstorming:
 ## Verification plan
 
 Manual verification across the three portals after implementation:
+
 - **Auth:** sign in (candidate/recruiter/admin), sign out, register, forgot password, verify email, reset password.
 - **Onboarding:** complete candidate flow end-to-end (resume upload, personal info, education, experience, skills, preferences). Confirm only resume upload + final step toast on success; intermediate steps are silent. Same for recruiter (about, company, focus).
 - **Recruiter portal:** create/update/publish/archive a job; change application status; save notes; schedule interview; send offer.

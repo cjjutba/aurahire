@@ -70,30 +70,41 @@ export function RecruiterFocusForm({ defaults }: FocusFormProps) {
     };
     const parsed = recruiterFocusSchema.safeParse(data);
     if (!parsed.success) {
-      toastApiError(null, "Check your input", parsed.error.errors.map((e) => e.message).join(", "));
+      toastApiError(
+        null,
+        "Check your input",
+        parsed.error.errors.map((e) => e.message).join(", "),
+      );
       return;
     }
     await updateFocus.mutateAsync({ data: parsed.data });
   }
 
+  const textareaCls =
+    "min-h-28 w-full rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-4 py-3 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus-visible:border-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/20";
+  const labelCls = "text-sm font-semibold text-[var(--color-ink)]";
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <FormField
           control={form.control}
           name="rolesHiringForRaw"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Roles you typically hire for</FormLabel>
+              <FormLabel className={labelCls}>
+                Roles you typically hire for
+              </FormLabel>
               <FormControl>
                 <Textarea
-                  rows={3}
-                  placeholder="Software Engineer, Data Scientist, Product Manager"
+                  className={textareaCls}
+                  rows={4}
+                  placeholder="e.g. Software Engineer, Data Scientist, Product Manager"
                   {...field}
                 />
               </FormControl>
               <p className="text-xs text-[var(--color-muted)]">
-                Comma-separated.
+                Separate roles with commas.
               </p>
               <FormMessage />
             </FormItem>
@@ -104,14 +115,16 @@ export function RecruiterFocusForm({ defaults }: FocusFormProps) {
           name="hiringVolumePerQuarter"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Hiring volume per quarter</FormLabel>
+              <FormLabel className={labelCls}>
+                Hiring volume per quarter
+              </FormLabel>
               <Select
                 onValueChange={(v) => field.onChange(v as HiringVolume)}
                 value={field.value ?? undefined}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select range" />
+                    <SelectValue placeholder="Select hiring range" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -126,22 +139,22 @@ export function RecruiterFocusForm({ defaults }: FocusFormProps) {
             </FormItem>
           )}
         />
-        <div className="flex justify-between pt-4">
+        <div className="mt-2 flex items-center justify-between gap-3 border-t border-[var(--color-hairline-soft)] pt-6">
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/onboarding/recruiter/company")}
-            className="rounded-[var(--radius-pill)] px-8"
+            onClick={() => router.push("/onboarding/recruiter")}
+            className="h-11 rounded-[var(--radius-pill)] border-[var(--color-hairline)] bg-[var(--color-surface-strong)] px-8 text-sm font-semibold text-[var(--color-ink)] transition-colors hover:bg-[var(--color-hairline)]"
           >
             Back
           </Button>
           <Button
             type="submit"
             disabled={updateFocus.isPending}
-            className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 hover:bg-[var(--color-primary-active)]"
+            className="h-11 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-8 text-sm font-semibold text-[var(--color-on-primary)] transition-colors hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
           >
             {updateFocus.isPending && <ButtonSpinner />}
-            {updateFocus.isPending ? "Finishing..." : "Finish"}
+            {updateFocus.isPending ? "Finishing…" : "Complete setup"}
           </Button>
         </div>
       </form>

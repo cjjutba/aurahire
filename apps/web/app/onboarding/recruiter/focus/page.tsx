@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
-import { WizardShell } from "@/components/onboarding/wizard-shell";
+import { OnboardingShell } from "@/components/onboarding/onboarding-shell";
 import { RecruiterFocusForm } from "@/components/onboarding/recruiter/focus-form";
 import { getCurrentSession } from "@/lib/auth/session";
+import { RECRUITER_ONBOARDING_STEPS } from "../_steps";
 
 export const metadata = { title: "Hiring Focus — Onboarding" };
-
-const STEPS = [{ label: "About" }, { label: "Company" }, { label: "Focus" }];
 
 type HiringVolume = "1-5" | "6-10" | "11-25" | "25+";
 
@@ -39,19 +38,20 @@ export default async function RecruiterFocusPage() {
   if (body.data.profileCompleted) redirect("/recruiter");
 
   return (
-    <WizardShell
+    <OnboardingShell
+      steps={RECRUITER_ONBOARDING_STEPS}
+      currentStepId="focus"
+      saveStatus="idle"
       title="Your hiring focus"
-      description="What kinds of roles do you typically hire for?"
-      steps={STEPS}
-      currentStep={3}
+      subtitle="A quick read on what you typically hire for — this lets us tune relevance from day one."
     >
       <RecruiterFocusForm
         defaults={{
           rolesHiringFor: body.data.rolesHiringFor,
-          hiringVolumePerQuarter:
-            body.data.hiringVolumePerQuarter as HiringVolume | null,
+          hiringVolumePerQuarter: body.data
+            .hiringVolumePerQuarter as HiringVolume | null,
         }}
       />
-    </WizardShell>
+    </OnboardingShell>
   );
 }

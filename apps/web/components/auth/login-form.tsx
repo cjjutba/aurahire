@@ -10,6 +10,7 @@ import { toastSuccess, toastApiError } from "@/lib/toast";
 import { loginSchema, type LoginInput } from "@aurahire/shared";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { setSessionOnlyMarker } from "@/lib/auth/cookie-persistence.client";
+import { setActiveCompanyId } from "@/lib/active-company";
 import { AuthInput } from "@/components/auth/auth-input";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
@@ -46,7 +47,11 @@ export function LoginForm() {
 
       if (error) {
         if (error.message.toLowerCase().includes("email not confirmed")) {
-          toastApiError(null, "Sign in failed", "Please verify your email first. Check your inbox for the verification link.");
+          toastApiError(
+            null,
+            "Sign in failed",
+            "Please verify your email first. Check your inbox for the verification link.",
+          );
         } else {
           toastApiError(null, "Sign in failed", "Email or password incorrect.");
         }
@@ -65,7 +70,11 @@ export function LoginForm() {
       });
 
       if (profileRes.status === 404) {
-        toastApiError(null, "Profile not found", "Please complete registration.");
+        toastApiError(
+          null,
+          "Profile not found",
+          "Please complete registration.",
+        );
         router.push("/register");
         return;
       }
@@ -76,13 +85,22 @@ export function LoginForm() {
       }
 
       const profileBody = (await profileRes.json()) as {
-        data: { role: "candidate" | "recruiter" | "admin"; profileCompleted: boolean };
+        data: {
+          role: "candidate" | "recruiter" | "admin";
+          profileCompleted: boolean;
+        };
       };
       const { role, profileCompleted } = profileBody.data;
 
+      // Clear any stale active-company id from a previous session — the
+      // portal will rehydrate it from `profile.lastActiveCompanyId` on first load.
+      setActiveCompanyId(null);
+
       const dest =
         redirectTo ??
-        (profileCompleted ? `/${role}` : `/onboarding/${role === "admin" ? "" : role}`);
+        (profileCompleted
+          ? `/${role}`
+          : `/onboarding/${role === "admin" ? "" : role}`);
       toastSuccess("Signed in");
       router.push(dest);
       router.refresh();

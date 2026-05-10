@@ -59,8 +59,16 @@ export function PasswordResetTemplate({
             Reset your password
           </Heading>
 
-          <Text style={{ color: "#5b616e", fontSize: "16px", lineHeight: 1.5, margin: "0 0 24px 0" }}>
-            We got a request to reset your password. Click the button below to set a new one.
+          <Text
+            style={{
+              color: "#5b616e",
+              fontSize: "16px",
+              lineHeight: 1.5,
+              margin: "0 0 24px 0",
+            }}
+          >
+            We got a request to reset your password. Click the button below to
+            set a new one.
           </Text>
 
           <Section style={{ textAlign: "center", margin: "32px 0" }}>
@@ -81,7 +89,14 @@ export function PasswordResetTemplate({
             </Button>
           </Section>
 
-          <Text style={{ color: "#5b616e", fontSize: "14px", lineHeight: 1.5, margin: "0 0 8px 0" }}>
+          <Text
+            style={{
+              color: "#5b616e",
+              fontSize: "14px",
+              lineHeight: 1.5,
+              margin: "0 0 8px 0",
+            }}
+          >
             Or copy and paste this link into your browser:
           </Text>
           <Text
@@ -99,9 +114,16 @@ export function PasswordResetTemplate({
 
           <Hr style={{ borderColor: "#dee1e6", margin: "32px 0" }} />
 
-          <Text style={{ color: "#7c828a", fontSize: "13px", lineHeight: 1.5, margin: 0 }}>
-            This link expires in 1 hour. If you didn't request a reset, you can safely ignore
-            this email — your password won't change.
+          <Text
+            style={{
+              color: "#7c828a",
+              fontSize: "13px",
+              lineHeight: 1.5,
+              margin: 0,
+            }}
+          >
+            This link expires in 1 hour. If you didn't request a reset, you can
+            safely ignore this email — your password won't change.
           </Text>
         </Container>
       </Body>

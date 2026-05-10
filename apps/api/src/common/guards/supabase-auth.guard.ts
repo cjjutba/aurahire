@@ -8,7 +8,11 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Reflector } from "@nestjs/core";
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
+import { type JWTPayload } from "jose";
+import {
+  createSupabaseJwtVerifier,
+  type SupabaseJwtVerifier,
+} from "../auth/verify-supabase-jwt";
 import { eq } from "drizzle-orm";
 import { profilesTable } from "@aurahire/db";
 import type { AuthUser } from "@aurahire/shared";
@@ -19,8 +23,7 @@ import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
   private readonly logger = new Logger(SupabaseAuthGuard.name);
-  private readonly jwks: ReturnType<typeof createRemoteJWKSet>;
-  private readonly issuer: string;
+  private readonly verifier: SupabaseJwtVerifier;
 
   constructor(
     private readonly reflector: Reflector,
@@ -28,16 +31,7 @@ export class SupabaseAuthGuard implements CanActivate {
     @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
   ) {
     const supabaseUrl = config.getOrThrow<string>("SUPABASE_URL");
-    this.issuer = `${supabaseUrl}/auth/v1`;
-    // JWKS lives at the spec-standard well-known path and is unauthenticated.
-    // /auth/v1/keys is gated by the project apikey and returns 401.
-    this.jwks = createRemoteJWKSet(
-      new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`),
-      {
-        cacheMaxAge: 24 * 60 * 60 * 1000, // 24h
-        cooldownDuration: 30_000,
-      },
-    );
+    this.verifier = createSupabaseJwtVerifier({ supabaseUrl });
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -61,14 +55,8 @@ export class SupabaseAuthGuard implements CanActivate {
 
     let payload: JWTPayload;
     try {
-      const result = await jwtVerify(token, this.jwks, {
-        issuer: this.issuer,
-        // Supabase tokens have audience "authenticated"
-        audience: "authenticated",
-      });
-      payload = result.payload;
-    } catch (err) {
-      this.logger.warn(`JWT verification failed: ${(err as Error).message}`);
+      payload = await this.verifier.verify(token);
+    } catch {
       throw new UnauthorizedException({
         code: "INVALID_TOKEN",
         message: "Invalid or expired token",
@@ -135,7 +123,9 @@ export class SupabaseAuthGuard implements CanActivate {
     return true;
   }
 
-  private extractToken(req: { headers: Record<string, string | string[] | undefined> }): string | null {
+  private extractToken(req: {
+    headers: Record<string, string | string[] | undefined>;
+  }): string | null {
     const header = req.headers["authorization"];
     if (!header || typeof header !== "string") return null;
     const [scheme, token] = header.split(" ");

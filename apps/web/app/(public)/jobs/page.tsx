@@ -25,7 +25,7 @@ interface PublicJobRow {
   salaryCurrency: string;
   status: JobStatus;
   publishedAt: string | null;
-  company: { name: string };
+  company: { name: string; logoUrl: string | null };
 }
 
 export const metadata = { title: "Browse Jobs" };

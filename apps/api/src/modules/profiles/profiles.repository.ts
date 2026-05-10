@@ -5,6 +5,7 @@ import {
   candidateProfilesTable,
   recruiterProfilesTable,
   companiesTable,
+  companyMembersTable,
   type Profile,
   type NewProfile,
   type CandidateProfile,
@@ -15,10 +16,14 @@ import {
   type NewCompany,
 } from "@aurahire/db";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
+import { CacheService, TAGS } from "../../cache";
 
 @Injectable()
 export class ProfilesRepository {
-  constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient) {}
+  constructor(
+    @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async findById(id: string): Promise<Profile | null> {
     const rows = await this.db
@@ -61,41 +66,127 @@ export class ProfilesRepository {
     candidateData: Omit<NewCandidateProfile, "id">,
   ): Promise<{ profile: Profile; candidateProfile: CandidateProfile }> {
     return await this.db.transaction(async (tx) => {
-      const [profile] = await tx.insert(profilesTable).values(profileData).returning();
+      const [profile] = await tx
+        .insert(profilesTable)
+        .values(profileData)
+        .returning();
       if (!profile) throw new Error("Failed to insert profile");
       const [candidateProfile] = await tx
         .insert(candidateProfilesTable)
         .values({ ...candidateData, id: profile.id })
         .returning();
-      if (!candidateProfile) throw new Error("Failed to insert candidate profile");
+      if (!candidateProfile)
+        throw new Error("Failed to insert candidate profile");
       return { profile, candidateProfile };
+    });
+  }
+
+  /**
+   * Initialize a recruiter at email-verification time WITHOUT creating a
+   * company or membership. Company creation is deferred to the
+   * /onboarding/start fork (create-vs-join) so recruiters who are being
+   * invited to existing teams don't end up owning a stub company.
+   * `last_active_company_id` stays null until the user picks a path.
+   */
+  async insertRecruiterWithoutCompany(
+    profileData: NewProfile,
+    recruiterData: Omit<NewRecruiterProfile, "id">,
+  ): Promise<{ profile: Profile; recruiterProfile: RecruiterProfile }> {
+    return await this.db.transaction(async (tx) => {
+      const [profile] = await tx
+        .insert(profilesTable)
+        .values(profileData)
+        .returning();
+      if (!profile) throw new Error("Failed to insert profile");
+      const [recruiterProfile] = await tx
+        .insert(recruiterProfilesTable)
+        .values({ ...recruiterData, id: profile.id })
+        .returning();
+      if (!recruiterProfile)
+        throw new Error("Failed to insert recruiter profile");
+      return { profile, recruiterProfile };
     });
   }
 
   async insertRecruiter(
     profileData: NewProfile,
     companyData: NewCompany,
-    recruiterData: Omit<NewRecruiterProfile, "id" | "companyId">,
+    recruiterData: Omit<NewRecruiterProfile, "id">,
   ): Promise<{
     profile: Profile;
     company: Company;
     recruiterProfile: RecruiterProfile;
   }> {
-    return await this.db.transaction(async (tx) => {
-      const [profile] = await tx.insert(profilesTable).values(profileData).returning();
-      if (!profile) throw new Error("Failed to insert profile");
-      const [company] = await tx
-        .insert(companiesTable)
-        .values({ ...companyData, createdBy: profile.id })
-        .returning();
-      if (!company) throw new Error("Failed to insert company");
-      const [recruiterProfile] = await tx
-        .insert(recruiterProfilesTable)
-        .values({ ...recruiterData, id: profile.id, companyId: company.id })
-        .returning();
-      if (!recruiterProfile) throw new Error("Failed to insert recruiter profile");
-      return { profile, company, recruiterProfile };
-    });
+    return await this.db
+      .transaction(async (tx) => {
+        const [profile] = await tx
+          .insert(profilesTable)
+          .values(profileData)
+          .returning();
+        if (!profile) throw new Error("Failed to insert profile");
+        const [company] = await tx
+          .insert(companiesTable)
+          .values({ ...companyData, createdBy: profile.id })
+          .returning();
+        if (!company) throw new Error("Failed to insert company");
+        const [recruiterProfile] = await tx
+          .insert(recruiterProfilesTable)
+          .values({ ...recruiterData, id: profile.id })
+          .returning();
+        if (!recruiterProfile)
+          throw new Error("Failed to insert recruiter profile");
+
+        // Multi-tenancy: the new recruiter is the founding owner of their company.
+        // Insert the corresponding company_members row + point profile at the
+        // company so ActiveCompanyGuard's fallback path (and Phase 2b stopgap
+        // reads of profiles.lastActiveCompanyId) resolve immediately.
+        const now = new Date();
+        await tx.insert(companyMembersTable).values({
+          companyId: company.id,
+          userId: profile.id,
+          email: profile.email,
+          role: "owner",
+          status: "active",
+          invitedAt: now,
+          joinedAt: now,
+        });
+        await tx
+          .update(profilesTable)
+          .set({ lastActiveCompanyId: company.id, updatedAt: now })
+          .where(eq(profilesTable.id, profile.id));
+
+        // Reflect the lastActiveCompanyId update in the returned profile object
+        // so callers that read it immediately don't have to re-fetch.
+        profile.lastActiveCompanyId = company.id;
+
+        return { profile, company, recruiterProfile };
+      })
+      .then(async (result) => {
+        // Bust the cached profile-lookup tag so ActiveCompanyGuard's fallback
+        // path sees the new pointer on its next read. Runs outside the
+        // transaction so a Redis hiccup doesn't roll back the profile insert.
+        await this.cacheService.bustTags([
+          TAGS.userMemberships(result.profile.id),
+        ]);
+        return result;
+      });
+  }
+
+  /**
+   * Repoint a user's `last_active_company_id`. Pass null to clear it (used
+   * when the user leaves their last company).
+   */
+  async setActiveCompany(
+    userId: string,
+    companyId: string | null,
+  ): Promise<void> {
+    await this.db
+      .update(profilesTable)
+      .set({ lastActiveCompanyId: companyId, updatedAt: new Date() })
+      .where(eq(profilesTable.id, userId));
+    // Bust the cached profile-lookup so ActiveCompanyGuard's fallback path
+    // returns the fresh pointer on the next request.
+    await this.cacheService.bustTags([TAGS.userMemberships(userId)]);
   }
 
   async updateProfile(

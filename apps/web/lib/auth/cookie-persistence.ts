@@ -8,7 +8,9 @@ import type { CookieOptions } from "@supabase/ssr";
  */
 export const SESSION_ONLY_MARKER = "ah-session-only";
 
-export function stripPersistenceFromCookieOptions(options: CookieOptions): CookieOptions {
+export function stripPersistenceFromCookieOptions(
+  options: CookieOptions,
+): CookieOptions {
   const { maxAge: _maxAge, expires: _expires, ...rest } = options ?? {};
   return rest;
 }

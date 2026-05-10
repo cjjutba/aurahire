@@ -84,7 +84,9 @@ export class AdminBiasMonitorRepository {
       .select({
         term: biasFlagsTable.term,
         count: sql<number>`count(*)::int`,
-        jobIds: sql<string[]>`array_agg(distinct ${biasFlagsTable.jobId}::text)`,
+        jobIds: sql<
+          string[]
+        >`array_agg(distinct ${biasFlagsTable.jobId}::text)`,
       })
       .from(biasFlagsTable)
       .where(
@@ -152,7 +154,10 @@ export class AdminBiasMonitorRepository {
       })
       .from(biasFlagsTable)
       .innerJoin(jobsTable, eq(jobsTable.id, biasFlagsTable.jobId))
-      .leftJoin(profilesTable, eq(profilesTable.id, biasFlagsTable.overriddenBy))
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, biasFlagsTable.overriddenBy),
+      )
       .where(
         and(
           eq(biasFlagsTable.status, "overridden"),
@@ -175,6 +180,98 @@ export class AdminBiasMonitorRepository {
       overrideReason: r.flag.overrideReason ?? "(no reason recorded)",
       overriddenAt: r.flag.overriddenAt!,
     }));
+  }
+
+  /**
+   * Aggregate calibration warnings from audit_logs over a date range.
+   * Optionally filtered by min prompt_version (e.g. ">=1.2.0" so legacy
+   * pre-reconciliation rows don't pollute the count).
+   *
+   * Reads from audit_logs.details.calibrationWarnings array (camelCase).
+   * Source: every score-write path (computeProfileScore / computeMatchScore /
+   * computeMatchPreviewInternal / rescore-batch.processor) emits this field.
+   */
+  async getCalibrationWarnings(opts: {
+    from: Date;
+    to: Date;
+    promptVersionMin?: string;
+  }): Promise<{
+    totalWarnings: number;
+    byReason: Array<{ reason: string; count: number }>;
+    byComponent: Array<{ componentName: string; count: number }>;
+    recent: Array<{
+      auditLogId: string;
+      componentName: string;
+      reason: string;
+      promptVersion: string;
+      createdAt: string;
+    }>;
+  }> {
+    const promptVersionFilter = opts.promptVersionMin
+      ? sql`AND (details->>'promptVersion') >= ${opts.promptVersionMin}`
+      : sql``;
+
+    const result = await this.db.execute(sql`
+      SELECT
+        al.id AS audit_log_id,
+        al.created_at,
+        details->>'promptVersion' AS prompt_version,
+        warning->>'componentName' AS component_name,
+        warning->>'reason' AS reason
+      FROM audit_logs al
+      CROSS JOIN LATERAL jsonb_array_elements(
+        COALESCE(details->'calibrationWarnings', '[]'::jsonb)
+      ) AS warning
+      WHERE al.action IN ('score.profile.computed', 'score.match.computed', 'score.match.preview.computed', 'score.match.recomputed')
+        AND al.created_at >= ${opts.from}
+        AND al.created_at <= ${opts.to}
+        ${promptVersionFilter}
+      ORDER BY al.created_at DESC
+      LIMIT 500
+    `);
+
+    type Row = {
+      audit_log_id: string;
+      created_at: Date;
+      prompt_version: string;
+      component_name: string;
+      reason: string;
+    };
+    // Drizzle's `db.execute` for raw SQL returns a result whose row shape varies
+    // by driver. Cast through `unknown` then to our row type after extracting
+    // the rows array.
+    const rows = (
+      Array.isArray(result)
+        ? result
+        : ((result as unknown as { rows?: Row[] }).rows ?? [])
+    ) as Row[];
+
+    const byReasonMap = new Map<string, number>();
+    const byComponentMap = new Map<string, number>();
+    for (const r of rows) {
+      byReasonMap.set(r.reason, (byReasonMap.get(r.reason) ?? 0) + 1);
+      byComponentMap.set(
+        r.component_name,
+        (byComponentMap.get(r.component_name) ?? 0) + 1,
+      );
+    }
+
+    return {
+      totalWarnings: rows.length,
+      byReason: Array.from(byReasonMap.entries())
+        .map(([reason, count]) => ({ reason, count }))
+        .sort((a, b) => b.count - a.count),
+      byComponent: Array.from(byComponentMap.entries())
+        .map(([componentName, count]) => ({ componentName, count }))
+        .sort((a, b) => b.count - a.count),
+      recent: rows.slice(0, 25).map((r) => ({
+        auditLogId: r.audit_log_id,
+        componentName: r.component_name,
+        reason: r.reason,
+        promptVersion: r.prompt_version,
+        createdAt: new Date(r.created_at).toISOString(),
+      })),
+    };
   }
 
   async sampleSize(

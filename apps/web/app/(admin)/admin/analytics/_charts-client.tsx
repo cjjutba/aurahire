@@ -125,10 +125,7 @@ const APPLICATION_STATUSES = [
 export function ChartsClient({ charts }: Props) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <ChartCard
-        title="User Growth"
-        isEmpty={charts.userGrowth.length === 0}
-      >
+      <ChartCard title="User Growth" isEmpty={charts.userGrowth.length === 0}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={charts.userGrowth}

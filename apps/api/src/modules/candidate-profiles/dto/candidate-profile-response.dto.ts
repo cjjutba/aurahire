@@ -13,8 +13,12 @@ export class CandidateProfileMeDto {
   @ApiProperty({ type: [String] }) desiredRoles!: string[];
   @ApiProperty({ nullable: true }) desiredSeniority!: string | null;
   @ApiProperty({ type: [String] }) openTo!: string[];
-  @ApiProperty({ nullable: true, type: Number }) desiredSalaryMin!: number | null;
-  @ApiProperty({ nullable: true, type: Number }) desiredSalaryMax!: number | null;
+  @ApiProperty({ nullable: true, type: Number }) desiredSalaryMin!:
+    | number
+    | null;
+  @ApiProperty({ nullable: true, type: Number }) desiredSalaryMax!:
+    | number
+    | null;
   @ApiProperty() desiredCurrency!: string;
   @ApiProperty({ nullable: true }) availableStartDate!: string | null;
   @ApiProperty() profileCompleted!: boolean;

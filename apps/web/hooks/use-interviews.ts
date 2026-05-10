@@ -18,17 +18,20 @@ export function useRecruiterInterviewsQuery(params: RecruiterInterviewsParams) {
   return useQuery({
     queryKey: queryKeys.recruiterInterviews.list(params),
     queryFn: ({ signal }) =>
-      clientApiFetch<InterviewsListResponse>("/api/v1/interviews/by-recruiter/me", {
-        query: {
-          q: params.q,
-          status: params.status,
-          format: params.format,
-          sort: params.sort,
-          page: params.page,
-          limit: params.limit,
+      clientApiFetch<InterviewsListResponse>(
+        "/api/v1/interviews/by-recruiter/me",
+        {
+          query: {
+            q: params.q,
+            status: params.status,
+            format: params.format,
+            sort: params.sort,
+            page: params.page,
+            limit: params.limit,
+          },
+          signal,
         },
-        signal,
-      }),
+      ),
   });
 }
 

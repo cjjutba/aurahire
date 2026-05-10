@@ -10,7 +10,12 @@ export class HealthController {
   @Version(VERSION_NEUTRAL)
   @ApiOperation({ summary: "Service health check" })
   @ApiResponse({ status: 200, description: "Service is healthy" })
-  check(): { status: "ok"; uptime: number; version: string; timestamp: string } {
+  check(): {
+    status: "ok";
+    uptime: number;
+    version: string;
+    timestamp: string;
+  } {
     return {
       status: "ok",
       uptime: process.uptime(),

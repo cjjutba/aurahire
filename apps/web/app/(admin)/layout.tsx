@@ -7,15 +7,14 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const profile = (await getCurrentProfile()) as
-    | {
-        id: string;
-        role: string;
-        fullName: string;
-        email: string;
-        profileCompleted: boolean;
-      }
-    | null;
+  const profile = (await getCurrentProfile()) as {
+    id: string;
+    role: string;
+    fullName: string;
+    email: string;
+    avatarUrl: string | null;
+    profileCompleted: boolean;
+  } | null;
 
   if (!profile) redirect("/login");
   if (profile.role !== "admin") redirect("/login");
@@ -23,9 +22,10 @@ export default async function AdminLayout({
   return (
     <PortalShell
       role="admin"
+      userId={profile.id}
       fullName={profile.fullName}
       email={profile.email}
-      companyName={null}
+      avatarUrl={profile.avatarUrl ?? null}
     >
       {children}
     </PortalShell>

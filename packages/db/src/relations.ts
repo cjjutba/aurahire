@@ -4,18 +4,21 @@ import {
   candidateProfilesTable,
   recruiterProfilesTable,
   companiesTable,
+  companyMembersTable,
   jobsTable,
   resumesTable,
   applicationsTable,
   interviewsTable,
+  interviewVenuesTable,
   offersTable,
   profileScoresTable,
   matchScoresTable,
+  matchScorePreviewsTable,
   evidenceExcerptsTable,
   biasFlagsTable,
   scoringConfigTable,
   auditLogsTable,
-} from "./schema.ts";
+} from "./schema";
 
 export const profilesRelations = relations(profilesTable, ({ one, many }) => ({
   candidateProfile: one(candidateProfilesTable, {
@@ -26,6 +29,11 @@ export const profilesRelations = relations(profilesTable, ({ one, many }) => ({
     fields: [profilesTable.id],
     references: [recruiterProfilesTable.id],
   }),
+  lastActiveCompany: one(companiesTable, {
+    fields: [profilesTable.lastActiveCompanyId],
+    references: [companiesTable.id],
+  }),
+  memberships: many(companyMembersTable),
   resumes: many(resumesTable),
   applicationsAsCandidate: many(applicationsTable),
   jobsAsRecruiter: many(jobsTable),
@@ -33,36 +41,59 @@ export const profilesRelations = relations(profilesTable, ({ one, many }) => ({
   auditLogsAsActor: many(auditLogsTable),
 }));
 
-export const candidateProfilesRelations = relations(candidateProfilesTable, ({ one, many }) => ({
-  profile: one(profilesTable, {
-    fields: [candidateProfilesTable.id],
-    references: [profilesTable.id],
+export const candidateProfilesRelations = relations(
+  candidateProfilesTable,
+  ({ one, many }) => ({
+    profile: one(profilesTable, {
+      fields: [candidateProfilesTable.id],
+      references: [profilesTable.id],
+    }),
+    defaultResume: one(resumesTable, {
+      fields: [candidateProfilesTable.defaultResumeId],
+      references: [resumesTable.id],
+    }),
   }),
-  defaultResume: one(resumesTable, {
-    fields: [candidateProfilesTable.defaultResumeId],
-    references: [resumesTable.id],
-  }),
-}));
+);
 
-export const recruiterProfilesRelations = relations(recruiterProfilesTable, ({ one }) => ({
-  profile: one(profilesTable, {
-    fields: [recruiterProfilesTable.id],
-    references: [profilesTable.id],
+export const recruiterProfilesRelations = relations(
+  recruiterProfilesTable,
+  ({ one }) => ({
+    profile: one(profilesTable, {
+      fields: [recruiterProfilesTable.id],
+      references: [profilesTable.id],
+    }),
   }),
-  company: one(companiesTable, {
-    fields: [recruiterProfilesTable.companyId],
-    references: [companiesTable.id],
-  }),
-}));
+);
 
-export const companiesRelations = relations(companiesTable, ({ one, many }) => ({
-  createdByProfile: one(profilesTable, {
-    fields: [companiesTable.createdBy],
-    references: [profilesTable.id],
+export const companiesRelations = relations(
+  companiesTable,
+  ({ one, many }) => ({
+    createdByProfile: one(profilesTable, {
+      fields: [companiesTable.createdBy],
+      references: [profilesTable.id],
+    }),
+    members: many(companyMembersTable),
+    jobs: many(jobsTable),
   }),
-  recruiters: many(recruiterProfilesTable),
-  jobs: many(jobsTable),
-}));
+);
+
+export const companyMembersRelations = relations(
+  companyMembersTable,
+  ({ one }) => ({
+    company: one(companiesTable, {
+      fields: [companyMembersTable.companyId],
+      references: [companiesTable.id],
+    }),
+    user: one(profilesTable, {
+      fields: [companyMembersTable.userId],
+      references: [profilesTable.id],
+    }),
+    invitedByProfile: one(profilesTable, {
+      fields: [companyMembersTable.invitedBy],
+      references: [profilesTable.id],
+    }),
+  }),
+);
 
 export const jobsRelations = relations(jobsTable, ({ one, many }) => ({
   recruiter: one(profilesTable, {
@@ -85,29 +116,32 @@ export const resumesRelations = relations(resumesTable, ({ one, many }) => ({
   applications: many(applicationsTable),
 }));
 
-export const applicationsRelations = relations(applicationsTable, ({ one, many }) => ({
-  job: one(jobsTable, {
-    fields: [applicationsTable.jobId],
-    references: [jobsTable.id],
+export const applicationsRelations = relations(
+  applicationsTable,
+  ({ one, many }) => ({
+    job: one(jobsTable, {
+      fields: [applicationsTable.jobId],
+      references: [jobsTable.id],
+    }),
+    candidate: one(profilesTable, {
+      fields: [applicationsTable.candidateId],
+      references: [profilesTable.id],
+    }),
+    resume: one(resumesTable, {
+      fields: [applicationsTable.resumeId],
+      references: [resumesTable.id],
+    }),
+    matchScore: one(matchScoresTable, {
+      fields: [applicationsTable.id],
+      references: [matchScoresTable.applicationId],
+    }),
+    interviews: many(interviewsTable),
+    offer: one(offersTable, {
+      fields: [applicationsTable.id],
+      references: [offersTable.applicationId],
+    }),
   }),
-  candidate: one(profilesTable, {
-    fields: [applicationsTable.candidateId],
-    references: [profilesTable.id],
-  }),
-  resume: one(resumesTable, {
-    fields: [applicationsTable.resumeId],
-    references: [resumesTable.id],
-  }),
-  matchScore: one(matchScoresTable, {
-    fields: [applicationsTable.id],
-    references: [matchScoresTable.applicationId],
-  }),
-  interviews: many(interviewsTable),
-  offer: one(offersTable, {
-    fields: [applicationsTable.id],
-    references: [offersTable.applicationId],
-  }),
-}));
+);
 
 export const interviewsRelations = relations(interviewsTable, ({ one }) => ({
   application: one(applicationsTable, {
@@ -120,6 +154,20 @@ export const interviewsRelations = relations(interviewsTable, ({ one }) => ({
   }),
 }));
 
+export const interviewVenuesRelations = relations(
+  interviewVenuesTable,
+  ({ one }) => ({
+    company: one(companiesTable, {
+      fields: [interviewVenuesTable.companyId],
+      references: [companiesTable.id],
+    }),
+    creator: one(profilesTable, {
+      fields: [interviewVenuesTable.createdBy],
+      references: [profilesTable.id],
+    }),
+  }),
+);
+
 export const offersRelations = relations(offersTable, ({ one }) => ({
   application: one(applicationsTable, {
     fields: [offersTable.applicationId],
@@ -131,16 +179,19 @@ export const offersRelations = relations(offersTable, ({ one }) => ({
   }),
 }));
 
-export const profileScoresRelations = relations(profileScoresTable, ({ one }) => ({
-  candidate: one(profilesTable, {
-    fields: [profileScoresTable.candidateId],
-    references: [profilesTable.id],
+export const profileScoresRelations = relations(
+  profileScoresTable,
+  ({ one }) => ({
+    candidate: one(profilesTable, {
+      fields: [profileScoresTable.candidateId],
+      references: [profilesTable.id],
+    }),
+    resume: one(resumesTable, {
+      fields: [profileScoresTable.resumeId],
+      references: [resumesTable.id],
+    }),
   }),
-  resume: one(resumesTable, {
-    fields: [profileScoresTable.resumeId],
-    references: [resumesTable.id],
-  }),
-}));
+);
 
 export const matchScoresRelations = relations(matchScoresTable, ({ one }) => ({
   application: one(applicationsTable, {
@@ -161,6 +212,24 @@ export const matchScoresRelations = relations(matchScoresTable, ({ one }) => ({
   }),
 }));
 
+export const matchScorePreviewsRelations = relations(
+  matchScorePreviewsTable,
+  ({ one }) => ({
+    candidate: one(profilesTable, {
+      fields: [matchScorePreviewsTable.candidateId],
+      references: [profilesTable.id],
+    }),
+    job: one(jobsTable, {
+      fields: [matchScorePreviewsTable.jobId],
+      references: [jobsTable.id],
+    }),
+    resume: one(resumesTable, {
+      fields: [matchScorePreviewsTable.resumeId],
+      references: [resumesTable.id],
+    }),
+  }),
+);
+
 export const biasFlagsRelations = relations(biasFlagsTable, ({ one }) => ({
   job: one(jobsTable, {
     fields: [biasFlagsTable.jobId],
@@ -172,16 +241,23 @@ export const biasFlagsRelations = relations(biasFlagsTable, ({ one }) => ({
   }),
 }));
 
-export const scoringConfigRelations = relations(scoringConfigTable, ({ one }) => ({
-  updatedByProfile: one(profilesTable, {
-    fields: [scoringConfigTable.updatedBy],
-    references: [profilesTable.id],
+export const scoringConfigRelations = relations(
+  scoringConfigTable,
+  ({ one }) => ({
+    updatedByProfile: one(profilesTable, {
+      fields: [scoringConfigTable.updatedBy],
+      references: [profilesTable.id],
+    }),
   }),
-}));
+);
 
 export const auditLogsRelations = relations(auditLogsTable, ({ one }) => ({
   actor: one(profilesTable, {
     fields: [auditLogsTable.actorId],
     references: [profilesTable.id],
+  }),
+  company: one(companiesTable, {
+    fields: [auditLogsTable.companyId],
+    references: [companiesTable.id],
   }),
 }));

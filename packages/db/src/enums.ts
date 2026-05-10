@@ -10,14 +10,41 @@ export const APPLICATION_STATUS = [
   "screening",
   "interview",
   "offer",
+  "offer_accepted",
+  "offer_declined",
   "hired",
   "rejected",
   "withdrawn",
 ] as const;
 
-export const OFFER_STATUS = ["pending", "accepted", "declined", "expired", "withdrawn"] as const;
+/**
+ * Lifecycle of the AI match-score for an application.
+ *  - "computing": worker has been enqueued; UI shows AiShimmer.
+ *  - "completed": match_score row exists and was emitted via realtime.
+ *  - "failed": worker exhausted retries; UI shows a manual-retry affordance.
+ */
+export const APPLICATION_SCORE_STATUS = [
+  "computing",
+  "completed",
+  "failed",
+] as const;
+
+export const OFFER_STATUS = [
+  "pending",
+  "accepted",
+  "declined",
+  "expired",
+  "withdrawn",
+] as const;
 export const INTERVIEW_FORMAT = ["phone", "video", "in-person"] as const;
-export const INTERVIEW_STATUS = ["scheduled", "completed", "cancelled", "no-show"] as const;
+export const INTERVIEW_STATUS = [
+  "scheduled",
+  "completed",
+  "cancelled",
+  "no-show",
+  "rescheduled",
+] as const;
+export const INTERVIEW_RECOMMENDATION = ["proceed", "hold", "reject"] as const;
 
 export const JOB_STATUS = ["draft", "published", "archived", "closed"] as const;
 export const EMPLOYMENT_TYPE = ["full-time", "part-time", "contract"] as const;
@@ -55,9 +82,20 @@ export const COMPANY_SIZE = [
 export const SCORE_BAND = ["strong", "partial", "limited"] as const;
 export const SCORE_STATUS = ["pending", "completed", "failed"] as const;
 
-export const RESUME_PARSE_STATUS = ["pending", "parsing", "parsed", "failed"] as const;
+export const RESUME_PARSE_STATUS = [
+  "pending",
+  "parsing",
+  "parsed",
+  "failed",
+] as const;
 
-export const BIAS_CATEGORY = ["gendered", "age-coded", "ableist", "exclusionary", "other"] as const;
+export const BIAS_CATEGORY = [
+  "gendered",
+  "age-coded",
+  "ableist",
+  "exclusionary",
+  "other",
+] as const;
 export const BIAS_FLAG_STATUS = ["flagged", "overridden", "resolved"] as const;
 export const BIAS_SEVERITY = ["high", "medium", "low"] as const;
 
@@ -72,15 +110,46 @@ export const SCORE_COMPONENT_PROFILE = [
   "experience_clarity",
   "education_quality",
 ] as const;
-export const SCORE_COMPONENT_MATCH = ["skills", "experience", "education", "cultural_fit"] as const;
+export const SCORE_COMPONENT_MATCH = [
+  "skills",
+  "experience",
+  "education",
+  "cultural_fit",
+] as const;
+
+export const COMPANY_MEMBER_ROLE = ["owner", "admin", "recruiter"] as const;
+export const COMPANY_MEMBER_STATUS = [
+  "invited",
+  "active",
+  "suspended",
+  "left",
+] as const;
+
+// In-app feedback — user-submitted via the sidebar profile popover.
+export const FEEDBACK_TYPE = [
+  "bug",
+  "suggestion",
+  "praise",
+  "question",
+  "other",
+] as const;
+export const FEEDBACK_SEVERITY = ["low", "normal", "high"] as const;
+export const FEEDBACK_STATUS = [
+  "new",
+  "reviewing",
+  "resolved",
+  "dismissed",
+] as const;
 
 // TypeScript types derived from the const tuples
 export type UserRole = (typeof USER_ROLES)[number];
 export type UserStatus = (typeof USER_STATUS)[number];
 export type ApplicationStatus = (typeof APPLICATION_STATUS)[number];
+export type ApplicationScoreStatus = (typeof APPLICATION_SCORE_STATUS)[number];
 export type OfferStatus = (typeof OFFER_STATUS)[number];
 export type InterviewFormat = (typeof INTERVIEW_FORMAT)[number];
 export type InterviewStatus = (typeof INTERVIEW_STATUS)[number];
+export type InterviewRecommendation = (typeof INTERVIEW_RECOMMENDATION)[number];
 export type JobStatus = (typeof JOB_STATUS)[number];
 export type EmploymentType = (typeof EMPLOYMENT_TYPE)[number];
 export type WorkMode = (typeof WORK_MODE)[number];
@@ -97,3 +166,55 @@ export type AuditActorType = (typeof AUDIT_ACTOR_TYPE)[number];
 export type ParseConfidence = (typeof PARSE_CONFIDENCE)[number];
 export type EvidenceRelevance = (typeof EVIDENCE_RELEVANCE)[number];
 export type ScoreType = (typeof SCORE_TYPE)[number];
+export type CompanyMemberRole = (typeof COMPANY_MEMBER_ROLE)[number];
+export type CompanyMemberStatus = (typeof COMPANY_MEMBER_STATUS)[number];
+export type FeedbackType = (typeof FEEDBACK_TYPE)[number];
+export type FeedbackSeverity = (typeof FEEDBACK_SEVERITY)[number];
+export type FeedbackStatus = (typeof FEEDBACK_STATUS)[number];
+
+// Notification system — used by `notificationsTable` and `notificationPreferencesTable`.
+export const NOTIFICATION_EVENT_TYPE = [
+  // Candidate (personal scope)
+  "application_status_changed",
+  "interview_scheduled",
+  "interview_reminder_24h",
+  "interview_cancelled",
+  "offer_received",
+  "offer_expiring_soon",
+  // Recruiter (personal scope)
+  "new_application_received",
+  "candidate_withdrew",
+  "interview_feedback_due",
+  "offer_accepted",
+  "offer_declined",
+  "bias_flag_raised",
+  "team_invite_accepted",
+  "team_invite_declined",
+  // Admin (system scope)
+  "system_bias_flag_raised",
+  "system_ai_scoring_failure",
+  "system_moderation_queue_item",
+  // Interviews (candidate-facing)
+  "interview_feedback_shared",
+  "interview_rescheduled",
+  "interview_completed",
+  // Interviews (recruiter-facing)
+  "interview_record_feedback",
+  // Applications (recruiter-facing)
+  "application_withdrawn",
+  // Offers (auto-transition; both candidate + recruiter)
+  "offer_expired",
+  // Jobs (recruiter-facing)
+  "job_archived_by_deadline",
+  // Security (always-instant, not user-toggleable)
+  "account_password_reset",
+  "account_email_verified",
+  "account_login_new_device",
+] as const;
+
+export const NOTIFICATION_MODE = ["instant", "digest", "off"] as const;
+export const NOTIFICATION_SCOPE = ["personal", "system"] as const;
+
+export type NotificationEventType = (typeof NOTIFICATION_EVENT_TYPE)[number];
+export type NotificationMode = (typeof NOTIFICATION_MODE)[number];
+export type NotificationScope = (typeof NOTIFICATION_SCOPE)[number];

@@ -7,7 +7,7 @@ import { clientApiFetch } from "./_client-fetch";
 
 interface CandidateJobsListResponse {
   data: unknown[];
-  meta: { total: number };
+  meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
 export function useCandidateJobsQuery(params: CandidateJobsListParams) {
@@ -19,7 +19,9 @@ export function useCandidateJobsQuery(params: CandidateJobsListParams) {
           q: params.q,
           mode: params.mode,
           experienceLevel: params.experienceLevel,
+          sort: params.sort,
           page: params.page,
+          limit: params.limit,
         },
         signal,
       }),

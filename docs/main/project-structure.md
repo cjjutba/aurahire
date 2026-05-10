@@ -15,7 +15,7 @@ This document defines the canonical folder layout for the AuraHire monorepo, fil
 aurahire/
 ├── apps/                         # Deployable applications
 │   ├── web/                      # Next.js 16 frontend (Vercel)
-│   └── api/                      # NestJS backend (Railway)
+│   └── api/                      # NestJS backend (Digital Ocean Droplet, PM2)
 ├── packages/                     # Shared libraries
 │   ├── shared/                   # Zod schemas, enums, constants, API client
 │   └── db/                       # Drizzle schema + types
@@ -213,6 +213,7 @@ apps/web/
 ```
 
 **Frontend rules:**
+
 - No imports from `apps/api/`
 - No imports from `packages/db/` (unless purely type imports — rare; prefer Zod schemas in `packages/shared/`)
 - All API calls go through `lib/api/` which wraps `packages/shared/api-client/`
@@ -336,7 +337,7 @@ apps/api/
 │   │   ├── db.provider.ts            # Drizzle client provider (DI)
 │   │   └── tx-decorator.ts           # Transaction helpers
 │   └── health/
-│       ├── health.controller.ts      # GET /api/health for Railway probes
+│       ├── health.controller.ts      # GET /api/health (Caddy + PM2 probes on the Droplet)
 │       └── health.module.ts
 ├── test/
 │   └── (deferred to Phase 2 — no tests in sprint)
@@ -348,6 +349,7 @@ apps/api/
 ```
 
 **Backend rules:**
+
 - One feature = one module folder
 - Module structure: `<feature>.module.ts` + `<feature>.controller.ts` + `<feature>.service.ts` + `<feature>.repository.ts` + `dto/`
 - All controllers gated by `@UseGuards(SupabaseAuthGuard, RolesGuard)` unless `@Public()`
@@ -441,43 +443,43 @@ import type { Job } from "@aurahire/db/types";
 
 ## File Naming Conventions
 
-| Type | Convention | Example |
-|---|---|---|
-| Components (React) | kebab-case file, PascalCase export | `score-ring.tsx` exports `ScoreRing` |
-| Pages (Next.js) | `page.tsx` | App Router convention |
-| Layouts (Next.js) | `layout.tsx` | App Router convention |
-| NestJS modules | `<feature>.module.ts` | `jobs.module.ts` |
-| NestJS controllers | `<feature>.controller.ts` | `jobs.controller.ts` |
-| NestJS services | `<feature>.service.ts` | `jobs.service.ts` |
-| NestJS DTOs | `<action>-<feature>.dto.ts` | `create-job.dto.ts` |
-| Zod schemas | kebab-case, named exports | `jobs.ts` exports `jobSchema`, `createJobSchema` |
-| Drizzle tables | snake_case in schema; `<name>Table` export | `applications` table → `applicationsTable` |
-| Constants | UPPER_SNAKE | `STRONG_MATCH_THRESHOLD` |
-| React hooks | `use-`-prefix kebab | `use-current-user.ts` exports `useCurrentUser` |
-| Utility functions | camelCase | `formatScore` |
+| Type               | Convention                                 | Example                                          |
+| ------------------ | ------------------------------------------ | ------------------------------------------------ |
+| Components (React) | kebab-case file, PascalCase export         | `score-ring.tsx` exports `ScoreRing`             |
+| Pages (Next.js)    | `page.tsx`                                 | App Router convention                            |
+| Layouts (Next.js)  | `layout.tsx`                               | App Router convention                            |
+| NestJS modules     | `<feature>.module.ts`                      | `jobs.module.ts`                                 |
+| NestJS controllers | `<feature>.controller.ts`                  | `jobs.controller.ts`                             |
+| NestJS services    | `<feature>.service.ts`                     | `jobs.service.ts`                                |
+| NestJS DTOs        | `<action>-<feature>.dto.ts`                | `create-job.dto.ts`                              |
+| Zod schemas        | kebab-case, named exports                  | `jobs.ts` exports `jobSchema`, `createJobSchema` |
+| Drizzle tables     | snake_case in schema; `<name>Table` export | `applications` table → `applicationsTable`       |
+| Constants          | UPPER_SNAKE                                | `STRONG_MATCH_THRESHOLD`                         |
+| React hooks        | `use-`-prefix kebab                        | `use-current-user.ts` exports `useCurrentUser`   |
+| Utility functions  | camelCase                                  | `formatScore`                                    |
 
 ---
 
 ## Where to Place New Code
 
-| If you're adding... | Put it in... |
-|---|---|
-| A new page route | `apps/web/app/(group)/path/page.tsx` |
-| A new shadcn component | `apps/web/components/ui/*` (via shadcn CLI) |
-| A feature-specific React component | `apps/web/components/<feature>/*` |
-| A new Zod schema | `packages/shared/src/schemas/<feature>.ts` |
-| A new enum | `packages/shared/src/enums/<name>.ts` |
-| A new Drizzle table | `packages/db/src/schema.ts` |
-| A new RLS policy | `packages/db/src/rls/<table>.sql` |
-| A new NestJS module | `apps/api/src/modules/<feature>/` (full module structure) |
-| A new endpoint on existing module | Add controller method + DTO + service method in existing module folder |
-| A new AI prompt | `apps/api/src/ai/prompts/<purpose>.ts` (with version) |
-| A new background job processor | `apps/api/src/queue/processors/<job-name>.processor.ts` |
-| A new cron task | `apps/api/src/cron/<task-name>.cron.ts` |
-| A new email template | `apps/api/src/email/templates/<purpose>.tsx` |
-| Common types / constants | `packages/shared/src/types/` or `constants/` |
-| Custom React hook | `apps/web/lib/hooks/use-<thing>.ts` |
-| API client wrapper | `apps/web/lib/api/<feature>.ts` (wraps generated hooks) |
+| If you're adding...                | Put it in...                                                           |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| A new page route                   | `apps/web/app/(group)/path/page.tsx`                                   |
+| A new shadcn component             | `apps/web/components/ui/*` (via shadcn CLI)                            |
+| A feature-specific React component | `apps/web/components/<feature>/*`                                      |
+| A new Zod schema                   | `packages/shared/src/schemas/<feature>.ts`                             |
+| A new enum                         | `packages/shared/src/enums/<name>.ts`                                  |
+| A new Drizzle table                | `packages/db/src/schema.ts`                                            |
+| A new RLS policy                   | `packages/db/src/rls/<table>.sql`                                      |
+| A new NestJS module                | `apps/api/src/modules/<feature>/` (full module structure)              |
+| A new endpoint on existing module  | Add controller method + DTO + service method in existing module folder |
+| A new AI prompt                    | `apps/api/src/ai/prompts/<purpose>.ts` (with version)                  |
+| A new background job processor     | `apps/api/src/queue/processors/<job-name>.processor.ts`                |
+| A new cron task                    | `apps/api/src/cron/<task-name>.cron.ts`                                |
+| A new email template               | `apps/api/src/email/templates/<purpose>.tsx`                           |
+| Common types / constants           | `packages/shared/src/types/` or `constants/`                           |
+| Custom React hook                  | `apps/web/lib/hooks/use-<thing>.ts`                                    |
+| API client wrapper                 | `apps/web/lib/api/<feature>.ts` (wraps generated hooks)                |
 
 ---
 
@@ -494,6 +496,7 @@ import type { Job } from "@aurahire/db/types";
 ## TypeScript Path Aliases
 
 ### `apps/web/tsconfig.json`
+
 ```json
 {
   "compilerOptions": {
@@ -503,10 +506,12 @@ import type { Job } from "@aurahire/db/types";
   }
 }
 ```
+
 - Imports: `@/components/...`, `@/lib/...`, `@/app/...`
 - Cross-package: `import { ... } from "@aurahire/shared"`
 
 ### `apps/api/tsconfig.json`
+
 ```json
 {
   "compilerOptions": {
@@ -516,6 +521,7 @@ import type { Job } from "@aurahire/db/types";
   }
 }
 ```
+
 - Imports: `@/modules/...`, `@/common/...`, `@/ai/...`
 - Cross-package: `import { ... } from "@aurahire/shared"`, `import { ... } from "@aurahire/db"`
 
@@ -524,6 +530,7 @@ import type { Job } from "@aurahire/db/types";
 ## Files Already Present (from `create-next-app`)
 
 These will be moved into `apps/web/` during Day 1 monorepo init:
+
 - `next.config.ts` → `apps/web/next.config.ts`
 - `tsconfig.json` → `apps/web/tsconfig.json` (with adjustments)
 - `eslint.config.mjs` → `apps/web/eslint.config.mjs`
@@ -544,11 +551,13 @@ pnpm dev
 ```
 
 This runs `turbo dev`, which:
+
 1. Reads `turbo.json` task config
 2. Runs `dev` script in each workspace package in parallel
 3. Streams logs from both `apps/web` and `apps/api` interleaved
 
 Output:
+
 ```
 apps/web:dev: ▲ Next.js 16.2.4
 apps/web:dev:   - Local:        http://localhost:3000
@@ -575,6 +584,7 @@ The human runs this. Claude does not start dev servers.
 ## Iteration Guide
 
 When in doubt:
+
 1. **Routes** group by audience (`(public)`, `(auth)`, role-based portals).
 2. **Components** group by feature first, shared primitives second.
 3. **Backend logic:** module per feature; controller-service-repository.

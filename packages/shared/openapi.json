@@ -31,9 +31,7 @@
           }
         ],
         "summary": "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified.",
-        "tags": [
-          "admin-cron-debug"
-        ]
+        "tags": ["admin-cron-debug"]
       }
     },
     "/api/v1/profiles/me": {
@@ -64,9 +62,7 @@
           }
         ],
         "summary": "Get the current user's profile + role-specific subprofile",
-        "tags": [
-          "profiles"
-        ]
+        "tags": ["profiles"]
       }
     },
     "/api/v1/recruiter-profiles/me": {
@@ -94,9 +90,7 @@
           }
         ],
         "summary": "Get the authenticated recruiter's full profile + company",
-        "tags": [
-          "recruiter-profiles"
-        ]
+        "tags": ["recruiter-profiles"]
       }
     },
     "/api/v1/recruiter-profiles/about": {
@@ -131,9 +125,7 @@
           }
         ],
         "summary": "Onboarding step 1: about you",
-        "tags": [
-          "recruiter-profiles"
-        ]
+        "tags": ["recruiter-profiles"]
       }
     },
     "/api/v1/recruiter-profiles/company": {
@@ -168,9 +160,7 @@
           }
         ],
         "summary": "Onboarding step 2: company details",
-        "tags": [
-          "recruiter-profiles"
-        ]
+        "tags": ["recruiter-profiles"]
       }
     },
     "/api/v1/recruiter-profiles/focus": {
@@ -205,9 +195,7 @@
           }
         ],
         "summary": "Onboarding step 3 (final): hiring focus — flips profile_completed=true",
-        "tags": [
-          "recruiter-profiles"
-        ]
+        "tags": ["recruiter-profiles"]
       }
     },
     "/api/v1/candidate-profiles/me": {
@@ -232,9 +220,7 @@
           }
         ],
         "summary": "Get the authenticated candidate's full profile",
-        "tags": [
-          "candidate-profiles"
-        ]
+        "tags": ["candidate-profiles"]
       }
     },
     "/api/v1/candidate-profiles/personal": {
@@ -269,9 +255,7 @@
           }
         ],
         "summary": "Onboarding step 2: personal info (name, phone, location, headline)",
-        "tags": [
-          "candidate-profiles"
-        ]
+        "tags": ["candidate-profiles"]
       }
     },
     "/api/v1/candidate-profiles/preferences": {
@@ -306,9 +290,7 @@
           }
         ],
         "summary": "Onboarding step 6: job preferences",
-        "tags": [
-          "candidate-profiles"
-        ]
+        "tags": ["candidate-profiles"]
       }
     },
     "/api/v1/candidate-profiles/complete": {
@@ -334,9 +316,7 @@
           }
         ],
         "summary": "Mark candidate onboarding complete (sets profile_completed=true)",
-        "tags": [
-          "candidate-profiles"
-        ]
+        "tags": ["candidate-profiles"]
       }
     },
     "/api/v1/jobs": {
@@ -374,9 +354,7 @@
           }
         ],
         "summary": "Create a new job (status='draft')",
-        "tags": [
-          "jobs"
-        ]
+        "tags": ["jobs"]
       },
       "get": {
         "operationId": "JobsController_listPublic_v1",
@@ -419,11 +397,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "remote",
-                "hybrid",
-                "on-site"
-              ],
+              "enum": ["remote", "hybrid", "on-site"],
               "type": "string"
             }
           },
@@ -460,11 +434,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "recent",
-                "best-match",
-                "salary-high"
-              ],
+              "enum": ["recent", "best-match", "salary-high"],
               "type": "string"
             }
           },
@@ -473,12 +443,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "draft",
-                "published",
-                "archived",
-                "closed"
-              ],
+              "enum": ["draft", "published", "archived", "closed"],
               "type": "string"
             }
           },
@@ -487,9 +452,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "stats"
-              ],
+              "enum": ["stats"],
               "type": "string"
             }
           }
@@ -507,9 +470,7 @@
           }
         },
         "summary": "Public list of published jobs (paginated, filterable)",
-        "tags": [
-          "jobs"
-        ]
+        "tags": ["jobs"]
       }
     },
     "/api/v1/jobs/{id}": {
@@ -556,9 +517,7 @@
           }
         ],
         "summary": "Update a job (recruiter must own it)",
-        "tags": [
-          "jobs"
-        ]
+        "tags": ["jobs"]
       },
       "get": {
         "operationId": "JobsController_getPublic_v1",
@@ -588,9 +547,7 @@
           }
         },
         "summary": "Public detail (only published jobs)",
-        "tags": [
-          "jobs"
-        ]
+        "tags": ["jobs"]
       }
     },
     "/api/v1/jobs/{id}/publish": {
@@ -630,9 +587,7 @@
           }
         ],
         "summary": "Publish a draft job (NAIVE — bias check wraps this in Slice 2.7)",
-        "tags": [
-          "jobs"
-        ]
+        "tags": ["jobs"]
       }
     },
     "/api/v1/jobs/{id}/archive": {
@@ -669,9 +624,7 @@
           }
         ],
         "summary": "Archive a job",
-        "tags": [
-          "jobs"
-        ]
+        "tags": ["jobs"]
       }
     },
     "/api/v1/jobs/mine": {
@@ -716,11 +669,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "remote",
-                "hybrid",
-                "on-site"
-              ],
+              "enum": ["remote", "hybrid", "on-site"],
               "type": "string"
             }
           },
@@ -772,12 +721,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "draft",
-                "published",
-                "archived",
-                "closed"
-              ],
+              "enum": ["draft", "published", "archived", "closed"],
               "type": "string"
             }
           },
@@ -786,9 +730,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "stats"
-              ],
+              "enum": ["stats"],
               "type": "string"
             }
           }
@@ -811,9 +753,7 @@
           }
         ],
         "summary": "List own jobs (any status); paginated. Supports ?include=stats for per-job aggregates.",
-        "tags": [
-          "jobs"
-        ]
+        "tags": ["jobs"]
       }
     },
     "/api/v1/jobs/for-candidate": {
@@ -858,11 +798,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "remote",
-                "hybrid",
-                "on-site"
-              ],
+              "enum": ["remote", "hybrid", "on-site"],
               "type": "string"
             }
           },
@@ -914,12 +850,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "draft",
-                "published",
-                "archived",
-                "closed"
-              ],
+              "enum": ["draft", "published", "archived", "closed"],
               "type": "string"
             }
           },
@@ -928,9 +859,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "stats"
-              ],
+              "enum": ["stats"],
               "type": "string"
             }
           }
@@ -953,9 +882,7 @@
           }
         ],
         "summary": "Candidate list of published jobs (sprint: same as public; Slice 2.6 enriches with match score)",
-        "tags": [
-          "jobs"
-        ]
+        "tags": ["jobs"]
       }
     },
     "/api/v1/jobs/{id}/for-recruiter": {
@@ -992,9 +919,7 @@
           }
         ],
         "summary": "Recruiter view of own job (any status)",
-        "tags": [
-          "jobs"
-        ]
+        "tags": ["jobs"]
       }
     },
     "/api/v1/jobs/{id}/for-candidate": {
@@ -1028,9 +953,7 @@
           }
         ],
         "summary": "Candidate detail (sprint: same as public; Slice 2.6 enriches with match score)",
-        "tags": [
-          "jobs"
-        ]
+        "tags": ["jobs"]
       }
     },
     "/api/v1/bias/check": {
@@ -1068,9 +991,7 @@
           }
         ],
         "summary": "Stateless bias scan — does NOT persist; used by debounced editor preview",
-        "tags": [
-          "bias"
-        ]
+        "tags": ["bias"]
       }
     },
     "/api/v1/bias/jobs/{jobId}/scan": {
@@ -1107,9 +1028,7 @@
           }
         ],
         "summary": "Run bias scan on a job's persisted description; replaces existing 'flagged' rows",
-        "tags": [
-          "bias"
-        ]
+        "tags": ["bias"]
       }
     },
     "/api/v1/bias/jobs/{jobId}/flags": {
@@ -1143,9 +1062,7 @@
           }
         ],
         "summary": "List persisted bias flags for a job (any status)",
-        "tags": [
-          "bias"
-        ]
+        "tags": ["bias"]
       }
     },
     "/api/v1/bias/jobs/{jobId}/flags/{flagId}/override": {
@@ -1203,9 +1120,7 @@
           }
         ],
         "summary": "Override a bias flag with a written reason (≥10 chars); status → overridden",
-        "tags": [
-          "bias"
-        ]
+        "tags": ["bias"]
       }
     },
     "/api/v1/scoring/profile/compute": {
@@ -1240,9 +1155,7 @@
           }
         ],
         "summary": "Compute the candidate's Profile Score from default resume + preferences",
-        "tags": [
-          "scoring"
-        ]
+        "tags": ["scoring"]
       }
     },
     "/api/v1/scoring/profile/me": {
@@ -1267,9 +1180,7 @@
           }
         ],
         "summary": "Get the candidate's most recent Profile Score (or null if none)",
-        "tags": [
-          "scoring"
-        ]
+        "tags": ["scoring"]
       }
     },
     "/api/v1/resumes/upload": {
@@ -1313,9 +1224,7 @@
           }
         ],
         "summary": "Upload a resume PDF/DOCX and parse it via AI",
-        "tags": [
-          "resumes"
-        ]
+        "tags": ["resumes"]
       }
     },
     "/api/v1/resumes/mine": {
@@ -1340,9 +1249,7 @@
           }
         ],
         "summary": "List my resumes",
-        "tags": [
-          "resumes"
-        ]
+        "tags": ["resumes"]
       }
     },
     "/api/v1/resumes/{id}": {
@@ -1376,9 +1283,7 @@
           }
         ],
         "summary": "Get a resume by id (own or admin)",
-        "tags": [
-          "resumes"
-        ]
+        "tags": ["resumes"]
       },
       "delete": {
         "operationId": "ResumesController_delete_v1",
@@ -1403,9 +1308,7 @@
           }
         ],
         "summary": "Delete a resume",
-        "tags": [
-          "resumes"
-        ]
+        "tags": ["resumes"]
       }
     },
     "/api/v1/resumes/{id}/set-default": {
@@ -1439,9 +1342,7 @@
           }
         ],
         "summary": "Set this resume as default for applications",
-        "tags": [
-          "resumes"
-        ]
+        "tags": ["resumes"]
       }
     },
     "/api/v1/resumes/{id}/download": {
@@ -1475,9 +1376,7 @@
           }
         ],
         "summary": "Get a 1-hour signed URL to download the resume PDF",
-        "tags": [
-          "resumes"
-        ]
+        "tags": ["resumes"]
       }
     },
     "/api/v1/applications": {
@@ -1516,9 +1415,7 @@
           }
         ],
         "summary": "Apply to a job (creates application + computes match score)",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/mine": {
@@ -1543,9 +1440,7 @@
           }
         ],
         "summary": "List own applications",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/recruiter-stats": {
@@ -1557,12 +1452,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "7d",
-                "30d",
-                "90d",
-                "all"
-              ],
+              "enum": ["7d", "30d", "90d", "all"],
               "type": "string"
             }
           }
@@ -1585,9 +1475,7 @@
           }
         ],
         "summary": "Dashboard summary for the current recruiter (range-filterable)",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/recruiter-analytics": {
@@ -1612,9 +1500,7 @@
           }
         ],
         "summary": "Recruiter-scoped analytics bundle: KPIs + top jobs by app count + status breakdown",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/recent": {
@@ -1653,9 +1539,7 @@
           }
         ],
         "summary": "Recent applications across all of this recruiter's jobs",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/shortlist": {
@@ -1702,11 +1586,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "strong",
-                "partial",
-                "limited"
-              ],
+              "enum": ["strong", "partial", "limited"],
               "type": "string"
             }
           },
@@ -1767,9 +1647,7 @@
           }
         ],
         "summary": "List the recruiter's shortlisted applications",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/by-job/{jobId}": {
@@ -1803,9 +1681,7 @@
           }
         ],
         "summary": "List applications for a job (recruiter must own it)",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/{id}": {
@@ -1839,9 +1715,7 @@
           }
         ],
         "summary": "Get application detail",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/{id}/status": {
@@ -1888,9 +1762,7 @@
           }
         ],
         "summary": "Move application through status state machine",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/{id}/notes": {
@@ -1934,9 +1806,7 @@
           }
         ],
         "summary": "Update recruiter notes on an application",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/{id}/shortlist": {
@@ -1970,9 +1840,7 @@
           }
         ],
         "summary": "Add this application to the recruiter's shortlist",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       },
       "delete": {
         "operationId": "ApplicationsController_unshortlist_v1",
@@ -2004,9 +1872,7 @@
           }
         ],
         "summary": "Remove this application from the recruiter's shortlist",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/{id}/withdraw": {
@@ -2040,9 +1906,7 @@
           }
         ],
         "summary": "Withdraw own application",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/{id}/resume-download": {
@@ -2077,9 +1941,7 @@
           }
         ],
         "summary": "1-hour signed URL for the candidate's resume in the context of this application",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications/{applicationId}/interviews": {
@@ -2123,9 +1985,7 @@
           }
         ],
         "summary": "Schedule an interview for an application (recruiter must own the job)",
-        "tags": [
-          "interviews"
-        ]
+        "tags": ["interviews"]
       },
       "get": {
         "operationId": "InterviewsController_listForApplication_v1",
@@ -2157,9 +2017,7 @@
           }
         ],
         "summary": "List interviews for an application (auth-scoped)",
-        "tags": [
-          "interviews"
-        ]
+        "tags": ["interviews"]
       }
     },
     "/api/v1/interviews/mine": {
@@ -2184,9 +2042,7 @@
           }
         ],
         "summary": "List candidate's own interviews",
-        "tags": [
-          "interviews"
-        ]
+        "tags": ["interviews"]
       }
     },
     "/api/v1/interviews/by-recruiter/me": {
@@ -2211,9 +2067,7 @@
           }
         ],
         "summary": "List all interviews for jobs the recruiter owns",
-        "tags": [
-          "interviews"
-        ]
+        "tags": ["interviews"]
       }
     },
     "/api/v1/interviews/{id}/feedback": {
@@ -2257,9 +2111,7 @@
           }
         ],
         "summary": "Update interview feedback + rating",
-        "tags": [
-          "interviews"
-        ]
+        "tags": ["interviews"]
       }
     },
     "/api/v1/interviews/{id}/status": {
@@ -2303,9 +2155,7 @@
           }
         ],
         "summary": "Change interview status (cancel / mark completed / no-show)",
-        "tags": [
-          "interviews"
-        ]
+        "tags": ["interviews"]
       }
     },
     "/api/v1/applications/{applicationId}/offers": {
@@ -2352,9 +2202,7 @@
           }
         ],
         "summary": "Send an offer for an application",
-        "tags": [
-          "offers"
-        ]
+        "tags": ["offers"]
       },
       "get": {
         "operationId": "OffersController_listForApplication_v1",
@@ -2386,9 +2234,7 @@
           }
         ],
         "summary": "List offers for an application (auth-scoped)",
-        "tags": [
-          "offers"
-        ]
+        "tags": ["offers"]
       }
     },
     "/api/v1/offers/mine": {
@@ -2413,9 +2259,7 @@
           }
         ],
         "summary": "List candidate's own offers",
-        "tags": [
-          "offers"
-        ]
+        "tags": ["offers"]
       }
     },
     "/api/v1/offers/{id}/accept": {
@@ -2449,9 +2293,7 @@
           }
         ],
         "summary": "Candidate accepts a pending offer (auto-advances application → hired)",
-        "tags": [
-          "offers"
-        ]
+        "tags": ["offers"]
       }
     },
     "/api/v1/offers/{id}/decline": {
@@ -2495,9 +2337,7 @@
           }
         ],
         "summary": "Candidate declines a pending offer (optional reason)",
-        "tags": [
-          "offers"
-        ]
+        "tags": ["offers"]
       }
     },
     "/api/v1/offers/{id}/withdraw": {
@@ -2531,9 +2371,7 @@
           }
         ],
         "summary": "Recruiter withdraws a pending offer",
-        "tags": [
-          "offers"
-        ]
+        "tags": ["offers"]
       }
     },
     "/api/v1/admin/stats/overview": {
@@ -2558,9 +2396,7 @@
           }
         ],
         "summary": "Command Center KPIs in one fetch (cached 60s)",
-        "tags": [
-          "admin-stats"
-        ]
+        "tags": ["admin-stats"]
       }
     },
     "/api/v1/admin/users": {
@@ -2572,11 +2408,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "candidate",
-                "recruiter",
-                "admin"
-              ],
+              "enum": ["candidate", "recruiter", "admin"],
               "type": "string"
             }
           },
@@ -2585,11 +2417,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "active",
-                "suspended",
-                "deleted"
-              ],
+              "enum": ["active", "suspended", "deleted"],
               "type": "string"
             }
           },
@@ -2663,9 +2491,7 @@
           }
         ],
         "summary": "List/filter all users",
-        "tags": [
-          "admin-users"
-        ]
+        "tags": ["admin-users"]
       }
     },
     "/api/v1/admin/users/{id}": {
@@ -2699,9 +2525,7 @@
           }
         ],
         "summary": "Get user detail (incl. audit count)",
-        "tags": [
-          "admin-users"
-        ]
+        "tags": ["admin-users"]
       },
       "delete": {
         "operationId": "AdminUsersController_delete_v1",
@@ -2736,9 +2560,7 @@
           }
         ],
         "summary": "Hard-delete a user (soft-delete profile + delete auth.users row)",
-        "tags": [
-          "admin-users"
-        ]
+        "tags": ["admin-users"]
       }
     },
     "/api/v1/admin/users/{id}/suspend": {
@@ -2785,9 +2607,7 @@
           }
         ],
         "summary": "Suspend a user (status='suspended'); reason required ≥10 chars",
-        "tags": [
-          "admin-users"
-        ]
+        "tags": ["admin-users"]
       }
     },
     "/api/v1/admin/users/{id}/reactivate": {
@@ -2821,9 +2641,7 @@
           }
         ],
         "summary": "Reactivate a suspended user",
-        "tags": [
-          "admin-users"
-        ]
+        "tags": ["admin-users"]
       }
     },
     "/api/v1/admin/users/{id}/role": {
@@ -2870,9 +2688,7 @@
           }
         ],
         "summary": "Change a user's role",
-        "tags": [
-          "admin-users"
-        ]
+        "tags": ["admin-users"]
       }
     },
     "/api/v1/admin/users/{id}/force-password-reset": {
@@ -2906,9 +2722,7 @@
           }
         ],
         "summary": "Issue a password-reset token (and email it) on behalf of a user",
-        "tags": [
-          "admin-users"
-        ]
+        "tags": ["admin-users"]
       }
     },
     "/api/v1/admin/jobs": {
@@ -2920,12 +2734,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "draft",
-                "published",
-                "archived",
-                "closed"
-              ],
+              "enum": ["draft", "published", "archived", "closed"],
               "type": "string"
             }
           },
@@ -2998,9 +2807,7 @@
           }
         ],
         "summary": "List/filter all jobs across the system",
-        "tags": [
-          "admin-jobs"
-        ]
+        "tags": ["admin-jobs"]
       }
     },
     "/api/v1/admin/jobs/{id}": {
@@ -3034,9 +2841,7 @@
           }
         ],
         "summary": "Admin view of a job (any status, any recruiter)",
-        "tags": [
-          "admin-jobs"
-        ]
+        "tags": ["admin-jobs"]
       }
     },
     "/api/v1/admin/jobs/{id}/archive": {
@@ -3070,9 +2875,7 @@
           }
         ],
         "summary": "Archive a job (admin bypasses ownership)",
-        "tags": [
-          "admin-jobs"
-        ]
+        "tags": ["admin-jobs"]
       }
     },
     "/api/v1/admin/applications": {
@@ -3208,9 +3011,7 @@
           }
         ],
         "summary": "Filter + list all applications across the system (cached 30s)",
-        "tags": [
-          "admin-applications"
-        ]
+        "tags": ["admin-applications"]
       }
     },
     "/api/v1/admin/applications/{id}": {
@@ -3247,9 +3048,7 @@
           }
         ],
         "summary": "Full admin detail for an application — includes raw AI output, parsed resume + redactedFields list, and the audit trail",
-        "tags": [
-          "admin-applications"
-        ]
+        "tags": ["admin-applications"]
       }
     },
     "/api/v1/admin/scoring-config": {
@@ -3274,9 +3073,7 @@
           }
         ],
         "summary": "Get the active scoring configuration",
-        "tags": [
-          "admin-config"
-        ]
+        "tags": ["admin-config"]
       },
       "patch": {
         "operationId": "AdminConfigController_update_v1",
@@ -3312,9 +3109,7 @@
           }
         ],
         "summary": "Update the active scoring configuration (in-place); audits the diff",
-        "tags": [
-          "admin-config"
-        ]
+        "tags": ["admin-config"]
       }
     },
     "/api/v1/admin/scoring-config/preview-impact": {
@@ -3349,9 +3144,7 @@
           }
         ],
         "summary": "Re-weight the last N match scores using proposed weights/thresholds; pure arithmetic, no AI calls",
-        "tags": [
-          "admin-config"
-        ]
+        "tags": ["admin-config"]
       }
     },
     "/api/v1/admin/audit": {
@@ -3408,11 +3201,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "user",
-                "system",
-                "ai"
-              ],
+              "enum": ["user", "system", "ai"],
               "type": "string"
             }
           },
@@ -3477,9 +3266,7 @@
           }
         ],
         "summary": "Filter + list audit log entries",
-        "tags": [
-          "admin-audit"
-        ]
+        "tags": ["admin-audit"]
       }
     },
     "/api/v1/admin/audit/export.csv": {
@@ -3536,11 +3323,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": [
-                "user",
-                "system",
-                "ai"
-              ],
+              "enum": ["user", "system", "ai"],
               "type": "string"
             }
           },
@@ -3601,9 +3384,7 @@
           }
         ],
         "summary": "Export filtered audit log as CSV (max 10,000 rows)",
-        "tags": [
-          "admin-audit"
-        ]
+        "tags": ["admin-audit"]
       }
     },
     "/api/v1/admin/audit/{id}": {
@@ -3640,9 +3421,7 @@
           }
         ],
         "summary": "Get a single audit entry (full details JSONB)",
-        "tags": [
-          "admin-audit"
-        ]
+        "tags": ["admin-audit"]
       }
     },
     "/api/v1/admin/analytics": {
@@ -3686,9 +3465,7 @@
           }
         ],
         "summary": "Cached 5-min analytics bundle (KPIs + 6 chart series)",
-        "tags": [
-          "admin-analytics"
-        ]
+        "tags": ["admin-analytics"]
       }
     },
     "/api/v1/admin/bias-monitor": {
@@ -3732,9 +3509,7 @@
           }
         ],
         "summary": "Aggregate fairness metrics — KPIs, breakdowns, top flagged terms, recent overrides. Cached 5 min.",
-        "tags": [
-          "admin-bias-monitor"
-        ]
+        "tags": ["admin-bias-monitor"]
       }
     },
     "/api/v1/admin/queue/rescore-batch": {
@@ -3769,9 +3544,7 @@
           }
         ],
         "summary": "Enqueue a rescore-batch background job that recomputes the last N match scores using current weights",
-        "tags": [
-          "admin-queue"
-        ]
+        "tags": ["admin-queue"]
       }
     },
     "/api/v1/admin/queue/jobs/{queueJobId}/status": {
@@ -3805,9 +3578,7 @@
           }
         ],
         "summary": "Poll the status of a queued background job. Route is /admin/queue/jobs/:queueJobId/status to avoid collision with /admin/jobs/:id (3.1 job moderation).",
-        "tags": [
-          "admin-queue"
-        ]
+        "tags": ["admin-queue"]
       }
     },
     "/api/v1/auth/signup-candidate": {
@@ -3841,9 +3612,7 @@
           }
         },
         "summary": "Sign up a candidate (creates Supabase user, sends verification email)",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/signup-recruiter": {
@@ -3876,9 +3645,7 @@
           }
         },
         "summary": "Sign up a recruiter (creates Supabase user, sends verification email)",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/verify-email": {
@@ -3912,9 +3679,7 @@
           }
         },
         "summary": "Verify an email-verification token",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/resend-verification": {
@@ -3945,9 +3710,7 @@
           }
         },
         "summary": "Resend the verification email",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/forgot-password": {
@@ -3978,9 +3741,7 @@
           }
         },
         "summary": "Request a password reset email",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/reset-password": {
@@ -4013,9 +3774,7 @@
           }
         },
         "summary": "Consume a password-reset token and set a new password",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/health": {
@@ -4028,9 +3787,7 @@
           }
         },
         "summary": "Service health check",
-        "tags": [
-          "health"
-        ]
+        "tags": ["health"]
       }
     }
   },
@@ -4105,12 +3862,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "companyId",
-          "jobTitle",
-          "department",
-          "profileCompleted"
-        ]
+        "required": ["companyId", "jobTitle", "department", "profileCompleted"]
       },
       "CompanySummaryDto": {
         "type": "object",
@@ -4134,13 +3886,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "id",
-          "name",
-          "industry",
-          "size",
-          "website"
-        ]
+        "required": ["id", "name", "industry", "size", "website"]
       },
       "ProfileResponseDto": {
         "type": "object",
@@ -4156,19 +3902,11 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "candidate",
-              "recruiter",
-              "admin"
-            ]
+            "enum": ["candidate", "recruiter", "admin"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "suspended",
-              "deleted"
-            ]
+            "enum": ["active", "suspended", "deleted"]
           },
           "phone": {
             "type": "object",
@@ -4227,9 +3965,7 @@
             "$ref": "#/components/schemas/ProfileResponseDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "RecruiterCompanyDto": {
         "type": "object",
@@ -4332,9 +4068,7 @@
             "$ref": "#/components/schemas/RecruiterProfileMeDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "UpdateRecruiterAboutDto": {
         "type": "object",
@@ -4361,10 +4095,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "fullName",
-          "phone"
-        ]
+        "required": ["fullName", "phone"]
       },
       "UpdateRecruiterCompanyDto": {
         "type": "object",
@@ -4381,14 +4112,7 @@
           },
           "size": {
             "type": "string",
-            "enum": [
-              "1-10",
-              "11-50",
-              "51-200",
-              "201-500",
-              "501-1000",
-              "1000+"
-            ],
+            "enum": ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"],
             "nullable": true
           },
           "website": {
@@ -4406,9 +4130,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "companyName"
-        ]
+        "required": ["companyName"]
       },
       "UpdateRecruiterFocusDto": {
         "type": "object",
@@ -4422,12 +4144,7 @@
           },
           "hiringVolumePerQuarter": {
             "type": "string",
-            "enum": [
-              "1-5",
-              "6-10",
-              "11-25",
-              "25+"
-            ],
+            "enum": ["1-5", "6-10", "11-25", "25+"],
             "nullable": true
           }
         }
@@ -4530,9 +4247,7 @@
             "$ref": "#/components/schemas/CandidateProfileMeDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "UpdateCandidatePersonalDto": {
         "type": "object",
@@ -4571,10 +4286,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "fullName",
-          "phone"
-        ]
+        "required": ["fullName", "phone"]
       },
       "UpdateCandidatePreferencesDto": {
         "type": "object",
@@ -4635,19 +4347,11 @@
           },
           "employmentType": {
             "type": "string",
-            "enum": [
-              "full-time",
-              "part-time",
-              "contract"
-            ]
+            "enum": ["full-time", "part-time", "contract"]
           },
           "workMode": {
             "type": "string",
-            "enum": [
-              "remote",
-              "hybrid",
-              "on-site"
-            ]
+            "enum": ["remote", "hybrid", "on-site"]
           },
           "locationCity": {
             "type": "string",
@@ -4856,9 +4560,7 @@
             "$ref": "#/components/schemas/JobResponseDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "UpdateJobDto": {
         "type": "object",
@@ -4875,19 +4577,11 @@
           },
           "employmentType": {
             "type": "string",
-            "enum": [
-              "full-time",
-              "part-time",
-              "contract"
-            ]
+            "enum": ["full-time", "part-time", "contract"]
           },
           "workMode": {
             "type": "string",
-            "enum": [
-              "remote",
-              "hybrid",
-              "on-site"
-            ]
+            "enum": ["remote", "hybrid", "on-site"]
           },
           "locationCity": {
             "type": "string",
@@ -4984,12 +4678,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages"
-        ]
+        "required": ["page", "limit", "total", "totalPages"]
       },
       "JobListResponseDto": {
         "type": "object",
@@ -5004,10 +4693,7 @@
             "$ref": "#/components/schemas/PaginationMetaDto"
           }
         },
-        "required": [
-          "data",
-          "meta"
-        ]
+        "required": ["data", "meta"]
       },
       "CheckBiasDto": {
         "type": "object",
@@ -5025,9 +4711,7 @@
             }
           }
         },
-        "required": [
-          "text"
-        ]
+        "required": ["text"]
       },
       "CheckBiasFlagPreviewDto": {
         "type": "object",
@@ -5040,11 +4724,7 @@
           },
           "severity": {
             "type": "string",
-            "enum": [
-              "high",
-              "medium",
-              "low"
-            ]
+            "enum": ["high", "medium", "low"]
           },
           "explanation": {
             "type": "string"
@@ -5088,12 +4768,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "flags",
-          "latencyMs",
-          "promptVersion",
-          "modelUsed"
-        ]
+        "required": ["flags", "latencyMs", "promptVersion", "modelUsed"]
       },
       "CheckBiasResponseDto": {
         "type": "object",
@@ -5102,9 +4777,7 @@
             "$ref": "#/components/schemas/CheckBiasResponseBodyDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "BiasFlagDto": {
         "type": "object",
@@ -5131,11 +4804,7 @@
           "severity": {
             "type": "string",
             "nullable": true,
-            "enum": [
-              "high",
-              "medium",
-              "low"
-            ]
+            "enum": ["high", "medium", "low"]
           },
           "suggestion": {
             "type": "object",
@@ -5151,11 +4820,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "flagged",
-              "overridden",
-              "resolved"
-            ]
+            "enum": ["flagged", "overridden", "resolved"]
           },
           "overrideReason": {
             "type": "object",
@@ -5204,9 +4869,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "BiasFlagsListEnvelopeDto": {
         "type": "object",
@@ -5218,9 +4881,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "OverrideBiasFlagDto": {
         "type": "object",
@@ -5231,9 +4892,7 @@
             "maxLength": 500
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "BiasFlagEnvelopeDto": {
         "type": "object",
@@ -5242,9 +4901,7 @@
             "$ref": "#/components/schemas/BiasFlagDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "ScoreEvidenceDto": {
         "type": "object",
@@ -5257,18 +4914,10 @@
           },
           "relevance": {
             "type": "string",
-            "enum": [
-              "positive",
-              "negative",
-              "neutral"
-            ]
+            "enum": ["positive", "negative", "neutral"]
           }
         },
-        "required": [
-          "excerpt",
-          "source",
-          "relevance"
-        ]
+        "required": ["excerpt", "source", "relevance"]
       },
       "ProfileComponentDto": {
         "type": "object",
@@ -5323,11 +4972,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "title",
-          "description",
-          "estimatedImpact"
-        ]
+        "required": ["title", "description", "estimatedImpact"]
       },
       "ProfileScoreDto": {
         "type": "object",
@@ -5340,11 +4985,7 @@
           },
           "band": {
             "type": "string",
-            "enum": [
-              "strong",
-              "partial",
-              "limited"
-            ]
+            "enum": ["strong", "partial", "limited"]
           },
           "components": {
             "type": "array",
@@ -5402,9 +5043,7 @@
             ]
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "ResumeResponseDto": {
         "type": "object",
@@ -5437,12 +5076,7 @@
           },
           "parseStatus": {
             "type": "string",
-            "enum": [
-              "pending",
-              "parsing",
-              "parsed",
-              "failed"
-            ]
+            "enum": ["pending", "parsing", "parsed", "failed"]
           },
           "parseError": {
             "type": "object",
@@ -5479,9 +5113,7 @@
             "$ref": "#/components/schemas/ResumeResponseDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "ResumeListResponseDto": {
         "type": "object",
@@ -5493,9 +5125,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "SignedUrlPayloadDto": {
         "type": "object",
@@ -5507,10 +5137,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "signedUrl",
-          "expiresAt"
-        ]
+        "required": ["signedUrl", "expiresAt"]
       },
       "SignedUrlResponseDto": {
         "type": "object",
@@ -5519,9 +5146,7 @@
             "$ref": "#/components/schemas/SignedUrlPayloadDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "ApplyToJobDto": {
         "type": "object",
@@ -5540,9 +5165,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "jobId"
-        ]
+        "required": ["jobId"]
       },
       "MatchEvidenceDto": {
         "type": "object",
@@ -5555,34 +5178,21 @@
           },
           "relevance": {
             "type": "string",
-            "enum": [
-              "positive",
-              "negative",
-              "neutral"
-            ]
+            "enum": ["positive", "negative", "neutral"]
           },
           "contributionPoints": {
             "type": "number",
             "nullable": true
           }
         },
-        "required": [
-          "excerpt",
-          "source",
-          "relevance"
-        ]
+        "required": ["excerpt", "source", "relevance"]
       },
       "MatchComponentDto": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "enum": [
-              "skills",
-              "experience",
-              "education",
-              "cultural_fit"
-            ]
+            "enum": ["skills", "experience", "education", "cultural_fit"]
           },
           "score": {
             "type": "number"
@@ -5623,11 +5233,7 @@
           },
           "band": {
             "type": "string",
-            "enum": [
-              "strong",
-              "partial",
-              "limited"
-            ]
+            "enum": ["strong", "partial", "limited"]
           },
           "components": {
             "type": "array",
@@ -5707,11 +5313,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "id",
-          "fullName",
-          "email"
-        ]
+        "required": ["id", "fullName", "email"]
       },
       "ApplicationCompanyDto": {
         "type": "object",
@@ -5723,10 +5325,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "name"
-        ]
+        "required": ["id", "name"]
       },
       "ApplicationJobDto": {
         "type": "object",
@@ -5751,13 +5350,7 @@
             "$ref": "#/components/schemas/ApplicationCompanyDto"
           }
         },
-        "required": [
-          "id",
-          "title",
-          "employmentType",
-          "workMode",
-          "company"
-        ]
+        "required": ["id", "title", "employmentType", "workMode", "company"]
       },
       "ApplicationDto": {
         "type": "object",
@@ -5846,9 +5439,7 @@
             "$ref": "#/components/schemas/ApplicationDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "ApplicationListEnvelopeDto": {
         "type": "object",
@@ -5860,9 +5451,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "RecruiterStatsResultDto": {
         "type": "object",
@@ -5920,9 +5509,7 @@
             "$ref": "#/components/schemas/RecruiterStatsResultDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "RecruiterAnalyticsKpisDto": {
         "type": "object",
@@ -5966,13 +5553,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "jobId",
-          "title",
-          "status",
-          "applicationCount",
-          "avgScore"
-        ]
+        "required": ["jobId", "title", "status", "applicationCount", "avgScore"]
       },
       "RecruiterAnalyticsStatusBreakdownDto": {
         "type": "object",
@@ -5984,10 +5565,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "status",
-          "count"
-        ]
+        "required": ["status", "count"]
       },
       "RecruiterAnalyticsResultDto": {
         "type": "object",
@@ -6008,11 +5586,7 @@
             }
           }
         },
-        "required": [
-          "kpis",
-          "topJobs",
-          "applicationsByStatus"
-        ]
+        "required": ["kpis", "topJobs", "applicationsByStatus"]
       },
       "RecruiterAnalyticsEnvelopeDto": {
         "type": "object",
@@ -6021,9 +5595,7 @@
             "$ref": "#/components/schemas/RecruiterAnalyticsResultDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "ShortlistListEnvelopeDto": {
         "type": "object",
@@ -6038,10 +5610,7 @@
             "$ref": "#/components/schemas/PaginationMetaDto"
           }
         },
-        "required": [
-          "data",
-          "meta"
-        ]
+        "required": ["data", "meta"]
       },
       "UpdateApplicationStatusDto": {
         "type": "object",
@@ -6064,9 +5633,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "newStatus"
-        ]
+        "required": ["newStatus"]
       },
       "UpdateApplicationNotesDto": {
         "type": "object",
@@ -6077,9 +5644,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "notes"
-        ]
+        "required": ["notes"]
       },
       "SignedDownloadPayloadDto": {
         "type": "object",
@@ -6091,10 +5656,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "signedUrl",
-          "expiresAt"
-        ]
+        "required": ["signedUrl", "expiresAt"]
       },
       "SignedDownloadEnvelopeDto": {
         "type": "object",
@@ -6103,9 +5665,7 @@
             "$ref": "#/components/schemas/SignedDownloadPayloadDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "ScheduleInterviewDto": {
         "type": "object",
@@ -6124,11 +5684,7 @@
           },
           "format": {
             "type": "string",
-            "enum": [
-              "phone",
-              "video",
-              "in-person"
-            ]
+            "enum": ["phone", "video", "in-person"]
           },
           "locationOrLink": {
             "type": "string",
@@ -6137,10 +5693,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "scheduledAt",
-          "format"
-        ]
+        "required": ["scheduledAt", "format"]
       },
       "InterviewDto": {
         "type": "object",
@@ -6162,11 +5715,7 @@
           },
           "format": {
             "type": "string",
-            "enum": [
-              "phone",
-              "video",
-              "in-person"
-            ]
+            "enum": ["phone", "video", "in-person"]
           },
           "locationOrLink": {
             "type": "object",
@@ -6174,12 +5723,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "scheduled",
-              "completed",
-              "cancelled",
-              "no-show"
-            ]
+            "enum": ["scheduled", "completed", "cancelled", "no-show"]
           },
           "feedback": {
             "type": "object",
@@ -6215,9 +5759,7 @@
             "$ref": "#/components/schemas/InterviewDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "InterviewListEnvelopeDto": {
         "type": "object",
@@ -6229,9 +5771,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "UpdateInterviewFeedbackDto": {
         "type": "object",
@@ -6250,26 +5790,17 @@
             "nullable": true
           }
         },
-        "required": [
-          "feedback"
-        ]
+        "required": ["feedback"]
       },
       "UpdateInterviewStatusDto": {
         "type": "object",
         "properties": {
           "newStatus": {
             "type": "string",
-            "enum": [
-              "scheduled",
-              "completed",
-              "cancelled",
-              "no-show"
-            ]
+            "enum": ["scheduled", "completed", "cancelled", "no-show"]
           }
         },
-        "required": [
-          "newStatus"
-        ]
+        "required": ["newStatus"]
       },
       "CreateOfferDto": {
         "type": "object",
@@ -6315,11 +5846,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "title",
-          "salary",
-          "startDate"
-        ]
+        "required": ["title", "salary", "startDate"]
       },
       "OfferDto": {
         "type": "object",
@@ -6359,13 +5886,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "pending",
-              "accepted",
-              "declined",
-              "expired",
-              "withdrawn"
-            ]
+            "enum": ["pending", "accepted", "declined", "expired", "withdrawn"]
           },
           "sentAt": {
             "type": "string"
@@ -6398,9 +5919,7 @@
             "$ref": "#/components/schemas/OfferDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "OfferListEnvelopeDto": {
         "type": "object",
@@ -6412,9 +5931,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "DeclineOfferDto": {
         "type": "object",
@@ -6440,31 +5957,20 @@
             "nullable": true
           }
         },
-        "required": [
-          "label",
-          "value",
-          "trend"
-        ]
+        "required": ["label", "value", "trend"]
       },
       "ScoreBandHistogramEntryDto": {
         "type": "object",
         "properties": {
           "band": {
             "type": "string",
-            "enum": [
-              "strong",
-              "partial",
-              "limited"
-            ]
+            "enum": ["strong", "partial", "limited"]
           },
           "count": {
             "type": "number"
           }
         },
-        "required": [
-          "band",
-          "count"
-        ]
+        "required": ["band", "count"]
       },
       "BiasCategoryBreakdownDto": {
         "type": "object",
@@ -6483,10 +5989,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "category",
-          "count"
-        ]
+        "required": ["category", "count"]
       },
       "RecentAuditEntryDto": {
         "type": "object",
@@ -6504,12 +6007,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "action",
-          "actorType",
-          "entityType",
-          "createdAt"
-        ]
+        "required": ["action", "actorType", "entityType", "createdAt"]
       },
       "AdminStatsOverviewDto": {
         "type": "object",
@@ -6570,9 +6068,7 @@
             "$ref": "#/components/schemas/AdminStatsOverviewDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "AdminUserDto": {
         "type": "object",
@@ -6588,19 +6084,11 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "candidate",
-              "recruiter",
-              "admin"
-            ]
+            "enum": ["candidate", "recruiter", "admin"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "suspended",
-              "deleted"
-            ]
+            "enum": ["active", "suspended", "deleted"]
           },
           "phone": {
             "type": "string",
@@ -6647,12 +6135,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages"
-        ]
+        "required": ["page", "limit", "total", "totalPages"]
       },
       "AdminUserListEnvelopeDto": {
         "type": "object",
@@ -6667,10 +6150,7 @@
             "$ref": "#/components/schemas/AdminUserListMetaDto"
           }
         },
-        "required": [
-          "data",
-          "meta"
-        ]
+        "required": ["data", "meta"]
       },
       "AdminUserDetailDto": {
         "type": "object",
@@ -6686,19 +6166,11 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "candidate",
-              "recruiter",
-              "admin"
-            ]
+            "enum": ["candidate", "recruiter", "admin"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "suspended",
-              "deleted"
-            ]
+            "enum": ["active", "suspended", "deleted"]
           },
           "phone": {
             "type": "string",
@@ -6740,9 +6212,7 @@
             "$ref": "#/components/schemas/AdminUserDetailDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "SuspendUserDto": {
         "type": "object",
@@ -6753,25 +6223,17 @@
             "maxLength": 1000
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "ChangeUserRoleDto": {
         "type": "object",
         "properties": {
           "newRole": {
             "type": "string",
-            "enum": [
-              "candidate",
-              "recruiter",
-              "admin"
-            ]
+            "enum": ["candidate", "recruiter", "admin"]
           }
         },
-        "required": [
-          "newRole"
-        ]
+        "required": ["newRole"]
       },
       "ForcePasswordResetDataDto": {
         "type": "object",
@@ -6786,11 +6248,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "resetUrl",
-          "expiresAt",
-          "emailSent"
-        ]
+        "required": ["resetUrl", "expiresAt", "emailSent"]
       },
       "ForcePasswordResetResponseDto": {
         "type": "object",
@@ -6799,9 +6257,7 @@
             "$ref": "#/components/schemas/ForcePasswordResetDataDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "AdminJobRecruiterDto": {
         "type": "object",
@@ -6816,11 +6272,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "fullName",
-          "email"
-        ]
+        "required": ["id", "fullName", "email"]
       },
       "AdminJobCompanyDto": {
         "type": "object",
@@ -6832,10 +6284,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "name"
-        ]
+        "required": ["id", "name"]
       },
       "AdminJobDto": {
         "type": "object",
@@ -6852,12 +6301,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "draft",
-              "published",
-              "archived",
-              "closed"
-            ]
+            "enum": ["draft", "published", "archived", "closed"]
           },
           "employmentType": {
             "type": "string"
@@ -6918,12 +6362,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages"
-        ]
+        "required": ["page", "limit", "total", "totalPages"]
       },
       "AdminJobListEnvelopeDto": {
         "type": "object",
@@ -6938,10 +6377,7 @@
             "$ref": "#/components/schemas/AdminJobListMetaDto"
           }
         },
-        "required": [
-          "data",
-          "meta"
-        ]
+        "required": ["data", "meta"]
       },
       "AdminJobBiasFlagDto": {
         "type": "object",
@@ -6961,11 +6397,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "flagged",
-              "overridden",
-              "resolved"
-            ]
+            "enum": ["flagged", "overridden", "resolved"]
           },
           "overrideReason": {
             "type": "string",
@@ -6979,13 +6411,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "term",
-          "category",
-          "status",
-          "createdAt"
-        ]
+        "required": ["id", "term", "category", "status", "createdAt"]
       },
       "AdminJobDetailDto": {
         "type": "object",
@@ -7002,12 +6428,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "draft",
-              "published",
-              "archived",
-              "closed"
-            ]
+            "enum": ["draft", "published", "archived", "closed"]
           },
           "employmentType": {
             "type": "string"
@@ -7081,9 +6502,7 @@
             "$ref": "#/components/schemas/AdminJobDetailDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "AdminApplicationCandidateSummaryDto": {
         "type": "object",
@@ -7098,11 +6517,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "fullName",
-          "email"
-        ]
+        "required": ["id", "fullName", "email"]
       },
       "AdminApplicationJobSummaryDto": {
         "type": "object",
@@ -7120,12 +6535,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "title",
-          "companyName",
-          "recruiterName"
-        ]
+        "required": ["id", "title", "companyName", "recruiterName"]
       },
       "AdminApplicationListRowDto": {
         "type": "object",
@@ -7161,11 +6571,7 @@
           "band": {
             "type": "string",
             "nullable": true,
-            "enum": [
-              "strong",
-              "partial",
-              "limited"
-            ]
+            "enum": ["strong", "partial", "limited"]
           },
           "hasRedactions": {
             "type": "boolean"
@@ -7196,12 +6602,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages"
-        ]
+        "required": ["page", "limit", "total", "totalPages"]
       },
       "AdminApplicationListEnvelopeDto": {
         "type": "object",
@@ -7216,10 +6617,7 @@
             "$ref": "#/components/schemas/AdminApplicationListMetaDto"
           }
         },
-        "required": [
-          "data",
-          "meta"
-        ]
+        "required": ["data", "meta"]
       },
       "AdminApplicationCandidateDetailDto": {
         "type": "object",
@@ -7242,11 +6640,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "id",
-          "fullName",
-          "email"
-        ]
+        "required": ["id", "fullName", "email"]
       },
       "AdminApplicationJobRecruiterDto": {
         "type": "object",
@@ -7261,11 +6655,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "fullName",
-          "email"
-        ]
+        "required": ["id", "fullName", "email"]
       },
       "AdminApplicationJobCompanyDto": {
         "type": "object",
@@ -7277,10 +6667,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "name"
-        ]
+        "required": ["id", "name"]
       },
       "AdminApplicationJobDetailDto": {
         "type": "object",
@@ -7336,21 +6723,14 @@
           },
           "relevance": {
             "type": "string",
-            "enum": [
-              "positive",
-              "negative",
-              "neutral"
-            ]
+            "enum": ["positive", "negative", "neutral"]
           },
           "contributionPoints": {
             "type": "number",
             "nullable": true
           }
         },
-        "required": [
-          "excerpt",
-          "relevance"
-        ]
+        "required": ["excerpt", "relevance"]
       },
       "AdminScoreComponentDto": {
         "type": "object",
@@ -7397,11 +6777,7 @@
           },
           "band": {
             "type": "string",
-            "enum": [
-              "strong",
-              "partial",
-              "limited"
-            ]
+            "enum": ["strong", "partial", "limited"]
           },
           "components": {
             "type": "array",
@@ -7479,11 +6855,7 @@
           },
           "parseStatus": {
             "type": "string",
-            "enum": [
-              "pending",
-              "parsed",
-              "failed"
-            ]
+            "enum": ["pending", "parsed", "failed"]
           },
           "parsedData": {
             "type": "object",
@@ -7493,12 +6865,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "filename",
-          "parseStatus",
-          "uploadedAt"
-        ]
+        "required": ["id", "filename", "parseStatus", "uploadedAt"]
       },
       "AdminAuditEntryDto": {
         "type": "object",
@@ -7511,11 +6878,7 @@
           },
           "actorType": {
             "type": "string",
-            "enum": [
-              "user",
-              "ai",
-              "system"
-            ]
+            "enum": ["user", "ai", "system"]
           },
           "actorId": {
             "type": "object",
@@ -7618,9 +6981,7 @@
             "$ref": "#/components/schemas/AdminApplicationDetailDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "MatchWeightsDto": {
         "type": "object",
@@ -7638,34 +6999,29 @@
             "type": "number"
           }
         },
-        "required": [
-          "skills",
-          "experience",
-          "education",
-          "cultural_fit"
-        ]
+        "required": ["skills", "experience", "education", "cultural_fit"]
       },
       "ProfileWeightsDto": {
         "type": "object",
         "properties": {
-          "resume_quality": {
+          "completeness": {
             "type": "number"
           },
-          "skills_breadth": {
+          "skill_depth": {
             "type": "number"
           },
-          "experience_depth": {
+          "experience_clarity": {
             "type": "number"
           },
-          "preferences_clarity": {
+          "education_quality": {
             "type": "number"
           }
         },
         "required": [
-          "resume_quality",
-          "skills_breadth",
-          "experience_depth",
-          "preferences_clarity"
+          "completeness",
+          "skill_depth",
+          "experience_clarity",
+          "education_quality"
         ]
       },
       "BandThresholdsDto": {
@@ -7678,10 +7034,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "strong",
-          "partial"
-        ]
+        "required": ["strong", "partial"]
       },
       "ScoringConfigUpdatedByDto": {
         "type": "object",
@@ -7696,11 +7049,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "fullName",
-          "email"
-        ]
+        "required": ["id", "fullName", "email"]
       },
       "ScoringConfigDto": {
         "type": "object",
@@ -7769,9 +7118,7 @@
             "$ref": "#/components/schemas/ScoringConfigDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "UpdateScoringConfigDto": {
         "type": "object",
@@ -7808,39 +7155,34 @@
                 "exclusiveMaximum": false
               }
             },
-            "required": [
-              "skills",
-              "experience",
-              "education",
-              "cultural_fit"
-            ],
+            "required": ["skills", "experience", "education", "cultural_fit"],
             "x-nestjs_zod-self-required": false
           },
           "profileWeights": {
             "type": "object",
             "properties": {
-              "resume_quality": {
+              "completeness": {
                 "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": false,
                 "maximum": 100,
                 "exclusiveMaximum": false
               },
-              "skills_breadth": {
+              "skill_depth": {
                 "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": false,
                 "maximum": 100,
                 "exclusiveMaximum": false
               },
-              "experience_depth": {
+              "experience_clarity": {
                 "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": false,
                 "maximum": 100,
                 "exclusiveMaximum": false
               },
-              "preferences_clarity": {
+              "education_quality": {
                 "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": false,
@@ -7849,10 +7191,10 @@
               }
             },
             "required": [
-              "resume_quality",
-              "skills_breadth",
-              "experience_depth",
-              "preferences_clarity"
+              "completeness",
+              "skill_depth",
+              "experience_clarity",
+              "education_quality"
             ],
             "x-nestjs_zod-self-required": false
           },
@@ -7874,10 +7216,7 @@
                 "exclusiveMaximum": false
               }
             },
-            "required": [
-              "strong",
-              "partial"
-            ],
+            "required": ["strong", "partial"],
             "x-nestjs_zod-self-required": false
           },
           "biasCategoriesEnabled": {
@@ -7980,10 +7319,7 @@
                     "exclusiveMaximum": false
                   }
                 },
-                "required": [
-                  "strong",
-                  "partial"
-                ]
+                "required": ["strong", "partial"]
               }
             },
             "x-nestjs_zod-self-required": true
@@ -7997,9 +7333,7 @@
             "default": 100
           }
         },
-        "required": [
-          "proposedConfig"
-        ]
+        "required": ["proposedConfig"]
       },
       "BandDistributionDto": {
         "type": "object",
@@ -8017,12 +7351,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "strong",
-          "partial",
-          "limited",
-          "avgScore"
-        ]
+        "required": ["strong", "partial", "limited", "avgScore"]
       },
       "TopMoverDto": {
         "type": "object",
@@ -8081,13 +7410,7 @@
             }
           }
         },
-        "required": [
-          "sampledCount",
-          "current",
-          "proposed",
-          "delta",
-          "examples"
-        ]
+        "required": ["sampledCount", "current", "proposed", "delta", "examples"]
       },
       "PreviewImpactEnvelopeDto": {
         "type": "object",
@@ -8096,9 +7419,7 @@
             "$ref": "#/components/schemas/PreviewImpactDataDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "AuditActorDto": {
         "type": "object",
@@ -8117,11 +7438,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "id",
-          "fullName",
-          "email"
-        ]
+        "required": ["id", "fullName", "email"]
       },
       "AuditEntryRowDto": {
         "type": "object",
@@ -8134,11 +7451,7 @@
           },
           "actorType": {
             "type": "string",
-            "enum": [
-              "user",
-              "ai",
-              "system"
-            ]
+            "enum": ["user", "ai", "system"]
           },
           "actor": {
             "nullable": true,
@@ -8187,12 +7500,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages"
-        ]
+        "required": ["page", "limit", "total", "totalPages"]
       },
       "AuditListEnvelopeDto": {
         "type": "object",
@@ -8207,10 +7515,7 @@
             "$ref": "#/components/schemas/AuditListMetaDto"
           }
         },
-        "required": [
-          "data",
-          "meta"
-        ]
+        "required": ["data", "meta"]
       },
       "AuditEntryDetailDto": {
         "type": "object",
@@ -8223,11 +7528,7 @@
           },
           "actorType": {
             "type": "string",
-            "enum": [
-              "user",
-              "ai",
-              "system"
-            ]
+            "enum": ["user", "ai", "system"]
           },
           "actor": {
             "nullable": true,
@@ -8279,9 +7580,7 @@
             "$ref": "#/components/schemas/AuditEntryDetailDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "AnalyticsRangeDto": {
         "type": "object",
@@ -8293,10 +7592,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "from",
-          "to"
-        ]
+        "required": ["from", "to"]
       },
       "AnalyticsKpisDto": {
         "type": "object",
@@ -8345,12 +7641,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "date",
-          "candidate",
-          "recruiter",
-          "admin"
-        ]
+        "required": ["date", "candidate", "recruiter", "admin"]
       },
       "JobsOverTimePointDto": {
         "type": "object",
@@ -8368,12 +7659,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "date",
-          "draft",
-          "published",
-          "archived"
-        ]
+        "required": ["date", "draft", "published", "archived"]
       },
       "ApplicationsByStatusPointDto": {
         "type": "object",
@@ -8424,10 +7710,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "bucket",
-          "count"
-        ]
+        "required": ["bucket", "count"]
       },
       "AiProcessingPointDto": {
         "type": "object",
@@ -8442,11 +7725,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "date",
-          "avgParseMs",
-          "avgScoreMs"
-        ]
+        "required": ["date", "avgParseMs", "avgScoreMs"]
       },
       "TopRecruiterDto": {
         "type": "object",
@@ -8464,12 +7743,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "recruiterId",
-          "fullName",
-          "jobCount",
-          "applicationCount"
-        ]
+        "required": ["recruiterId", "fullName", "jobCount", "applicationCount"]
       },
       "AnalyticsChartsDto": {
         "type": "object",
@@ -8533,11 +7807,7 @@
             "$ref": "#/components/schemas/AnalyticsChartsDto"
           }
         },
-        "required": [
-          "range",
-          "kpis",
-          "charts"
-        ]
+        "required": ["range", "kpis", "charts"]
       },
       "AnalyticsBundleEnvelopeDto": {
         "type": "object",
@@ -8546,9 +7816,7 @@
             "$ref": "#/components/schemas/AnalyticsBundleDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "BiasMonitorRangeDto": {
         "type": "object",
@@ -8560,10 +7828,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "from",
-          "to"
-        ]
+        "required": ["from", "to"]
       },
       "BiasMonitorKpisDto": {
         "type": "object",
@@ -8608,11 +7873,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "category",
-          "count",
-          "pct"
-        ]
+        "required": ["category", "count", "pct"]
       },
       "TopFlaggedTermDto": {
         "type": "object",
@@ -8630,22 +7891,14 @@
             }
           }
         },
-        "required": [
-          "term",
-          "count",
-          "exampleJobIds"
-        ]
+        "required": ["term", "count", "exampleJobIds"]
       },
       "ScoreBandSliceDto": {
         "type": "object",
         "properties": {
           "band": {
             "type": "string",
-            "enum": [
-              "strong",
-              "partial",
-              "limited"
-            ]
+            "enum": ["strong", "partial", "limited"]
           },
           "count": {
             "type": "number"
@@ -8654,11 +7907,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "band",
-          "count",
-          "pct"
-        ]
+        "required": ["band", "count", "pct"]
       },
       "OverrideRecruiterDto": {
         "type": "object",
@@ -8670,10 +7919,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "fullName"
-        ]
+        "required": ["id", "fullName"]
       },
       "RecentOverrideDto": {
         "type": "object",
@@ -8731,11 +7977,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "flags",
-          "scores",
-          "jobs"
-        ]
+        "required": ["flags", "scores", "jobs"]
       },
       "BiasMonitorBundleDto": {
         "type": "object",
@@ -8791,9 +8033,7 @@
             "$ref": "#/components/schemas/BiasMonitorBundleDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "EnqueueRescoreBatchDto": {
         "type": "object",
@@ -8815,9 +8055,7 @@
             "type": "object"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "RescoreBatchResultDto": {
         "type": "object",
@@ -8884,11 +8122,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "queueJobId",
-          "state",
-          "progress"
-        ]
+        "required": ["queueJobId", "state", "progress"]
       },
       "QueueJobStatusResponseDto": {
         "type": "object",
@@ -8897,9 +8131,7 @@
             "$ref": "#/components/schemas/QueueJobStatusDataDto"
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "SignupCandidateDto": {
         "type": "object",
@@ -8927,12 +8159,7 @@
             "maxLength": 128
           }
         },
-        "required": [
-          "fullName",
-          "email",
-          "phone",
-          "password"
-        ]
+        "required": ["fullName", "email", "phone", "password"]
       },
       "AuthMessageDto": {
         "type": "object",
@@ -8941,9 +8168,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "message"
-        ]
+        "required": ["message"]
       },
       "SignupRecruiterDto": {
         "type": "object",
@@ -8976,13 +8201,7 @@
             "maxLength": 128
           }
         },
-        "required": [
-          "fullName",
-          "email",
-          "phone",
-          "companyName",
-          "password"
-        ]
+        "required": ["fullName", "email", "phone", "companyName", "password"]
       },
       "VerifyEmailDto": {
         "type": "object",
@@ -8992,19 +8211,14 @@
             "minLength": 1
           }
         },
-        "required": [
-          "token"
-        ]
+        "required": ["token"]
       },
       "VerifyEmailResponseDto": {
         "type": "object",
         "properties": {
           "role": {
             "type": "string",
-            "enum": [
-              "candidate",
-              "recruiter"
-            ]
+            "enum": ["candidate", "recruiter"]
           },
           "email": {
             "type": "string"
@@ -9014,11 +8228,7 @@
             "description": "One-time Supabase magic-link token_hash. Frontend calls supabase.auth.verifyOtp({ token_hash, type: 'magiclink' }) to establish a session."
           }
         },
-        "required": [
-          "role",
-          "email",
-          "sessionTokenHash"
-        ]
+        "required": ["role", "email", "sessionTokenHash"]
       },
       "ResendVerificationDto": {
         "type": "object",
@@ -9030,9 +8240,7 @@
             "maxLength": 255
           }
         },
-        "required": [
-          "email"
-        ]
+        "required": ["email"]
       },
       "ForgotPasswordDto": {
         "type": "object",
@@ -9044,9 +8252,7 @@
             "maxLength": 255
           }
         },
-        "required": [
-          "email"
-        ]
+        "required": ["email"]
       },
       "ResetPasswordDto": {
         "type": "object",
@@ -9061,10 +8267,7 @@
             "maxLength": 128
           }
         },
-        "required": [
-          "token",
-          "password"
-        ]
+        "required": ["token", "password"]
       }
     }
   }

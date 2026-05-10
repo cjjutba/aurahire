@@ -5,7 +5,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toastApiError } from "@/lib/toast";
 
-import { recruiterCompanySchema, type RecruiterCompany } from "@aurahire/shared";
+import {
+  recruiterCompanySchema,
+  type RecruiterCompany,
+} from "@aurahire/shared";
 import { useRecruiterProfilesControllerUpdateCompanyV1 } from "@aurahire/shared";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
@@ -67,7 +70,7 @@ export function RecruiterCompanyForm({ defaults }: CompanyFormProps) {
           name="companyName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company Name</FormLabel>
+              <FormLabel>Company Name *</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>

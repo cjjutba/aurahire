@@ -1,3 +1,4 @@
+export * from "./auth/verify-supabase-jwt";
 export * from "./decorators";
 export * from "./guards";
 export { HttpExceptionFilter } from "./filters/http-exception.filter";

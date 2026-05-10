@@ -8,6 +8,7 @@ import {
 } from "@aurahire/db";
 
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
+import type { ApplicationsTx } from "../applications/applications.repository";
 
 @Injectable()
 export class OffersRepository {
@@ -36,7 +37,9 @@ export class OffersRepository {
       .orderBy(desc(offersTable.sentAt));
   }
 
-  async findPendingByApplicationId(applicationId: string): Promise<Offer | null> {
+  async findPendingByApplicationId(
+    applicationId: string,
+  ): Promise<Offer | null> {
     const [row] = await this.db
       .select()
       .from(offersTable)
@@ -50,18 +53,47 @@ export class OffersRepository {
     return row ?? null;
   }
 
+  /**
+   * Most recent offer (by sentAt DESC) for an application — or null if no
+   * offer has ever been sent. Used by ApplicationsService to enforce that
+   * a "hired" transition requires an accepted offer. When invoked inside
+   * an application-row transaction (e.g., hire()), pass `tx` so the read
+   * sees the locked row's tx-scoped snapshot.
+   */
+  async findLatestByApplicationId(
+    applicationId: string,
+    tx?: ApplicationsTx,
+  ): Promise<Offer | null> {
+    const exec = tx ?? this.db;
+    const [row] = await exec
+      .select()
+      .from(offersTable)
+      .where(eq(offersTable.applicationId, applicationId))
+      .orderBy(desc(offersTable.sentAt))
+      .limit(1);
+    return row ?? null;
+  }
+
   async findByCandidateId(candidateId: string): Promise<Offer[]> {
     const rows = await this.db
       .select({ offer: offersTable })
       .from(offersTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, offersTable.applicationId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, offersTable.applicationId),
+      )
       .where(eq(applicationsTable.candidateId, candidateId))
       .orderBy(desc(offersTable.sentAt));
     return rows.map((r) => r.offer);
   }
 
-  async update(id: string, patch: Partial<NewOffer>): Promise<Offer> {
-    const [row] = await this.db
+  async update(
+    id: string,
+    patch: Partial<NewOffer>,
+    tx?: ApplicationsTx,
+  ): Promise<Offer> {
+    const exec = tx ?? this.db;
+    const [row] = await exec
       .update(offersTable)
       .set({ ...patch, updatedAt: new Date() })
       .where(eq(offersTable.id, id))

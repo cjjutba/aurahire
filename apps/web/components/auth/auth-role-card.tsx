@@ -8,7 +8,12 @@ interface AuthRoleCardProps {
   description: string;
 }
 
-export function AuthRoleCard({ href, icon: Icon, title, description }: AuthRoleCardProps) {
+export function AuthRoleCard({
+  href,
+  icon: Icon,
+  title,
+  description,
+}: AuthRoleCardProps) {
   return (
     <Link
       href={href}
@@ -18,8 +23,12 @@ export function AuthRoleCard({ href, icon: Icon, title, description }: AuthRoleC
         <Icon className="size-4" />
       </span>
       <span className="flex-1">
-        <span className="block text-sm font-semibold text-[var(--color-ink)]">{title}</span>
-        <span className="mt-0.5 block text-xs text-[var(--color-body)]">{description}</span>
+        <span className="block text-sm font-semibold text-[var(--color-ink)]">
+          {title}
+        </span>
+        <span className="mt-0.5 block text-xs text-[var(--color-body)]">
+          {description}
+        </span>
       </span>
       <ChevronRight className="size-4 text-[var(--color-muted)]" />
     </Link>

@@ -18,6 +18,7 @@ interface Props {
   jobTitle: string;
   companyName: string;
   applicationUrl: string;
+  company?: { name: string; logoUrl: string | null } | null;
 }
 
 export function OfferExpiredEmail({
@@ -25,6 +26,7 @@ export function OfferExpiredEmail({
   jobTitle,
   companyName,
   applicationUrl,
+  company,
 }: Props): React.ReactElement {
   return (
     <Html>
@@ -46,16 +48,22 @@ export function OfferExpiredEmail({
             margin: "0 auto",
           }}
         >
-          <EmailBrandHeader />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <EmailBrandHeader company={company} />
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             Offer Expired
           </Heading>
           <Section>
-            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>Hi {candidateName},</Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-              Your offer for <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong>
-              {" "}at {companyName} has expired without a response. If you'd still like
-              to discuss the opportunity, please reach out to the recruiter directly.
+              Hi {candidateName},
+            </Text>
+            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
+              Your offer for{" "}
+              <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong> at{" "}
+              {companyName} has expired without a response. If you'd still like
+              to discuss the opportunity, please reach out to the recruiter
+              directly.
             </Text>
           </Section>
           <Section style={{ marginTop: "24px" }}>

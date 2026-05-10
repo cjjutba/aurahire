@@ -10,7 +10,11 @@ export class CandidateSubprofileDto {
 }
 
 export class RecruiterSubprofileDto {
-  @ApiProperty() companyId!: string;
+  // Phase 2b: companyId is no longer a recruiter-profile column. The field
+  // is sourced from profiles.last_active_company_id (the user's active
+  // company pointer) and is nullable for recruiters who have left every
+  // company they belonged to.
+  @ApiProperty({ nullable: true }) companyId!: string | null;
   @ApiProperty({ nullable: true }) jobTitle!: string | null;
   @ApiProperty({ nullable: true }) department!: string | null;
   @ApiProperty() profileCompleted!: boolean;
@@ -29,10 +33,14 @@ export class ProfileResponseDto {
   @ApiProperty() email!: string;
   @ApiProperty() fullName!: string;
   @ApiProperty({ enum: ["candidate", "recruiter", "admin"] }) role!: UserRole;
-  @ApiProperty({ enum: ["active", "suspended", "deleted"] }) status!: UserStatus;
+  @ApiProperty({ enum: ["active", "suspended", "deleted"] })
+  status!: UserStatus;
   @ApiProperty({ nullable: true }) phone!: string | null;
   @ApiProperty({ nullable: true }) avatarUrl!: string | null;
   @ApiProperty() profileCompleted!: boolean;
+  // Phase 3: surfaced so the web app can seed ActiveCompanyContext with the
+  // server-rendered initial value before TanStack Query rehydrates client-side.
+  @ApiProperty({ nullable: true }) lastActiveCompanyId!: string | null;
   @ApiProperty({ type: () => CandidateSubprofileDto, nullable: true })
   candidateProfile!: CandidateSubprofileDto | null;
   @ApiProperty({ type: () => RecruiterSubprofileDto, nullable: true })

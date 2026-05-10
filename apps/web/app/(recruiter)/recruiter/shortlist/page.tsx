@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 
 import { getCurrentSession } from "@/lib/auth/session";
 import { EmptyState } from "@/components/empty-state";
+import { ClickableRow } from "@/components/ui/clickable-row";
 
 import { ShortlistToolbarClient } from "./_shortlist-toolbar-client";
 import { ShortlistPagination } from "./_shortlist-pagination";
@@ -49,13 +50,41 @@ interface ShortlistEnvelope {
 type AppStatusEntry = { label: string; dot: string; text: string };
 
 const APP_STATUS: Record<string, AppStatusEntry> = {
-  applied:   { label: "Applied",   dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  screening: { label: "Screening", dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  interview: { label: "Interview", dot: "bg-[var(--color-status-info)]",    text: "text-[var(--color-status-info)]" },
-  offer:     { label: "Offer",     dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  hired:     { label: "Hired",     dot: "bg-[var(--color-status-success)]", text: "text-[var(--color-status-success)]" },
-  rejected:  { label: "Rejected",  dot: "bg-[var(--color-status-danger)]",  text: "text-[var(--color-status-danger)]" },
-  withdrawn: { label: "Withdrawn", dot: "bg-[var(--color-muted)]",          text: "text-[var(--color-muted)]" },
+  applied: {
+    label: "Applied",
+    dot: "bg-[var(--color-status-info)]",
+    text: "text-[var(--color-status-info)]",
+  },
+  screening: {
+    label: "Screening",
+    dot: "bg-[var(--color-status-info)]",
+    text: "text-[var(--color-status-info)]",
+  },
+  interview: {
+    label: "Interview",
+    dot: "bg-[var(--color-status-info)]",
+    text: "text-[var(--color-status-info)]",
+  },
+  offer: {
+    label: "Offer",
+    dot: "bg-[var(--color-status-success)]",
+    text: "text-[var(--color-status-success)]",
+  },
+  hired: {
+    label: "Hired",
+    dot: "bg-[var(--color-status-success)]",
+    text: "text-[var(--color-status-success)]",
+  },
+  rejected: {
+    label: "Rejected",
+    dot: "bg-[var(--color-status-danger)]",
+    text: "text-[var(--color-status-danger)]",
+  },
+  withdrawn: {
+    label: "Withdrawn",
+    dot: "bg-[var(--color-muted)]",
+    text: "text-[var(--color-muted)]",
+  },
 };
 
 const DEFAULT_APP_STATUS: AppStatusEntry = {
@@ -104,7 +133,9 @@ interface PageProps {
   }>;
 }
 
-export default async function RecruiterShortlistPage({ searchParams }: PageProps) {
+export default async function RecruiterShortlistPage({
+  searchParams,
+}: PageProps) {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
@@ -241,9 +272,11 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
                 const candidateName = row.candidate?.fullName ?? "Unknown";
                 const candidateInitials = initials(candidateName);
                 return (
-                  <tr
+                  <ClickableRow
                     key={row.id}
-                    className={`border-b border-[var(--color-hairline-soft)] hover:bg-[var(--color-surface-soft)] ${
+                    href={`/recruiter/applications/${row.id}`}
+                    ariaLabel={`Open shortlisted application from ${candidateName}`}
+                    className={`border-b border-[var(--color-hairline-soft)] ${
                       idx === rows.length - 1 ? "border-b-0" : ""
                     }`}
                   >
@@ -257,12 +290,9 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
                           {candidateInitials}
                         </div>
                         <div className="min-w-0">
-                          <Link
-                            href={`/recruiter/applications/${row.id}`}
-                            className="block truncate font-medium text-[var(--color-ink)] hover:text-[var(--color-primary)]"
-                          >
+                          <span className="block truncate font-medium text-[var(--color-ink)]">
                             {candidateName}
-                          </Link>
+                          </span>
                           {row.candidate?.email && (
                             <p className="truncate text-xs text-[var(--color-muted)]">
                               {row.candidate.email}
@@ -292,14 +322,15 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
                     {/* Score */}
                     <td className="px-4 py-3 text-right">
                       {row.matchScore ? (
-                        <Link
-                          href={`/recruiter/applications/${row.id}`}
-                          className={`font-mono text-sm font-medium hover:underline ${scoreBandColor(row.matchScore.band)}`}
+                        <span
+                          className={`font-mono text-sm font-medium ${scoreBandColor(row.matchScore.band)}`}
                         >
                           {row.matchScore.overallScore}/100
-                        </Link>
+                        </span>
                       ) : (
-                        <span className="text-[var(--color-muted-soft)]">—</span>
+                        <span className="text-[var(--color-muted-soft)]">
+                          —
+                        </span>
                       )}
                     </td>
 
@@ -322,7 +353,7 @@ export default async function RecruiterShortlistPage({ searchParams }: PageProps
                         status={row.status}
                       />
                     </td>
-                  </tr>
+                  </ClickableRow>
                 );
               })}
             </tbody>

@@ -13,7 +13,10 @@ export default function LoginPage() {
       footer={
         <span>
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-[var(--color-primary)] hover:underline">
+          <Link
+            href="/register"
+            className="text-[var(--color-primary)] hover:underline"
+          >
             Sign up
           </Link>
         </span>

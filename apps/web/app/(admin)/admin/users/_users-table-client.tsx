@@ -6,12 +6,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   ActionModalsClient,
   type PendingAction,
 } from "./_action-modals-client";
+import { UsersPagination } from "./_users-pagination";
 
 interface UserRow {
   id: string;
@@ -28,134 +30,132 @@ interface Props {
   rows: UserRow[];
   currentUserId: string | null;
   meta: { page: number; limit: number; total: number; totalPages: number };
+  searchParams: { role?: string; status?: string; q?: string };
 }
 
-const ROLE_BG: Record<string, string> = {
+const ROLE_BADGE: Record<string, string> = {
   candidate: "bg-[var(--color-primary-soft)] text-[var(--color-primary)]",
   recruiter: "bg-[var(--color-score-high-soft)] text-[var(--color-score-high)]",
   admin: "bg-[var(--color-score-mid-soft)] text-[var(--color-score-mid)]",
 };
 
-const STATUS_BG: Record<string, string> = {
-  active: "bg-[var(--color-score-high-soft)] text-[var(--color-score-high)]",
-  suspended: "bg-[var(--color-score-mid-soft)] text-[var(--color-score-mid)]",
-  deleted: "bg-[var(--color-surface-strong)] text-[var(--color-muted)]",
+const USER_STATUS: Record<
+  string,
+  { label: string; dot: string; text: string }
+> = {
+  active: {
+    label: "Active",
+    dot: "bg-[var(--color-status-success)]",
+    text: "text-[var(--color-status-success)]",
+  },
+  suspended: {
+    label: "Suspended",
+    dot: "bg-[var(--color-status-warning)]",
+    text: "text-[var(--color-status-warning)]",
+  },
+  deleted: {
+    label: "Deleted",
+    dot: "bg-[var(--color-muted)]",
+    text: "text-[var(--color-muted)]",
+  },
 };
 
-export function UsersTableClient({ rows, currentUserId, meta }: Props) {
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+const DEFAULT_USER_STATUS = USER_STATUS["active"]!;
+
+function getUserStatus(s: string) {
+  return USER_STATUS[s] ?? DEFAULT_USER_STATUS;
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export function UsersTableClient({
+  rows,
+  currentUserId,
+  meta,
+  searchParams,
+}: Props) {
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(
+    null,
+  );
 
   return (
     <>
-      <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)]">
-        <table className="min-w-full">
+      <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)]">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[var(--color-hairline)] text-left text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-              <th className="p-4">Name</th>
-              <th className="p-4">Email</th>
-              <th className="p-4">Role</th>
-              <th className="p-4">Status</th>
-              <th className="p-4">Created</th>
-              <th className="p-4 text-right">Actions</th>
+            <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-soft)]">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Name
+              </th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Email
+              </th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Role
+              </th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Status
+              </th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Created
+              </th>
+              <th className="w-10 px-2"></th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[var(--color-hairline-soft)]">
             {rows.map((u) => {
               const isSelf = u.id === currentUserId;
+              const status = getUserStatus(u.status);
+              const roleClass = ROLE_BADGE[u.role] ?? "";
               return (
                 <tr
                   key={u.id}
-                  className="border-b border-[var(--color-hairline-soft)] last:border-b-0"
+                  className="transition hover:bg-[var(--color-surface-soft)]"
                 >
-                  <td className="p-4 font-medium text-[var(--color-ink)]">
-                    {u.fullName}
+                  <td className="px-4 py-3">
+                    <span className="font-medium text-[var(--color-ink)]">
+                      {u.fullName}
+                    </span>
                     {isSelf && (
-                      <span className="ml-1 text-xs text-[var(--color-muted)]">
+                      <span className="ml-1.5 text-xs text-[var(--color-muted)]">
                         (you)
                       </span>
                     )}
                   </td>
-                  <td className="p-4 text-sm text-[var(--color-body)]">
+                  <td className="px-4 py-3 text-[var(--color-body)]">
                     {u.email}
                   </td>
-                  <td className="p-4">
+                  <td className="px-4 py-3">
                     <span
-                      className={`inline-flex items-center rounded-[var(--radius-pill)] px-2 py-0.5 text-xs font-semibold uppercase tracking-wider ${
-                        ROLE_BG[u.role] ?? ""
-                      }`}
+                      className={`inline-flex items-center rounded-[var(--radius-pill)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${roleClass}`}
                     >
                       {u.role}
                     </span>
                   </td>
-                  <td className="p-4">
+                  <td className="px-4 py-3">
                     <span
-                      className={`inline-flex items-center rounded-[var(--radius-pill)] px-2 py-0.5 text-xs font-semibold uppercase tracking-wider ${
-                        STATUS_BG[u.status] ?? ""
-                      }`}
+                      className={`inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${status.text}`}
                     >
-                      {u.status}
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+                        aria-hidden
+                      />
+                      {status.label}
                     </span>
                   </td>
-                  <td className="p-4 text-xs text-[var(--color-muted)]">
-                    {new Date(u.createdAt).toLocaleDateString()}
+                  <td className="px-4 py-3 text-[var(--color-muted)]">
+                    {formatDate(u.createdAt)}
                   </td>
-                  <td className="p-4 text-right">
-                    {!isSelf && u.status !== "deleted" && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <button className="rounded-[var(--radius-md)] p-1 hover:bg-[var(--color-surface-soft)]">
-                              <MoreHorizontal className="h-4 w-4 text-[var(--color-muted)]" />
-                            </button>
-                          }
-                        />
-                        <DropdownMenuContent align="end">
-                          {u.status === "active" && (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                setPendingAction({ kind: "suspend", user: u })
-                              }
-                            >
-                              Suspend
-                            </DropdownMenuItem>
-                          )}
-                          {u.status === "suspended" && (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                setPendingAction({ kind: "reactivate", user: u })
-                              }
-                            >
-                              Reactivate
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setPendingAction({ kind: "changeRole", user: u })
-                            }
-                          >
-                            Change Role
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setPendingAction({
-                                kind: "forcePasswordReset",
-                                user: u,
-                              })
-                            }
-                          >
-                            Force Password Reset
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() =>
-                              setPendingAction({ kind: "delete", user: u })
-                            }
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+                  <td className="px-2 py-3 text-right">
+                    {!isSelf && u.status !== "deleted" ? (
+                      <UserRowActions user={u} onAction={setPendingAction} />
+                    ) : null}
                   </td>
                 </tr>
               );
@@ -164,34 +164,67 @@ export function UsersTableClient({ rows, currentUserId, meta }: Props) {
         </table>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-[var(--color-muted)]">
-        <span>
-          Page {meta.page} of {meta.totalPages}
-        </span>
-        <div className="flex gap-2">
-          {meta.page > 1 && (
-            <a
-              href={`?page=${meta.page - 1}`}
-              className="rounded-[var(--radius-pill)] border border-[var(--color-hairline)] px-3 py-1"
-            >
-              ← Prev
-            </a>
-          )}
-          {meta.page < meta.totalPages && (
-            <a
-              href={`?page=${meta.page + 1}`}
-              className="rounded-[var(--radius-pill)] border border-[var(--color-hairline)] px-3 py-1"
-            >
-              Next →
-            </a>
-          )}
-        </div>
-      </div>
+      <UsersPagination meta={meta} searchParams={searchParams} />
 
       <ActionModalsClient
         action={pendingAction}
         onClose={() => setPendingAction(null)}
       />
     </>
+  );
+}
+
+function UserRowActions({
+  user,
+  onAction,
+}: {
+  user: UserRow;
+  onAction: (action: PendingAction) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            aria-label="User actions"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          >
+            <MoreHorizontal className="h-4 w-4" aria-hidden />
+          </button>
+        }
+      />
+      <DropdownMenuContent align="end" side="bottom">
+        {user.status === "active" && (
+          <DropdownMenuItem onClick={() => onAction({ kind: "suspend", user })}>
+            Suspend
+          </DropdownMenuItem>
+        )}
+        {user.status === "suspended" && (
+          <DropdownMenuItem
+            onClick={() => onAction({ kind: "reactivate", user })}
+          >
+            Reactivate
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          onClick={() => onAction({ kind: "changeRole", user })}
+        >
+          Change Role
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => onAction({ kind: "forcePasswordReset", user })}
+        >
+          Force Password Reset
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => onAction({ kind: "delete", user })}
+        >
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

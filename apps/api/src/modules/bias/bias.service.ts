@@ -12,6 +12,7 @@ import type { BiasFlag } from "@aurahire/db";
 
 import { AuditService } from "../../audit";
 import { DetectBiasService } from "../../ai/detect-bias.service";
+import { EventsService } from "../../realtime";
 import { JobsRepository } from "../jobs/jobs.repository";
 import { ScoringRepository } from "../scoring/scoring.repository";
 import { BiasRepository } from "./bias.repository";
@@ -39,6 +40,7 @@ export class BiasService {
     private readonly jobsRepo: JobsRepository,
     private readonly scoringRepo: ScoringRepository,
     private readonly audit: AuditService,
+    private readonly events: EventsService,
   ) {}
 
   // -----------------------------------------------------------------
@@ -90,6 +92,7 @@ export class BiasService {
 
   async scanJob(
     user: AuthUser,
+    companyId: string,
     jobId: string,
     requestMeta: RequestMeta = {},
   ): Promise<BiasFlagDto[]> {
@@ -101,8 +104,11 @@ export class BiasService {
     }
 
     const job = await this.jobsRepo.findById(jobId);
-    if (!job || job.recruiterId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+    if (!job || job.companyId !== companyId) {
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
 
     const customTerms = await this.loadCustomFlaggedTerms();
@@ -130,6 +136,19 @@ export class BiasService {
 
     const inserted = await this.biasRepo.insertMany(newRows);
 
+    for (const row of inserted) {
+      this.events.emitBiasFlagCreated({
+        flagId: row.id,
+        jobId: row.jobId,
+        term: row.term,
+        category: row.category,
+        createdAt:
+          row.createdAt instanceof Date
+            ? row.createdAt.toISOString()
+            : new Date(row.createdAt).toISOString(),
+      });
+    }
+
     const explanationByTerm = new Map(
       aiResult.flags.map((f) => [f.term.toLowerCase(), f.explanation]),
     );
@@ -140,6 +159,7 @@ export class BiasService {
       action: "job.bias_check_run",
       entityType: "job",
       entityId: jobId,
+      companyId,
       details: {
         flagCount: inserted.length,
         categories: inserted.map((r) => r.category),
@@ -161,6 +181,7 @@ export class BiasService {
 
   async override(
     user: AuthUser,
+    companyId: string,
     jobId: string,
     flagId: string,
     reason: string,
@@ -174,13 +195,19 @@ export class BiasService {
     }
 
     const job = await this.jobsRepo.findById(jobId);
-    if (!job || job.recruiterId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+    if (!job || job.companyId !== companyId) {
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
 
     const flag = await this.biasRepo.findById(flagId);
     if (!flag || flag.jobId !== jobId) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Flag not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Flag not found",
+      });
     }
 
     if (flag.status !== "flagged") {
@@ -198,6 +225,7 @@ export class BiasService {
       action: "bias_flag.overridden",
       entityType: "bias_flag",
       entityId: flagId,
+      companyId,
       details: {
         jobId,
         term: flag.term,
@@ -214,7 +242,11 @@ export class BiasService {
   // LIST
   // -----------------------------------------------------------------
 
-  async listForJob(user: AuthUser, jobId: string): Promise<BiasFlagDto[]> {
+  async listForJob(
+    user: AuthUser,
+    companyId: string | null,
+    jobId: string,
+  ): Promise<BiasFlagDto[]> {
     if (user.role !== "recruiter" && user.role !== "admin") {
       throw new ForbiddenException({
         code: "FORBIDDEN",
@@ -224,10 +256,18 @@ export class BiasService {
 
     const job = await this.jobsRepo.findById(jobId);
     if (!job) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
-    if (user.role === "recruiter" && job.recruiterId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Job not found" });
+    // Recruiters scope to their active company; admins (companyId === null)
+    // bypass the tenant check since they act across tenants.
+    if (user.role === "recruiter" && job.companyId !== companyId) {
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Job not found",
+      });
     }
 
     const rows = await this.biasRepo.findByJobId(jobId);

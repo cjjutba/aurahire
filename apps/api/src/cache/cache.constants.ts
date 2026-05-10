@@ -22,23 +22,35 @@ export const TTL_SECONDS = {
  * Tag templates — call with the dynamic id to materialize the tag string.
  * One key may be tagged with multiple tags; bustTag removes every key that
  * carries that tag.
+ *
+ * Phase 2c sweep: every recruiter-keyed tag (jobs/dashboard/applications/
+ * interviews/shortlistRecruiter) was deleted. Tenant cutover demands the
+ * keys themselves include `companyId` so a stale read from another tenant
+ * cannot poison cache. Tags below split into:
+ *   - global (jobsPublic, scoringConfigActive)
+ *   - candidate-scoped (applicationsCandidate, interviewsCandidate, profileScore)
+ *   - company-scoped (everything that was previously recruiter-keyed)
+ *   - membership-utility (companyMembership, userMemberships)
  */
 export const TAGS = {
   scoringConfigActive: () => "scoring-config:active",
   jobsPublic: () => "jobs:public",
-  jobsRecruiter: (recruiterId: string) => `jobs:recruiter:${recruiterId}`,
   jobDetail: (jobId: string) => `job:${jobId}`,
-  dashboardRecruiter: (recruiterId: string) => `dashboard:recruiter:${recruiterId}`,
-  applicationsRecruiter: (recruiterId: string) =>
-    `applications:recruiter:${recruiterId}`,
   applicationsCandidate: (candidateId: string) =>
     `applications:candidate:${candidateId}`,
-  interviewsRecruiter: (recruiterId: string) =>
-    `interviews:recruiter:${recruiterId}`,
   interviewsCandidate: (candidateId: string) =>
     `interviews:candidate:${candidateId}`,
-  shortlistRecruiter: (recruiterId: string) => `shortlist:recruiter:${recruiterId}`,
   profileScore: (userId: string) => `profile-score:${userId}`,
+  // ─── Company-scoped tags (Phase 2 multi-tenancy) ─────────────────────
+  companyJobs: (companyId: string) => `jobs:company:${companyId}`,
+  companyApplications: (companyId: string) =>
+    `applications:company:${companyId}`,
+  companyInterviews: (companyId: string) => `interviews:company:${companyId}`,
+  companyOffers: (companyId: string) => `offers:company:${companyId}`,
+  companyShortlist: (companyId: string) => `shortlist:company:${companyId}`,
+  companyDashboard: (companyId: string) => `dashboard:company:${companyId}`,
+  companyMembership: (companyId: string) => `company-members:${companyId}`,
+  userMemberships: (userId: string) => `user-memberships:${userId}`,
 } as const;
 
 /** Injection token for the ioredis client owned by CacheModule. */

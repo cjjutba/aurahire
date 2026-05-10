@@ -1,4 +1,7 @@
-import { QueryClient, defaultShouldDehydrateQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  defaultShouldDehydrateQuery,
+} from "@tanstack/react-query";
 
 /**
  * Single source of truth for QueryClient configuration. Used by both:
@@ -16,7 +19,8 @@ export function makeQueryClient(): QueryClient {
         gcTime: 5 * 60_000,
         refetchOnWindowFocus: false,
         retry: (failureCount, error) => {
-          const status = (error as { response?: { status?: number } })?.response?.status;
+          const status = (error as { response?: { status?: number } })?.response
+            ?.status;
           if (status === 401 || status === 403 || status === 404) return false;
           return failureCount < 2;
         },
@@ -26,7 +30,8 @@ export function makeQueryClient(): QueryClient {
       },
       dehydrate: {
         shouldDehydrateQuery: (query) =>
-          defaultShouldDehydrateQuery(query) && query.state.status === "success",
+          defaultShouldDehydrateQuery(query) &&
+          query.state.status === "success",
       },
     },
   });

@@ -37,7 +37,9 @@ interface ListBody {
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
-export default async function AdminApplicationsPage({ searchParams }: PageProps) {
+export default async function AdminApplicationsPage({
+  searchParams,
+}: PageProps) {
   const sp = await searchParams;
   const session = await getCurrentSession();
   if (!session) redirect("/login");
@@ -64,36 +66,66 @@ export default async function AdminApplicationsPage({ searchParams }: PageProps)
 
   if (!res.ok) {
     return (
-      <div className="text-[var(--color-status-danger)]">
-        Failed to load applications.
+      <div className="mx-auto max-w-[1280px]">
+        <p className="text-sm text-[var(--color-status-danger)]">
+          Failed to load applications.
+        </p>
       </div>
     );
   }
   const body = (await res.json()) as ListBody;
 
+  const filtersActive = !!(
+    sp.status ||
+    sp.minScore ||
+    sp.maxScore ||
+    sp.dateFrom ||
+    sp.dateTo ||
+    sp.q ||
+    sp.jobId
+  );
+
   return (
     <div className="mx-auto max-w-[1280px] space-y-6">
       <header>
-        <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+        <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           Application Oversight
         </h1>
-        <p className="mt-1 text-sm text-[var(--color-body)]">
-          {body.meta.total} application{body.meta.total === 1 ? "" : "s"}{" "}
-          system-wide
+        <p className="mt-2 text-sm text-[var(--color-body)]">
+          {body.meta.total === 0 ? (
+            "No applications system-wide"
+          ) : (
+            <>
+              <span className="font-mono">{body.meta.total}</span> application
+              {body.meta.total === 1 ? "" : "s"} system-wide
+            </>
+          )}
         </p>
       </header>
 
       <FiltersClient initialFilters={sp} />
 
       {body.data.length === 0 ? (
-        <div className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] py-16 text-center">
-          <h3 className="text-lg font-semibold text-[var(--color-ink)]">
-            No applications match these filters
-          </h3>
-          <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-body)]">
-            Try widening the score range or clearing the search.
-          </p>
-        </div>
+        filtersActive ? (
+          <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
+            <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
+              No applications match your filters
+            </div>
+            <div className="mt-1 text-xs text-[var(--color-muted)]">
+              Try different search terms or clear the filters.
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-center">
+            <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
+              No applications yet
+            </div>
+            <div className="mt-1 text-xs text-[var(--color-muted)]">
+              Applications will appear here as candidates apply across the
+              platform.
+            </div>
+          </div>
+        )
       ) : (
         <ApplicationsTableClient rows={body.data} meta={body.meta} />
       )}

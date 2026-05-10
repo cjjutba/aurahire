@@ -33,14 +33,24 @@ interface Props {
 interface PreviewBody {
   data: {
     sampledCount: number;
-    current: { strong: number; partial: number; limited: number; avgScore: number };
+    current: {
+      strong: number;
+      partial: number;
+      limited: number;
+      avgScore: number;
+    };
     proposed: {
       strong: number;
       partial: number;
       limited: number;
       avgScore: number;
     };
-    delta: { strong: number; partial: number; limited: number; avgScore: number };
+    delta: {
+      strong: number;
+      partial: number;
+      limited: number;
+      avgScore: number;
+    };
     examples: Array<{
       applicationId: string;
       candidateName: string;
@@ -100,7 +110,8 @@ export function PreviewImpactModalClient({
           setError("Not signed in");
           return;
         }
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
         const res = await fetch(
           `${apiUrl}/api/v1/admin/scoring-config/preview-impact`,
           {
@@ -128,7 +139,12 @@ export function PreviewImpactModalClient({
 
   function renderDistributionBar(
     title: string,
-    dist: { strong: number; partial: number; limited: number; avgScore: number },
+    dist: {
+      strong: number;
+      partial: number;
+      limited: number;
+      avgScore: number;
+    },
     total: number,
   ) {
     const barFor = (count: number, color: string, label: string) => {
@@ -229,13 +245,17 @@ export function PreviewImpactModalClient({
               </span>
               <span>
                 Partial{" "}
-                <strong className={`font-mono ${deltaTone(data.delta.partial)}`}>
+                <strong
+                  className={`font-mono ${deltaTone(data.delta.partial)}`}
+                >
                   {deltaText(data.delta.partial)}
                 </strong>
               </span>
               <span>
                 Limited{" "}
-                <strong className={`font-mono ${deltaTone(data.delta.limited)}`}>
+                <strong
+                  className={`font-mono ${deltaTone(data.delta.limited)}`}
+                >
                   {deltaText(data.delta.limited)}
                 </strong>
               </span>

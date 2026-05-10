@@ -7,6 +7,7 @@ interface EvidenceCalloutProps {
   source: string;
   relevance: Relevance;
   contributionPoints?: number | null;
+  reasoning?: string | null;
   className?: string;
 }
 
@@ -36,6 +37,7 @@ export function EvidenceCallout({
   source,
   relevance,
   contributionPoints,
+  reasoning,
   className,
 }: EvidenceCalloutProps) {
   const variant = RELEVANCE_VARIANTS[relevance];
@@ -57,15 +59,28 @@ export function EvidenceCallout({
         </span>
       </header>
       {source && (
-        <p className="mb-2 text-xs italic text-[var(--color-muted)]">{source}</p>
+        <p className="mb-2 text-xs italic text-[var(--color-muted)]">
+          {source}
+        </p>
       )}
       <blockquote className="text-sm italic text-[var(--color-body)] break-words">
         &ldquo;{excerpt}&rdquo;
       </blockquote>
+      {reasoning && reasoning.trim().length > 0 && (
+        <p
+          className="mt-3 border-l-2 pl-3 text-sm leading-relaxed text-[var(--color-body)]"
+          style={{ borderLeftColor: variant.borderColor }}
+        >
+          {reasoning}
+        </p>
+      )}
       {typeof contributionPoints === "number" && contributionPoints !== 0 && (
-        <p className="mt-3 text-xs text-[var(--color-muted)]">
-          Contributes {contributionPoints > 0 ? "+" : ""}
-          <span className="font-mono">{contributionPoints}</span> points
+        <p
+          className="mt-3 font-mono text-xs font-semibold"
+          style={{ color: variant.iconColor }}
+        >
+          {contributionPoints > 0 ? "+" : "−"}
+          {Math.abs(contributionPoints)} points
         </p>
       )}
     </article>

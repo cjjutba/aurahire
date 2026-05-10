@@ -6,8 +6,8 @@ import {
   JOB_STATUS,
   USER_ROLES,
   USER_STATUS,
-} from "../enums/index.ts";
-import { uuidSchema } from "./shared.ts";
+} from "../enums/index";
+import { uuidSchema } from "./shared";
 
 // ---------- LIST USERS QUERY ----------
 export const listAdminUsersQuerySchema = z.object({
@@ -87,10 +87,10 @@ export const matchWeightsSchema = z.object({
 export type MatchWeights = z.infer<typeof matchWeightsSchema>;
 
 export const profileWeightsSchema = z.object({
-  resume_quality: z.number().int().min(0).max(100),
-  skills_breadth: z.number().int().min(0).max(100),
-  experience_depth: z.number().int().min(0).max(100),
-  preferences_clarity: z.number().int().min(0).max(100),
+  completeness: z.number().int().min(0).max(100),
+  skill_depth: z.number().int().min(0).max(100),
+  experience_clarity: z.number().int().min(0).max(100),
+  education_quality: z.number().int().min(0).max(100),
 });
 export type ProfileWeights = z.infer<typeof profileWeightsSchema>;
 
@@ -123,29 +123,35 @@ export const updateScoringConfigSchema = z
     matchWeights: matchWeightsSchema.optional(),
     profileWeights: profileWeightsSchema.optional(),
     bandThresholds: bandThresholdsSchema.optional(),
-    biasCategoriesEnabled: z.array(z.enum(BIAS_CATEGORY_VALUES)).max(5).optional(),
+    biasCategoriesEnabled: z
+      .array(z.enum(BIAS_CATEGORY_VALUES))
+      .max(5)
+      .optional(),
     customFlaggedTerms: z.array(z.string().min(1).max(100)).max(50).optional(),
     piiRedactionEnabled: z.boolean().optional(),
     piiFieldsRedacted: z.array(z.string().min(1).max(50)).max(20).optional(),
   })
-  .refine(
-    (data) => !data.matchWeights || sumsTo100(data.matchWeights),
-    { message: "matchWeights must sum to 100", path: ["matchWeights"] },
-  )
-  .refine(
-    (data) => !data.profileWeights || sumsTo100(data.profileWeights),
-    { message: "profileWeights must sum to 100", path: ["profileWeights"] },
-  )
+  .refine((data) => !data.matchWeights || sumsTo100(data.matchWeights), {
+    message: "matchWeights must sum to 100",
+    path: ["matchWeights"],
+  })
+  .refine((data) => !data.profileWeights || sumsTo100(data.profileWeights), {
+    message: "profileWeights must sum to 100",
+    path: ["profileWeights"],
+  })
   .refine(
     (data) =>
       !data.bandThresholds ||
       data.bandThresholds.strong > data.bandThresholds.partial,
     {
-      message: "bandThresholds.strong must be greater than bandThresholds.partial",
+      message:
+        "bandThresholds.strong must be greater than bandThresholds.partial",
       path: ["bandThresholds"],
     },
   );
-export type UpdateScoringConfigInput = z.infer<typeof updateScoringConfigSchema>;
+export type UpdateScoringConfigInput = z.infer<
+  typeof updateScoringConfigSchema
+>;
 
 // ---------- PREVIEW IMPACT REQUEST ----------
 
@@ -155,16 +161,17 @@ export const previewImpactRequestSchema = z.object({
       matchWeights: matchWeightsSchema.optional(),
       bandThresholds: bandThresholdsSchema.optional(),
     })
-    .refine(
-      (data) => !data.matchWeights || sumsTo100(data.matchWeights),
-      { message: "matchWeights must sum to 100", path: ["matchWeights"] },
-    )
+    .refine((data) => !data.matchWeights || sumsTo100(data.matchWeights), {
+      message: "matchWeights must sum to 100",
+      path: ["matchWeights"],
+    })
     .refine(
       (data) =>
         !data.bandThresholds ||
         data.bandThresholds.strong > data.bandThresholds.partial,
       {
-        message: "bandThresholds.strong must be greater than bandThresholds.partial",
+        message:
+          "bandThresholds.strong must be greater than bandThresholds.partial",
         path: ["bandThresholds"],
       },
     ),
@@ -187,10 +194,17 @@ export const listAdminAuditQuerySchema = z.object({
       "bias_flag",
       "scoring_config",
       "resume",
+      "company",
+      "company_member",
+      "interview",
+      "offer",
+      "cron",
     ])
     .optional(),
   action: z.string().max(100).optional(),
   actorType: z.enum(AUDIT_ACTOR_TYPE).optional(),
+  /** Cross-tenant filter: scope to a specific company. */
+  companyId: uuidSchema.optional(),
   dateFrom: z.string().datetime().optional(),
   dateTo: z.string().datetime().optional(),
   page: z.coerce.number().int().min(1).default(1),
@@ -220,6 +234,7 @@ export const biasMonitorQuerySchema = z
   .object({
     dateFrom: z.string().datetime().optional(),
     dateTo: z.string().datetime().optional(),
+    promptVersionMin: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -235,4 +250,6 @@ export type BiasMonitorQuery = z.infer<typeof biasMonitorQuerySchema>;
 export const enqueueRescoreBatchSchema = z.object({
   sampleSize: z.coerce.number().int().min(1).max(500).default(50),
 });
-export type EnqueueRescoreBatchInput = z.infer<typeof enqueueRescoreBatchSchema>;
+export type EnqueueRescoreBatchInput = z.infer<
+  typeof enqueueRescoreBatchSchema
+>;

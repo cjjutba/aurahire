@@ -21,18 +21,26 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { ProfilesModule } from "./modules/profiles/profiles.module";
 import { RecruiterProfilesModule } from "./modules/recruiter-profiles/recruiter-profiles.module";
 import { CandidateProfilesModule } from "./modules/candidate-profiles/candidate-profiles.module";
+import { CompaniesModule } from "./modules/companies/companies.module";
+import { InvitationsModule } from "./modules/invitations/invitations.module";
 import { JobsModule } from "./modules/jobs/jobs.module";
 import { ResumesModule } from "./modules/resumes/resumes.module";
 import { ScoringModule } from "./modules/scoring/scoring.module";
 import { ApplicationsModule } from "./modules/applications/applications.module";
 import { BiasModule } from "./modules/bias/bias.module";
 import { InterviewsModule } from "./modules/interviews/interviews.module";
+import { InterviewVenuesModule } from "./modules/interview-venues/interview-venues.module";
+import { NotificationPreferencesModule } from "./modules/notification-preferences/notification-preferences.module";
+import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { OffersModule } from "./modules/offers/offers.module";
 import { AdminModule } from "./modules/admin/admin.module";
+import { FeedbackModule } from "./modules/feedback/feedback.module";
+import { RealtimeModule } from "./realtime";
 import { QueueModule } from "./queue";
 import { CronModule } from "./cron";
 import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
+import { ActiveCompanyGuard } from "./common/guards/active-company.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 
 @Module({
@@ -95,7 +103,10 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
       pinoHttp: {
         transport:
           process.env.NODE_ENV !== "production"
-            ? { target: "pino-pretty", options: { singleLine: true, translateTime: "SYS:HH:MM:ss" } }
+            ? {
+                target: "pino-pretty",
+                options: { singleLine: true, translateTime: "SYS:HH:MM:ss" },
+              }
             : undefined,
         level: process.env.LOG_LEVEL ?? "info",
         autoLogging: true,
@@ -114,14 +125,21 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     ProfilesModule,
     RecruiterProfilesModule,
     CandidateProfilesModule,
+    CompaniesModule,
+    InvitationsModule,
     JobsModule,
     ResumesModule,
     ScoringModule,
     ApplicationsModule,
     BiasModule,
     InterviewsModule,
+    InterviewVenuesModule,
+    NotificationPreferencesModule,
+    NotificationsModule,
     OffersModule,
     AdminModule,
+    FeedbackModule,
+    RealtimeModule,
     HealthModule,
     AuthModule,
   ],
@@ -139,6 +157,17 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    // ActiveCompanyGuard runs LAST among the four global guards. It
+    // resolves the active company for recruiter requests and attaches
+    // `req.activeCompanyId` + `req.companyRole`. Routes annotated
+    // `@Public()` skip auth entirely; admin + candidate roles bypass
+    // tenant scoping; `@SkipActiveCompany()` opts out per-route for
+    // pre-membership endpoints (signup, invitation accept, etc.).
+    // Depends on `CompanyMembersRepository` from CompaniesModule.
+    {
+      provide: APP_GUARD,
+      useClass: ActiveCompanyGuard,
     },
   ],
 })

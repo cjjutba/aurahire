@@ -15,6 +15,7 @@ export interface OfferRow {
 interface Props {
   applicationId: string;
   offers: OfferRow[];
+  applicationStatus: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -37,8 +38,16 @@ function formatSalary(value: number, currency: string): string {
   }
 }
 
-export function RecruiterOffersSection({ applicationId, offers }: Props) {
+export function RecruiterOffersSection({
+  applicationId,
+  offers,
+  applicationStatus,
+}: Props) {
   const hasPending = offers.some((o) => o.status === "pending");
+  const canSendOffer =
+    !hasPending &&
+    (applicationStatus === "interview" ||
+      applicationStatus === "offer_declined");
 
   return (
     <section className="space-y-4 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
@@ -51,7 +60,7 @@ export function RecruiterOffersSection({ applicationId, offers }: Props) {
             Send and track offers for this candidate.
           </p>
         </div>
-        {!hasPending && (
+        {canSendOffer && (
           <Link
             href={`/recruiter/offers/new?applicationId=${applicationId}`}
             className="inline-flex items-center justify-center rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
@@ -74,13 +83,16 @@ export function RecruiterOffersSection({ applicationId, offers }: Props) {
                 <strong className="text-[var(--color-ink)]">{o.title}</strong>
                 <span
                   className="text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: STATUS_COLORS[o.status] ?? "var(--color-muted)" }}
+                  style={{
+                    color: STATUS_COLORS[o.status] ?? "var(--color-muted)",
+                  }}
                 >
                   {o.status}
                 </span>
               </div>
               <p className="mt-1 font-mono text-xs text-[var(--color-body)]">
-                {formatSalary(o.salary, o.salaryCurrency)} · starts {o.startDate}
+                {formatSalary(o.salary, o.salaryCurrency)} · starts{" "}
+                {o.startDate}
               </p>
               <p className="mt-1 text-xs text-[var(--color-muted)]">
                 Sent {new Date(o.sentAt).toLocaleString()}

@@ -65,7 +65,9 @@ export class ScoreProfileService {
       promptVersion: SCORE_PROFILE_VERSION,
     });
 
-    const aiResult = await this.cacheService.getOrSet<Omit<ScoreProfileOutput, "redactedFields">>({
+    const aiResult = await this.cacheService.getOrSet<
+      Omit<ScoreProfileOutput, "redactedFields">
+    >({
       key: `ai:score-profile:${cacheInputHash}`,
       ttlSeconds: TTL_SECONDS.ai,
       telemetryName: "ai:score-profile",

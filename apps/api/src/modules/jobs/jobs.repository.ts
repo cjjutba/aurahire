@@ -69,10 +69,22 @@ export interface ListJobsFilters {
   experienceLevel?: ExperienceLevel;
   locationCountry?: string;
   status?: JobStatus | JobStatus[];
-  recruiterId?: string;
+  /**
+   * Phase 2c access-control axis. When set, only rows whose
+   * `jobs.company_id` matches are returned. Replaces the prior
+   * `recruiterId` scoping field — `recruiter_id` remains on the row as
+   * audit trail (who created it) but is no longer a filter.
+   */
+  companyId?: string;
   sort?: "recent" | "best-match" | "salary-high";
   page: number;
   limit: number;
+  /**
+   * When set to a candidate user ID, jobs the candidate has already applied
+   * to are excluded from the listing. Used by the for-candidate endpoint
+   * when `excludeApplied=true` is passed in the query string.
+   */
+  excludeCandidateApplied?: string;
 }
 
 @Injectable()
@@ -115,7 +127,9 @@ export class JobsRepository {
     return { ...row.job, company: row.company };
   }
 
-  async list(filters: ListJobsFilters): Promise<{ rows: JobWithCompany[]; total: number }> {
+  async list(
+    filters: ListJobsFilters,
+  ): Promise<{ rows: JobWithCompany[]; total: number }> {
     const where = this.buildWhere(filters);
     const orderBy = this.buildOrder(filters.sort);
     const offset = (filters.page - 1) * filters.limit;
@@ -140,8 +154,8 @@ export class JobsRepository {
     };
   }
 
-  async listMineWithStats(
-    recruiterId: string,
+  async listForCompanyWithStats(
+    companyId: string,
     options: {
       page: number;
       limit: number;
@@ -149,7 +163,7 @@ export class JobsRepository {
       sort?: "recent" | "recent-activity";
     },
   ): Promise<{ rows: JobWithCompanyAndStats[]; total: number }> {
-    const conditions: SQL[] = [eq(jobsTable.recruiterId, recruiterId)];
+    const conditions: SQL[] = [eq(jobsTable.companyId, companyId)];
     if (options.status) {
       conditions.push(eq(jobsTable.status, options.status));
     }
@@ -175,7 +189,9 @@ export class JobsRepository {
         interviewed: sql<number>`count(distinct ${applicationsTable.id}) filter (where ${applicationsTable.status} = 'interview')::int`,
         offered: sql<number>`count(distinct ${applicationsTable.id}) filter (where ${applicationsTable.status} = 'offer')::int`,
         hired: sql<number>`count(distinct ${applicationsTable.id}) filter (where ${applicationsTable.status} = 'hired')::int`,
-        avgScore: sql<number | null>`avg(${matchScoresTable.overallScore})::float`,
+        avgScore: sql<
+          number | null
+        >`avg(${matchScoresTable.overallScore})::float`,
       })
       .from(jobsTable)
       .innerJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
@@ -249,9 +265,13 @@ export class JobsRepository {
       );
       if (orClause) conditions.push(orClause);
     }
-    if (filters.hasBiasFlags) {
+    if (filters.hasBiasFlags === true) {
       conditions.push(
         sql`EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
+      );
+    } else if (filters.hasBiasFlags === false) {
+      conditions.push(
+        sql`NOT EXISTS (SELECT 1 FROM ${biasFlagsTable} WHERE ${biasFlagsTable.jobId} = ${jobsTable.id})`,
       );
     }
     const where =
@@ -318,8 +338,11 @@ export class JobsRepository {
       }
     }
 
-    if (filters.recruiterId) {
-      conditions.push(eq(jobsTable.recruiterId, filters.recruiterId));
+    // Phase 2c: company-scoped access. recruiter_id stays on the row but is
+    // no longer used as a filter for member access (members of the same
+    // company see all of its jobs, even ones they didn't create).
+    if (filters.companyId) {
+      conditions.push(eq(jobsTable.companyId, filters.companyId));
     }
 
     if (filters.q) {
@@ -340,6 +363,16 @@ export class JobsRepository {
 
     if (filters.locationCountry) {
       conditions.push(eq(jobsTable.locationCountry, filters.locationCountry));
+    }
+
+    if (filters.excludeCandidateApplied) {
+      conditions.push(
+        sql`NOT EXISTS (
+          SELECT 1 FROM ${applicationsTable}
+          WHERE ${applicationsTable.jobId} = ${jobsTable.id}
+            AND ${applicationsTable.candidateId} = ${filters.excludeCandidateApplied}
+        )`,
+      );
     }
 
     if (conditions.length === 0) return undefined;

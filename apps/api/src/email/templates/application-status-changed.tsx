@@ -20,6 +20,7 @@ interface Props {
   previousStatus: string;
   newStatus: string;
   applicationUrl: string;
+  company?: { name: string; logoUrl: string | null } | null;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -39,6 +40,7 @@ export function ApplicationStatusChangedEmail({
   previousStatus,
   newStatus,
   applicationUrl,
+  company,
 }: Props): React.ReactElement {
   const fromLabel = STATUS_LABELS[previousStatus] ?? previousStatus;
   const toLabel = STATUS_LABELS[newStatus] ?? newStatus;
@@ -63,14 +65,19 @@ export function ApplicationStatusChangedEmail({
             margin: "0 auto",
           }}
         >
-          <EmailBrandHeader />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <EmailBrandHeader company={company} />
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             Application Update
           </Heading>
           <Section>
-            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>Hi {candidateName},</Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-              Your application for <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong> at{" "}
+              Hi {candidateName},
+            </Text>
+            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
+              Your application for{" "}
+              <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong> at{" "}
               {companyName} has moved from <strong>{fromLabel}</strong> to{" "}
               <strong style={{ color: "#2563eb" }}>{toLabel}</strong>.
             </Text>

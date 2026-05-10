@@ -1,4 +1,5 @@
 import { getAccessToken } from "@aurahire/shared";
+import { getActiveCompanyId } from "@/lib/active-company";
 
 export class ClientApiError extends Error {
   constructor(
@@ -22,6 +23,7 @@ export async function clientApiFetch<T>(
 ): Promise<T> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
   const token = getAccessToken();
+  const activeCompanyId = getActiveCompanyId();
   const url = new URL(path.startsWith("http") ? path : `${apiUrl}${path}`);
   if (init.query) {
     for (const [k, v] of Object.entries(init.query)) {
@@ -33,7 +35,10 @@ export async function clientApiFetch<T>(
     method: init.method ?? "GET",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init.body !== undefined ? { "content-type": "application/json" } : {}),
+      ...(activeCompanyId ? { "X-Active-Company-Id": activeCompanyId } : {}),
+      ...(init.body !== undefined
+        ? { "content-type": "application/json" }
+        : {}),
     },
     body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     credentials: "include",
@@ -44,7 +49,11 @@ export async function clientApiFetch<T>(
     try {
       body = await res.json();
     } catch {}
-    const err = new ClientApiError(res.status, body, `API ${res.status} for ${url.pathname}`);
+    const err = new ClientApiError(
+      res.status,
+      body,
+      `API ${res.status} for ${url.pathname}`,
+    );
     (err as { response?: unknown }).response = { status: res.status, body };
     throw err;
   }

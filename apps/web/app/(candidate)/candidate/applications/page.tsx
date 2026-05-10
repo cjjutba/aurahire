@@ -8,9 +8,29 @@ import { ApplicationsListClient } from "./_applications-client";
 
 export const metadata = { title: "My Applications" };
 
-export default async function ApplicationsPage() {
+interface PageProps {
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    band?: string;
+    sort?: string;
+    page?: string;
+  }>;
+}
+
+export default async function ApplicationsPage({ searchParams }: PageProps) {
   const session = await getCurrentSession();
   if (!session) redirect("/login");
+
+  const sp = await searchParams;
+  const params = {
+    q: sp.q?.trim() || undefined,
+    status: sp.status && sp.status !== "all" ? sp.status : undefined,
+    band: sp.band && sp.band !== "all" ? sp.band : undefined,
+    sort: sp.sort ?? "recent",
+    page: sp.page ? Math.max(1, Number(sp.page)) : 1,
+    limit: 25,
+  };
 
   const queryClient = makeQueryClient();
   await queryClient.prefetchQuery({
@@ -20,7 +40,7 @@ export default async function ApplicationsPage() {
 
   return (
     <PrefetchedHydration queryClient={queryClient}>
-      <ApplicationsListClient />
+      <ApplicationsListClient params={params} />
     </PrefetchedHydration>
   );
 }

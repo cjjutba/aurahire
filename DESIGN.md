@@ -9,6 +9,7 @@ Type pairs **Inter Display** for hero headlines with **Inter** for body, caption
 The page rhythm rotates three modes: bright white editorial sections, soft-gray elevation bands, and **full-bleed dark editorial heroes** carrying layered Score Ring + Breakdown Bar mockup cards. The dark hero with floating scoring mockups is the single most distinctive component.
 
 **Key Characteristics:**
+
 - Single accent color: `{colors.primary}` (#2563eb AuraHire Blue) carries every primary CTA, wordmark, and inline brand link. Used scarcely.
 - Modest display weights — Inter Display at weight 400, never 700+.
 - Editorial pill geometry: every CTA is `{rounded.pill}` (100px), every avatar/score glyph is `{rounded.full}`, every card is `{rounded.xl}` (24px). Sharp corners absent.
@@ -19,12 +20,14 @@ The page rhythm rotates three modes: bright white editorial sections, soft-gray 
 ## Colors
 
 ### Brand & Accent
+
 - **AuraHire Blue** (`{colors.primary}` — #2563eb): The single brand color. Every primary CTA pill, the AuraHire wordmark, inline brand links, score-progress fill, focus ring.
 - **AuraHire Blue Active** (`{colors.primary-active}` — #1e40af): Press-state darken on the primary pill.
 - **AuraHire Blue Soft** (`{colors.primary-soft}` — #dbeafe): Score-progress track, primary-tinted backgrounds, "AI Suggested" badge background.
 - **AuraHire Blue Disabled** (`{colors.primary-disabled}` — #a8b8cc): Faded-blue tint for disabled CTAs.
 
 ### Surface
+
 - **Canvas** (`{colors.canvas}` — #ffffff): The default page floor.
 - **Surface Soft** (`{colors.surface-soft}` — #f7f7f7): Subtle alternating band surface, portal content background.
 - **Surface Strong** (`{colors.surface-strong}` — #eef0f3): The light-gray fill behind secondary buttons, search pills, avatar plates.
@@ -32,10 +35,12 @@ The page rhythm rotates three modes: bright white editorial sections, soft-gray 
 - **Surface Dark Elevated** (`{colors.surface-dark-elevated}` — #16181c): One step lighter, used for floating Score Ring + Breakdown Bar mockup cards inside dark heroes.
 
 ### Hairlines
+
 - **Hairline** (`{colors.hairline}` — #dee1e6): Default 1px divider on white surfaces.
 - **Hairline Soft** (`{colors.hairline-soft}` — #eef0f3): Lighter divider — same hex as `{colors.surface-strong}`.
 
 ### Text
+
 - **Ink** (`{colors.ink}` — #0a0b0d): Display headings, primary nav, body emphasis.
 - **Body** (`{colors.body}` — #5b616e): Default running-text — slightly cool gray.
 - **Body Strong** (`{colors.body-strong}` — #0a0b0d): Same as ink, used for stronger emphasis.
@@ -46,6 +51,7 @@ The page rhythm rotates three modes: bright white editorial sections, soft-gray 
 - **On Dark Soft** (`{colors.on-dark-soft}` — #a8acb3): Muted off-white for secondary text on dark.
 
 ### Scoring Semantics
+
 - **Score Low** (`{colors.score-low}` — #dc2626): "Limited Match" (0–39). Score Ring fill + Breakdown Bar segments + match-band-chip text.
 - **Score Mid** (`{colors.score-mid}` — #f59e0b): "Partial Match" (40–69). Same uses.
 - **Score High** (`{colors.score-high}` — #10b981): "Strong Match" (70–100). Same uses.
@@ -53,9 +59,10 @@ The page rhythm rotates three modes: bright white editorial sections, soft-gray 
 - **Score Mid Soft** (`{colors.score-mid-soft}` — #fef3c7): Chip background, soft fill.
 - **Score High Soft** (`{colors.score-high-soft}` — #d1fae5): Chip background, soft fill.
 
-Scoring colors visualize the *computed score against stated job criteria*, not a value judgment of the candidate. Fairness lives upstream — in PII redaction, transparent weight configuration, and audit logs of every score and override.
+Scoring colors visualize the _computed score against stated job criteria_, not a value judgment of the candidate. Fairness lives upstream — in PII redaction, transparent weight configuration, and audit logs of every score and override.
 
 ### Status Semantics (text-only inline)
+
 - **Status Success** (`{colors.status-success}` — #05b169): "Verified", "Hired", "Completed".
 - **Status Warning** (`{colors.status-warning}` — #f59e0b): "Bias Flag", "Needs Review", "Pending Action".
 - **Status Danger** (`{colors.status-danger}` — #cf202f): "Rejected", "Expired", "Failed".
@@ -66,39 +73,43 @@ Status colors apply to lifecycle states (where an application is in the funnel),
 ## Typography
 
 ### Font Family
+
 The system runs **Inter Display** (display headlines), **Inter** (body, navigation, captions, buttons), **Lucide React** (icon component library), and **JetBrains Mono** for tabular numerical data — score values, percentages, salary ranges, time-to-hire. Fallback stack: `-apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`.
 
 The display/body split is functional: Inter Display carries hero headlines only; Inter carries everything else.
 
 ### Hierarchy
 
-| Token | Size | Weight | Line Height | Letter Spacing | Use |
-|---|---|---|---|---|---|
-| `{typography.display-mega}` | 80px | 400 | 1.0 | -2px | Marketing landing h1 |
-| `{typography.display-xl}` | 64px | 400 | 1.0 | -1.6px | Subsidiary heroes |
-| `{typography.display-lg}` | 52px | 400 | 1.0 | -1.3px | Section heads |
-| `{typography.display-md}` | 44px | 400 | 1.09 | -1px | CTA-band headlines, portal hero h1 |
-| `{typography.display-sm}` | 36px | 400 | 1.11 | -0.5px | Sub-section heads — Inter |
-| `{typography.title-lg}` | 32px | 400 | 1.13 | -0.4px | Card group titles, dashboard widget titles |
-| `{typography.title-md}` | 18px | 600 | 1.33 | 0 | Component titles, list-row primary |
-| `{typography.title-sm}` | 16px | 600 | 1.25 | 0 | List labels, form section titles |
-| `{typography.body-md}` | 16px | 400 | 1.5 | 0 | Default body |
-| `{typography.body-strong}` | 16px | 600 | 1.5 | 0 | Emphasized body |
-| `{typography.body-sm}` | 14px | 400 | 1.5 | 0 | Helper text, table body |
-| `{typography.caption}` | 13px | 400 | 1.5 | 0 | Captions, labels |
-| `{typography.caption-strong}` | 12px | 600 | 1.5 | 0.04em | Badge / chip labels (uppercase) |
-| `{typography.number-display}` | 18px | 500 | 1.4 | 0 | Score values, percentages, counts — JetBrains Mono |
-| `{typography.number-large}` | 36px | 500 | 1.0 | -0.5px | Score Ring center number — JetBrains Mono |
-| `{typography.button}` | 16px | 600 | 1.15 | 0 | Standard CTA pill |
-| `{typography.nav-link}` | 14px | 500 | 1.4 | 0 | Top-nav menu items, sidebar items |
+| Token                         | Size | Weight | Line Height | Letter Spacing | Use                                                |
+| ----------------------------- | ---- | ------ | ----------- | -------------- | -------------------------------------------------- |
+| `{typography.display-mega}`   | 80px | 400    | 1.0         | -2px           | Marketing landing h1                               |
+| `{typography.display-xl}`     | 64px | 400    | 1.0         | -1.6px         | Subsidiary heroes                                  |
+| `{typography.display-lg}`     | 52px | 400    | 1.0         | -1.3px         | Section heads                                      |
+| `{typography.display-md}`     | 44px | 400    | 1.09        | -1px           | CTA-band headlines, portal hero h1                 |
+| `{typography.display-sm}`     | 36px | 400    | 1.11        | -0.5px         | Sub-section heads — Inter                          |
+| `{typography.title-lg}`       | 32px | 400    | 1.13        | -0.4px         | Card group titles, dashboard widget titles         |
+| `{typography.title-md}`       | 18px | 600    | 1.33        | 0              | Component titles, list-row primary                 |
+| `{typography.title-sm}`       | 16px | 600    | 1.25        | 0              | List labels, form section titles                   |
+| `{typography.body-md}`        | 16px | 400    | 1.5         | 0              | Default body                                       |
+| `{typography.body-strong}`    | 16px | 600    | 1.5         | 0              | Emphasized body                                    |
+| `{typography.body-sm}`        | 14px | 400    | 1.5         | 0              | Helper text, table body                            |
+| `{typography.caption}`        | 13px | 400    | 1.5         | 0              | Captions, labels                                   |
+| `{typography.caption-strong}` | 12px | 600    | 1.5         | 0.04em         | Badge / chip labels (uppercase)                    |
+| `{typography.number-display}` | 18px | 500    | 1.4         | 0              | Score values, percentages, counts — JetBrains Mono |
+| `{typography.number-large}`   | 36px | 500    | 1.0         | -0.5px         | Score Ring center number — JetBrains Mono          |
+| `{typography.button}`         | 16px | 600    | 1.15        | 0              | Standard CTA pill                                  |
+| `{typography.nav-link}`       | 14px | 500    | 1.4         | 0              | Top-nav menu items, sidebar items                  |
 
 ### Principles
+
 - **Display weight stays at 400.** The single most distinctive typographic choice — signals "calm, transparent platform" rather than "automation-first urgency."
 - **Negative letter-spacing on display only.** Display uses -1px to -2px tracking; body and titles stay at 0.
 - **JetBrains Mono on every number.** Score values, percentages, salary ranges, application counts, durations — anything tabular renders in JetBrains Mono.
 
 ### Note on Font Substitutes
+
 Inter and JetBrains Mono are the documented brand typefaces (open-licensed substitutes for premium typefaces). Both load via `next/font/google` for optimal performance.
+
 - **Inter Display** at weight 400, letter-spacing -1.5%.
 - **Inter** at weight 400/500/600.
 - **JetBrains Mono** (or Geist Mono fallback) at weight 500.
@@ -106,6 +117,7 @@ Inter and JetBrains Mono are the documented brand typefaces (open-licensed subst
 ## Layout
 
 ### Spacing System
+
 - **Base unit:** 4px.
 - **Tokens:** `{spacing.xxs}` 4px · `{spacing.xs}` 8px · `{spacing.sm}` 12px · `{spacing.base}` 16px · `{spacing.md}` 20px · `{spacing.lg}` 24px · `{spacing.xl}` 32px · `{spacing.xxl}` 48px · `{spacing.section}` 96px · `{spacing.portal-section}` 32px.
 - **Marketing section padding:** `{spacing.section}` (96px) for every major editorial band.
@@ -113,6 +125,7 @@ Inter and JetBrains Mono are the documented brand typefaces (open-licensed subst
 - **Card internal padding:** `{spacing.xl}` (32px) for marketing feature cards; `{spacing.lg}` (24px) for portal widgets.
 
 ### Grid & Container
+
 - **Marketing max content width:** ~1200px centered. Hero photography full-bleed.
 - **Portal layout:** persistent sidebar 256px + topbar 64px + scrollable content area, max-width 1280px.
 - **Editorial body:** Single 12-column grid with 24px gutter on marketing, 16px on portal.
@@ -120,19 +133,21 @@ Inter and JetBrains Mono are the documented brand typefaces (open-licensed subst
 - **Footer:** 6-column link list at desktop.
 
 ### Whitespace Philosophy
+
 Generous editorial pacing on marketing — closer to Bloomberg or Linear's marketing site than to a recruitment dashboard. 96px between bands; cards inside bands sit 24–32px apart. Density lives behind login walls, not on marketing. **Two modes, one system:** marketing follows Coinbase-style editorial calm; portals follow Linear/Vercel-style dense calm. Tokens are shared; layouts differ.
 
 ## Elevation & Depth
 
-| Level | Treatment | Use |
-|---|---|---|
-| Flat | No shadow, no border | 80% of surfaces |
-| Hairline border | 1px `{colors.hairline}` | Feature card outlines on white, table cell rows |
-| Soft drop | `0 4px 12px rgba(0, 0, 0, 0.04)` | Single shadow tier — hovered cards, dropdown menu, popover |
-| Modal | `0 16px 48px rgba(0, 0, 0, 0.12)` | Modal/dialog overlay only |
-| Photographic | Full-bleed Score Ring + Breakdown Bar mockups | Hero depth |
+| Level           | Treatment                                     | Use                                                        |
+| --------------- | --------------------------------------------- | ---------------------------------------------------------- |
+| Flat            | No shadow, no border                          | 80% of surfaces                                            |
+| Hairline border | 1px `{colors.hairline}`                       | Feature card outlines on white, table cell rows            |
+| Soft drop       | `0 4px 12px rgba(0, 0, 0, 0.04)`              | Single shadow tier — hovered cards, dropdown menu, popover |
+| Modal           | `0 16px 48px rgba(0, 0, 0, 0.12)`             | Modal/dialog overlay only                                  |
+| Photographic    | Full-bleed Score Ring + Breakdown Bar mockups | Hero depth                                                 |
 
 ### Decorative Depth
+
 - **Layered Score Ring + Breakdown Bar mockup cards inside dark heroes** is the most distinctive decorative pattern — a `{component.product-ui-card-dark}` floats above a darker base canvas, often with a second smaller card overlapping at an angle, displaying a sample candidate-to-job match.
 - **Geometric brand illustrations** carry illustrative depth where shadows would otherwise.
 
@@ -140,16 +155,16 @@ Generous editorial pacing on marketing — closer to Bloomberg or Linear's marke
 
 ### Border Radius Scale
 
-| Token | Value | Use |
-|---|---|---|
-| `{rounded.none}` | 0px | Reserved (essentially unused) |
-| `{rounded.xs}` | 4px | Inline tags |
-| `{rounded.sm}` | 8px | Compact rows |
-| `{rounded.md}` | 12px | Form inputs |
-| `{rounded.lg}` | 16px | Mid-size cards, dashboard widgets |
-| `{rounded.xl}` | 24px | Hero cards, Score Ring containers, marketing feature cards |
-| `{rounded.pill}` | 100px | All CTA buttons, search pills, chips, badges |
-| `{rounded.full}` | 9999px | Avatars, score-icon circles |
+| Token            | Value  | Use                                                        |
+| ---------------- | ------ | ---------------------------------------------------------- |
+| `{rounded.none}` | 0px    | Reserved (essentially unused)                              |
+| `{rounded.xs}`   | 4px    | Inline tags                                                |
+| `{rounded.sm}`   | 8px    | Compact rows                                               |
+| `{rounded.md}`   | 12px   | Form inputs                                                |
+| `{rounded.lg}`   | 16px   | Mid-size cards, dashboard widgets                          |
+| `{rounded.xl}`   | 24px   | Hero cards, Score Ring containers, marketing feature cards |
+| `{rounded.pill}` | 100px  | All CTA buttons, search pills, chips, badges               |
+| `{rounded.full}` | 9999px | Avatars, score-icon circles                                |
 
 Pill for interactive, card-radius (24px) for marketing containers / 16px for portal containers, full circle for identity glyphs. Sharp corners absent.
 
@@ -244,6 +259,7 @@ Pill for interactive, card-radius (24px) for marketing containers / 16px for por
 ## Do's and Don'ts
 
 ### Do
+
 - Reserve `{colors.primary}` (AuraHire Blue) for primary CTAs, wordmark, brand-glyph illustrations, inline accent links, score-progress fill, focus rings.
 - Set every CTA as `{rounded.pill}` (100px); every avatar/score glyph as `{rounded.full}`.
 - Keep Inter Display headlines at weight 400.
@@ -255,6 +271,7 @@ Pill for interactive, card-radius (24px) for marketing containers / 16px for por
 - Pair every AI Shimmer with a caption explaining what the AI is doing.
 
 ### Don't
+
 - Don't introduce a secondary brand color. AuraHire Blue is the only action color.
 - Don't bold display copy — display sits at weight 400; bolding shifts the brand voice.
 - Don't add drop-shadow tiers — system has one shadow tier.
@@ -271,14 +288,15 @@ Pill for interactive, card-radius (24px) for marketing containers / 16px for por
 
 ### Breakpoints
 
-| Name | Width | Marketing | Portal |
-|---|---|---|---|
-| Mobile | < 640px | Hero h1 80→40px; feature card grid 1-up; layered mockup cards collapse to single card; nav collapses to hamburger | Sidebar → drawer; tables → vertical card list; Score Ring sm size |
-| Tablet | 640–1024px | Hero h1 64px; feature card grid 2-up; mockup 2 stacked | Sidebar drawer; topbar full; tables compress |
-| Desktop | 1024–1280px | Full editorial hero 80px; feature card grid 3-up | Persistent sidebar 256px; full topbar |
-| Wide | > 1280px | Content caps at 1200px; hero photography full-bleed | Content max-width 1280px |
+| Name    | Width       | Marketing                                                                                                         | Portal                                                            |
+| ------- | ----------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Mobile  | < 640px     | Hero h1 80→40px; feature card grid 1-up; layered mockup cards collapse to single card; nav collapses to hamburger | Sidebar → drawer; tables → vertical card list; Score Ring sm size |
+| Tablet  | 640–1024px  | Hero h1 64px; feature card grid 2-up; mockup 2 stacked                                                            | Sidebar drawer; topbar full; tables compress                      |
+| Desktop | 1024–1280px | Full editorial hero 80px; feature card grid 3-up                                                                  | Persistent sidebar 256px; full topbar                             |
+| Wide    | > 1280px    | Content caps at 1200px; hero photography full-bleed                                                               | Content max-width 1280px                                          |
 
 ### Touch Targets
+
 - Primary CTA pill at 44px height — at WCAG AAA.
 - Larger hero pill (`{component.button-pill-cta}`) at 56px — well above AAA.
 - Avatar / score icon circles at 32–40px — padded into 48px effective tap zone via row padding.
@@ -286,6 +304,7 @@ Pill for interactive, card-radius (24px) for marketing containers / 16px for por
 - Sidebar nav item at 44px height — at AAA.
 
 ### Collapsing Strategy
+
 - Top nav switches to hamburger sheet below 768px. Sign Up CTA stays visible.
 - Hero h1 steps down: 80 → 64 → 52 → 44 → 36px on smallest screens.
 - Layered Score Ring + Breakdown Bar mockup cards collapse from 2-3 stacked into a single card on mobile.

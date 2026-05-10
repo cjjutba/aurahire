@@ -23,7 +23,10 @@ export class AdminQueueService {
 
   constructor(
     @InjectQueue(RESCORE_BATCH_QUEUE)
-    private readonly rescoreQueue: Queue<RescoreBatchPayload, RescoreBatchResult>,
+    private readonly rescoreQueue: Queue<
+      RescoreBatchPayload,
+      RescoreBatchResult
+    >,
     private readonly audit: AuditService,
   ) {}
 
@@ -57,7 +60,9 @@ export class AdminQueueService {
       ...requestMeta,
     });
 
-    this.logger.log(`Enqueued rescore-batch job ${job.id} (sampleSize=${dto.sampleSize})`);
+    this.logger.log(
+      `Enqueued rescore-batch job ${job.id} (sampleSize=${dto.sampleSize})`,
+    );
 
     return {
       queueJobId: job.id,
@@ -89,10 +94,16 @@ export class AdminQueueService {
       queueJobId,
       state,
       progress,
-      processedOn: job.processedOn ? new Date(job.processedOn).toISOString() : null,
-      finishedOn: job.finishedOn ? new Date(job.finishedOn).toISOString() : null,
+      processedOn: job.processedOn
+        ? new Date(job.processedOn).toISOString()
+        : null,
+      finishedOn: job.finishedOn
+        ? new Date(job.finishedOn).toISOString()
+        : null,
       result:
-        state === "completed" ? ((job.returnvalue as RescoreBatchResult | undefined) ?? null) : null,
+        state === "completed"
+          ? ((job.returnvalue as RescoreBatchResult | undefined) ?? null)
+          : null,
       failedReason: state === "failed" ? (job.failedReason ?? null) : null,
     };
   }

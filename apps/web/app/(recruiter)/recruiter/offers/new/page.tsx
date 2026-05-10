@@ -29,7 +29,9 @@ export default async function NewOfferPage({ searchParams }: PageProps) {
   });
   if (res.status === 404) notFound();
   if (!res.ok) {
-    return <div className="text-[var(--color-status-danger)]">Failed to load.</div>;
+    return (
+      <div className="text-[var(--color-status-danger)]">Failed to load.</div>
+    );
   }
   const body = (await res.json()) as { data: AppContext };
 
@@ -47,9 +49,12 @@ export default async function NewOfferPage({ searchParams }: PageProps) {
             Send Offer
           </h1>
           <p className="mt-1 text-sm text-[var(--color-body)]">
-            To <strong>{body.data.candidate?.fullName ?? "candidate"}</strong> for{" "}
-            <strong>{body.data.job?.title ?? "the role"}</strong>
-            {body.data.job?.company.name ? <> at {body.data.job.company.name}</> : null}.
+            To <strong>{body.data.candidate?.fullName ?? "candidate"}</strong>{" "}
+            for <strong>{body.data.job?.title ?? "the role"}</strong>
+            {body.data.job?.company.name ? (
+              <> at {body.data.job.company.name}</>
+            ) : null}
+            .
           </p>
         </header>
         <OfferFormClient

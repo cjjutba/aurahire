@@ -5,6 +5,7 @@ import { jobsTable } from "@aurahire/db";
 
 import { AUDIT_ACTIONS, AuditService } from "../audit";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../db/db.module";
+import { NotificationsService } from "../modules/notifications/notifications.service";
 
 const CRON_NAME = "archive-past-deadline-jobs";
 const CRON_ENTITY_SENTINEL = "00000000-0000-0000-0000-000000000000";
@@ -16,6 +17,7 @@ export class ArchivePastDeadlineJobsCron {
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** Daily at 00:00 server time (UTC in dev container). */
@@ -37,6 +39,7 @@ export class ArchivePastDeadlineJobsCron {
           id: jobsTable.id,
           title: jobsTable.title,
           recruiterId: jobsTable.recruiterId,
+          applicationDeadline: jobsTable.applicationDeadline,
         })
         .from(jobsTable)
         .where(
@@ -64,7 +67,11 @@ export class ArchivePastDeadlineJobsCron {
       const ids = candidates.map((c) => c.id);
       await this.db
         .update(jobsTable)
-        .set({ status: "archived", updatedAt: new Date() })
+        .set({
+          status: "archived",
+          archivedReason: "deadline_passed",
+          updatedAt: new Date(),
+        })
         .where(sql`${jobsTable.id} = ANY(${ids}::uuid[])`);
 
       for (const c of candidates) {
@@ -74,8 +81,31 @@ export class ArchivePastDeadlineJobsCron {
           action: AUDIT_ACTIONS.JOB_ARCHIVED_BY_CRON,
           entityType: "job",
           entityId: c.id,
-          details: { title: c.title, recruiterId: c.recruiterId },
+          details: {
+            title: c.title,
+            recruiterId: c.recruiterId,
+            archivedReason: "deadline_passed",
+          },
         });
+
+        // Notify the owning recruiter — best-effort; errors don't fail the cron.
+        try {
+          await this.notifications.emit({
+            userId: c.recruiterId,
+            eventType: "job_archived_by_deadline",
+            entityType: "job",
+            entityId: c.id,
+            metadata: {
+              jobId: c.id,
+              title: c.title,
+              deadline: c.applicationDeadline,
+            },
+          });
+        } catch (innerErr) {
+          this.logger.warn(
+            `[${CRON_NAME}] notify failed for job ${c.id}: ${(innerErr as Error).message}`,
+          );
+        }
       }
 
       const durationMs = Date.now() - startedAt;

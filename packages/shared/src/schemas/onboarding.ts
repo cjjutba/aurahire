@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fullNameSchema, phoneSchema, companyNameSchema } from "./shared.ts";
+import { fullNameSchema, phoneSchema, companyNameSchema } from "./shared";
 
 // ============================================================================
 // CANDIDATE ONBOARDING (skeleton; populated in Slice 1.8 + Slice 2.4)
@@ -65,3 +65,29 @@ export const recruiterFocusSchema = z.object({
 });
 
 export type RecruiterFocus = z.infer<typeof recruiterFocusSchema>;
+
+// ============================================================================
+// CANDIDATE ONBOARDING — analyzing-screen skip telemetry (Skip-to-Dashboard)
+// ============================================================================
+
+/**
+ * Body of `POST /candidate-profiles/me/onboarding/skipped-analyzing`.
+ *
+ * Fired by the analyzing screen when the candidate clicks the manual
+ * "Skip to dashboard" link. Pure telemetry: lets us measure how often the
+ * skip is exercised and at what stage of preview-streaming it happens. The
+ * endpoint records an audit row and returns 204; it has no scoring side
+ * effects.
+ */
+export const onboardingSkippedAnalyzingSchema = z.object({
+  /** True if the Profile Score had landed (state was past `computingProfileScore`)
+   * by the time the candidate clicked Skip. False only on the degraded path. */
+  scoreReady: z.boolean(),
+  /** How many `match-preview.created` events had ticked into the reducer
+   * by the time of the skip. Capped at 5 because the precompute target is 5. */
+  previewsReady: z.number().int().min(0).max(5),
+});
+
+export type OnboardingSkippedAnalyzing = z.infer<
+  typeof onboardingSkippedAnalyzingSchema
+>;

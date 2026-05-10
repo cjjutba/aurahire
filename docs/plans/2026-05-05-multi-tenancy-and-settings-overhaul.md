@@ -20,7 +20,7 @@ Convert AuraHire from a single-tenant model (one recruiter ⇄ one company) into
 5. New members are added via **email invitations** with single-use tokens
 6. The settings page is rebuilt as a **left-rail tabbed surface** with 9 sections split across "Personal" and "{Active Company}" groups, with role-aware visibility (Owner / Admin / Recruiter / Member)
 
-The thesis-defining property — **explainable, fair AI scoring with full audit trail** — is preserved and *strengthened*: every audit log now carries `company_id`, making per-tenant explainability queries trivial.
+The thesis-defining property — **explainable, fair AI scoring with full audit trail** — is preserved and _strengthened_: every audit log now carries `company_id`, making per-tenant explainability queries trivial.
 
 ---
 
@@ -167,12 +167,12 @@ The recruiter invitation email is the **one** template that has only AuraHire br
 
 Every Redis cache key gains a `company` segment:
 
-| Old key | New key |
-|---|---|
-| `dashboard:recruiter:{userId}:analytics` | `dashboard:recruiter:{userId}:{companyId}:analytics` |
-| `interviews:recruiter:{userId}:list` | `interviews:recruiter:{userId}:{companyId}:list` |
-| `jobs:recruiter:{userId}:list:{hash}` | `jobs:company:{companyId}:list:{hash}` |
-| `applications:recruiter:{userId}:shortlist:{hash}` | `applications:company:{companyId}:shortlist:{hash}` |
+| Old key                                            | New key                                              |
+| -------------------------------------------------- | ---------------------------------------------------- |
+| `dashboard:recruiter:{userId}:analytics`           | `dashboard:recruiter:{userId}:{companyId}:analytics` |
+| `interviews:recruiter:{userId}:list`               | `interviews:recruiter:{userId}:{companyId}:list`     |
+| `jobs:recruiter:{userId}:list:{hash}`              | `jobs:company:{companyId}:list:{hash}`               |
+| `applications:recruiter:{userId}:shortlist:{hash}` | `applications:company:{companyId}:shortlist:{hash}`  |
 
 Tag invalidation similarly company-scoped. Cutover requires a **full Redis flush** to prevent cross-tenant cache poisoning.
 
@@ -249,7 +249,7 @@ Today: `/jobs/{slug}` where slug must be globally unique. With multi-tenancy, tw
                 /recruiter (dashboard, scoped to that company)
 ```
 
-### Recruiter — invited *without* an account
+### Recruiter — invited _without_ an account
 
 ```
 Email link: aurahire.app/invite/{token}
@@ -268,7 +268,7 @@ Email link: aurahire.app/invite/{token}
 /recruiter
 ```
 
-### Recruiter — already signed in, clicks invite link for a *different* company
+### Recruiter — already signed in, clicks invite link for a _different_ company
 
 ```
 aurahire.app/invite/{token}
@@ -371,6 +371,7 @@ The work is sequenced into **6 phases**. Each phase ends in a state where the sy
    - All indexes from the DDL above
 
 2. Write the **backfill** as a single `WITH` statement in the same migration:
+
    ```sql
    WITH new_owners AS (
      INSERT INTO company_members (company_id, user_id, email, role, status, joined_at)
@@ -406,6 +407,7 @@ The work is sequenced into **6 phases**. Each phase ends in a state where the sy
 5. **Human runs the migration** in dev (`drizzle-kit push` or `supabase db push`). Claude does NOT run this — see `CLAUDE.md` § Hard Rules.
 
 **DoD for Phase 1:**
+
 - [ ] Migration file written, reviewed
 - [ ] Drizzle schema regenerates types successfully (`pnpm tsc --noEmit` green)
 - [ ] Backfill plan documented in the migration's leading comment
@@ -488,6 +490,7 @@ The work is sequenced into **6 phases**. Each phase ends in a state where the sy
     ```
 
 **DoD for Phase 2:**
+
 - [ ] `ActiveCompanyGuard` compiles, tested with unit tests covering: header present + valid, header absent + last_active fallback, no membership → 403, admin bypass
 - [ ] All recruiter endpoints scope by `req.activeCompanyId`; grep for `recruiterId` in queries returns zero results in `apps/api/src/modules/{jobs,applications,interviews,offers,scoring,bias}`
 - [ ] Cache keys include company segment; `pnpm tsc --noEmit` green
@@ -529,6 +532,7 @@ The work is sequenced into **6 phases**. Each phase ends in a state where the sy
 6. Handle 404 on company switch: if the user is on `/recruiter/jobs/{id}` and the new active company doesn't have that job, the API returns 404 → catch in client component → redirect to `/recruiter/jobs`.
 
 **DoD for Phase 3:**
+
 - [ ] `useActiveCompany()` hook returns expected shape on every recruiter page
 - [ ] Sidebar combobox opens, lists memberships, switches company on click, persists across reload
 - [ ] All TanStack queries refetch on switch (no stale data shown)
@@ -572,6 +576,7 @@ The work is sequenced into **6 phases**. Each phase ends in a state where the sy
    - Table: avatar, name (or pending email), role, status, joined date, ⋮ actions
 
 **DoD for Phase 4:**
+
 - [ ] Fresh recruiter signup → "Create company" path works end-to-end (already mostly working; just confirm onboarding/start gate is in place)
 - [ ] Fresh recruiter signup → "Join my team" path works end-to-end with manual token
 - [ ] Invite link from email: signed-out path (cookie → register → auto-route) works
@@ -643,6 +648,7 @@ The work is sequenced into **6 phases**. Each phase ends in a state where the sy
 14. Admin gets `apps/web/app/(admin)/admin/settings/` with admin-specific sections (system-wide scoring defaults, system-wide bias thresholds, help articles). Out of scope for the recruiter-focused settings page above; ship in a follow-up phase if time permits.
 
 **DoD for Phase 5:**
+
 - [ ] All 9 recruiter sections accessible via left-rail navigation
 - [ ] Role-based visibility works (recruiter cannot see Company / Members / Scoring / etc.)
 - [ ] Profile / Security / Notifications / Privacy all save successfully and persist
@@ -683,6 +689,7 @@ The work is sequenced into **6 phases**. Each phase ends in a state where the sy
    - Cross-test for: jobs, applications, interviews, offers, scoring_configs, bias_flags, audit_logs
 
 **DoD for Phase 6:**
+
 - [ ] All email templates render company branding correctly in Mailpit preview
 - [ ] Candidate-facing surfaces show company attribution
 - [ ] Admin can list, suspend, restore, impersonate, delete companies
@@ -717,6 +724,7 @@ These are surfaced again from the conversation thread, in checklist form:
 The full overhaul is complete when ALL the following are true:
 
 **Backend:**
+
 - [ ] All 6 phases' DoD checklists are green
 - [ ] Every recruiter endpoint scopes by `req.activeCompanyId`; zero remaining references to `recruiterId` as a scoping field in `apps/api/src/modules/{jobs,applications,interviews,offers,scoring,bias,...}`
 - [ ] Every audit log entry from a recruiter action includes `companyId`
@@ -726,6 +734,7 @@ The full overhaul is complete when ALL the following are true:
 - [ ] `pnpm --filter @aurahire/api test` clean
 
 **Frontend:**
+
 - [ ] `<ActiveCompanyProvider>` mounted in recruiter layout
 - [ ] Sidebar combobox switches companies; data refetches; persists across sessions
 - [ ] Onboarding fork (create vs join) works for fresh signups
@@ -737,12 +746,14 @@ The full overhaul is complete when ALL the following are true:
 - [ ] `pnpm --filter @aurahire/web exec next lint` clean
 
 **Data:**
+
 - [ ] Migration applied; all existing recruiters have one `company_members(role=owner, status=active)` row
 - [ ] Every existing recruiter has `last_active_company_id` set
 - [ ] `recruiter_profiles.company_id` column dropped (verify with `\d recruiter_profiles`)
 - [ ] Redis flushed on cutover
 
 **Verification:**
+
 - [ ] Manual demo path: Recruiter A creates company X → invites Recruiter B → B accepts → B sees X's jobs → A switches to a second company Y (created via switcher) → A creates a job in Y → B can NOT see Y's jobs
 - [ ] Admin path: admin lists all companies → impersonates X → audit log shows the impersonation
 - [ ] Candidate path: candidate applies to a job in X → email arrives branded with X's name + logo → status update arrives the same way
@@ -757,7 +768,7 @@ These are real and worth doing, just not in this plan:
 - **Stripe billing + per-seat plan tiers** — schema leaves room (e.g., `companies.plan_id` reservation), no enforcement
 - **SSO (Google Workspace / Okta / Azure AD)** — Supabase Auth supports it; configuration is per-company, future work
 - **White-label custom domains** — `tenant.aurahire.app` or `careers.tenant.com`
-- **Per-company custom prompts** — currently the AI prompts are global with per-company *weights*; full prompt-per-company is a later iteration
+- **Per-company custom prompts** — currently the AI prompts are global with per-company _weights_; full prompt-per-company is a later iteration
 - **Audit log retention policies** — admin-configurable retention; today we keep forever
 - **Two-factor authentication** — UI placeholder only in Phase 5
 - **Company-level API keys** — for ATS integrations; today the integrations section stubs the webhook URL only

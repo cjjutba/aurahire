@@ -1,7 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, count, desc, eq, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, inArray, ne, sql, type SQL } from "drizzle-orm";
 import {
   applicationsTable,
+  companiesTable,
   interviewsTable,
   jobsTable,
   profilesTable,
@@ -20,6 +21,14 @@ export interface RecruiterInterviewRow extends Interview {
   jobTitle: string | null;
 }
 
+export interface CandidateInterviewRow extends Interview {
+  jobId: string | null;
+  jobTitle: string | null;
+  companyId: string | null;
+  companyName: string | null;
+  companyLogoUrl: string | null;
+}
+
 export interface RecruiterInterviewsQuery {
   page: number;
   limit: number;
@@ -34,7 +43,10 @@ export class InterviewsRepository {
   constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient) {}
 
   async insert(data: NewInterview): Promise<Interview> {
-    const [row] = await this.db.insert(interviewsTable).values(data).returning();
+    const [row] = await this.db
+      .insert(interviewsTable)
+      .values(data)
+      .returning();
     if (!row) throw new Error("Interview insert failed");
     return row;
   }
@@ -56,21 +68,42 @@ export class InterviewsRepository {
       .orderBy(desc(interviewsTable.scheduledAt));
   }
 
-  async findByCandidateId(candidateId: string): Promise<Interview[]> {
+  async findByCandidateId(
+    candidateId: string,
+  ): Promise<CandidateInterviewRow[]> {
     const rows = await this.db
-      .select({ interview: interviewsTable })
+      .select({
+        interview: interviewsTable,
+        jobId: jobsTable.id,
+        jobTitle: jobsTable.title,
+        companyId: companiesTable.id,
+        companyName: companiesTable.name,
+        companyLogoUrl: companiesTable.logoUrl,
+      })
       .from(interviewsTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, interviewsTable.applicationId),
+      )
+      .leftJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .leftJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
       .where(eq(applicationsTable.candidateId, candidateId))
       .orderBy(desc(interviewsTable.scheduledAt));
-    return rows.map((r) => r.interview);
+    return rows.map((r) => ({
+      ...r.interview,
+      jobId: r.jobId,
+      jobTitle: r.jobTitle,
+      companyId: r.companyId,
+      companyName: r.companyName,
+      companyLogoUrl: r.companyLogoUrl,
+    }));
   }
 
-  async listForRecruiterPaginated(
-    recruiterId: string,
+  async listForCompanyPaginated(
+    companyId: string,
     options: RecruiterInterviewsQuery,
   ): Promise<{ rows: RecruiterInterviewRow[]; total: number }> {
-    const conditions: SQL[] = [eq(jobsTable.recruiterId, recruiterId)];
+    const conditions: SQL[] = [eq(jobsTable.companyId, companyId)];
     if (options.status) {
       conditions.push(eq(interviewsTable.status, options.status));
     }
@@ -88,9 +121,15 @@ export class InterviewsRepository {
     const countRows = await this.db
       .select({ count: count() })
       .from(interviewsTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, interviewsTable.applicationId),
+      )
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .where(where);
     const total = countRows[0]?.count ?? 0;
 
@@ -118,9 +157,15 @@ export class InterviewsRepository {
         jobTitle: jobsTable.title,
       })
       .from(interviewsTable)
-      .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+      .innerJoin(
+        applicationsTable,
+        eq(applicationsTable.id, interviewsTable.applicationId),
+      )
       .innerJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
-      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, applicationsTable.candidateId),
+      )
       .where(where)
       .orderBy(orderClause)
       .limit(options.limit)
@@ -147,5 +192,100 @@ export class InterviewsRepository {
       .returning();
     if (!row) throw new Error("Interview update failed");
     return row;
+  }
+
+  async markRescheduled(
+    id: string,
+    tx?: DrizzleClient,
+  ): Promise<{ id: string } | null> {
+    const client = tx ?? this.db;
+    const [row] = await client
+      .update(interviewsTable)
+      .set({ status: "rescheduled", updatedAt: new Date() })
+      .where(
+        and(
+          eq(interviewsTable.id, id),
+          inArray(interviewsTable.status, ["scheduled", "no-show"]),
+        ),
+      )
+      .returning({ id: interviewsTable.id });
+    return row ?? null;
+  }
+
+  async setRescheduledTo(
+    originalId: string,
+    newId: string,
+    tx?: DrizzleClient,
+  ): Promise<void> {
+    const client = tx ?? this.db;
+    await client
+      .update(interviewsTable)
+      .set({ rescheduledToId: newId, updatedAt: new Date() })
+      .where(eq(interviewsTable.id, originalId));
+  }
+
+  async findOverlapping(args: {
+    startsAt: Date;
+    endsAt: Date;
+    recruiterId?: string;
+    candidateId?: string;
+    excludeInterviewId?: string;
+  }): Promise<
+    Array<{
+      id: string;
+      applicationId: string;
+      scheduledAt: Date;
+      durationMinutes: number;
+      scheduledBy: string;
+    }>
+  > {
+    const conditions: SQL[] = [
+      eq(interviewsTable.status, "scheduled"),
+      sql`(
+        ${interviewsTable.scheduledAt} < ${args.endsAt.toISOString()}::timestamptz
+        AND (${interviewsTable.scheduledAt} + (${interviewsTable.durationMinutes} || ' minutes')::interval)
+            > ${args.startsAt.toISOString()}::timestamptz
+      )`,
+    ];
+    if (args.excludeInterviewId) {
+      conditions.push(ne(interviewsTable.id, args.excludeInterviewId));
+    }
+
+    if (args.recruiterId && !args.candidateId) {
+      conditions.push(eq(interviewsTable.scheduledBy, args.recruiterId));
+      return this.db
+        .select({
+          id: interviewsTable.id,
+          applicationId: interviewsTable.applicationId,
+          scheduledAt: interviewsTable.scheduledAt,
+          durationMinutes: interviewsTable.durationMinutes,
+          scheduledBy: interviewsTable.scheduledBy,
+        })
+        .from(interviewsTable)
+        .where(and(...conditions));
+    }
+    if (args.candidateId && !args.recruiterId) {
+      return this.db
+        .select({
+          id: interviewsTable.id,
+          applicationId: interviewsTable.applicationId,
+          scheduledAt: interviewsTable.scheduledAt,
+          durationMinutes: interviewsTable.durationMinutes,
+          scheduledBy: interviewsTable.scheduledBy,
+        })
+        .from(interviewsTable)
+        .innerJoin(
+          applicationsTable,
+          eq(applicationsTable.id, interviewsTable.applicationId),
+        )
+        .where(
+          and(
+            ...conditions,
+            eq(applicationsTable.candidateId, args.candidateId),
+          ),
+        );
+    }
+    // No filter combination supplied — return empty rather than scanning all interviews.
+    return [];
   }
 }

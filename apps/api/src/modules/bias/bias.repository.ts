@@ -1,10 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { and, desc, eq } from "drizzle-orm";
-import {
-  biasFlagsTable,
-  type BiasFlag,
-  type NewBiasFlag,
-} from "@aurahire/db";
+import { biasFlagsTable, type BiasFlag, type NewBiasFlag } from "@aurahire/db";
 
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 

@@ -56,6 +56,7 @@ interface Detail {
         source: string | null;
         relevance: "positive" | "negative" | "neutral";
         contributionPoints: number | null;
+        reasoning?: string | null;
       }>;
     }>;
     summary: string;
@@ -121,8 +122,7 @@ export function ApplicationDetailSheetClient({
         setError("Not signed in");
         return;
       }
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
       const res = await fetch(
         `${apiUrl}/api/v1/admin/applications/${applicationId}`,
         {
@@ -286,6 +286,7 @@ export function ApplicationDetailSheetClient({
                             source={ev.source ?? ""}
                             relevance={ev.relevance}
                             contributionPoints={ev.contributionPoints}
+                            reasoning={ev.reasoning ?? null}
                           />
                         ))}
                       </div>
@@ -353,8 +354,8 @@ export function ApplicationDetailSheetClient({
               </>
             ) : (
               <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-5 text-sm text-[var(--color-body)]">
-                No match score persisted for this application — scoring may
-                have failed during apply.
+                No match score persisted for this application — scoring may have
+                failed during apply.
               </div>
             )}
 

@@ -79,8 +79,10 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   );
   if (!res.ok) {
     return (
-      <div className="text-[var(--color-status-danger)]">
-        Failed to load analytics.
+      <div className="mx-auto max-w-[1280px]">
+        <p className="text-sm text-[var(--color-status-danger)]">
+          Failed to load analytics.
+        </p>
       </div>
     );
   }
@@ -94,15 +96,11 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
             Analytics
           </h1>
           <p className="mt-1 text-xs text-[var(--color-muted)]">
-            Period:{" "}
-            {new Date(body.data.range.from).toLocaleDateString()} →{" "}
+            Period: {new Date(body.data.range.from).toLocaleDateString()} →{" "}
             {new Date(body.data.range.to).toLocaleDateString()}
           </p>
         </div>
-        <DateRangeClient
-          initialFrom={sp.dateFrom}
-          initialTo={sp.dateTo}
-        />
+        <DateRangeClient initialFrom={sp.dateFrom} initialTo={sp.dateTo} />
       </header>
 
       <KpiTiles kpis={body.data.kpis} />

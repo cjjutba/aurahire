@@ -88,7 +88,8 @@ export function FlagBreakdownChartClient({ data }: Props) {
                   fontSize: 12,
                 }}
                 formatter={(value, _name, item) => {
-                  const pct = (item?.payload as { pct?: number } | undefined)?.pct ?? 0;
+                  const pct =
+                    (item?.payload as { pct?: number } | undefined)?.pct ?? 0;
                   return [`${value} (${pct}%)`, "Flags"];
                 }}
               />
@@ -96,7 +97,9 @@ export function FlagBreakdownChartClient({ data }: Props) {
                 {data.map((entry) => (
                   <Cell
                     key={entry.category}
-                    fill={CATEGORY_COLOR[entry.category] ?? "var(--color-muted)"}
+                    fill={
+                      CATEGORY_COLOR[entry.category] ?? "var(--color-muted)"
+                    }
                   />
                 ))}
               </Bar>

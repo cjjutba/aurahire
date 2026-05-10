@@ -65,12 +65,15 @@ export class AnalyticsRangeDto {
 }
 
 export class AnalyticsChartsDto {
-  @ApiProperty({ type: [UserGrowthPointDto] }) userGrowth!: UserGrowthPointDto[];
-  @ApiProperty({ type: [JobsOverTimePointDto] }) jobsOverTime!: JobsOverTimePointDto[];
+  @ApiProperty({ type: [UserGrowthPointDto] })
+  userGrowth!: UserGrowthPointDto[];
+  @ApiProperty({ type: [JobsOverTimePointDto] })
+  jobsOverTime!: JobsOverTimePointDto[];
   @ApiProperty({ type: [ApplicationsByStatusPointDto] })
   applicationsByStatus!: ApplicationsByStatusPointDto[];
   @ApiProperty({ type: [ScoreBucketDto] }) scoreDistribution!: ScoreBucketDto[];
-  @ApiProperty({ type: [AiProcessingPointDto] }) aiProcessingTime!: AiProcessingPointDto[];
+  @ApiProperty({ type: [AiProcessingPointDto] })
+  aiProcessingTime!: AiProcessingPointDto[];
   @ApiProperty({ type: [TopRecruiterDto] }) topRecruiters!: TopRecruiterDto[];
 }
 

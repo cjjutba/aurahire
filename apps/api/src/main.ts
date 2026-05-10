@@ -1,7 +1,10 @@
 import "reflect-metadata";
 
 import { NestFactory } from "@nestjs/core";
-import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from "@nestjs/platform-fastify";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { VersioningType } from "@nestjs/common";
 import { Logger } from "nestjs-pino";
@@ -11,11 +14,15 @@ import multipart from "@fastify/multipart";
 
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { RedisIoAdapter } from "./realtime/redis-adapter.provider";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ logger: false, genReqId: () => undefined as unknown as string }),
+    new FastifyAdapter({
+      logger: false,
+      genReqId: () => undefined as unknown as string,
+    }),
     { bufferLogs: true },
   );
 
@@ -44,14 +51,27 @@ async function bootstrap() {
   });
 
   // CORS
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "http://localhost:3000")
+  const allowedOrigins = (
+    process.env.ALLOWED_ORIGINS ?? "http://localhost:3000"
+  )
     .split(",")
     .map((o) => o.trim());
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
-    allowedHeaders: ["Authorization", "Content-Type", "X-Request-Id"],
+    allowedHeaders: [
+      "Authorization",
+      "Content-Type",
+      "X-Request-Id",
+      "X-Active-Company-Id",
+    ],
   });
+
+  // WebSocket adapter — must run before listen(). Connects the Redis
+  // pub/sub backing for Socket.io rooms across instances.
+  const wsAdapter = new RedisIoAdapter(app);
+  await wsAdapter.connectToRedis();
+  app.useWebSocketAdapter(wsAdapter);
 
   // Global prefix + versioning
   app.setGlobalPrefix("api");

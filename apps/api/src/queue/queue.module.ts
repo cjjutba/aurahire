@@ -2,7 +2,15 @@ import { Global, Logger, Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
-import { RESCORE_BATCH_QUEUE } from "./queue.constants";
+import {
+  MATCH_PREVIEW_PRECOMPUTE_QUEUE,
+  MATCH_SCORE_QUEUE,
+  PROFILE_SCORE_RECOMPUTE_QUEUE,
+  RESCORE_BATCH_QUEUE,
+} from "./queue.constants";
+import { MatchPreviewQueueService } from "./match-preview-queue.service";
+import { MatchScoreQueueService } from "./match-score-queue.service";
+import { ProfileScoreQueueService } from "./profile-score-queue.service";
 
 const logger = new Logger("QueueModule");
 
@@ -28,7 +36,26 @@ const logger = new Logger("QueueModule");
     BullModule.registerQueue({
       name: RESCORE_BATCH_QUEUE,
     }),
+    BullModule.registerQueue({
+      name: MATCH_PREVIEW_PRECOMPUTE_QUEUE,
+    }),
+    BullModule.registerQueue({
+      name: MATCH_SCORE_QUEUE,
+    }),
+    BullModule.registerQueue({
+      name: PROFILE_SCORE_RECOMPUTE_QUEUE,
+    }),
   ],
-  exports: [BullModule],
+  providers: [
+    MatchPreviewQueueService,
+    MatchScoreQueueService,
+    ProfileScoreQueueService,
+  ],
+  exports: [
+    BullModule,
+    MatchPreviewQueueService,
+    MatchScoreQueueService,
+    ProfileScoreQueueService,
+  ],
 })
 export class QueueModule {}

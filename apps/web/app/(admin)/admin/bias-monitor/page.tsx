@@ -7,6 +7,8 @@ import { FlagBreakdownChartClient } from "./_flag-breakdown-chart-client";
 import { TopTermsTable } from "./_top-terms-table";
 import { ScoreDistributionAuditClient } from "./_score-distribution-audit-client";
 import { RecentOverridesList } from "./_recent-overrides-list";
+import { BiasMonitorRealtimeClient } from "./_bias-monitor-realtime-client";
+import { ScoringQualityPanel } from "./_scoring-quality-panel";
 
 export const metadata = { title: "Bias & Fairness Monitor" };
 
@@ -45,6 +47,18 @@ interface BundleBody {
       overriddenAt: string;
     }>;
     sampleSize: { flags: number; scores: number; jobs: number };
+    scoringQuality: {
+      totalWarnings: number;
+      byReason: Array<{ reason: string; count: number }>;
+      byComponent: Array<{ componentName: string; count: number }>;
+      recent: Array<{
+        auditLogId: string;
+        componentName: string;
+        reason: string;
+        promptVersion: string;
+        createdAt: string;
+      }>;
+    };
   };
 }
 
@@ -67,8 +81,10 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
   );
   if (!res.ok) {
     return (
-      <div className="text-[var(--color-status-danger)]">
-        Failed to load bias monitor.
+      <div className="mx-auto max-w-[1280px]">
+        <p className="text-sm text-[var(--color-status-danger)]">
+          Failed to load bias monitor.
+        </p>
       </div>
     );
   }
@@ -78,6 +94,7 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
   return (
     <TooltipProvider delay={150}>
       <div className="mx-auto max-w-[1280px] space-y-8">
+        <BiasMonitorRealtimeClient />
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
@@ -141,6 +158,14 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
         {/* Recent overrides */}
         <RecentOverridesList overrides={d.recentOverrides} />
 
+        {/* Scoring quality (calibration warnings) */}
+        <ScoringQualityPanel
+          totalWarnings={d.scoringQuality.totalWarnings}
+          byReason={d.scoringQuality.byReason}
+          byComponent={d.scoringQuality.byComponent}
+          recent={d.scoringQuality.recent}
+        />
+
         {/* Honesty footer */}
         <p className="rounded-[var(--radius-lg)] bg-[var(--color-surface-soft)] p-4 text-xs text-[var(--color-muted)]">
           <strong className="text-[var(--color-body)]">
@@ -149,7 +174,10 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
           This view surfaces aggregate flag counts + override decisions. It does
           NOT compute disparate-impact tests against demographic groups — by
           design, the system does not collect protected-class data (PII
-          redaction, see <code className="rounded bg-[var(--color-canvas)] px-1 font-mono">/admin/ai-config</code>
+          redaction, see{" "}
+          <code className="rounded bg-[var(--color-canvas)] px-1 font-mono">
+            /admin/ai-config
+          </code>
           ). For the methodology, see{" "}
           <code className="rounded bg-[var(--color-canvas)] px-1 font-mono">
             docs/main/ai-design.md

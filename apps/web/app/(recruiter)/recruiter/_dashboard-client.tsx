@@ -8,9 +8,12 @@ import {
   Clock,
   Inbox,
   PieChart,
+  Plus,
   Sparkles,
   TrendingUp,
 } from "lucide-react";
+import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +25,8 @@ import {
   useRecruiterAnalyticsQuery,
   useRecruiterRecentApplicationsQuery,
 } from "@/hooks/use-dashboard";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { RealtimeEvent } from "@/lib/realtime";
 import type { RecruiterStatsResponse } from "@/lib/query";
 
 type Range = "7d" | "30d" | "90d" | "all";
@@ -50,50 +55,48 @@ function extractKpis(body: RecruiterStatsResponse): KpiData {
   };
 }
 
-const APP_STATUS: Record<
-  string,
-  { label: string; dot: string; text: string }
-> = {
-  applied: {
-    label: "Applied",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  screening: {
-    label: "Screening",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  interview: {
-    label: "Interview",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  offer: {
-    label: "Offer",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  hired: {
-    label: "Hired",
-    dot: "bg-[var(--color-status-success)]",
-    text: "text-[var(--color-status-success)]",
-  },
-  rejected: {
-    label: "Rejected",
-    dot: "bg-[var(--color-status-danger)]",
-    text: "text-[var(--color-status-danger)]",
-  },
-  withdrawn: {
-    label: "Withdrawn",
-    dot: "bg-[var(--color-muted)]",
-    text: "text-[var(--color-muted)]",
-  },
-};
+const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
+  {
+    applied: {
+      label: "Applied",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    screening: {
+      label: "Screening",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    interview: {
+      label: "Interview",
+      dot: "bg-[var(--color-status-info)]",
+      text: "text-[var(--color-status-info)]",
+    },
+    offer: {
+      label: "Offer",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    hired: {
+      label: "Hired",
+      dot: "bg-[var(--color-status-success)]",
+      text: "text-[var(--color-status-success)]",
+    },
+    rejected: {
+      label: "Rejected",
+      dot: "bg-[var(--color-status-danger)]",
+      text: "text-[var(--color-status-danger)]",
+    },
+    withdrawn: {
+      label: "Withdrawn",
+      dot: "bg-[var(--color-muted)]",
+      text: "text-[var(--color-muted)]",
+    },
+  };
 
-const DEFAULT_APP_STATUS = APP_STATUS[
-  "applied"
-] as NonNullable<(typeof APP_STATUS)[string]>;
+const DEFAULT_APP_STATUS = APP_STATUS["applied"] as NonNullable<
+  (typeof APP_STATUS)[string]
+>;
 
 function getAppStatus(s: string): NonNullable<(typeof APP_STATUS)[string]> {
   return APP_STATUS[s] ?? DEFAULT_APP_STATUS;
@@ -148,7 +151,10 @@ function ApplicationsByStatusCard({
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
       <div className="mb-4 flex items-center gap-2">
-        <PieChart className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+        <PieChart
+          className="h-3.5 w-3.5 text-[var(--color-muted)]"
+          aria-hidden
+        />
         <h2 className="text-base font-semibold text-[var(--color-ink)]">
           Applications by Status
         </h2>
@@ -198,7 +204,10 @@ function TopJobsByVolumeCard({
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
       <div className="mb-4 flex items-center gap-2">
-        <TrendingUp className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+        <TrendingUp
+          className="h-3.5 w-3.5 text-[var(--color-muted)]"
+          aria-hidden
+        />
         <h2 className="text-base font-semibold text-[var(--color-ink)]">
           Top Jobs by Volume
         </h2>
@@ -269,7 +278,9 @@ function RecentAppRow({ app }: { app: RecentApp }) {
           </div>
           <div className="truncate text-xs text-[var(--color-muted)]">
             Applied to{" "}
-            <strong className="font-semibold">{app.job?.title ?? "(job)"}</strong>
+            <strong className="font-semibold">
+              {app.job?.title ?? "(job)"}
+            </strong>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -290,17 +301,64 @@ function RecentAppRow({ app }: { app: RecentApp }) {
   );
 }
 
-function EmptyAppsState() {
+function EmptyAppsState({ hasJobs }: { hasJobs: boolean }) {
   return (
     <div className="px-4 py-12 text-center">
-      <Inbox className="mx-auto h-6 w-6 text-[var(--color-muted)]" aria-hidden />
+      <Inbox
+        className="mx-auto h-6 w-6 text-[var(--color-muted)]"
+        aria-hidden
+      />
       <div className="mt-3 text-sm font-medium text-[var(--color-ink)]">
         No applications yet
       </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
-        Once candidates apply to your jobs, they&apos;ll appear here.
+        {hasJobs
+          ? "Once candidates apply to your jobs, they'll appear here."
+          : "Post a job to start collecting applications."}
       </div>
+      {!hasJobs && (
+        <Link
+          href="/recruiter/jobs/new"
+          className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Post your first job
+        </Link>
+      )}
     </div>
+  );
+}
+
+function FirstRunWelcomeCard({
+  recruiterName,
+}: {
+  recruiterName?: string | null;
+}) {
+  const greeting = recruiterName
+    ? `Welcome, ${recruiterName.split(" ")[0]}.`
+    : "Welcome to AuraHire.";
+  return (
+    <section className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-gradient-to-br from-[var(--color-primary-soft)]/40 to-[var(--color-canvas)] p-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
+            {greeting}
+          </h2>
+          <p className="mt-2 max-w-[640px] text-sm text-[var(--color-body)]">
+            You&apos;re all set. Post your first job to start matching with
+            qualified candidates — AuraHire will score every application against
+            your criteria and explain how each candidate matched.
+          </p>
+        </div>
+        <Link
+          href="/recruiter/jobs/new"
+          className="inline-flex h-12 shrink-0 items-center gap-2 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-6 text-base font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
+        >
+          <Plus className="h-4 w-4" />
+          Post your first job
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -337,10 +395,14 @@ function KpiTile({
         </span>
         <Icon className="h-4 w-4 text-[var(--color-muted)]" aria-hidden />
       </div>
-      <div className={`mt-3 font-mono text-3xl font-medium ${loading ? "text-[var(--color-muted)]" : valueClass}`}>
+      <div
+        className={`mt-3 font-mono text-3xl font-medium ${loading ? "text-[var(--color-muted)]" : valueClass}`}
+      >
         {loading ? "—" : value}
       </div>
-      <div className="mt-1 text-xs text-[var(--color-muted)]">{description}</div>
+      <div className="mt-1 text-xs text-[var(--color-muted)]">
+        {description}
+      </div>
     </div>
   );
 }
@@ -353,6 +415,25 @@ export function RecruiterDashboardClient({
   recentLimit: number;
 }) {
   const [range, setRange] = useState<Range>(defaultRange);
+  const queryClient = useQueryClient();
+
+  // Targeted invalidation: only stats + recent depend on application events.
+  // Analytics aggregations (heavier query) only need a refetch on the natural
+  // refetchInterval, not on every incoming event.
+  const invalidateDashboard = (): void => {
+    void queryClient.invalidateQueries({
+      queryKey: ["recruiter-dashboard", "stats"],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ["recruiter-dashboard", "recent"],
+    });
+  };
+
+  useRealtimeChannel(RealtimeEvent.ApplicationCreated, invalidateDashboard);
+  useRealtimeChannel(
+    RealtimeEvent.ApplicationStatusChanged,
+    invalidateDashboard,
+  );
 
   const stats = useRecruiterStatsQuery(range);
   const analytics = useRecruiterAnalyticsQuery();
@@ -364,15 +445,28 @@ export function RecruiterDashboardClient({
       : { activeJobs: 0, totalApps: 0, pendingReview: 0, avgMatchScore: 0 };
 
   const analyticsData = analytics.data?.data ?? {
-    kpis: { activeJobs: 0, totalApplications: 0, pendingReviews: 0, avgMatchScore: 0 },
+    kpis: {
+      activeJobs: 0,
+      totalApplications: 0,
+      pendingReviews: 0,
+      avgMatchScore: 0,
+    },
     topJobs: [],
     applicationsByStatus: [],
   };
 
   const recentApps: RecentApp[] = recent.data?.data ?? [];
 
+  // First-run state: stats loaded and the recruiter has zero jobs AND zero apps.
+  // Skip the welcome card during initial fetch so we don't flash it briefly.
+  const isFirstRun =
+    !stats.isLoading &&
+    !analytics.isLoading &&
+    kpis.activeJobs === 0 &&
+    kpis.totalApps === 0;
+
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-[1280px] space-y-8">
       <header>
         <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           Recruiter Dashboard
@@ -381,6 +475,8 @@ export function RecruiterDashboardClient({
           Pipeline at a glance.
         </p>
       </header>
+
+      {isFirstRun && <FirstRunWelcomeCard />}
 
       {/* Section 1: KPI Hero Row with date filter */}
       <section>
@@ -444,7 +540,10 @@ export function RecruiterDashboardClient({
       {/* Section 2: Pipeline Snapshot */}
       <section>
         <div className="mb-3 flex items-center gap-2">
-          <BarChart3 className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+          <BarChart3
+            className="h-3.5 w-3.5 text-[var(--color-muted)]"
+            aria-hidden
+          />
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
             Pipeline Snapshot
           </span>
@@ -459,7 +558,10 @@ export function RecruiterDashboardClient({
       <section>
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Inbox className="h-3.5 w-3.5 text-[var(--color-muted)]" aria-hidden />
+            <Inbox
+              className="h-3.5 w-3.5 text-[var(--color-muted)]"
+              aria-hidden
+            />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
               Recent Applications
             </span>
@@ -473,7 +575,7 @@ export function RecruiterDashboardClient({
         </div>
         <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)]">
           {recentApps.length === 0 ? (
-            <EmptyAppsState />
+            <EmptyAppsState hasJobs={kpis.activeJobs > 0} />
           ) : (
             <ul className="divide-y divide-[var(--color-hairline-soft)]">
               {recentApps.map((app) => (

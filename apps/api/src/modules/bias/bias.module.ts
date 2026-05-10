@@ -6,7 +6,7 @@ import { BiasRepository } from "./bias.repository";
 import { BiasService } from "./bias.service";
 
 @Module({
-  imports: [forwardRef(() => JobsModule), ScoringModule],
+  imports: [forwardRef(() => JobsModule), forwardRef(() => ScoringModule)],
   controllers: [BiasController],
   providers: [BiasService, BiasRepository],
   exports: [BiasService, BiasRepository],

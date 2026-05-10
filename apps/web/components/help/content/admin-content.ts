@@ -382,15 +382,33 @@ export const adminHelp: HelpPageContent = {
               head: ["Field", "Description"],
               rows: [
                 ["id", "ULID; lexicographically sortable by time."],
-                ["actor_user_id", "Who performed the action; null for system events."],
+                [
+                  "actor_user_id",
+                  "Who performed the action; null for system events.",
+                ],
                 ["actor_role", "candidate / recruiter / admin / system."],
-                ["workspace_id", "Tenant scope (nullable for cross-workspace events)."],
-                ["category", "Lifecycle, scoring, bias, offer, communication, config, identity."],
-                ["action", "Specific verb (e.g. score.override, offer.send, prompt.bump)."],
-                ["target_kind", "Resource type (job, application, user, prompt-version)."],
+                [
+                  "workspace_id",
+                  "Tenant scope (nullable for cross-workspace events).",
+                ],
+                [
+                  "category",
+                  "Lifecycle, scoring, bias, offer, communication, config, identity.",
+                ],
+                [
+                  "action",
+                  "Specific verb (e.g. score.override, offer.send, prompt.bump).",
+                ],
+                [
+                  "target_kind",
+                  "Resource type (job, application, user, prompt-version).",
+                ],
                 ["target_id", "Resource ID."],
                 ["before / after", "JSON diff of the resource state."],
-                ["reason", "Free-text reason (required for overrides and escalations)."],
+                [
+                  "reason",
+                  "Free-text reason (required for overrides and escalations).",
+                ],
                 ["created_at", "Server timestamp; not client-supplied."],
               ],
             },
@@ -488,7 +506,7 @@ export const adminHelp: HelpPageContent = {
                 {
                   label: "Backend",
                   description:
-                    "NestJS on Railway. Owns DB writes, AI calls, queue jobs, and cron.",
+                    "NestJS on a Digital Ocean Droplet (PM2). Owns DB writes, AI calls, queue jobs, and cron.",
                 },
                 {
                   label: "Database",
@@ -503,7 +521,7 @@ export const adminHelp: HelpPageContent = {
                 {
                   label: "Queue",
                   description:
-                    "BullMQ on Upstash / Railway Redis. Resume parsing, scoring, email sends, and exports run as jobs.",
+                    "BullMQ on the Droplet's Redis (Docker container, localhost-bound). Resume parsing, scoring, email sends, and exports run as jobs.",
                 },
                 {
                   label: "Cron",
@@ -713,8 +731,8 @@ export const adminHelp: HelpPageContent = {
   ],
   contact: {
     title: "Need to escalate?",
-    body: "Email the on-call line for incidents (24/7) or the standard support inbox for questions. Include workspace IDs and audit IDs whenever possible.",
-    email: "oncall@aurahire.app",
+    body: "Email the AuraHire team for incidents or platform-admin questions. Include workspace IDs and audit IDs whenever possible.",
+    email: "hello@aurahire.site",
     secondaryLink: { label: "Open the admin command center", href: "/admin" },
   },
 };

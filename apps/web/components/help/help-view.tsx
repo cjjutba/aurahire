@@ -25,6 +25,11 @@ const HELP_CONTENT: Record<HelpVariant, HelpPageContent> = {
   admin: adminHelp,
 };
 
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 interface HelpViewProps {
   variant: HelpVariant;
 }
@@ -37,6 +42,9 @@ export function HelpView({ variant }: HelpViewProps) {
   );
   const [tocOpen, setTocOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const tocScrollRef = useRef<HTMLDivElement | null>(null);
+  const [tocCanScrollUp, setTocCanScrollUp] = useState(false);
+  const [tocCanScrollDown, setTocCanScrollDown] = useState(false);
 
   // Cmd/Ctrl+K focuses search
   useEffect(() => {
@@ -109,12 +117,52 @@ export function HelpView({ variant }: HelpViewProps) {
     return () => observer.disconnect();
   }, [allSectionIds]);
 
+  // Keep the active TOC item visible inside the bounded scroll container.
+  // `block: "nearest"` is a no-op when the target is already on-screen,
+  // so this never fights manual TOC scrolling.
+  useEffect(() => {
+    if (!activeId) return;
+    const container = tocScrollRef.current;
+    if (!container) return;
+    const btn = container.querySelector<HTMLButtonElement>(
+      `[data-toc-id="${activeId}"]`,
+    );
+    if (!btn) return;
+    btn.scrollIntoView({
+      block: "nearest",
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+  }, [activeId]);
+
+  // Track whether the TOC has overflow above/below the viewport so we can render
+  // a visible scroll affordance — macOS auto-hides custom scrollbars, so we
+  // need our own indicator. Updates on scroll, on resize, and when content filters.
+  useEffect(() => {
+    const el = tocScrollRef.current;
+    if (!el) return;
+    const update = () => {
+      setTocCanScrollUp(el.scrollTop > 1);
+      setTocCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, [filtered]);
+
   function handleTocClick(id: string) {
     const el = document.getElementById(id);
     if (!el) return;
     setActiveId(id);
     setTocOpen(false);
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
     if (typeof history !== "undefined") {
       history.replaceState(null, "", `#${id}`);
     }
@@ -126,7 +174,7 @@ export function HelpView({ variant }: HelpViewProps) {
     filtered.faq.length === 0;
 
   return (
-    <div className="mx-auto max-w-[1080px]">
+    <div className="mx-auto max-w-[1280px]">
       {/* Hero */}
       <header className="mb-10">
         <div className="mb-3 flex items-center gap-2">
@@ -268,20 +316,54 @@ export function HelpView({ variant }: HelpViewProps) {
 
         {/* Desktop sticky TOC */}
         <aside className="hidden lg:block">
-          <div className="sticky top-8">
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+          <div className="sticky top-8 flex max-h-[calc(100vh-4rem)] flex-col">
+            <div className="mb-3 shrink-0 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
               On this page
             </div>
-            <TocList
-              groups={filtered.groups}
-              activeId={activeId}
-              onPick={handleTocClick}
-              extra={
-                filtered.faq.length > 0
-                  ? [{ id: "faq", title: "Frequently asked" }]
-                  : []
-              }
-            />
+            <div className="relative min-h-0 flex-1">
+              {/* top fade — only when content scrolled above is clipped */}
+              {tocCanScrollUp && (
+                <div
+                  className="pointer-events-none absolute inset-x-0 top-0 z-10 h-4 bg-gradient-to-b from-[var(--color-canvas)] to-transparent"
+                  aria-hidden
+                />
+              )}
+              {/* scroll surface */}
+              <div
+                ref={tocScrollRef}
+                className="h-full overflow-y-auto pb-8 pr-2 pt-1 [scrollbar-color:var(--color-hairline)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--color-hairline)] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5"
+              >
+                <TocList
+                  groups={filtered.groups}
+                  activeId={activeId}
+                  onPick={handleTocClick}
+                  extra={
+                    filtered.faq.length > 0
+                      ? [{ id: "faq", title: "Frequently asked" }]
+                      : []
+                  }
+                />
+              </div>
+              {/* bottom — clickable chevron affordance when more topics exist below */}
+              {tocCanScrollDown && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = tocScrollRef.current;
+                    if (!el) return;
+                    el.scrollBy({
+                      top: el.clientHeight * 0.7,
+                      behavior: prefersReducedMotion() ? "auto" : "smooth",
+                    });
+                  }}
+                  aria-label="Scroll to see more topics"
+                  className="absolute inset-x-0 bottom-0 z-10 flex h-8 items-end justify-center gap-1 bg-gradient-to-t from-[var(--color-canvas)] via-[var(--color-canvas)] to-transparent pb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)] transition hover:text-[var(--color-primary)]"
+                >
+                  <ChevronDown className="h-3 w-3" aria-hidden />
+                  <span>More</span>
+                </button>
+              )}
+            </div>
           </div>
         </aside>
       </div>
@@ -319,7 +401,7 @@ function SectionView({ section }: { section: HelpSection }) {
                   ?.writeText(url.toString())
                   .catch(() => undefined);
                 document.getElementById(section.id)?.scrollIntoView({
-                  behavior: "smooth",
+                  behavior: prefersReducedMotion() ? "auto" : "smooth",
                   block: "start",
                 });
                 if (typeof history !== "undefined") {
@@ -373,12 +455,15 @@ function TocList({
                 <li key={s.id}>
                   <button
                     type="button"
+                    data-toc-id={s.id}
+                    aria-current={active ? "location" : undefined}
                     onClick={() => onPick(s.id)}
                     className={cn(
-                      "block w-full truncate rounded-[var(--radius-sm)] px-2 py-1.5 text-left transition",
+                      "relative block w-full truncate rounded-[var(--radius-sm)] py-1.5 pl-3 pr-2 text-left transition",
+                      "before:absolute before:inset-y-1 before:left-0 before:w-[2px] before:rounded-full before:transition-colors before:content-['']",
                       active
-                        ? "bg-[var(--color-primary-soft)] font-medium text-[var(--color-primary)]"
-                        : "text-[var(--color-body)] hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]",
+                        ? "font-medium text-[var(--color-ink)] before:bg-[var(--color-primary)]"
+                        : "text-[var(--color-body)] before:bg-transparent hover:text-[var(--color-ink)]",
                     )}
                   >
                     {s.title}
@@ -398,12 +483,15 @@ function TocList({
                 <li key={item.id}>
                   <button
                     type="button"
+                    data-toc-id={item.id}
+                    aria-current={active ? "location" : undefined}
                     onClick={() => onPick(item.id)}
                     className={cn(
-                      "block w-full truncate rounded-[var(--radius-sm)] px-2 py-1.5 text-left transition",
+                      "relative block w-full truncate rounded-[var(--radius-sm)] py-1.5 pl-3 pr-2 text-left transition",
+                      "before:absolute before:inset-y-1 before:left-0 before:w-[2px] before:rounded-full before:transition-colors before:content-['']",
                       active
-                        ? "bg-[var(--color-primary-soft)] font-medium text-[var(--color-primary)]"
-                        : "text-[var(--color-body)] hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)]",
+                        ? "font-medium text-[var(--color-ink)] before:bg-[var(--color-primary)]"
+                        : "text-[var(--color-body)] before:bg-transparent hover:text-[var(--color-ink)]",
                     )}
                   >
                     {item.title}
@@ -544,9 +632,7 @@ function blockMatches(
         (block.cite?.toLowerCase().includes(q) ?? false)
       );
     case "kbd":
-      return block.entries.some((e) =>
-        e.description.toLowerCase().includes(q),
-      );
+      return block.entries.some((e) => e.description.toLowerCase().includes(q));
     case "matrix":
       return (
         block.head.some((h) => h.toLowerCase().includes(q)) ||

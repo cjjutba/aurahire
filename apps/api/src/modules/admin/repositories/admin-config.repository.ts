@@ -34,7 +34,10 @@ export class AdminConfigRepository {
         profile: profilesTable,
       })
       .from(scoringConfigTable)
-      .leftJoin(profilesTable, eq(profilesTable.id, scoringConfigTable.updatedBy))
+      .leftJoin(
+        profilesTable,
+        eq(profilesTable.id, scoringConfigTable.updatedBy),
+      )
       .where(eq(scoringConfigTable.isActive, true))
       .limit(1);
 
@@ -70,7 +73,9 @@ export class AdminConfigRepository {
     return row;
   }
 
-  async sampleRecentMatchScores(sampleSize: number): Promise<MatchScoreSample[]> {
+  async sampleRecentMatchScores(
+    sampleSize: number,
+  ): Promise<MatchScoreSample[]> {
     const rows = await this.db
       .select({
         matchScore: matchScoresTable,
@@ -79,7 +84,10 @@ export class AdminConfigRepository {
         company: companiesTable,
       })
       .from(matchScoresTable)
-      .innerJoin(profilesTable, eq(profilesTable.id, matchScoresTable.candidateId))
+      .innerJoin(
+        profilesTable,
+        eq(profilesTable.id, matchScoresTable.candidateId),
+      )
       .innerJoin(jobsTable, eq(jobsTable.id, matchScoresTable.jobId))
       .innerJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
       .orderBy(desc(matchScoresTable.createdAt))

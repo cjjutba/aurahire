@@ -119,7 +119,9 @@ async function main() {
   }
 
   console.log("=== Smoke test PASSED ===");
-  console.log(`Total latency: ${parseResult.latencyMs + biasResult.latencyMs}ms`);
+  console.log(
+    `Total latency: ${parseResult.latencyMs + biasResult.latencyMs}ms`,
+  );
   console.log(
     `Total tokens: ${parseResult.promptTokens + parseResult.completionTokens + biasResult.promptTokens + biasResult.completionTokens}`,
   );

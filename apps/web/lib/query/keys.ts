@@ -2,7 +2,8 @@ export const queryKeys = {
   recruiterDashboard: {
     stats: (range: string) => ["recruiter-dashboard", "stats", range] as const,
     analytics: () => ["recruiter-dashboard", "analytics"] as const,
-    recent: (limit: number) => ["recruiter-dashboard", "recent", limit] as const,
+    recent: (limit: number) =>
+      ["recruiter-dashboard", "recent", limit] as const,
   },
   recruiterJobs: {
     list: (params: RecruiterJobsListParams) =>
@@ -20,6 +21,8 @@ export const queryKeys = {
   recruiterApplications: {
     byJob: (jobId: string, params: RecruiterApplicationsByJobParams) =>
       ["recruiter-applications", "by-job", jobId, params] as const,
+    list: (params: RecruiterApplicationsListParams) =>
+      ["recruiter-applications", "list", params] as const,
   },
   candidateJobs: {
     list: (params: CandidateJobsListParams) =>
@@ -36,6 +39,17 @@ export const queryKeys = {
   },
   profileScore: {
     me: () => ["profile-score", "me"] as const,
+  },
+  matchPreviews: {
+    list: () => ["candidate-match-previews", "list"] as const,
+  },
+  candidateResumes: {
+    list: () => ["candidate-resumes", "list"] as const,
+    download: (id: string) => ["candidate-resumes", "download", id] as const,
+  },
+  interviewVenues: {
+    byCompany: (companyId: string) =>
+      ["interview-venues", "by-company", companyId] as const,
   },
 } as const;
 
@@ -64,11 +78,23 @@ export interface RecruiterApplicationsByJobParams {
   status?: string;
   page?: number;
 }
+export interface RecruiterApplicationsListParams {
+  q?: string;
+  status?: string;
+  jobId?: string;
+  band?: string;
+  sort?: string;
+  page?: number;
+  limit?: number;
+}
 export interface CandidateJobsListParams {
   q?: string;
   mode?: string;
   experienceLevel?: string;
+  sort?: string;
   page?: number;
+  limit?: number;
+  excludeApplied?: boolean;
 }
 export interface CandidateApplicationsParams {
   status?: string;

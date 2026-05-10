@@ -13,45 +13,51 @@ This document specifies every AI surface in AuraHire: resume parsing, profile sc
 ## Design Principles
 
 ### 1. Structured outputs always
+
 Every AI call uses OpenAI's structured-output JSON Schema mode. Free-text parsing is forbidden. The model produces JSON that conforms to a Zod-derived schema; we never write a regex against AI output.
 
 **Why:** Reliability + auditability. A score must always have a parseable breakdown.
 
 ### 2. PII redaction before scoring
+
 Resumes are passed through a redaction step that strips name, photo URL, age, gender markers, and address before any scoring AI sees them. Skills, experience, education, and city/country remain.
 
 **Why:** Removes the most direct vectors for biased scoring. The fairness story starts here.
 
 ### 3. Evidence over assertion
+
 Every component score includes excerpt-level evidence — the literal text from the resume that drove the score up or down. The candidate, recruiter, and admin can all click a score and see what made it.
 
 **Why:** No black-box scores. This is the single most important explainability lever.
 
 ### 4. Transparent weights, configurable by admin
+
 Scoring weights live in the `scoring_config` table. Admin can tune them; every change is audited; every score records the weights used at compute time.
 
 **Why:** Demonstrates the system's openness — examiners can see exactly what the algorithm values.
 
 ### 5. Bias detection is upstream, not just downstream
+
 We detect biased language in job descriptions before they're published, not just monitor scores after the fact. Detection at posting time prevents biased inputs to the rest of the system.
 
 **Why:** Mitigation > monitoring. Active intervention is the academically interesting part.
 
 ### 6. Audit every AI event
+
 Every parse, score, override, and config change writes to `audit_logs`. The log is queryable by admin and exportable for thesis appendix.
 
 ---
 
 ## AI Surface Inventory
 
-| Surface | When | Input | Output | Model |
-|---|---|---|---|---|
-| Resume Parsing | Onboarding step 1 + every new resume upload | PDF/DOCX → plain text | Structured resume JSON | gpt-4o-mini |
-| PII Redaction | Before any scoring call | Parsed resume JSON | Redacted JSON + redacted_fields list | (rule-based + LLM-assisted) |
-| Profile Score | End of onboarding + on resume/preferences change | Redacted resume + preferences | Profile Score JSON with breakdown + suggestions | gpt-4o-mini |
-| Match Score | At application time + on demand | Redacted resume + job posting | Match Score JSON with breakdown + evidence | gpt-4o-mini |
-| Bias Detection | On job description blur + on publish | Job description plain text | List of flagged terms with categories + suggestions | gpt-4o-mini |
-| Aggregate Fairness Metrics | Computed on demand for admin | Database aggregations | Pre-computed stats (no AI call) | (SQL only) |
+| Surface                    | When                                             | Input                         | Output                                              | Model                       |
+| -------------------------- | ------------------------------------------------ | ----------------------------- | --------------------------------------------------- | --------------------------- |
+| Resume Parsing             | Onboarding step 1 + every new resume upload      | PDF/DOCX → plain text         | Structured resume JSON                              | gpt-4o-mini                 |
+| PII Redaction              | Before any scoring call                          | Parsed resume JSON            | Redacted JSON + redacted_fields list                | (rule-based + LLM-assisted) |
+| Profile Score              | End of onboarding + on resume/preferences change | Redacted resume + preferences | Profile Score JSON with breakdown + suggestions     | gpt-4o-mini                 |
+| Match Score                | At application time + on demand                  | Redacted resume + job posting | Match Score JSON with breakdown + evidence          | gpt-4o-mini                 |
+| Bias Detection             | On job description blur + on publish             | Job description plain text    | List of flagged terms with categories + suggestions | gpt-4o-mini                 |
+| Aggregate Fairness Metrics | Computed on demand for admin                     | Database aggregations         | Pre-computed stats (no AI call)                     | (SQL only)                  |
 
 ---
 
@@ -99,8 +105,8 @@ export const educationEntrySchema = z.object({
 export const experienceEntrySchema = z.object({
   company: z.string(),
   title: z.string(),
-  start_date: z.string().nullable(),  // ISO YYYY-MM
-  end_date: z.string().nullable(),    // ISO YYYY-MM, or null for "Present"
+  start_date: z.string().nullable(), // ISO YYYY-MM
+  end_date: z.string().nullable(), // ISO YYYY-MM, or null for "Present"
   is_current: z.boolean().default(false),
   responsibilities: z.array(z.string()),
   technologies_used: z.array(z.string()),
@@ -161,13 +167,13 @@ Resume text:
 
 ### Failure modes & fallback
 
-| Mode | Handling |
-|---|---|
+| Mode                | Handling                                                                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Empty / corrupt PDF | Return `parse_status='failed'`, show "We couldn't parse your resume. Please fill out manually." Allow user to proceed with empty fields. |
-| OCR garble | Model returns parse_confidence='low'; UI shows soft warning ("We extracted limited information; please review carefully") |
-| OpenAI 5xx | Retry once with same input; if still fails, save with `parse_status='failed'` |
-| Invalid JSON output | Should never happen with structured outputs; if it does, log raw response, mark `parse_status='failed'` |
-| Timeout (>30s) | Abort with `parse_status='failed'` + "Parsing timed out. Try a simpler PDF." |
+| OCR garble          | Model returns parse_confidence='low'; UI shows soft warning ("We extracted limited information; please review carefully")                |
+| OpenAI 5xx          | Retry once with same input; if still fails, save with `parse_status='failed'`                                                            |
+| Invalid JSON output | Should never happen with structured outputs; if it does, log raw response, mark `parse_status='failed'`                                  |
+| Timeout (>30s)      | Abort with `parse_status='failed'` + "Parsing timed out. Try a simpler PDF."                                                             |
 
 ### Caching
 
@@ -264,12 +270,12 @@ Compute a candidate's overall resume strength score (0–100), independent of an
 
 ### Components & default weights
 
-| Component | Default Weight | What it measures |
-|---|---|---|
-| Completeness | 25 | Percentage of resume sections filled (contact, education, experience, skills) |
-| Skill Depth | 30 | Number of relevant skills, modernity, alignment with desired role |
-| Experience Clarity | 30 | Quality of experience descriptions: outcomes, technologies, durations clear |
-| Education Quality | 15 | Degree match for desired role + relevant certifications |
+| Component          | Default Weight | What it measures                                                              |
+| ------------------ | -------------- | ----------------------------------------------------------------------------- |
+| Completeness       | 25             | Percentage of resume sections filled (contact, education, experience, skills) |
+| Skill Depth        | 30             | Number of relevant skills, modernity, alignment with desired role             |
+| Experience Clarity | 30             | Quality of experience descriptions: outcomes, technologies, durations clear   |
+| Education Quality  | 15             | Degree match for desired role + relevant certifications                       |
 
 Total = 100. Weights configurable in `scoring_config.profile_weights`.
 
@@ -280,27 +286,38 @@ Total = 100. Weights configurable in `scoring_config.profile_weights`.
 import { z } from "zod";
 
 export const componentSchema = z.object({
-  name: z.enum(["completeness", "skill_depth", "experience_clarity", "education_quality"]),
-  score: z.number().int().min(0),                  // 0-max
-  max: z.number().int(),                           // weight value (e.g. 25)
-  weight: z.number().int(),                        // weight (same as max for now)
-  explanation: z.string(),                         // plain-language WHY
-  evidence: z.array(z.object({
-    excerpt: z.string(),
-    source: z.string(),                            // section ref
-    relevance: z.enum(["positive", "negative", "neutral"]),
-  })),
+  name: z.enum([
+    "completeness",
+    "skill_depth",
+    "experience_clarity",
+    "education_quality",
+  ]),
+  score: z.number().int().min(0), // 0-max
+  max: z.number().int(), // weight value (e.g. 25)
+  weight: z.number().int(), // weight (same as max for now)
+  explanation: z.string(), // plain-language WHY
+  evidence: z.array(
+    z.object({
+      excerpt: z.string(),
+      source: z.string(), // section ref
+      relevance: z.enum(["positive", "negative", "neutral"]),
+    }),
+  ),
 });
 
 export const profileScoreSchema = z.object({
   overall_score: z.number().int().min(0).max(100),
   band: z.enum(["strong", "partial", "limited"]),
   components: z.array(componentSchema),
-  improvement_suggestions: z.array(z.object({
-    title: z.string(),
-    description: z.string(),
-    estimated_impact: z.number().int(),  // points the candidate could gain
-  })).max(3),
+  improvement_suggestions: z
+    .array(
+      z.object({
+        title: z.string(),
+        description: z.string(),
+        estimated_impact: z.number().int(), // points the candidate could gain
+      }),
+    )
+    .max(3),
 });
 ```
 
@@ -374,12 +391,12 @@ Compute how well a candidate fits a specific job. Computed at application time a
 
 ### Components & default weights
 
-| Component | Default Weight | What it measures |
-|---|---|---|
-| Skills Match | 40 | Coverage of required_skills + relevant adjacent skills |
-| Experience Match | 35 | Years of experience vs. required level + role/title alignment |
-| Education Match | 15 | Degree level vs. requirement + field alignment |
-| Cultural / Language Fit | 10 | Tone, terminology, soft-skill alignment between resume + job description |
+| Component               | Default Weight | What it measures                                                         |
+| ----------------------- | -------------- | ------------------------------------------------------------------------ |
+| Skills Match            | 40             | Coverage of required_skills + relevant adjacent skills                   |
+| Experience Match        | 35             | Years of experience vs. required level + role/title alignment            |
+| Education Match         | 15             | Degree level vs. requirement + field alignment                           |
+| Cultural / Language Fit | 10             | Tone, terminology, soft-skill alignment between resume + job description |
 
 Total = 100. Weights configurable in `scoring_config.match_weights`.
 
@@ -393,20 +410,24 @@ export const matchComponentSchema = z.object({
   max: z.number().int(),
   weight: z.number().int(),
   explanation: z.string(),
-  evidence: z.array(z.object({
-    excerpt: z.string(),
-    source: z.string(),
-    relevance: z.enum(["positive", "negative", "neutral"]),
-    contribution_points: z.number().int(),
-  })).max(5),
+  evidence: z
+    .array(
+      z.object({
+        excerpt: z.string(),
+        source: z.string(),
+        relevance: z.enum(["positive", "negative", "neutral"]),
+        contribution_points: z.number().int(),
+      }),
+    )
+    .max(5),
 });
 
 export const matchScoreSchema = z.object({
   overall_score: z.number().int().min(0).max(100),
   band: z.enum(["strong", "partial", "limited"]),
   components: z.array(matchComponentSchema),
-  summary: z.string(),    // one-paragraph plain-language synthesis
-  red_flags: z.array(z.string()).optional(),  // significant gaps
+  summary: z.string(), // one-paragraph plain-language synthesis
+  red_flags: z.array(z.string()).optional(), // significant gaps
   green_flags: z.array(z.string()).optional(), // standout strengths
 });
 ```
@@ -492,11 +513,11 @@ Flag biased language in job descriptions before publishing. Empower the recruite
 
 ### Categories
 
-| Category | Examples |
-|---|---|
-| **Gendered** | "rockstar", "ninja", "guys", "manpower", "salesman", "girl Friday" |
-| **Age-coded** | "young", "energetic", "digital native", "fresh", "recent graduate", "mature" |
-| **Ableist** | "able-bodied", "stand for long periods" (without context), "lift heavy" (without context) |
+| Category         | Examples                                                                                  |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| **Gendered**     | "rockstar", "ninja", "guys", "manpower", "salesman", "girl Friday"                        |
+| **Age-coded**    | "young", "energetic", "digital native", "fresh", "recent graduate", "mature"              |
+| **Ableist**      | "able-bodied", "stand for long periods" (without context), "lift heavy" (without context) |
 | **Exclusionary** | "must be willing to work long hours", "no remote", culture-fit language without specifics |
 
 ### Output Schema
@@ -504,11 +525,17 @@ Flag biased language in job descriptions before publishing. Empower the recruite
 ```ts
 // lib/ai/schemas/bias-flags.ts
 export const biasFlagSchema = z.object({
-  term: z.string(),                           // exact text flagged
-  category: z.enum(["gendered", "age-coded", "ableist", "exclusionary", "other"]),
+  term: z.string(), // exact text flagged
+  category: z.enum([
+    "gendered",
+    "age-coded",
+    "ableist",
+    "exclusionary",
+    "other",
+  ]),
   severity: z.enum(["high", "medium", "low"]),
-  explanation: z.string(),                    // why it's flagged
-  suggestion: z.string(),                     // recommended replacement
+  explanation: z.string(), // why it's flagged
+  suggestion: z.string(), // recommended replacement
   position_start: z.number().int().optional(),
   position_end: z.number().int().optional(),
 });
@@ -564,6 +591,7 @@ CUSTOM TERMS TO ALSO FLAG (admin-added):
 ### Recruiter override flow
 
 When publishing with unresolved flags:
+
 1. Modal shows the flagged terms + suggestions
 2. Recruiter must either:
    - **Edit** the description to resolve flags (preferred)
@@ -587,22 +615,22 @@ Surface system-level fairness metrics to admin. Spot trends. Demonstrate ongoing
 
 ### Metrics surfaced
 
-| Metric | SQL Source |
-|---|---|
-| Total flags this period | `COUNT(*) FROM bias_flags WHERE created_at >= ?` |
-| Flags per job | `COUNT(*) / COUNT(DISTINCT job_id)` |
-| Flags resolved % | `COUNT(*) WHERE status='resolved' / COUNT(*)` |
-| Override rate | `COUNT(*) WHERE status='overridden' / COUNT(*) WHERE status IN ('overridden', 'resolved')` |
-| Top flagged terms | `SELECT term, COUNT(*) FROM bias_flags GROUP BY term ORDER BY count DESC LIMIT 10` |
-| Flag breakdown by category | `SELECT category, COUNT(*) FROM bias_flags GROUP BY category` |
-| Score distribution | Histogram of `match_scores.overall_score` |
-| Score distribution by job | Per-job aggregation |
-| Recent override decisions | List of `bias_flags WHERE status='overridden'` with reason and recruiter |
+| Metric                     | SQL Source                                                                                 |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| Total flags this period    | `COUNT(*) FROM bias_flags WHERE created_at >= ?`                                           |
+| Flags per job              | `COUNT(*) / COUNT(DISTINCT job_id)`                                                        |
+| Flags resolved %           | `COUNT(*) WHERE status='resolved' / COUNT(*)`                                              |
+| Override rate              | `COUNT(*) WHERE status='overridden' / COUNT(*) WHERE status IN ('overridden', 'resolved')` |
+| Top flagged terms          | `SELECT term, COUNT(*) FROM bias_flags GROUP BY term ORDER BY count DESC LIMIT 10`         |
+| Flag breakdown by category | `SELECT category, COUNT(*) FROM bias_flags GROUP BY category`                              |
+| Score distribution         | Histogram of `match_scores.overall_score`                                                  |
+| Score distribution by job  | Per-job aggregation                                                                        |
+| Recent override decisions  | List of `bias_flags WHERE status='overridden'` with reason and recruiter                   |
 
 ### What we don't claim (yet)
 
 - **Disparate impact statistical tests** (e.g., 4/5 rule against demographic groups) require demographic data we deliberately don't collect (PII redaction). For thesis purposes:
-  - We document this as a tradeoff in the thesis: "We chose redaction over collection. Disparate impact requires collected demographic labels, which contradicts our redaction philosophy. Future work could collect *self-reported* optional demographics for fairness audits."
+  - We document this as a tradeoff in the thesis: "We chose redaction over collection. Disparate impact requires collected demographic labels, which contradicts our redaction philosophy. Future work could collect _self-reported_ optional demographics for fairness audits."
 - **Causal fairness analysis** is out of scope; we surface aggregate distributions and flag rates.
 
 ### Computation
@@ -615,22 +643,22 @@ All metrics are SQL aggregations — no AI calls. Computed on demand when admin 
 
 ### Default: gpt-4o-mini
 
-| Aspect | gpt-4o-mini |
-|---|---|
-| Input cost | $0.15 / 1M tokens |
-| Output cost | $0.60 / 1M tokens |
-| Latency | typically 3-8s for our prompt sizes |
-| Structured outputs | Supported |
-| Quality | Sufficient for parsing, scoring, bias detection |
+| Aspect             | gpt-4o-mini                                     |
+| ------------------ | ----------------------------------------------- |
+| Input cost         | $0.15 / 1M tokens                               |
+| Output cost        | $0.60 / 1M tokens                               |
+| Latency            | typically 3-8s for our prompt sizes             |
+| Structured outputs | Supported                                       |
+| Quality            | Sufficient for parsing, scoring, bias detection |
 
 ### Per-call cost estimate
 
-| Operation | Input tokens (typical) | Output tokens | Cost per call |
-|---|---|---|---|
-| Resume parse | ~3000 | ~1500 | ~$0.0015 |
-| Profile score | ~2000 | ~1000 | ~$0.0009 |
-| Match score | ~3000 | ~1500 | ~$0.0015 |
-| Bias check | ~1000 | ~500 | ~$0.0005 |
+| Operation     | Input tokens (typical) | Output tokens | Cost per call |
+| ------------- | ---------------------- | ------------- | ------------- |
+| Resume parse  | ~3000                  | ~1500         | ~$0.0015      |
+| Profile score | ~2000                  | ~1000         | ~$0.0009      |
+| Match score   | ~3000                  | ~1500         | ~$0.0015      |
+| Bias check    | ~1000                  | ~500          | ~$0.0005      |
 
 Sprint demo (~50 candidates × 10 jobs × scoring): ~$5 total.
 Thesis defense buffer: $20 OpenAI credit covers everything plus retries.
@@ -638,6 +666,7 @@ Thesis defense buffer: $20 OpenAI credit covers everything plus retries.
 ### When to upgrade to gpt-4o
 
 Consider for:
+
 - Edge-case resumes that gpt-4o-mini misparses
 - Bias detection in subtle/contextual language
 - Cultural fit scoring on long, narrative job descriptions
@@ -647,11 +676,12 @@ For sprint: gpt-4o-mini default. Document upgrade path in thesis appendix.
 ### Timeout & retry
 
 ```ts
-const AI_TIMEOUT_MS = 30_000;       // 30s for parsing, scoring
-const AI_RETRY_COUNT = 1;           // one retry on transient errors
+const AI_TIMEOUT_MS = 30_000; // 30s for parsing, scoring
+const AI_RETRY_COUNT = 1; // one retry on transient errors
 ```
 
 If primary call times out:
+
 1. Retry once with same input
 2. If retry fails: mark score row `status='failed'`, surface friendly message ("Score temporarily unavailable; retry?")
 
@@ -667,6 +697,7 @@ export const PARSE_RESUME_VERSION = "1.0.0";
 ```
 
 When a prompt changes:
+
 1. Bump version (`1.0.0` → `1.1.0` for prompt edits, `2.0.0` for breaking schema changes)
 2. Old prompt remains in code as commented or archived
 3. Audit log + score rows record version used at compute time
@@ -720,13 +751,13 @@ Document results in thesis appendix. **Curate; don't claim "tested at scale."**
 
 How each AI design choice maps to the thesis claim **"Explainable and Fair AI-Powered Recruitment with Bias Mitigation"**:
 
-| Thesis claim | Implementation |
-|---|---|
-| **Explainable** | Structured outputs + evidence excerpts + plain-language explanations + admin score audit view |
-| **Fair** | PII redaction before scoring + bias detection on job descriptions + aggregate fairness monitor |
-| **AI-powered** | gpt-4o-mini at parsing, scoring, and bias detection points |
-| **Recruitment** | End-to-end: register → apply → screen → interview → offer |
-| **with Bias Mitigation** | Active intervention at job posting time + monitoring at admin level |
+| Thesis claim             | Implementation                                                                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| **Explainable**          | Structured outputs + evidence excerpts + plain-language explanations + admin score audit view  |
+| **Fair**                 | PII redaction before scoring + bias detection on job descriptions + aggregate fairness monitor |
+| **AI-powered**           | gpt-4o-mini at parsing, scoring, and bias detection points                                     |
+| **Recruitment**          | End-to-end: register → apply → screen → interview → offer                                      |
+| **with Bias Mitigation** | Active intervention at job posting time + monitoring at admin level                            |
 
 ### Thesis appendix items to extract from this system
 
@@ -772,15 +803,16 @@ packages/shared/src/schemas/
 
 ### REST endpoints calling AI services
 
-| Endpoint | Service | Module |
-|---|---|---|
-| `POST /api/v1/resumes/upload` | `ParseResumeService.parse()` | `ResumesModule` |
-| `POST /api/v1/scoring/profile/compute` | `RedactPiiService` → `ScoreProfileService` | `ScoringModule` |
-| `POST /api/v1/applications` | `RedactPiiService` → `ScoreMatchService` | `ApplicationsModule` |
-| `POST /api/v1/bias/check` | `DetectBiasService` | `BiasModule` |
-| `POST /api/v1/jobs/:id/publish` | `DetectBiasService` (defensive re-run) | `JobsModule` |
+| Endpoint                               | Service                                    | Module               |
+| -------------------------------------- | ------------------------------------------ | -------------------- |
+| `POST /api/v1/resumes/upload`          | `ParseResumeService.parse()`               | `ResumesModule`      |
+| `POST /api/v1/scoring/profile/compute` | `RedactPiiService` → `ScoreProfileService` | `ScoringModule`      |
+| `POST /api/v1/applications`            | `RedactPiiService` → `ScoreMatchService`   | `ApplicationsModule` |
+| `POST /api/v1/bias/check`              | `DetectBiasService`                        | `BiasModule`         |
+| `POST /api/v1/jobs/:id/publish`        | `DetectBiasService` (defensive re-run)     | `JobsModule`         |
 
 Each NestJS controller method:
+
 1. Validates request via Zod DTO (nestjs-zod)
 2. Auth check via `SupabaseAuthGuard` + `RolesGuard`
 3. Calls AI service
@@ -809,6 +841,7 @@ Each NestJS controller method:
 ## Iteration Guide
 
 When changing any prompt or schema:
+
 1. Bump version in `prompts/<name>.ts`
 2. Run smoke test (10 resumes × 5 jobs)
 3. Compare scores with prior version — large unexpected shifts indicate prompt regression

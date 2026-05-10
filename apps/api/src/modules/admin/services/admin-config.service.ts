@@ -114,7 +114,11 @@ export class AdminConfigService {
     const after: Record<string, unknown> = {};
     const changedFields: string[] = [];
 
-    function diff<T>(field: string, currentVal: T, newVal: T | undefined): void {
+    function diff<T>(
+      field: string,
+      currentVal: T,
+      newVal: T | undefined,
+    ): void {
       if (newVal === undefined) return;
       if (JSON.stringify(currentVal) === JSON.stringify(newVal)) return;
       patch[field] = newVal;
@@ -203,7 +207,10 @@ export class AdminConfigService {
         s.matchScore.components,
         effectiveMatchWeights,
       );
-      const proposedBand = this.computeBand(proposedScore, effectiveBandThresholds);
+      const proposedBand = this.computeBand(
+        proposedScore,
+        effectiveBandThresholds,
+      );
 
       return {
         sample: s,
@@ -216,7 +223,10 @@ export class AdminConfigService {
     });
 
     const currentDist = this.buildDistribution(
-      recomputations.map((r) => ({ score: r.currentScore, band: r.currentBand })),
+      recomputations.map((r) => ({
+        score: r.currentScore,
+        band: r.currentBand,
+      })),
     );
     const proposedDist = this.buildDistribution(
       recomputations.map((r) => ({
@@ -289,9 +299,12 @@ export class AdminConfigService {
     return "limited";
   }
 
-  private buildDistribution(
-    rows: Array<{ score: number; band: string }>,
-  ): { strong: number; partial: number; limited: number; avgScore: number } {
+  private buildDistribution(rows: Array<{ score: number; band: string }>): {
+    strong: number;
+    partial: number;
+    limited: number;
+    avgScore: number;
+  } {
     let strong = 0;
     let partial = 0;
     let limited = 0;

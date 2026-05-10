@@ -1,0 +1,21 @@
+{
+  "contact": {
+    "full_name": "Christian Jutba",
+    "phone": "09764556948",
+    "email": "cjjutba@example.com",
+    "location_city": "Manila",
+    "location_country": "Philippines"
+  },
+  "experienceCount": 3,
+  "educationCount": 1,
+  "skills": [
+    "TypeScript",
+    "JavaScript",
+    "React",
+    "Node.js",
+    "NestJS",
+    "PostgreSQL",
+    "AWS",
+    "Docker"
+  ]
+}

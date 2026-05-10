@@ -150,14 +150,14 @@ For dense table rows and inline actions.
 
 ### Button States Matrix
 
-| State | Treatment |
-|---|---|
-| Default | Base palette |
-| Hover | Background darkens 4–8%; cursor pointer |
-| Focus-visible | `{colors.primary}` 2px outer ring, 2px offset |
-| Active/Pressed | Press-state palette |
-| Disabled | `disabled` palette, cursor `not-allowed`, no hover |
-| Loading | Spinner replaces leading icon, label dims, button non-interactive |
+| State          | Treatment                                                         |
+| -------------- | ----------------------------------------------------------------- |
+| Default        | Base palette                                                      |
+| Hover          | Background darkens 4–8%; cursor pointer                           |
+| Focus-visible  | `{colors.primary}` 2px outer ring, 2px offset                     |
+| Active/Pressed | Press-state palette                                               |
+| Disabled       | `disabled` palette, cursor `not-allowed`, no hover                |
+| Loading        | Spinner replaces leading icon, label dims, button non-interactive |
 
 ---
 
@@ -228,13 +228,13 @@ Trigger looks like `text-input` with calendar icon. Popover calendar uses shadcn
 
 ### Form Validation Pattern
 
-| State | Treatment |
-|---|---|
-| Default | Hairline border |
-| Focus | Primary 2px border, no error/success colors yet |
-| Error | Danger 2px border, error message below in danger color, Lucide alert-circle icon leading the message |
-| Success | Success 2px border (only after async validation, e.g., email already taken check) |
-| Disabled | Strong-soft background, muted-soft text |
+| State    | Treatment                                                                                            |
+| -------- | ---------------------------------------------------------------------------------------------------- |
+| Default  | Hairline border                                                                                      |
+| Focus    | Primary 2px border, no error/success colors yet                                                      |
+| Error    | Danger 2px border, error message below in danger color, Lucide alert-circle icon leading the message |
+| Success  | Success 2px border (only after async validation, e.g., email already taken check)                    |
+| Disabled | Strong-soft background, muted-soft text                                                              |
 
 Error messages appear **below** the field, separated by 4px, in `{typography.caption}` and `{colors.status-danger}`.
 
@@ -604,6 +604,7 @@ When a list, table, or dashboard widget has no data.
 - **Action:** primary CTA below
 
 Examples:
+
 - Candidate dashboard, no applications: "No applications yet" + "Browse jobs that match your profile" + CTA "Browse Jobs"
 - Recruiter dashboard, no jobs posted: "Post your first job" + CTA "Create a job"
 - Admin bias monitor, no flags: "No bias flags detected this period" (success-flavored, with check icon, no CTA)
@@ -704,12 +705,12 @@ For filtering (e.g., "All / Applied / Screening / Hired").
 
 ### Breakpoints
 
-| Name | Width | Marketing | Portal |
-|---|---|---|---|
-| Mobile | < 640px | Hero h1 80→40px; hero mockup → single card; feature grid 1-up; footer single column | Sidebar → drawer; topbar simplified; tables → vertical card list |
-| Tablet | 640–1024px | Hero h1 64px; feature grid 2-up; mockup 2 stacked | Sidebar drawer; topbar full; tables compress |
-| Desktop | 1024–1280px | Full editorial hero 80px; feature grid 3-up | Persistent sidebar 256px; full topbar |
-| Wide | > 1280px | Content caps at 1200px; hero photography full-bleed | Content max-width 1280px |
+| Name    | Width       | Marketing                                                                           | Portal                                                           |
+| ------- | ----------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Mobile  | < 640px     | Hero h1 80→40px; hero mockup → single card; feature grid 1-up; footer single column | Sidebar → drawer; topbar simplified; tables → vertical card list |
+| Tablet  | 640–1024px  | Hero h1 64px; feature grid 2-up; mockup 2 stacked                                   | Sidebar drawer; topbar full; tables compress                     |
+| Desktop | 1024–1280px | Full editorial hero 80px; feature grid 3-up                                         | Persistent sidebar 256px; full topbar                            |
+| Wide    | > 1280px    | Content caps at 1200px; hero photography full-bleed                                 | Content max-width 1280px                                         |
 
 ### Touch Targets
 

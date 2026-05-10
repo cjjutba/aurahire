@@ -8,7 +8,12 @@ import {
   Post,
   Req,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import type { FastifyRequest } from "fastify";
 import type { AuthUser } from "@aurahire/shared";
 
@@ -42,7 +47,8 @@ export class AdminConfigController {
   @Roles("admin")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Update the active scoring configuration (in-place); audits the diff",
+    summary:
+      "Update the active scoring configuration (in-place); audits the diff",
   })
   @ApiResponse({ status: 200, type: ScoringConfigEnvelopeDto })
   @ApiResponse({

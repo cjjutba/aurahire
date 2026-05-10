@@ -56,7 +56,10 @@ export function InterviewsPagination({
 
       <nav className="flex items-center gap-1" aria-label="Pagination">
         {page > 1 ? (
-          <Link href={buildHref(queryString, page - 1)} className={inactiveCell}>
+          <Link
+            href={buildHref(queryString, page - 1)}
+            className={inactiveCell}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Link>
         ) : (
@@ -67,7 +70,10 @@ export function InterviewsPagination({
 
         {window.map((w, i) =>
           w === "..." ? (
-            <span key={`ellipsis-${i}`} className={`${baseCell} text-[var(--color-muted)]`}>
+            <span
+              key={`ellipsis-${i}`}
+              className={`${baseCell} text-[var(--color-muted)]`}
+            >
               …
             </span>
           ) : w === page ? (
@@ -75,14 +81,21 @@ export function InterviewsPagination({
               {w}
             </span>
           ) : (
-            <Link key={w} href={buildHref(queryString, w as number)} className={inactiveCell}>
+            <Link
+              key={w}
+              href={buildHref(queryString, w as number)}
+              className={inactiveCell}
+            >
               {w}
             </Link>
           ),
         )}
 
         {page < totalPages ? (
-          <Link href={buildHref(queryString, page + 1)} className={inactiveCell}>
+          <Link
+            href={buildHref(queryString, page + 1)}
+            className={inactiveCell}
+          >
             <ChevronRight className="h-4 w-4" />
           </Link>
         ) : (

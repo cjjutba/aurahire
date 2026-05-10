@@ -22,6 +22,7 @@ interface Props {
   startDate: string;
   expiresAt: string | null;
   applicationUrl: string;
+  company?: { name: string; logoUrl: string | null } | null;
 }
 
 function formatSalary(value: number, currency: string): string {
@@ -45,6 +46,7 @@ export function OfferSentEmail({
   startDate,
   expiresAt,
   applicationUrl,
+  company,
 }: Props): React.ReactElement {
   const expiresLabel = expiresAt
     ? new Date(expiresAt).toLocaleDateString(undefined, { dateStyle: "long" })
@@ -70,12 +72,16 @@ export function OfferSentEmail({
             margin: "0 auto",
           }}
         >
-          <EmailBrandHeader />
-          <Heading style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}>
+          <EmailBrandHeader company={company} />
+          <Heading
+            style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
+          >
             Congratulations — offer extended!
           </Heading>
           <Section>
-            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>Hi {candidateName},</Text>
+            <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
+              Hi {candidateName},
+            </Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
               {companyName} has extended you an offer for{" "}
               <strong style={{ color: "#0a0b0d" }}>{jobTitle}</strong>.

@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { SumIndicator } from "./_sum-indicator-client";
 import { PreviewImpactModalClient } from "./_preview-impact-modal-client";
 
@@ -22,10 +23,10 @@ interface InitialConfig {
     cultural_fit: number;
   };
   profileWeights: {
-    resume_quality: number;
-    skills_breadth: number;
-    experience_depth: number;
-    preferences_clarity: number;
+    completeness: number;
+    skill_depth: number;
+    experience_clarity: number;
+    education_quality: number;
   };
   bandThresholds: { strong: number; partial: number };
   biasCategoriesEnabled: string[];
@@ -49,14 +50,19 @@ const REQUIRED_PII_FIELDS = ["name", "email", "phone", "address"];
 
 export function ConfigEditorClient({ initial }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [matchWeights, setMatchWeights] = useState(initial.matchWeights);
   const [profileWeights, setProfileWeights] = useState(initial.profileWeights);
   const [bandThresholds, setBandThresholds] = useState(initial.bandThresholds);
-  const [biasCats, setBiasCats] = useState<string[]>(initial.biasCategoriesEnabled);
+  const [biasCats, setBiasCats] = useState<string[]>(
+    initial.biasCategoriesEnabled,
+  );
   const [customTermsText, setCustomTermsText] = useState(
     initial.customFlaggedTerms.join("\n"),
   );
-  const [piiFields, setPiiFields] = useState<string[]>(initial.piiFieldsRedacted);
+  const [piiFields, setPiiFields] = useState<string[]>(
+    initial.piiFieldsRedacted,
+  );
   const [piiAddInput, setPiiAddInput] = useState("");
   const [working, setWorking] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -71,10 +77,10 @@ export function ConfigEditorClient({ initial }: Props) {
   );
   const profileSum = useMemo(
     () =>
-      profileWeights.resume_quality +
-      profileWeights.skills_breadth +
-      profileWeights.experience_depth +
-      profileWeights.preferences_clarity,
+      profileWeights.completeness +
+      profileWeights.skill_depth +
+      profileWeights.experience_clarity +
+      profileWeights.education_quality,
     [profileWeights],
   );
   const bandValid =
@@ -97,8 +103,10 @@ export function ConfigEditorClient({ initial }: Props) {
   const dirty = useMemo(
     () =>
       JSON.stringify(matchWeights) !== JSON.stringify(initial.matchWeights) ||
-      JSON.stringify(profileWeights) !== JSON.stringify(initial.profileWeights) ||
-      JSON.stringify(bandThresholds) !== JSON.stringify(initial.bandThresholds) ||
+      JSON.stringify(profileWeights) !==
+        JSON.stringify(initial.profileWeights) ||
+      JSON.stringify(bandThresholds) !==
+        JSON.stringify(initial.bandThresholds) ||
       JSON.stringify([...biasCats].sort()) !==
         JSON.stringify([...initial.biasCategoriesEnabled].sort()) ||
       JSON.stringify(customTermsList) !==
@@ -120,7 +128,10 @@ export function ConfigEditorClient({ initial }: Props) {
     const n = Math.max(0, Math.min(100, Number(raw) || 0));
     setMatchWeights({ ...matchWeights, [key]: n });
   }
-  function setProfile<K extends keyof typeof profileWeights>(key: K, raw: string) {
+  function setProfile<K extends keyof typeof profileWeights>(
+    key: K,
+    raw: string,
+  ) {
     const n = Math.max(0, Math.min(100, Number(raw) || 0));
     setProfileWeights({ ...profileWeights, [key]: n });
   }
@@ -145,7 +156,11 @@ export function ConfigEditorClient({ initial }: Props) {
   }
   function removePiiField(field: string) {
     if (REQUIRED_PII_FIELDS.includes(field)) {
-      toastApiError(null, "Check your input", `'${field}' is required and cannot be removed.`);
+      toastApiError(
+        null,
+        "Check your input",
+        `'${field}' is required and cannot be removed.`,
+      );
       return;
     }
     setPiiFields(piiFields.filter((f) => f !== field));
@@ -169,13 +184,25 @@ export function ConfigEditorClient({ initial }: Props) {
 
   async function save() {
     if (!allValid) {
-      toastApiError(null, "Check your input", "Fix validation errors before saving.");
+      toastApiError(
+        null,
+        "Check your input",
+        "Fix validation errors before saving.",
+      );
       return;
     }
     if (!dirty) {
       toastApiError(null, "Couldn't save configuration", "No changes to save.");
       return;
     }
+    const ok = await confirm({
+      title: "Save scoring configuration?",
+      description:
+        "These weights, thresholds, and bias settings will apply to all future scoring across the platform. Existing scores stay unchanged.",
+      confirmLabel: "Save configuration",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setWorking(true);
     try {
       const res = await authedFetch("/api/v1/admin/scoring-config", {
@@ -194,7 +221,11 @@ export function ConfigEditorClient({ initial }: Props) {
         const body = (await res.json().catch(() => ({}))) as {
           message?: string;
         };
-        toastApiError(null, "Couldn't save configuration", body.message ?? `HTTP ${res.status}`);
+        toastApiError(
+          null,
+          "Couldn't save configuration",
+          body.message ?? `HTTP ${res.status}`,
+        );
         return;
       }
       toastSuccess("Configuration saved");
@@ -258,10 +289,10 @@ export function ConfigEditorClient({ initial }: Props) {
         <div className="grid gap-4 sm:grid-cols-2">
           {(
             [
-              ["resume_quality", "Resume Quality"],
-              ["skills_breadth", "Skills Breadth"],
-              ["experience_depth", "Experience Depth"],
-              ["preferences_clarity", "Preferences Clarity"],
+              ["completeness", "Completeness"],
+              ["skill_depth", "Skill Depth"],
+              ["experience_clarity", "Experience Clarity"],
+              ["education_quality", "Education Quality"],
             ] as const
           ).map(([key, label]) => (
             <div key={key}>
@@ -318,8 +349,9 @@ export function ConfigEditorClient({ initial }: Props) {
         </div>
         {bandValid ? (
           <p className="mt-3 font-mono text-xs text-[var(--color-body)]">
-            Strong: {bandThresholds.strong}-100 · Partial: {bandThresholds.partial}-
-            {bandThresholds.strong - 1} · Limited: 0-{bandThresholds.partial - 1}
+            Strong: {bandThresholds.strong}-100 · Partial:{" "}
+            {bandThresholds.partial}-{bandThresholds.strong - 1} · Limited: 0-
+            {bandThresholds.partial - 1}
           </p>
         ) : (
           <p className="mt-3 text-xs text-[var(--color-status-danger)]">
@@ -342,7 +374,10 @@ export function ConfigEditorClient({ initial }: Props) {
             </p>
             <div className="flex flex-wrap gap-3">
               {BIAS_CATEGORIES.map((c) => (
-                <label key={c.value} className="flex items-center gap-2 text-sm">
+                <label
+                  key={c.value}
+                  className="flex items-center gap-2 text-sm"
+                >
                   <Checkbox
                     checked={biasCats.includes(c.value)}
                     onCheckedChange={() => toggleCategory(c.value)}
@@ -385,8 +420,8 @@ export function ConfigEditorClient({ initial }: Props) {
           <Info className="mt-0.5 h-3 w-3 flex-shrink-0" />
           <span>
             PII redaction is mandatory in this system and cannot be disabled —
-            it&rsquo;s part of the thesis-defining fairness contract. You can ADD
-            additional fields to redact but cannot remove the core required
+            it&rsquo;s part of the thesis-defining fairness contract. You can
+            ADD additional fields to redact but cannot remove the core required
             fields ({REQUIRED_PII_FIELDS.join(", ")}).
           </span>
         </p>

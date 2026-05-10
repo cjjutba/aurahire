@@ -49,3 +49,7 @@ Thumbs.db
 .cache/
 coverage/
 .superpowers/
+.vercel
+
+# Worktrees (created by superpowers:using-git-worktrees)
+.worktrees/

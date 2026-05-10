@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -14,10 +15,14 @@ import type {
 
 import { AuditService } from "../../audit";
 import { AUDIT_ACTIONS } from "../../audit/audit.types";
+import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 import { EmailService } from "../../email/email.service";
+import { EventsService } from "../../realtime";
 import { ApplicationsRepository } from "../applications/applications.repository";
+import type { ApplicationsTx } from "../applications/applications.repository";
 import { ApplicationsService } from "../applications/applications.service";
 import { JobsRepository } from "../jobs/jobs.repository";
+import { NotificationsService } from "../notifications/notifications.service";
 import { ProfilesRepository } from "../profiles/profiles.repository";
 import { OffersRepository } from "./offers.repository";
 import type { OfferDto } from "./dto/offer-response.dto";
@@ -41,31 +46,43 @@ export class OffersService {
     private readonly profilesRepo: ProfilesRepository,
     private readonly email: EmailService,
     private readonly audit: AuditService,
+    private readonly events: EventsService,
+    private readonly notifications: NotificationsService,
+    @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
   ) {}
 
   async create(
     user: AuthUser,
+    companyId: string,
     applicationId: string,
     dto: CreateOfferInput,
     requestMeta: RequestMeta = {},
   ): Promise<OfferDto> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
 
-    const application = await this.applicationsRepo.findApplicationContextForRecruiter(
-      applicationId,
-      user.id,
-    );
+    const application =
+      await this.applicationsRepo.findApplicationContextForCompany(
+        applicationId,
+        companyId,
+      );
     if (!application) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     const pending = await this.repo.findPendingByApplicationId(applicationId);
     if (pending) {
       throw new ConflictException({
         code: "OFFER_ALREADY_PENDING",
-        message: "An offer is already pending for this application; withdraw it first",
+        message:
+          "An offer is already pending for this application; withdraw it first",
         currentOfferId: pending.id,
       });
     }
@@ -90,6 +107,7 @@ export class OffersService {
       action: AUDIT_ACTIONS.OFFER_SENT,
       entityType: "offer",
       entityId: offer.id,
+      companyId,
       details: {
         applicationId,
         title: offer.title,
@@ -97,6 +115,14 @@ export class OffersService {
         salaryCurrency: dto.salaryCurrency,
       },
       ...requestMeta,
+    });
+
+    this.events.emitOfferSent({
+      offerId: offer.id,
+      applicationId: offer.applicationId,
+      recruiterId: user.id,
+      candidateId: application.candidateId,
+      sentAt: offer.sentAt.toISOString(),
     });
 
     // Auto-advance application status to 'offer' so the candidate's view + the
@@ -111,7 +137,9 @@ export class OffersService {
         requestMeta,
       );
     } catch (err) {
-      this.logger.warn(`App auto-advance to offer failed: ${(err as Error).message}`);
+      this.logger.warn(
+        `App auto-advance to offer failed: ${(err as Error).message}`,
+      );
     }
 
     void this.notifyCandidateOfferSent(offer.id).catch((err) => {
@@ -127,27 +155,84 @@ export class OffersService {
     requestMeta: RequestMeta = {},
   ): Promise<OfferDto> {
     if (user.role !== "candidate") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Candidate role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
     }
 
     const offer = await this.repo.findById(offerId);
     if (!offer) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Offer not found",
+      });
     }
-    const application = await this.applicationsRepo.findById(offer.applicationId);
+    const application = await this.applicationsRepo.findById(
+      offer.applicationId,
+    );
     if (!application || application.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
-    }
-    if (offer.status !== "pending") {
-      throw new BadRequestException({
-        code: "OFFER_NOT_PENDING",
-        message: `Cannot accept offer in status '${offer.status}'`,
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Offer not found",
       });
     }
 
-    const updated = await this.repo.update(offerId, {
-      status: "accepted",
-      respondedAt: new Date(),
+    const job = await this.jobsRepo.findById(application.jobId);
+
+    const updated = await this.db.transaction(async (tx) => {
+      // Lock the application row so concurrent decline / Mark Hired serialise.
+      const lockedApp = await this.applicationsRepo.findByIdForUpdate(
+        tx as ApplicationsTx,
+        offer.applicationId,
+      );
+      if (!lockedApp) {
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Offer not found",
+        });
+      }
+
+      // Re-read the offer inside the lock to defeat racing accept/decline.
+      const lockedOffer = await this.repo.findById(offerId);
+      if (!lockedOffer || lockedOffer.status !== "pending") {
+        throw new BadRequestException({
+          code: "OFFER_NOT_PENDING",
+          message: `Cannot accept offer in status '${lockedOffer?.status ?? "unknown"}'`,
+        });
+      }
+
+      const updatedOffer = await this.repo.update(
+        offerId,
+        { status: "accepted", respondedAt: new Date() },
+        tx as ApplicationsTx,
+      );
+
+      // Auto-advance app → offer_accepted (only if still at "offer"). The
+      // recruiter must then make the final hire / not-hire decision.
+      if (lockedApp.status === "offer") {
+        await this.applicationsService.transitionFromSystem(
+          user,
+          offer.applicationId,
+          "offer_accepted",
+          "Candidate accepted offer — pending recruiter confirmation",
+          requestMeta,
+          tx as ApplicationsTx,
+        );
+
+        await this.audit.log({
+          actorId: user.id,
+          actorType: "user",
+          action: AUDIT_ACTIONS.APPLICATION_AUTO_TRANSITION_OFFER_ACCEPTED,
+          entityType: "application",
+          entityId: offer.applicationId,
+          companyId: job?.companyId ?? null,
+          details: { offerId },
+          ...requestMeta,
+        });
+      }
+
+      return updatedOffer;
     });
 
     await this.audit.log({
@@ -156,25 +241,52 @@ export class OffersService {
       action: AUDIT_ACTIONS.OFFER_ACCEPTED,
       entityType: "offer",
       entityId: offerId,
+      companyId: job?.companyId ?? null,
       details: { applicationId: offer.applicationId },
       ...requestMeta,
     });
 
-    try {
-      await this.applicationsService.transitionFromSystem(
-        user,
-        offer.applicationId,
-        "hired",
-        "Offer accepted",
-        requestMeta,
-      );
-    } catch (err) {
-      this.logger.warn(`App auto-advance to hired failed: ${(err as Error).message}`);
-    }
-
     void this.notifyRecruiterDecision(offerId, "accepted").catch((err) => {
       this.logger.warn(`Notify recruiter failed: ${(err as Error).message}`);
     });
+
+    const recruiterUserIds = Array.from(
+      new Set(
+        [job?.recruiterId, offer.sentBy].filter((id): id is string =>
+          Boolean(id),
+        ),
+      ),
+    );
+    // Resolve candidate name + canonical job title so the recruiter
+    // notification renders "<name> accepted your offer — <jobTitle>"
+    // instead of the template's generic fallbacks. The offer carries
+    // its own `title`, but we prefer the live job title to stay
+    // consistent if the role has been renamed since offer was sent.
+    const acceptedCandidate = await this.profilesRepo.findById(
+      application.candidateId,
+    );
+    void this.notifications
+      .emitMany(recruiterUserIds, {
+        eventType: "offer_accepted",
+        scope: "personal",
+        entityType: "offer",
+        entityId: offerId,
+        actorId: user.id,
+        metadata: {
+          offerId,
+          applicationId: offer.applicationId,
+          candidateId: application.candidateId,
+          candidateName: acceptedCandidate?.fullName ?? null,
+          jobId: application.jobId,
+          jobTitle: job?.title ?? offer.title,
+          occurredAt: new Date().toISOString(),
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `notifications.emitMany(offer_accepted) failed: ${(err as Error).message}`,
+        );
+      });
 
     return this.toDto(updated);
   }
@@ -186,32 +298,94 @@ export class OffersService {
     requestMeta: RequestMeta = {},
   ): Promise<OfferDto> {
     if (user.role !== "candidate") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Candidate role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
     }
 
     const offer = await this.repo.findById(offerId);
     if (!offer) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Offer not found",
+      });
     }
-    const application = await this.applicationsRepo.findById(offer.applicationId);
+    const application = await this.applicationsRepo.findById(
+      offer.applicationId,
+    );
     if (!application || application.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
-    }
-    if (offer.status !== "pending") {
-      throw new BadRequestException({
-        code: "OFFER_NOT_PENDING",
-        message: `Cannot decline offer in status '${offer.status}'`,
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Offer not found",
       });
     }
 
-    const updated = await this.repo.update(offerId, {
-      status: "declined",
-      respondedAt: new Date(),
-      ...(dto.reason
-        ? {
-            customMessage: `${offer.customMessage ?? ""}\n\n[Candidate declined: ${dto.reason}]`.trim(),
-          }
-        : {}),
+    const declinedJob = await this.jobsRepo.findById(application.jobId);
+
+    const updated = await this.db.transaction(async (tx) => {
+      const lockedApp = await this.applicationsRepo.findByIdForUpdate(
+        tx as ApplicationsTx,
+        offer.applicationId,
+      );
+      if (!lockedApp) {
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Offer not found",
+        });
+      }
+
+      const lockedOffer = await this.repo.findById(offerId);
+      if (!lockedOffer || lockedOffer.status !== "pending") {
+        throw new BadRequestException({
+          code: "OFFER_NOT_PENDING",
+          message: `Cannot decline offer in status '${lockedOffer?.status ?? "unknown"}'`,
+        });
+      }
+
+      const updatedOffer = await this.repo.update(
+        offerId,
+        {
+          status: "declined",
+          respondedAt: new Date(),
+          ...(dto.reason
+            ? {
+                customMessage:
+                  `${lockedOffer.customMessage ?? ""}\n\n[Candidate declined: ${dto.reason}]`.trim(),
+              }
+            : {}),
+        },
+        tx as ApplicationsTx,
+      );
+
+      // Auto-advance app → offer_declined when still at offer. Other terminal
+      // states are left alone (e.g., recruiter rejected during the same window).
+      if (lockedApp.status === "offer") {
+        await this.applicationsService.transitionFromSystem(
+          user,
+          offer.applicationId,
+          "offer_declined",
+          "Candidate declined offer",
+          requestMeta,
+          tx as ApplicationsTx,
+        );
+
+        // Distinct audit row alongside the offer.declined log so reports
+        // can correlate the offer event with the application's transition.
+        // Mirrors the cron's APPLICATION_AUTO_TRANSITION_OFFER_EXPIRED row.
+        await this.audit.log({
+          actorId: user.id,
+          actorType: "user",
+          action: AUDIT_ACTIONS.APPLICATION_AUTO_TRANSITION_OFFER_DECLINED,
+          entityType: "application",
+          entityId: offer.applicationId,
+          companyId: declinedJob?.companyId ?? null,
+          details: { offerId, reasonLength: dto.reason?.length ?? 0 },
+          ...requestMeta,
+        });
+      }
+
+      return updatedOffer;
     });
 
     await this.audit.log({
@@ -220,7 +394,11 @@ export class OffersService {
       action: AUDIT_ACTIONS.OFFER_DECLINED,
       entityType: "offer",
       entityId: offerId,
-      details: { applicationId: offer.applicationId, reasonLength: dto.reason?.length ?? 0 },
+      companyId: declinedJob?.companyId ?? null,
+      details: {
+        applicationId: offer.applicationId,
+        reasonLength: dto.reason?.length ?? 0,
+      },
       ...requestMeta,
     });
 
@@ -228,28 +406,72 @@ export class OffersService {
       this.logger.warn(`Notify recruiter failed: ${(err as Error).message}`);
     });
 
+    const recruiterUserIds = Array.from(
+      new Set(
+        [declinedJob?.recruiterId, offer.sentBy].filter((id): id is string =>
+          Boolean(id),
+        ),
+      ),
+    );
+    const declinedCandidate = await this.profilesRepo.findById(
+      application.candidateId,
+    );
+    void this.notifications
+      .emitMany(recruiterUserIds, {
+        eventType: "offer_declined",
+        scope: "personal",
+        entityType: "offer",
+        entityId: offerId,
+        actorId: user.id,
+        metadata: {
+          offerId,
+          applicationId: offer.applicationId,
+          candidateId: application.candidateId,
+          candidateName: declinedCandidate?.fullName ?? null,
+          jobId: application.jobId,
+          jobTitle: declinedJob?.title ?? offer.title,
+          occurredAt: new Date().toISOString(),
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `notifications.emitMany(offer_declined) failed: ${(err as Error).message}`,
+        );
+      });
+
     return this.toDto(updated);
   }
 
   async withdraw(
     user: AuthUser,
+    companyId: string,
     offerId: string,
     requestMeta: RequestMeta = {},
   ): Promise<OfferDto> {
     if (user.role !== "recruiter") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Recruiter role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
     }
 
     const offer = await this.repo.findById(offerId);
     if (!offer) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Offer not found",
+      });
     }
-    const application = await this.applicationsRepo.findApplicationContextForRecruiter(
-      offer.applicationId,
-      user.id,
-    );
+    const application =
+      await this.applicationsRepo.findApplicationContextForCompany(
+        offer.applicationId,
+        companyId,
+      );
     if (!application) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Offer not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Offer not found",
+      });
     }
     if (offer.status !== "pending") {
       throw new BadRequestException({
@@ -266,6 +488,7 @@ export class OffersService {
       action: AUDIT_ACTIONS.OFFER_WITHDRAWN,
       entityType: "offer",
       entityId: offerId,
+      companyId,
       details: { applicationId: offer.applicationId },
       ...requestMeta,
     });
@@ -275,25 +498,41 @@ export class OffersService {
 
   async listMine(user: AuthUser): Promise<OfferDto[]> {
     if (user.role !== "candidate") {
-      throw new ForbiddenException({ code: "FORBIDDEN", message: "Candidate role required" });
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Candidate role required",
+      });
     }
     const rows = await this.repo.findByCandidateId(user.id);
     return rows.map((r) => this.toDto(r));
   }
 
-  async listForApplication(user: AuthUser, applicationId: string): Promise<OfferDto[]> {
+  async listForApplication(
+    user: AuthUser,
+    companyId: string | null,
+    applicationId: string,
+  ): Promise<OfferDto[]> {
     const app = await this.applicationsRepo.findById(applicationId);
     if (!app) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
 
     if (user.role === "candidate" && app.candidateId !== user.id) {
-      throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Application not found",
+      });
     }
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
-      if (!job || job.recruiterId !== user.id) {
-        throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      if (!job || job.companyId !== companyId) {
+        throw new NotFoundException({
+          code: "NOT_FOUND",
+          message: "Application not found",
+        });
       }
     }
 
@@ -314,7 +553,7 @@ export class OffersService {
     const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     if (!candidate || !jobRow) return;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
     await this.email.send({
       to: candidate.email,
       subject: `Offer extended for ${offer.title}`,
@@ -330,6 +569,7 @@ export class OffersService {
             : new Date(offer.startDate).toISOString().slice(0, 10),
         expiresAt: offer.expiresAt ? offer.expiresAt.toISOString() : null,
         applicationUrl: `${appUrl}/candidate/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
     });
   }
@@ -347,7 +587,7 @@ export class OffersService {
     const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     if (!candidate || !recruiter || !jobRow) return;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
     await this.email.send({
       to: recruiter.email,
       subject: `Offer ${decision}: ${candidate.fullName} for ${offer.title}`,
@@ -357,6 +597,7 @@ export class OffersService {
         jobTitle: offer.title,
         decision,
         applicationUrl: `${appUrl}/recruiter/applications/${app.id}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
       }),
     });
   }

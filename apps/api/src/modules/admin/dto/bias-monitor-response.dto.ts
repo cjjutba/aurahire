@@ -49,6 +49,36 @@ export class RecentOverrideDto {
   @ApiProperty() overriddenAt!: string;
 }
 
+// ---------------- SCORING QUALITY ----------------
+
+export class ScoringQualityReasonDto {
+  @ApiProperty() reason!: string;
+  @ApiProperty() count!: number;
+}
+
+export class ScoringQualityComponentDto {
+  @ApiProperty() componentName!: string;
+  @ApiProperty() count!: number;
+}
+
+export class ScoringQualityRecentDto {
+  @ApiProperty() auditLogId!: string;
+  @ApiProperty() componentName!: string;
+  @ApiProperty() reason!: string;
+  @ApiProperty() promptVersion!: string;
+  @ApiProperty() createdAt!: string;
+}
+
+export class ScoringQualityDto {
+  @ApiProperty() totalWarnings!: number;
+  @ApiProperty({ type: [ScoringQualityReasonDto] })
+  byReason!: ScoringQualityReasonDto[];
+  @ApiProperty({ type: [ScoringQualityComponentDto] })
+  byComponent!: ScoringQualityComponentDto[];
+  @ApiProperty({ type: [ScoringQualityRecentDto] })
+  recent!: ScoringQualityRecentDto[];
+}
+
 // ---------------- BUNDLE ----------------
 
 export class BiasMonitorRangeDto {
@@ -65,12 +95,18 @@ export class BiasMonitorSampleSizeDto {
 export class BiasMonitorBundleDto {
   @ApiProperty({ type: () => BiasMonitorRangeDto }) range!: BiasMonitorRangeDto;
   @ApiProperty({ type: () => BiasMonitorKpisDto }) kpis!: BiasMonitorKpisDto;
-  @ApiProperty({ type: [FlagsByCategoryDto] }) flagsByCategory!: FlagsByCategoryDto[];
-  @ApiProperty({ type: [TopFlaggedTermDto] }) topFlaggedTerms!: TopFlaggedTermDto[];
-  @ApiProperty({ type: [ScoreBandSliceDto] }) scoreDistributionByBand!: ScoreBandSliceDto[];
-  @ApiProperty({ type: [RecentOverrideDto] }) recentOverrides!: RecentOverrideDto[];
+  @ApiProperty({ type: [FlagsByCategoryDto] })
+  flagsByCategory!: FlagsByCategoryDto[];
+  @ApiProperty({ type: [TopFlaggedTermDto] })
+  topFlaggedTerms!: TopFlaggedTermDto[];
+  @ApiProperty({ type: [ScoreBandSliceDto] })
+  scoreDistributionByBand!: ScoreBandSliceDto[];
+  @ApiProperty({ type: [RecentOverrideDto] })
+  recentOverrides!: RecentOverrideDto[];
   @ApiProperty({ type: () => BiasMonitorSampleSizeDto })
   sampleSize!: BiasMonitorSampleSizeDto;
+  @ApiProperty({ type: () => ScoringQualityDto })
+  scoringQuality!: ScoringQualityDto;
 }
 
 export class BiasMonitorBundleEnvelopeDto {

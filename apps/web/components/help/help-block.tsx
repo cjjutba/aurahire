@@ -236,8 +236,7 @@ export function HelpBlockRenderer({ block }: { block: HelpBlock }) {
                       key={cidx}
                       className={cn(
                         "px-4 py-3 align-top text-[var(--color-body)]",
-                        cidx === 0 &&
-                          "font-medium text-[var(--color-ink)]",
+                        cidx === 0 && "font-medium text-[var(--color-ink)]",
                       )}
                     >
                       {cell}

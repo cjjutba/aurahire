@@ -1,0 +1,71 @@
+# AuraHire — Production droplet services (Redis + Mailpit)
+#
+# Both containers bind to 127.0.0.1 only — never reachable from the public internet.
+# The NestJS API (PM2-managed, on the same host) connects to them via localhost.
+# Caddy is the only thing listening on 0.0.0.0:80/443.
+#
+# Run from /home/deploy/aurahire as the deploy user:
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d
+#   docker compose -f deploy/docker-compose.prod.yml logs -f
+#   docker compose -f deploy/docker-compose.prod.yml down
+
+name: aurahire-prod
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: aurahire-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    # BullMQ requires `noeviction` so queued jobs are never silently dropped
+    # under memory pressure. 512mb is plenty for thesis-scale traffic.
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - "512mb"
+      - --maxmemory-policy
+      - noeviction
+      - --requirepass
+      - "${REDIS_PASSWORD}"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: aurahire-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025" # SMTP — apps/api connects here as SMTP_HOST=127.0.0.1
+      - "127.0.0.1:8025:8025" # Web UI — access via SSH tunnel only (see README)
+    environment:
+      MP_MAX_MESSAGES: "5000"
+      MP_DATABASE: "/data/mailpit.db"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    volumes:
+      - mailpit-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8025/api/v1/info",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  redis-data:
+  mailpit-data:

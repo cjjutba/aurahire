@@ -6,7 +6,7 @@ import {
   EDUCATION_REQUIREMENT,
   JOB_STATUS,
 } from "../enums";
-import { paginationSchema } from "./shared.ts";
+import { paginationSchema } from "./shared";
 
 const moneySchema = z.coerce.number().int().nonnegative().nullable().optional();
 
@@ -28,10 +28,17 @@ export const createJobSchema = z
     experienceLevel: z.enum(EXPERIENCE_LEVEL),
     educationRequirement: z.enum(EDUCATION_REQUIREMENT).nullable().optional(),
     applicationDeadline: z.string().date().nullable().optional(),
+    // When true, the backend transitions the new job to 'published' in the
+    // same call (after running the bias scan). On bias-flag failure the job
+    // remains as draft so the recruiter can resolve flags and retry from the
+    // job detail page. When false/omitted, the job is created as 'draft'.
+    publishImmediately: z.boolean().optional().default(false),
   })
   .refine(
     (data) =>
-      data.salaryMin == null || data.salaryMax == null || data.salaryMax >= data.salaryMin,
+      data.salaryMin == null ||
+      data.salaryMax == null ||
+      data.salaryMax >= data.salaryMin,
     { message: "salaryMax must be >= salaryMin", path: ["salaryMax"] },
   );
 
@@ -58,7 +65,9 @@ export const updateJobSchema = z
   })
   .refine(
     (data) =>
-      data.salaryMin == null || data.salaryMax == null || data.salaryMax >= data.salaryMin,
+      data.salaryMin == null ||
+      data.salaryMax == null ||
+      data.salaryMax >= data.salaryMin,
     { message: "salaryMax must be >= salaryMin", path: ["salaryMax"] },
   );
 
@@ -75,6 +84,16 @@ export const listJobsQuerySchema = paginationSchema.extend({
     .optional(),
   status: z.enum(JOB_STATUS).optional(),
   include: z.enum(["stats"]).optional(),
+  // Candidate-only flag: when true, the for-candidate endpoint excludes jobs
+  // the authenticated candidate has already applied to. Ignored on the public
+  // list endpoint (no authenticated user to compare against).
+  //
+  // NOT z.coerce.boolean(): that follows JS Boolean() semantics, where the
+  // literal string "false" coerces to true. We accept only "1" / "true".
+  excludeApplied: z
+    .enum(["true", "1", "false", "0"])
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
 });
 
 export type ListJobsQuery = z.infer<typeof listJobsQuerySchema>;

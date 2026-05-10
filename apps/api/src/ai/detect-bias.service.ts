@@ -1,8 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import {
-  type BiasFlag,
-  biasFlagListSchema,
-} from "@aurahire/shared";
+import { type BiasFlag, biasFlagListSchema } from "@aurahire/shared";
 
 import { OpenAIService } from "./openai.service";
 import {

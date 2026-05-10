@@ -22,10 +22,9 @@ export class RolesGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
-    const requiredRoles = this.reflector.getAllAndOverride<UserRole[] | undefined>(
-      ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredRoles = this.reflector.getAllAndOverride<
+      UserRole[] | undefined
+    >(ROLES_KEY, [context.getHandler(), context.getClass()]);
 
     // No @Roles() means "any authenticated user" — already covered by SupabaseAuthGuard.
     if (!requiredRoles || requiredRoles.length === 0) return true;

@@ -38,7 +38,8 @@ export function ScoreRing({
   const radius = (config.px - config.stroke) / 2;
   const center = config.px / 2;
   const circumference = 2 * Math.PI * radius;
-  const targetOffset = circumference * (1 - Math.max(0, Math.min(score, 100)) / 100);
+  const targetOffset =
+    circumference * (1 - Math.max(0, Math.min(score, 100)) / 100);
 
   const [offset, setOffset] = useState(circumference);
   const mountedRef = useRef(false);
@@ -64,7 +65,11 @@ export function ScoreRing({
       aria-label={`Score ${score} out of 100`}
       style={{ width: `${config.px}px`, height: `${config.px}px` }}
     >
-      <svg width={config.px} height={config.px} viewBox={`0 0 ${config.px} ${config.px}`}>
+      <svg
+        width={config.px}
+        height={config.px}
+        viewBox={`0 0 ${config.px} ${config.px}`}
+      >
         <circle
           cx={center}
           cy={center}

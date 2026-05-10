@@ -46,34 +46,37 @@ export default async function EditJobPage({ params }: PageProps) {
   const job = body.data;
 
   return (
-    <div className="mx-auto max-w-[1280px]">
-      <div className="max-w-[840px]">
-        <h1 className="text-3xl font-normal tracking-tight text-[var(--color-ink)]">
+    <div className="mx-auto max-w-[1280px] space-y-6">
+      <header>
+        <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
           Edit job
         </h1>
-        <div className="mt-8 rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
-          <JobForm
-            jobId={id}
-            defaults={{
-              title: job.title,
-              department: job.department,
-              employmentType: job.employmentType,
-              workMode: job.workMode,
-              locationCity: job.locationCity,
-              locationRegion: job.locationRegion,
-              locationCountry: job.locationCountry,
-              salaryMin: job.salaryMin,
-              salaryMax: job.salaryMax,
-              salaryCurrency: job.salaryCurrency,
-              description: job.description,
-              descriptionPlain: job.descriptionPlain,
-              requiredSkills: job.requiredSkills,
-              experienceLevel: job.experienceLevel,
-              educationRequirement: job.educationRequirement,
-              applicationDeadline: job.applicationDeadline,
-            }}
-          />
-        </div>
+        <p className="mt-2 text-sm text-[var(--color-body)]">
+          Update the details and save your changes.
+        </p>
+      </header>
+      <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
+        <JobForm
+          jobId={id}
+          defaults={{
+            title: job.title,
+            department: job.department,
+            employmentType: job.employmentType,
+            workMode: job.workMode,
+            locationCity: job.locationCity,
+            locationRegion: job.locationRegion,
+            locationCountry: job.locationCountry,
+            salaryMin: job.salaryMin,
+            salaryMax: job.salaryMax,
+            salaryCurrency: job.salaryCurrency,
+            description: job.description,
+            descriptionPlain: job.descriptionPlain,
+            requiredSkills: job.requiredSkills,
+            experienceLevel: job.experienceLevel,
+            educationRequirement: job.educationRequirement,
+            applicationDeadline: job.applicationDeadline,
+          }}
+        />
       </div>
     </div>
   );

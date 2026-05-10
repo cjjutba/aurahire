@@ -40,6 +40,8 @@ export interface ListAdminApplicationsFilters {
     | "screening"
     | "interview"
     | "offer"
+    | "offer_accepted"
+    | "offer_declined"
     | "hired"
     | "rejected"
     | "withdrawn";
@@ -155,7 +157,9 @@ export class AdminApplicationsRepository {
       .where(where);
 
     // Batch-load recruiter names for the visible page (avoids alias dance).
-    const recruiterIds = Array.from(new Set(rows.map((r) => r.job.recruiterId)));
+    const recruiterIds = Array.from(
+      new Set(rows.map((r) => r.job.recruiterId)),
+    );
     const recruiters =
       recruiterIds.length > 0
         ? await this.db

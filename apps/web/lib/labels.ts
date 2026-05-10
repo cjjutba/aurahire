@@ -10,6 +10,8 @@ export const APPLICATION_STATUS_DISPLAY: Record<ApplicationStatus, string> = {
   screening: "Screening",
   interview: "Interview",
   offer: "Offer",
+  offer_accepted: "Offer Accepted",
+  offer_declined: "Offer Declined",
   hired: "Hired",
   rejected: "Rejected",
   withdrawn: "Withdrawn",

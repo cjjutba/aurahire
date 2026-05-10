@@ -14,10 +14,13 @@ export function useRecruiterStatsQuery(range: string) {
   return useQuery({
     queryKey: queryKeys.recruiterDashboard.stats(range),
     queryFn: ({ signal }) =>
-      clientApiFetch<RecruiterStatsResponse>("/api/v1/applications/recruiter-stats", {
-        query: { range },
-        signal,
-      }),
+      clientApiFetch<RecruiterStatsResponse>(
+        "/api/v1/applications/recruiter-stats",
+        {
+          query: { range },
+          signal,
+        },
+      ),
     placeholderData: (prev) => prev,
   });
 }

@@ -1,15 +1,17 @@
 /**
  * Seed DB: truncate every public-schema table, delete every Supabase auth user,
- * then create demo accounts + a populated tech-jobs corpus for end-to-end testing.
+ * then create demo accounts + a Philippine-based tech-jobs corpus for end-to-end testing.
  *
  * Resulting accounts:
  *   admin@admin.com / password123 (admin)
- *   recruiter@gmail.com / password123 (recruiter — owns TechCorp company + 18 jobs)
+ *   recruiter@gmail.com / password123 (recruiter — owns TechCorp company + 19 jobs)
  *
  * Plus:
  *   - 1 active scoring_config row (canonical weights: skills 40 / experience 35 / education 15 / cultural_fit 10)
- *   - 1 company (TechCorp Inc.)
- *   - 18 published tech jobs spanning web / mobile / fullstack / backend / devops / cloud / data / security / ML
+ *   - 1 company (TechCorp Inc., HQ Bonifacio Global City, Taguig)
+ *   - 19 published tech jobs spanning web / mobile / fullstack / backend / devops / cloud / data / security / ML
+ *   - All roles are Philippine-based with monthly PHP salary ranges benchmarked
+ *     against current JobStreet PH and Indeed PH listings (BGC, Makati, Cebu, etc.)
  *
  * Requires DATABASE_URL, SUPABASE_URL, and SUPABASE_SERVICE_ROLE_KEY in apps/api/.env.
  *
@@ -60,10 +62,10 @@ const COMPANY = {
   name: "TechCorp Inc.",
   industry: "Software / SaaS",
   size: "201-500" as const,
-  website: "https://techcorp.dev",
-  headquartersLocation: "San Francisco, CA, USA",
+  website: "https://techcorp.ph",
+  headquartersLocation: "Bonifacio Global City, Taguig, Philippines",
   description:
-    "TechCorp builds developer tooling for distributed systems. We're a remote-first team of 320 across 14 time zones, with hubs in San Francisco, Berlin, and Singapore. Our products power infrastructure observability for thousands of engineering teams.",
+    "TechCorp builds developer tooling for distributed systems. We're a Philippines-headquartered, remote-first team of 320 with offices in Bonifacio Global City (Taguig), Makati, and Cebu IT Park. Our products power infrastructure observability for thousands of engineering teams across Southeast Asia and beyond.",
 };
 
 // ─── Active scoring config ─────────────────────────────────────────────────
@@ -71,16 +73,25 @@ const COMPANY = {
 const SCORING_CONFIG = {
   matchWeights: { skills: 40, experience: 35, education: 15, cultural_fit: 10 },
   profileWeights: {
-    resume_quality: 25,
-    skills_breadth: 30,
-    experience_depth: 30,
-    preferences_clarity: 15,
+    completeness: 25,
+    skill_depth: 30,
+    experience_clarity: 30,
+    education_quality: 15,
   },
   bandThresholds: { strong: 70, partial: 40 },
   biasCategoriesEnabled: ["gendered", "age-coded", "ableist", "exclusionary"],
   customFlaggedTerms: [],
   piiRedactionEnabled: true,
-  piiFieldsRedacted: ["name", "email", "phone", "address", "date_of_birth", "age", "gender", "photo"],
+  piiFieldsRedacted: [
+    "name",
+    "email",
+    "phone",
+    "address",
+    "date_of_birth",
+    "age",
+    "gender",
+    "photo",
+  ],
 };
 
 // ─── 18 jobs ───────────────────────────────────────────────────────────────
@@ -129,12 +140,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 140000,
-    salaryMax: 185000,
+    locationCountry: "Philippines",
+    salaryMin: 90000,
+    salaryMax: 150000,
     experienceLevel: "senior",
     educationRequirement: "bachelor",
-    requiredSkills: ["React", "TypeScript", "Next.js", "GraphQL", "Tailwind CSS", "Jest"],
+    requiredSkills: [
+      "React",
+      "TypeScript",
+      "Next.js",
+      "GraphQL",
+      "Tailwind CSS",
+      "Jest",
+    ],
     description:
       "<p>We're building the next generation of our developer dashboard. You'll own the React/Next.js codebase that thousands of engineers use daily to debug their distributed systems.</p><h3>What you'll do</h3><ul><li>Design and ship features end-to-end across our React + TypeScript codebase</li><li>Partner with design + product to define interactions, not just implement them</li><li>Mentor mid-level engineers through code review and pair programming</li><li>Drive frontend architecture decisions (state management, performance, accessibility)</li></ul><h3>What we're looking for</h3><ul><li>5+ years of professional React experience</li><li>Strong TypeScript fundamentals</li><li>Experience with Next.js (App Router preferred) and modern React patterns (Server Components, Suspense)</li><li>Comfortable with GraphQL clients (Apollo, urql, or similar)</li><li>Track record of shipping production UI at scale</li></ul>",
     descriptionPlain:
@@ -146,12 +164,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 115000,
-    salaryMax: 150000,
+    locationCountry: "Philippines",
+    salaryMin: 65000,
+    salaryMax: 105000,
     experienceLevel: "mid",
     educationRequirement: "bachelor",
-    requiredSkills: ["React", "TypeScript", "Storybook", "CSS-in-JS", "Figma", "Accessibility (WCAG)"],
+    requiredSkills: [
+      "React",
+      "TypeScript",
+      "Storybook",
+      "CSS-in-JS",
+      "Figma",
+      "Accessibility (WCAG)",
+    ],
     description:
       "<p>Join our Design Systems team to build the component library that powers every product surface at TechCorp. You'll be the primary engineer working alongside designers to ship reusable, accessible primitives.</p><h3>What you'll do</h3><ul><li>Build and maintain our React component library (used by 30+ engineers across 5 products)</li><li>Document components in Storybook with usage examples and a11y notes</li><li>Audit existing surfaces for design-system adoption gaps</li><li>Run office hours to support product engineering teams</li></ul><h3>What we're looking for</h3><ul><li>3+ years building React components for production</li><li>Strong eye for visual detail and consistency</li><li>WCAG 2.1 AA familiarity (you've shipped accessible components before)</li><li>Comfortable working closely with designers in Figma</li></ul>",
     descriptionPlain:
@@ -163,13 +188,20 @@ const JOBS: SeedJob[] = [
     department: "Mobile",
     employmentType: "full-time",
     workMode: "hybrid",
-    locationCity: "San Francisco",
-    locationCountry: "USA",
-    salaryMin: 150000,
-    salaryMax: 195000,
+    locationCity: "Bonifacio Global City",
+    locationCountry: "Philippines",
+    salaryMin: 100000,
+    salaryMax: 160000,
     experienceLevel: "senior",
     educationRequirement: "bachelor",
-    requiredSkills: ["Swift", "SwiftUI", "Combine", "iOS SDK", "XCTest", "Core Data"],
+    requiredSkills: [
+      "Swift",
+      "SwiftUI",
+      "Combine",
+      "iOS SDK",
+      "XCTest",
+      "Core Data",
+    ],
     description:
       "<p>We're rebuilding our iOS companion app from the ground up in SwiftUI. You'll be the senior voice in a team of three iOS engineers shaping the architecture from day one.</p><h3>What you'll do</h3><ul><li>Lead the SwiftUI rewrite of the TechCorp mobile app</li><li>Define our state management approach (Combine, observable patterns)</li><li>Set up CI/CD for App Store deployment</li><li>Mentor a junior + mid iOS engineer</li></ul><h3>What we're looking for</h3><ul><li>5+ years of iOS development with Swift</li><li>Production SwiftUI experience (not just demos)</li><li>Comfort with Core Data + Combine</li><li>Track record of shipping apps to the App Store</li></ul>",
     descriptionPlain:
@@ -181,12 +213,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "Canada",
-    salaryMin: 110000,
-    salaryMax: 145000,
+    locationCountry: "Philippines",
+    salaryMin: 60000,
+    salaryMax: 95000,
     experienceLevel: "mid",
     educationRequirement: "bachelor",
-    requiredSkills: ["Kotlin", "Jetpack Compose", "Coroutines", "Android SDK", "Room", "MVVM"],
+    requiredSkills: [
+      "Kotlin",
+      "Jetpack Compose",
+      "Coroutines",
+      "Android SDK",
+      "Room",
+      "MVVM",
+    ],
     description:
       "<p>Help us build the Android version of our developer companion app. You'll join a small mobile team owning the Android codebase end-to-end.</p><h3>What you'll do</h3><ul><li>Build features in Kotlin + Jetpack Compose</li><li>Manage local persistence with Room</li><li>Wire async flows with Coroutines + Flow</li><li>Ship through Google Play with our existing CI</li></ul><h3>What we're looking for</h3><ul><li>3+ years of Android development with Kotlin</li><li>Jetpack Compose experience (production preferred)</li><li>Coroutines + Flow comfortable in your daily work</li><li>Familiarity with MVVM or MVI architecture</li></ul>",
     descriptionPlain:
@@ -198,12 +237,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 120000,
-    salaryMax: 160000,
+    locationCountry: "Philippines",
+    salaryMin: 70000,
+    salaryMax: 115000,
     experienceLevel: "mid",
     educationRequirement: "none",
-    requiredSkills: ["React Native", "TypeScript", "Expo", "Redux Toolkit", "Native modules", "Jest"],
+    requiredSkills: [
+      "React Native",
+      "TypeScript",
+      "Expo",
+      "Redux Toolkit",
+      "Native modules",
+      "Jest",
+    ],
     description:
       "<p>We use React Native for cross-platform features that need to ship to both iOS and Android simultaneously. You'll work with both our iOS and Android teams to deliver shared functionality.</p><h3>What you'll do</h3><ul><li>Build cross-platform features in React Native + TypeScript</li><li>Bridge to native modules when platform APIs are needed</li><li>Optimize performance (60fps lists, image loading, cold start)</li><li>Coordinate releases with our native iOS + Android teams</li></ul><h3>What we're looking for</h3><ul><li>3+ years building React Native apps in production</li><li>Comfortable writing Swift/Kotlin for native bridges</li><li>Solid TypeScript + state management experience</li><li>Familiarity with Expo and EAS Build</li></ul>",
     descriptionPlain:
@@ -216,12 +262,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 145000,
-    salaryMax: 190000,
+    locationCountry: "Philippines",
+    salaryMin: 95000,
+    salaryMax: 155000,
     experienceLevel: "senior",
     educationRequirement: "bachelor",
-    requiredSkills: ["Node.js", "TypeScript", "NestJS", "PostgreSQL", "Redis", "REST APIs"],
+    requiredSkills: [
+      "Node.js",
+      "TypeScript",
+      "NestJS",
+      "PostgreSQL",
+      "Redis",
+      "REST APIs",
+    ],
     description:
       "<p>Own backend services that handle millions of requests per day. You'll work in our NestJS/Postgres stack designing APIs that scale.</p><h3>What you'll do</h3><ul><li>Design and ship REST endpoints in NestJS + TypeScript</li><li>Model data in PostgreSQL with Drizzle ORM</li><li>Tune query performance and add indexes when needed</li><li>Write integration tests against real Postgres + Redis</li></ul><h3>What we're looking for</h3><ul><li>5+ years of Node.js backend experience</li><li>Strong TypeScript and SQL skills</li><li>Production experience with NestJS or similar (Express, Fastify)</li><li>Comfortable with Redis for caching + queues</li></ul>",
     descriptionPlain:
@@ -232,17 +285,24 @@ const JOBS: SeedJob[] = [
     department: "Engineering",
     employmentType: "full-time",
     workMode: "hybrid",
-    locationCity: "Berlin",
-    locationCountry: "Germany",
-    salaryMin: 75000,
+    locationCity: "Makati City",
+    locationCountry: "Philippines",
+    salaryMin: 60000,
     salaryMax: 100000,
     experienceLevel: "mid",
     educationRequirement: "bachelor",
-    requiredSkills: ["Python", "Django", "Django REST Framework", "PostgreSQL", "Celery", "pytest"],
+    requiredSkills: [
+      "Python",
+      "Django",
+      "Django REST Framework",
+      "PostgreSQL",
+      "Celery",
+      "pytest",
+    ],
     description:
-      "<p>Join our Berlin office working on the analytics backend. We process billions of events per day through a Python data pipeline.</p><h3>What you'll do</h3><ul><li>Build and maintain Django REST APIs</li><li>Write Celery tasks for async event processing</li><li>Optimize complex Postgres queries on time-series data</li><li>Pair with data engineers to define new metrics</li></ul><h3>What we're looking for</h3><ul><li>3+ years of Django + DRF experience</li><li>Comfortable with Celery + Redis-backed task queues</li><li>Strong PostgreSQL skills (window functions, indexing)</li><li>Test-driven mindset (pytest)</li></ul>",
+      "<p>Join our Makati office working on the analytics backend. We process billions of events per day through a Python data pipeline.</p><h3>What you'll do</h3><ul><li>Build and maintain Django REST APIs</li><li>Write Celery tasks for async event processing</li><li>Optimize complex Postgres queries on time-series data</li><li>Pair with data engineers to define new metrics</li></ul><h3>What we're looking for</h3><ul><li>3+ years of Django + DRF experience</li><li>Comfortable with Celery + Redis-backed task queues</li><li>Strong PostgreSQL skills (window functions, indexing)</li><li>Test-driven mindset (pytest)</li></ul>",
     descriptionPlain:
-      "Join our Berlin office working on the analytics backend. We process billions of events per day through a Python data pipeline. What you'll do: Build and maintain Django REST APIs. Write Celery tasks for async event processing. Optimize complex Postgres queries on time-series data. Pair with data engineers to define new metrics. What we're looking for: 3+ years of Django + DRF experience. Comfortable with Celery + Redis-backed task queues. Strong PostgreSQL skills (window functions, indexing). Test-driven mindset (pytest).",
+      "Join our Makati office working on the analytics backend. We process billions of events per day through a Python data pipeline. What you'll do: Build and maintain Django REST APIs. Write Celery tasks for async event processing. Optimize complex Postgres queries on time-series data. Pair with data engineers to define new metrics. What we're looking for: 3+ years of Django + DRF experience. Comfortable with Celery + Redis-backed task queues. Strong PostgreSQL skills (window functions, indexing). Test-driven mindset (pytest).",
   },
   {
     title: "Go Backend Engineer — Infrastructure",
@@ -250,12 +310,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 135000,
+    locationCountry: "Philippines",
+    salaryMin: 110000,
     salaryMax: 180000,
     experienceLevel: "senior",
     educationRequirement: "bachelor",
-    requiredSkills: ["Go", "gRPC", "Kubernetes", "PostgreSQL", "Distributed systems", "Protocol Buffers"],
+    requiredSkills: [
+      "Go",
+      "gRPC",
+      "Kubernetes",
+      "PostgreSQL",
+      "Distributed systems",
+      "Protocol Buffers",
+    ],
     description:
       "<p>Work on the Go services that form the backbone of our observability platform. These services ingest, route, and store telemetry from thousands of customer clusters.</p><h3>What you'll do</h3><ul><li>Design Go microservices that handle 100k+ req/sec sustained</li><li>Define gRPC contracts between internal services</li><li>Tune for latency (p99 budget is 50ms)</li><li>Operate services in production (you're on a small on-call rotation)</li></ul><h3>What we're looking for</h3><ul><li>4+ years of Go production experience</li><li>Distributed systems intuition (consensus, partitioning, failure modes)</li><li>Kubernetes operational experience (not just deploying — debugging)</li><li>Comfortable with gRPC and Protocol Buffers</li></ul>",
     descriptionPlain:
@@ -268,12 +335,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 125000,
-    salaryMax: 165000,
+    locationCountry: "Philippines",
+    salaryMin: 70000,
+    salaryMax: 115000,
     experienceLevel: "mid",
     educationRequirement: "none",
-    requiredSkills: ["TypeScript", "React", "Node.js", "PostgreSQL", "REST APIs", "Git"],
+    requiredSkills: [
+      "TypeScript",
+      "React",
+      "Node.js",
+      "PostgreSQL",
+      "REST APIs",
+      "Git",
+    ],
     description:
       "<p>Work across our entire TypeScript stack — React on the frontend, Node.js on the backend. Ideal for engineers who like ownership of features end-to-end.</p><h3>What you'll do</h3><ul><li>Build features that span database → API → UI</li><li>Pair with design + PM to scope work</li><li>Write tests at every layer (unit, integration, e2e)</li><li>Participate in product reviews; bring an engineering perspective</li></ul><h3>What we're looking for</h3><ul><li>3+ years building full-stack products in TypeScript</li><li>React + Node.js comfortable in production</li><li>SQL proficiency (you can write JOINs without consulting docs)</li><li>You enjoy ownership across the stack rather than specializing</li></ul>",
     descriptionPlain:
@@ -284,13 +358,20 @@ const JOBS: SeedJob[] = [
     department: "Engineering",
     employmentType: "full-time",
     workMode: "hybrid",
-    locationCity: "San Francisco",
-    locationCountry: "USA",
-    salaryMin: 95000,
-    salaryMax: 120000,
+    locationCity: "Cebu City",
+    locationCountry: "Philippines",
+    salaryMin: 35000,
+    salaryMax: 55000,
     experienceLevel: "junior",
     educationRequirement: "bachelor",
-    requiredSkills: ["TypeScript", "React", "Node.js", "Git", "REST APIs", "SQL basics"],
+    requiredSkills: [
+      "TypeScript",
+      "React",
+      "Node.js",
+      "Git",
+      "REST APIs",
+      "SQL basics",
+    ],
     description:
       "<p>Start your career on a tight team that mentors deliberately. You'll pair with senior engineers daily and own features within your first 30 days.</p><h3>What you'll do</h3><ul><li>Pair with senior engineers on real features (not just bug fixes)</li><li>Own one or two small features per quarter end-to-end</li><li>Learn our TypeScript + React + Node.js stack</li><li>Participate in code review (give and receive feedback)</li></ul><h3>What we're looking for</h3><ul><li>1-2 years of professional experience OR a strong CS degree + 1 internship</li><li>Comfortable with JavaScript/TypeScript</li><li>Curiosity about the full stack — frontend AND backend</li><li>Comfort asking questions and saying when you don't know something</li></ul>",
     descriptionPlain:
@@ -303,12 +384,20 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 150000,
-    salaryMax: 195000,
+    locationCountry: "Philippines",
+    salaryMin: 110000,
+    salaryMax: 175000,
     experienceLevel: "senior",
     educationRequirement: "bachelor",
-    requiredSkills: ["Terraform", "AWS", "Kubernetes", "Docker", "CI/CD", "Bash", "Python"],
+    requiredSkills: [
+      "Terraform",
+      "AWS",
+      "Kubernetes",
+      "Docker",
+      "CI/CD",
+      "Bash",
+      "Python",
+    ],
     description:
       "<p>Own the infrastructure that runs TechCorp's production systems. We're a multi-AZ AWS shop with 50+ Kubernetes clusters across regions.</p><h3>What you'll do</h3><ul><li>Maintain and evolve our Terraform-managed AWS infrastructure</li><li>Operate Kubernetes clusters (EKS) in production</li><li>Build and maintain CI/CD pipelines (GitHub Actions, ArgoCD)</li><li>Be on a small on-call rotation (1 week per ~6 weeks)</li></ul><h3>What we're looking for</h3><ul><li>5+ years of DevOps / SRE / platform engineering</li><li>Deep AWS familiarity (VPC, IAM, EKS, RDS, S3 at minimum)</li><li>Production Terraform + Kubernetes experience</li><li>Scripting comfort in Bash + Python</li></ul>",
     descriptionPlain:
@@ -320,12 +409,20 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 145000,
-    salaryMax: 195000,
+    locationCountry: "Philippines",
+    salaryMin: 110000,
+    salaryMax: 175000,
     experienceLevel: "senior",
     educationRequirement: "bachelor",
-    requiredSkills: ["Prometheus", "Grafana", "Kubernetes", "Go", "Linux", "Distributed tracing", "PagerDuty"],
+    requiredSkills: [
+      "Prometheus",
+      "Grafana",
+      "Kubernetes",
+      "Go",
+      "Linux",
+      "Distributed tracing",
+      "PagerDuty",
+    ],
     description:
       "<p>Be the reliability voice for the Go services that power our platform. You'll define SLOs, run game days, and tune for the long tail.</p><h3>What you'll do</h3><ul><li>Define and track SLOs for our top 5 customer-facing services</li><li>Run quarterly game days (chaos engineering exercises)</li><li>Improve observability — metrics, logs, traces — across the platform</li><li>Coach service owners on production-readiness reviews</li></ul><h3>What we're looking for</h3><ul><li>4+ years of SRE / production engineering experience</li><li>Strong Linux + Kubernetes operational skills</li><li>Comfortable with Go (you can read service code, write small tools)</li><li>Prometheus + Grafana fluency</li></ul>",
     descriptionPlain:
@@ -336,17 +433,24 @@ const JOBS: SeedJob[] = [
     department: "Infrastructure",
     employmentType: "full-time",
     workMode: "hybrid",
-    locationCity: "Singapore",
-    locationCountry: "Singapore",
-    salaryMin: 100000,
-    salaryMax: 140000,
+    locationCity: "Bonifacio Global City",
+    locationCountry: "Philippines",
+    salaryMin: 75000,
+    salaryMax: 120000,
     experienceLevel: "mid",
     educationRequirement: "bachelor",
-    requiredSkills: ["GCP", "BigQuery", "Cloud Run", "Pub/Sub", "Terraform", "Python"],
+    requiredSkills: [
+      "GCP",
+      "BigQuery",
+      "Cloud Run",
+      "Pub/Sub",
+      "Terraform",
+      "Python",
+    ],
     description:
-      "<p>Help us build out our Asia-Pacific GCP footprint. You'll work on data pipelines and serverless services in the Singapore office.</p><h3>What you'll do</h3><ul><li>Stand up new GCP services (Cloud Run, Pub/Sub, BigQuery) for product teams</li><li>Manage Terraform modules for our GCP resources</li><li>Build cost-tracking dashboards for engineering leadership</li><li>Partner with our AWS team on multi-cloud strategy</li></ul><h3>What we're looking for</h3><ul><li>3+ years of cloud infrastructure experience</li><li>GCP-first preferred; AWS-fluent transitioning to GCP also welcome</li><li>Terraform comfortable</li><li>Comfortable in BigQuery (you've written analytical SQL at scale)</li></ul>",
+      "<p>Help us build out our Southeast Asia GCP footprint. You'll work on data pipelines and serverless services from our Bonifacio Global City office.</p><h3>What you'll do</h3><ul><li>Stand up new GCP services (Cloud Run, Pub/Sub, BigQuery) for product teams</li><li>Manage Terraform modules for our GCP resources</li><li>Build cost-tracking dashboards for engineering leadership</li><li>Partner with our AWS team on multi-cloud strategy</li></ul><h3>What we're looking for</h3><ul><li>3+ years of cloud infrastructure experience</li><li>GCP-first preferred; AWS-fluent transitioning to GCP also welcome</li><li>Terraform comfortable</li><li>Comfortable in BigQuery (you've written analytical SQL at scale)</li></ul>",
     descriptionPlain:
-      "Help us build out our Asia-Pacific GCP footprint. You'll work on data pipelines and serverless services in the Singapore office. What you'll do: Stand up new GCP services (Cloud Run, Pub/Sub, BigQuery) for product teams. Manage Terraform modules for our GCP resources. Build cost-tracking dashboards for engineering leadership. Partner with our AWS team on multi-cloud strategy. What we're looking for: 3+ years of cloud infrastructure experience. GCP-first preferred; AWS-fluent transitioning to GCP also welcome. Terraform comfortable. Comfortable in BigQuery (you've written analytical SQL at scale).",
+      "Help us build out our Southeast Asia GCP footprint. You'll work on data pipelines and serverless services from our Bonifacio Global City office. What you'll do: Stand up new GCP services (Cloud Run, Pub/Sub, BigQuery) for product teams. Manage Terraform modules for our GCP resources. Build cost-tracking dashboards for engineering leadership. Partner with our AWS team on multi-cloud strategy. What we're looking for: 3+ years of cloud infrastructure experience. GCP-first preferred; AWS-fluent transitioning to GCP also welcome. Terraform comfortable. Comfortable in BigQuery (you've written analytical SQL at scale).",
   },
   {
     title: "Platform Engineer — Developer Experience",
@@ -354,12 +458,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 130000,
-    salaryMax: 175000,
+    locationCountry: "Philippines",
+    salaryMin: 85000,
+    salaryMax: 135000,
     experienceLevel: "mid",
     educationRequirement: "none",
-    requiredSkills: ["Go", "Kubernetes", "Backstage", "Bazel", "GitHub Actions", "TypeScript"],
+    requiredSkills: [
+      "Go",
+      "Kubernetes",
+      "Backstage",
+      "Bazel",
+      "GitHub Actions",
+      "TypeScript",
+    ],
     description:
       "<p>Build the internal platform that 200+ TechCorp engineers use to ship code. This is a high-leverage role: every productivity improvement multiplies across the org.</p><h3>What you'll do</h3><ul><li>Maintain our Backstage developer portal</li><li>Design templates for new service scaffolding</li><li>Improve build times in our Bazel monorepo</li><li>Listen to engineers' pain points and prioritize fixes</li></ul><h3>What we're looking for</h3><ul><li>3+ years of platform / DX work</li><li>Comfortable in Go and TypeScript</li><li>You enjoy tooling work and have shipped internal tools before</li><li>Strong communication — you'll write a lot of docs</li></ul>",
     descriptionPlain:
@@ -372,9 +483,9 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 130000,
-    salaryMax: 175000,
+    locationCountry: "Philippines",
+    salaryMin: 75000,
+    salaryMax: 120000,
     experienceLevel: "mid",
     educationRequirement: "bachelor",
     requiredSkills: ["Python", "SQL", "Airflow", "dbt", "Snowflake", "Spark"],
@@ -389,12 +500,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 160000,
-    salaryMax: 215000,
+    locationCountry: "Philippines",
+    salaryMin: 130000,
+    salaryMax: 200000,
     experienceLevel: "senior",
     educationRequirement: "master",
-    requiredSkills: ["Python", "PyTorch", "MLflow", "Kubeflow", "AWS SageMaker", "Distributed training"],
+    requiredSkills: [
+      "Python",
+      "PyTorch",
+      "MLflow",
+      "Kubeflow",
+      "AWS SageMaker",
+      "Distributed training",
+    ],
     description:
       "<p>Build the ML systems that power anomaly detection in our observability product. You'll work on time-series models that flag issues before customers see them.</p><h3>What you'll do</h3><ul><li>Train + evaluate time-series anomaly detection models</li><li>Productionize models via SageMaker endpoints</li><li>Monitor model drift and retrain pipelines</li><li>Partner with product on model UX (false positive thresholds, etc.)</li></ul><h3>What we're looking for</h3><ul><li>4+ years of ML engineering (research-to-production)</li><li>PyTorch fluency</li><li>Production deployment experience (not just notebooks)</li><li>MS in CS, ML, Statistics, or equivalent practical experience</li></ul>",
     descriptionPlain:
@@ -407,12 +525,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 145000,
-    salaryMax: 195000,
+    locationCountry: "Philippines",
+    salaryMin: 110000,
+    salaryMax: 175000,
     experienceLevel: "senior",
     educationRequirement: "bachelor",
-    requiredSkills: ["OWASP Top 10", "Threat modeling", "Burp Suite", "Python", "TypeScript", "SAST/DAST"],
+    requiredSkills: [
+      "OWASP Top 10",
+      "Threat modeling",
+      "Burp Suite",
+      "Python",
+      "TypeScript",
+      "SAST/DAST",
+    ],
     description:
       "<p>Be the security partner for product engineering. You'll review designs, threat-model features, and run security assessments on shipping code.</p><h3>What you'll do</h3><ul><li>Threat-model new features alongside product engineers</li><li>Run penetration tests against our production surfaces</li><li>Maintain our SAST + DAST tooling in CI</li><li>Triage security findings and partner on remediation</li></ul><h3>What we're looking for</h3><ul><li>4+ years of application security experience</li><li>Strong OWASP Top 10 knowledge with practical examples</li><li>Comfortable reading TypeScript and Python codebases</li><li>Experience with Burp Suite and similar tooling</li></ul>",
     descriptionPlain:
@@ -425,12 +550,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 180000,
-    salaryMax: 230000,
+    locationCountry: "Philippines",
+    salaryMin: 200000,
+    salaryMax: 300000,
     experienceLevel: "manager",
     educationRequirement: "bachelor",
-    requiredSkills: ["People management", "React", "TypeScript", "Frontend architecture", "Roadmap planning", "Hiring"],
+    requiredSkills: [
+      "People management",
+      "React",
+      "TypeScript",
+      "Frontend architecture",
+      "Roadmap planning",
+      "Hiring",
+    ],
     description:
       "<p>Lead a team of 6 frontend engineers building the design system + core shared components. This is a hands-off-keyboard role focused on people, planning, and stakeholder management.</p><h3>What you'll do</h3><ul><li>Manage 6 engineers (career growth, performance, team health)</li><li>Set quarterly goals with the team and partner orgs</li><li>Hire 2 more engineers in the next 6 months</li><li>Stay close enough to the codebase to make architectural calls</li></ul><h3>What we're looking for</h3><ul><li>3+ years of management experience leading frontend teams</li><li>Strong React + TypeScript background (you came up through the IC track)</li><li>Track record of hiring + retaining engineers</li><li>Comfort presenting roadmaps to executive leadership</li></ul>",
     descriptionPlain:
@@ -442,12 +574,19 @@ const JOBS: SeedJob[] = [
     employmentType: "full-time",
     workMode: "remote",
     locationCity: null,
-    locationCountry: "USA",
-    salaryMin: 200000,
-    salaryMax: 260000,
+    locationCountry: "Philippines",
+    salaryMin: 220000,
+    salaryMax: 340000,
     experienceLevel: "lead",
     educationRequirement: "bachelor",
-    requiredSkills: ["Distributed systems", "Go", "TypeScript", "PostgreSQL", "System design", "Technical leadership"],
+    requiredSkills: [
+      "Distributed systems",
+      "Go",
+      "TypeScript",
+      "PostgreSQL",
+      "System design",
+      "Technical leadership",
+    ],
     description:
       "<p>Be the technical leader for our core platform team. You'll set the architectural direction for the services that handle our most critical workloads.</p><h3>What you'll do</h3><ul><li>Drive architectural decisions across the platform team (12 engineers)</li><li>Author RFCs for major changes; review RFCs from others</li><li>Pair with the team on the hardest technical problems</li><li>Mentor senior engineers heading toward staff</li></ul><h3>What we're looking for</h3><ul><li>8+ years of backend engineering experience</li><li>Track record of leading large technical initiatives end-to-end</li><li>Deep distributed systems knowledge</li><li>Strong written communication (RFC-grade writing)</li></ul>",
     descriptionPlain:
@@ -550,7 +689,9 @@ async function createAuthUser(
     );
   }
 
-  const body = (await res.json()) as CreatedAuthUser | { id: string; email: string };
+  const body = (await res.json()) as
+    | CreatedAuthUser
+    | { id: string; email: string };
   if ("user" in body) {
     return { id: body.user.id, email: body.user.email };
   }
@@ -564,7 +705,7 @@ async function main(): Promise<void> {
         "",
         "  Refusing to run without --yes flag.",
         "  This will DELETE ALL DATA from public tables AND all Supabase auth users,",
-        "  then seed admin + recruiter accounts + 18 published tech jobs.",
+        "  then seed admin + recruiter accounts + 19 published Philippine-based tech jobs.",
         "  Re-run with --yes to confirm:",
         "",
         "    pnpm --filter @aurahire/api seed-db -- --yes",
@@ -612,7 +753,9 @@ async function main(): Promise<void> {
     role: "admin",
     fullName: ADMIN_FULL_NAME,
   });
-  process.stdout.write(`  ✓ Created auth.users ${adminUser.id} (${adminUser.email})\n`);
+  process.stdout.write(
+    `  ✓ Created auth.users ${adminUser.id} (${adminUser.email})\n`,
+  );
 
   process.stdout.write("\n→ Creating recruiter auth user\n");
   const recruiterUser = await createAuthUser(supabaseUrl, serviceRoleKey, {
@@ -621,7 +764,9 @@ async function main(): Promise<void> {
     role: "recruiter",
     fullName: RECRUITER_FULL_NAME,
   });
-  process.stdout.write(`  ✓ Created auth.users ${recruiterUser.id} (${recruiterUser.email})\n`);
+  process.stdout.write(
+    `  ✓ Created auth.users ${recruiterUser.id} (${recruiterUser.email})\n`,
+  );
 
   // ─── 4. Insert profiles + company + recruiter_profile + scoring_config + jobs ────
   process.stdout.write("\n→ Inserting application-layer rows\n");
@@ -656,17 +801,18 @@ async function main(): Promise<void> {
       RETURNING id
     `;
     if (!companyRow) throw new Error("Company insert returned no row");
-    process.stdout.write(`  ✓ company row ${companyRow.id} (${COMPANY.name})\n`);
+    process.stdout.write(
+      `  ✓ company row ${companyRow.id} (${COMPANY.name})\n`,
+    );
 
-    // Recruiter profile (FK to companies + profiles)
+    // Recruiter profile (FK to profiles). Company link now lives in company_members.
     await sql`
       INSERT INTO recruiter_profiles (
-        id, company_id, job_title, department, roles_hiring_for,
+        id, job_title, department, roles_hiring_for,
         hiring_volume_per_quarter, profile_completed
       )
       VALUES (
         ${recruiterUser.id},
-        ${companyRow.id},
         ${RECRUITER_JOB_TITLE},
         ${RECRUITER_DEPARTMENT},
         ${sql.array([
@@ -683,6 +829,36 @@ async function main(): Promise<void> {
       )
     `;
     process.stdout.write(`  ✓ recruiter_profiles row\n`);
+
+    // Company membership (recruiter is the owner of TechCorp)
+    await sql`
+      INSERT INTO company_members (
+        company_id, user_id, email, role, status, invited_by, joined_at
+      )
+      VALUES (
+        ${companyRow.id},
+        ${recruiterUser.id},
+        ${RECRUITER_EMAIL},
+        ${"owner"},
+        ${"active"},
+        ${recruiterUser.id},
+        ${new Date()}
+      )
+    `;
+    process.stdout.write(`  ✓ company_members row (recruiter = owner)\n`);
+
+    // Phase 2c: profiles.last_active_company_id is the server-side source of
+    // truth used by ActiveCompanyGuard's DB fallback (the X-Active-Company-Id
+    // header is localStorage-only and not visible to SSR fetches). Without
+    // this update the seeded recruiter would 403 on every SSR page load.
+    await sql`
+      UPDATE profiles
+      SET last_active_company_id = ${companyRow.id}
+      WHERE id = ${recruiterUser.id}
+    `;
+    process.stdout.write(
+      `  ✓ profiles.last_active_company_id = ${companyRow.id}\n`,
+    );
 
     // Active scoring_config
     await sql`
@@ -727,7 +903,7 @@ async function main(): Promise<void> {
           ${job.locationCountry},
           ${String(job.salaryMin)},
           ${String(job.salaryMax)},
-          ${"USD"},
+          ${"PHP"},
           ${job.description},
           ${job.descriptionPlain},
           ${sql.array(job.requiredSkills)},
@@ -748,17 +924,28 @@ async function main(): Promise<void> {
   process.stdout.write("\n✓ Seed complete.\n\n");
   process.stdout.write("Accounts:\n");
   process.stdout.write(`  admin:     ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}\n`);
-  process.stdout.write(`  recruiter: ${RECRUITER_EMAIL} / ${RECRUITER_PASSWORD}\n`);
+  process.stdout.write(
+    `  recruiter: ${RECRUITER_EMAIL} / ${RECRUITER_PASSWORD}\n`,
+  );
   process.stdout.write("\n");
-  process.stdout.write(`Company:   ${COMPANY.name} (${JOBS.length} published jobs)\n`);
-  process.stdout.write(`Scoring config: active (skills 40 / experience 35 / education 15 / cultural_fit 10)\n`);
-  process.stdout.write("\nNow register a candidate via the UI to test the full demo path.\n");
+  process.stdout.write(
+    `Company:   ${COMPANY.name} — HQ ${COMPANY.headquartersLocation}\n`,
+  );
+  process.stdout.write(
+    `Jobs:      ${JOBS.length} published, all Philippine-based, monthly PHP salaries\n`,
+  );
+  process.stdout.write(
+    `Scoring config: active (skills 40 / experience 35 / education 15 / cultural_fit 10)\n`,
+  );
+  process.stdout.write(
+    "\nNow register a candidate via the UI to test the full demo path.\n",
+  );
   process.exit(0);
 }
 
 main().catch((err: unknown) => {
   process.stderr.write(
-    `seed-db failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`,
+    `seed-db failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
   );
   process.exit(1);
 });

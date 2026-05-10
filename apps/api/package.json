@@ -9,6 +9,8 @@
     "start:prod": "node dist/main.js",
     "lint": "eslint \"src/**/*.ts\"",
     "type-check": "tsc --noEmit -p tsconfig.json",
+    "test": "jest",
+    "test:ai-parse": "tsx scripts/run-ai-parse-corpus.ts",
     "generate:openapi": "node --require @swc-node/register scripts/generate-openapi.ts",
     "reset-db": "node --require @swc-node/register --env-file=.env scripts/reset-db.ts",
     "seed-db": "node --require @swc-node/register --env-file=.env scripts/seed-db.ts"
@@ -26,11 +28,14 @@
     "@nestjs/config": "^3.3.0",
     "@nestjs/core": "^10.4.15",
     "@nestjs/platform-fastify": "^10.4.15",
+    "@nestjs/platform-socket.io": "^10.4.15",
     "@nestjs/schedule": "^6.1.3",
     "@nestjs/swagger": "^8.0.7",
     "@nestjs/throttler": "^6.5.0",
+    "@nestjs/websockets": "^10.4.15",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.8",
+    "@socket.io/redis-adapter": "^8.3.0",
     "@supabase/supabase-js": "^2",
     "bullmq": "^5.76.5",
     "cache-manager": "^7.2.8",
@@ -53,24 +58,51 @@
     "reflect-metadata": "^0.2.2",
     "resend": "^6.12.2",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.9",
     "@nestjs/schematics": "^10.2.3",
+    "@nestjs/testing": "^10.4.22",
     "@swc-node/register": "^1.11.1",
     "@swc/core": "^1.15.32",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.17.10",
     "@types/nodemailer": "^8.0.0",
     "@types/pdf-parse": "^1.1.5",
     "@types/pdfkit": "^0.17.6",
     "@types/react": "^19.0.2",
+    "jest": "^30.3.0",
     "pdfkit": "^0.18.0",
     "react": "19.2.4",
+    "ts-jest": "^29.4.9",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
     "typescript": "^5.7.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts",
+      "tsx"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "ts-jest",
+        {
+          "tsconfig": "<rootDir>/../tsconfig.json"
+        }
+      ]
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!.*jose)"
+    ]
   }
 }

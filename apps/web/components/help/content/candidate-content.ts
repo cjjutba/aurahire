@@ -210,12 +210,27 @@ export const candidateHelp: HelpPageContent = {
               kind: "matrix",
               head: ["Status", "What it means"],
               rows: [
-                ["Applied", "You've submitted; the recruiter hasn't taken action yet."],
-                ["Screening", "The recruiter is actively reviewing your application."],
-                ["Interview", "An interview has been scheduled or is in progress."],
-                ["Offer", "An offer has been extended — check your inbox and the application page."],
+                [
+                  "Applied",
+                  "You've submitted; the recruiter hasn't taken action yet.",
+                ],
+                [
+                  "Screening",
+                  "The recruiter is actively reviewing your application.",
+                ],
+                [
+                  "Interview",
+                  "An interview has been scheduled or is in progress.",
+                ],
+                [
+                  "Offer",
+                  "An offer has been extended — check your inbox and the application page.",
+                ],
                 ["Hired", "You accepted; congratulations!"],
-                ["Rejected", "Not moving forward for this role. The recruiter may have shared a reason."],
+                [
+                  "Rejected",
+                  "Not moving forward for this role. The recruiter may have shared a reason.",
+                ],
                 ["Withdrawn", "You chose to withdraw the application."],
               ],
             },
@@ -420,7 +435,7 @@ export const candidateHelp: HelpPageContent = {
                 {
                   label: "Where to send",
                   description:
-                    "fairness@aurahire.app — separate inbox from general support so it's triaged appropriately.",
+                    "hello@aurahire.site — please use the subject line “Fairness review” so we route it to the right reviewer.",
                 },
                 {
                   label: "What we'll do",
@@ -637,8 +652,8 @@ export const candidateHelp: HelpPageContent = {
   ],
   contact: {
     title: "Need a human?",
-    body: "Email support — we typically reply within one business day. For fairness or bias concerns, please email fairness@aurahire.app instead so it routes correctly.",
-    email: "support@aurahire.app",
+    body: "Email us — we typically reply within one business day. For fairness or bias concerns, use the subject line “Fairness review” so it routes correctly.",
+    email: "hello@aurahire.site",
     secondaryLink: { label: "Browse open jobs", href: "/candidate/jobs" },
   },
 };

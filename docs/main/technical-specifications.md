@@ -15,7 +15,7 @@ This document is the per-feature implementation contract. For each feature, it s
 ### Base URL
 
 - **Local dev:** `http://localhost:3333/api/v1`
-- **Production:** `https://aurahire-api.up.railway.app/api/v1`
+- **Production:** `https://api.<your-domain>/api/v1` (Digital Ocean Droplet, fronted by Caddy with Let's Encrypt TLS)
 
 Frontend reads `NEXT_PUBLIC_API_URL` env var; the auto-generated client in `packages/shared/api-client/` prepends `/api/v1` automatically.
 
@@ -26,22 +26,29 @@ All protected endpoints require `Authorization: Bearer <supabase-jwt>` header. T
 ### Standard Response Envelope
 
 **Success (2xx):**
+
 ```json
 {
-  "data": { /* resource shape */ },
+  "data": {
+    /* resource shape */
+  },
   "meta": { "requestId": "uuid", "timestamp": "2026-05-01T..." }
 }
 ```
 
 For paginated lists:
+
 ```json
 {
-  "data": [ /* items */ ],
+  "data": [
+    /* items */
+  ],
   "meta": { "page": 1, "limit": 25, "total": 142, "totalPages": 6 }
 }
 ```
 
 **Error (4xx/5xx):**
+
 ```json
 {
   "statusCode": 400,
@@ -60,20 +67,20 @@ Standard query params: `?page=1&limit=25&sort=appliedAt:desc`. Default limit 25,
 
 ### HTTP Status Codes
 
-| Code | Use |
-|---|---|
-| 200 | OK (GET, PATCH, action endpoints) |
-| 201 | Created (POST creating resource) |
-| 204 | No Content (DELETE) |
-| 400 | Validation error |
-| 401 | Unauthenticated (no/invalid JWT) |
-| 403 | Forbidden (wrong role / no permission) |
-| 404 | Resource not found |
-| 409 | Conflict (e.g., duplicate application) |
-| 422 | Unprocessable (e.g., bias flags require override) |
-| 429 | Rate limited |
-| 500 | Server error |
-| 503 | Service unavailable (AI down) |
+| Code | Use                                               |
+| ---- | ------------------------------------------------- |
+| 200  | OK (GET, PATCH, action endpoints)                 |
+| 201  | Created (POST creating resource)                  |
+| 204  | No Content (DELETE)                               |
+| 400  | Validation error                                  |
+| 401  | Unauthenticated (no/invalid JWT)                  |
+| 403  | Forbidden (wrong role / no permission)            |
+| 404  | Resource not found                                |
+| 409  | Conflict (e.g., duplicate application)            |
+| 422  | Unprocessable (e.g., bias flags require override) |
+| 429  | Rate limited                                      |
+| 500  | Server error                                      |
+| 503  | Service unavailable (AI down)                     |
 
 ---
 
@@ -110,11 +117,13 @@ Every feature follows this template:
 **Module:** `apps/api/src/modules/auth/`
 
 **Flow:**
+
 1. Frontend calls `supabase.auth.signUp({ email, password, options: { data: { full_name, phone } } })` directly
 2. Supabase creates `auth.users` row + sends verification email (we override template via Resend in production)
 3. Frontend then calls `POST /api/v1/auth/register-candidate` with the new JWT to initialize the profile
 
 **Request:**
+
 ```json
 {
   "fullName": "Maria Reyes",
@@ -127,11 +136,13 @@ Every feature follows this template:
 **Authorization:** Authenticated user; `auth.uid()` from JWT becomes the new profile's id.
 
 **Side effects:**
+
 1. INSERT `profiles` (id from JWT, role='candidate', status='active')
 2. INSERT `candidate_profiles` (id, profile_completed=false)
 3. Audit log `action='user.registered.candidate'`
 
 **Response (201):**
+
 ```json
 {
   "data": { "id": "uuid", "role": "candidate", "profileCompleted": false }
@@ -154,11 +165,17 @@ Every feature follows this template:
 Same flow as candidate, plus creates company record.
 
 **Request:**
+
 ```json
-{ "fullName": "Alex Cruz", "phone": "+639171234567", "companyName": "Acme Corp" }
+{
+  "fullName": "Alex Cruz",
+  "phone": "+639171234567",
+  "companyName": "Acme Corp"
+}
 ```
 
 **Side effects:**
+
 1. INSERT `companies` (created_by from JWT)
 2. INSERT `profiles` (role='recruiter')
 3. INSERT `recruiter_profiles` (company_id, profile_completed=false)
@@ -173,6 +190,7 @@ Same flow as candidate, plus creates company record.
 **Auth:** Authenticated (any role)
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -183,8 +201,12 @@ Same flow as candidate, plus creates company record.
     "status": "active",
     "profileCompleted": false,
     "avatarUrl": null,
-    "candidateProfile": { /* if role=candidate */ },
-    "recruiterProfile": { /* if role=recruiter */ }
+    "candidateProfile": {
+      /* if role=candidate */
+    },
+    "recruiterProfile": {
+      /* if role=recruiter */
+    }
   }
 }
 ```
@@ -218,11 +240,13 @@ These flows happen entirely between frontend and Supabase Auth — backend not i
 **Request:** `multipart/form-data` with `file` field
 
 **Validation:**
+
 - MIME: `application/pdf` or `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
 - Size: 10MB max
 - Server-side: re-validate MIME + magic byte sniff
 
 **Side effects:**
+
 1. Upload to Supabase Storage path `resumes/{candidateId}/{uuid}.pdf` (service role)
 2. INSERT `resumes` row (parse_status='pending', is_default=true if first resume)
 3. Synchronously call `ParseResumeService.parse()` — extract text + AI structured output
@@ -230,19 +254,23 @@ These flows happen entirely between frontend and Supabase Auth — backend not i
 5. Audit logs: `resume.uploaded`, `resume.parsed` (or `resume.parse_failed`)
 
 **Response (201):**
+
 ```json
 {
   "data": {
     "id": "uuid",
     "filename": "maria-resume.pdf",
     "parseStatus": "parsed",
-    "parsedData": { /* full ParsedResume JSON */ },
+    "parsedData": {
+      /* full ParsedResume JSON */
+    },
     "parseConfidence": "high"
   }
 }
 ```
 
 **UI states:**
+
 - Idle: dropzone
 - Uploading: progress bar
 - Parsing: AI Shimmer "AI is parsing your resume..."
@@ -263,6 +291,7 @@ These flows happen entirely between frontend and Supabase Auth — backend not i
 ### Save Candidate Profile Section
 
 **Endpoints:**
+
 - `PATCH /api/v1/candidate-profiles/personal`
 - `PATCH /api/v1/candidate-profiles/education`
 - `PATCH /api/v1/candidate-profiles/experience`
@@ -274,6 +303,7 @@ These flows happen entirely between frontend and Supabase Auth — backend not i
 **Validation:** Per-section Zod schemas in `packages/shared/`.
 
 **Side effects:**
+
 1. UPDATE `candidate_profiles` for the relevant fields
 2. (Skills/experience may be embedded JSONB or separate tables — see `database-schema.md`)
 3. Audit log if material change
@@ -291,6 +321,7 @@ These flows happen entirely between frontend and Supabase Auth — backend not i
 **Request body:** none (uses authenticated candidate id) or `{ resumeId?: string }` to score a specific resume version.
 
 **Side effects:**
+
 1. Load redacted resume + preferences
 2. Apply PII redaction
 3. Call OpenAI with profile-score prompt
@@ -299,6 +330,7 @@ These flows happen entirely between frontend and Supabase Auth — backend not i
 6. Audit log `score.profile.computed`
 
 **Response (201):**
+
 ```json
 {
   "data": {
@@ -331,6 +363,7 @@ These flows happen entirely between frontend and Supabase Auth — backend not i
 ### Save Recruiter Profile Section
 
 **Endpoints:**
+
 - `PATCH /api/v1/recruiter-profiles/about`
 - `PATCH /api/v1/recruiter-profiles/company`
 - `PATCH /api/v1/recruiter-profiles/focus`
@@ -348,6 +381,7 @@ Standard form-per-step Server Action endpoints; no AI involvement.
 **Auth:** Recruiter role
 
 **Request:**
+
 ```json
 {
   "title": "Senior Engineer",
@@ -372,6 +406,7 @@ Standard form-per-step Server Action endpoints; no AI involvement.
 **Authorization:** Recruiter; `recruiter_profiles.profile_completed=true`.
 
 **Side effects:**
+
 1. INSERT `jobs` (status='draft', recruiter_id, company_id from recruiter's profile)
 2. Audit log `job.created`
 3. Cache invalidation: public job listing cache
@@ -387,15 +422,18 @@ Standard form-per-step Server Action endpoints; no AI involvement.
 **Auth:** Recruiter role
 
 **Request:**
+
 ```json
 { "text": "We need a rockstar engineer ready for fast-paced startup vibes" }
 ```
 
 **Side effects:**
+
 - AI call only; no DB writes (flags persist on publish, not on every check)
 - Rate-limited to prevent over-calling during typing
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -425,15 +463,20 @@ Standard form-per-step Server Action endpoints; no AI involvement.
 **Auth:** Recruiter role; owns job; job.status='draft'
 
 **Request (optional overrides):**
+
 ```json
 {
   "overrides": [
-    { "term": "rockstar", "reason": "Internal team band reference; no exclusion intent" }
+    {
+      "term": "rockstar",
+      "reason": "Internal team band reference; no exclusion intent"
+    }
   ]
 }
 ```
 
 **Side effects:**
+
 1. Re-run bias check on description
 2. If unresolved flags + no overrides → return **422** with flags array
 3. Else:
@@ -471,6 +514,7 @@ All write audit logs, invalidate cache.
 **Auth:** Public (no JWT required)
 
 **Query params:**
+
 - `q`: search term (matches title + description_plain via tsvector)
 - `mode`: remote / hybrid / on-site
 - `industry`, `experience`: filters
@@ -499,6 +543,7 @@ Same as public listing but each job includes a `matchScorePreview` (lazily compu
 ### Job Detail
 
 **Endpoints:**
+
 - `GET /api/v1/jobs/:id` — public
 - `GET /api/v1/jobs/:id/for-candidate` — candidate-specific (includes match score)
 - `GET /api/v1/jobs/:id/for-recruiter` — recruiter ownership view (includes draft analytics, applications count)
@@ -514,6 +559,7 @@ Same as public listing but each job includes a `matchScorePreview` (lazily compu
 **Auth:** Candidate role; `profile_completed=true`
 
 **Request:**
+
 ```json
 {
   "jobId": "uuid",
@@ -525,11 +571,13 @@ Same as public listing but each job includes a `matchScorePreview` (lazily compu
 **Validation:** `applyToJobSchema`.
 
 **Authorization:**
+
 - Job is `status='published'`
 - Job's `application_deadline` is null or future
 - Candidate hasn't already applied (DB UNIQUE constraint on `(candidate_id, job_id)`)
 
 **Side effects:**
+
 1. INSERT `applications` (status='applied')
 2. Compute Match Score synchronously:
    - Load redacted resume + job
@@ -541,6 +589,7 @@ Same as public listing but each job includes a `matchScorePreview` (lazily compu
 5. Cache invalidation: candidate's applications list, recruiter's job applications list
 
 **Response (201):**
+
 ```json
 {
   "data": {
@@ -578,6 +627,7 @@ Same as public listing but each job includes a `matchScorePreview` (lazily compu
 **Auth:** Recruiter role; owns the job
 
 **Request:**
+
 ```json
 { "newStatus": "interview", "note": "Strong skills match; let's chat" }
 ```
@@ -585,6 +635,7 @@ Same as public listing but each job includes a `matchScorePreview` (lazily compu
 **Validation:** Valid transitions per state machine (see `prd.md` lifecycle).
 
 **Side effects:**
+
 1. UPDATE `applications.status` + `status_updated_at`
 2. Optionally append to `recruiter_notes`
 3. Send `application-status-changed` email to candidate
@@ -659,6 +710,7 @@ Returns 1-hour signed URL. Authorization: candidate owns OR recruiter views in a
 **Auth:** Recruiter; owns the job
 
 **Request:**
+
 ```json
 {
   "scheduledAt": "2026-05-10T14:00:00Z",
@@ -670,6 +722,7 @@ Returns 1-hour signed URL. Authorization: candidate owns OR recruiter views in a
 ```
 
 **Side effects:**
+
 1. INSERT `interviews`
 2. UPDATE application status='interview' if currently 'screening'
 3. Send `interview-scheduled` email
@@ -682,8 +735,13 @@ Returns 1-hour signed URL. Authorization: candidate owns OR recruiter views in a
 **Endpoint:** `PATCH /api/v1/interviews/:id/feedback`
 
 **Request:**
+
 ```json
-{ "feedback": "Strong technical skills; communication good", "rating": 4, "status": "completed" }
+{
+  "feedback": "Strong technical skills; communication good",
+  "rating": 4,
+  "status": "completed"
+}
 ```
 
 ---
@@ -704,6 +762,7 @@ Returns 1-hour signed URL. Authorization: candidate owns OR recruiter views in a
 **Auth:** Recruiter; owns job; application status in ('interview', 'offer')
 
 **Request:**
+
 ```json
 {
   "title": "Senior Engineer",
@@ -717,6 +776,7 @@ Returns 1-hour signed URL. Authorization: candidate owns OR recruiter views in a
 ```
 
 **Side effects:**
+
 1. INSERT `offers` (status='pending', expires_at=now()+7d)
 2. UPDATE application.status='offer'
 3. Send `offer-sent` email with rendered offer letter (React Email)
@@ -727,12 +787,14 @@ Returns 1-hour signed URL. Authorization: candidate owns OR recruiter views in a
 ### Accept / Decline Offer
 
 **Endpoints:**
+
 - `POST /api/v1/offers/:id/accept`
 - `POST /api/v1/offers/:id/decline`
 
 **Auth:** Candidate; owns application; offer.status='pending'; not expired
 
 **Side effects:**
+
 1. UPDATE offers.status + responded_at
 2. UPDATE application.status: 'hired' (accept) or 'rejected' (decline)
 3. Notify recruiter via email
@@ -790,10 +852,21 @@ Returns active config row.
 **Endpoint:** `PATCH /api/v1/admin/scoring-config`
 
 **Request:**
+
 ```json
 {
-  "matchWeights": { "skills": 50, "experience": 30, "education": 10, "culturalFit": 10 },
-  "profileWeights": { "completeness": 25, "skillDepth": 30, "experienceClarity": 30, "educationQuality": 15 },
+  "matchWeights": {
+    "skills": 50,
+    "experience": 30,
+    "education": 10,
+    "culturalFit": 10
+  },
+  "profileWeights": {
+    "completeness": 25,
+    "skillDepth": 30,
+    "experienceClarity": 30,
+    "educationQuality": 15
+  },
   "bandThresholds": { "strongMin": 70, "partialMin": 40 },
   "biasCategoriesEnabled": ["gendered", "age-coded", "ableist", "exclusionary"],
   "customFlaggedTerms": ["rockstar", "ninja"]
@@ -803,6 +876,7 @@ Returns active config row.
 **Validation:** Sum of weights = 100; thresholds 0-100; strongMin > partialMin.
 
 **Side effects:**
+
 1. UPDATE active config row OR insert new active row + deactivate prior
 2. Audit log `scoring_config.updated` with full diff
 3. **Optional:** queue batch re-score job
@@ -818,12 +892,19 @@ Returns active config row.
 **Behavior:** Re-scores last 100 applications in-memory with proposed weights; returns delta (avg score change, band shifts). No DB writes.
 
 **Response:**
+
 ```json
 {
   "data": {
     "avgScoreChange": +3.2,
-    "bandShifts": { "partialToStrong": 12, "limitedToPartial": 5, "noChange": 83 },
-    "sample": [ /* first 10 examples */ ]
+    "bandShifts": {
+      "partialToStrong": 12,
+      "limitedToPartial": 5,
+      "noChange": 83
+    },
+    "sample": [
+      /* first 10 examples */
+    ]
   }
 }
 ```
@@ -870,7 +951,7 @@ Returns: flag counts, breakdown by category, top flagged terms, override rate, s
 
 ## Health & Misc
 
-- `GET /api/health` — Railway health check; returns `{ status: "ok", uptime, version }` (Public, not under /api/v1)
+- `GET /api/health` — health check probed by Caddy + PM2 on the Digital Ocean Droplet; returns `{ status: "ok", uptime, version }` (Public, not under /api/v1)
 - `GET /api/v1/version` — `{ version, commitSha }`
 
 ---
@@ -884,9 +965,9 @@ Backend-internal service called by every controller method that mutates state:
 ```ts
 await this.auditService.log({
   actorId: user.id,
-  actorType: 'user',
-  action: 'application.created',
-  entityType: 'application',
+  actorType: "user",
+  action: "application.created",
+  entityType: "application",
   entityId: application.id,
   details: { jobId: dto.jobId, scoreId: matchScore.id },
 });
@@ -925,35 +1006,35 @@ async createJob(dto: CreateJobDto, user: AuthUser) {
 
 All in `packages/shared/src/schemas/`:
 
-| File | Schemas |
-|---|---|
-| `auth.ts` | login, register-candidate, register-recruiter, password-reset |
-| `onboarding.ts` | candidate steps, recruiter steps |
-| `jobs.ts` | createJob, updateJob, publishJob |
-| `applications.ts` | applyToJob, updateStatus, withdraw |
-| `resumes.ts` | uploadResume, setDefault |
-| `interviews.ts` | scheduleInterview, recordFeedback |
-| `offers.ts` | sendOffer, acceptOffer, declineOffer |
-| `ai-config.ts` | updateScoringConfig, previewImpact |
-| `score.ts` | profile-score, match-score, evidence (output shapes) |
-| `bias.ts` | bias-flag (output shapes) |
-| `shared.ts` | email, phone, password, uuid, pagination |
+| File              | Schemas                                                       |
+| ----------------- | ------------------------------------------------------------- |
+| `auth.ts`         | login, register-candidate, register-recruiter, password-reset |
+| `onboarding.ts`   | candidate steps, recruiter steps                              |
+| `jobs.ts`         | createJob, updateJob, publishJob                              |
+| `applications.ts` | applyToJob, updateStatus, withdraw                            |
+| `resumes.ts`      | uploadResume, setDefault                                      |
+| `interviews.ts`   | scheduleInterview, recordFeedback                             |
+| `offers.ts`       | sendOffer, acceptOffer, declineOffer                          |
+| `ai-config.ts`    | updateScoringConfig, previewImpact                            |
+| `score.ts`        | profile-score, match-score, evidence (output shapes)          |
+| `bias.ts`         | bias-flag (output shapes)                                     |
+| `shared.ts`       | email, phone, password, uuid, pagination                      |
 
 ---
 
 ## Error Handling Matrix
 
-| Error Type | Layer | Status | Surfacing |
-|---|---|---|---|
-| Validation (Zod) | nestjs-zod pipe | 400 | Inline form error |
-| Unauthenticated | SupabaseAuthGuard | 401 | Frontend redirects to /login |
-| Forbidden | RolesGuard / OwnershipGuard | 403 | Frontend 403 page or alert |
-| Not found | Controller | 404 | not-found.tsx |
-| Business rule (e.g., duplicate apply) | Service | 409 | Inline alert / toast |
-| Bias flags require override | Service | 422 | Modal with override flow |
-| AI service down | Service | 503 | "Score temporarily unavailable; retry" |
-| Rate limited | Throttler | 429 | Inline + countdown |
-| Unknown | Exception filter | 500 | Generic friendly message; logged |
+| Error Type                            | Layer                       | Status | Surfacing                              |
+| ------------------------------------- | --------------------------- | ------ | -------------------------------------- |
+| Validation (Zod)                      | nestjs-zod pipe             | 400    | Inline form error                      |
+| Unauthenticated                       | SupabaseAuthGuard           | 401    | Frontend redirects to /login           |
+| Forbidden                             | RolesGuard / OwnershipGuard | 403    | Frontend 403 page or alert             |
+| Not found                             | Controller                  | 404    | not-found.tsx                          |
+| Business rule (e.g., duplicate apply) | Service                     | 409    | Inline alert / toast                   |
+| Bias flags require override           | Service                     | 422    | Modal with override flow               |
+| AI service down                       | Service                     | 503    | "Score temporarily unavailable; retry" |
+| Rate limited                          | Throttler                   | 429    | Inline + countdown                     |
+| Unknown                               | Exception filter            | 500    | Generic friendly message; logged       |
 
 ---
 
@@ -1005,7 +1086,9 @@ function ApplyButton({ jobId, resumeId }: Props) {
 import { fetchApplications } from "@aurahire/shared";
 
 export default async function Page() {
-  const { data } = await fetchApplications({ headers: { Authorization: `Bearer ${token}` } });
+  const { data } = await fetchApplications({
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return <ApplicationsList items={data} />;
 }
 ```
@@ -1015,6 +1098,7 @@ export default async function Page() {
 ## Iteration Guide
 
 When adding a feature:
+
 1. Add Zod schema to `packages/shared/src/schemas/`
 2. Add Drizzle table in `packages/db/src/schema.ts` if new entity (and RLS policy in `packages/db/src/rls/`)
 3. Create NestJS module in `apps/api/src/modules/<feature>/` (controller + service + repository + DTOs)

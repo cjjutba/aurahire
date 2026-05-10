@@ -9,14 +9,14 @@ This document is the master list of every page in the AuraHire system, grouped b
 
 **Total pages: ~45 across six surfaces:**
 
-| Surface | Pages | Auth | Notes |
-|---|---|---|---|
-| Marketing (public) | 5 | none | Coinbase-style editorial |
-| Auth | 7 | none | Email/password only, no OAuth |
-| Onboarding | 2 wizards (8 steps total) | required | Resume-first for candidates |
-| Candidate Portal | 10 | candidate role | Apply, track, score visibility |
-| Recruiter Portal | 13 | recruiter role | Post, screen, decide |
-| Admin Portal | 8 | admin role | System-wide oversight |
+| Surface            | Pages                     | Auth           | Notes                          |
+| ------------------ | ------------------------- | -------------- | ------------------------------ |
+| Marketing (public) | 5                         | none           | Coinbase-style editorial       |
+| Auth               | 7                         | none           | Email/password only, no OAuth  |
+| Onboarding         | 2 wizards (8 steps total) | required       | Resume-first for candidates    |
+| Candidate Portal   | 10                        | candidate role | Apply, track, score visibility |
+| Recruiter Portal   | 13                        | recruiter role | Post, screen, decide           |
+| Admin Portal       | 8                         | admin role     | System-wide oversight          |
 
 ---
 
@@ -29,6 +29,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 **Purpose:** Primary entry point. Tell the AuraHire story; convert to sign-up.
 
 **Layout:**
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │ [nav-marketing-on-dark]  AuraHire   Product · Solutions · ...   │
@@ -91,6 +92,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 **Purpose:** Thesis-friendly explanation of explainability + fairness philosophy. Lives in marketing for trust-building.
 
 **Layout:**
+
 - `hero-band-light` with badge "OUR APPROACH" + display headline "AI that shows its work"
 - Long-form editorial body (12-col, content centered max 720px) explaining: explainability, PII redaction, weight transparency, audit trails
 - Embedded `score-ring-lg` mockup as inline figure
@@ -105,6 +107,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 **Purpose:** Public job listings searchable without login.
 
 **Layout:**
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │ [nav-marketing-top]                                              │
@@ -134,6 +137,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 **Primary action:** Click row → `/jobs/[id]`.
 
 **Edge states:**
+
 - Empty (no results): `empty-state` "No jobs match your filters" + reset filters CTA.
 - Loading: 8 skeleton rows.
 
@@ -144,6 +148,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 **Purpose:** Show full job description; CTA to apply (requires login).
 
 **Layout:**
+
 - Sticky header with job title `{typography.display-md}`, company, location, employment type chips, "Apply Now" `button-primary` right
 - Two-column body:
   - Left 8-col: rich-text job description, requirements, benefits
@@ -156,6 +161,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 **Primary action:** "Apply Now" → if not logged in → `/login?redirect=/candidate/jobs/[id]/apply`; if candidate → direct to apply page.
 
 **Edge states:**
+
 - Job closed: banner above body "This job is no longer accepting applications" in `chip-status-rejected` palette; Apply button disabled.
 
 ---
@@ -165,6 +171,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 **Purpose:** Lead form for institutional inquiries.
 
 **Layout:**
+
 - `hero-band-light` with form
 - Form: name, email, company, role, message + `button-primary` submit
 - Confirmation state: success card + "Back to home" link
@@ -182,6 +189,7 @@ Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark t
 **Purpose:** Email + password authentication. Routes to onboarding (if first-time) or to role's portal dashboard.
 
 **Layout:**
+
 ```
 ┌──────────────────────────────────────────┐
 │              [AuraHire wordmark]          │
@@ -212,6 +220,7 @@ Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark t
 **Components:** centered card (`{rounded.xl}`, `{spacing.xl}` padding), `text-input`, `button-primary-large`, `button-tertiary` ("Forgot?" / "Sign up").
 
 **Validation:**
+
 - Empty fields → inline error
 - Wrong credentials → `alert-inline` above form ("Email or password incorrect")
 - Account not verified → `alert-inline` ("Verify your email first") + "Resend verification" link
@@ -226,6 +235,7 @@ Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark t
 **Purpose:** Pick a role first; then route to role-specific registration.
 
 **Layout:**
+
 - Centered card
 - Headline: "Create your account"
 - Two large `card-feature` tiles side-by-side:
@@ -243,6 +253,7 @@ Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark t
 **Purpose:** Create candidate account. Minimal fields per spec.
 
 **Form fields:**
+
 - Full Name `text-input`
 - Email `text-input` (with async validation: not taken)
 - Phone Number `text-input`
@@ -255,6 +266,7 @@ Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark t
 **Primary action:** "Create Account" `button-primary-large` → sends verification email → `/verify-email/sent`.
 
 **Edge:**
+
 - Email already taken: inline error on email field with "Sign in instead?" link.
 - Passwords don't match: inline error on confirm field.
 - Server error: `alert-inline` above form.
@@ -266,6 +278,7 @@ Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark t
 **Purpose:** Create recruiter account.
 
 **Form fields:**
+
 - Full Name
 - Company Name
 - Email
@@ -303,6 +316,7 @@ Same validation, same routing as candidate signup.
 **Purpose:** Verify email from link. Auto-redirects on success.
 
 **States:**
+
 - Verifying (loading skeleton)
 - Verified → redirect to `/onboarding/[role]` after 1s
 - Invalid/expired → error card with "Resend verification" CTA
@@ -353,6 +367,7 @@ Multi-step wizard pattern. `wizard-shell` + `wizard-progress`. No portal chrome 
 ```
 
 **Edge:**
+
 - Parse fails: friendly card "We couldn't read your resume. You can fill out your profile manually." + still allow proceed.
 - File too large: inline error.
 - Wrong file type: inline error.
@@ -360,6 +375,7 @@ Multi-step wizard pattern. `wizard-shell` + `wizard-progress`. No portal chrome 
 #### Step 2: Personal Information
 
 Fields prefilled from resume + signup. Each AI-prefilled field has `badge-ai-suggested`.
+
 - Full Name (from signup, editable)
 - Email (from signup, read-only)
 - Phone (from signup, editable)
@@ -370,6 +386,7 @@ Fields prefilled from resume + signup. Each AI-prefilled field has `badge-ai-sug
 #### Step 3: Education
 
 Repeating block (each block = one entry). Prefilled from resume. Each block has:
+
 - Institution
 - Degree / Field of Study
 - Start Year — End Year (or "Present")
@@ -379,6 +396,7 @@ Repeating block (each block = one entry). Prefilled from resume. Each block has:
 #### Step 4: Experience
 
 Repeating block. Prefilled.
+
 - Company
 - Title
 - Start — End
@@ -398,6 +416,7 @@ Repeating block. Prefilled.
 - Available Start Date `date-picker`
 
 **Final action: "Generate my Profile Score"**
+
 - Triggers AI scoring with `ai-shimmer` "Computing your Profile Score..."
 - Routes to `/onboarding/candidate/result`
 
@@ -416,6 +435,7 @@ Repeating block. Prefilled.
 **Wizard steps:**
 
 #### Step 1: About You
+
 - Full Name (from signup, editable)
 - Email (from signup, read-only)
 - Phone (from signup, editable)
@@ -423,6 +443,7 @@ Repeating block. Prefilled.
 - Department `select` (HR, Engineering, Operations, etc.)
 
 #### Step 2: About Your Company
+
 - Company Name (from signup, editable)
 - Industry `select` (large list)
 - Company Size `select` (1–10, 11–50, 51–200, 201–500, 501–1000, 1000+)
@@ -432,6 +453,7 @@ Repeating block. Prefilled.
 - Logo upload (optional, `file-upload-dropzone` for image)
 
 #### Step 3: Hiring Focus
+
 - Roles you typically hire for `multi-select`
 - Hiring volume per quarter `select`
 - "+ Invite teammates later" link (deferred — Phase 2)
@@ -449,6 +471,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 **Purpose:** At-a-glance view of applications, score, recommendations.
 
 **Layout:**
+
 ```
 ┌────────┬──────────────────────────────────────────────────────────┐
 │ SIDE   │ [topbar: breadcrumb · search · 🔔 · avatar]              │
@@ -487,6 +510,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 **Purpose:** Logged-in job search. Same layout as public `/jobs` but each row shows the candidate's match score chip.
 
 **Difference from public:**
+
 - Each `card-list-row` includes `chip-match-band` showing this candidate's pre-computed match for that job (computed lazily on first view + cached)
 - Sort options include "Best Match"
 - "Save Job" button replaces "Apply" (apply moves to detail)
@@ -498,6 +522,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 **Purpose:** Full job description + match score preview + apply CTA.
 
 **Layout:** like public job detail but right sidebar carries:
+
 - `score-ring-md` showing this candidate's match against this job
 - "View full breakdown" expand link → opens `sheet-side` with full Score Breakdown Bar + Evidence Callouts
 - `button-primary-large` "Apply with this resume"
@@ -509,6 +534,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 **Purpose:** Confirm resume + optional cover letter + submit.
 
 **Layout:**
+
 - Job summary card at top (read-only)
 - "Use my current resume" toggle — defaults on
   - If on: shows current resume filename + "Replace for this application" link
@@ -526,6 +552,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 **Purpose:** All applications with status, filterable.
 
 **Layout:**
+
 - `segmented-control` filter: All · Applied · Screening · Interview · Offer · Closed
 - `pipeline-card-compact` list (one row per application)
   - Each row: company logo + role + applied date + `chip-status` + `chip-match-band` + chevron-right
@@ -540,6 +567,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 **Purpose:** Full timeline of this application, including the score breakdown and any interviews scheduled.
 
 **Layout:**
+
 ```
 ┌────────┬──────────────────────────────────────────────────────────┐
 │ SIDE   │  Senior Engineer · Acme Corp                              │
@@ -578,6 +606,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 **Purpose:** All scheduled interviews.
 
 **Layout:**
+
 - Two sections: Upcoming, Past
 - Each item: card with date/time, role, recruiter name, meeting link/format chip, "Add to calendar" button (download .ics)
 - Empty: `empty-state`.
@@ -589,6 +618,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 **Purpose:** Edit candidate profile + view current Profile Score.
 
 **Layout:**
+
 - Hero section at top: large `score-ring-lg` of current Profile Score + `chip-match-band` + "Last computed: May 1" + "Recompute" button (rate-limited)
 - Tabs: Personal · Education · Experience · Skills · Preferences
 - Each tab editable; saving triggers async re-score with `ai-shimmer` if material change
@@ -600,6 +630,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 **Purpose:** Upload new resume versions, set default.
 
 **Layout:**
+
 - Default resume card with filename, upload date, "View" / "Download" / "Replace" actions
 - "Upload new version" `file-upload-dropzone`
 - Versions list: previous resumes (read-only)
@@ -613,6 +644,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 **Purpose:** Account, notifications, privacy.
 
 **Sections:**
+
 - Account: name, phone, password change
 - Notifications: toggles for email categories (application updates, new job matches, interview reminders)
 - Privacy: "Download my data" button, "Delete my account" destructive button (modal confirm)
@@ -628,6 +660,7 @@ Auth-required, recruiter role.
 **Purpose:** Pipeline overview + recent activity.
 
 **Layout:**
+
 - 4 `card-stat`: Active Jobs, Total Applications (this month), Pending Reviews, Avg Match Score
 - `card-widget: Pipeline Funnel` — horizontal stacked bar showing counts at each stage (Applied → Screening → Interview → Offer → Hired)
 - `card-widget: Top Candidates This Week` — `card-list-row` × 5 with score chips, click-through to candidate
@@ -641,6 +674,7 @@ Auth-required, recruiter role.
 **Purpose:** Create job posting with built-in bias check.
 
 **Layout:**
+
 - Wizard-like single-page form (no multi-step):
   - Job Title
   - Department / Team `select`
@@ -659,6 +693,7 @@ Auth-required, recruiter role.
 - Bottom CTAs: "Save Draft" (`button-secondary`) + "Publish" (`button-primary` — disabled if any unresolved bias flags unless explicitly overridden with reason)
 
 **On Publish:**
+
 - Confirmation modal: "This will be visible to candidates immediately. Continue?"
 - Audit log entry
 
@@ -669,6 +704,7 @@ Auth-required, recruiter role.
 **Purpose:** All jobs created by this recruiter.
 
 **Layout:**
+
 - Filter: `segmented-control` (All · Active · Draft · Closed)
 - `table-data` columns: Title · Status (`chip-status`) · Applications · Avg Match · Posted · Actions (View / Edit / Archive)
 - Empty: `empty-state` "Post your first job".
@@ -680,10 +716,12 @@ Auth-required, recruiter role.
 **Purpose:** Job posting + applications list + analytics.
 
 **Layout:**
+
 - Sticky header: title + `chip-status` + actions (Edit / Archive / Duplicate)
 - Tabs: Applications · Description · Analytics
 
 **Applications tab:**
+
 - Filters: `segmented-control` (All · New · Screening · Interview · Offer · Rejected)
 - Sort: Best Match (default), Most Recent, Most Reviewed
 - `table-data` rows: Avatar + Name · Match Score (`score-ring-sm` inline) · Match Band · Applied date · Status chip · Action menu
@@ -711,6 +749,7 @@ Same layout as Post Job, prefilled. Re-runs bias check on save.
 **Purpose:** Full candidate review with score, evidence, actions.
 
 **Layout:**
+
 ```
 Sticky header: Candidate Name · Job Title · [chip-status] · Actions
                                               [Schedule Interview]
@@ -757,6 +796,7 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 **Purpose:** Full candidate view (across all their applications to this recruiter's jobs).
 
 **Layout:**
+
 - Hero with avatar + name + headline + Profile Score `score-ring-md`
 - Tabs: Overview · Resume · Applications to my jobs · Notes
 - Applications tab lists all applications this candidate made to this recruiter's jobs with per-job match score
@@ -768,6 +808,7 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 **Purpose:** Curated pool across jobs.
 
 **Layout:**
+
 - `table-data` with checkbox column for bulk actions
 - Columns: Avatar + Name · Job Applied To · Match Score · Status · Action menu
 - Bulk: "Schedule Interviews" (opens batch modal), "Move to Rejected", "Export to CSV"
@@ -779,11 +820,13 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 **Purpose:** All interviews recruiter is running.
 
 **Layout:**
+
 - Calendar view (week default) + list view toggle (`segmented-control`)
 - Each interview card: date/time, candidate, job, format, meeting link field, "Record Feedback" button (opens modal)
 - Filter: `segmented-control` (Upcoming · Completed · Cancelled)
 
 **Schedule Interview modal:**
+
 - Application reference (read-only)
 - Date + time picker
 - Format `segmented-control` (Phone · Video · In-person)
@@ -797,6 +840,7 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 **Purpose:** Generate and send offer letter.
 
 **Layout:**
+
 - Application reference card at top
 - Form:
   - Offer Title
@@ -817,6 +861,7 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 **Purpose:** Aggregate metrics across recruiter's jobs.
 
 **Layout:**
+
 - Date range picker
 - KPI cards: Time to Hire, Cost per Hire (manual input), Acceptance Rate, Avg Match Score
 - Charts (Recharts):
@@ -843,6 +888,7 @@ Auth-required, admin role. Eight focused screens, each going deep.
 **Purpose:** System-wide health and KPIs at a glance.
 
 **Layout:**
+
 - Top row of `card-stat`: Total Users, Active Jobs, Applications (today / this week), Avg Profile Score, Avg Match Score
 - `card-widget: System Health` — uptime, AI service status (OpenAI), DB latency, recent error count (clickable to logs)
 - `card-widget: Score Distribution` — histogram of all match scores in last 30 days, segmented by score band
@@ -857,6 +903,7 @@ Auth-required, admin role. Eight focused screens, each going deep.
 **Purpose:** Full CRUD on users.
 
 **Layout:**
+
 - Filters: role (All / Candidate / Recruiter / Admin) · status (Active / Suspended / Deleted) · created date range · search by name/email
 - `table-data` columns: Avatar + Name · Email · Role chip · Status chip · Created · Last Active · Actions (View · Suspend · Reset Password · Change Role · Delete)
 - Bulk: Suspend, Export CSV
@@ -872,6 +919,7 @@ Auth-required, admin role. Eight focused screens, each going deep.
 **Purpose:** Review all jobs, approve/reject, see bias flag history.
 
 **Layout:**
+
 - Filters: status, recruiter, has-bias-flags
 - `table-data` columns: Title · Recruiter · Company · Status · Bias Flags count · Applications · Posted · Actions (View · Archive · Flag for Review)
 - Click row → drawer with full job + bias flag history (which terms flagged, who overrode, why)
@@ -883,6 +931,7 @@ Auth-required, admin role. Eight focused screens, each going deep.
 **Purpose:** System-wide application audit, drill into any AI score.
 
 **Layout:**
+
 - Filters: job, score range slider (0–100), status, date range
 - `table-data` columns: Candidate · Job · Match Score (`score-ring-sm`) · Match Band · Applied · Status · Action ("View full breakdown")
 - Click → drawer with **full Score Breakdown** including evidence callouts and the redacted resume snapshot used for scoring (admin-only view of redaction transparency)
@@ -896,6 +945,7 @@ This is a key thesis demo surface — admin can audit any AI decision in detail.
 **Purpose:** Tune the scoring weights system-wide. Showpiece for thesis.
 
 **Layout:**
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │  AI Scoring Configuration                                         │
@@ -937,6 +987,7 @@ This is a key thesis demo surface — admin can audit any AI decision in detail.
 **Purpose:** Immutable log of all consequential system actions.
 
 **Layout:**
+
 - Filters: actor (any user) · entity type (User · Job · Application · Score · Config · BiasFlag) · action type · date range
 - `table-data` columns: Timestamp · Actor · Action · Entity · Detail (truncated, click for full JSON diff in drawer)
 - Export: CSV
@@ -949,6 +1000,7 @@ This is a key thesis demo surface — admin can audit any AI decision in detail.
 **Purpose:** Platform-wide statistics.
 
 **Layout:**
+
 - KPI tiles: total users, growth rate, active jobs, applications/day, avg time-to-hire
 - Charts:
   - User growth (line, by role)
@@ -968,6 +1020,7 @@ This is a key thesis demo surface — admin can audit any AI decision in detail.
 **Purpose:** Aggregate fairness oversight. Thesis showpiece.
 
 **Layout:**
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │  Bias & Fairness Monitor                                          │
@@ -1010,6 +1063,7 @@ This is the screen most likely to be shown in the thesis defense. Make it polish
 ### Loading States
 
 Every page that fetches data:
+
 - Skeleton placeholders for the layout shape
 - Topbar + sidebar render immediately (cached)
 - Full content loads incrementally
@@ -1029,6 +1083,7 @@ Every list, table, or widget defines its empty state — never "this section is 
 ### Mobile Behavior
 
 All portal pages collapse:
+
 - Sidebar → drawer (`nav-mobile-drawer`)
 - Tables → vertical card lists
 - Score Ring sm size on mobile
@@ -1039,15 +1094,15 @@ All portal pages collapse:
 
 ## Page Count Summary
 
-| Surface | Pages |
-|---|---|
-| Marketing | 5 |
-| Auth | 7 |
-| Onboarding | 2 wizards (8 steps) |
-| Candidate Portal | 10 |
-| Recruiter Portal | 13 |
-| Admin Portal | 8 |
-| **Total** | **~45 distinct routes** |
+| Surface          | Pages                   |
+| ---------------- | ----------------------- |
+| Marketing        | 5                       |
+| Auth             | 7                       |
+| Onboarding       | 2 wizards (8 steps)     |
+| Candidate Portal | 10                      |
+| Recruiter Portal | 13                      |
+| Admin Portal     | 8                       |
+| **Total**        | **~45 distinct routes** |
 
 ---
 

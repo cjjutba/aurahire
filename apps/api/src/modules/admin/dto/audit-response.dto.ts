@@ -7,12 +7,20 @@ export class AuditActorDto {
   @ApiPropertyOptional({ nullable: true }) role!: string | null;
 }
 
+export class AuditCompanyDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() name!: string;
+  @ApiPropertyOptional({ nullable: true }) logoUrl!: string | null;
+}
+
 export class AuditEntryRowDto {
   @ApiProperty() id!: string;
   @ApiProperty() action!: string;
   @ApiProperty({ enum: ["user", "ai", "system"] }) actorType!: string;
   @ApiPropertyOptional({ nullable: true, type: () => AuditActorDto })
   actor!: AuditActorDto | null;
+  @ApiPropertyOptional({ nullable: true, type: () => AuditCompanyDto })
+  company!: AuditCompanyDto | null;
   @ApiProperty() entityType!: string;
   @ApiProperty() entityId!: string;
   @ApiProperty() detailsSnippet!: string;

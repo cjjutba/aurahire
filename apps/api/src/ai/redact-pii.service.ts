@@ -3,10 +3,12 @@ import type { ParsedResume } from "@aurahire/shared";
 
 import { OpenAIService } from "./openai.service";
 import {
-  REDACT_TEXT_SYSTEM_PROMPT,
-  REDACT_TEXT_VERSION,
-  buildRedactTextUserPrompt,
-} from "./prompts/redact-text";
+  REDACT_BATCH_SYSTEM_PROMPT,
+  REDACT_BATCH_VERSION,
+  buildRedactBatchUserPrompt,
+  redactBatchOutputSchema,
+  type RedactBatchInputItem,
+} from "./prompts/redact-batch";
 
 /**
  * Fields that are ALWAYS redacted from a parsed resume before AI scoring.
@@ -19,6 +21,14 @@ const ALWAYS_REDACTED_PATHS = [
   "contact.linkedin_url",
   "contact.portfolio_url",
 ] as const;
+
+/**
+ * Sentinel that replaces redacted PII content. Preserves the *presence*
+ * signal — completeness scoring needs to know a field was filled — while
+ * removing the demographic *content* that bias mitigation requires.
+ * AI prompts must treat "[REDACTED]" as "field was provided, content withheld".
+ */
+export const REDACTED_PLACEHOLDER = "[REDACTED]";
 
 /** Free-text fields long enough to warrant LLM-assisted scrubbing. */
 const FREE_TEXT_MIN_LENGTH = 50;
@@ -46,12 +56,11 @@ export class RedactPiiService {
     };
 
     for (const path of ALWAYS_REDACTED_PATHS) {
-      // path is "contact.<key>"
       const [, key] = path.split(".");
       if (!key) continue;
       const k = key as keyof typeof cleaned.contact;
       if (cleaned.contact[k] != null) {
-        cleaned.contact[k] = null as never;
+        cleaned.contact[k] = REDACTED_PLACEHOLDER as never;
         redactedFields.push(path);
       }
     }
@@ -60,8 +69,16 @@ export class RedactPiiService {
   }
 
   /**
-   * Full redaction pipeline: structured scrub + LLM-assisted free-text scrub.
-   * Call this before any scoring AI call.
+   * Full redaction pipeline: structured scrub + LLM-assisted batched scrub.
+   *
+   * Every free-text field (summary + each long responsibility) is sent in
+   * ONE structured OpenAI call (prompt v2.0.0). The AI returns the cleaned
+   * text per id; we apply results in declaration order so `redactedFields`
+   * ordering is stable.
+   *
+   * Best-effort: if the batch call fails or returns missing ids, the
+   * affected fields keep their originals — contact-field redactions still
+   * apply, and the worker continues with whatever cleaning landed.
    */
   async redactResume(
     parsed: ParsedResume,
@@ -69,52 +86,86 @@ export class RedactPiiService {
   ): Promise<RedactionResult> {
     const { redacted, redactedFields } = this.redactStructured(parsed);
 
-    // Scrub summary
-    if (redacted.summary && redacted.summary.length >= FREE_TEXT_MIN_LENGTH) {
-      try {
-        const scrubbed = await this.scrubText(redacted.summary, requestId);
-        if (scrubbed !== redacted.summary) {
-          redacted.summary = scrubbed;
-          redactedFields.push("summary");
-        }
-      } catch (err) {
-        // Free-text scrub is best-effort; log and continue
-        this.logger.warn(`Summary scrub failed: ${(err as Error).message}`);
-      }
+    type ScrubTask = {
+      path: string;
+      original: string;
+      apply: (scrubbed: string) => void;
+    };
+    const tasks: ScrubTask[] = [];
+
+    if (
+      redacted.summary &&
+      redacted.summary.text.length >= FREE_TEXT_MIN_LENGTH
+    ) {
+      const summary = redacted.summary;
+      tasks.push({
+        path: "summary",
+        original: summary.text,
+        apply: (scrubbed) => {
+          redacted.summary = { ...summary, text: scrubbed };
+        },
+      });
     }
 
-    // Scrub experience responsibilities
     for (let i = 0; i < redacted.experience.length; i++) {
       const exp = redacted.experience[i]!;
       for (let j = 0; j < exp.responsibilities.length; j++) {
         const r = exp.responsibilities[j]!;
         if (r.length >= FREE_TEXT_MIN_LENGTH) {
-          try {
-            const scrubbed = await this.scrubText(r, requestId);
-            if (scrubbed !== r) {
-              exp.responsibilities[j] = scrubbed;
-              redactedFields.push(`experience.${i}.responsibilities.${j}`);
-            }
-          } catch (err) {
-            this.logger.warn(
-              `Experience[${i}].responsibilities[${j}] scrub failed: ${(err as Error).message}`,
-            );
-          }
+          const idxI = i;
+          const idxJ = j;
+          tasks.push({
+            path: `experience.${idxI}.responsibilities.${idxJ}`,
+            original: r,
+            apply: (scrubbed) => {
+              redacted.experience[idxI]!.responsibilities[idxJ] = scrubbed;
+            },
+          });
         }
       }
     }
 
-    return { redacted, redactedFields };
-  }
+    if (tasks.length === 0) {
+      return { redacted, redactedFields };
+    }
 
-  private async scrubText(text: string, requestId?: string): Promise<string> {
-    const result = await this.openai.generateText({
-      systemPrompt: REDACT_TEXT_SYSTEM_PROMPT,
-      userPrompt: buildRedactTextUserPrompt(text),
-      requestId: requestId
-        ? `${requestId}:redact-v${REDACT_TEXT_VERSION}`
-        : undefined,
-    });
-    return result.text.trim();
+    const items: RedactBatchInputItem[] = tasks.map((t) => ({
+      id: t.path,
+      text: t.original,
+    }));
+
+    try {
+      const result = await this.openai.generateStructured({
+        schema: redactBatchOutputSchema,
+        schemaName: "RedactBatchOutput",
+        systemPrompt: REDACT_BATCH_SYSTEM_PROMPT,
+        userPrompt: buildRedactBatchUserPrompt(items),
+        requestId: requestId
+          ? `${requestId}:redact-v${REDACT_BATCH_VERSION}`
+          : undefined,
+      });
+
+      const byId = new Map(result.data.items.map((it) => [it.id, it.scrubbed]));
+
+      for (const task of tasks) {
+        const scrubbed = byId.get(task.path);
+        if (scrubbed === undefined) {
+          this.logger.warn(
+            `Redact batch dropped id ${task.path}; keeping original`,
+          );
+          continue;
+        }
+        if (scrubbed !== task.original) {
+          task.apply(scrubbed);
+          redactedFields.push(task.path);
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Batched redaction failed; keeping originals: ${(err as Error).message}`,
+      );
+    }
+
+    return { redacted, redactedFields };
   }
 }

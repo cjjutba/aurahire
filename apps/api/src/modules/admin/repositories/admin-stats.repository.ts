@@ -68,14 +68,12 @@ export class AdminStatsRepository {
       avg_match_score: number;
       score_band_histogram: Array<{ band: string; count: number }> | null;
       bias_flags_this_week: Array<{ category: string; count: number }> | null;
-      recent_audit_events:
-        | Array<{
-            action: string;
-            actorType: string;
-            entityType: string;
-            createdAt: string;
-          }>
-        | null;
+      recent_audit_events: Array<{
+        action: string;
+        actorType: string;
+        entityType: string;
+        createdAt: string;
+      }> | null;
     }>(sql`
       SELECT
         (SELECT count(*)::int FROM profiles WHERE status <> 'deleted') AS total_users,
@@ -129,17 +127,16 @@ export class AdminStatsRepository {
           avg_profile_score: number;
           avg_match_score: number;
           score_band_histogram: Array<{ band: string; count: number }> | null;
-          bias_flags_this_week:
-            | Array<{ category: string; count: number }>
-            | null;
-          recent_audit_events:
-            | Array<{
-                action: string;
-                actorType: string;
-                entityType: string;
-                createdAt: string;
-              }>
-            | null;
+          bias_flags_this_week: Array<{
+            category: string;
+            count: number;
+          }> | null;
+          recent_audit_events: Array<{
+            action: string;
+            actorType: string;
+            entityType: string;
+            createdAt: string;
+          }> | null;
         }
       | undefined;
 
@@ -218,7 +215,9 @@ export class AdminStatsRepository {
     return rows.map((r) => ({ band: r.band, count: r.count }));
   }
 
-  async biasFlagsThisWeek(): Promise<Array<{ category: string; count: number }>> {
+  async biasFlagsThisWeek(): Promise<
+    Array<{ category: string; count: number }>
+  > {
     const since = new Date(Date.now() - 7 * DAY_MS);
     const rows = await this.db
       .select({
@@ -231,9 +230,7 @@ export class AdminStatsRepository {
     return rows.map((r) => ({ category: r.category, count: r.count }));
   }
 
-  async recentAuditEvents(
-    limit = 10,
-  ): Promise<
+  async recentAuditEvents(limit = 10): Promise<
     Array<{
       action: string;
       actorType: string;

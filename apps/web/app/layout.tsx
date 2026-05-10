@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { AuthTokenProvider } from "@/components/providers/auth-token-provider";
+import { ConfirmProvider } from "@/components/providers/confirm-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { SocketProvider } from "@/components/providers/socket-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -25,14 +27,22 @@ export const metadata: Metadata = {
   description: "Explainable + Fair AI-Powered Recruitment",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
         <AuthTokenProvider>
           <QueryProvider>
-            {children}
-            <Toaster position="bottom-right" richColors closeButton />
+            <SocketProvider>
+              <ConfirmProvider>
+                {children}
+                <Toaster position="top-right" richColors closeButton />
+              </ConfirmProvider>
+            </SocketProvider>
           </QueryProvider>
         </AuthTokenProvider>
       </body>

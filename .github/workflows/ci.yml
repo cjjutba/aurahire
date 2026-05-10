@@ -1,0 +1,67 @@
+# AuraHire — CI pipeline.
+#
+# Runs on every PR (validation only) and on every push to `main` (so the
+# main-branch run can be a required precondition for the deploy workflow).
+# This is a single source of truth for "is the code shippable?": format,
+# type-check, lint, test. The deploy workflow re-uses the same steps via
+# `needs: validate` to gate the deploy on a green run.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, dev]
+
+# A push to a PR branch supersedes any in-flight run for the same PR.
+# `cancel-in-progress: true` keeps CI minutes low and gives a clean signal.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9.12.3"
+
+jobs:
+  validate:
+    name: Format · Type-check · Lint · Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Type-check (all packages)
+        run: pnpm type-check
+
+      - name: Lint (best-effort — does not fail the job)
+        # Lint is allowed to fail because eslint v9 config is still being
+        # stabilised in the repo. Once the lint surface is clean, drop the
+        # `continue-on-error` so the job blocks on lint failures too.
+        continue-on-error: true
+        run: pnpm lint
+
+      - name: Test — API
+        run: pnpm --filter @aurahire/api test
+
+      - name: Test — Web
+        run: pnpm --filter @aurahire/web test

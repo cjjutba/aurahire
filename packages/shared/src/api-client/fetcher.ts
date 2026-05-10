@@ -2,9 +2,15 @@
  * Custom fetcher for orval-generated API client.
  * Module-level access token is injected as Authorization: Bearer <jwt>.
  * apps/web's <AuthTokenProvider> calls setAccessToken() on session changes.
+ *
+ * Phase 3 (multi-tenancy): an optional active-company id resolver lets
+ * apps/web wire the localStorage-backed singleton in `lib/active-company`
+ * without creating a circular dep. The shared package stays UI-agnostic;
+ * apps/web installs the resolver at startup.
  */
 
 let accessToken: string | null = null;
+let activeCompanyResolver: (() => string | null) | null = null;
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
@@ -12,6 +18,17 @@ export function setAccessToken(token: string | null): void {
 
 export function getAccessToken(): string | null {
   return accessToken;
+}
+
+/**
+ * Install a resolver that returns the caller's currently active company id
+ * (or null if none). When set, the fetcher injects `X-Active-Company-Id` on
+ * every request.
+ */
+export function setActiveCompanyResolver(
+  resolver: (() => string | null) | null,
+): void {
+  activeCompanyResolver = resolver;
 }
 
 const RESOLVED_API_URL = (): string => {
@@ -44,6 +61,12 @@ export const fetcher = async <T = unknown>(
   }
   if (accessToken && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${accessToken}`);
+  }
+  if (!headers.has("X-Active-Company-Id") && activeCompanyResolver) {
+    const companyId = activeCompanyResolver();
+    if (companyId) {
+      headers.set("X-Active-Company-Id", companyId);
+    }
   }
 
   const res = await fetch(fullUrl, {
