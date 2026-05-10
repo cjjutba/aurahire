@@ -12,6 +12,7 @@ export interface ScoreDashboardEvidence {
   source: string;
   relevance: "positive" | "negative" | "neutral";
   contributionPoints?: number | null;
+  reasoning?: string | null;
 }
 
 export interface ScoreDashboardComponent {
@@ -57,6 +58,12 @@ export interface ScoreDashboardProps {
   beforeRightPane?: ReactNode;
   /** Optional sections rendered below the main grid (improvements, offers, etc.). */
   extraSections?: ReactNode;
+  /**
+   * Optional inline notice rendered above the grid. Used to surface
+   * calibration warnings ("breakdown may be incomplete — recompute") to the
+   * candidate without disrupting layout.
+   */
+  calibrationNotice?: ReactNode;
   /** Optional fairness disclosure shown collapsed at the bottom. */
   fairness?: ScoreDashboardFairness | null;
 }
@@ -86,6 +93,7 @@ export function ScoreDashboard({
   componentLabels,
   beforeRightPane,
   extraSections,
+  calibrationNotice,
   fairness,
 }: ScoreDashboardProps) {
   const [activeName, setActiveName] = useState<string>(
@@ -102,6 +110,8 @@ export function ScoreDashboard({
       {header}
 
       {topActions}
+
+      {calibrationNotice}
 
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         {/* Left rail — sticky summary + component list */}
@@ -322,6 +332,7 @@ function ActiveComponentPanel({
               source={ev.source}
               relevance={ev.relevance}
               contributionPoints={ev.contributionPoints ?? null}
+              reasoning={ev.reasoning ?? null}
             />
           ))}
         </div>
@@ -364,6 +375,7 @@ function EvidenceGroup({
             source={ev.source}
             relevance={ev.relevance}
             contributionPoints={ev.contributionPoints ?? null}
+            reasoning={ev.reasoning ?? null}
           />
         ))}
       </div>

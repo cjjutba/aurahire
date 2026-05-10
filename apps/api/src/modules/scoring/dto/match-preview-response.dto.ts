@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 import {
   MatchComponentDto,
+  CalibrationWarningDto,
 } from "../../applications/dto/application-response.dto";
 
 export class MatchScorePreviewDto {
@@ -17,6 +18,8 @@ export class MatchScorePreviewDto {
   @ApiProperty() latencyMs!: number;
   @ApiProperty({ enum: ["system", "candidate"] }) source!: string;
   @ApiProperty() createdAt!: string;
+  @ApiProperty({ type: [CalibrationWarningDto] })
+  calibrationWarnings!: CalibrationWarningDto[];
   @ApiPropertyOptional({ nullable: true }) job?: {
     id: string;
     title: string;

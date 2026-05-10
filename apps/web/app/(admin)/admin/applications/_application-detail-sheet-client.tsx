@@ -56,6 +56,7 @@ interface Detail {
         source: string | null;
         relevance: "positive" | "negative" | "neutral";
         contributionPoints: number | null;
+        reasoning?: string | null;
       }>;
     }>;
     summary: string;
@@ -286,6 +287,7 @@ export function ApplicationDetailSheetClient({
                             source={ev.source ?? ""}
                             relevance={ev.relevance}
                             contributionPoints={ev.contributionPoints}
+                            reasoning={ev.reasoning ?? null}
                           />
                         ))}
                       </div>

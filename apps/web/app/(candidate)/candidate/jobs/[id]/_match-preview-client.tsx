@@ -8,7 +8,10 @@ import { Sparkles, ChevronRight, AlertCircle, RotateCw } from "lucide-react";
 import { ScoreRing } from "@/components/score/score-ring";
 import { MatchBandChip } from "@/components/score/match-band-chip";
 import { EvidenceCallout } from "@/components/score/evidence-callout";
-import { AiShimmer } from "@/components/ai/ai-shimmer";
+import {
+  AiProgressIndicator,
+  MATCH_SCORE_STAGES,
+} from "@/components/ai/ai-progress-indicator";
 import { Button } from "@/components/ui/button";
 import { ClientApiError, clientApiFetch } from "@/hooks/_client-fetch";
 import { useConfirm } from "@/components/providers/confirm-provider";
@@ -25,6 +28,7 @@ interface PreviewEvidence {
   source: string;
   relevance: "positive" | "negative" | "neutral";
   contributionPoints: number | null;
+  reasoning?: string | null;
 }
 
 interface PreviewComponent {
@@ -34,6 +38,11 @@ interface PreviewComponent {
   weight: number;
   explanation: string;
   evidence: PreviewEvidence[];
+}
+
+interface PreviewCalibrationWarning {
+  componentName: string;
+  reason: "ceiling_with_thin_evidence" | "deduction_without_negative_evidence";
 }
 
 interface MatchPreviewData {
@@ -49,6 +58,7 @@ interface MatchPreviewData {
   latencyMs: number;
   source: "system" | "candidate" | "candidate_view";
   createdAt: string;
+  calibrationWarnings?: PreviewCalibrationWarning[];
 }
 
 interface MatchPreviewEnvelope {
@@ -284,10 +294,7 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
             Match Preview
           </h2>
         </header>
-        <AiShimmer
-          caption="Computing your match for this role…"
-          height={120}
-        />
+        <AiProgressIndicator stages={MATCH_SCORE_STAGES} />
       </div>
     );
   }
@@ -320,9 +327,22 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
       </header>
 
       {compute.isPending ? (
-        <AiShimmer caption="Recomputing match score…" height={120} />
+        <AiProgressIndicator stages={MATCH_SCORE_STAGES} />
       ) : (
         <>
+          {preview.calibrationWarnings &&
+            preview.calibrationWarnings.length > 0 && (
+              <div
+                className="rounded-[var(--radius-pill)] px-4 py-2 text-xs"
+                style={{
+                  backgroundColor: "var(--color-score-mid-soft)",
+                  color: "var(--color-score-mid)",
+                }}
+              >
+                <span className="font-semibold">Heads up — </span>
+                This breakdown may be incomplete. Recompute to refresh.
+              </div>
+            )}
           {/* Top: ring + meta + breakdown bars */}
           <div className="flex flex-wrap items-center gap-5">
             <ScoreRing
@@ -550,6 +570,7 @@ function ActiveComponentPanel({
               source={ev.source}
               relevance={ev.relevance}
               contributionPoints={ev.contributionPoints}
+              reasoning={ev.reasoning ?? null}
             />
           ))}
         </div>
@@ -592,6 +613,7 @@ function PreviewEvidenceGroup({
             source={ev.source}
             relevance={ev.relevance}
             contributionPoints={ev.contributionPoints}
+            reasoning={ev.reasoning ?? null}
           />
         ))}
       </div>

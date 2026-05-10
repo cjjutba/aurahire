@@ -23,6 +23,11 @@ interface ImprovementSuggestion {
   estimatedImpact: number;
 }
 
+export interface ProfileCalibrationWarning {
+  componentName: string;
+  reason: "ceiling_with_thin_evidence" | "deduction_without_negative_evidence";
+}
+
 export interface ProfileScoreData {
   overallScore: number;
   band: "strong" | "partial" | "limited";
@@ -33,6 +38,7 @@ export interface ProfileScoreData {
   modelUsed: string;
   latencyMs: number;
   createdAt: string;
+  calibrationWarnings?: ProfileCalibrationWarning[];
 }
 
 export function ProfileScoreDashboardClient({ data }: { data: ProfileScoreData }) {
@@ -106,6 +112,20 @@ export function ProfileScoreDashboardClient({ data }: { data: ProfileScoreData }
             </div>
           </section>
         ) : undefined
+      }
+      calibrationNotice={
+        data.calibrationWarnings && data.calibrationWarnings.length > 0 ? (
+          <div
+            className="rounded-[var(--radius-pill)] px-4 py-2 text-xs"
+            style={{
+              backgroundColor: "var(--color-score-mid-soft)",
+              color: "var(--color-score-mid)",
+            }}
+          >
+            <span className="font-semibold">Heads up — </span>
+            This breakdown may be incomplete. Recompute to refresh.
+          </div>
+        ) : null
       }
       fairness={{
         redactedFields: data.redactedFields,

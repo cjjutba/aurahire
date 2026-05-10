@@ -1,9 +1,13 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class ScoreEvidenceDto {
   @ApiProperty() excerpt!: string;
   @ApiProperty() source!: string;
   @ApiProperty({ enum: ["positive", "negative", "neutral"] }) relevance!: string;
+  @ApiPropertyOptional({ nullable: true, type: Number })
+  contributionPoints!: number | null;
+  @ApiPropertyOptional({ nullable: true, type: String })
+  reasoning!: string | null;
 }
 
 export class ProfileComponentDto {
@@ -24,6 +28,14 @@ export class ImprovementSuggestionDto {
   @ApiProperty() estimatedImpact!: number;
 }
 
+export class CalibrationWarningDto {
+  @ApiProperty() componentName!: string;
+  @ApiProperty({
+    enum: ["ceiling_with_thin_evidence", "deduction_without_negative_evidence"],
+  })
+  reason!: "ceiling_with_thin_evidence" | "deduction_without_negative_evidence";
+}
+
 export class ProfileScoreDto {
   @ApiProperty() id!: string;
   @ApiProperty() overallScore!: number;
@@ -36,6 +48,8 @@ export class ProfileScoreDto {
   @ApiProperty() modelUsed!: string;
   @ApiProperty() latencyMs!: number;
   @ApiProperty() createdAt!: string;
+  @ApiProperty({ type: [CalibrationWarningDto] })
+  calibrationWarnings!: CalibrationWarningDto[];
 }
 
 export class ProfileScoreEnvelopeDto {

@@ -534,6 +534,19 @@ export class ScoringService {
     overallOverride?: number,
     bandOverride?: "strong" | "partial" | "limited",
   ): ProfileScoreDto {
+    const calibrationWarnings = score.components.flatMap((c) =>
+      detectCalibrationWarnings({
+        name: c.name,
+        score: c.score,
+        max: c.max,
+        evidence: c.evidence.map((e) => ({
+          excerpt: e.excerpt,
+          source: e.source,
+          relevance: e.relevance,
+          contribution_points: e.contribution_points,
+        })),
+      }),
+    );
     return {
       id: scoreId,
       overallScore: overallOverride ?? score.overall_score,
@@ -548,6 +561,8 @@ export class ScoringService {
           excerpt: e.excerpt,
           source: e.source,
           relevance: e.relevance,
+          contributionPoints: e.contribution_points,
+          reasoning: e.reasoning,
         })),
       })),
       improvementSuggestions: score.improvement_suggestions.map((s) => ({
@@ -560,6 +575,7 @@ export class ScoringService {
       modelUsed: aiMeta.model,
       latencyMs: aiMeta.latencyMs,
       createdAt: createdAt.toISOString(),
+      calibrationWarnings,
     };
   }
 
@@ -567,6 +583,20 @@ export class ScoringService {
     const components = (row.components as ProfileScoreOutput["components"]) ?? [];
     const suggestions =
       (row.improvementSuggestions as ProfileScoreOutput["improvement_suggestions"]) ?? [];
+
+    const calibrationWarnings = components.flatMap((c) =>
+      detectCalibrationWarnings({
+        name: c.name,
+        score: c.score,
+        max: c.max,
+        evidence: c.evidence.map((e) => ({
+          excerpt: e.excerpt,
+          source: e.source,
+          relevance: e.relevance,
+          contribution_points: e.contribution_points,
+        })),
+      }),
+    );
 
     return {
       id: row.id,
@@ -582,6 +612,8 @@ export class ScoringService {
           excerpt: e.excerpt,
           source: e.source,
           relevance: e.relevance,
+          contributionPoints: e.contribution_points,
+          reasoning: e.reasoning,
         })),
       })),
       improvementSuggestions: suggestions.map((s) => ({
@@ -594,6 +626,7 @@ export class ScoringService {
       modelUsed: row.modelUsed,
       latencyMs: row.latencyMs ?? 0,
       createdAt: row.createdAt.toISOString(),
+      calibrationWarnings,
     };
   }
 
@@ -837,6 +870,19 @@ export class ScoringService {
 
     const components = (row.components as MatchScoreOutput["components"]) ?? [];
     const raw = row.rawOutput as MatchScoreOutput;
+    const calibrationWarnings = components.flatMap((c) =>
+      detectCalibrationWarnings({
+        name: c.name,
+        score: c.score,
+        max: c.max,
+        evidence: c.evidence.map((e) => ({
+          excerpt: e.excerpt,
+          source: e.source,
+          relevance: e.relevance,
+          contribution_points: e.contribution_points,
+        })),
+      }),
+    );
     return {
       id: row.id,
       overallScore: row.overallScore,
@@ -852,6 +898,7 @@ export class ScoringService {
           source: e.source,
           relevance: e.relevance,
           contributionPoints: e.contribution_points,
+          reasoning: e.reasoning,
         })),
       })),
       summary: raw?.summary ?? "",
@@ -862,6 +909,7 @@ export class ScoringService {
       modelUsed: row.modelUsed,
       latencyMs: row.latencyMs ?? 0,
       createdAt: row.createdAt.toISOString(),
+      calibrationWarnings,
     };
   }
 
@@ -1266,6 +1314,19 @@ export class ScoringService {
 
   private matchPreviewRowToDto(row: DbMatchScorePreview): MatchScorePreviewDto {
     const components = (row.components as MatchScoreOutput["components"]) ?? [];
+    const calibrationWarnings = components.flatMap((c) =>
+      detectCalibrationWarnings({
+        name: c.name,
+        score: c.score,
+        max: c.max,
+        evidence: c.evidence.map((e) => ({
+          excerpt: e.excerpt,
+          source: e.source,
+          relevance: e.relevance,
+          contribution_points: e.contribution_points,
+        })),
+      }),
+    );
     return {
       id: row.id,
       jobId: row.jobId,
@@ -1283,6 +1344,7 @@ export class ScoringService {
           source: e.source,
           relevance: e.relevance,
           contributionPoints: e.contribution_points,
+          reasoning: e.reasoning,
         })),
       })),
       redactedFields: row.redactedFields,
@@ -1291,6 +1353,7 @@ export class ScoringService {
       latencyMs: row.latencyMs ?? 0,
       source: row.source,
       createdAt: row.createdAt.toISOString(),
+      calibrationWarnings,
       job: null,
     };
   }
@@ -1303,6 +1366,19 @@ export class ScoringService {
     overallOverride?: number,
     bandOverride?: "strong" | "partial" | "limited",
   ): MatchScoreDto {
+    const calibrationWarnings = score.components.flatMap((c) =>
+      detectCalibrationWarnings({
+        name: c.name,
+        score: c.score,
+        max: c.max,
+        evidence: c.evidence.map((e) => ({
+          excerpt: e.excerpt,
+          source: e.source,
+          relevance: e.relevance,
+          contribution_points: e.contribution_points,
+        })),
+      }),
+    );
     return {
       id: scoreId,
       overallScore: overallOverride ?? score.overall_score,
@@ -1318,6 +1394,7 @@ export class ScoringService {
           source: e.source,
           relevance: e.relevance,
           contributionPoints: e.contribution_points,
+          reasoning: e.reasoning,
         })),
       })),
       summary: score.summary,
@@ -1328,6 +1405,7 @@ export class ScoringService {
       modelUsed: aiMeta.model,
       latencyMs: aiMeta.latencyMs,
       createdAt: createdAt.toISOString(),
+      calibrationWarnings,
     };
   }
 }

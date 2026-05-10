@@ -174,6 +174,7 @@ function buildSvc(opts: {
     modelUsed: "gpt-4o-mini",
     latencyMs: 1234,
     createdAt: "2026-05-08T00:00:00.000Z",
+    calibrationWarnings: [],
   };
   const scoring = {
     computeProfileScore:
@@ -376,6 +377,7 @@ describe("CandidateProfilesService.completeOnboarding (extended response)", () =
       modelUsed: "gpt-4o-mini",
       latencyMs: 1500,
       createdAt: "2026-05-08T12:00:00.000Z",
+      calibrationWarnings: [],
     };
     const computeProfileScore = jest.fn().mockResolvedValue(fakeScore);
 

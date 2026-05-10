@@ -50,6 +50,7 @@ export interface MatchEvidence {
   source: string;
   relevance: "positive" | "negative" | "neutral";
   contributionPoints: number | null;
+  reasoning?: string | null;
 }
 
 export interface MatchComponent {
@@ -59,6 +60,11 @@ export interface MatchComponent {
   weight: number;
   explanation: string;
   evidence: MatchEvidence[];
+}
+
+export interface MatchCalibrationWarning {
+  componentName: string;
+  reason: "ceiling_with_thin_evidence" | "deduction_without_negative_evidence";
 }
 
 export interface MatchScoreData {
@@ -72,6 +78,7 @@ export interface MatchScoreData {
   promptVersion?: string;
   modelUsed?: string;
   latencyMs?: number;
+  calibrationWarnings?: MatchCalibrationWarning[];
 }
 
 export interface AppDetail {
@@ -169,6 +176,7 @@ export function RecruiterApplicationDetailClient({
           source: e.source,
           relevance: e.relevance,
           contributionPoints: e.contributionPoints,
+          reasoning: e.reasoning ?? null,
         })),
       })),
     [score?.components],
@@ -325,6 +333,21 @@ export function RecruiterApplicationDetailClient({
       }
       components={dashboardComponents}
       componentLabels={COMPONENT_LABELS}
+      calibrationNotice={
+        score.calibrationWarnings && score.calibrationWarnings.length > 0 ? (
+          <div
+            className="rounded-[var(--radius-pill)] px-4 py-2 text-xs"
+            style={{
+              backgroundColor: "var(--color-score-mid-soft)",
+              color: "var(--color-score-mid)",
+            }}
+          >
+            <span className="font-semibold">Heads up — </span>
+            This breakdown may be incomplete. Consider asking the candidate to
+            recompute, or rescore from the admin tools.
+          </div>
+        ) : null
+      }
       beforeRightPane={
         <SummaryDisclosure
           summary={score.summary}

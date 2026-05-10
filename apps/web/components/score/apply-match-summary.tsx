@@ -24,6 +24,7 @@ export interface ApplyMatchPreviewEvidence {
   source: string;
   relevance: "positive" | "negative" | "neutral";
   contributionPoints: number | null;
+  reasoning?: string | null;
 }
 
 export interface ApplyMatchPreviewComponent {
@@ -33,6 +34,11 @@ export interface ApplyMatchPreviewComponent {
   weight: number;
   explanation: string;
   evidence: ApplyMatchPreviewEvidence[];
+}
+
+export interface ApplyMatchCalibrationWarning {
+  componentName: string;
+  reason: "ceiling_with_thin_evidence" | "deduction_without_negative_evidence";
 }
 
 export interface ApplyMatchPreview {
@@ -48,6 +54,7 @@ export interface ApplyMatchPreview {
   latencyMs: number;
   source: "system" | "candidate";
   createdAt: string;
+  calibrationWarnings?: ApplyMatchCalibrationWarning[];
 }
 
 interface ApplyMatchSummaryProps {
@@ -146,6 +153,21 @@ export function ApplyMatchSummary({
           )}
         </div>
       </header>
+
+      {preview.calibrationWarnings &&
+        preview.calibrationWarnings.length > 0 && (
+          <div
+            className="mb-5 rounded-[var(--radius-pill)] px-4 py-2 text-xs"
+            style={{
+              backgroundColor: "var(--color-score-mid-soft)",
+              color: "var(--color-score-mid)",
+            }}
+          >
+            <span className="font-semibold">Heads up — </span>
+            This breakdown may be incomplete. The full breakdown will refresh on
+            recompute.
+          </div>
+        )}
 
       <div className="flex flex-wrap items-center gap-5">
         <ScoreRing
@@ -366,6 +388,7 @@ function ActiveComponentPanel({
               source={ev.source}
               relevance={ev.relevance}
               contributionPoints={ev.contributionPoints}
+              reasoning={ev.reasoning ?? null}
             />
           ))}
         </div>
@@ -408,6 +431,7 @@ function ApplyEvidenceGroup({
             source={ev.source}
             relevance={ev.relevance}
             contributionPoints={ev.contributionPoints}
+            reasoning={ev.reasoning ?? null}
           />
         ))}
       </div>

@@ -6,6 +6,8 @@ export class MatchEvidenceDto {
   @ApiProperty({ enum: ["positive", "negative", "neutral"] }) relevance!: string;
   @ApiPropertyOptional({ nullable: true, type: Number })
   contributionPoints!: number | null;
+  @ApiPropertyOptional({ nullable: true, type: String })
+  reasoning!: string | null;
 }
 
 export class MatchComponentDto {
@@ -16,6 +18,14 @@ export class MatchComponentDto {
   @ApiProperty() weight!: number;
   @ApiProperty() explanation!: string;
   @ApiProperty({ type: [MatchEvidenceDto] }) evidence!: MatchEvidenceDto[];
+}
+
+export class CalibrationWarningDto {
+  @ApiProperty() componentName!: string;
+  @ApiProperty({
+    enum: ["ceiling_with_thin_evidence", "deduction_without_negative_evidence"],
+  })
+  reason!: "ceiling_with_thin_evidence" | "deduction_without_negative_evidence";
 }
 
 export class MatchScoreDto {
@@ -32,6 +42,8 @@ export class MatchScoreDto {
   @ApiProperty() modelUsed!: string;
   @ApiProperty() latencyMs!: number;
   @ApiProperty() createdAt!: string;
+  @ApiProperty({ type: [CalibrationWarningDto] })
+  calibrationWarnings!: CalibrationWarningDto[];
 }
 
 export class ApplicationCandidateDto {

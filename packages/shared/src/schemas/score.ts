@@ -22,10 +22,14 @@ export const evidenceSchema = z.object({
  * The engine derives `component.score = clamp(sum(contribution_points), 0, max)`
  * so this field is the source of truth for a component's numeric score.
  *
- * Used by both profile components (since v1.2.0) and match components.
+ * `reasoning` is a 10–280 char sentence on every row explaining WHY this row
+ * helps or hurts — surfacing per-evidence transparency the chip alone can't.
+ *
+ * Used by profile components (since v1.4.0) and match components (since v1.3.0).
  */
 export const scoredEvidenceSchema = evidenceSchema.extend({
   contribution_points: z.number().int().multipleOf(5),
+  reasoning: z.string().min(10).max(280),
 });
 
 /**
@@ -96,3 +100,23 @@ export const matchScoreSchema = z.object({
 export type MatchComponent = z.infer<typeof matchComponentSchema>;
 export type MatchScore = z.infer<typeof matchScoreSchema>;
 export type MatchEvidence = z.infer<typeof matchEvidenceSchema>;
+
+// ============================================================================
+// CALIBRATION WARNINGS — advisory signals on score quality
+// ============================================================================
+
+/**
+ * Advisory signal emitted when a score component matches a known model
+ * misbehavior pattern (ceiling without strong evidence, deduction without
+ * negative evidence). Surfaced to candidate UIs for inline "this breakdown
+ * may be incomplete" notices and aggregated in /admin/bias-monitor.
+ */
+export const calibrationWarningSchema = z.object({
+  componentName: z.string(),
+  reason: z.enum([
+    "ceiling_with_thin_evidence",
+    "deduction_without_negative_evidence",
+  ]),
+});
+
+export type CalibrationWarning = z.infer<typeof calibrationWarningSchema>;

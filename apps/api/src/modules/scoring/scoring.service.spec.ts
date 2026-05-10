@@ -243,6 +243,25 @@ describe("detectCalibrationWarnings", () => {
     );
     expect(warnings).toEqual([]);
   });
+
+  it("fires `deduction_without_negative_evidence` for the 2026-05-10 screenshot failure mode (Skills 20/40 with two positives + two neutrals quoting requirements)", () => {
+    const warnings = detectCalibrationWarnings(
+      buildComponent({
+        name: "skills",
+        score: 20,
+        max: 40,
+        evidence: [
+          { excerpt: "TypeScript", source: "skills", relevance: "positive", contribution_points: 10 },
+          { excerpt: "Kubernetes", source: "skills", relevance: "positive", contribution_points: 10 },
+          { excerpt: "Go, Backstage, Bazel", source: "Job requirement › Required Skills", relevance: "neutral", contribution_points: 0 },
+          { excerpt: "JavaScript, React, Node.js, AWS, Docker", source: "skills", relevance: "neutral", contribution_points: 0 },
+        ],
+      }),
+    );
+    expect(warnings).toEqual([
+      { componentName: "skills", reason: "deduction_without_negative_evidence" },
+    ]);
+  });
 });
 
 describe("ScoringService.computeMatchPreviewOnView", () => {
