@@ -132,6 +132,7 @@ describe("ApplicationsService — notification emissions", () => {
       companyStats: jest.fn(),
       companyTopJobsByApplications: jest.fn(),
       companyApplicationsByStatus: jest.fn(),
+      countInflightOnJob: jest.fn().mockResolvedValue(0),
     } as any;
 
     jobsRepo = {

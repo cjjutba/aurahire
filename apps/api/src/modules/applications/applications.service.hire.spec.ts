@@ -22,6 +22,7 @@ function makeRepoMock() {
     update: jest.fn(),
     findByIdForUpdate: jest.fn(),
     findInflightByJobId: jest.fn(),
+    countInflightOnJob: jest.fn().mockResolvedValue(0),
   };
 }
 function makeJobsMock() {
