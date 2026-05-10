@@ -13,6 +13,12 @@ export type ApplyToJobInput = z.infer<typeof applyToJobSchema>;
 export const updateApplicationStatusSchema = z.object({
   newStatus: z.enum(APPLICATION_STATUS),
   note: z.string().max(2000).nullable().optional(),
+  /**
+   * When true AND newStatus is "hired", server cascades: every other
+   * in-flight application on the same job is auto-rejected with a
+   * "position filled" notification. Honored only for hire transitions.
+   */
+  autoRejectOthers: z.boolean().optional(),
 });
 
 export type UpdateApplicationStatusInput = z.infer<typeof updateApplicationStatusSchema>;
