@@ -10,6 +10,7 @@ export const APPLICATION_STATUS = [
   "screening",
   "interview",
   "offer",
+  "offer_accepted",
   "offer_declined",
   "hired",
   "rejected",

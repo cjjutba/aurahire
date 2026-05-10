@@ -23,10 +23,26 @@ describe("application state machine", () => {
     expect(canTransition("interview", "withdrawn")).toBe(true);
   });
 
-  it("allows offer → hired | rejected | withdrawn", () => {
-    expect(canTransition("offer", "hired")).toBe(true);
+  it("allows offer → offer_accepted | offer_declined | rejected | withdrawn (no direct hired)", () => {
+    expect(canTransition("offer", "offer_accepted")).toBe(true);
+    expect(canTransition("offer", "offer_declined")).toBe(true);
     expect(canTransition("offer", "rejected")).toBe(true);
     expect(canTransition("offer", "withdrawn")).toBe(true);
+    expect(canTransition("offer", "hired")).toBe(false);
+  });
+
+  it("allows offer_accepted → hired | rejected | withdrawn", () => {
+    expect(canTransition("offer_accepted", "hired")).toBe(true);
+    expect(canTransition("offer_accepted", "rejected")).toBe(true);
+    expect(canTransition("offer_accepted", "withdrawn")).toBe(true);
+  });
+
+  it("disallows offer_accepted → applied | screening | interview | offer | offer_declined", () => {
+    expect(canTransition("offer_accepted", "applied")).toBe(false);
+    expect(canTransition("offer_accepted", "screening")).toBe(false);
+    expect(canTransition("offer_accepted", "interview")).toBe(false);
+    expect(canTransition("offer_accepted", "offer")).toBe(false);
+    expect(canTransition("offer_accepted", "offer_declined")).toBe(false);
   });
 
   it("disallows transitions out of terminal states", () => {
