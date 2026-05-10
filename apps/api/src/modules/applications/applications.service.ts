@@ -27,6 +27,7 @@ import { ResumesRepository } from "../resumes/resumes.repository";
 import { ScoringService } from "../scoring/scoring.service";
 import { StorageService } from "../../storage/storage.service";
 import { ApplicationsRepository } from "./applications.repository";
+import type { ApplicationsTx } from "./applications.repository";
 import { canTransition } from "./state-machine";
 import type {
   ApplicationDto,
@@ -729,11 +730,12 @@ export class ApplicationsService {
    * Still audits + notifies the candidate so the trail stays complete.
    */
   async transitionFromSystem(
-    actor: AuthUser,
+    actor: AuthUser | null,
     id: string,
     newStatus: ApplicationStatus,
     note: string,
     requestMeta: RequestMeta = {},
+    tx?: ApplicationsTx,
   ): Promise<ApplicationDto> {
     const app = await this.repo.findById(id);
     if (!app) {
@@ -743,17 +745,21 @@ export class ApplicationsService {
       return this.toDto(id);
     }
 
-    await this.repo.update(id, {
-      status: newStatus,
-      statusUpdatedAt: new Date(),
-      recruiterNotes: this.appendNote(app.recruiterNotes, note),
-    });
+    await this.repo.update(
+      id,
+      {
+        status: newStatus,
+        statusUpdatedAt: new Date(),
+        recruiterNotes: this.appendNote(app.recruiterNotes, note),
+      },
+      tx,
+    );
 
     const job = await this.jobsRepo.findById(app.jobId);
 
     await this.audit.log({
-      actorId: actor.id,
-      actorType: "user",
+      actorId: actor?.id ?? null,
+      actorType: actor ? "user" : "system",
       action: "application.status_changed",
       entityType: "application",
       entityId: id,
@@ -798,7 +804,7 @@ export class ApplicationsService {
         scope: "personal",
         entityType: "application",
         entityId: id,
-        actorId: actor.id,
+        actorId: actor?.id ?? null,
         metadata: {
           applicationId: id,
           jobId: app.jobId,
