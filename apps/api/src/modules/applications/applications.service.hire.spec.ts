@@ -83,7 +83,7 @@ describe("ApplicationsService.hire()", () => {
   });
 
   it("rejects when latest offer is not accepted", async () => {
-    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer", jobId: "j-1", candidateId: "c-1" });
+    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer_accepted", jobId: "j-1", candidateId: "c-1" });
     jobs.findById.mockResolvedValue({ id: "j-1", companyId: "co-1", recruiterId: "rec-1" });
     offers.findLatestByApplicationId.mockResolvedValue({ status: "pending" });
 
@@ -93,7 +93,7 @@ describe("ApplicationsService.hire()", () => {
   });
 
   it("hires the candidate when offer is accepted, no cascade", async () => {
-    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer", jobId: "j-1", candidateId: "c-1", recruiterNotes: null });
+    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer_accepted", jobId: "j-1", candidateId: "c-1", recruiterNotes: null });
     jobs.findById.mockResolvedValue({ id: "j-1", companyId: "co-1", recruiterId: "rec-1" });
     offers.findLatestByApplicationId.mockResolvedValue({ status: "accepted" });
     repo.findInflightByJobId.mockResolvedValue([]);
@@ -113,7 +113,7 @@ describe("ApplicationsService.hire()", () => {
   });
 
   it("cascades — auto-rejects in-flight siblings when autoRejectOthers=true", async () => {
-    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer", jobId: "j-1", candidateId: "c-1", recruiterNotes: null });
+    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer_accepted", jobId: "j-1", candidateId: "c-1", recruiterNotes: null });
     jobs.findById.mockResolvedValue({ id: "j-1", companyId: "co-1", recruiterId: "rec-1" });
     offers.findLatestByApplicationId.mockResolvedValue({ status: "accepted" });
     repo.findInflightByJobId.mockResolvedValue([
@@ -131,7 +131,7 @@ describe("ApplicationsService.hire()", () => {
   });
 
   it("does not touch siblings when autoRejectOthers=false", async () => {
-    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer", jobId: "j-1", candidateId: "c-1", recruiterNotes: null });
+    repo.findByIdForUpdate.mockResolvedValue({ id: "a-1", status: "offer_accepted", jobId: "j-1", candidateId: "c-1", recruiterNotes: null });
     jobs.findById.mockResolvedValue({ id: "j-1", companyId: "co-1", recruiterId: "rec-1" });
     offers.findLatestByApplicationId.mockResolvedValue({ status: "accepted" });
     repo.findInflightByJobId.mockResolvedValue([{ id: "a-2", candidateId: "c-2" }]);
