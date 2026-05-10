@@ -755,3 +755,60 @@ describe("CandidateProfilesService.enqueueProfileScoreIfMissing", () => {
     expect(firstJobId).toContain(RESUME_ID);
   });
 });
+
+describe("CandidateProfilesService.recordOnboardingSkipped", () => {
+  it("writes an audit row with the skip telemetry payload and returns void", async () => {
+    const { svc, audit } = buildSvc({
+      profile: buildProfile({ fullName: "Jane Doe" }),
+      candidateProfile: buildCandidateProfile(),
+      defaultResume: null,
+    });
+
+    const requestMeta = { ipAddress: "127.0.0.1", userAgent: "jest" };
+
+    const result = await svc.recordOnboardingSkipped(
+      candidateUser,
+      { scoreReady: true, previewsReady: 3 },
+      requestMeta,
+    );
+
+    expect(result).toBeUndefined();
+    expect(audit.log).toHaveBeenCalledTimes(1);
+    expect(audit.log).toHaveBeenCalledWith({
+      actorId: candidateUser.id,
+      actorType: "user",
+      action: "user.onboarding.skipped_analyzing",
+      entityType: "candidate_profile",
+      entityId: candidateUser.id,
+      details: { scoreReady: true, previewsReady: 3 },
+      ipAddress: "127.0.0.1",
+      userAgent: "jest",
+    });
+  });
+
+  it("rejects non-candidate users", async () => {
+    const { svc, audit } = buildSvc({
+      profile: buildProfile({ fullName: "Jane Doe" }),
+      candidateProfile: buildCandidateProfile(),
+      defaultResume: null,
+    });
+
+    const recruiterUser: AuthUser = {
+      id: "22222222-2222-2222-2222-222222222222",
+      email: "recruiter@example.com",
+      role: "recruiter",
+      status: "active",
+      fullName: "Test Recruiter",
+      profileCompleted: true,
+    };
+
+    await expect(
+      svc.recordOnboardingSkipped(
+        recruiterUser,
+        { scoreReady: true, previewsReady: 0 },
+        {},
+      ),
+    ).rejects.toThrow();
+    expect(audit.log).not.toHaveBeenCalled();
+  });
+});

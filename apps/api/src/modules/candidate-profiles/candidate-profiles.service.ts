@@ -218,6 +218,32 @@ export class CandidateProfilesService {
   }
 
   /**
+   * Records an audit row when the candidate manually clicks "Skip to
+   * dashboard" on the analyzing screen. Pure telemetry — no DB writes
+   * besides the audit log, no scoring side effects, no notifications.
+   *
+   * Returns void. Callers should fire-and-forget; a failing audit write
+   * must never block the candidate's navigation.
+   */
+  async recordOnboardingSkipped(
+    user: AuthUser,
+    payload: { scoreReady: boolean; previewsReady: number },
+    requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
+  ): Promise<void> {
+    this.assertCandidate(user);
+
+    void this.audit.log({
+      actorId: user.id,
+      actorType: "user",
+      action: "user.onboarding.skipped_analyzing",
+      entityType: "candidate_profile",
+      entityId: user.id,
+      details: { scoreReady: payload.scoreReady, previewsReady: payload.previewsReady },
+      ...requestMeta,
+    });
+  }
+
+  /**
    * Validates per-step onboarding minimums (personal → review → preferences),
    * then sets `profileCompleted = true` and writes an audit log. Used by the
    * wizard's Finish button — gives the backend defense-in-depth on top of
