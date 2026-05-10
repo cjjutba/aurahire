@@ -28,6 +28,8 @@ import { AuditService } from "../../audit";
 import { CacheService } from "../../cache";
 import { EventsService } from "../../realtime";
 import { MatchScoreQueueService } from "../../queue/match-score-queue.service";
+import { OffersRepository } from "../offers/offers.repository";
+import { DRIZZLE_CLIENT } from "../../db/db.module";
 
 // ── Test IDs ────────────────────────────────────────────────────────────────
 
@@ -216,6 +218,8 @@ describe("ApplicationsService — notification emissions", () => {
         { provide: EventsService, useValue: events },
         { provide: MatchScoreQueueService, useValue: matchScoreQueue },
         { provide: NotificationsService, useValue: notifications },
+        { provide: OffersRepository, useValue: { findLatestByApplicationId: jest.fn() } },
+        { provide: DRIZZLE_CLIENT, useValue: { transaction: jest.fn(async <T>(fn: (tx: unknown) => Promise<T>) => fn({})) } },
       ],
     }).compile();
 

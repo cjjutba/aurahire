@@ -17,6 +17,7 @@ import type {
   WithdrawApplicationInput,
 } from "@aurahire/shared";
 
+import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 import { AuditService, AUDIT_ACTIONS } from "../../audit";
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { EventsService } from "../../realtime";
@@ -43,6 +44,7 @@ import {
 } from "./dto/application-response.dto";
 import { ApplicationReceivedEmail } from "../../email/templates/application-received";
 import { ApplicationStatusChangedEmail } from "../../email/templates/application-status-changed";
+import { PositionFilledEmail } from "../../email/templates/position-filled";
 
 const RESUMES_BUCKET = "resumes";
 
@@ -56,6 +58,7 @@ export class ApplicationsService {
   private readonly logger = new Logger(ApplicationsService.name);
 
   constructor(
+    @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
     private readonly repo: ApplicationsRepository,
     private readonly jobsRepo: JobsRepository,
     @Inject(forwardRef(() => OffersRepository)) private readonly offersRepo: OffersRepository,
@@ -585,6 +588,231 @@ export class ApplicationsService {
   // -----------------------------------------------------------------
   // STATUS / NOTES / WITHDRAW
   // -----------------------------------------------------------------
+
+  /**
+   * Hire a candidate. Wrapped in a transaction so the application UPDATE,
+   * the accepted-offer guard, and the optional cascade auto-reject of
+   * sibling applications all commit atomically. Side effects (email,
+   * realtime emit, in-app notifications) fire after commit.
+   */
+  async hire(
+    user: AuthUser,
+    companyId: string,
+    applicationId: string,
+    dto: { autoRejectOthers: boolean; note?: string | null },
+    requestMeta: RequestMeta = {},
+  ): Promise<{ application: ApplicationDto; otherApplicationsRejected: number }> {
+    if (user.role !== "recruiter") {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Recruiter role required",
+      });
+    }
+
+    const result = await this.db.transaction(async (tx) => {
+      const app = await this.repo.findByIdForUpdate(tx as ApplicationsTx, applicationId);
+      if (!app) {
+        throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      }
+
+      const job = await this.jobsRepo.findById(app.jobId);
+      if (!job || job.companyId !== companyId) {
+        throw new NotFoundException({ code: "NOT_FOUND", message: "Application not found" });
+      }
+
+      if (!canTransition(app.status as ApplicationStatus, "hired")) {
+        throw new BadRequestException({
+          code: "INVALID_STATUS_TRANSITION",
+          message: `Cannot transition from ${app.status} to hired`,
+        });
+      }
+
+      const latestOffer = await this.offersRepo.findLatestByApplicationId(applicationId);
+      if (!latestOffer || latestOffer.status !== "accepted") {
+        throw new BadRequestException({
+          code: "OFFER_NOT_ACCEPTED",
+          message: "Cannot mark hired — candidate has not accepted an offer.",
+        });
+      }
+
+      // 1) Hire the chosen candidate
+      await this.repo.update(
+        applicationId,
+        {
+          status: "hired",
+          statusUpdatedAt: new Date(),
+          ...(dto.note
+            ? { recruiterNotes: this.appendNote(app.recruiterNotes, dto.note) }
+            : {}),
+        },
+        tx as ApplicationsTx,
+      );
+
+      await this.audit.log({
+        actorId: user.id,
+        actorType: "user",
+        action: "application.status_changed",
+        entityType: "application",
+        entityId: applicationId,
+        companyId,
+        details: { from: app.status, to: "hired", note: dto.note ?? null },
+        ...requestMeta,
+      });
+
+      // 2) Cascade — auto-reject other in-flight applicants on the same job
+      let cascaded: Array<{ id: string; candidateId: string }> = [];
+      if (dto.autoRejectOthers) {
+        const others = await this.repo.findInflightByJobId(
+          tx as ApplicationsTx,
+          app.jobId,
+          applicationId,
+        );
+
+        for (const other of others) {
+          await this.repo.update(
+            other.id,
+            {
+              status: "rejected",
+              statusUpdatedAt: new Date(),
+              recruiterNotes: this.appendNote(
+                other.recruiterNotes,
+                "[Auto-rejected: position filled by another candidate]",
+              ),
+            },
+            tx as ApplicationsTx,
+          );
+
+          await this.audit.log({
+            actorId: user.id,
+            actorType: "user",
+            action: AUDIT_ACTIONS.APPLICATION_AUTO_REJECTED_POSITION_FILLED,
+            entityType: "application",
+            entityId: other.id,
+            companyId,
+            details: {
+              hiredApplicationId: applicationId,
+              hiredCandidateId: app.candidateId,
+              jobId: app.jobId,
+            },
+            ...requestMeta,
+          });
+        }
+
+        cascaded = others.map((o) => ({ id: o.id, candidateId: o.candidateId }));
+      }
+
+      return { app, job, cascaded };
+    });
+
+    // 3) After-commit side effects (best-effort, fire-and-forget)
+    await this.cacheService.bustTags([
+      TAGS.companyDashboard(companyId),
+      TAGS.companyApplications(companyId),
+      TAGS.companyShortlist(companyId),
+      TAGS.applicationsCandidate(result.app.candidateId),
+      ...result.cascaded.map((c) => TAGS.applicationsCandidate(c.candidateId)),
+    ]);
+
+    this.events.emitApplicationStatusChanged({
+      applicationId,
+      jobId: result.app.jobId,
+      recruiterId: result.job.recruiterId,
+      candidateId: result.app.candidateId,
+      previousStatus: result.app.status as ApplicationStatus,
+      status: "hired",
+      changedAt: new Date().toISOString(),
+    });
+
+    void this.notifyCandidateOfStatusChange(applicationId, result.app.status, "hired").catch(
+      (err) => this.logger.warn(`Hire candidate notify failed: ${(err as Error).message}`),
+    );
+
+    void this.notifications
+      .emit({
+        userId: result.app.candidateId,
+        eventType: "application_status_changed",
+        scope: "personal",
+        entityType: "application",
+        entityId: applicationId,
+        actorId: user.id,
+        metadata: {
+          applicationId,
+          jobId: result.app.jobId,
+          fromStatus: result.app.status,
+          toStatus: "hired",
+          occurredAt: new Date().toISOString(),
+        },
+      })
+      .catch((err) =>
+        this.logger.warn(`hire notification failed: ${(err as Error).message}`),
+      );
+
+    // Cascade notifications + position-filled email per affected sibling
+    for (const other of result.cascaded) {
+      void this.notifyPositionFilled(other.id, other.candidateId, result.app.jobId).catch(
+        (err) =>
+          this.logger.warn(
+            `position-filled notify failed for ${other.id}: ${(err as Error).message}`,
+          ),
+      );
+
+      void this.notifications
+        .emit({
+          userId: other.candidateId,
+          eventType: "application_status_changed",
+          scope: "personal",
+          entityType: "application",
+          entityId: other.id,
+          actorId: user.id,
+          metadata: {
+            applicationId: other.id,
+            jobId: result.app.jobId,
+            fromStatus: "(cascade)",
+            toStatus: "rejected",
+            reason: "position_filled",
+            hiredApplicationId: applicationId,
+            occurredAt: new Date().toISOString(),
+          },
+        })
+        .catch((err) =>
+          this.logger.warn(
+            `cascade notify failed for ${other.id}: ${(err as Error).message}`,
+          ),
+        );
+    }
+
+    return {
+      application: await this.toDto(applicationId),
+      otherApplicationsRejected: result.cascaded.length,
+    };
+  }
+
+  /**
+   * Sends the position-filled email to a bulk-rejected candidate. Helper
+   * extracted so the cascade loop stays readable.
+   */
+  private async notifyPositionFilled(
+    applicationId: string,
+    candidateId: string,
+    jobId: string,
+  ): Promise<void> {
+    const candidate = await this.profilesRepo.findById(candidateId);
+    const jobRow = await this.jobsRepo.findByIdWithCompany(jobId);
+    if (!candidate || !jobRow) return;
+
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+
+    await this.email.send({
+      to: candidate.email,
+      subject: `Update on your application — ${jobRow.title}`,
+      template: PositionFilledEmail({
+        candidateName: candidate.fullName,
+        jobTitle: jobRow.title,
+        applicationUrl: `${appUrl}/candidate/applications/${applicationId}`,
+        company: { name: jobRow.company.name, logoUrl: jobRow.company.logoUrl },
+      }),
+    });
+  }
 
   async updateStatus(
     user: AuthUser,

@@ -227,13 +227,24 @@ export class ApplicationsController {
     @Param("id") id: string,
     @Body() dto: UpdateApplicationStatusDto,
     @Req() req: FastifyRequest,
-  ): Promise<ApplicationEnvelopeDto> {
+  ): Promise<ApplicationEnvelopeDto | { data: ApplicationDto; otherApplicationsRejected: number }> {
+    const meta = this.requestMeta(req);
+    if (dto.newStatus === "hired") {
+      const result = await this.service.hire(
+        user,
+        activeCompany.companyId,
+        id,
+        { autoRejectOthers: dto.autoRejectOthers ?? false, note: dto.note ?? null },
+        meta,
+      );
+      return { data: result.application, otherApplicationsRejected: result.otherApplicationsRejected };
+    }
     const data = await this.service.updateStatus(
       user,
       activeCompany.companyId,
       id,
       dto,
-      this.requestMeta(req),
+      meta,
     );
     return { data };
   }
