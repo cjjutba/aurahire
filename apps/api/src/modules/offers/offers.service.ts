@@ -184,17 +184,28 @@ export class OffersService {
         tx as ApplicationsTx,
       );
 
-      // Auto-advance app → hired (only if not already terminal). The state
-      // machine permits offer → hired.
+      // Auto-advance app → offer_accepted (only if still at "offer"). The
+      // recruiter must then make the final hire / not-hire decision.
       if (lockedApp.status === "offer") {
         await this.applicationsService.transitionFromSystem(
           user,
           offer.applicationId,
-          "hired",
-          "Offer accepted",
+          "offer_accepted",
+          "Candidate accepted offer — pending recruiter confirmation",
           requestMeta,
           tx as ApplicationsTx,
         );
+
+        await this.audit.log({
+          actorId: user.id,
+          actorType: "user",
+          action: AUDIT_ACTIONS.APPLICATION_AUTO_TRANSITION_OFFER_ACCEPTED,
+          entityType: "application",
+          entityId: offer.applicationId,
+          companyId: job?.companyId ?? null,
+          details: { offerId },
+          ...requestMeta,
+        });
       }
 
       return updatedOffer;

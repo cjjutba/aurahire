@@ -69,6 +69,8 @@ export const AUDIT_ACTIONS = {
   OFFER_WITHDRAWN: "offer.withdrawn",
   OFFER_EXPIRED: "offer.expired",
   // Application auto-transitions driven by offer events
+  APPLICATION_AUTO_TRANSITION_OFFER_ACCEPTED:
+    "application.auto_transition_offer_accepted",
   APPLICATION_AUTO_TRANSITION_OFFER_DECLINED:
     "application.auto_transition_offer_declined",
   APPLICATION_AUTO_TRANSITION_OFFER_EXPIRED:
