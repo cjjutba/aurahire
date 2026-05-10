@@ -79,6 +79,12 @@ export interface ListJobsFilters {
   sort?: "recent" | "best-match" | "salary-high";
   page: number;
   limit: number;
+  /**
+   * When set to a candidate user ID, jobs the candidate has already applied
+   * to are excluded from the listing. Used by the for-candidate endpoint
+   * when `excludeApplied=true` is passed in the query string.
+   */
+  excludeCandidateApplied?: string;
 }
 
 @Injectable()
@@ -353,6 +359,16 @@ export class JobsRepository {
 
     if (filters.locationCountry) {
       conditions.push(eq(jobsTable.locationCountry, filters.locationCountry));
+    }
+
+    if (filters.excludeCandidateApplied) {
+      conditions.push(
+        sql`NOT EXISTS (
+          SELECT 1 FROM ${applicationsTable}
+          WHERE ${applicationsTable.jobId} = ${jobsTable.id}
+            AND ${applicationsTable.candidateId} = ${filters.excludeCandidateApplied}
+        )`,
+      );
     }
 
     if (conditions.length === 0) return undefined;

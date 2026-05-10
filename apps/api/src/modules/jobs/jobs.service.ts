@@ -374,8 +374,51 @@ export class JobsService {
   // ---------------------------------------------------- CANDIDATE LIST + DETAIL
   // Sprint = same shape as public; Slice 2.6 enriches with match score.
 
-  async listForCandidate(query: ListJobsQueryDto): Promise<ReturnType<JobsService["listPublic"]>> {
-    return this.listPublic(query);
+  async listForCandidate(
+    user: AuthUser,
+    query: ListJobsQueryDto,
+  ): Promise<ReturnType<JobsService["listPublic"]>> {
+    // When the candidate requests excludeApplied, we need a candidate-specific
+    // cache key (keyed by user.id) so two candidates don't share the same
+    // cached list. We also tag with applicationsCandidate so that when the
+    // candidate applies to a new job their cached list is busted immediately.
+    const excludeCandidateApplied = query.excludeApplied ? user.id : undefined;
+    const cacheKey = excludeCandidateApplied
+      ? `jobs:candidate:list:${excludeCandidateApplied}:${this.serializeQuery(query)}`
+      : `jobs:public:list:${this.serializeQuery(query)}`;
+    const tags = excludeCandidateApplied
+      ? [TAGS.jobsPublic(), TAGS.applicationsCandidate(user.id)]
+      : [TAGS.jobsPublic()];
+
+    return this.cacheService.getOrSet({
+      key: cacheKey,
+      ttlSeconds: TTL_SECONDS.hot,
+      tags,
+      telemetryName: "jobs:candidate:list",
+      load: async () => {
+        const filters: ListJobsFilters = {
+          q: query.q,
+          mode: query.mode,
+          experienceLevel: query.experienceLevel,
+          locationCountry: query.locationCountry,
+          status: "published",
+          sort: query.sort === "recent-activity" ? "recent" : query.sort,
+          page: query.page,
+          limit: query.limit,
+          excludeCandidateApplied,
+        };
+        const { rows, total } = await this.repo.list(filters);
+        return {
+          data: rows.map((r) => this.toResponse(r)),
+          meta: {
+            page: query.page,
+            limit: query.limit,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / query.limit)),
+          },
+        };
+      },
+    });
   }
 
   async getForCandidate(id: string): Promise<JobResponseDto> {
@@ -422,6 +465,7 @@ export class JobsService {
       `e=${q.experienceLevel ?? ""}`,
       `c=${q.locationCountry ?? ""}`,
       `s=${q.sort ?? "recent"}`,
+      `xa=${q.excludeApplied ? "1" : "0"}`,
     ].join("|");
   }
 

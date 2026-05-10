@@ -80,6 +80,10 @@ export const listJobsQuerySchema = paginationSchema.extend({
     .optional(),
   status: z.enum(JOB_STATUS).optional(),
   include: z.enum(["stats"]).optional(),
+  // Candidate-only flag: when true, the for-candidate endpoint excludes jobs
+  // the authenticated candidate has already applied to. Ignored on the public
+  // list endpoint (no authenticated user to compare against).
+  excludeApplied: z.coerce.boolean().optional(),
 });
 
 export type ListJobsQuery = z.infer<typeof listJobsQuerySchema>;

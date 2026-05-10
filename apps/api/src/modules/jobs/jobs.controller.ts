@@ -174,8 +174,11 @@ export class JobsController {
       "Candidate list of published jobs (sprint: same as public; Slice 2.6 enriches with match score)",
   })
   @ApiResponse({ status: 200, type: JobListResponseDto })
-  async listForCandidate(@Query() query: ListJobsQueryDto): Promise<JobListResponseDto> {
-    return this.service.listForCandidate(query);
+  async listForCandidate(
+    @CurrentUser() user: AuthUser,
+    @Query() query: ListJobsQueryDto,
+  ): Promise<JobListResponseDto> {
+    return this.service.listForCandidate(user, query);
   }
 
   @Get(":id/for-recruiter")
