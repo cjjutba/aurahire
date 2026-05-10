@@ -50,6 +50,21 @@ export class OffersRepository {
     return row ?? null;
   }
 
+  /**
+   * Most recent offer (by sentAt DESC) for an application — or null if no
+   * offer has ever been sent. Used by ApplicationsService to enforce that
+   * a "hired" transition requires an accepted offer.
+   */
+  async findLatestByApplicationId(applicationId: string): Promise<Offer | null> {
+    const [row] = await this.db
+      .select()
+      .from(offersTable)
+      .where(eq(offersTable.applicationId, applicationId))
+      .orderBy(desc(offersTable.sentAt))
+      .limit(1);
+    return row ?? null;
+  }
+
   async findByCandidateId(candidateId: string): Promise<Offer[]> {
     const rows = await this.db
       .select({ offer: offersTable })
