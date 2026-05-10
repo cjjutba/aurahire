@@ -6,6 +6,8 @@ import { DRIZZLE_CLIENT } from "../db/db.module";
 import { AuditService } from "../audit";
 import { EmailService } from "../email/email.service";
 import { NotificationsService } from "../modules/notifications/notifications.service";
+import { ApplicationsService } from "../modules/applications/applications.service";
+import { ApplicationsRepository } from "../modules/applications/applications.repository";
 
 // AuditService transitively imports jose (ESM); mock it.
 jest.mock("jose", () => ({}));
@@ -34,7 +36,13 @@ function makeDb(rows: ExpiredRow[]) {
   const from = jest.fn().mockReturnValue({ innerJoin });
   const select = jest.fn().mockReturnValue({ from });
 
-  return { select, update, _updateSet: updateSet, _updateWhere: updateWhere };
+  // transaction: execute the callback with a fake tx object so the cron's
+  // inner db.transaction(async tx => { ... }) path is exercised.
+  const transaction = jest.fn().mockImplementation((cb: (tx: unknown) => Promise<void>) =>
+    cb({}),
+  );
+
+  return { select, update, transaction, _updateSet: updateSet, _updateWhere: updateWhere };
 }
 
 describe("ExpireOffersCron", () => {
@@ -42,6 +50,8 @@ describe("ExpireOffersCron", () => {
   let audit: jest.Mocked<Pick<AuditService, "log">>;
   let email: jest.Mocked<Pick<EmailService, "send">>;
   let notifications: jest.Mocked<Pick<NotificationsService, "emit">>;
+  let applicationsServiceMock: jest.Mocked<Pick<ApplicationsService, "transitionFromSystem">>;
+  let applicationsRepoMock: jest.Mocked<Pick<ApplicationsRepository, "findByIdForUpdate">>;
   let db: ReturnType<typeof makeDb>;
 
   async function setup(rows: ExpiredRow[]) {
@@ -49,6 +59,8 @@ describe("ExpireOffersCron", () => {
     audit = { log: jest.fn() };
     email = { send: jest.fn().mockResolvedValue(undefined) };
     notifications = { emit: jest.fn() };
+    applicationsServiceMock = { transitionFromSystem: jest.fn().mockResolvedValue({}) };
+    applicationsRepoMock = { findByIdForUpdate: jest.fn() };
     const moduleRef = await Test.createTestingModule({
       providers: [
         ExpireOffersCron,
@@ -57,6 +69,8 @@ describe("ExpireOffersCron", () => {
         { provide: EmailService, useValue: email },
         { provide: ConfigService, useValue: { get: () => undefined } },
         { provide: NotificationsService, useValue: notifications },
+        { provide: ApplicationsService, useValue: applicationsServiceMock },
+        { provide: ApplicationsRepository, useValue: applicationsRepoMock },
       ],
     }).compile();
     cron = moduleRef.get(ExpireOffersCron);
@@ -146,5 +160,40 @@ describe("ExpireOffersCron", () => {
     // Email was attempted twice; the second succeeded so notify fired for that row.
     expect(email.send).toHaveBeenCalledTimes(2);
     expect(result.affectedRows).toBe(2);
+  });
+
+  it("auto-transitions the application to offer_declined when app is still at offer", async () => {
+    await setup([makeRow({ offerId: "o1" })]);
+    applicationsRepoMock.findByIdForUpdate.mockResolvedValue({
+      id: "app-o1",
+      status: "offer",
+      jobId: "job-o1",
+      candidateId: "cand-o1",
+    } as never);
+
+    await cron.execute();
+
+    expect(applicationsServiceMock.transitionFromSystem).toHaveBeenCalledWith(
+      null,
+      expect.any(String),
+      "offer_declined",
+      "Offer expired without response",
+      {},
+      expect.anything(),
+    );
+  });
+
+  it("skips application transition when app is no longer at offer", async () => {
+    await setup([makeRow({ offerId: "o1" })]);
+    applicationsRepoMock.findByIdForUpdate.mockResolvedValue({
+      id: "app-o1",
+      status: "rejected",
+      jobId: "job-o1",
+      candidateId: "cand-o1",
+    } as never);
+
+    await cron.execute();
+
+    expect(applicationsServiceMock.transitionFromSystem).not.toHaveBeenCalled();
   });
 });

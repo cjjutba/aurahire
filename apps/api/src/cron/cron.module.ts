@@ -12,9 +12,10 @@ import { InterviewFeedbackDueCron } from "./interview-feedback-due.cron";
 import { InterviewAutocompleteCron } from "./interview-autocomplete.cron";
 import { CronAdminController } from "./cron-admin.controller";
 import { NotificationsModule } from "../modules/notifications/notifications.module";
+import { ApplicationsModule } from "../modules/applications/applications.module";
 
 @Module({
-  imports: [ScheduleModule.forRoot(), NotificationsModule],
+  imports: [ScheduleModule.forRoot(), NotificationsModule, ApplicationsModule],
   controllers: [CronAdminController],
   providers: [
     ArchivePastDeadlineJobsCron,

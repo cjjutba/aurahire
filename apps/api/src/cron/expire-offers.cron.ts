@@ -15,6 +15,8 @@ import { DRIZZLE_CLIENT, type DrizzleClient } from "../db/db.module";
 import { EmailService } from "../email/email.service";
 import { OfferExpiredEmail } from "../email/templates/offer-expired";
 import { NotificationsService } from "../modules/notifications/notifications.service";
+import { ApplicationsService } from "../modules/applications/applications.service";
+import { ApplicationsRepository, type ApplicationsTx } from "../modules/applications/applications.repository";
 
 const CRON_NAME = "expire-offers";
 // audit_logs.entity_id is NOT NULL UUID; sentinel for cron-level entries.
@@ -30,6 +32,8 @@ export class ExpireOffersCron {
     private readonly email: EmailService,
     private readonly config: ConfigService,
     private readonly notifications: NotificationsService,
+    private readonly applicationsService: ApplicationsService,
+    private readonly applicationsRepo: ApplicationsRepository,
   ) {}
 
   /** Hourly at minute 0. */
@@ -154,6 +158,40 @@ export class ExpireOffersCron {
               candidateId: c.candidateId,
               candidateName: c.candidateName,
               companyName: c.companyName,
+            },
+          });
+
+          // Auto-advance the application to offer_declined so it leaves the
+          // recruiter's offer pipeline. Wrapped in its own transaction with
+          // FOR UPDATE so a race with a recruiter action serialises.
+          await this.db.transaction(async (tx) => {
+            const lockedApp = await this.applicationsRepo.findByIdForUpdate(
+              tx as ApplicationsTx,
+              c.applicationId,
+            );
+            if (!lockedApp || lockedApp.status !== "offer") return;
+
+            await this.applicationsService.transitionFromSystem(
+              null,
+              c.applicationId,
+              "offer_declined",
+              "Offer expired without response",
+              {},
+              tx as ApplicationsTx,
+            );
+          });
+
+          // Distinct audit row so reports can separate decline vs expiry causes.
+          await this.audit.log({
+            actorId: null,
+            actorType: "system",
+            action: AUDIT_ACTIONS.APPLICATION_AUTO_TRANSITION_OFFER_EXPIRED,
+            entityType: "application",
+            entityId: c.applicationId,
+            details: {
+              offerId: c.offerId,
+              jobId: c.jobId,
+              expiredAt: new Date().toISOString(),
             },
           });
         } catch (innerErr) {
