@@ -34,4 +34,33 @@ describe("application state machine", () => {
       expect(getNextStatuses(t).length).toBe(0);
     }
   });
+
+  it("allows offer → offer_declined (system-initiated)", () => {
+    expect(canTransition("offer", "offer_declined")).toBe(true);
+  });
+
+  it("allows offer_declined → offer (recruiter re-extend)", () => {
+    expect(canTransition("offer_declined", "offer")).toBe(true);
+  });
+
+  it("allows offer_declined → rejected | withdrawn", () => {
+    expect(canTransition("offer_declined", "rejected")).toBe(true);
+    expect(canTransition("offer_declined", "withdrawn")).toBe(true);
+  });
+
+  it("disallows offer_declined → hired (must re-extend + accept first)", () => {
+    expect(canTransition("offer_declined", "hired")).toBe(false);
+  });
+
+  it("disallows offer_declined → applied | screening | interview", () => {
+    expect(canTransition("offer_declined", "applied")).toBe(false);
+    expect(canTransition("offer_declined", "screening")).toBe(false);
+    expect(canTransition("offer_declined", "interview")).toBe(false);
+  });
+
+  it("exports STATUSES_REQUIRING_ACCEPTED_OFFER containing 'hired'", () => {
+    // Imported lazily so the failing test guards the export shape too.
+    const sm = require("./state-machine") as typeof import("./state-machine");
+    expect(sm.STATUSES_REQUIRING_ACCEPTED_OFFER).toContain("hired");
+  });
 });
