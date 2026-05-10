@@ -10,6 +10,7 @@ export const APPLICATION_STATUS = [
   "screening",
   "interview",
   "offer",
+  "offer_declined",
   "hired",
   "rejected",
   "withdrawn",
@@ -96,6 +97,11 @@ export const SCORE_COMPONENT_MATCH = ["skills", "experience", "education", "cult
 export const COMPANY_MEMBER_ROLE = ["owner", "admin", "recruiter"] as const;
 export const COMPANY_MEMBER_STATUS = ["invited", "active", "suspended", "left"] as const;
 
+// In-app feedback — user-submitted via the sidebar profile popover.
+export const FEEDBACK_TYPE = ["bug", "suggestion", "praise", "question", "other"] as const;
+export const FEEDBACK_SEVERITY = ["low", "normal", "high"] as const;
+export const FEEDBACK_STATUS = ["new", "reviewing", "resolved", "dismissed"] as const;
+
 // TypeScript types derived from the const tuples
 export type UserRole = (typeof USER_ROLES)[number];
 export type UserStatus = (typeof USER_STATUS)[number];
@@ -123,6 +129,9 @@ export type EvidenceRelevance = (typeof EVIDENCE_RELEVANCE)[number];
 export type ScoreType = (typeof SCORE_TYPE)[number];
 export type CompanyMemberRole = (typeof COMPANY_MEMBER_ROLE)[number];
 export type CompanyMemberStatus = (typeof COMPANY_MEMBER_STATUS)[number];
+export type FeedbackType = (typeof FEEDBACK_TYPE)[number];
+export type FeedbackSeverity = (typeof FEEDBACK_SEVERITY)[number];
+export type FeedbackStatus = (typeof FEEDBACK_STATUS)[number];
 
 // Notification system — used by `notificationsTable` and `notificationPreferencesTable`.
 export const NOTIFICATION_EVENT_TYPE = [
