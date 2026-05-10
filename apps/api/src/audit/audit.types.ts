@@ -31,6 +31,7 @@ export interface AuditLogInput {
  */
 export const AUDIT_ACTIONS = {
   USER_REGISTERED_CANDIDATE: "user.registered.candidate",
+  USER_ONBOARDING_SKIPPED_ANALYZING: "user.onboarding.skipped_analyzing",
   USER_REGISTERED_RECRUITER: "user.registered.recruiter",
   USER_LOGIN: "user.login",
   USER_LOGOUT: "user.logout",
@@ -99,6 +100,10 @@ export const AUDIT_ACTIONS = {
   OFFER_EXPIRY_REMINDER_RUN: "cron.offer_expiry_reminder.executed",
   INTERVIEW_FEEDBACK_DUE_RUN: "cron.interview_feedback_due.executed",
   SYSTEM_AI_SCORING_FAILURE_NOTIFIED: "system.ai_scoring_failure_notified",
+  // Feedback
+  FEEDBACK_SUBMITTED: "feedback.submitted",
+  FEEDBACK_STATUS_CHANGED: "feedback.status_changed",
+  FEEDBACK_NOTE_UPDATED: "feedback.note_updated",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS] | string;
