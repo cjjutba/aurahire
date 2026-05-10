@@ -20,6 +20,7 @@ import { UpdateCandidatePersonalDto } from "./dto/personal.dto";
 import { UpdateCandidatePreferencesDto } from "./dto/preferences.dto";
 import { CandidateProfileEnvelopeDto } from "./dto/candidate-profile-response.dto";
 import { CompleteOnboardingEnvelopeDto } from "./dto/complete-onboarding-response.dto";
+import { OnboardingSkippedAnalyzingDto } from "./dto/onboarding-skipped.dto";
 import { CandidateProfilesService } from "./candidate-profiles.service";
 
 @ApiTags("candidate-profiles")
@@ -110,6 +111,27 @@ export class CandidateProfilesController {
   ): Promise<CompleteOnboardingEnvelopeDto> {
     const data = await this.service.completeOnboarding(user, this.requestMeta(req));
     return { data };
+  }
+
+  @Post("me/onboarding/skipped-analyzing")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles("candidate")
+  @ApiOperation({
+    summary: "Record that the candidate skipped the analyzing screen",
+    description:
+      "Pure telemetry. Writes an audit row capturing whether the Profile Score had landed and how many match-preview events had streamed in by the time of the skip. Returns 204.",
+  })
+  @ApiResponse({ status: 204, description: "Skip recorded" })
+  async recordOnboardingSkipped(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: OnboardingSkippedAnalyzingDto,
+    @Req() req: FastifyRequest,
+  ): Promise<void> {
+    await this.service.recordOnboardingSkipped(
+      user,
+      { scoreReady: dto.scoreReady, previewsReady: dto.previewsReady },
+      this.requestMeta(req),
+    );
   }
 
   private requestMeta(req: FastifyRequest): {
