@@ -43,6 +43,9 @@ import {
   NOTIFICATION_MODE,
   NOTIFICATION_SCOPE,
   INTERVIEW_RECOMMENDATION,
+  FEEDBACK_TYPE,
+  FEEDBACK_SEVERITY,
+  FEEDBACK_STATUS,
 } from "./enums";
 
 // ============================================================================
@@ -683,6 +686,59 @@ export const auditLogsTable = pgTable(
 );
 
 // ============================================================================
+// FEEDBACK
+// ============================================================================
+//
+// In-app feedback rows submitted by any signed-in user via the sidebar
+// profile popover. The submitter's role + active company are snapshotted at
+// submission time so admin reports stay coherent even if the user later
+// switches role or leaves a tenant. The submitterId is set null on user
+// delete so the row survives forensically — submitterEmail is captured at
+// write time for the same reason.
+
+export const feedbackTable = pgTable(
+  "feedback",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    submitterId: uuid("submitter_id").references(() => profilesTable.id, {
+      onDelete: "set null",
+    }),
+    submitterEmail: text("submitter_email").notNull(),
+    submitterName: text("submitter_name").notNull(),
+    submitterRole: text("submitter_role", { enum: USER_ROLES }).notNull(),
+    companyId: uuid("company_id").references(() => companiesTable.id, {
+      onDelete: "set null",
+    }),
+    type: text("type", { enum: FEEDBACK_TYPE }).notNull(),
+    severity: text("severity", { enum: FEEDBACK_SEVERITY }),
+    subject: text("subject").notNull(),
+    message: text("message").notNull(),
+    pageUrl: text("page_url"),
+    userAgent: text("user_agent"),
+    appVersion: text("app_version"),
+    status: text("status", { enum: FEEDBACK_STATUS }).notNull().default("new"),
+    adminNote: text("admin_note"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolvedBy: uuid("resolved_by").references(() => profilesTable.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    statusCreatedIdx: index("feedback_status_created_idx").on(t.status, t.createdAt),
+    typeIdx: index("feedback_type_idx").on(t.type),
+    submitterIdx: index("feedback_submitter_idx").on(t.submitterId),
+    companyIdx: index("feedback_company_idx").on(t.companyId),
+    createdIdx: index("feedback_created_idx").on(t.createdAt),
+    severityCheck: check(
+      "feedback_severity_only_when_bug",
+      sql`(${t.type} = 'bug' AND ${t.severity} IS NOT NULL) OR (${t.type} <> 'bug' AND ${t.severity} IS NULL)`,
+    ),
+  }),
+);
+
+// ============================================================================
 // NOTIFICATIONS
 // ============================================================================
 
@@ -781,3 +837,5 @@ export type Notification = typeof notificationsTable.$inferSelect;
 export type NewNotification = typeof notificationsTable.$inferInsert;
 export type NotificationPreference = typeof notificationPreferencesTable.$inferSelect;
 export type NewNotificationPreference = typeof notificationPreferencesTable.$inferInsert;
+export type Feedback = typeof feedbackTable.$inferSelect;
+export type NewFeedback = typeof feedbackTable.$inferInsert;

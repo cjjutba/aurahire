@@ -34,6 +34,7 @@ import { NotificationPreferencesModule } from "./modules/notification-preference
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { OffersModule } from "./modules/offers/offers.module";
 import { AdminModule } from "./modules/admin/admin.module";
+import { FeedbackModule } from "./modules/feedback/feedback.module";
 import { RealtimeModule } from "./realtime";
 import { QueueModule } from "./queue";
 import { CronModule } from "./cron";
@@ -134,6 +135,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     NotificationsModule,
     OffersModule,
     AdminModule,
+    FeedbackModule,
     RealtimeModule,
     HealthModule,
     AuthModule,

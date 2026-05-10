@@ -2,25 +2,22 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   BookOpen,
   HelpCircle,
   LogOut,
-  Monitor,
-  Moon,
   Settings,
   Smile,
-  Sun,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import type { UserRole } from "@aurahire/shared";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FeedbackModalClient } from "@/components/portal/feedback-modal-client";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { setSessionOnlyMarker } from "@/lib/auth/cookie-persistence.client";
 import { setActiveCompanyId } from "@/lib/active-company";
 import { toastApiError, toastSuccess } from "@/lib/toast";
-import { cn } from "@/lib/utils";
 
 export interface SidebarProfilePopoverUser {
   id: string;
@@ -48,10 +45,11 @@ const HELP_PATH: Record<UserRole, string> = {
   admin: "/admin/help",
 };
 
-const HOW_IT_WORKS_PATH = "/how-it-works";
-
-const FEEDBACK_MAILTO =
-  "mailto:cjjutbaofficial@gmail.com?subject=AuraHire%20feedback";
+const HOW_IT_WORKS_PATH: Record<UserRole, string> = {
+  candidate: "/candidate/how-it-works",
+  recruiter: "/recruiter/how-it-works",
+  admin: "/admin/how-it-works",
+};
 
 /**
  * Profile popover content — used by both the avatar/name trigger and the
@@ -64,6 +62,7 @@ export function SidebarProfilePopoverBody({
 }: SidebarProfilePopoverBodyProps) {
   const router = useRouter();
   const initials = getInitials(user.name);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   async function handleSignOut() {
     const supabase = createSupabaseBrowserClient();
@@ -110,18 +109,17 @@ export function SidebarProfilePopoverBody({
       </div>
 
       <div className="space-y-1">
-        <a
-          href={FEEDBACK_MAILTO}
-          className="flex items-center justify-between rounded-[var(--radius-sm)] px-2 py-2 text-sm text-[var(--color-ink)] transition hover:bg-[var(--color-surface-soft)]"
+        <button
+          type="button"
+          onClick={() => setFeedbackOpen(true)}
+          className="flex w-full items-center justify-between rounded-[var(--radius-sm)] px-2 py-2 text-left text-sm text-[var(--color-ink)] transition hover:bg-[var(--color-surface-soft)]"
         >
           <span>Send feedback</span>
           <Smile className="h-4 w-4 text-[var(--color-muted)]" />
-        </a>
-
-        <ThemeRow />
+        </button>
 
         <Link
-          href={HOW_IT_WORKS_PATH}
+          href={HOW_IT_WORKS_PATH[user.role]}
           className="flex items-center justify-between rounded-[var(--radius-sm)] px-2 py-2 text-sm text-[var(--color-ink)] transition hover:bg-[var(--color-surface-soft)]"
         >
           <span>How it works</span>
@@ -149,43 +147,11 @@ export function SidebarProfilePopoverBody({
       <div className="mt-4 border-t border-[var(--color-hairline-soft)] pt-3">
         <AiStatusPill />
       </div>
-    </div>
-  );
-}
 
-function ThemeRow() {
-  const { theme, setTheme } = useTheme();
-  const active = theme ?? "system";
-  const buttons: Array<{ value: string; label: string; Icon: typeof Sun }> = [
-    { value: "system", label: "System theme", Icon: Monitor },
-    { value: "light", label: "Light theme", Icon: Sun },
-    { value: "dark", label: "Dark theme", Icon: Moon },
-  ];
-  return (
-    <div className="flex items-center justify-between rounded-[var(--radius-sm)] px-2 py-2 text-sm text-[var(--color-ink)]">
-      <span>Theme</span>
-      <div className="flex items-center gap-1">
-        {buttons.map(({ value, label, Icon }) => {
-          const isActive = active === value;
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setTheme(value)}
-              aria-pressed={isActive}
-              aria-label={label}
-              className={cn(
-                "rounded-full p-1 transition",
-                isActive
-                  ? "bg-[var(--color-surface-strong)] text-[var(--color-ink)]"
-                  : "text-[var(--color-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-ink)]",
-              )}
-            >
-              <Icon className="h-4 w-4" />
-            </button>
-          );
-        })}
-      </div>
+      <FeedbackModalClient
+        open={feedbackOpen}
+        onOpenChange={setFeedbackOpen}
+      />
     </div>
   );
 }

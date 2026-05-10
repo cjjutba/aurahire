@@ -33,10 +33,6 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/candidate",
 }));
 
-vi.mock("next-themes", () => ({
-  useTheme: () => ({ theme: "system", setTheme: vi.fn() }),
-}));
-
 vi.mock("@/lib/auth/client", () => ({
   createSupabaseBrowserClient: () => ({
     auth: { signOut: vi.fn(async () => ({ error: null })) },

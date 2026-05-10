@@ -17,6 +17,7 @@ export * from "./schemas/interview-venues";
 export * from "./schemas/offers";
 export * from "./schemas/companies";
 export * from "./schemas/notifications";
+export * from "./schemas/feedback";
 export * from "./onboarding/index";
 
 // Enums

@@ -30,6 +30,9 @@ export {
   SCORE_COMPONENT_MATCH,
   COMPANY_MEMBER_ROLE,
   COMPANY_MEMBER_STATUS,
+  FEEDBACK_TYPE,
+  FEEDBACK_SEVERITY,
+  FEEDBACK_STATUS,
 } from "@aurahire/db";
 
 export type {
@@ -59,4 +62,7 @@ export type {
   ScoreType,
   CompanyMemberRole,
   CompanyMemberStatus,
+  FeedbackType,
+  FeedbackSeverity,
+  FeedbackStatus,
 } from "@aurahire/db";

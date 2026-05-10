@@ -7,13 +7,13 @@ import { AlertTriangle, Building2 } from "lucide-react";
 
 import { toastSuccess, toastApiError } from "@/lib/toast";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/select";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { getActiveCompanyId } from "@/lib/active-company";
-import { useConfirm } from "@/components/providers/confirm-provider";
 import { queryKeys } from "@/lib/query";
 import { clientApiFetch } from "@/hooks/_client-fetch";
 
@@ -89,13 +88,12 @@ function FieldLabel({
 // Component
 // ---------------------------------------------------------------------------
 
-export function ScheduleInterviewModalClient({
+export function ScheduleInterviewSheetClient({
   applicationId,
   open,
   onOpenChange,
 }: Props) {
   const router = useRouter();
-  const confirm = useConfirm();
   const companyId = getActiveCompanyId();
 
   // ── Core scheduling fields ────────────────────────────────────────────────
@@ -265,15 +263,6 @@ export function ScheduleInterviewModalClient({
       return;
     }
 
-    const ok = await confirm({
-      title: "Schedule this interview?",
-      description:
-        "The candidate will receive an email with the date, time, and venue details.",
-      confirmLabel: "Schedule interview",
-      variant: "info",
-    });
-    if (!ok) return;
-
     setWorking(true);
     try {
       const supabase = createSupabaseBrowserClient();
@@ -335,213 +324,219 @@ export function ScheduleInterviewModalClient({
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Schedule Interview</DialogTitle>
-          <DialogDescription>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col gap-0 bg-[var(--color-canvas)] p-0 sm:max-w-2xl"
+      >
+        <SheetHeader className="border-b border-[var(--color-hairline)] p-6">
+          <SheetTitle className="text-base font-semibold text-[var(--color-ink)]">
+            Schedule Interview
+          </SheetTitle>
+          <SheetDescription className="text-sm text-[var(--color-body)]">
             Candidate will receive an email with the date, time, and venue
             details.
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
-        <div className="space-y-5">
-          {/* ── Saved venue selector ──────────────────────────────────────── */}
-          {venues.length > 0 && (
-            <div>
-              <FieldLabel>Use saved venue</FieldLabel>
-              <Select onValueChange={applyVenue}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a venue template…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {venues.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      <span className="flex items-center gap-2">
-                        <Building2 className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted)]" />
-                        {v.label}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="mt-1 text-[11px] text-[var(--color-muted)]">
-                Selecting a venue autofills the fields below. You can edit them
-                before submitting.
-              </p>
-            </div>
-          )}
-
-          {/* ── Date, time, duration ──────────────────────────────────────── */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <FieldLabel required>Date &amp; Time</FieldLabel>
-              <Input
-                type="datetime-local"
-                value={scheduledAt}
-                onChange={(e) => {
-                  setScheduledAt(e.target.value);
-                  setConflicts(null);
-                }}
-              />
-            </div>
-            <div>
-              <FieldLabel>Duration (minutes)</FieldLabel>
-              <Input
-                type="number"
-                min={15}
-                max={240}
-                value={durationMinutes}
-                onChange={(e) =>
-                  setDurationMinutes(Number(e.target.value) || 60)
-                }
-              />
-            </div>
-          </div>
-
-          {/* ── Conflict chips ────────────────────────────────────────────── */}
-          {conflicts?.hasConflicts && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-score-mid-soft)] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-score-mid)]">
-                <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                Scheduling conflict detected — you may still proceed
-              </span>
-            </div>
-          )}
-
-          {/* ── Venue fields ──────────────────────────────────────────────── */}
-          <div>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-              Venue Details
-            </p>
-            <div className="space-y-3">
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="space-y-6">
+            {/* ── Saved venue selector ─────────────────────────────────── */}
+            {venues.length > 0 && (
               <div>
-                <FieldLabel required>Venue name</FieldLabel>
-                <Input
-                  value={venueName}
-                  onChange={(e) => setVenueName(e.target.value)}
-                  placeholder="e.g. AuraHire HQ — Floor 3"
-                />
-              </div>
-              <div>
-                <FieldLabel required>Address</FieldLabel>
-                <Input
-                  value={addressLine}
-                  onChange={(e) => setAddressLine(e.target.value)}
-                  placeholder="123 Main St, City, Country"
-                />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <FieldLabel>Room / Floor</FieldLabel>
-                  <Input
-                    value={roomOrFloor}
-                    onChange={(e) => setRoomOrFloor(e.target.value)}
-                    placeholder="e.g. Room 3B"
-                  />
-                </div>
-                <div>
-                  <FieldLabel>Map URL</FieldLabel>
-                  <Input
-                    value={mapUrl}
-                    onChange={(e) => {
-                      setMapUrl(e.target.value);
-                      setMapUrlError(validateMapUrl(e.target.value));
-                    }}
-                    placeholder="https://maps.google.com/…"
-                  />
-                  {mapUrlError && (
-                    <p className="mt-1 text-[11px] text-[var(--color-status-danger)]">
-                      {mapUrlError}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Candidate guidance ────────────────────────────────────────── */}
-          <div>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-              Candidate Guidance
-            </p>
-            <div className="space-y-3">
-              <div>
-                <FieldLabel>Reporting instructions</FieldLabel>
-                <textarea
-                  value={reportingInstructions}
-                  onChange={(e) => setReportingInstructions(e.target.value)}
-                  rows={3}
-                  placeholder="Ask for John at reception. Bring photo ID."
-                  className="w-full rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
-                />
-              </div>
-              <div>
-                <FieldLabel>What to bring</FieldLabel>
-                <textarea
-                  value={whatToBring}
-                  onChange={(e) => setWhatToBring(e.target.value)}
-                  rows={2}
-                  placeholder="Portfolio, references, government-issued ID…"
-                  className="w-full rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ── Interviewer ───────────────────────────────────────────────── */}
-          <div>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-              Interviewer
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <FieldLabel>Name</FieldLabel>
-                <Input
-                  value={interviewerName}
-                  onChange={(e) => setInterviewerName(e.target.value)}
-                  placeholder="Your name"
-                />
-              </div>
-              <div>
-                <FieldLabel>Title</FieldLabel>
-                <Input
-                  value={interviewerTitle}
-                  onChange={(e) => setInterviewerTitle(e.target.value)}
-                  placeholder="e.g. Engineering Manager"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ── Save as venue template ────────────────────────────────────── */}
-          <div className="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-3">
-            <label className="flex cursor-pointer items-start gap-2.5">
-              <input
-                type="checkbox"
-                checked={saveAsTemplate}
-                onChange={(e) => setSaveAsTemplate(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded accent-[var(--color-primary)]"
-              />
-              <span className="text-sm text-[var(--color-body)]">
-                Save as venue template for future interviews
-              </span>
-            </label>
-            {saveAsTemplate && (
-              <div className="mt-3">
-                <FieldLabel required>Template label</FieldLabel>
-                <Input
-                  value={templateLabel}
-                  onChange={(e) => setTemplateLabel(e.target.value)}
-                  placeholder="e.g. Main Office — Conference Room A"
-                  className="bg-[var(--color-canvas)]"
-                />
+                <FieldLabel>Use saved venue</FieldLabel>
+                <Select onValueChange={applyVenue}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a venue template…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {venues.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        <span className="flex items-center gap-2">
+                          <Building2 className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted)]" />
+                          {v.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-[11px] text-[var(--color-muted)]">
+                  Selecting a venue autofills the fields below. You can edit
+                  them before submitting.
+                </p>
               </div>
             )}
+
+            {/* ── Date, time, duration ─────────────────────────────────── */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <FieldLabel required>Date &amp; Time</FieldLabel>
+                <Input
+                  type="datetime-local"
+                  value={scheduledAt}
+                  onChange={(e) => {
+                    setScheduledAt(e.target.value);
+                    setConflicts(null);
+                  }}
+                />
+              </div>
+              <div>
+                <FieldLabel>Duration (minutes)</FieldLabel>
+                <Input
+                  type="number"
+                  min={15}
+                  max={240}
+                  value={durationMinutes}
+                  onChange={(e) =>
+                    setDurationMinutes(Number(e.target.value) || 60)
+                  }
+                />
+              </div>
+            </div>
+
+            {/* ── Conflict chips ───────────────────────────────────────── */}
+            {conflicts?.hasConflicts && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-score-mid-soft)] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-score-mid)]">
+                  <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+                  Scheduling conflict detected — you may still proceed
+                </span>
+              </div>
+            )}
+
+            {/* ── Venue fields ─────────────────────────────────────────── */}
+            <div>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Venue Details
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <FieldLabel required>Venue name</FieldLabel>
+                  <Input
+                    value={venueName}
+                    onChange={(e) => setVenueName(e.target.value)}
+                    placeholder="e.g. AuraHire HQ — Floor 3"
+                  />
+                </div>
+                <div>
+                  <FieldLabel required>Address</FieldLabel>
+                  <Input
+                    value={addressLine}
+                    onChange={(e) => setAddressLine(e.target.value)}
+                    placeholder="123 Main St, City, Country"
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <FieldLabel>Room / Floor</FieldLabel>
+                    <Input
+                      value={roomOrFloor}
+                      onChange={(e) => setRoomOrFloor(e.target.value)}
+                      placeholder="e.g. Room 3B"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel>Map URL</FieldLabel>
+                    <Input
+                      value={mapUrl}
+                      onChange={(e) => {
+                        setMapUrl(e.target.value);
+                        setMapUrlError(validateMapUrl(e.target.value));
+                      }}
+                      placeholder="https://maps.google.com/…"
+                    />
+                    {mapUrlError && (
+                      <p className="mt-1 text-[11px] text-[var(--color-status-danger)]">
+                        {mapUrlError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Candidate guidance ───────────────────────────────────── */}
+            <div>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Candidate Guidance
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <FieldLabel>Reporting instructions</FieldLabel>
+                  <textarea
+                    value={reportingInstructions}
+                    onChange={(e) => setReportingInstructions(e.target.value)}
+                    rows={3}
+                    placeholder="Ask for John at reception. Bring photo ID."
+                    className="w-full rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
+                  />
+                </div>
+                <div>
+                  <FieldLabel>What to bring</FieldLabel>
+                  <textarea
+                    value={whatToBring}
+                    onChange={(e) => setWhatToBring(e.target.value)}
+                    rows={2}
+                    placeholder="Portfolio, references, government-issued ID…"
+                    className="w-full rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ── Interviewer ──────────────────────────────────────────── */}
+            <div>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Interviewer
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <FieldLabel>Name</FieldLabel>
+                  <Input
+                    value={interviewerName}
+                    onChange={(e) => setInterviewerName(e.target.value)}
+                    placeholder="Your name"
+                  />
+                </div>
+                <div>
+                  <FieldLabel>Title</FieldLabel>
+                  <Input
+                    value={interviewerTitle}
+                    onChange={(e) => setInterviewerTitle(e.target.value)}
+                    placeholder="e.g. Engineering Manager"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ── Save as venue template (flat, no inset card) ─────────── */}
+            <div>
+              <label className="flex cursor-pointer items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  checked={saveAsTemplate}
+                  onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded accent-[var(--color-primary)]"
+                />
+                <span className="text-sm text-[var(--color-body)]">
+                  Save as venue template for future interviews
+                </span>
+              </label>
+              {saveAsTemplate && (
+                <div className="mt-3">
+                  <FieldLabel required>Template label</FieldLabel>
+                  <Input
+                    value={templateLabel}
+                    onChange={(e) => setTemplateLabel(e.target.value)}
+                    placeholder="e.g. Main Office — Conference Room A"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <DialogFooter>
+        <SheetFooter className="flex-row justify-end gap-2 border-t border-[var(--color-hairline)] p-4">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -551,14 +546,16 @@ export function ScheduleInterviewModalClient({
           </Button>
           <Button
             onClick={submit}
-            disabled={working || !scheduledAt || !venueName.trim() || !addressLine.trim()}
+            disabled={
+              working || !scheduledAt || !venueName.trim() || !addressLine.trim()
+            }
             className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
           >
             {working && <ButtonSpinner />}
             {working ? "Scheduling…" : "Schedule interview"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

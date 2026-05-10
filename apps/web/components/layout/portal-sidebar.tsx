@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   ScrollText,
   SlidersHorizontal,
+  MessageSquare,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { UserRole } from "@aurahire/shared";
@@ -116,6 +117,7 @@ const NAV_SECTIONS: Record<UserRole, NavSection[]> = {
         { href: "/admin/audit", label: "Audit Log", icon: ScrollText },
         { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
         { href: "/admin/bias-monitor", label: "Bias Monitor", icon: ShieldAlert },
+        { href: "/admin/feedback", label: "Feedback", icon: MessageSquare },
       ],
     },
   ],
