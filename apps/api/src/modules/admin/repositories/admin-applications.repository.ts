@@ -40,6 +40,7 @@ export interface ListAdminApplicationsFilters {
     | "screening"
     | "interview"
     | "offer"
+    | "offer_declined"
     | "hired"
     | "rejected"
     | "withdrawn";
