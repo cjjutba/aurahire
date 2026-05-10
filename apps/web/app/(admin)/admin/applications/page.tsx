@@ -64,8 +64,10 @@ export default async function AdminApplicationsPage({ searchParams }: PageProps)
 
   if (!res.ok) {
     return (
-      <div className="text-[var(--color-status-danger)]">
-        Failed to load applications.
+      <div className="mx-auto max-w-[1280px]">
+        <p className="text-sm text-[var(--color-status-danger)]">
+          Failed to load applications.
+        </p>
       </div>
     );
   }

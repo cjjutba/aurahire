@@ -82,8 +82,10 @@ export default async function AuditPage({ searchParams }: PageProps) {
   ]);
   if (!res.ok) {
     return (
-      <div className="text-[var(--color-status-danger)]">
-        Failed to load audit log.
+      <div className="mx-auto max-w-[1280px]">
+        <p className="text-sm text-[var(--color-status-danger)]">
+          Failed to load audit log.
+        </p>
       </div>
     );
   }

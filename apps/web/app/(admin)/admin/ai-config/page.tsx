@@ -57,8 +57,10 @@ export default async function AiConfigPage() {
       );
     }
     return (
-      <div className="text-[var(--color-status-danger)]">
-        Failed to load scoring config.
+      <div className="mx-auto max-w-[1280px]">
+        <p className="text-sm text-[var(--color-status-danger)]">
+          Failed to load scoring config.
+        </p>
       </div>
     );
   }

@@ -79,8 +79,10 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   );
   if (!res.ok) {
     return (
-      <div className="text-[var(--color-status-danger)]">
-        Failed to load analytics.
+      <div className="mx-auto max-w-[1280px]">
+        <p className="text-sm text-[var(--color-status-danger)]">
+          Failed to load analytics.
+        </p>
       </div>
     );
   }

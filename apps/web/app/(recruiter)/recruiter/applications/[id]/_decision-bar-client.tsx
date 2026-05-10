@@ -151,6 +151,14 @@ export function DecisionBarClient({
         return;
       }
       toastSuccess("Status updated");
+      // When advancing to "interview" we hand off to the Interviews section,
+      // which auto-opens the schedule modal on `?schedule=1`. The query param
+      // survives router.refresh() so the modal pops without lifting state.
+      if (newStatus === "interview") {
+        router.replace(
+          `/recruiter/applications/${applicationId}?schedule=1`,
+        );
+      }
       router.refresh();
     } finally {
       setPending(null);

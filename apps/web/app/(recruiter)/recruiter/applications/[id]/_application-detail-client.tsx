@@ -2,7 +2,13 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ChevronRight, Sparkles, AlertTriangle, User2 } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  ChevronRight,
+  Sparkles,
+  User2,
+} from "lucide-react";
 
 import {
   ScoreDashboard,
@@ -133,6 +139,8 @@ export function RecruiterApplicationDetailClient({
   const initials = getInitials(candidateName);
   const latestInterview = useMemo(() => findLatestInterview(interviews), [interviews]);
   const latestInterviewRecommendation = latestInterview?.recommendation ?? null;
+  const showSchedulePrompt =
+    app.status === "interview" && interviews.length === 0;
 
   const appliedAt = useMemo(
     () =>
@@ -230,6 +238,33 @@ export function RecruiterApplicationDetailClient({
           </div>
         </div>
       </header>
+
+      {showSchedulePrompt && (
+        <div className="flex flex-wrap items-start justify-between gap-3 rounded-[var(--radius-lg)] bg-[var(--color-primary-soft)] px-4 py-3">
+          <div className="flex items-start gap-3">
+            <CalendarClock
+              className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-primary)]"
+              aria-hidden
+            />
+            <div>
+              <p className="text-sm font-semibold text-[var(--color-ink)]">
+                Candidate is in Interview stage
+              </p>
+              <p className="text-sm text-[var(--color-body)]">
+                Schedule the first interview to send the candidate a calendar
+                invite, venue details, and reporting instructions.
+              </p>
+            </div>
+          </div>
+          <Link
+            href={`/recruiter/applications/${app.id}?schedule=1`}
+            replace
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
+          >
+            Schedule interview
+          </Link>
+        </div>
+      )}
     </div>
   );
 

@@ -68,8 +68,10 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
   );
   if (!res.ok) {
     return (
-      <div className="text-[var(--color-status-danger)]">
-        Failed to load bias monitor.
+      <div className="mx-auto max-w-[1280px]">
+        <p className="text-sm text-[var(--color-status-danger)]">
+          Failed to load bias monitor.
+        </p>
       </div>
     );
   }

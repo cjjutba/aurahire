@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ChevronDown,
@@ -349,11 +349,28 @@ export function RecruiterInterviewsSection({ applicationId, interviews }: Props)
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [pastOpen, setPastOpen] = useState(false);
 
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Auto-open the schedule modal when arriving with ?schedule=1 — set by the
+  // decision bar after a status flip to "interview" or by the prompt banner.
+  // We scrub the param either way so refresh/back doesn't re-trigger. This is
+  // a URL→state sync (URL is an external system); the lint rule against
+  // setState-in-effect doesn't fit this case.
+  useEffect(() => {
+    if (searchParams.get("schedule") !== "1") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (interviews.length === 0) setScheduleOpen(true);
+    router.replace(pathname);
+  }, [searchParams, pathname, interviews.length, router]);
+
   const sorted = sortInterviews(interviews);
   const [active, ...past] = sorted;
 
   const latestStatus = active?.status ?? null;
   const hasPast = past.length > 0;
+  const isEmpty = interviews.length === 0;
 
   return (
     <section className="space-y-4 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
@@ -369,15 +386,27 @@ export function RecruiterInterviewsSection({ applicationId, interviews }: Props)
           onClick={() => setScheduleOpen(true)}
           className="rounded-[var(--radius-pill)] bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-active)]"
         >
-          Schedule another interview
+          {isEmpty ? "Schedule interview" : "Schedule another interview"}
         </Button>
       </header>
 
       {/* ── No interviews state ────────────────────────────────────────── */}
-      {interviews.length === 0 && (
-        <p className="text-sm text-[var(--color-muted)]">
-          No interviews scheduled yet.
-        </p>
+      {isEmpty && (
+        <div className="flex items-start gap-3 rounded-[var(--radius-md)] border border-dashed border-[var(--color-hairline)] bg-[var(--color-surface-soft)] px-4 py-5 text-sm">
+          <CalendarClock
+            className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-muted)]"
+            aria-hidden
+          />
+          <div>
+            <p className="font-medium text-[var(--color-ink)]">
+              No interviews scheduled yet
+            </p>
+            <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+              Set a date, format, and venue — the candidate gets a calendar
+              invite and reporting details by email.
+            </p>
+          </div>
+        </div>
       )}
 
       {/* ── Active interview card ─────────────────────────────────────── */}

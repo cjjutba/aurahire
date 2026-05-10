@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, FileText, Loader2, Sparkles, Star } from "lucide-react";
+import { Check, FileText, Sparkles, Star } from "lucide-react";
 
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -120,17 +120,9 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
     // Apply now returns ~200ms; the wait UI for the AI match score
     // lives on the application detail page (driven by scoreStatus).
     return (
-      <div
-        role="status"
-        aria-busy={true}
-        className="flex items-center justify-center gap-3 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-12 text-sm text-[var(--color-body)]"
-      >
-        <Loader2
-          className="h-4 w-4 animate-spin text-[var(--color-primary)]"
-          aria-hidden
-        />
-        <span>Submitting application…</span>
-      </div>
+      <SubmittingState
+        lockingInMatch={preview !== null && selectedResumeMatchesPreview}
+      />
     );
   }
 
@@ -423,5 +415,127 @@ function ResumeMatchBanner({
         We&apos;ll score your resume against this job when you submit.
       </span>
     </div>
+  );
+}
+
+// Time-based stage advance — the API responds in ~200ms, so we don't gate
+// the UI on real progress. Stages animate to a graceful minimum of ~600ms
+// so the moment doesn't flicker even when the network is fast.
+const STAGE_TICK_MS = [220, 460] as const;
+
+function SubmittingState({ lockingInMatch }: { lockingInMatch: boolean }) {
+  const [stageIdx, setStageIdx] = useState(0);
+
+  useEffect(() => {
+    const timers = STAGE_TICK_MS.map((ms, i) =>
+      setTimeout(
+        () => setStageIdx((idx) => Math.max(idx, i + 1)),
+        ms,
+      ),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  const stages = [
+    { id: "save", label: "Saving your application" },
+    { id: "attach", label: "Attaching your resume" },
+    {
+      id: "match",
+      label: lockingInMatch ? "Locking in your match" : "Preparing your match",
+    },
+  ] as const;
+
+  return (
+    <section
+      role="status"
+      aria-busy
+      aria-live="polite"
+      aria-label="Sending your application"
+      className="flex flex-col items-center rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-6 py-14 text-center sm:px-12 sm:py-16"
+    >
+      {/* Brand orb — concentric pulse rings around a Sparkles glyph */}
+      <div
+        className="relative flex h-20 w-20 items-center justify-center"
+        aria-hidden
+      >
+        <span className="absolute inset-0 animate-ping rounded-[var(--radius-full)] bg-[var(--color-primary)] opacity-15" />
+        <span
+          className="absolute inset-2 animate-ping rounded-[var(--radius-full)] bg-[var(--color-primary)] opacity-25"
+          style={{ animationDelay: "200ms" }}
+        />
+        <span className="relative flex h-12 w-12 items-center justify-center rounded-[var(--radius-full)] bg-[var(--color-primary-soft)]">
+          <Sparkles
+            className="h-6 w-6 text-[var(--color-primary)]"
+            strokeWidth={1.75}
+          />
+        </span>
+      </div>
+
+      <h2 className="mt-7 text-2xl font-normal leading-tight tracking-[-0.4px] text-[var(--color-ink)] sm:text-[32px]">
+        Sending your application…
+      </h2>
+      <p className="mt-2 max-w-md text-sm text-[var(--color-body)]">
+        {lockingInMatch
+          ? "Hold tight — we're saving your details and locking in your match."
+          : "Hold tight — we're saving your details and lining up your match."}
+      </p>
+
+      {/* Indeterminate sweep — same affordance used elsewhere in the app */}
+      <div className="mt-8 h-[2px] w-full max-w-sm overflow-hidden rounded-[var(--radius-full)] bg-[var(--color-surface-strong)]">
+        <div className="animate-indeterminate-sweep h-full w-1/3 bg-gradient-to-r from-transparent via-[var(--color-primary)] to-transparent" />
+      </div>
+
+      <ul className="mt-7 w-full max-w-sm space-y-3.5 text-left" role="list">
+        {stages.map((stage, i) => {
+          const state: "done" | "active" | "pending" =
+            i < stageIdx ? "done" : i === stageIdx ? "active" : "pending";
+          return (
+            <SubmitStageRow key={stage.id} label={stage.label} state={state} />
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function SubmitStageRow({
+  label,
+  state,
+}: {
+  label: string;
+  state: "done" | "active" | "pending";
+}) {
+  const labelClass =
+    state === "active"
+      ? "flex-1 text-sm font-semibold text-[var(--color-ink)]"
+      : state === "done"
+        ? "flex-1 text-sm text-[var(--color-body)]"
+        : "flex-1 text-sm text-[var(--color-muted-soft)]";
+
+  return (
+    <li className="flex items-center gap-3">
+      <span
+        className="flex h-5 w-5 shrink-0 items-center justify-center"
+        aria-hidden
+      >
+        {state === "done" ? (
+          <span className="flex h-5 w-5 items-center justify-center rounded-[var(--radius-full)] bg-[var(--color-score-high-soft)]">
+            <Check
+              key="done"
+              className="animate-stage-check-pop h-3 w-3 text-[var(--color-score-high)]"
+              strokeWidth={3}
+            />
+          </span>
+        ) : state === "active" ? (
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-[var(--radius-full)] bg-[var(--color-primary)] opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-[var(--radius-full)] bg-[var(--color-primary)]" />
+          </span>
+        ) : (
+          <span className="block h-2.5 w-2.5 rounded-[var(--radius-full)] border border-[var(--color-hairline)]" />
+        )}
+      </span>
+      <span className={labelClass}>{label}</span>
+    </li>
   );
 }
