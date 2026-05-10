@@ -89,7 +89,10 @@ export class InterviewsService {
         message: "scheduledAt is not a valid date",
       });
     }
-    if (scheduledAt < new Date()) {
+    // 60s grace window absorbs clock skew and form-submit latency so a user
+    // who picks a near-now time isn't rejected by the time the request lands.
+    const PAST_GRACE_MS = 60_000;
+    if (scheduledAt.getTime() < Date.now() - PAST_GRACE_MS) {
       throw new BadRequestException({
         code: "PAST_DATE",
         message: "Interview cannot be scheduled in the past",
@@ -337,7 +340,10 @@ export class InterviewsService {
         TAGS.interviewsCandidate(app.candidateId),
       ]);
 
-      // In-app notification to candidate
+      // In-app notification to candidate. Resolve the job + company so the
+      // body renders "Your recruiter shared their feedback summary for the
+      // <jobTitle> interview" instead of the template's generic fallback.
+      const feedbackJobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
       void this.notifications
         .emit({
           userId: app.candidateId,
@@ -347,6 +353,8 @@ export class InterviewsService {
           metadata: {
             interviewId,
             applicationId: interview.applicationId,
+            jobTitle: feedbackJobRow?.title ?? null,
+            companyName: feedbackJobRow?.company.name ?? null,
           },
         })
         .catch((err) => {
@@ -443,7 +451,8 @@ export class InterviewsService {
     if (Number.isNaN(scheduledAt.getTime())) {
       throw new BadRequestException({ code: "INVALID_DATE", message: "scheduledAt is not a valid date" });
     }
-    if (scheduledAt < new Date()) {
+    // 60s grace window absorbs clock skew and form-submit latency.
+    if (scheduledAt.getTime() < Date.now() - 60_000) {
       throw new BadRequestException({ code: "PAST_DATE", message: "Reschedule cannot be in the past" });
     }
 

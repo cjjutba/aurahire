@@ -233,6 +233,12 @@ export class OffersService {
         ),
       ),
     );
+    // Resolve candidate name + canonical job title so the recruiter
+    // notification renders "<name> accepted your offer — <jobTitle>"
+    // instead of the template's generic fallbacks. The offer carries
+    // its own `title`, but we prefer the live job title to stay
+    // consistent if the role has been renamed since offer was sent.
+    const acceptedCandidate = await this.profilesRepo.findById(application.candidateId);
     void this.notifications
       .emitMany(recruiterUserIds, {
         eventType: "offer_accepted",
@@ -244,6 +250,9 @@ export class OffersService {
           offerId,
           applicationId: offer.applicationId,
           candidateId: application.candidateId,
+          candidateName: acceptedCandidate?.fullName ?? null,
+          jobId: application.jobId,
+          jobTitle: job?.title ?? offer.title,
           occurredAt: new Date().toISOString(),
         },
       })
@@ -360,6 +369,7 @@ export class OffersService {
         ),
       ),
     );
+    const declinedCandidate = await this.profilesRepo.findById(application.candidateId);
     void this.notifications
       .emitMany(recruiterUserIds, {
         eventType: "offer_declined",
@@ -371,6 +381,9 @@ export class OffersService {
           offerId,
           applicationId: offer.applicationId,
           candidateId: application.candidateId,
+          candidateName: declinedCandidate?.fullName ?? null,
+          jobId: application.jobId,
+          jobTitle: declinedJob?.title ?? offer.title,
           occurredAt: new Date().toISOString(),
         },
       })

@@ -199,6 +199,11 @@ describe("OffersService — accept/decline notifications", () => {
           offerId: OFFER_ID,
           applicationId: APPLICATION_ID,
           candidateId: CANDIDATE_ID,
+          // Required so the template renders "<name> accepted your offer
+          // — <jobTitle>" without using "Candidate"/"your role" fallbacks.
+          candidateName: "Test Candidate",
+          jobId: JOB_ID,
+          jobTitle: "Senior Software Engineer",
           occurredAt: expect.any(String),
         }),
       }),
@@ -224,6 +229,9 @@ describe("OffersService — accept/decline notifications", () => {
           offerId: OFFER_ID,
           applicationId: APPLICATION_ID,
           candidateId: CANDIDATE_ID,
+          candidateName: "Test Candidate",
+          jobId: JOB_ID,
+          jobTitle: "Senior Software Engineer",
         }),
       }),
     );

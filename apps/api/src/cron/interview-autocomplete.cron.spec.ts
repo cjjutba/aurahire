@@ -27,9 +27,16 @@ function makeDb(dueRows: DueRow[], updatedRow?: { id: string } | null) {
 
   const limitFn = jest.fn().mockResolvedValue(dueRows);
   const whereFn = jest.fn().mockReturnValue({ limit: limitFn });
-  const innerJoinFn = jest.fn();
-  innerJoinFn.mockReturnValue({ innerJoin: innerJoinFn, where: whereFn });
-  const fromFn = jest.fn().mockReturnValue({ innerJoin: innerJoinFn });
+  // The query chains innerJoin → leftJoin (jobs) → leftJoin (companies) →
+  // leftJoin (profiles) → where → limit. The chain object exposes all three
+  // so any order of joins resolves to the same builder.
+  const joinChain: Record<string, jest.Mock> = {};
+  const innerJoinFn = jest.fn().mockReturnValue(joinChain);
+  const leftJoinFn = jest.fn().mockReturnValue(joinChain);
+  joinChain.innerJoin = innerJoinFn;
+  joinChain.leftJoin = leftJoinFn;
+  joinChain.where = whereFn as unknown as jest.Mock;
+  const fromFn = jest.fn().mockReturnValue({ innerJoin: innerJoinFn, leftJoin: leftJoinFn });
   const selectFn = jest.fn().mockReturnValue({ from: fromFn });
 
   return { select: selectFn, update, _returning: returningFn };

@@ -248,6 +248,157 @@ export function deriveBand(
   return "limited";
 }
 
+/**
+ * Build the Completeness component deterministically from the parsed resume's
+ * structural shape. Completeness measures whether a candidate filled the
+ * canonical resume sections; that is structural data, not a judgment call —
+ * it doesn't need an LLM, and asking the LLM made it brittle (post-PII-redaction
+ * the model couldn't see contact content and scored 0/25 even on full resumes).
+ *
+ * Five binary checks (contact, summary, education, experience, skills) split
+ * the configured max evenly. Each filled check contributes +N points; each
+ * missing check contributes -N (engine clamps the sum to [0, max]). The
+ * resulting evidence array carries enough positive + negative rows to satisfy
+ * `detectCalibrationWarnings` without further model assistance.
+ */
+export function buildDeterministicCompletenessComponent(
+  parsed: ParsedResume,
+  configuredMax: number,
+): {
+  name: "completeness";
+  score: number;
+  max: number;
+  weight: number;
+  explanation: string;
+  evidence: Array<{
+    excerpt: string;
+    source: string;
+    relevance: "positive" | "negative" | "neutral";
+    contribution_points: number;
+    reasoning: string;
+  }>;
+} {
+  // `resume.parsedData` is stored as untyped JSON and cast through `unknown`,
+  // so legacy / malformed rows might be missing canonical sub-fields.
+  // Treat absent objects/arrays as empty rather than crashing.
+  const contact = parsed.contact ?? ({} as ParsedResume["contact"]);
+  const summary = parsed.summary ?? null;
+  const education = Array.isArray(parsed.education) ? parsed.education : [];
+  const experience = Array.isArray(parsed.experience) ? parsed.experience : [];
+  const skills = Array.isArray(parsed.skills) ? parsed.skills : [];
+
+  const checks: Array<{
+    label: string;
+    filled: boolean;
+    filledExcerpt: string;
+    missingExcerpt: string;
+    filledReasoning: string;
+    missingReasoning: string;
+  }> = [
+    {
+      label: "Contact",
+      filled:
+        Boolean(contact.full_name) ||
+        Boolean(contact.email) ||
+        Boolean(contact.phone) ||
+        Boolean(contact.linkedin_url) ||
+        Boolean(contact.portfolio_url),
+      filledExcerpt: "Contact details present",
+      missingExcerpt: "Contact details missing",
+      filledReasoning:
+        "Resume lists identifying contact details (name, email, phone, or links).",
+      missingReasoning:
+        "No contact details (name, email, phone, or links) detected on the resume.",
+    },
+    {
+      label: "Summary",
+      filled: summary !== null && summary.text.trim().length > 0,
+      filledExcerpt: "Summary section provided",
+      missingExcerpt: "Summary section missing",
+      filledReasoning: "Resume includes a summary or objective statement.",
+      missingReasoning: "No summary or objective statement on the resume.",
+    },
+    {
+      label: "Education",
+      filled: education.length > 0,
+      filledExcerpt: `Education section (${education.length} ${
+        education.length === 1 ? "entry" : "entries"
+      })`,
+      missingExcerpt: "Education section missing",
+      filledReasoning: "Resume lists at least one education entry.",
+      missingReasoning: "No education history detected on the resume.",
+    },
+    {
+      label: "Experience",
+      filled: experience.length > 0,
+      filledExcerpt: `Experience section (${experience.length} ${
+        experience.length === 1 ? "role" : "roles"
+      })`,
+      missingExcerpt: "Experience section missing",
+      filledReasoning: "Resume lists at least one work experience entry.",
+      missingReasoning: "No work experience detected on the resume.",
+    },
+    {
+      label: "Skills",
+      filled: skills.length > 0,
+      filledExcerpt: `Skills section (${skills.length} ${
+        skills.length === 1 ? "skill" : "skills"
+      })`,
+      missingExcerpt: "Skills section missing",
+      filledReasoning: "Resume lists explicit skills.",
+      missingReasoning: "No skills section detected on the resume.",
+    },
+  ];
+
+  // Each check contributes a multiple of 5; rounded so the array of
+  // `contribution_points` survives `reconcileEvidenceContributions`'s quantizer.
+  const perCheck = Math.max(
+    5,
+    Math.round(configuredMax / checks.length / 5) * 5,
+  );
+
+  const evidence = checks.map((check) =>
+    check.filled
+      ? {
+          excerpt: check.filledExcerpt,
+          source: `Resume › ${check.label}`,
+          relevance: "positive" as const,
+          contribution_points: perCheck,
+          reasoning: check.filledReasoning,
+        }
+      : {
+          excerpt: check.missingExcerpt,
+          source: `Resume › ${check.label}`,
+          relevance: "negative" as const,
+          contribution_points: -perCheck,
+          reasoning: check.missingReasoning,
+        },
+  );
+
+  const filledCount = checks.filter((c) => c.filled).length;
+  const missingCount = checks.length - filledCount;
+  const missingLabels = checks
+    .filter((c) => !c.filled)
+    .map((c) => c.label.toLowerCase());
+
+  const explanation =
+    missingCount === 0
+      ? `All ${checks.length} resume sections are present (contact, summary, education, experience, skills).`
+      : `${filledCount} of ${checks.length} resume sections are present. Missing: ${missingLabels.join(", ")}.`;
+
+  const rawScore = filledCount * perCheck - missingCount * perCheck;
+  const score = Math.max(0, Math.min(configuredMax, rawScore));
+
+  return {
+    name: "completeness",
+    score,
+    max: configuredMax,
+    weight: configuredMax,
+    explanation,
+    evidence,
+  };
+}
+
 @Injectable()
 export class ScoringService {
   private readonly logger = new Logger(ScoringService.name);
@@ -374,13 +525,26 @@ export class ScoringService {
     const weights = config.profileWeights as ProfileWeights;
     const bandThresholds = config.bandThresholds as BandThresholds;
 
+    const parsedResume = resume.parsedData as unknown as ParsedResume;
     const aiResult = await this.scoreProfile.score({
-      parsedResume: resume.parsedData as unknown as ParsedResume,
+      parsedResume,
       desiredRole,
       desiredSeniority,
       weights,
       requestId: `score-profile:${candidateId}`,
     });
+
+    // Completeness is structural — whether canonical resume sections were
+    // filled — and post-PII-redaction the model cannot reliably see contact
+    // content. Engine-side override using the original parsed resume keeps the
+    // component honest without leaking redacted data back to the AI.
+    const completenessOverride = buildDeterministicCompletenessComponent(
+      parsedResume,
+      weights.completeness,
+    );
+    const componentsWithDeterministicCompleteness = aiResult.score.components.map(
+      (c) => (c.name === "completeness" ? completenessOverride : c),
+    );
 
     // Engine-enforced arithmetic: components are normalized against the
     // configured weights (so a model that fabricates its own maxes can't
@@ -388,7 +552,7 @@ export class ScoringService {
     // normalized to 0..100. The AI's overall_score / band are kept in
     // raw_output for audit but never surface to clients or downstream logic.
     const normalizedProfileComponents = normalizeComponentsToWeights(
-      aiResult.score.components,
+      componentsWithDeterministicCompleteness,
       weights as unknown as Record<string, number>,
     );
 

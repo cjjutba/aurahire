@@ -248,7 +248,16 @@ describe("ApplicationsService — notification emissions", () => {
         metadata: expect.objectContaining({
           applicationId: APPLICATION_ID,
           jobId: JOB_ID,
+          // Template requires these to render the title/body without
+          // falling back to "your role" / "the company" / "—".
+          jobTitle: "Software Engineer",
+          companyName: "AcmeCorp",
           candidateId: CANDIDATE_ID,
+          candidateName: "Test Candidate",
+          // scoreValue/matchBand are null when async scoring is in flight
+          // (the default in this test); the template renders "pending".
+          scoreValue: null,
+          matchBand: null,
           occurredAt: expect.any(String),
         }),
       }),
@@ -279,7 +288,11 @@ describe("ApplicationsService — notification emissions", () => {
         metadata: expect.objectContaining({
           applicationId: APPLICATION_ID,
           jobId: JOB_ID,
+          // Template reads `newStatus`; `toStatus` retained for back-compat.
+          jobTitle: "Software Engineer",
+          companyName: "AcmeCorp",
           fromStatus: "applied",
+          newStatus: "screening",
           toStatus: "screening",
           occurredAt: expect.any(String),
         }),
@@ -311,7 +324,10 @@ describe("ApplicationsService — notification emissions", () => {
         metadata: expect.objectContaining({
           applicationId: APPLICATION_ID,
           jobId: JOB_ID,
+          jobTitle: "Software Engineer",
+          companyName: "AcmeCorp",
           fromStatus: "interview",
+          newStatus: "offer",
           toStatus: "offer",
           system: true,
         }),

@@ -7,7 +7,9 @@ import {
   ScoringService,
   reconcileEvidenceContributions,
   detectCalibrationWarnings,
+  buildDeterministicCompletenessComponent,
 } from "./scoring.service";
+import type { ParsedResume } from "@aurahire/shared";
 import type { ScoringRepository } from "./scoring.repository";
 import type { ResumesRepository } from "../resumes/resumes.repository";
 import type { JobsRepository } from "../jobs/jobs.repository";
@@ -146,6 +148,139 @@ describe("reconcileEvidenceContributions", () => {
     );
     expect(result.component.evidence[0]!.relevance).toBe("neutral");
     expect(result.component.score).toBe(0);
+  });
+});
+
+describe("buildDeterministicCompletenessComponent", () => {
+  function buildParsed(overrides: Partial<ParsedResume> = {}): ParsedResume {
+    const base: ParsedResume = {
+      contact: {
+        full_name: "Alex Doe",
+        full_name_source: "Alex Doe",
+        email: "alex@example.com",
+        email_source: "alex@example.com",
+        phone: null,
+        phone_source: null,
+        location_city: null,
+        location_city_source: null,
+        location_country: null,
+        location_country_source: null,
+        linkedin_url: null,
+        linkedin_url_source: null,
+        portfolio_url: null,
+        portfolio_url_source: null,
+      },
+      summary: { text: "10+ years of platform engineering.", text_source: "src" },
+      education: [
+        {
+          institution: "State U",
+          institution_source: "State U",
+          degree: "BS",
+          degree_source: "BS",
+          field_of_study: "CS",
+          field_of_study_source: "CS",
+          start_year: 2010,
+          end_year: 2014,
+          period_source: "2010-2014",
+          gpa: null,
+          gpa_source: null,
+        },
+      ],
+      experience: [
+        {
+          company: "Acme",
+          company_source: "Acme",
+          title: "Senior Engineer",
+          title_source: "Senior Engineer",
+          start_date: "2020-01",
+          end_date: null,
+          period_source: "2020-now",
+          is_current: true,
+          responsibilities: ["Led platform team."],
+          responsibilities_source: ["Led platform team."],
+          technologies_used: ["TypeScript"],
+        },
+      ],
+      skills: [{ name: "TypeScript", source: "TypeScript" }],
+      certifications: [],
+      languages: [],
+      parse_confidence: "high",
+    };
+    return { ...base, ...overrides } as ParsedResume;
+  }
+
+  it("scores 25/25 with 5 positives when every section is filled", () => {
+    const c = buildDeterministicCompletenessComponent(buildParsed(), 25);
+    expect(c.score).toBe(25);
+    expect(c.max).toBe(25);
+    expect(c.evidence).toHaveLength(5);
+    expect(c.evidence.every((e) => e.relevance === "positive")).toBe(true);
+    expect(c.evidence.every((e) => e.contribution_points === 5)).toBe(true);
+    expect(c.explanation).toContain("All 5 resume sections are present");
+  });
+
+  it("emits a negative evidence row for each missing section", () => {
+    const parsed = buildParsed({ summary: null, skills: [] });
+    const c = buildDeterministicCompletenessComponent(parsed, 25);
+    expect(c.score).toBeLessThan(25);
+    const negatives = c.evidence.filter((e) => e.relevance === "negative");
+    const positives = c.evidence.filter((e) => e.relevance === "positive");
+    expect(negatives).toHaveLength(2);
+    expect(positives).toHaveLength(3);
+    expect(c.explanation).toMatch(/Missing:.*summary.*skills|Missing:.*skills.*summary/);
+  });
+
+  it("clamps to 0 when no canonical sections are present", () => {
+    const parsed = buildParsed({
+      contact: {
+        full_name: null,
+        full_name_source: null,
+        email: null,
+        email_source: null,
+        phone: null,
+        phone_source: null,
+        location_city: null,
+        location_city_source: null,
+        location_country: null,
+        location_country_source: null,
+        linkedin_url: null,
+        linkedin_url_source: null,
+        portfolio_url: null,
+        portfolio_url_source: null,
+      },
+      summary: null,
+      education: [],
+      experience: [],
+      skills: [],
+    });
+    const c = buildDeterministicCompletenessComponent(parsed, 25);
+    expect(c.score).toBe(0);
+    expect(c.evidence.every((e) => e.relevance === "negative")).toBe(true);
+  });
+
+  it("treats redaction sentinel values as filled (presence preserved)", () => {
+    // After redactStructured runs, contact fields are "[REDACTED]" — that
+    // sentinel still counts as presence for the structural completeness check.
+    const parsed = buildParsed({
+      contact: {
+        full_name: "[REDACTED]",
+        full_name_source: "Alex Doe",
+        email: "[REDACTED]",
+        email_source: "alex@example.com",
+        phone: null,
+        phone_source: null,
+        location_city: null,
+        location_city_source: null,
+        location_country: null,
+        location_country_source: null,
+        linkedin_url: null,
+        linkedin_url_source: null,
+        portfolio_url: null,
+        portfolio_url_source: null,
+      },
+    });
+    const c = buildDeterministicCompletenessComponent(parsed, 25);
+    expect(c.score).toBe(25);
   });
 });
 

@@ -1,7 +1,13 @@
 import { Cron } from "@nestjs/schedule";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { and, eq, sql } from "drizzle-orm";
-import { interviewsTable, applicationsTable } from "@aurahire/db";
+import {
+  interviewsTable,
+  applicationsTable,
+  jobsTable,
+  companiesTable,
+  profilesTable,
+} from "@aurahire/db";
 
 import { AUDIT_ACTIONS, AuditService } from "../audit";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../db/db.module";
@@ -41,9 +47,15 @@ export class InterviewAutocompleteCron {
         scheduledBy: interviewsTable.scheduledBy,
         candidateId: applicationsTable.candidateId,
         jobId: applicationsTable.jobId,
+        jobTitle: jobsTable.title,
+        companyName: companiesTable.name,
+        candidateName: profilesTable.fullName,
       })
       .from(interviewsTable)
       .innerJoin(applicationsTable, eq(applicationsTable.id, interviewsTable.applicationId))
+      .leftJoin(jobsTable, eq(jobsTable.id, applicationsTable.jobId))
+      .leftJoin(companiesTable, eq(companiesTable.id, jobsTable.companyId))
+      .leftJoin(profilesTable, eq(profilesTable.id, applicationsTable.candidateId))
       .where(
         and(
           eq(interviewsTable.status, "scheduled"),
@@ -94,14 +106,24 @@ export class InterviewAutocompleteCron {
           eventType: "interview_completed",
           entityType: "interview",
           entityId: row.id,
-          metadata: { applicationId: row.applicationId },
+          metadata: {
+            applicationId: row.applicationId,
+            interviewId: row.id,
+            jobTitle: row.jobTitle ?? null,
+            companyName: row.companyName ?? null,
+          },
         });
         await this.notifications.emit({
           userId: row.scheduledBy,
           eventType: "interview_record_feedback",
           entityType: "interview",
           entityId: row.id,
-          metadata: { applicationId: row.applicationId },
+          metadata: {
+            applicationId: row.applicationId,
+            interviewId: row.id,
+            jobTitle: row.jobTitle ?? null,
+            candidateName: row.candidateName ?? null,
+          },
         });
 
         completed += 1;

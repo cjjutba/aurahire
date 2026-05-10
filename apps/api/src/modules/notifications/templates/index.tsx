@@ -147,15 +147,28 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   },
   new_application_received: {
     buildTitle: (md) => `New application: ${m(md, "candidateName", "a candidate")}`,
-    buildBody: (md) =>
-      `Applied to ${m(md, "jobTitle", "your role")} — match score ${m(md, "scoreValue", "—")} (${m(md, "matchBand", "—")}).`,
+    buildBody: (md) => {
+      const score = md.scoreValue;
+      const band = md.matchBand;
+      const role = m(md, "jobTitle", "your role");
+      // Score is computed asynchronously after apply; render "pending" when
+      // the worker hasn't filled it in yet rather than leaking an em-dash.
+      if (score == null || band == null) {
+        return `Applied to ${role} — match score pending.`;
+      }
+      return `Applied to ${role} — match score ${score} (${band}).`;
+    },
     buildLink: (_role, md) =>
       `/recruiter/jobs/${m(md, "jobId", "")}/applications/${m(md, "applicationId", "")}`,
     emailSubject: (md) => `New application — ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
       (md) => `New application from ${m(md, "candidateName", "a candidate")}`,
-      (md) =>
-        `Applied to ${m(md, "jobTitle", "your role")}. Match score ${m(md, "scoreValue", "—")}.`,
+      (md) => {
+        const score = md.scoreValue;
+        const role = m(md, "jobTitle", "your role");
+        if (score == null) return `Applied to ${role}. Match score pending.`;
+        return `Applied to ${role}. Match score ${score}.`;
+      },
       () => "Review application",
       (_role, md) =>
         `/recruiter/jobs/${m(md, "jobId", "")}/applications/${m(md, "applicationId", "")}`,

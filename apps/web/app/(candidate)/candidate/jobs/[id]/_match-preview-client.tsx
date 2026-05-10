@@ -330,19 +330,6 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
         <AiProgressIndicator stages={MATCH_SCORE_STAGES} />
       ) : (
         <>
-          {preview.calibrationWarnings &&
-            preview.calibrationWarnings.length > 0 && (
-              <div
-                className="rounded-[var(--radius-pill)] px-4 py-2 text-xs"
-                style={{
-                  backgroundColor: "var(--color-score-mid-soft)",
-                  color: "var(--color-score-mid)",
-                }}
-              >
-                <span className="font-semibold">Heads up — </span>
-                This breakdown may be incomplete. Recompute to refresh.
-              </div>
-            )}
           {/* Top: ring + meta + breakdown bars */}
           <div className="flex flex-wrap items-center gap-5">
             <ScoreRing

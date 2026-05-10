@@ -19,10 +19,20 @@ const PIPELINE_STAGES: Array<{ key: string; label: string }> = [
   { key: "screening", label: "Screening" },
   { key: "interview", label: "Interview" },
   { key: "offer", label: "Offer" },
-  { key: "offer_accepted", label: "Offer Accepted" },
-  { key: "offer_declined", label: "Offer Declined" },
   { key: "hired", label: "Hired" },
 ];
+
+// Offer outcomes are rendered as inline sub-states on the Offer node, not as
+// separate funnel stages — the recruiter still needs to mark Hired afterward.
+const STATUS_TO_STAGE_KEY: Record<string, string> = {
+  applied: "applied",
+  screening: "screening",
+  interview: "interview",
+  offer: "offer",
+  offer_accepted: "offer",
+  offer_declined: "offer",
+  hired: "hired",
+};
 
 interface AdvanceAction {
   status: string;
@@ -468,8 +478,15 @@ function PipelinePath({ currentStatus }: { currentStatus: string }) {
     );
   }
 
-  const currentIdx = PIPELINE_STAGES.findIndex((s) => s.key === currentStatus);
+  const activeKey = STATUS_TO_STAGE_KEY[currentStatus] ?? "applied";
+  const currentIdx = PIPELINE_STAGES.findIndex((s) => s.key === activeKey);
   const safeIdx = currentIdx === -1 ? 0 : currentIdx;
+  const offerOutcome =
+    currentStatus === "offer_accepted"
+      ? { label: "Accepted", className: "text-[var(--color-score-high)]" }
+      : currentStatus === "offer_declined"
+        ? { label: "Declined", className: "text-[var(--color-score-mid)]" }
+        : null;
 
   return (
     <ol
@@ -479,6 +496,7 @@ function PipelinePath({ currentStatus }: { currentStatus: string }) {
       {PIPELINE_STAGES.map((stage, idx) => {
         const isCurrent = idx === safeIdx;
         const isPast = idx < safeIdx;
+        const showOutcome = stage.key === "offer" && offerOutcome !== null;
         return (
           <li key={stage.key} className="flex items-center gap-1.5">
             <span
@@ -501,6 +519,12 @@ function PipelinePath({ currentStatus }: { currentStatus: string }) {
               }`}
             >
               {stage.label}
+              {showOutcome && (
+                <>
+                  <span aria-hidden className="mx-1 text-[var(--color-muted)]">·</span>
+                  <span className={offerOutcome!.className}>{offerOutcome!.label}</span>
+                </>
+              )}
             </span>
             {idx < PIPELINE_STAGES.length - 1 && (
               <span

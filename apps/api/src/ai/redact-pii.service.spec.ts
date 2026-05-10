@@ -1,6 +1,6 @@
 import type { ParsedResume } from "@aurahire/shared";
 
-import { RedactPiiService } from "./redact-pii.service";
+import { RedactPiiService, REDACTED_PLACEHOLDER } from "./redact-pii.service";
 
 function buildResume(opts: {
   summaryText?: string | null;
@@ -54,7 +54,7 @@ function buildResume(opts: {
 }
 
 describe("RedactPiiService.redactStructured", () => {
-  it("nullifies the five contact fields synchronously and reports them", () => {
+  it("replaces the five contact fields with [REDACTED] and reports them", () => {
     const svc = new RedactPiiService({
       generateStructured: jest.fn(),
       generateText: jest.fn(),
@@ -63,16 +63,36 @@ describe("RedactPiiService.redactStructured", () => {
 
     const result = svc.redactStructured(parsed);
 
-    expect(result.redacted.contact.full_name).toBeNull();
-    expect(result.redacted.contact.email).toBeNull();
-    expect(result.redacted.contact.phone).toBeNull();
-    expect(result.redacted.contact.linkedin_url).toBeNull();
-    expect(result.redacted.contact.portfolio_url).toBeNull();
+    expect(result.redacted.contact.full_name).toBe(REDACTED_PLACEHOLDER);
+    expect(result.redacted.contact.email).toBe(REDACTED_PLACEHOLDER);
+    expect(result.redacted.contact.phone).toBe(REDACTED_PLACEHOLDER);
+    expect(result.redacted.contact.linkedin_url).toBe(REDACTED_PLACEHOLDER);
+    expect(result.redacted.contact.portfolio_url).toBe(REDACTED_PLACEHOLDER);
     expect(result.redactedFields).toEqual([
       "contact.full_name",
       "contact.email",
       "contact.phone",
       "contact.linkedin_url",
+      "contact.portfolio_url",
+    ]);
+  });
+
+  it("leaves originally-null contact fields as null (no false presence)", () => {
+    const svc = new RedactPiiService({
+      generateStructured: jest.fn(),
+      generateText: jest.fn(),
+    } as never);
+    const parsed = buildResume({ responsibilities: [] });
+    parsed.contact.phone = null;
+    parsed.contact.linkedin_url = null;
+
+    const result = svc.redactStructured(parsed);
+
+    expect(result.redacted.contact.phone).toBeNull();
+    expect(result.redacted.contact.linkedin_url).toBeNull();
+    expect(result.redactedFields).toEqual([
+      "contact.full_name",
+      "contact.email",
       "contact.portfolio_url",
     ]);
   });

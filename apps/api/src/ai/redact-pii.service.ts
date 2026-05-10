@@ -22,6 +22,14 @@ const ALWAYS_REDACTED_PATHS = [
   "contact.portfolio_url",
 ] as const;
 
+/**
+ * Sentinel that replaces redacted PII content. Preserves the *presence*
+ * signal — completeness scoring needs to know a field was filled — while
+ * removing the demographic *content* that bias mitigation requires.
+ * AI prompts must treat "[REDACTED]" as "field was provided, content withheld".
+ */
+export const REDACTED_PLACEHOLDER = "[REDACTED]";
+
 /** Free-text fields long enough to warrant LLM-assisted scrubbing. */
 const FREE_TEXT_MIN_LENGTH = 50;
 
@@ -52,7 +60,7 @@ export class RedactPiiService {
       if (!key) continue;
       const k = key as keyof typeof cleaned.contact;
       if (cleaned.contact[k] != null) {
-        cleaned.contact[k] = null as never;
+        cleaned.contact[k] = REDACTED_PLACEHOLDER as never;
         redactedFields.push(path);
       }
     }

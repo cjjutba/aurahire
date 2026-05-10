@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Building2 } from "lucide-react";
@@ -99,6 +99,16 @@ export function ScheduleInterviewSheetClient({
   // ── Core scheduling fields ────────────────────────────────────────────────
   const [scheduledAt, setScheduledAt] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
+
+  // Native datetime-local min, recomputed when the sheet opens so the picker
+  // disables past times. Anchor is "now" — a 60s server-side grace handles
+  // submit latency.
+  const minScheduledAt = useMemo(() => {
+    if (!open) return undefined;
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }, [open]);
 
   // ── Structured venue fields ───────────────────────────────────────────────
   const [venueName, setVenueName] = useState("");
@@ -374,6 +384,7 @@ export function ScheduleInterviewSheetClient({
                 <Input
                   type="datetime-local"
                   value={scheduledAt}
+                  min={minScheduledAt}
                   onChange={(e) => {
                     setScheduledAt(e.target.value);
                     setConflicts(null);

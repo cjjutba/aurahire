@@ -240,6 +240,9 @@ export class ApplicationsService {
     const recruiterUserIds = [job.recruiterId].filter(
       (id): id is string => Boolean(id),
     );
+    // Resolve the company once so the notification can render
+    // "Applied to <jobTitle> at <companyName>" instead of fallback text.
+    const jobWithCompany = await this.jobsRepo.findByIdWithCompany(dto.jobId);
     void this.notifications
       .emitMany(recruiterUserIds, {
         eventType: "new_application_received",
@@ -250,7 +253,15 @@ export class ApplicationsService {
         metadata: {
           applicationId: application.id,
           jobId: dto.jobId,
+          jobTitle: job.title,
+          companyName: jobWithCompany?.company.name ?? null,
           candidateId: user.id,
+          candidateName: user.fullName,
+          // Score may be null when async scoring is in flight; the template
+          // surfaces "pending" in that case and the realtime
+          // application.scored event refreshes the recruiter UI when ready.
+          scoreValue: promotedScore?.overallScore ?? null,
+          matchBand: promotedScore?.band ?? null,
           occurredAt: new Date().toISOString(),
         },
       })
@@ -736,6 +747,9 @@ export class ApplicationsService {
       (err) => this.logger.warn(`Hire candidate notify failed: ${(err as Error).message}`),
     );
 
+    // Resolve job + company so the candidate notification can render
+    // "your application for <jobTitle> at <companyName>" rather than fallbacks.
+    const hiredJobRow = await this.jobsRepo.findByIdWithCompany(result.app.jobId);
     void this.notifications
       .emit({
         userId: result.app.candidateId,
@@ -747,7 +761,12 @@ export class ApplicationsService {
         metadata: {
           applicationId,
           jobId: result.app.jobId,
+          jobTitle: hiredJobRow?.title ?? null,
+          companyName: hiredJobRow?.company.name ?? null,
           fromStatus: result.app.status,
+          // Templates read `newStatus`; keep `toStatus` for backward
+          // compatibility with existing audit/event consumers.
+          newStatus: "hired",
           toStatus: "hired",
           occurredAt: new Date().toISOString(),
         },
@@ -776,7 +795,10 @@ export class ApplicationsService {
           metadata: {
             applicationId: other.id,
             jobId: result.app.jobId,
+            jobTitle: hiredJobRow?.title ?? null,
+            companyName: hiredJobRow?.company.name ?? null,
             fromStatus: "(cascade)",
+            newStatus: "rejected",
             toStatus: "rejected",
             reason: "position_filled",
             hiredApplicationId: applicationId,
@@ -904,6 +926,7 @@ export class ApplicationsService {
       this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
     });
 
+    const transitionJobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     void this.notifications
       .emit({
         userId: app.candidateId,
@@ -915,7 +938,12 @@ export class ApplicationsService {
         metadata: {
           applicationId: id,
           jobId: app.jobId,
+          jobTitle: transitionJobRow?.title ?? null,
+          companyName: transitionJobRow?.company.name ?? null,
           fromStatus: app.status,
+          // Templates read `newStatus`; keep `toStatus` for backward
+          // compatibility with existing audit/event consumers.
+          newStatus: dto.newStatus,
           toStatus: dto.newStatus,
           occurredAt: new Date().toISOString(),
         },
@@ -1048,6 +1076,7 @@ export class ApplicationsService {
       this.logger.warn(`Candidate notify failed: ${(err as Error).message}`);
     });
 
+    const systemJobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
     void this.notifications
       .emit({
         userId: app.candidateId,
@@ -1059,7 +1088,12 @@ export class ApplicationsService {
         metadata: {
           applicationId: id,
           jobId: app.jobId,
+          jobTitle: systemJobRow?.title ?? null,
+          companyName: systemJobRow?.company.name ?? null,
           fromStatus: app.status,
+          // Templates read `newStatus`; keep `toStatus` for backward
+          // compatibility with existing audit/event consumers.
+          newStatus,
           toStatus: newStatus,
           occurredAt: new Date().toISOString(),
           system: true,

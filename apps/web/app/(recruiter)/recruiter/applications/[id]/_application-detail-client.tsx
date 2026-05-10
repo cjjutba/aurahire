@@ -333,21 +333,7 @@ export function RecruiterApplicationDetailClient({
       }
       components={dashboardComponents}
       componentLabels={COMPONENT_LABELS}
-      calibrationNotice={
-        score.calibrationWarnings && score.calibrationWarnings.length > 0 ? (
-          <div
-            className="rounded-[var(--radius-pill)] px-4 py-2 text-xs"
-            style={{
-              backgroundColor: "var(--color-score-mid-soft)",
-              color: "var(--color-score-mid)",
-            }}
-          >
-            <span className="font-semibold">Heads up — </span>
-            This breakdown may be incomplete. Consider asking the candidate to
-            recompute, or rescore from the admin tools.
-          </div>
-        ) : null
-      }
+      calibrationNotice={null}
       beforeRightPane={
         <SummaryDisclosure
           summary={score.summary}

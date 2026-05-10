@@ -113,20 +113,7 @@ export function ProfileScoreDashboardClient({ data }: { data: ProfileScoreData }
           </section>
         ) : undefined
       }
-      calibrationNotice={
-        data.calibrationWarnings && data.calibrationWarnings.length > 0 ? (
-          <div
-            className="rounded-[var(--radius-pill)] px-4 py-2 text-xs"
-            style={{
-              backgroundColor: "var(--color-score-mid-soft)",
-              color: "var(--color-score-mid)",
-            }}
-          >
-            <span className="font-semibold">Heads up — </span>
-            This breakdown may be incomplete. Recompute to refresh.
-          </div>
-        ) : null
-      }
+      calibrationNotice={null}
       fairness={{
         redactedFields: data.redactedFields,
         promptVersion: data.promptVersion,

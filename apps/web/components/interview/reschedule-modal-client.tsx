@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Building2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -137,6 +137,16 @@ export function RescheduleModalClient({
   const [durationMinutes, setDurationMinutes] = useState(
     defaults?.durationMinutes ?? 60,
   );
+
+  // Native datetime-local min, recomputed when the modal opens so the picker
+  // disables past times. Anchor is "now" — a 60s server-side grace handles
+  // submit latency.
+  const minScheduledAt = useMemo(() => {
+    if (!open) return undefined;
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }, [open]);
 
   // ── Venue fields ──────────────────────────────────────────────────────────
   const [venueName, setVenueName] = useState(defaults?.venueName ?? "");
@@ -382,6 +392,7 @@ export function RescheduleModalClient({
               <Input
                 type="datetime-local"
                 value={scheduledAt}
+                min={minScheduledAt}
                 onChange={(e) => {
                   setScheduledAt(e.target.value);
                   setHasConflict(false);

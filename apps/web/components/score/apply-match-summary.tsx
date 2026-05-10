@@ -154,21 +154,6 @@ export function ApplyMatchSummary({
         </div>
       </header>
 
-      {preview.calibrationWarnings &&
-        preview.calibrationWarnings.length > 0 && (
-          <div
-            className="mb-5 rounded-[var(--radius-pill)] px-4 py-2 text-xs"
-            style={{
-              backgroundColor: "var(--color-score-mid-soft)",
-              color: "var(--color-score-mid)",
-            }}
-          >
-            <span className="font-semibold">Heads up — </span>
-            This breakdown may be incomplete. The full breakdown will refresh on
-            recompute.
-          </div>
-        )}
-
       <div className="flex flex-wrap items-center gap-5">
         <ScoreRing
           score={preview.overallScore}

@@ -5,7 +5,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 
 import { toastSuccess, toastApiError } from "@/lib/toast";
-import { AiShimmer } from "@/components/ai/ai-shimmer";
+import {
+  AiProgressIndicator,
+  PROFILE_SCORE_STAGES,
+} from "@/components/ai/ai-progress-indicator";
 import { ScoreRing } from "@/components/score/score-ring";
 import { MatchBandChip } from "@/components/score/match-band-chip";
 import { useProfileScoreQuery } from "@/hooks/use-profile-score";
@@ -139,7 +142,7 @@ export function ProfileScoreCardClient({ candidateId }: ProfileScoreCardClientPr
           Profile Score
         </h3>
         <div className="mt-4">
-          <AiShimmer caption="Computing your Profile Score…" height={120} />
+          <AiProgressIndicator stages={PROFILE_SCORE_STAGES} />
         </div>
       </div>
     );

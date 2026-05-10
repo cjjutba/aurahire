@@ -4,7 +4,10 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Building2, ChevronRight, Sparkles, AlertTriangle } from "lucide-react";
 
-import { AiShimmer } from "@/components/ai/ai-shimmer";
+import {
+  AiProgressIndicator,
+  MATCH_SCORE_STAGES,
+} from "@/components/ai/ai-progress-indicator";
 import {
   ScoreDashboard,
   type ScoreDashboardComponent,
@@ -260,10 +263,7 @@ export function ApplicationDetailClient({
           {header}
           {bannerAndFeedback}
           <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
-            <AiShimmer
-              caption="Computing your match against this job — analyzing skills, experience, education, and cultural fit..."
-              height={240}
-            />
+            <AiProgressIndicator stages={MATCH_SCORE_STAGES} />
           </div>
         </div>
       );
