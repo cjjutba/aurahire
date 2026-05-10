@@ -15,7 +15,9 @@
   "scripts": {
     "lint": "eslint \"src/**/*.ts\"",
     "type-check": "tsc --noEmit -p tsconfig.json",
-    "codegen": "orval --config orval.config.ts"
+    "codegen": "orval --config orval.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@aurahire/db": "workspace:^",
