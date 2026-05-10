@@ -15,6 +15,7 @@ interface PageProps {
     experienceLevel?: string;
     sort?: string;
     page?: string;
+    excludeApplied?: string;
   }>;
 }
 
@@ -31,6 +32,7 @@ export default async function CandidateJobsPage({ searchParams }: PageProps) {
     sort: sp.sort ?? "recent",
     page: sp.page ? Math.max(1, Number(sp.page)) : 1,
     limit: 12,
+    excludeApplied: sp.excludeApplied === "1" || sp.excludeApplied === "true",
   };
 
   const queryClient = makeQueryClient();

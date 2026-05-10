@@ -93,6 +93,7 @@ export interface CandidateJobsListParams {
   sort?: string;
   page?: number;
   limit?: number;
+  excludeApplied?: boolean;
 }
 export interface CandidateApplicationsParams {
   status?: string;

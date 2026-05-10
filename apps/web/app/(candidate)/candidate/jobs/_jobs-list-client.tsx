@@ -102,6 +102,7 @@ export function CandidateJobsListClient({
         mode={params.mode ?? "all"}
         experienceLevel={params.experienceLevel ?? "all"}
         sort={params.sort}
+        excludeApplied={!!params.excludeApplied}
       />
 
       {/* Grid or empty state */}

@@ -134,6 +134,7 @@ export const serverQueries = {
         sort: params.sort,
         page: params.page,
         limit: params.limit,
+        excludeApplied: params.excludeApplied,
       },
     }),
   candidateJobDetail: (id: string) =>
