@@ -45,6 +45,8 @@ import { ResumesRepository } from "../resumes/resumes.repository";
 import { ScoringService } from "../scoring/scoring.service";
 import { StorageService } from "../../storage/storage.service";
 import { MatchScoreQueueService } from "../../queue/match-score-queue.service";
+import { OffersRepository } from "../offers/offers.repository";
+import { DRIZZLE_CLIENT } from "../../db/db.module";
 
 // ── Test IDs ──────────────────────────────────────────────────────────────────
 
@@ -185,6 +187,7 @@ describe("Interview v2 — happy-path integration", () => {
       insert: jest.fn(),
       findApplicationContextForCompany: jest.fn(),
       findApplicationContextForCompanyByUser: jest.fn(),
+      countInflightOnJob: jest.fn().mockResolvedValue(0),
     } as any;
 
     jobsRepo = {
@@ -262,6 +265,13 @@ describe("Interview v2 — happy-path integration", () => {
         },
         { provide: StorageService, useValue: { getSignedUrl: jest.fn() } },
         { provide: MatchScoreQueueService, useValue: { enqueue: jest.fn().mockResolvedValue(undefined) } },
+        { provide: OffersRepository, useValue: { findLatestByApplicationId: jest.fn().mockResolvedValue(null) } },
+        {
+          provide: DRIZZLE_CLIENT,
+          useValue: {
+            transaction: jest.fn(async <T,>(fn: (tx: unknown) => Promise<T>) => fn({})),
+          },
+        },
       ],
     }).compile();
 
