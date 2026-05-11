@@ -424,6 +424,15 @@ export function ScheduleInterviewSheetClient({
                     setDurationMinutes(Number(e.target.value) || 60)
                   }
                 />
+                {durationMinutes < 15 || durationMinutes > 240 ? (
+                  <p className="mt-1 text-[11px] text-[var(--color-status-danger)]">
+                    Must be between 15 and 240 minutes.
+                  </p>
+                ) : (
+                  <p className="mt-1 text-[11px] text-[var(--color-muted)]">
+                    15–240 minutes (default 60).
+                  </p>
+                )}
               </div>
             </div>
 
