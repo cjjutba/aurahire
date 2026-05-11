@@ -335,12 +335,12 @@ export class AuthService {
       });
 
       void this.auditService.log({
-        actorId: user.id,
-        actorType: "user",
+        actorId: null,
+        actorType: "system",
         action: AUDIT_ACTIONS.USER_PASSWORD_RESET_REQUESTED,
         entityType: "user",
         entityId: user.id,
-        details: { email: user.email },
+        details: { email: user.email, user_id: user.id },
         ...meta,
       });
     }
@@ -420,12 +420,12 @@ export class AuthService {
     }
 
     void this.auditService.log({
-      actorId: row.userId,
-      actorType: "user",
+      actorId: null,
+      actorType: "system",
       action: AUDIT_ACTIONS.USER_PASSWORD_RESET,
       entityType: "user",
       entityId: row.userId,
-      details: { email: row.email },
+      details: { email: row.email, user_id: row.userId },
       ...meta,
     });
 
