@@ -127,8 +127,8 @@ describe("humanizeAuditAction", () => {
   });
 
   describe("edge cases", () => {
-    it("returns an em-dash for an empty string", () => {
-      expect(humanizeAuditAction("")).toBe("—");
+    it("returns a hyphen placeholder for an empty string", () => {
+      expect(humanizeAuditAction("")).toBe("-");
     });
 
     it("trims whitespace before processing", () => {

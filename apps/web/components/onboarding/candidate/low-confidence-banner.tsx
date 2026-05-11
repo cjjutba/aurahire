@@ -20,7 +20,7 @@ export function LowConfidenceBanner({ confidence }: LowConfidenceBannerProps) {
       />
       <div className="min-w-0">
         <p className="text-sm font-semibold text-[var(--color-ink)]">
-          Heads up — low-confidence parse
+          Heads up, low-confidence parse
         </p>
         <p className="mt-0.5 text-sm text-[var(--color-body)]">
           The AI wasn&apos;t sure about parts of this resume. Double-check every

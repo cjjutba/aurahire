@@ -23,7 +23,7 @@ interface PrivacySectionProps {
 }
 
 /**
- * Both privacy actions (export, delete) are stubs in Phase 5 — the export
+ * Both privacy actions (export, delete) are stubs in Phase 5, the export
  * pipeline isn't built and there's no /profiles/me delete endpoint yet.
  *
  * The "delete" path still signs the user out so the request is at least
@@ -42,7 +42,7 @@ export function PrivacySection({ email }: PrivacySectionProps) {
   async function handleExport() {
     setExportPending(true);
     try {
-      // Stub — no backend job yet. We toast and resolve.
+      // Stub, no backend job yet. We toast and resolve.
       await new Promise((r) => setTimeout(r, 300));
       toastSuccess(
         "Export request received",
@@ -64,7 +64,7 @@ export function PrivacySection({ email }: PrivacySectionProps) {
     }
     setDeletePending(true);
     try {
-      // No backend delete endpoint yet — sign the user out and surface
+      // No backend delete endpoint yet, sign the user out and surface
       // the action as a request received. When the endpoint lands this
       // becomes a real DELETE call before the sign-out.
       const supabase = createSupabaseBrowserClient();

@@ -1,6 +1,6 @@
 /**
  * Server-side fetcher for the caller's memberships. Returns an empty array on
- * any failure — callers route based on count, so a soft-fail is preferable to
+ * any failure, callers route based on count, so a soft-fail is preferable to
  * tearing down the whole onboarding fork.
  */
 export interface ServerMembership {

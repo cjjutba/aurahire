@@ -135,7 +135,7 @@ export function CandidatePreferencesForm({
 
     // Frontend gate that mirrors the backend `INCOMPLETE_PREFERENCES`
     // validation. Without at least one desired role there's nothing to
-    // score the candidate against — block here BEFORE we navigate away,
+    // score the candidate against, block here BEFORE we navigate away,
     // instead of letting the analyzing screen call the API and surface
     // the same message later.
     const latest = buildPayload(getValues());
@@ -151,7 +151,7 @@ export function CandidatePreferencesForm({
       // synchronous-style guarantees: a blur-triggered save can be
       // in-flight when Finish is clicked, in which case `flush()`
       // early-returns (its `inFlight` guard) and the recursive flush in
-      // the `finally` block runs fire-and-forget — the await resolves
+      // the `finally` block runs fire-and-forget, the await resolves
       // before the new payload actually persists, the redirect wins the
       // race, and the analyzing screen's complete-onboarding call sees
       // empty desiredRoles and 400s with INCOMPLETE_PREFERENCES. A

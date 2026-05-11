@@ -18,7 +18,7 @@
 export const PENDING_INVITE_COOKIE = "pendingInviteToken";
 
 /**
- * 1 hour — long enough to complete signup + email verification on a single
+ * 1 hour, long enough to complete signup + email verification on a single
  * sitting, short enough that an abandoned tab doesn't carry the token forward
  * indefinitely.
  */

@@ -31,7 +31,7 @@ const ROLE_LABEL: Record<AcceptResponse["data"]["role"], string> = {
  *      company as last_active_company_id)
  *   2. Mirror the choice into the client singleton so subsequent fetches
  *      carry X-Active-Company-Id immediately
- *   3. Clear TanStack Query — previous-tenant data is now stale
+ *   3. Clear TanStack Query, previous-tenant data is now stale
  *   4. Toast confirmation
  *   5. Navigate to /recruiter (the new active tenant)
  *

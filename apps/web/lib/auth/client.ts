@@ -15,7 +15,7 @@ import {
  *
  * Provides a custom cookie adapter so that "Remember me = false" sessions
  * downgrade Supabase auth cookies to session cookies (no Max-Age / Expires)
- * — they die when the browser closes. The middleware applies the same rule
+ *, they die when the browser closes. The middleware applies the same rule
  * on token refresh; together they keep non-persistent sessions truly
  * non-persistent across the full request lifecycle.
  */

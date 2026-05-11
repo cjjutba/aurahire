@@ -10,7 +10,7 @@ import type {
 import type { TextLayerItem } from "./find-text-spans";
 
 if (typeof window !== "undefined") {
-  // Worker URL — bundled by Next.js's webpack via import.meta.url.
+  // Worker URL, bundled by Next.js's webpack via import.meta.url.
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     "pdfjs-dist/build/pdf.worker.min.mjs",
     import.meta.url,

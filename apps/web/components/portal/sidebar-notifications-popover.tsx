@@ -18,7 +18,7 @@ export interface SidebarNotificationsPopoverBodyProps {
 const NOTIFICATIONS_SETTINGS_PATH = "/settings/notifications";
 
 /**
- * Notifications popover content — Inbox / Archive tabs, click-to-read row,
+ * Notifications popover content, Inbox / Archive tabs, click-to-read row,
  * and an "Archive all" footer. Lazy-fetches the archive tab the first time
  * the user opens it (the hook owns the cache; this component only renders).
  */

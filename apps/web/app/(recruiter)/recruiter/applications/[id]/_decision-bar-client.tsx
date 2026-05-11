@@ -23,7 +23,7 @@ const PIPELINE_STAGES: Array<{ key: string; label: string }> = [
 ];
 
 // Offer outcomes are rendered as inline sub-states on the Offer node, not as
-// separate funnel stages — the recruiter still needs to mark Hired afterward.
+// separate funnel stages, the recruiter still needs to mark Hired afterward.
 const STATUS_TO_STAGE_KEY: Record<string, string> = {
   applied: "applied",
   screening: "screening",
@@ -450,7 +450,7 @@ export function DecisionBarClient({
         </div>
       </div>
 
-      {/* Soft-confirm modal — shown when recruiter acts without interview feedback */}
+      {/* Soft-confirm modal, shown when recruiter acts without interview feedback */}
       <OfferConfirmModalClient
         open={softConfirmOpen}
         onOpenChange={setSoftConfirmOpen}

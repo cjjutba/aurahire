@@ -61,14 +61,14 @@ export function NotesSectionClient({ applicationId, initialNotes }: Props) {
           Recruiter Notes
         </h2>
         <p className="mt-1 text-xs text-[var(--color-muted)]">
-          Notes for your team — visible only to recruiters at your company.
+          Notes for your team, visible only to recruiters at your company.
         </p>
       </header>
       <Textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
         rows={4}
-        placeholder="Notes for your team — visible only to recruiters"
+        placeholder="Notes for your team, visible only to recruiters"
       />
       <div className="flex justify-end">
         <Button

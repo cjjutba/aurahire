@@ -15,7 +15,7 @@ import type {
  *
  * **Handler stability:** the `handler` argument is intentionally NOT in the
  * effect deps. If your handler closes over reactive state (anything that
- * changes between renders), wrap it in `useCallback` with the right deps —
+ * changes between renders), wrap it in `useCallback` with the right deps -
  * otherwise stale closures will read stale state. Most call sites in this
  * codebase only close over stable identifiers (`applicationId`, `jobId` from
  * route params; `queryClient` from a stable hook) and don't need this.

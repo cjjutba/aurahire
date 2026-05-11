@@ -1,4 +1,4 @@
-// Client-safe step definitions and types — imported by Client Components.
+// Client-safe step definitions and types, imported by Client Components.
 // Do NOT import server-only modules (e.g. next/headers) here.
 
 export const ONBOARDING_STEPS = [

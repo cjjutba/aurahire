@@ -46,7 +46,7 @@ const FIELDS: { key: keyof Weights; label: string; help: string }[] = [
 ];
 
 /**
- * Scoring weights are global (per the Phase 2c report) — there's no
+ * Scoring weights are global (per the Phase 2c report), there's no
  * per-company write endpoint exposed yet. We render the canonical
  * defaults read-only with sliders so a recruiter can see what the AI
  * applies without wondering where the numbers come from.

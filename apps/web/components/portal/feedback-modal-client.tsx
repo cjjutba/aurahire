@@ -59,7 +59,7 @@ export function FeedbackModalClient({ open, onOpenChange }: Props) {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Reset on close so the next open is fresh — avoids accidentally
+  // Reset on close so the next open is fresh, avoids accidentally
   // re-submitting a previous draft after a successful send.
   useEffect(() => {
     if (!open) {
@@ -134,7 +134,7 @@ export function FeedbackModalClient({ open, onOpenChange }: Props) {
         return;
       }
 
-      toastSuccess("Thanks — feedback sent", "We read every submission.");
+      toastSuccess("Thanks, feedback sent", "We read every submission.");
       onOpenChange(false);
     } catch (err) {
       toastApiError(err, "Couldn't send feedback");

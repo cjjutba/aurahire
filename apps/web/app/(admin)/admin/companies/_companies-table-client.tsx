@@ -184,7 +184,7 @@ export function CompaniesTableClient({ rows }: Props) {
                         )}
                       </div>
                     ) : (
-                      <span className="text-[var(--color-muted-soft)]">—</span>
+                      <span className="text-[var(--color-muted-soft)]">-</span>
                     )}
                   </td>
 

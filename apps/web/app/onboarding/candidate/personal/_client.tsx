@@ -53,7 +53,7 @@ export function PersonalStepClient({
           </ResumeSheet>
         }
         title="Tell us about yourself"
-        subtitle="Some fields are prefilled from your resume — review and edit as needed."
+        subtitle="Some fields are prefilled from your resume, review and edit as needed."
       >
         <LowConfidenceBanner
           confidence={latestResume?.parsed?.parse_confidence ?? null}

@@ -53,7 +53,7 @@ interface MemberRemovedResponse {
 export const MEMBERS_QUERY_KEY = ["company-members"] as const;
 
 /**
- * GET /api/v1/companies/me/members — single envelope listing both
+ * GET /api/v1/companies/me/members, single envelope listing both
  * active members and pending invites. Status is on each row.
  */
 export function useMembersQuery(enabled: boolean = true) {
@@ -129,7 +129,7 @@ export function useResendInvitationMutation() {
 }
 
 /**
- * POST /api/v1/companies/me/members/:id/transfer-ownership — owner only.
+ * POST /api/v1/companies/me/members/:id/transfer-ownership, owner only.
  * On success the caller's role is downgraded to admin and the target
  * member becomes the owner. Memberships query is invalidated so the
  * sidebar reflects the new role label.

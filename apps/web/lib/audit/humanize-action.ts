@@ -5,7 +5,7 @@
  *
  * Keep this map in sync with AUDIT_ACTIONS in the API. If a backend code
  * appears that isn't in this map, the fallback formatter still renders
- * it cleanly (Title Cased Words) — losing nuance but never readability.
+ * it cleanly (Title Cased Words), losing nuance but never readability.
  */
 const KNOWN_LABELS: Record<string, string> = {
   // Identity & accounts
@@ -136,11 +136,11 @@ function titleCaseFallback(action: string): string {
 /**
  * Returns a plain-English label for a known audit action code.
  * Falls back to Title Cased Words for unknown codes (forward compatibility).
- * Returns "—" for empty input.
+ * Returns "-" for empty input.
  */
 export function humanizeAuditAction(action: string): string {
   const trimmed = action.trim();
-  if (trimmed.length === 0) return "—";
+  if (trimmed.length === 0) return "-";
   const known = KNOWN_LABELS[trimmed];
   if (known) return known;
   return titleCaseFallback(trimmed);

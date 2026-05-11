@@ -304,7 +304,7 @@ export default async function RecruiterShortlistPage({
 
                     {/* Job */}
                     <td className="px-4 py-3 text-[var(--color-body)]">
-                      {row.job?.title ?? "—"}
+                      {row.job?.title ?? "-"}
                     </td>
 
                     {/* Status */}
@@ -329,7 +329,7 @@ export default async function RecruiterShortlistPage({
                         </span>
                       ) : (
                         <span className="text-[var(--color-muted-soft)]">
-                          —
+                          -
                         </span>
                       )}
                     </td>
@@ -338,7 +338,7 @@ export default async function RecruiterShortlistPage({
                     <td className="px-4 py-3 text-[var(--color-body)]">
                       {row.shortlistedAt
                         ? new Date(row.shortlistedAt).toLocaleDateString()
-                        : "—"}
+                        : "-"}
                     </td>
 
                     {/* Applied */}

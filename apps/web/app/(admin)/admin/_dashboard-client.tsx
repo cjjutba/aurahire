@@ -143,7 +143,7 @@ function KpiTile({
           loading ? "text-[var(--color-muted)]" : valueClass
         }`}
       >
-        {loading ? "—" : value}
+        {loading ? "-" : value}
       </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
         {description}

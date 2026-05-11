@@ -95,7 +95,7 @@ function FormLabel({
   const { error, formItemId } = useFormField();
 
   // Auto-style a trailing "*" on string-only labels into a red asterisk.
-  // Optional fields carry no marker — absence of the asterisk signals optional.
+  // Optional fields carry no marker, absence of the asterisk signals optional.
   const renderedChildren = (() => {
     if (typeof children !== "string") return children;
     const requiredMatch = children.match(/^(.*\S)\s*\*\s*$/);

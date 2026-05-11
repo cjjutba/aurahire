@@ -4,7 +4,7 @@ import { RecruiterFocusForm } from "@/components/onboarding/recruiter/focus-form
 import { getCurrentSession } from "@/lib/auth/session";
 import { RECRUITER_ONBOARDING_STEPS } from "../_steps";
 
-export const metadata = { title: "Hiring Focus — Onboarding" };
+export const metadata = { title: "Hiring Focus, Onboarding" };
 
 type HiringVolume = "1-5" | "6-10" | "11-25" | "25+";
 
@@ -43,7 +43,7 @@ export default async function RecruiterFocusPage() {
       currentStepId="focus"
       saveStatus="idle"
       title="Your hiring focus"
-      subtitle="A quick read on what you typically hire for — this lets us tune relevance from day one."
+      subtitle="A quick read on what you typically hire for, this lets us tune relevance from day one."
     >
       <RecruiterFocusForm
         defaults={{

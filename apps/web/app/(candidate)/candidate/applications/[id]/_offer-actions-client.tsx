@@ -154,7 +154,7 @@ export function OfferActionsClient({ offer }: Props) {
               Decline this offer?
             </DialogTitle>
             <DialogDescription className="text-sm leading-relaxed">
-              You can tell the recruiter why — it helps them improve.
+              You can tell the recruiter why, it helps them improve.
             </DialogDescription>
           </DialogHeader>
           <Textarea

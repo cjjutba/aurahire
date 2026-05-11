@@ -51,11 +51,11 @@ interface CreateCompanyResponse {
 
 interface CompanyCreateFormProps {
   /**
-   * "switcher"   — existing recruiter creating a second workspace via the
+   * "switcher"  , existing recruiter creating a second workspace via the
    *                full /onboarding/recruiter/company-create?from=switcher
    *                page. Success → /recruiter.
-   * "onboarding" — first-time signup. Success → /onboarding/recruiter.
-   * "dialog"     — sidebar modal. Success → onSuccess() to close + refresh.
+   * "onboarding", first-time signup. Success → /onboarding/recruiter.
+   * "dialog"    , sidebar modal. Success → onSuccess() to close + refresh.
    */
   mode: "switcher" | "onboarding" | "dialog";
   /** Called after a successful create in `dialog` mode. */
@@ -98,7 +98,7 @@ export function CompanyCreateForm({
         router.push("/recruiter");
         router.refresh();
       } else if (mode === "dialog") {
-        // Sidebar modal — switch active company, drop the previous tenant's
+        // Sidebar modal, switch active company, drop the previous tenant's
         // cached lists, force memberships to refetch (so the sidebar chip
         // flips to the new company before we close), refresh server
         // components, then close.
@@ -112,7 +112,7 @@ export function CompanyCreateForm({
         router.refresh();
         onSuccess?.();
       } else {
-        // Onboarding path — backend already set last_active_company_id.
+        // Onboarding path, backend already set last_active_company_id.
         // Mirror it client-side so the next /recruiter render carries the
         // header on every fetch from the start.
         setActiveCompanyId(res.data.id);

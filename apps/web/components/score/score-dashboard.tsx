@@ -45,7 +45,7 @@ export interface ScoreDashboardProps {
    * adds a sticky bar above so the rail doesn't slide behind it.
    */
   stickyTopClass?: string;
-  /** Overall numeric score (0–100). */
+  /** Overall numeric score (0-100). */
   overallScore: number;
   band: "strong" | "partial" | "limited";
   /** Small lines of meta shown next to the ring (computed-at, model, etc.). */
@@ -60,7 +60,7 @@ export interface ScoreDashboardProps {
   extraSections?: ReactNode;
   /**
    * Optional inline notice rendered above the grid. Used to surface
-   * calibration warnings ("breakdown may be incomplete — recompute") to the
+   * calibration warnings ("breakdown may be incomplete, recompute") to the
    * candidate without disrupting layout.
    */
   calibrationNotice?: ReactNode;
@@ -123,7 +123,7 @@ export function ScoreDashboard({
       {calibrationNotice}
 
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-        {/* Left rail — sticky summary + component list */}
+        {/* Left rail, sticky summary + component list */}
         <aside className={`lg:sticky ${stickyTopClass} lg:self-start`}>
           <div className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5">
             <div className="flex items-center gap-4">
@@ -162,7 +162,7 @@ export function ScoreDashboard({
           </div>
         </aside>
 
-        {/* Right pane — active component detail */}
+        {/* Right pane, active component detail */}
         <section
           aria-live="polite"
           className="rounded-[var(--radius-xl)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6"
@@ -323,7 +323,7 @@ function ActiveComponentPanel({
           {negatives.length > 0 && (
             <EvidenceGroup
               tone="gap"
-              heading="Gaps — why this isn't a perfect score"
+              heading="Gaps, why this isn't a perfect score"
               items={negatives}
               componentName={c.name}
             />
@@ -421,7 +421,7 @@ function FairnessDisclosure({
       <div className="mt-4 space-y-3 border-t border-[var(--color-hairline-soft)] pt-4 text-sm text-[var(--color-body)]">
         <p>
           Before scoring, we redacted personal information from your resume so
-          the AI scores you on your skills and experience — not on identity
+          the AI scores you on your skills and experience, not on identity
           markers.
         </p>
         {f.redactedFields.length > 0 && (

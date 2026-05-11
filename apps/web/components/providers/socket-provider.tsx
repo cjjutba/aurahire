@@ -32,7 +32,7 @@ export function useSocket(): SocketContextValue {
  * Owns the singleton socket lifecycle for a tab.
  *
  * Token plumbing: AuthTokenProvider writes the access token into a
- * module-level singleton (@aurahire/shared fetcher) — that's not reactive
+ * module-level singleton (@aurahire/shared fetcher), that's not reactive
  * React state. This provider subscribes to Supabase auth state changes
  * directly (same pattern as AuthTokenProvider) so React re-renders happen
  * when the token changes.

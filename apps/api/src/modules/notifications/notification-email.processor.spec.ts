@@ -60,7 +60,7 @@ describe("NotificationEmailProcessor", () => {
     expect(email.send.mock.calls[0][0]).toEqual(
       expect.objectContaining({
         to: "u@x.io",
-        subject: expect.stringContaining("Application update"),
+        subject: expect.stringContaining("application"),
       }),
     );
     expect(repo.setEmailSent).toHaveBeenCalledWith("n1");

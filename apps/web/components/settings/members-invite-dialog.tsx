@@ -120,10 +120,10 @@ export function MembersInviteDialog({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="admin">
-                        Admin — manage team, edit company
+                        Admin, manage team, edit company
                       </SelectItem>
                       <SelectItem value="recruiter">
-                        Recruiter — post jobs, review candidates
+                        Recruiter, post jobs, review candidates
                       </SelectItem>
                     </SelectContent>
                   </Select>

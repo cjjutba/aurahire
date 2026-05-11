@@ -241,7 +241,7 @@ export function PortalSidebarContent({
       </nav>
 
       {/* Bottom rail: avatar + name + three-dot + bell. Replaces the legacy
-       * Help link + sign-out dropdown — Help, Settings, theme, and sign-out
+       * Help link + sign-out dropdown, Help, Settings, theme, and sign-out
        * now live inside the profile popover surfaced by the rail. */}
       <SidebarBottomRail
         user={{

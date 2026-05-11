@@ -8,7 +8,7 @@ import { fetchMyMemberships } from "@/lib/memberships-server";
 import { fetchInvitationPreview } from "@/lib/invitation-preview";
 import { PENDING_INVITE_COOKIE } from "@/lib/invite-cookie";
 
-export const metadata = { title: "Get started — AuraHire" };
+export const metadata = { title: "Get started, AuraHire" };
 
 /**
  * The pre-step "create vs join" fork. Reached on:
@@ -56,7 +56,7 @@ export default async function OnboardingStartPage() {
     if (preview && !preview.isExpired && preview.status === "invited") {
       redirect(`/onboarding/invite?token=${encodeURIComponent(pendingToken)}`);
     }
-    // Stale cookie — do nothing here; /onboarding/invite is the page that
+    // Stale cookie, do nothing here; /onboarding/invite is the page that
     // owns clearing it. Surfacing the chooser is the right fallback.
   }
 

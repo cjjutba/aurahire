@@ -10,7 +10,7 @@ export type {
   CandidateApplicationsParams,
   CandidateInterviewsParams,
 } from "./keys";
-// Type-only re-exports — TypeScript erases these so client bundles
+// Type-only re-exports, TypeScript erases these so client bundles
 // don't transitively import the server-only ./queries.ts module.
 export type {
   RecruiterStatsResponse,

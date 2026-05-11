@@ -35,7 +35,7 @@ export async function createServerClient() {
               cookieStore.set(name, value, finalOptions);
             });
           } catch {
-            // Setting cookies in Server Components throws — only middleware/Route Handlers can set them.
+            // Setting cookies in Server Components throws, only middleware/Route Handlers can set them.
           }
         },
       },

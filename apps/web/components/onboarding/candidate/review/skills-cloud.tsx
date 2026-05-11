@@ -81,7 +81,7 @@ export function SkillsCloud({ initial, onSync }: Props) {
               add(query.trim());
             }
           }}
-          placeholder="Add a skill — e.g. TypeScript"
+          placeholder="Add a skill, e.g. TypeScript"
           className="w-full rounded-full border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-4 py-2 text-sm focus:border-[var(--color-primary)] focus:outline-none"
         />
         {suggestions.length > 0 && (

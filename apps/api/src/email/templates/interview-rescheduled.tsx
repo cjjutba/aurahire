@@ -222,7 +222,7 @@ export function InterviewRescheduledEmail({
             <Text
               style={{ color: "#7c828a", fontSize: "13px", lineHeight: 1.5 }}
             >
-              An updated calendar invite (.ics) is attached — add it to replace
+              An updated calendar invite (.ics) is attached. Add it to replace
               the previous entry in your calendar.
             </Text>
           </Section>

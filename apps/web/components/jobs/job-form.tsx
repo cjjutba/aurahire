@@ -125,12 +125,12 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
   );
 
   // Drives button visibility/emphasis. We read from biasFlags (last known
-  // result) — never from biasScanning — so the buttons don't flicker while a
+  // result), never from biasScanning, so the buttons don't flicker while a
   // re-scan is in flight. The "Checking…" caption below conveys scan status
   // without rearranging the action area.
   //
   // Only medium/high flags gate publish. LOW flags surface in the UI and the
-  // audit trail but don't block — they're informational. This mirrors the
+  // audit trail but don't block, they're informational. This mirrors the
   // backend gate in jobs.service.ts publish().
   const hasGatingFlags = biasFlags.some(
     (f) => f.severity === "medium" || f.severity === "high",
@@ -211,7 +211,7 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
         e?.status === 422 &&
         e?.body?.code === "BIAS_CHECK_REQUIRED"
       ) {
-        toast.warning("Saved as draft — bias check required", {
+        toast.warning("Saved as draft, bias check required", {
           description:
             e.body?.message ??
             "Resolve the flagged language and publish from the job page.",
@@ -584,7 +584,7 @@ export function JobForm({ jobId, defaults }: JobFormProps) {
           )}
           {!isEdit && hasOnlyLowFlags && !biasScanning && (
             <p className="text-xs text-[var(--color-muted)]">
-              Low-severity flags surfaced for awareness — not blocking.
+              Low-severity flags surfaced for awareness, not blocking.
             </p>
           )}
           <div className="flex flex-wrap justify-end gap-3">

@@ -9,7 +9,7 @@ export interface SubscribeOptions {
 
 /**
  * Sends a `subscribe` message to the server and returns a function that
- * sends the matching `unsubscribe`. Idempotent on the server — safe to call
+ * sends the matching `unsubscribe`. Idempotent on the server, safe to call
  * after every reconnect.
  */
 export function subscribeToResource(

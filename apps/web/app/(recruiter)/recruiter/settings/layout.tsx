@@ -13,8 +13,8 @@ export const metadata = { title: "Settings" };
  *
  * Below 1024px the rail collapses to a horizontal scrolling tab strip
  * rendered above the content (handled inside <SettingsRail/>). Both modes
- * share a single nav component — visibility is toggled via Tailwind
- * breakpoints — so route changes feel continuous.
+ * share a single nav component, visibility is toggled via Tailwind
+ * breakpoints, so route changes feel continuous.
  *
  * The header (`Settings` h1 + subtitle) is rendered once at the layout
  * level so each sub-route only owns its own h2 + body. Server-rendered

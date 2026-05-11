@@ -21,7 +21,7 @@ export const adminHowItWorks: HowItWorksContent = {
   hero: {
     eyebrow: "How AuraHire works for admins",
     title: "Operate the system. Defend every decision.",
-    lede: "Admins own the platform's policies and the audit trail. This walkthrough explains every control surface — scoring weights, prompt versions, bias monitoring, calibration, audit logs — and how the pieces fit together so the system is defensible end to end.",
+    lede: "Admins own the platform's policies and the audit trail. This walkthrough explains every control surface, scoring weights, prompt versions, bias monitoring, calibration, audit logs, and how the pieces fit together so the system is defensible end to end.",
   },
   journey: {
     title: "Your operating loop",
@@ -78,7 +78,7 @@ export const adminHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "AuraHire's recruiter and candidate portals are built on top of the policies you configure as an admin. If the platform is ever questioned — by a regulator, a court, an internal audit, or a journalist — your control surfaces are how the system's behavior is reconstructed and explained. Every change you make is versioned; every decision the system makes references the version that produced it.",
+              text: "AuraHire's recruiter and candidate portals are built on top of the policies you configure as an admin. If the platform is ever questioned, by a regulator, a court, an internal audit, or a journalist, your control surfaces are how the system's behavior is reconstructed and explained. Every change you make is versioned; every decision the system makes references the version that produced it.",
             },
             {
               kind: "fields",
@@ -86,7 +86,7 @@ export const adminHowItWorks: HowItWorksContent = {
                 {
                   label: "Versioned everything",
                   description:
-                    "Scoring weights, AI prompts, bias dictionaries, decline-reason taxonomies — all versioned. A score generated under v3 stays attributable to v3 even after v4 is published.",
+                    "Scoring weights, AI prompts, bias dictionaries, decline-reason taxonomies, all versioned. A score generated under v3 stays attributable to v3 even after v4 is published.",
                 },
                 {
                   label: "Continuous fairness measurement",
@@ -104,7 +104,7 @@ export const adminHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "What 'admin' actually means here",
-              body: "Admin is the operational role — the person who keeps the platform's policies aligned with the organization's standards and the relevant law. Admins do not see candidate-level personal data by default; they see aggregated patterns and the audit log.",
+              body: "Admin is the operational role, the person who keeps the platform's policies aligned with the organization's standards and the relevant law. Admins do not see candidate-level personal data by default; they see aggregated patterns and the audit log.",
             },
           ],
         },
@@ -122,7 +122,7 @@ export const adminHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "Scores are a weighted sum of components. You define which components are active, what their weights are, and what scoring engine handles each. Components can be deterministic (rule-based, e.g., skill matching, years of experience comparison) or generative (AI model, e.g., role-fit narrative). Strict-sum reconciliation guarantees that the visible breakdown adds up to the headline score — no opaque adjustments.",
+              text: "Scores are a weighted sum of components. You define which components are active, what their weights are, and what scoring engine handles each. Components can be deterministic (rule-based, e.g., skill matching, years of experience comparison) or generative (AI model, e.g., role-fit narrative). Strict-sum reconciliation guarantees that the visible breakdown adds up to the headline score, no opaque adjustments.",
             },
             {
               kind: "matrix",
@@ -132,7 +132,7 @@ export const adminHowItWorks: HowItWorksContent = {
                   "Must-have skills",
                   "Deterministic matcher",
                   "35%",
-                  "Yes — per role and globally",
+                  "Yes, per role and globally",
                 ],
                 ["Nice-to-have skills", "Deterministic matcher", "15%", "Yes"],
                 [
@@ -191,7 +191,7 @@ export const adminHowItWorks: HowItWorksContent = {
                 {
                   label: "Structured outputs only",
                   description:
-                    "Every prompt is paired with a JSON schema (Zod-derived). The model's response is validated against the schema before storage. Free-text outputs are not allowed in production paths — that's a hard constraint, not a convention.",
+                    "Every prompt is paired with a JSON schema (Zod-derived). The model's response is validated against the schema before storage. Free-text outputs are not allowed in production paths, that's a hard constraint, not a convention.",
                 },
               ],
             },
@@ -199,7 +199,7 @@ export const adminHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "ai",
               title: "Why structured outputs?",
-              body: "Free-text outputs drift in shape over time and are hard to compare across runs. Structured outputs give us per-field reliability — and they make the audit log readable, because every field has a known meaning.",
+              body: "Free-text outputs drift in shape over time and are hard to compare across runs. Structured outputs give us per-field reliability, and they make the audit log readable, because every field has a known meaning.",
             },
           ],
         },
@@ -212,7 +212,7 @@ export const adminHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "When recruiters draft job descriptions, the bias detector scans for terms in your maintained dictionaries — gendered descriptors, age-coded language, exclusionary qualifications, regional/legal-sensitive phrasing. Each entry has a category, a severity (info / warning / danger), an explanation shown to recruiters, and one or more suggested replacements.",
+              text: "When recruiters draft job descriptions, the bias detector scans for terms in your maintained dictionaries, gendered descriptors, age-coded language, exclusionary qualifications, regional/legal-sensitive phrasing. Each entry has a category, a severity (info / warning / danger), an explanation shown to recruiters, and one or more suggested replacements.",
             },
             {
               kind: "fields",
@@ -220,7 +220,7 @@ export const adminHowItWorks: HowItWorksContent = {
                 {
                   label: "Dictionary entries",
                   description:
-                    "Add, edit, or retire entries from /admin/bias-dictionary. Each entry's history is versioned. Changes apply to new flags only — historical flags reference the entry version that produced them.",
+                    "Add, edit, or retire entries from /admin/bias-dictionary. Each entry's history is versioned. Changes apply to new flags only, historical flags reference the entry version that produced them.",
                 },
                 {
                   label: "Severity tuning",
@@ -256,7 +256,7 @@ export const adminHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "Every artifact that affects scoring or fairness — weights, prompts, bias dictionaries, decline reason taxonomies — is versioned. Score records reference the artifact versions that produced them. This means: a score from three months ago can be exactly explained by reading the v7 weights, the v3 narrative prompt, and the v12 bias dictionary that were active at the time.",
+              text: "Every artifact that affects scoring or fairness, weights, prompts, bias dictionaries, decline reason taxonomies, is versioned. Score records reference the artifact versions that produced them. This means: a score from three months ago can be exactly explained by reading the v7 weights, the v3 narrative prompt, and the v12 bias dictionary that were active at the time.",
             },
             {
               kind: "matrix",
@@ -303,7 +303,7 @@ export const adminHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "Why re-scoring is opt-in",
-              body: "Automatically re-scoring all historical applications when you update weights would silently invalidate prior decisions — that's the opposite of accountability. You can re-score deliberately (with a logged action) when you want consistency across a pipeline; otherwise old applications keep their original scores.",
+              body: "Automatically re-scoring all historical applications when you update weights would silently invalidate prior decisions, that's the opposite of accountability. You can re-score deliberately (with a logged action) when you want consistency across a pipeline; otherwise old applications keep their original scores.",
             },
           ],
         },
@@ -330,7 +330,7 @@ export const adminHowItWorks: HowItWorksContent = {
                 {
                   label: "System health",
                   description:
-                    "API latency, AI call latency, queue depth (BullMQ), Redis connection state, Postgres pool, Mailpit/Resend delivery rate. The operational layer — separate from the fairness layer.",
+                    "API latency, AI call latency, queue depth (BullMQ), Redis connection state, Postgres pool, Mailpit/Resend delivery rate. The operational layer, separate from the fairness layer.",
                 },
               ],
             },
@@ -360,12 +360,12 @@ export const adminHowItWorks: HowItWorksContent = {
                 {
                   title: "Read the underlying decisions",
                   description:
-                    "The detail links into the affected applications and the recruiter actions on them. You can see — without revealing identity — the scores, breakdowns, and stage moves that produced the pattern.",
+                    "The detail links into the affected applications and the recruiter actions on them. You can see, without revealing identity, the scores, breakdowns, and stage moves that produced the pattern.",
                 },
                 {
                   title: "Decide on action",
                   description:
-                    "Three outcomes: (1) The pattern reflects real signal — close with a documented note. (2) The pattern is configuration drift — adjust weights / prompt / dictionary. (3) The pattern is recruiter behavior — surface a calibration prompt to the recruiter via the platform.",
+                    "Three outcomes: (1) The pattern reflects real signal, close with a documented note. (2) The pattern is configuration drift, adjust weights / prompt / dictionary. (3) The pattern is recruiter behavior, surface a calibration prompt to the recruiter via the platform.",
                 },
                 {
                   title: "Document the outcome",
@@ -448,7 +448,7 @@ export const adminHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "Anonymization on candidate deletion",
-              body: "If a candidate deletes their account, their personal data is removed from the candidate record — but audit log entries that reference the candidate are anonymized (candidate id replaced with a hash, names removed) and retained. We need the record to defend that processes were followed.",
+              body: "If a candidate deletes their account, their personal data is removed from the candidate record, but audit log entries that reference the candidate are anonymized (candidate id replaced with a hash, names removed) and retained. We need the record to defend that processes were followed.",
             },
           ],
         },
@@ -457,7 +457,7 @@ export const adminHowItWorks: HowItWorksContent = {
           icon: ScrollText,
           kicker: "Operations",
           title: "Exporting the audit log",
-          lede: "Legal review, internal investigation, or regulator request — the export workflow is the same.",
+          lede: "Legal review, internal investigation, or regulator request, the export workflow is the same.",
           blocks: [
             {
               kind: "steps",
@@ -550,7 +550,7 @@ export const adminHowItWorks: HowItWorksContent = {
                 ],
                 [
                   "OpenAI",
-                  "All AI calls (parsing, scoring narrative, bias check) — backend-only.",
+                  "All AI calls (parsing, scoring narrative, bias check), backend-only.",
                   "Indirect: prompt versions and model selection live in /admin/prompts.",
                 ],
                 [
@@ -564,7 +564,7 @@ export const adminHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "Frontend has no DB or AI access",
-              body: "By architectural rule, the Next.js app makes no direct database queries and no direct OpenAI calls. Everything flows through the NestJS API. That's what makes audit logs trustworthy — there's only one path that produces them.",
+              body: "By architectural rule, the Next.js app makes no direct database queries and no direct OpenAI calls. Everything flows through the NestJS API. That's what makes audit logs trustworthy, there's only one path that produces them.",
             },
           ],
         },
@@ -591,7 +591,7 @@ export const adminHowItWorks: HowItWorksContent = {
                 {
                   term: "Calibration warning",
                   definition:
-                    "A chip beside a score indicating low confidence — usually because resume input was sparse or the AI rationale flagged uncertainty.",
+                    "A chip beside a score indicating low confidence, usually because resume input was sparse or the AI rationale flagged uncertainty.",
                 },
                 {
                   term: "Drift",
@@ -651,7 +651,7 @@ export const adminHowItWorks: HowItWorksContent = {
                 [
                   "Decide hiring outcomes",
                   "Never.",
-                  "Not in admin scope — recruiters own decisions.",
+                  "Not in admin scope, recruiters own decisions.",
                 ],
                 [
                   "Re-score historical applications",
@@ -698,7 +698,7 @@ export const adminHowItWorks: HowItWorksContent = {
                 "Document every config change in the version notes field. The reason matters more than the change.",
                 "Treat calibration warnings as triage signals, not noise. They mark the cases where override is most likely correct.",
                 "Audit the audit. Export a small sample monthly and verify the chain-of-custody manifest matches the query you ran.",
-                "When recruiters push back on a flag or a score, listen — that's the cheapest source of dictionary and prompt improvements.",
+                "When recruiters push back on a flag or a score, listen, that's the cheapest source of dictionary and prompt improvements.",
               ],
             },
           ],
@@ -712,7 +712,7 @@ export const adminHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "If you've finished this walkthrough and still have a specific question — about a stuck job, an export error, or a configuration detail — the admin help center is the right next stop. It's organized as searchable Q&A, not a linear story.",
+              text: "If you've finished this walkthrough and still have a specific question, about a stuck job, an export error, or a configuration detail, the admin help center is the right next stop. It's organized as searchable Q&A, not a linear story.",
             },
           ],
         },
@@ -721,7 +721,7 @@ export const adminHowItWorks: HowItWorksContent = {
   ],
   contact: {
     title: "Operating the system and need a second opinion?",
-    body: "If a configuration question, an investigation, or an audit-export workflow isn't clear, write to us — a human reads and responds. Operational questions are the most valuable ones.",
+    body: "If a configuration question, an investigation, or an audit-export workflow isn't clear, write to us, a human reads and responds. Operational questions are the most valuable ones.",
     email: "cjjutbaofficial@gmail.com",
     secondaryLink: { label: "Open the admin help center", href: "/admin/help" },
   },

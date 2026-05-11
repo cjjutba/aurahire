@@ -46,7 +46,7 @@ const HOW_IT_WORKS_PATH: Record<UserRole, string> = {
 };
 
 /**
- * Profile popover content — used by both the avatar/name trigger and the
+ * Profile popover content, used by both the avatar/name trigger and the
  * three-dot trigger in `SidebarBottomRail`. Lives outside the `<Popover>` so
  * the rail can re-use the same body in two `<Popover>` wrappers.
  */

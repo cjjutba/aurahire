@@ -84,12 +84,12 @@ export function CandidateJobsListClient({
         </h1>
         <p className="mt-2 text-sm text-[var(--color-body)]">
           {(() => {
-            if (isLoading) return "—";
+            if (isLoading) return "-";
             if (meta.total === 0) return "No jobs available";
 
             const base = `${meta.total} job${meta.total === 1 ? "" : "s"}`;
 
-            // Hold the suffix until previews actually land — otherwise the
+            // Hold the suffix until previews actually land, otherwise the
             // header advertises scoring before any chip renders below.
             const previewCount = previews.data?.data?.length ?? 0;
             if (!previews.isLoading && previewCount > 0) {

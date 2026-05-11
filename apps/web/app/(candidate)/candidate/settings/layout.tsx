@@ -5,8 +5,8 @@ import { CandidateSettingsRail } from "@/components/settings/candidate-settings-
 export const metadata = { title: "Settings" };
 
 /**
- * Candidate settings shell. Same geometry as the recruiter shell —
- * 256px rail + content column — but only the Personal group ships
+ * Candidate settings shell. Same geometry as the recruiter shell -
+ * 256px rail + content column, but only the Personal group ships
  * because candidates have no multi-tenancy.
  */
 export default function CandidateSettingsLayout({

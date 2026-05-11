@@ -3,7 +3,7 @@
  * /invite/[token] and /onboarding/invite to render a server-side preview
  * before any client-side accept/decline.
  *
- * The endpoint is public (no auth header required) — the token IS the auth.
+ * The endpoint is public (no auth header required), the token IS the auth.
  * Returns null on unknown / consumed tokens (404 from the API).
  */
 export interface InvitationPreview {

@@ -119,7 +119,7 @@ export function AuditTableClient({ rows, meta }: Props) {
                       </span>
                     </div>
                   ) : (
-                    <span className="text-[var(--color-muted-soft)]">—</span>
+                    <span className="text-[var(--color-muted-soft)]">-</span>
                   )}
                 </td>
                 <td className="max-w-[400px] truncate p-3 font-mono text-xs text-[var(--color-muted)]">

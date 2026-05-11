@@ -27,7 +27,7 @@ export function SignupRedirectForm({ token }: { token: string }) {
         >
           Sign in
         </a>{" "}
-        — we'll bring you back here.
+       , we'll bring you back here.
       </p>
     </form>
   );

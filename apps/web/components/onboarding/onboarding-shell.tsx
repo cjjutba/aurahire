@@ -72,7 +72,7 @@ export function OnboardingShell({
 
   return (
     <div className="flex flex-1 flex-col">
-      {/* Wizard progress — floats on the page canvas, compact spacing. */}
+      {/* Wizard progress, floats on the page canvas, compact spacing. */}
       <div
         className={`mx-auto w-full px-4 pt-5 pb-3 sm:px-6 sm:pt-7 sm:pb-4 ${wideContainerCls}`}
       >
@@ -94,7 +94,7 @@ export function OnboardingShell({
         <OnboardingProgress steps={steps} currentStepId={currentStepId} />
       </div>
 
-      {/* Content — no card wrapper, no background. Children render on canvas. */}
+      {/* Content, no card wrapper, no background. Children render on canvas. */}
       {rightPane ? (
         <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 gap-0 lg:grid-cols-[1.3fr_1fr]">
           <section className="min-w-0 px-4 pb-10 pt-2 sm:px-6 sm:pb-12 sm:pt-4">

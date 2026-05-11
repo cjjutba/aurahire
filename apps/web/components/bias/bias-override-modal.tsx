@@ -114,7 +114,7 @@ export function BiasOverrideModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            Bias Check — {flags.length} flag{flags.length === 1 ? "" : "s"}{" "}
+            Bias Check, {flags.length} flag{flags.length === 1 ? "" : "s"}{" "}
             require attention
           </DialogTitle>
           <DialogDescription>

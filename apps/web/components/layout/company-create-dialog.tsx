@@ -17,7 +17,7 @@ interface CompanyCreateDialogProps {
 /**
  * In-portal dialog for creating an additional company from the sidebar
  * switcher. Keeps the user anchored on /recruiter instead of bouncing them
- * to an /onboarding/* URL — see the discussion that replaced the old
+ * to an /onboarding/* URL, see the discussion that replaced the old
  * `?from=switcher` redirect with this modal.
  */
 export function CompanyCreateDialog({

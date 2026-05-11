@@ -31,7 +31,7 @@ export function SaveStatusIndicator({ status, onRetry, className }: Props) {
     return (
       <span className={cls}>
         <AlertCircle className="h-3.5 w-3.5" />
-        Couldn&apos;t save —{" "}
+        Couldn&apos;t save -{" "}
         <button onClick={onRetry} className="font-semibold underline">
           Retry
         </button>

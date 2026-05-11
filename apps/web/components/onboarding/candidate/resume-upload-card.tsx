@@ -57,7 +57,7 @@ export function ResumeUploadCard({
     type: string;
   } | null>(null);
 
-  // Stale "parsing" recovery state — render the recovery card, unless we're
+  // Stale "parsing" recovery state, render the recovery card, unless we're
   // explicitly in the replace flow (then the user wants the dropzone).
   if (
     !forceIdle &&
@@ -218,7 +218,7 @@ export function ResumeUploadCard({
         onClick={() => router.push("/onboarding/candidate/personal")}
         className="mt-5 text-sm text-[var(--color-muted)] underline transition-colors hover:text-[var(--color-ink)]"
       >
-        Skip — I&apos;ll fill in manually
+        Skip, I&apos;ll fill in manually
       </button>
     </div>
   );

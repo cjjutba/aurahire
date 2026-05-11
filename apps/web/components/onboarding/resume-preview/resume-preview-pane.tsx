@@ -26,17 +26,17 @@ const IMAGE_ONLY_PDF_THRESHOLD = 50;
  * Right-pane resume preview shown on `/onboarding/candidate/personal` and
  * `/onboarding/candidate/review`. Two tabs:
  *
- *   • Parsed Text  — linearized rawText with inline highlights tied to
+ *   • Parsed Text , linearized rawText with inline highlights tied to
  *                    parsed fields. This is the default tab; it's where
  *                    candidates verify what we extracted.
- *   • Original     — PDF.js-rendered canonical PDF with NO overlay
+ *   • Original    , PDF.js-rendered canonical PDF with NO overlay
  *                    rectangles. For DOCX uploads the backend exposes a
  *                    canonical PDF derivative, so DOCX renders here too.
  *
  * The toggle is always visible when at least one source is available; each
  * tab handles its own empty state and offers a one-click jump to the other
  * tab when its content can't render. Highlights only appear on the Parsed
- * Text view — text-layer matching against the PDF was unreliable, so the
+ * Text view, text-layer matching against the PDF was unreliable, so the
  * Original tab is intentionally clean.
  */
 export function ResumePreviewPane({
@@ -51,7 +51,7 @@ export function ResumePreviewPane({
   const [availableWidth, setAvailableWidth] = useState<number | null>(null);
 
   // Measure the always-visible pane root so the (sometimes-hidden) PDF
-  // container has a width to size against — clientWidth on `display:none`
+  // container has a width to size against, clientWidth on `display:none`
   // descendants reports 0.
   useEffect(() => {
     const node = rootRef.current;
@@ -104,7 +104,7 @@ export function ResumePreviewPane({
   // whenever it's available, falling back to the Original PDF only when
   // parsed text is missing. Once userMode is set, this whole block is
   // bypassed. Parsed Text leads because it's the highlighted, structured
-  // view of what we extracted — that's the artifact the candidate cares
+  // view of what we extracted, that's the artifact the candidate cares
   // about reviewing during onboarding.
   const displayedMode: ViewMode = useMemo(() => {
     if (userMode) return userMode;
@@ -119,7 +119,7 @@ export function ResumePreviewPane({
     displayedMode === "pdf" &&
     (pdfStatus === "rendered" || pdfStatus === "image-only");
 
-  // Original tab now renders the raw PDF only — no overlay rectangles.
+  // Original tab now renders the raw PDF only, no overlay rectangles.
   // Highlights live exclusively on the Parsed Text view, where matching
   // is done against the linearized text and is accurate. Attempting to
   // map highlights onto PDF.js text-layer coordinates produced false
@@ -238,7 +238,7 @@ export function ResumePreviewPane({
 
       {/*
         PDF renderer. Mounted whenever a URL exists, even when Parsed Text is
-        showing — this keeps the canvas + text layer warm so toggling back to
+        showing, this keeps the canvas + text layer warm so toggling back to
         Original is instant. Hidden via display:none when not visible.
       */}
       {hasPdf && (

@@ -51,7 +51,7 @@ export function ShortlistPagination({
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
       <p className="text-sm text-[var(--color-muted)]">
-        Showing {from}–{to} of {total}
+        Showing {from}-{to} of {total}
       </p>
 
       <nav className="flex items-center gap-1" aria-label="Pagination">

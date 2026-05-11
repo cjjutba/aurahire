@@ -7,9 +7,9 @@ export interface ProgressStage {
   id: string;
   /** Human-readable label shown while this stage is active. */
   label: string;
-  /** Cumulative percent (0–100) at which this stage ends. */
+  /** Cumulative percent (0-100) at which this stage ends. */
   percentTarget: number;
-  /** Typical duration of this stage in ms — used for synthetic pacing. */
+  /** Typical duration of this stage in ms, used for synthetic pacing. */
   durationMs: number;
 }
 
@@ -23,7 +23,7 @@ interface AiProgressIndicatorProps {
 }
 
 /**
- * AuraHire's unified "AI is working" affordance — a staged progress bar with
+ * AuraHire's unified "AI is working" affordance, a staged progress bar with
  * a real-time percentage and a stage-specific caption that names what the AI
  * is doing right now ("Securing your information" / "Analyzing your profile" /
  * "Finalizing your score"). Designed to replace the old silent shimmer on every
@@ -162,7 +162,7 @@ export const PROFILE_SCORE_STAGES: ProgressStage[] = [
 ];
 
 /**
- * Stage preset for a candidate–job Match Score compute.
+ * Stage preset for a candidate-job Match Score compute.
  *
  * Same redaction step (cached on hot paths), then a job-aware match scoring
  * pass that compares against the JD. Slightly longer scoring than profile

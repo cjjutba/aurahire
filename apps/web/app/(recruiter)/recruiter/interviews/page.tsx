@@ -310,7 +310,7 @@ export default async function RecruiterInterviewsPage({
 
                     {/* Job */}
                     <td className="px-4 py-3 text-[var(--color-body)]">
-                      {row.job?.title ?? "—"}
+                      {row.job?.title ?? "-"}
                     </td>
 
                     {/* When */}

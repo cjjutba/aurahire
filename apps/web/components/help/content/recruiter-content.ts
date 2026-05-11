@@ -23,7 +23,7 @@ export const recruiterHelp: HelpPageContent = {
   hero: {
     eyebrow: "Recruiter help center",
     title: "Hire fairly. Hire transparently. Hire faster.",
-    lede: "Everything you need to publish jobs, review the pipeline, and act on AI-assisted scoring with confidence — every recommendation shows its work, and every override is auditable.",
+    lede: "Everything you need to publish jobs, review the pipeline, and act on AI-assisted scoring with confidence, every recommendation shows its work, and every override is auditable.",
   },
   groups: [
     {
@@ -34,7 +34,7 @@ export const recruiterHelp: HelpPageContent = {
           icon: PanelsTopLeft,
           kicker: "Orientation",
           title: "How AuraHire works for recruiters",
-          lede: "A fast tour of the platform, the moving parts, and what the AI does — and doesn't — do.",
+          lede: "A fast tour of the platform, the moving parts, and what the AI does, and doesn't, do.",
           blocks: [
             {
               kind: "paragraph",
@@ -81,7 +81,7 @@ export const recruiterHelp: HelpPageContent = {
                 {
                   title: "Open Jobs → New job",
                   description:
-                    "From the sidebar, choose Jobs, then click New job. You'll start in Draft mode — nothing is visible to candidates yet.",
+                    "From the sidebar, choose Jobs, then click New job. You'll start in Draft mode, nothing is visible to candidates yet.",
                 },
                 {
                   title: "Fill in the role basics",
@@ -91,7 +91,7 @@ export const recruiterHelp: HelpPageContent = {
                 {
                   title: "Define your scoring criteria",
                   description:
-                    "Add the skills, qualifications, and experience that matter, with relative weights. The AI uses these — not a generic template — to score every applicant.",
+                    "Add the skills, qualifications, and experience that matter, with relative weights. The AI uses these, not a generic template, to score every applicant.",
                 },
                 {
                   title: "Run the bias check",
@@ -109,7 +109,7 @@ export const recruiterHelp: HelpPageContent = {
               kind: "callout",
               tone: "warning",
               title: "Overriding a bias flag",
-              body: "If the AI flags 'rockstar developer' but the term is intentional, you can override — but the override is logged with your reason and surfaces in your bias dashboard so the team can pattern-match over time.",
+              body: "If the AI flags 'rockstar developer' but the term is intentional, you can override, but the override is logged with your reason and surfaces in your bias dashboard so the team can pattern-match over time.",
             },
           ],
         },
@@ -131,7 +131,7 @@ export const recruiterHelp: HelpPageContent = {
                 {
                   label: "Jobs",
                   description:
-                    "All jobs you've created — drafts, published, paused, closed. Click into any job to see its applicant list.",
+                    "All jobs you've created, drafts, published, paused, closed. Click into any job to see its applicant list.",
                 },
                 {
                   label: "Shortlist",
@@ -177,11 +177,11 @@ export const recruiterHelp: HelpPageContent = {
           icon: Target,
           kicker: "The thesis",
           title: "How match scoring works",
-          lede: "From application submitted to a number on the screen — the full path, in plain language.",
+          lede: "From application submitted to a number on the screen, the full path, in plain language.",
           blocks: [
             {
               kind: "paragraph",
-              text: "When a candidate applies, AuraHire runs a deterministic pipeline before the AI ever sees the resume. The result is a 0–100 match score for the role's specific weighted criteria, paired with a Score Ring, a Breakdown Bar, and quoted evidence from the resume itself.",
+              text: "When a candidate applies, AuraHire runs a deterministic pipeline before the AI ever sees the resume. The result is a 0-100 match score for the role's specific weighted criteria, paired with a Score Ring, a Breakdown Bar, and quoted evidence from the resume itself.",
             },
             {
               kind: "steps",
@@ -204,12 +204,12 @@ export const recruiterHelp: HelpPageContent = {
                 {
                   title: "Weighted aggregation",
                   description:
-                    "Sub-scores are combined using your weights to produce the overall 0–100 match score and a Strong / Partial / Limited Match label.",
+                    "Sub-scores are combined using your weights to produce the overall 0-100 match score and a Strong / Partial / Limited Match label.",
                 },
                 {
                   title: "Audit recording",
                   description:
-                    "The model used, prompt version, latency, redacted fields, and final score are written to the audit log — the score is reproducible.",
+                    "The model used, prompt version, latency, redacted fields, and final score are written to the audit log, the score is reproducible.",
                 },
               ],
             },
@@ -217,7 +217,7 @@ export const recruiterHelp: HelpPageContent = {
               kind: "callout",
               tone: "ai",
               title: "Why structured outputs matter",
-              body: "Every AI call uses an OpenAI structured output schema. The model must return a Zod-validated JSON shape — never free text. That's how we can show you evidence chunks with confidence rather than scraping prose.",
+              body: "Every AI call uses an OpenAI structured output schema. The model must return a Zod-validated JSON shape, never free text. That's how we can show you evidence chunks with confidence rather than scraping prose.",
             },
           ],
         },
@@ -249,7 +249,7 @@ export const recruiterHelp: HelpPageContent = {
                 {
                   term: "Match band chip",
                   definition:
-                    "The plain-language label paired with every numeric score: Strong Match (70–100), Partial Match (40–69), Limited Match (0–39).",
+                    "The plain-language label paired with every numeric score: Strong Match (70-100), Partial Match (40-69), Limited Match (0-39).",
                 },
               ],
             },
@@ -258,17 +258,17 @@ export const recruiterHelp: HelpPageContent = {
               head: ["Score range", "Match band", "Recommended action"],
               rows: [
                 [
-                  "70 – 100",
+                  "70, 100",
                   "Strong Match",
                   "Prioritize for screening; evidence aligns with most criteria.",
                 ],
                 [
-                  "40 – 69",
+                  "40, 69",
                   "Partial Match",
                   "Worth reviewing; gaps may be coachable or context-dependent.",
                 ],
                 [
-                  "0 – 39",
+                  "0, 39",
                   "Limited Match",
                   "Likely not aligned, but always read the evidence before rejecting.",
                 ],
@@ -278,7 +278,7 @@ export const recruiterHelp: HelpPageContent = {
               kind: "callout",
               tone: "warning",
               title: "Numbers without evidence are not allowed",
-              body: "Anywhere you see a score, you can click into the breakdown and the underlying evidence. If you ever see a score without a click-through, that's a bug — please tell us.",
+              body: "Anywhere you see a score, you can click into the breakdown and the underlying evidence. If you ever see a score without a click-through, that's a bug, please tell us.",
             },
           ],
         },
@@ -286,7 +286,7 @@ export const recruiterHelp: HelpPageContent = {
           id: "evidence-and-overrides",
           icon: FileSearch,
           kicker: "Decisions",
-          title: "Acting on evidence — and overriding when you disagree",
+          title: "Acting on evidence, and overriding when you disagree",
           lede: "The AI is wrong sometimes. Your override is welcome, and tracked.",
           blocks: [
             {
@@ -299,7 +299,7 @@ export const recruiterHelp: HelpPageContent = {
                 {
                   label: "Bump up",
                   description:
-                    "Use when the resume evidence is stronger than the AI inferred — e.g. a relevant project hidden in the 'Personal' section.",
+                    "Use when the resume evidence is stronger than the AI inferred, e.g. a relevant project hidden in the 'Personal' section.",
                 },
                 {
                   label: "Bump down",
@@ -317,7 +317,7 @@ export const recruiterHelp: HelpPageContent = {
               kind: "callout",
               tone: "info",
               title: "Override patterns are observed",
-              body: "Persistent override patterns (e.g. always bumping down a specific criterion) get surfaced in the analytics view — useful both for catching AI miscalibration and for keeping individual recruiters honest with themselves.",
+              body: "Persistent override patterns (e.g. always bumping down a specific criterion) get surfaced in the analytics view, useful both for catching AI miscalibration and for keeping individual recruiters honest with themselves.",
             },
           ],
         },
@@ -335,7 +335,7 @@ export const recruiterHelp: HelpPageContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "Every job description goes through a bias check on save. The check looks for gendered language, age-coded phrases, ableist terms, culturally exclusive idioms, and overly aggressive 'culture fit' language. Flags surface inline as amber chips — click to read the explanation, accept a rewrite, or override with a reason.",
+              text: "Every job description goes through a bias check on save. The check looks for gendered language, age-coded phrases, ableist terms, culturally exclusive idioms, and overly aggressive 'culture fit' language. Flags surface inline as amber chips, click to read the explanation, accept a rewrite, or override with a reason.",
             },
             {
               kind: "definitions",
@@ -343,7 +343,7 @@ export const recruiterHelp: HelpPageContent = {
                 {
                   term: "Gendered language",
                   definition:
-                    "Phrases that statistically correlate with one gender — 'rockstar', 'ninja', 'aggressive', 'nurturing'. The check suggests neutral alternatives.",
+                    "Phrases that statistically correlate with one gender, 'rockstar', 'ninja', 'aggressive', 'nurturing'. The check suggests neutral alternatives.",
                 },
                 {
                   term: "Age coding",
@@ -353,7 +353,7 @@ export const recruiterHelp: HelpPageContent = {
                 {
                   term: "Ableist language",
                   definition:
-                    "Phrases that exclude candidates with disabilities — 'must be able to walk the floor', 'high-energy environment' — when the underlying requirement is something else.",
+                    "Phrases that exclude candidates with disabilities, 'must be able to walk the floor', 'high-energy environment', when the underlying requirement is something else.",
                 },
                 {
                   term: "Culture fit traps",
@@ -366,7 +366,7 @@ export const recruiterHelp: HelpPageContent = {
               kind: "callout",
               tone: "warning",
               title: "Overrides are not punishments",
-              body: "Sometimes the flag is wrong for your context. Overriding a flag is fine and expected — but the override and your reason are saved, and the team can review override patterns in the bias dashboard.",
+              body: "Sometimes the flag is wrong for your context. Overriding a flag is fine and expected, but the override and your reason are saved, and the team can review override patterns in the bias dashboard.",
             },
           ],
         },
@@ -393,7 +393,7 @@ export const recruiterHelp: HelpPageContent = {
                 {
                   label: "Visible to you",
                   description:
-                    "The full, unredacted resume — the redaction only applies to the AI's input. You see the complete document the candidate uploaded.",
+                    "The full, unredacted resume, the redaction only applies to the AI's input. You see the complete document the candidate uploaded.",
                 },
               ],
             },
@@ -414,7 +414,7 @@ export const recruiterHelp: HelpPageContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "AuraHire writes an audit log entry every time someone publishes a job, scores an application, overrides a score, changes a candidate's lifecycle status, sends an offer, or rejects an application. Logs are immutable from the recruiter portal — only admins can export them, and even admins cannot edit history.",
+              text: "AuraHire writes an audit log entry every time someone publishes a job, scores an application, overrides a score, changes a candidate's lifecycle status, sends an offer, or rejects an application. Logs are immutable from the recruiter portal, only admins can export them, and even admins cannot edit history.",
             },
             {
               kind: "list",
@@ -440,7 +440,7 @@ export const recruiterHelp: HelpPageContent = {
           icon: Workflow,
           kicker: "States",
           title: "Application lifecycle",
-          lede: "How a candidate moves from Applied to Hired — and what happens at each stage.",
+          lede: "How a candidate moves from Applied to Hired, and what happens at each stage.",
           blocks: [
             {
               kind: "matrix",
@@ -453,7 +453,7 @@ export const recruiterHelp: HelpPageContent = {
                 ],
                 [
                   "Screening",
-                  "You're actively reviewing — sometimes with a phone call or skills test.",
+                  "You're actively reviewing, sometimes with a phone call or skills test.",
                   "Recruiter",
                 ],
                 [
@@ -495,7 +495,7 @@ export const recruiterHelp: HelpPageContent = {
           id: "shortlist",
           icon: Star,
           kicker: "Curation",
-          title: "Shortlist — your working set",
+          title: "Shortlist, your working set",
           lede: "Star candidates across jobs and pull them up in one place.",
           blocks: [
             {
@@ -504,7 +504,7 @@ export const recruiterHelp: HelpPageContent = {
                 "Star a candidate from any application detail page.",
                 "Stars are private to you, not visible to candidates or other recruiters.",
                 "The Shortlist view aggregates stars across every job in your workspace, so you can hand-pick a session of follow-ups.",
-                "Removing a star never deletes the application — it just removes it from your shortlist.",
+                "Removing a star never deletes the application, it just removes it from your shortlist.",
               ],
             },
           ],
@@ -579,7 +579,7 @@ export const recruiterHelp: HelpPageContent = {
               kind: "callout",
               tone: "danger",
               title: "Offers are legally consequential",
-              body: "Once sent, an offer becomes part of your record. Edits after sending are blocked — you must rescind and re-send, both of which are logged.",
+              body: "Once sent, an offer becomes part of your record. Edits after sending are blocked, you must rescind and re-send, both of which are logged.",
             },
           ],
         },
@@ -593,11 +593,11 @@ export const recruiterHelp: HelpPageContent = {
             {
               kind: "list",
               items: [
-                "Application received — sent on submission.",
-                "Status changed — sent when you move the candidate to a new stage.",
-                "Interview scheduled / rescheduled / cancelled — sent on the corresponding action.",
-                "Offer sent / expired — sent on offer events.",
-                "Decision (acceptance / rejection) — sent when you finalize.",
+                "Application received, sent on submission.",
+                "Status changed, sent when you move the candidate to a new stage.",
+                "Interview scheduled / rescheduled / cancelled, sent on the corresponding action.",
+                "Offer sent / expired, sent on offer events.",
+                "Decision (acceptance / rejection), sent when you finalize.",
               ],
             },
             {
@@ -617,7 +617,7 @@ export const recruiterHelp: HelpPageContent = {
           id: "analytics",
           icon: ChartLine,
           kicker: "Measurement",
-          title: "Analytics — what to look at and why",
+          title: "Analytics, what to look at and why",
           lede: "Funnel health, time-to-hire, and fairness signals.",
           blocks: [
             {
@@ -641,7 +641,7 @@ export const recruiterHelp: HelpPageContent = {
                 {
                   term: "Override rate",
                   definition:
-                    "Percentage of AI scores or bias flags you've overridden. Very high overrides can mean the AI is poorly calibrated for your roles — worth a conversation with admin to revisit weights or prompts.",
+                    "Percentage of AI scores or bias flags you've overridden. Very high overrides can mean the AI is poorly calibrated for your roles, worth a conversation with admin to revisit weights or prompts.",
                 },
               ],
             },
@@ -707,14 +707,14 @@ export const recruiterHelp: HelpPageContent = {
   faq: [
     {
       q: "Why does this candidate have a low score even though they look qualified?",
-      a: "The score reflects how the resume's evidence matches the criteria and weights you set on the job. Open the breakdown — if a criterion has thin evidence in the resume, the AI scored conservatively. You can override with a reason if you have context the resume doesn't show.",
+      a: "The score reflects how the resume's evidence matches the criteria and weights you set on the job. Open the breakdown, if a criterion has thin evidence in the resume, the AI scored conservatively. You can override with a reason if you have context the resume doesn't show.",
     },
     {
       q: "Can I override an AI decision?",
       a: "Yes. You can adjust any criterion's sub-score, accept or override any bias flag, and move candidates through the lifecycle freely. Every override is logged with your reason.",
     },
     {
-      q: "What happens when I flag a job description as biased — or override a flag?",
+      q: "What happens when I flag a job description as biased, or override a flag?",
       a: "Accepted suggestions are applied to the description before publish. Overrides are recorded with your reason and surface in the bias dashboard so the team can spot patterns over time.",
     },
     {
@@ -735,12 +735,12 @@ export const recruiterHelp: HelpPageContent = {
     },
     {
       q: "Can I disable AI scoring entirely for a job?",
-      a: "No — the score is part of the audit trail. You can ignore the score and review applications manually, but you cannot prevent the score from being computed and logged.",
+      a: "No, the score is part of the audit trail. You can ignore the score and review applications manually, but you cannot prevent the score from being computed and logged.",
     },
   ],
   contact: {
     title: "Still stuck? We read every message.",
-    body: "Email support — you'll typically hear back within one business day. Include your workspace name and the URL of the screen you're on for the fastest reply.",
+    body: "Email support, you'll typically hear back within one business day. Include your workspace name and the URL of the screen you're on for the fastest reply.",
     email: "hello@aurahire.site",
     secondaryLink: {
       label: "Back to the recruiter dashboard",

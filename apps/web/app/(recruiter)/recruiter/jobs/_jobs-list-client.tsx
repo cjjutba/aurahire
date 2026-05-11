@@ -78,10 +78,10 @@ function formatSalaryRange(
   currency: string | null,
 ) {
   if (min == null && max == null)
-    return <span className="text-[var(--color-muted)]">—</span>;
+    return <span className="text-[var(--color-muted)]">-</span>;
   const cur = currency ?? "USD";
   if (min != null && max != null)
-    return `${formatSalary(min)}–${formatSalary(max)} ${cur}`;
+    return `${formatSalary(min)}-${formatSalary(max)} ${cur}`;
   if (min != null) return `From ${formatSalary(min)} ${cur}`;
   return `Up to ${formatSalary(max)} ${cur}`;
 }
@@ -89,7 +89,7 @@ function formatSalaryRange(
 function formatLocation(city: string | null, country: string | null) {
   const parts = [city, country].filter(Boolean);
   return parts.length === 0 ? (
-    <span className="text-[var(--color-muted)]">—</span>
+    <span className="text-[var(--color-muted)]">-</span>
   ) : (
     parts.join(", ")
   );

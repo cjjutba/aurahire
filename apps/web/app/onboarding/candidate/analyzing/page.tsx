@@ -4,12 +4,12 @@ import { getCurrentProfile, getCurrentSession } from "@/lib/auth/session";
 
 import { AnalyzingClient } from "./_analyzing-client";
 
-export const metadata = { title: "Analyzing — Onboarding" };
+export const metadata = { title: "Analyzing, Onboarding" };
 
 /**
  * Onboarding bridge between the preferences step and the candidate dashboard.
  *
- * The preferences form no longer calls `complete-onboarding` itself — it now
+ * The preferences form no longer calls `complete-onboarding` itself, it now
  * forwards the candidate here, and this screen owns the call. That gives the
  * UI a chance to render a state-machine experience (shimmer → Score Ring →
  * "N of 5 matches ready" → redirect) instead of leaving the candidate staring

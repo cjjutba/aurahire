@@ -3,8 +3,8 @@ import {
   Body,
   Container,
   Head,
-  Heading,
   Html,
+  Img,
   Link,
   Preview,
   Section,
@@ -18,6 +18,9 @@ interface BaseLayoutProps {
   unsubscribePath: string;
   appOrigin: string;
 }
+
+const BRAND_LOGO_URL =
+  "https://fzjvalmouygmmnrgpgtg.supabase.co/storage/v1/object/public/brand/aurahire-logo.png";
 
 export function BaseLayout({
   preview,
@@ -48,18 +51,19 @@ export function BaseLayout({
             borderRadius: 16,
           }}
         >
-          <Section style={{ paddingBottom: 24 }}>
-            <Heading
-              as="h1"
+          <Section style={{ paddingBottom: 24, textAlign: "center" }}>
+            <Img
+              src={BRAND_LOGO_URL}
+              alt="AuraHire"
+              width={64}
+              height={64}
               style={{
-                fontSize: 20,
-                fontWeight: 600,
-                color: "#2563eb",
-                margin: 0,
+                display: "block",
+                margin: "0 auto",
+                border: 0,
+                outline: "none",
               }}
-            >
-              AuraHire
-            </Heading>
+            />
           </Section>
           {children}
           <Hr

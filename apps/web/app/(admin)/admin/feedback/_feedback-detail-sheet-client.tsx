@@ -44,7 +44,7 @@ export function FeedbackDetailSheetClient({ entryId, open, onClose }: Props) {
   const [detail, setDetail] = useState<FeedbackRow | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Pending edits stay local until "Save changes" — lets the admin queue
+  // Pending edits stay local until "Save changes", lets the admin queue
   // both a status change and a note tweak in one mutation, matching the
   // PATCH endpoint's combined update shape.
   const [pendingStatus, setPendingStatus] = useState<FeedbackStatus | null>(

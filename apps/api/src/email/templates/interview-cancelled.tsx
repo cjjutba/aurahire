@@ -68,7 +68,7 @@ export function InterviewCancelledEmail({
               {companyName} on <strong>{when}</strong> has been cancelled.
             </Text>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-              Your application is still active — the recruiter may reschedule or
+              Your application is still active. The recruiter may reschedule or
               move you forward another way. Check your application detail for
               updates.
             </Text>

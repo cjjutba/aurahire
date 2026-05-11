@@ -208,7 +208,7 @@ function UploadDropzone({ onUploaded }: UploadDropzoneProps) {
               Uploading and parsing…
             </p>
             <p className="mt-1 text-xs text-[var(--color-muted)]">
-              Usually 5–15 seconds.
+              Usually 5-15 seconds.
             </p>
           </>
         ) : (
@@ -584,7 +584,7 @@ function ParsedFieldsView({ resume }: { resume: ResumeRow }) {
           AI is parsing your resume…
         </p>
         <p className="mt-1 text-xs text-[var(--color-muted)]">
-          This typically takes 5–15 seconds.
+          This typically takes 5-15 seconds.
         </p>
       </div>
     );

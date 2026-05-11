@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 /**
  * Returns a stable trigger function. Repeated calls within `waitMs` collapse
- * into a single trailing-edge `router.refresh()` — useful when a stream of
+ * into a single trailing-edge `router.refresh()`, useful when a stream of
  * server-pushed events would otherwise cause a refresh storm on the audit
  * feed or bias monitor (a bulk admin action emits N audit rows in quick
  * succession; we want one Server Component re-render, not N).

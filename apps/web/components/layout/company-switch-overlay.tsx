@@ -10,7 +10,7 @@ import { useActiveCompany } from "@/contexts/active-company-context";
  * Visual: white-canvas blurred backdrop + centered card with an AuraHire
  * Blue ring spinner. Echoes the design-system "Score Ring" cadence
  * (800ms rotation, primary on primary-soft track) without being a Score
- * Ring — this is a process indicator, not an evaluation surface.
+ * Ring, this is a process indicator, not an evaluation surface.
  */
 export function CompanySwitchOverlay() {
   const ctx = useActiveCompany();

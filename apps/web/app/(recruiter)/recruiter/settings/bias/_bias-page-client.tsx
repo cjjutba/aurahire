@@ -29,7 +29,7 @@ const CATEGORY_DESCRIPTIONS: Record<string, string> = {
 };
 
 /**
- * Per-company bias thresholds aren't wired yet — this page is a
+ * Per-company bias thresholds aren't wired yet, this page is a
  * read-only confirmation that all categories are detected with default
  * thresholds. The Phase 5 spec explicitly designates this section as a
  * stub for now.
@@ -94,7 +94,7 @@ export function BiasPageClient() {
                   {CATEGORY_DESCRIPTIONS[cat] ?? ""}
                 </p>
               </div>
-              {/* Read-only "on" toggle — visually identical to the live one but inert */}
+              {/* Read-only "on" toggle, visually identical to the live one but inert */}
               <span
                 role="switch"
                 aria-checked="true"

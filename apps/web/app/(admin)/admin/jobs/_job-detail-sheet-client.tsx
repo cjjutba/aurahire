@@ -178,7 +178,7 @@ export function JobDetailSheetClient({ jobId, open, onClose }: Props) {
                       key={f.id}
                       className="mt-2 rounded-[var(--radius-md)] bg-[var(--color-surface-soft)] p-3 text-xs"
                     >
-                      <strong>&ldquo;{f.term}&rdquo;</strong> overridden —{" "}
+                      <strong>&ldquo;{f.term}&rdquo;</strong> overridden -{" "}
                       {f.overrideReason}
                     </div>
                   ))}

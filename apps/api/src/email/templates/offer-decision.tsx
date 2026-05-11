@@ -78,7 +78,7 @@ export function OfferDecisionEmail({
               </Text>
             ) : (
               <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
-                The application remains active — you can review the
+                The application remains active. You can review the
                 candidate&apos;s notes and continue with other candidates for
                 this role.
               </Text>

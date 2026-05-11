@@ -156,7 +156,7 @@ function StatusPill({ status }: { status: string }) {
 
 interface InterviewCardProps {
   interview: InterviewRow;
-  /** The parent application ID — needed for reschedule conflict checks. */
+  /** The parent application ID, needed for reschedule conflict checks. */
   applicationId: string;
   /** When true, action buttons are rendered. */
   showActions: boolean;
@@ -265,7 +265,7 @@ function InterviewCard({
           <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
           <span>
             {iv.interviewerName}
-            {iv.interviewerTitle && ` — ${iv.interviewerTitle}`}
+            {iv.interviewerTitle && `, ${iv.interviewerTitle}`}
           </span>
         </p>
       )}
@@ -364,7 +364,7 @@ export function RecruiterInterviewsSection({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Auto-open the schedule modal when arriving with ?schedule=1 — set by the
+  // Auto-open the schedule modal when arriving with ?schedule=1, set by the
   // decision bar after a status flip to "interview" or by the prompt banner.
   // We scrub the param either way so refresh/back doesn't re-trigger. This is
   // a URL→state sync (URL is an external system); the lint rule against
@@ -415,7 +415,7 @@ export function RecruiterInterviewsSection({
               No interviews scheduled yet
             </p>
             <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-              Set a date, format, and venue — the candidate gets a calendar
+              Set a date, format, and venue, the candidate gets a calendar
               invite and reporting details by email.
             </p>
           </div>

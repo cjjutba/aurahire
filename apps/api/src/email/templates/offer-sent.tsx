@@ -76,7 +76,7 @@ export function OfferSentEmail({
           <Heading
             style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
           >
-            Congratulations — offer extended!
+            Congratulations, you have an offer!
           </Heading>
           <Section>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>

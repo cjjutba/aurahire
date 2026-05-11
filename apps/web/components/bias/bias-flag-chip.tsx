@@ -48,7 +48,7 @@ function chipPaletteFor(severity: BiasFlagChipFlag["severity"]): string {
   if (severity === "high") {
     return "bg-[var(--color-score-low-soft)] text-[var(--color-score-low)]";
   }
-  // medium (default for null/undefined too — assume blocking)
+  // medium (default for null/undefined too, assume blocking)
   return "bg-[var(--color-score-mid-soft)] text-[var(--color-score-mid)]";
 }
 
@@ -117,7 +117,7 @@ export function BiasFlagChip({ flag, onOverride, onDismiss, onSelect }: Props) {
           )}
           {isLow && (
             <p className="text-xs italic text-[var(--color-muted)]">
-              Informational — does not block publish.
+              Informational, does not block publish.
             </p>
           )}
           {(onOverride || onDismiss) && !isOverridden && !isResolved && (

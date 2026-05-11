@@ -17,8 +17,8 @@ import {
  * Cookie shape:
  *   - HTTP-only (no XSS leak via `document.cookie`)
  *   - Path "/" so every page can read it
- *   - 1 hour TTL — the user is expected to complete signup within this window
- *   - sameSite "lax" — survives a same-site navigation back from /register
+ *   - 1 hour TTL, the user is expected to complete signup within this window
+ *   - sameSite "lax", survives a same-site navigation back from /register
  */
 export async function startInviteSignup(token: string): Promise<void> {
   const cookieStore = await cookies();

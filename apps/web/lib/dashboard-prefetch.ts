@@ -10,7 +10,7 @@ const DASHBOARD_PATHS = [
 
 /**
  * Fire-and-forget GETs to the three recruiter-dashboard endpoints with
- * `X-Active-Company-Id: {companyId}`. Results are discarded — purpose is
+ * `X-Active-Company-Id: {companyId}`. Results are discarded, purpose is
  * to populate the API's Redis cache before the user clicks switch, so the
  * subsequent SSR refresh hits warm cache.
  *

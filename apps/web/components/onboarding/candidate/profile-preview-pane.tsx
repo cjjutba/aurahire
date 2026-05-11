@@ -67,7 +67,7 @@ export function ProfilePreviewPane({ me, experience, skills }: Props) {
                 <div className="text-xs text-[var(--color-muted)]">
                   {e.company} ·{" "}
                   <span className="font-mono">
-                    {e.start_date ?? "?"} –{" "}
+                    {e.start_date ?? "?"} -{" "}
                     {e.is_current ? "Present" : (e.end_date ?? "?")}
                   </span>
                 </div>

@@ -1553,9 +1553,30 @@ export class ApplicationsService {
 
     const appUrl = process.env.APP_URL ?? "http://localhost:3000";
 
+    const subject = (() => {
+      switch (toStatus.toLowerCase()) {
+        case "hired":
+          return `Congratulations, you're hired! ${jobRow.title}`;
+        case "offer":
+          return `You received an offer for ${jobRow.title}`;
+        case "interview":
+          return `Good news about your ${jobRow.title} application`;
+        case "rejected":
+          return `Update on your ${jobRow.title} application`;
+        case "withdrawn":
+          return `Application withdrawn: ${jobRow.title}`;
+        case "screening":
+          return `Your ${jobRow.title} application is under review`;
+        case "applied":
+          return `We received your application for ${jobRow.title}`;
+        default:
+          return `Update on your application for ${jobRow.title}`;
+      }
+    })();
+
     await this.email.send({
       to: candidate.email,
-      subject: `Update on your application for ${jobRow.title}`,
+      subject,
       template: ApplicationStatusChangedEmail({
         candidateName: candidate.fullName,
         jobTitle: jobRow.title,

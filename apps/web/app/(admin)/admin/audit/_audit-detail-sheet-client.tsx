@@ -122,7 +122,7 @@ export function AuditDetailSheetClient({ entryId, open, onClose }: Props) {
               </p>
               {detail.actor && (
                 <p className="text-[var(--color-muted)]">
-                  {detail.actor.email} · role: {detail.actor.role ?? "—"}
+                  {detail.actor.email} · role: {detail.actor.role ?? "-"}
                 </p>
               )}
               <p className="text-[var(--color-body)]">

@@ -38,7 +38,7 @@ export interface SidebarBottomRailProps {
  * bell with an unread-count dot that opens the notifications popover.
  *
  * The avatar/name and three-dot buttons render the SAME profile popover
- * content so the choice between them is purely affordance — clicking either
+ * content so the choice between them is purely affordance, clicking either
  * yields identical behavior.
  */
 export function SidebarBottomRail({
@@ -59,7 +59,7 @@ export function SidebarBottomRail({
 
   return (
     <div className="flex items-center gap-2 border-t border-[var(--color-hairline-soft)] px-3 py-3">
-      {/* Profile area: avatar + name (left) — owns the popover anchor */}
+      {/* Profile area: avatar + name (left), owns the popover anchor */}
       <Popover open={profileOpen} onOpenChange={setProfileOpen}>
         <PopoverTrigger
           className="flex min-w-0 flex-1 items-center gap-2 rounded-[var(--radius-md)] p-1 text-left transition hover:bg-[var(--color-surface-strong)]"

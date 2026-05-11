@@ -16,7 +16,7 @@ export default async function RecruiterDashboardPage() {
   if (!session) redirect("/login");
 
   const queryClient = makeQueryClient();
-  // Promise.allSettled — a single 403/404 from one endpoint must not block
+  // Promise.allSettled, a single 403/404 from one endpoint must not block
   // the page render of the other sections.
   await Promise.allSettled([
     queryClient.prefetchQuery({

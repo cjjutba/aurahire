@@ -67,7 +67,7 @@ export function UpcomingInterviewBannerClient({
                 </strong>
               ) : null}
               {interview.addressLine ? (
-                <span> — {interview.addressLine}</span>
+                <span>, {interview.addressLine}</span>
               ) : null}
               {interview.roomOrFloor ? (
                 <span> ({interview.roomOrFloor})</span>

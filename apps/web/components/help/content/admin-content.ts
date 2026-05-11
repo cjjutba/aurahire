@@ -24,7 +24,7 @@ export const adminHelp: HelpPageContent = {
   hero: {
     eyebrow: "Admin help center",
     title: "Operate AuraHire safely, defensibly, and at speed.",
-    lede: "Configure scoring, manage users, audit decisions, and monitor fairness across the platform — with the controls and accountability the thesis requires.",
+    lede: "Configure scoring, manage users, audit decisions, and monitor fairness across the platform, with the controls and accountability the thesis requires.",
   },
   groups: [
     {
@@ -127,7 +127,7 @@ export const adminHelp: HelpPageContent = {
                 {
                   label: "RLS as the third defense",
                   description:
-                    "JWT validation in NestJS is the primary guard; role checks are the secondary; Postgres RLS is the third — even a misconfigured query can't leak data across workspaces.",
+                    "JWT validation in NestJS is the primary guard; role checks are the secondary; Postgres RLS is the third, even a misconfigured query can't leak data across workspaces.",
                 },
               ],
             },
@@ -155,7 +155,7 @@ export const adminHelp: HelpPageContent = {
                 {
                   label: "Default weights",
                   description:
-                    "Skills 40 / Experience 30 / Education 15 / Domain 15 — applied to new jobs unless the recruiter adjusts. Changing defaults affects new jobs only; existing jobs keep their saved weights.",
+                    "Skills 40 / Experience 30 / Education 15 / Domain 15, applied to new jobs unless the recruiter adjusts. Changing defaults affects new jobs only; existing jobs keep their saved weights.",
                 },
                 {
                   label: "Criteria types",
@@ -186,7 +186,7 @@ export const adminHelp: HelpPageContent = {
           id: "prompt-versions",
           icon: Sparkles,
           kicker: "AI",
-          title: "Prompt versions — and why bumping one matters",
+          title: "Prompt versions, and why bumping one matters",
           lede: "Every AI call is keyed by a prompt version. Bumping a prompt is a thesis-defensible event, not a casual edit.",
           blocks: [
             {
@@ -199,7 +199,7 @@ export const adminHelp: HelpPageContent = {
                 {
                   label: "Versioning scheme",
                   description:
-                    "Semantic: <kind>.<major>.<minor> — e.g. resume-score.2.4. Major bump for behavior change; minor bump for clarification or metadata.",
+                    "Semantic: <kind>.<major>.<minor>, e.g. resume-score.2.4. Major bump for behavior change; minor bump for clarification or metadata.",
                 },
                 {
                   label: "Roll-forward only",
@@ -222,7 +222,7 @@ export const adminHelp: HelpPageContent = {
               kind: "callout",
               tone: "ai",
               title: "Why this is so cautious",
-              body: "Score reproducibility is the thesis's central claim. If a prompt edit silently changes scores, scores stop being defensible — and the platform's fairness story collapses with them.",
+              body: "Score reproducibility is the thesis's central claim. If a prompt edit silently changes scores, scores stop being defensible, and the platform's fairness story collapses with them.",
             },
           ],
         },
@@ -239,7 +239,7 @@ export const adminHelp: HelpPageContent = {
                 {
                   label: "Default model",
                   description:
-                    "OpenAI gpt-4o-mini for resume scoring and bias detection — best ratio of structured-output reliability to cost at this volume.",
+                    "OpenAI gpt-4o-mini for resume scoring and bias detection, best ratio of structured-output reliability to cost at this volume.",
                 },
                 {
                   label: "Per-task overrides",
@@ -269,14 +269,14 @@ export const adminHelp: HelpPageContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "PII redaction runs before any scoring AI call. The redactor uses a combination of named-entity extraction and pattern matching — admin can add or refine patterns per workspace, but cannot remove the platform-default patterns (those are non-negotiable).",
+              text: "PII redaction runs before any scoring AI call. The redactor uses a combination of named-entity extraction and pattern matching, admin can add or refine patterns per workspace, but cannot remove the platform-default patterns (those are non-negotiable).",
             },
             {
               kind: "list",
               items: [
                 "Built-in patterns (always on): name, email, phone, address, age, date-of-birth, gender markers, graduation year, photo references.",
                 "Workspace-tunable patterns: custom keywords (e.g. internal university tier mappings), additional contact format detection.",
-                "Override behavior: never. The redactor is fail-closed — if redaction fails, the scoring call is aborted and the application stays unscored.",
+                "Override behavior: never. The redactor is fail-closed, if redaction fails, the scoring call is aborted and the application stays unscored.",
               ],
             },
             {
@@ -328,7 +328,7 @@ export const adminHelp: HelpPageContent = {
               kind: "callout",
               tone: "warning",
               title: "These views are aggregates only",
-              body: "We never expose demographic inference for an individual application — that would defeat the redaction. Disparate-impact views are computed at the workspace level using anonymized cluster proxies and are surfaced as ratios, not as individual labels.",
+              body: "We never expose demographic inference for an individual application, that would defeat the redaction. Disparate-impact views are computed at the workspace level using anonymized cluster proxies and are surfaced as ratios, not as individual labels.",
             },
           ],
         },
@@ -454,7 +454,7 @@ export const adminHelp: HelpPageContent = {
           icon: BookOpen,
           kicker: "GDPR / DPA",
           title: "Data subject requests",
-          lede: "Access, correction, and erasure — the operational playbook.",
+          lede: "Access, correction, and erasure, the operational playbook.",
           blocks: [
             {
               kind: "fields",
@@ -550,7 +550,7 @@ export const adminHelp: HelpPageContent = {
                 "BullMQ admin view (Admin → System Health → Queues) shows active, waiting, delayed, and failed jobs per queue.",
                 "Failed jobs include the full stack trace and the input payload (redacted of PII).",
                 "Cron schedules are visible in Admin → System Health → Cron with last-run timestamps and outcomes.",
-                "Manual replay is available for failed jobs after the underlying issue is fixed — replays are logged.",
+                "Manual replay is available for failed jobs after the underlying issue is fixed, replays are logged.",
               ],
             },
           ],
@@ -568,7 +568,7 @@ export const adminHelp: HelpPageContent = {
                 {
                   title: "Check the audit log",
                   description:
-                    "Audit category = communication. Confirm the email was actually queued — sometimes the trigger is the bug, not delivery.",
+                    "Audit category = communication. Confirm the email was actually queued, sometimes the trigger is the bug, not delivery.",
                 },
                 {
                   title: "Check Resend",
@@ -583,7 +583,7 @@ export const adminHelp: HelpPageContent = {
                 {
                   title: "Check sender domain auth",
                   description:
-                    "SPF / DKIM / DMARC must be aligned. Misalignment causes silent bounces in major mail providers — Resend's domain page surfaces alignment failures.",
+                    "SPF / DKIM / DMARC must be aligned. Misalignment causes silent bounces in major mail providers, Resend's domain page surfaces alignment failures.",
                 },
               ],
             },
@@ -600,9 +600,9 @@ export const adminHelp: HelpPageContent = {
               kind: "list",
               items: [
                 "RLS policies are tested per release; the test suite blocks deploy on any policy regression.",
-                "API rate limits are per workspace, per user, and per endpoint — enforced in NestJS guards before any DB touch.",
+                "API rate limits are per workspace, per user, and per endpoint, enforced in NestJS guards before any DB touch.",
                 "Uptime SLO: 99.9% monthly for the API; 99.95% for the candidate portal. Status page surfaces incidents in real time.",
-                "On-call rotation lives in the on-call playbook (referenced below) — incident commander handoff is documented.",
+                "On-call rotation lives in the on-call playbook (referenced below), incident commander handoff is documented.",
               ],
             },
           ],
@@ -648,7 +648,7 @@ export const adminHelp: HelpPageContent = {
               kind: "callout",
               tone: "danger",
               title: "Never skip the audit",
-              body: "Even during an incident, audit log writes must succeed. If audit is the bottleneck, scaling audit comes before unblocking everything else — losing audit history is worse than the visible incident itself.",
+              body: "Even during an incident, audit log writes must succeed. If audit is the bottleneck, scaling audit comes before unblocking everything else, losing audit history is worse than the visible incident itself.",
             },
           ],
         },
@@ -698,7 +698,7 @@ export const adminHelp: HelpPageContent = {
   faq: [
     {
       q: "Can I roll back a prompt version after it goes live?",
-      a: "Yes — pin the active version back to the prior version. New scoring uses the pinned version; the bumped version stays in the registry for forensic comparison. The roll-back itself is audited with your reason.",
+      a: "Yes, pin the active version back to the prior version. New scoring uses the pinned version; the bumped version stays in the registry for forensic comparison. The roll-back itself is audited with your reason.",
     },
     {
       q: "What triggers an audit log entry?",
@@ -722,7 +722,7 @@ export const adminHelp: HelpPageContent = {
     },
     {
       q: "What if a recruiter overrides every AI score?",
-      a: "The override rate surfaces in the bias dashboard and lands them in the fairness review queue past a threshold. The AI may also be poorly calibrated for their roles — both are worth investigating before assuming bad faith.",
+      a: "The override rate surfaces in the bias dashboard and lands them in the fairness review queue past a threshold. The AI may also be poorly calibrated for their roles, both are worth investigating before assuming bad faith.",
     },
     {
       q: "Where do model latency budgets and cost caps live?",

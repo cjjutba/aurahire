@@ -43,15 +43,15 @@ function SelectTrigger({
       className={cn(
         // Layout
         "group/select-trigger flex w-full items-center justify-between gap-2 select-none whitespace-nowrap text-sm",
-        // Sizing — match AuraHire form input geometry
+        // Sizing, match AuraHire form input geometry
         "data-[size=default]:h-11 data-[size=sm]:h-9 px-4",
-        // Surface — AuraHire canvas + 12px radius + hairline border
+        // Surface, AuraHire canvas + 12px radius + hairline border
         "rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] text-[var(--color-ink)]",
         // Placeholder color
         "data-placeholder:text-[var(--color-muted-soft)]",
-        // Hover (subtle border darken — DESIGN.md "hover darkens 4-8%")
+        // Hover (subtle border darken, DESIGN.md "hover darkens 4-8%")
         "transition-colors hover:border-[var(--color-muted-soft)]",
-        // Focus + open state — primary blue border with 20% ring
+        // Focus + open state, primary blue border with 20% ring
         "outline-none focus-visible:border-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/20",
         "data-[popup-open]:border-[var(--color-primary)] data-[popup-open]:ring-2 data-[popup-open]:ring-[var(--color-primary)]/20",
         // Pressed
@@ -108,7 +108,7 @@ function SelectContent({
           className={cn(
             // Layout
             "relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 overflow-x-hidden overflow-y-auto",
-            // Surface — AuraHire canvas + soft shadow tier per DESIGN.md
+            // Surface, AuraHire canvas + soft shadow tier per DESIGN.md
             "rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] text-[var(--color-ink)]",
             "shadow-[0_4px_12px_rgba(0,0,0,0.08)]",
             // Animations
@@ -162,9 +162,9 @@ function SelectItem({
         "relative flex w-full cursor-pointer select-none items-center gap-2 py-2 pl-3 pr-9 text-sm outline-none",
         // Surface
         "rounded-[var(--radius-sm)] text-[var(--color-ink)] transition-colors",
-        // Highlighted (keyboard nav + hover) — surface-strong elevation step
+        // Highlighted (keyboard nav + hover), surface-strong elevation step
         "data-[highlighted]:bg-[var(--color-surface-strong)] data-[highlighted]:text-[var(--color-ink)]",
-        // Selected — emphasize with primary blue text
+        // Selected, emphasize with primary blue text
         "data-[selected]:font-semibold data-[selected]:text-[var(--color-primary)]",
         // Active (pressed)
         "active:bg-[var(--color-hairline)]",

@@ -11,7 +11,7 @@ import { InviteErrorCard } from "@/components/invite/invite-error-card";
 
 import { InviteActionsClient } from "./_invite-actions-client";
 
-export const metadata = { title: "Accept Invitation — Onboarding" };
+export const metadata = { title: "Accept Invitation, Onboarding" };
 
 interface PageProps {
   searchParams: Promise<{ token?: string }>;
@@ -22,7 +22,7 @@ interface PageProps {
  *   1. ?token=… query param (when redirected here from /onboarding/start
  *      after the cookie was validated)
  *   2. pendingInviteToken cookie (when this page is hit directly with no
- *      query param — e.g. an authenticated user manually browsing here)
+ *      query param, e.g. an authenticated user manually browsing here)
  *
  * Query-param wins when both are present.
  */

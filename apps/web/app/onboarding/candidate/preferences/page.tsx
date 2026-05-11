@@ -3,7 +3,7 @@ import { PreferencesStepClient } from "./_client";
 import { fetchCandidateProfileMe, fetchLatestParsedResume } from "../_data";
 import { getCurrentSession } from "@/lib/auth/session";
 
-export const metadata = { title: "Job Preferences — Onboarding" };
+export const metadata = { title: "Job Preferences, Onboarding" };
 
 export default async function Step4Page() {
   const me = await fetchCandidateProfileMe();

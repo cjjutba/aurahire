@@ -6,7 +6,7 @@ import { fetchCandidateProfileMe, fetchLatestParsedResume } from "./_data";
 import { ONBOARDING_STEPS } from "./_steps";
 import { getCurrentSession } from "@/lib/auth/session";
 
-export const metadata = { title: "Upload Resume — Onboarding" };
+export const metadata = { title: "Upload Resume, Onboarding" };
 
 export default async function Step1Page({
   searchParams,
@@ -36,7 +36,7 @@ export default async function Step1Page({
       currentStepId="resume"
       saveStatus="idle"
       title="Upload your resume"
-      subtitle="We'll extract your contact info, experience, education, and skills automatically. The AI takes 5–15 seconds."
+      subtitle="We'll extract your contact info, experience, education, and skills automatically. The AI takes 5-15 seconds."
     >
       <ResumeUploadCard
         latestResume={latestResume}

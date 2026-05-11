@@ -22,7 +22,7 @@ export const termsOfService: LegalDocument = {
   hero: {
     eyebrow: "Legal · Terms of Service",
     title: "Terms of Service",
-    lede: "These Terms govern your access to and use of AuraHire — an explainable, AI-assisted recruitment platform serving candidates, recruiters, and administrators. Please read them carefully.",
+    lede: "These Terms govern your access to and use of AuraHire, an explainable, AI-assisted recruitment platform serving candidates, recruiters, and administrators. Please read them carefully.",
     effectiveDate: "May 1, 2026",
     lastUpdated: "May 1, 2026",
     version: "v1.0",
@@ -34,7 +34,7 @@ export const termsOfService: LegalDocument = {
     },
     {
       label: "AI-assisted, human-decided",
-      body: "AuraHire's AI surfaces structured evidence to recruiters. Every hiring decision is made by a human — not by an algorithm.",
+      body: "AuraHire's AI surfaces structured evidence to recruiters. Every hiring decision is made by a human, not by an algorithm.",
     },
     {
       label: "Built for transparency",
@@ -69,12 +69,12 @@ export const termsOfService: LegalDocument = {
             {
               term: "Content",
               definition:
-                "Any information you submit to the Platform — including resumes, profile data, job descriptions, application notes, messages, and feedback.",
+                "Any information you submit to the Platform, including resumes, profile data, job descriptions, application notes, messages, and feedback.",
             },
             {
               term: "AI Features",
               definition:
-                "Functionality that uses machine-learning models — including resume parsing, match scoring, bias detection, and content suggestions.",
+                "Functionality that uses machine-learning models, including resume parsing, match scoring, bias detection, and content suggestions.",
             },
           ],
         },
@@ -190,7 +190,7 @@ export const termsOfService: LegalDocument = {
           kind: "callout",
           tone: "info",
           title: "Audit trails are not optional",
-          body: "Consequential actions — publishing a job, extending or rescinding an offer, advancing or rejecting an application — are recorded in the audit log. This is a feature, not a bug; it is what makes fair hiring defensible.",
+          body: "Consequential actions, publishing a job, extending or rescinding an offer, advancing or rejecting an application, are recorded in the audit log. This is a feature, not a bug; it is what makes fair hiring defensible.",
         },
       ],
     },
@@ -271,7 +271,7 @@ export const termsOfService: LegalDocument = {
         {
           kind: "list",
           items: [
-            "Recruiters receive a sub-license to the Content you submit to a specific application — limited to evaluating you for that role.",
+            "Recruiters receive a sub-license to the Content you submit to a specific application, limited to evaluating you for that role.",
             "AuraHire's name, logo, the Score Ring and Breakdown Bar visualizations, and the AuraHire user interface are proprietary to AuraHire.",
             "We do not claim ownership of resumes, profile data, or company-supplied job descriptions; we license them strictly for the purposes described.",
             "Feedback, suggestions, and bug reports you send us are non-confidential and may be used to improve the Platform without attribution.",
@@ -288,7 +288,7 @@ export const termsOfService: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          text: "AuraHire applies role-based access controls, row-level security in the database, JWT-based authentication, and PII redaction before AI processing. Where you have rights under data-protection law — to access, correct, port, or delete your personal data — those rights are described in the Privacy Policy along with how to exercise them.",
+          text: "AuraHire applies role-based access controls, row-level security in the database, JWT-based authentication, and PII redaction before AI processing. Where you have rights under data-protection law, to access, correct, port, or delete your personal data, those rights are described in the Privacy Policy along with how to exercise them.",
         },
         {
           kind: "callout",
@@ -334,7 +334,7 @@ export const termsOfService: LegalDocument = {
           items: [
             "We will give reasonable notice before terminating an account except where immediate action is required to protect the Platform or its users.",
             "Upon termination, your access ceases and your account is closed. Content is handled according to the retention rules in the Privacy Policy.",
-            "Sections of these Terms that by their nature should survive termination — including intellectual-property, disclaimers, limitation of liability, indemnity, and governing-law provisions — survive.",
+            "Sections of these Terms that by their nature should survive termination, including intellectual-property, disclaimers, limitation of liability, indemnity, and governing-law provisions, survive.",
           ],
         },
       ],
@@ -344,11 +344,11 @@ export const termsOfService: LegalDocument = {
       number: "12",
       icon: AlertTriangle,
       title: "Disclaimers",
-      lede: "Read this section carefully — it limits what AuraHire promises about the service.",
+      lede: "Read this section carefully, it limits what AuraHire promises about the service.",
       blocks: [
         {
           kind: "paragraph",
-          text: "The Platform is provided “as is” and “as available.” To the maximum extent permitted by law, AuraHire disclaims all warranties — express, implied, or statutory — including warranties of merchantability, fitness for a particular purpose, non-infringement, accuracy, and uninterrupted operation.",
+          text: "The Platform is provided “as is” and “as available.” To the maximum extent permitted by law, AuraHire disclaims all warranties, express, implied, or statutory, including warranties of merchantability, fitness for a particular purpose, non-infringement, accuracy, and uninterrupted operation.",
         },
         {
           kind: "list",
@@ -369,7 +369,7 @@ export const termsOfService: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          text: "To the maximum extent permitted by law, AuraHire and its affiliates, officers, employees, and agents will not be liable for any indirect, incidental, special, consequential, or punitive damages, or for any loss of profits, revenue, data, or goodwill, arising out of or in connection with these Terms or the Platform — even if advised of the possibility of such damages.",
+          text: "To the maximum extent permitted by law, AuraHire and its affiliates, officers, employees, and agents will not be liable for any indirect, incidental, special, consequential, or punitive damages, or for any loss of profits, revenue, data, or goodwill, arising out of or in connection with these Terms or the Platform, even if advised of the possibility of such damages.",
         },
         {
           kind: "paragraph",
@@ -385,7 +385,7 @@ export const termsOfService: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          text: "You agree to defend, indemnify, and hold harmless AuraHire and its affiliates from and against any claims, liabilities, damages, losses, and expenses — including reasonable legal fees — arising out of or in any way connected with: (a) your access to or use of the Platform; (b) Content you submit; (c) your violation of these Terms; or (d) your violation of any rights of another person or entity.",
+          text: "You agree to defend, indemnify, and hold harmless AuraHire and its affiliates from and against any claims, liabilities, damages, losses, and expenses, including reasonable legal fees, arising out of or in any way connected with: (a) your access to or use of the Platform; (b) Content you submit; (c) your violation of these Terms; or (d) your violation of any rights of another person or entity.",
         },
       ],
     },
@@ -409,7 +409,7 @@ export const termsOfService: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          text: "We may revise these Terms from time to time. When we do, we will update the “Last updated” date at the top of this page and, for material changes, provide reasonable advance notice — typically by email or an in-product banner. Continued use of the Platform after the effective date of an update constitutes acceptance of the revised Terms. Prior versions are kept on file and are available on request.",
+          text: "We may revise these Terms from time to time. When we do, we will update the “Last updated” date at the top of this page and, for material changes, provide reasonable advance notice, typically by email or an in-product banner. Continued use of the Platform after the effective date of an update constitutes acceptance of the revised Terms. Prior versions are kept on file and are available on request.",
         },
       ],
     },
@@ -417,7 +417,7 @@ export const termsOfService: LegalDocument = {
   crossLink: {
     label: "Privacy Policy",
     description:
-      "Read how AuraHire collects, redacts, processes, and retains personal data — including how PII is removed before AI scoring.",
+      "Read how AuraHire collects, redacts, processes, and retains personal data, including how PII is removed before AI scoring.",
     href: "/legal/privacy",
   },
   contact: {
@@ -425,7 +425,7 @@ export const termsOfService: LegalDocument = {
     body: "Reach our legal team for clarification, contract requests, or to report a concern about how the Platform is being used.",
     email: "hello@aurahire.site",
     addressLines: [
-      "AuraHire — Legal",
+      "AuraHire, Legal",
       "Attn: General Counsel",
       "aurahire.site · responses in English",
     ],

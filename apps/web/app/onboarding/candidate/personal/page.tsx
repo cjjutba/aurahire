@@ -3,10 +3,10 @@ import { PersonalStepClient } from "./_client";
 import { fetchCandidateProfileMe, fetchLatestParsedResume } from "../_data";
 import { getCurrentSession } from "@/lib/auth/session";
 
-export const metadata = { title: "Personal Info — Onboarding" };
+export const metadata = { title: "Personal Info, Onboarding" };
 
 export default async function Step2Page() {
-  // Run the three independent fetches in parallel — sequential awaits added
+  // Run the three independent fetches in parallel, sequential awaits added
   // ~3s of server time to every navigation into Step 2.
   const [me, session, latestResume] = await Promise.all([
     fetchCandidateProfileMe(),

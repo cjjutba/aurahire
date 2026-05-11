@@ -21,7 +21,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
   hero: {
     eyebrow: "How AuraHire works for recruiters",
     title: "Hire fairly. Hire transparently. Hire faster.",
-    lede: "AuraHire is built so you can defend every score and every stage decision. The AI does the reading, the sorting, and the surfacing — you do the deciding. This walkthrough explains the entire workflow, from drafting a job to extending an offer.",
+    lede: "AuraHire is built so you can defend every score and every stage decision. The AI does the reading, the sorting, and the surfacing, you do the deciding. This walkthrough explains the entire workflow, from drafting a job to extending an offer.",
   },
   journey: {
     title: "Your end-to-end workflow",
@@ -61,7 +61,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
       },
       {
         label: "Decide",
-        description: "Offer or decline with a reason — every action audited.",
+        description: "Offer or decline with a reason, every action audited.",
         icon: Handshake,
         targetId: "outcomes",
       },
@@ -80,7 +80,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "Most recruiting platforms make scoring opaque to candidates while making it equally opaque to you, the recruiter — you see numbers without rationale. AuraHire flips that: the same evidence trail shown to candidates is shown to you, plus the controls to override, re-score, and document any decision.",
+              text: "Most recruiting platforms make scoring opaque to candidates while making it equally opaque to you, the recruiter, you see numbers without rationale. AuraHire flips that: the same evidence trail shown to candidates is shown to you, plus the controls to override, re-score, and document any decision.",
             },
             {
               kind: "fields",
@@ -106,7 +106,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "What 'AI assists, humans decide' means in practice",
-              body: "The AI never auto-rejects a candidate, never auto-advances one, and never sends an outcome notification on its own. It produces a score, a breakdown, and a rationale — you do everything else.",
+              body: "The AI never auto-rejects a candidate, never auto-advances one, and never sends an outcome notification on its own. It produces a score, a breakdown, and a rationale, you do everything else.",
             },
           ],
         },
@@ -132,7 +132,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   title: "Title and core fields",
                   description:
-                    "Title, location, work model (remote / hybrid / on-site), employment type, and salary range. Salary range is mandatory — disclosure is increasingly required by law and increases candidate quality.",
+                    "Title, location, work model (remote / hybrid / on-site), employment type, and salary range. Salary range is mandatory, disclosure is increasingly required by law and increases candidate quality.",
                 },
                 {
                   title: "Criteria the AI scores against",
@@ -142,12 +142,12 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   title: "Description and responsibilities",
                   description:
-                    "The narrative section. The bias checker runs here — flags appear inline as you type or paste. You can accept the suggestion, edit your phrasing, or override the flag with a documented reason.",
+                    "The narrative section. The bias checker runs here, flags appear inline as you type or paste. You can accept the suggestion, edit your phrasing, or override the flag with a documented reason.",
                 },
                 {
                   title: "Application form",
                   description:
-                    "Optional role-specific questions presented to candidates at submission. Use sparingly — every question adds friction and lowers application volume.",
+                    "Optional role-specific questions presented to candidates at submission. Use sparingly, every question adds friction and lowers application volume.",
                 },
               ],
             },
@@ -161,7 +161,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "ai",
               title: "Why we flag, not block",
-              body: "Bias detection is heuristic — it has false positives. We surface the flag and let you decide, rather than block publication. Outright blocking would push you to draft the description outside the platform and paste it back, defeating the purpose.",
+              body: "Bias detection is heuristic, it has false positives. We surface the flag and let you decide, rather than block publication. Outright blocking would push you to draft the description outside the platform and paste it back, defeating the purpose.",
             },
           ],
         },
@@ -178,12 +178,12 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   label: "Visibility",
                   description:
-                    "Public on the job board immediately. You can also unpublish at any time — existing applications stay in the pipeline, but no new ones come in.",
+                    "Public on the job board immediately. You can also unpublish at any time, existing applications stay in the pipeline, but no new ones come in.",
                 },
                 {
                   label: "Editing after publish",
                   description:
-                    "Edits are versioned. The criteria a candidate was scored against are pinned to their application — so if you change the criteria mid-flight, existing scores don't silently shift.",
+                    "Edits are versioned. The criteria a candidate was scored against are pinned to their application, so if you change the criteria mid-flight, existing scores don't silently shift.",
                 },
                 {
                   label: "Pause vs. close",
@@ -210,11 +210,11 @@ export const recruiterHowItWorks: HowItWorksContent = {
           icon: ClipboardList,
           kicker: "Step 3",
           title: "Applications arrive scored and redacted",
-          lede: "Every new application is scored against your role criteria automatically. You see the score, the breakdown, and the redacted evidence first — names come later, by your choice.",
+          lede: "Every new application is scored against your role criteria automatically. You see the score, the breakdown, and the redacted evidence first, names come later, by your choice.",
           blocks: [
             {
               kind: "paragraph",
-              text: "When a candidate submits, our scoring engine runs against the application within seconds. The result is a 0–100 match score (quantized to 5-point bands), a breakdown bar showing each criterion's contribution, and an evidence panel with the exact resume excerpts cited. Applications appear in your pipeline as 'New' with the score visible from the row.",
+              text: "When a candidate submits, our scoring engine runs against the application within seconds. The result is a 0-100 match score (quantized to 5-point bands), a breakdown bar showing each criterion's contribution, and an evidence panel with the exact resume excerpts cited. Applications appear in your pipeline as 'New' with the score visible from the row.",
             },
             {
               kind: "matrix",
@@ -228,12 +228,12 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 [
                   "Pipeline row (expanded)",
                   "All of the above + breakdown bar + skills matched.",
-                  "Same — name still hidden until you click 'Reveal.'",
+                  "Same, name still hidden until you click 'Reveal.'",
                 ],
                 [
                   "Candidate detail page",
                   "Full profile, contact info, evidence panel, history.",
-                  "Nothing — but the page records that you opened it.",
+                  "Nothing, but the page records that you opened it.",
                 ],
                 [
                   "Bulk actions",
@@ -255,11 +255,11 @@ export const recruiterHowItWorks: HowItWorksContent = {
           icon: Target,
           kicker: "Step 4",
           title: "Anatomy of a match score",
-          lede: "How the 0–100 number is built — and where to look when it surprises you.",
+          lede: "How the 0-100 number is built, and where to look when it surprises you.",
           blocks: [
             {
               kind: "paragraph",
-              text: "The match score is a weighted sum of per-criterion sub-scores. The deterministic component (skills, years, education) is computed by rule; the AI component (role-fit narrative) is generated by a model from the redacted resume. Both are summed by the strict-sum reconciliation rule — the parts add up to the whole, with no opaque adjustment.",
+              text: "The match score is a weighted sum of per-criterion sub-scores. The deterministic component (skills, years, education) is computed by rule; the AI component (role-fit narrative) is generated by a model from the redacted resume. Both are summed by the strict-sum reconciliation rule, the parts add up to the whole, with no opaque adjustment.",
             },
             {
               kind: "definitions",
@@ -267,7 +267,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   term: "Score Ring",
                   definition:
-                    "Headline number 0–100. Quantized to nearest 5. Color-banded: red for 0–39, amber for 40–69, green for 70–100. The number is in JetBrains Mono for tabular legibility.",
+                    "Headline number 0-100. Quantized to nearest 5. Color-banded: red for 0-39, amber for 40-69, green for 70-100. The number is in JetBrains Mono for tabular legibility.",
                 },
                 {
                   term: "Breakdown Bar",
@@ -282,7 +282,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   term: "Strict-sum reconciliation",
                   definition:
-                    "The rule that the final score equals the sum of weighted criterion scores — nothing else. Quantization is applied last. There is no implicit bonus or hidden adjustment.",
+                    "The rule that the final score equals the sum of weighted criterion scores, nothing else. Quantization is applied last. There is no implicit bonus or hidden adjustment.",
                 },
                 {
                   term: "Calibration warning",
@@ -295,7 +295,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "ai",
               title: "Why scores quantize to 5-point bands",
-              body: "A 73 vs. 75 isn't a meaningful gap, but it would feel like one. We quantize so cosmetic precision doesn't drive triage decisions. The breakdown is the real signal — the headline number is honest about its precision.",
+              body: "A 73 vs. 75 isn't a meaningful gap, but it would feel like one. We quantize so cosmetic precision doesn't drive triage decisions. The breakdown is the real signal, the headline number is honest about its precision.",
             },
           ],
         },
@@ -327,7 +327,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   title: "Decline with a reason",
                   description:
-                    "Declining a candidate requires picking a reason from a fixed list (so reasons are consistent and reportable). Free-text justifications are not stored — the category is what's auditable.",
+                    "Declining a candidate requires picking a reason from a fixed list (so reasons are consistent and reportable). Free-text justifications are not stored, the category is what's auditable.",
                 },
               ],
             },
@@ -335,7 +335,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "Bulk stage moves are scoped",
-              body: "You can move multiple candidates at once — but only within the same stage and only with one declining reason. This prevents accidental mass-rejects and keeps the audit trail clean.",
+              body: "You can move multiple candidates at once, but only within the same stage and only with one declining reason. This prevents accidental mass-rejects and keeps the audit trail clean.",
             },
           ],
         },
@@ -366,7 +366,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   label: "Manual score adjustment",
                   description:
-                    "Disabled by default. Admins can enable per-role manual score editing — but every adjustment requires a reason and is flagged on the bias monitoring dashboard.",
+                    "Disabled by default. Admins can enable per-role manual score editing, but every adjustment requires a reason and is flagged on the bias monitoring dashboard.",
                 },
               ],
             },
@@ -396,7 +396,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   title: "Propose interview slots",
                   description:
-                    "Open the candidate's detail page, choose 'Schedule Interview,' and propose 2–4 time slots. The candidate picks one. Both parties get calendar invites with timezone-correct details.",
+                    "Open the candidate's detail page, choose 'Schedule Interview,' and propose 2-4 time slots. The candidate picks one. Both parties get calendar invites with timezone-correct details.",
                 },
                 {
                   title: "Capture interviewer notes",
@@ -406,7 +406,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   title: "Aggregate panel feedback",
                   description:
-                    "After all interviewers have submitted, the candidate detail shows an aggregated rubric score alongside individual responses. Disagreement on the panel is shown — not averaged away.",
+                    "After all interviewers have submitted, the candidate detail shows an aggregated rubric score alongside individual responses. Disagreement on the panel is shown, not averaged away.",
                 },
               ],
             },
@@ -455,7 +455,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "success",
               title: "Why decline reasons are categorical, not free-text",
-              body: "Categorical reasons are reportable, comparable across roles, and auditable. Free-text reasons drift over time — 'not a culture fit' means different things to different recruiters. The category list is editable by admins, but every decline picks from it.",
+              body: "Categorical reasons are reportable, comparable across roles, and auditable. Free-text reasons drift over time, 'not a culture fit' means different things to different recruiters. The category list is editable by admins, but every decline picks from it.",
             },
           ],
         },
@@ -486,7 +486,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   label: "Per-candidate audit",
                   description:
-                    "Each candidate detail has an 'Activity' tab showing every action ever taken on their application — by you, by other recruiters, and by the AI.",
+                    "Each candidate detail has an 'Activity' tab showing every action ever taken on their application, by you, by other recruiters, and by the AI.",
                 },
                 {
                   label: "Audit export",
@@ -499,7 +499,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "Audit logs survive deletes",
-              body: "If a candidate deletes their account, their personal data is removed — but the audit record of actions taken on their application is anonymized and retained. We need that record to defend any claim that a process was followed.",
+              body: "If a candidate deletes their account, their personal data is removed, but the audit record of actions taken on their application is anonymized and retained. We need that record to defend any claim that a process was followed.",
             },
           ],
         },
@@ -512,13 +512,13 @@ export const recruiterHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "Bias mitigation isn't a one-time configuration — it's an ongoing measurement. We compare scoring patterns and stage outcomes across demographic categories (where we can infer them from publicly available signals) and across recruiters. Drift triggers calibration warnings on the admin dashboard. As a recruiter, you might be prompted occasionally to review a flagged pattern in your decisions.",
+              text: "Bias mitigation isn't a one-time configuration, it's an ongoing measurement. We compare scoring patterns and stage outcomes across demographic categories (where we can infer them from publicly available signals) and across recruiters. Drift triggers calibration warnings on the admin dashboard. As a recruiter, you might be prompted occasionally to review a flagged pattern in your decisions.",
             },
             {
               kind: "callout",
               tone: "warning",
               title: "Calibration prompts are not accusations",
-              body: "If you receive a calibration prompt, it means a pattern crossed a statistical threshold — not that you've done anything wrong. Reviewing the pattern is a chance to confirm the decisions were sound, or to recognize a habit you'd want to change.",
+              body: "If you receive a calibration prompt, it means a pattern crossed a statistical threshold, not that you've done anything wrong. Reviewing the pattern is a chance to confirm the decisions were sound, or to recognize a habit you'd want to change.",
             },
           ],
         },
@@ -540,12 +540,12 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 {
                   term: "Match score",
                   definition:
-                    "0–100 number representing alignment between an application and the role's criteria. Quantized to the nearest 5.",
+                    "0-100 number representing alignment between an application and the role's criteria. Quantized to the nearest 5.",
                 },
                 {
                   term: "Match band",
                   definition:
-                    "Plain-language label for a score: Limited Match (0–39), Partial Match (40–69), Strong Match (70–100).",
+                    "Plain-language label for a score: Limited Match (0-39), Partial Match (40-69), Strong Match (70-100).",
                 },
                 {
                   term: "Bias flag",
@@ -585,7 +585,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 [
                   "Bias check on jobs",
                   "Flag suspect language with explanation and suggestion.",
-                  "Accept, edit, or override the flag — with logged reason.",
+                  "Accept, edit, or override the flag, with logged reason.",
                 ],
                 [
                   "Resume parsing",
@@ -610,7 +610,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
                 [
                   "Hiring decision",
                   "Nothing.",
-                  "Owns offer, decline, hold — every outcome notification is yours to send.",
+                  "Owns offer, decline, hold, every outcome notification is yours to send.",
                 ],
               ],
             },
@@ -632,9 +632,9 @@ export const recruiterHowItWorks: HowItWorksContent = {
             {
               kind: "list",
               items: [
-                "Review the breakdown before revealing the name. The product is designed around this — the workflow rewards it.",
+                "Review the breakdown before revealing the name. The product is designed around this, the workflow rewards it.",
                 "When you override, attach a one-line note. You'll thank yourself in three months when someone asks why.",
-                "Decline with the most specific reason category that fits — not the generic catch-all. Aggregate decline reasons are how the platform learns.",
+                "Decline with the most specific reason category that fits, not the generic catch-all. Aggregate decline reasons are how the platform learns.",
                 "Edit role criteria sparingly after publish. Versioning protects scores, but candidates appreciate stable expectations.",
                 "Pay attention to calibration warnings. Sparse-input scores are exactly where overrides are most likely to be appropriate.",
                 "Read the bias check suggestions even if you override. The model has seen more job postings than any of us; the suggestions are usually worth a look.",
@@ -651,7 +651,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "If you've finished this walkthrough and still have a specific question — about a stuck pipeline action, a settings detail, or an integration — the recruiter help center is the right next stop. It's organized as searchable Q&A, not a linear story.",
+              text: "If you've finished this walkthrough and still have a specific question, about a stuck pipeline action, a settings detail, or an integration, the recruiter help center is the right next stop. It's organized as searchable Q&A, not a linear story.",
             },
           ],
         },
@@ -660,7 +660,7 @@ export const recruiterHowItWorks: HowItWorksContent = {
   ],
   contact: {
     title: "Have a workflow question we didn't cover?",
-    body: "If something about the recruiter workflow isn't clear, write to us — a human reads and responds. Feedback informs the next iteration.",
+    body: "If something about the recruiter workflow isn't clear, write to us, a human reads and responds. Feedback informs the next iteration.",
     email: "cjjutbaofficial@gmail.com",
     secondaryLink: {
       label: "Open the recruiter help center",

@@ -278,7 +278,7 @@ function ApplicationRow({ app }: { app: AppRow }) {
           )}
           <div className="min-w-0">
             <div className="truncate text-sm text-[var(--color-ink)]">
-              {app.job?.title ?? "—"}
+              {app.job?.title ?? "-"}
             </div>
           </div>
         </div>
@@ -308,7 +308,7 @@ function ApplicationRow({ app }: { app: AppRow }) {
             <span className="text-[var(--color-muted)]">/100</span>
           </>
         ) : (
-          <span className="text-[var(--color-muted)]">—</span>
+          <span className="text-[var(--color-muted)]">-</span>
         )}
       </td>
       <td className="px-4 py-3 text-[var(--color-muted)]">

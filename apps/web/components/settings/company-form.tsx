@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/form";
 
 interface CompanyFormProps {
-  /** Skipped on first render — the query takes over once it resolves. */
+  /** Skipped on first render, the query takes over once it resolves. */
   initial?: CompanyDetail | null;
 }
 

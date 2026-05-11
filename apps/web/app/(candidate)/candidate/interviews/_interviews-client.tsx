@@ -293,7 +293,7 @@ function InterviewRowEl({ row }: { row: InterviewRow }) {
               {row.job?.title ?? "Interview"}
             </div>
             <div className="truncate text-xs text-[var(--color-muted)]">
-              {row.company?.name ?? "—"}
+              {row.company?.name ?? "-"}
             </div>
           </div>
         </div>

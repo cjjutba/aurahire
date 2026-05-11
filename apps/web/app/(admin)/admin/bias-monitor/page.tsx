@@ -101,7 +101,7 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
               Bias &amp; Fairness Monitor
             </h1>
             <p className="mt-1 text-sm text-[var(--color-body)]">
-              Aggregate oversight of biased-language detection on job postings —
+              Aggregate oversight of biased-language detection on job postings -
               see what the system caught, what it let through with
               justification, and how recruiters used the override flow.
             </p>
@@ -124,7 +124,7 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
           <KpiTileWithTooltip
             label="Total Flags"
             value={d.kpis.totalFlags}
-            tooltip="Count of bias_flags rows created in this period (any status — flagged, overridden, or resolved)."
+            tooltip="Count of bias_flags rows created in this period (any status, flagged, overridden, or resolved)."
           />
           <KpiTileWithTooltip
             label="Flags Per Job"
@@ -172,7 +172,7 @@ export default async function BiasMonitorPage({ searchParams }: PageProps) {
             A note on fairness analysis:
           </strong>{" "}
           This view surfaces aggregate flag counts + override decisions. It does
-          NOT compute disparate-impact tests against demographic groups — by
+          NOT compute disparate-impact tests against demographic groups, by
           design, the system does not collect protected-class data (PII
           redaction, see{" "}
           <code className="rounded bg-[var(--color-canvas)] px-1 font-mono">

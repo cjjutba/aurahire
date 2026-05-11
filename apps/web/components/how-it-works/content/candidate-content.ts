@@ -23,8 +23,8 @@ import type { HowItWorksContent } from "../how-it-works-types";
 export const candidateHowItWorks: HowItWorksContent = {
   hero: {
     eyebrow: "How AuraHire works for candidates",
-    title: "From resume to offer — every step, explained.",
-    lede: "AuraHire is built around a single promise: you should never wonder how a hiring decision was made. This walkthrough shows what happens behind the scenes — what the AI does, what humans decide, and what data we never touch — at every stage of your application.",
+    title: "From resume to offer, every step, explained.",
+    lede: "AuraHire is built around a single promise: you should never wonder how a hiring decision was made. This walkthrough shows what happens behind the scenes, what the AI does, what humans decide, and what data we never touch, at every stage of your application.",
   },
   journey: {
     title: "Your end-to-end journey",
@@ -37,7 +37,7 @@ export const candidateHowItWorks: HowItWorksContent = {
       },
       {
         label: "Build profile",
-        description: "Resume parsed, fields pre-filled — you stay in control.",
+        description: "Resume parsed, fields pre-filled, you stay in control.",
         icon: CircleUser,
         targetId: "build-profile",
       },
@@ -63,7 +63,7 @@ export const candidateHowItWorks: HowItWorksContent = {
       {
         label: "Outcome",
         description:
-          "Interview, offer, or polite decline — always with a reason.",
+          "Interview, offer, or polite decline, always with a reason.",
         icon: Award,
         targetId: "outcomes",
       },
@@ -78,7 +78,7 @@ export const candidateHowItWorks: HowItWorksContent = {
           icon: Sparkles,
           kicker: "Why we built this",
           title: "The transparency thesis",
-          lede: "Most ATS platforms are black boxes. AuraHire is the opposite — every score, every flag, every recommendation comes with its evidence attached.",
+          lede: "Most ATS platforms are black boxes. AuraHire is the opposite, every score, every flag, every recommendation comes with its evidence attached.",
           blocks: [
             {
               kind: "paragraph",
@@ -95,7 +95,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   label: "Fairness by design",
                   description:
-                    "Personal identifiers are stripped from your resume before the AI scores it. Job descriptions are checked for biased language before they're published. Both protections run automatically — they aren't optional add-ons.",
+                    "Personal identifiers are stripped from your resume before the AI scores it. Job descriptions are checked for biased language before they're published. Both protections run automatically, they aren't optional add-ons.",
                 },
                 {
                   label: "Human in the loop",
@@ -108,7 +108,7 @@ export const candidateHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "Score color is not a value judgment",
-              body: "A 'Limited Match' on one role does not mean you're a limited candidate. It means the resume evidence didn't strongly align with that specific role's stated criteria — which is different from your worth, your potential, or your fit elsewhere.",
+              body: "A 'Limited Match' on one role does not mean you're a limited candidate. It means the resume evidence didn't strongly align with that specific role's stated criteria, which is different from your worth, your potential, or your fit elsewhere.",
             },
           ],
         },
@@ -130,7 +130,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   title: "Create your account",
                   description:
-                    "Email and password. We send a verification link to confirm you own the address — clicking it activates your account.",
+                    "Email and password. We send a verification link to confirm you own the address, clicking it activates your account.",
                 },
                 {
                   title: "Choose your role",
@@ -148,7 +148,7 @@ export const candidateHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "ai",
               title: "What we never ask for at sign-up",
-              body: "We do not collect government IDs, social security numbers, payment information, or biometric data. If you ever see a request for any of those, please report it — that's not us.",
+              body: "We do not collect government IDs, social security numbers, payment information, or biometric data. If you ever see a request for any of those, please report it, that's not us.",
             },
           ],
         },
@@ -161,7 +161,7 @@ export const candidateHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "When you upload a resume, our parser extracts your work history, education, skills, certifications, and contact details. Each extracted field appears in your profile pre-filled with an 'AI Suggested' chip beside it. The chip becomes 'Edited' the moment you change it — so you always know which values came from the parser and which you authored yourself.",
+              text: "When you upload a resume, our parser extracts your work history, education, skills, certifications, and contact details. Each extracted field appears in your profile pre-filled with an 'AI Suggested' chip beside it. The chip becomes 'Edited' the moment you change it, so you always know which values came from the parser and which you authored yourself.",
             },
             {
               kind: "fields",
@@ -179,7 +179,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   label: "Editing freely",
                   description:
-                    "You can override any AI-suggested field at any time. Edits don't delete the underlying parse — they layer on top. You can re-run the parser if you upload a newer resume.",
+                    "You can override any AI-suggested field at any time. Edits don't delete the underlying parse, they layer on top. You can re-run the parser if you upload a newer resume.",
                 },
               ],
             },
@@ -187,7 +187,7 @@ export const candidateHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "ai",
               title: "PII redaction happens before scoring, not after",
-              body: "Your name, email, phone, address, and any photo are stored on your profile so recruiters can contact you — but they are stripped from the document the AI sees when it scores you against a job. The model never reads your name when assigning a number.",
+              body: "Your name, email, phone, address, and any photo are stored on your profile so recruiters can contact you, but they are stripped from the document the AI sees when it scores you against a job. The model never reads your name when assigning a number.",
             },
           ],
         },
@@ -214,7 +214,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   title: "Read the role criteria",
                   description:
-                    "Each posting shows the must-have skills, nice-to-haves, experience range, and required qualifications — the same fields the AI scores against. No hidden criteria.",
+                    "Each posting shows the must-have skills, nice-to-haves, experience range, and required qualifications, the same fields the AI scores against. No hidden criteria.",
                 },
                 {
                   title: "Submit your application",
@@ -240,7 +240,7 @@ export const candidateHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "Your profile and the redacted version of your resume are scored against the role's stated criteria. The result is a single 0–100 number on a 5-point quantization (so scores like 73 become 75 — small differences don't masquerade as meaningful ones), paired with a breakdown bar showing each criterion's contribution.",
+              text: "Your profile and the redacted version of your resume are scored against the role's stated criteria. The result is a single 0-100 number on a 5-point quantization (so scores like 73 become 75, small differences don't masquerade as meaningful ones), paired with a breakdown bar showing each criterion's contribution.",
             },
             {
               kind: "matrix",
@@ -269,7 +269,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 [
                   "Role-fit narrative",
                   "AI model reads your redacted resume and generates a short rationale.",
-                  "The full rationale is shown — not summarized, not hidden.",
+                  "The full rationale is shown, not summarized, not hidden.",
                 ],
               ],
             },
@@ -277,7 +277,7 @@ export const candidateHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "Strict-sum reconciliation",
-              body: "The final score is the sum of weighted component scores — nothing else. If the parts add up to 71, the whole is 71 (then quantized to the nearest 5). There's no secret bonus, no opaque adjustment, no algorithm 'gut feel' on top.",
+              body: "The final score is the sum of weighted component scores, nothing else. If the parts add up to 71, the whole is 71 (then quantized to the nearest 5). There's no secret bonus, no opaque adjustment, no algorithm 'gut feel' on top.",
             },
           ],
         },
@@ -294,7 +294,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   term: "Score Ring",
                   definition:
-                    "The headline number (0–100) shown in a circular progress ring. The ring fill is colored by band: red for Limited Match (0–39), amber for Partial Match (40–69), green for Strong Match (70–100). The number itself is in JetBrains Mono — readable, tabular, unambiguous.",
+                    "The headline number (0-100) shown in a circular progress ring. The ring fill is colored by band: red for Limited Match (0-39), amber for Partial Match (40-69), green for Strong Match (70-100). The number itself is in JetBrains Mono, readable, tabular, unambiguous.",
                 },
                 {
                   term: "Breakdown Bar",
@@ -309,7 +309,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   term: "Match-band chip",
                   definition:
-                    "A plain-language label always paired with the number — 'Strong Match,' 'Partial Match,' or 'Limited Match.' Never 'Excellent Candidate' or 'Mediocre Candidate.' The label describes alignment with the role, not your worth.",
+                    "A plain-language label always paired with the number, 'Strong Match,' 'Partial Match,' or 'Limited Match.' Never 'Excellent Candidate' or 'Mediocre Candidate.' The label describes alignment with the role, not your worth.",
                 },
               ],
             },
@@ -317,7 +317,7 @@ export const candidateHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "ai",
               title: "Why scores quantize to 5-point bands",
-              body: "A score of 72 vs. 74 isn't a meaningful difference — but it would feel like one. We quantize to the nearest 5 so cosmetic precision doesn't drive decisions. The breakdown shows the full picture; the headline number is honest about what it can claim.",
+              body: "A score of 72 vs. 74 isn't a meaningful difference, but it would feel like one. We quantize to the nearest 5 so cosmetic precision doesn't drive decisions. The breakdown shows the full picture; the headline number is honest about what it can claim.",
             },
           ],
         },
@@ -355,7 +355,7 @@ export const candidateHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "Why redaction matters",
-              body: "When the AI scores a resume, it should be reasoning about evidence — not pattern-matching against a name or a school's prestige. Stripping identifying details before scoring is the simplest, strongest fairness intervention available.",
+              body: "When the AI scores a resume, it should be reasoning about evidence, not pattern-matching against a name or a school's prestige. Stripping identifying details before scoring is the simplest, strongest fairness intervention available.",
             },
           ],
         },
@@ -368,13 +368,13 @@ export const candidateHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "When the AI scores you, we record the prompt version (so we can replay against the exact instructions used), the model identifier and version, the time the call took, and which fields the redactor stripped. If an admin later changes a scoring weight or a prompt, scores generated under the old version remain attributable to that version — not silently re-scored.",
+              text: "When the AI scores you, we record the prompt version (so we can replay against the exact instructions used), the model identifier and version, the time the call took, and which fields the redactor stripped. If an admin later changes a scoring weight or a prompt, scores generated under the old version remain attributable to that version, not silently re-scored.",
             },
             {
               kind: "callout",
               tone: "success",
               title: "Why this matters to you",
-              body: "If you ever feel a score doesn't reflect your application, you can ask the recruiter to review the underlying evidence. Because the breakdown and audit trail exist, the conversation can be specific — not 'the algorithm said so.'",
+              body: "If you ever feel a score doesn't reflect your application, you can ask the recruiter to review the underlying evidence. Because the breakdown and audit trail exist, the conversation can be specific, not 'the algorithm said so.'",
             },
           ],
         },
@@ -401,7 +401,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   label: "Delete your account",
                   description:
-                    "Settings → Account → Delete removes your profile, resume, and all linked applications. Audit logs we're legally required to retain are anonymized — your name is removed.",
+                    "Settings → Account → Delete removes your profile, resume, and all linked applications. Audit logs we're legally required to retain are anonymized, your name is removed.",
                 },
               ],
             },
@@ -417,7 +417,7 @@ export const candidateHowItWorks: HowItWorksContent = {
           icon: Eye,
           kicker: "Step 6",
           title: "How the recruiter reviews you",
-          lede: "Recruiters see your score, your breakdown, and your evidence — the same things you see — and decide what happens next.",
+          lede: "Recruiters see your score, your breakdown, and your evidence, the same things you see, and decide what happens next.",
           blocks: [
             {
               kind: "steps",
@@ -425,7 +425,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   title: "Triage",
                   description:
-                    "Your application enters the recruiter's pipeline as 'New.' The recruiter sees your score, breakdown, and evidence first — your name is shown only after they choose to expand the row.",
+                    "Your application enters the recruiter's pipeline as 'New.' The recruiter sees your score, breakdown, and evidence first, your name is shown only after they choose to expand the row.",
                 },
                 {
                   title: "Stage advancement",
@@ -435,7 +435,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   title: "Decline (with reason)",
                   description:
-                    "If the recruiter declines, they choose a reason from a fixed list (so reasons are consistent and reportable). You see the reason category — never a free-text justification we can't audit.",
+                    "If the recruiter declines, they choose a reason from a fixed list (so reasons are consistent and reportable). You see the reason category, never a free-text justification we can't audit.",
                 },
               ],
             },
@@ -443,7 +443,7 @@ export const candidateHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "info",
               title: "What 'New' means",
-              body: "A 'New' status doesn't mean unread — it means the recruiter hasn't decided yet. We don't tell you when a recruiter has opened your application; that's their workspace. We do tell you the moment they take a stage action.",
+              body: "A 'New' status doesn't mean unread, it means the recruiter hasn't decided yet. We don't tell you when a recruiter has opened your application; that's their workspace. We do tell you the moment they take a stage action.",
             },
           ],
         },
@@ -484,7 +484,7 @@ export const candidateHowItWorks: HowItWorksContent = {
           id: "outcomes",
           icon: Award,
           kicker: "Step 8",
-          title: "Offer, decline, or pause — always with a reason",
+          title: "Offer, decline, or pause, always with a reason",
           lede: "Every outcome is communicated. We don't ghost.",
           blocks: [
             {
@@ -517,7 +517,7 @@ export const candidateHowItWorks: HowItWorksContent = {
               kind: "callout",
               tone: "success",
               title: "Why we collect outcomes",
-              body: "Every outcome — including declines — improves the platform's calibration metrics. We use aggregated outcome data to detect bias drift over time. No individual outcome ever identifies you in those metrics.",
+              body: "Every outcome, including declines, improves the platform's calibration metrics. We use aggregated outcome data to detect bias drift over time. No individual outcome ever identifies you in those metrics.",
             },
           ],
         },
@@ -531,16 +531,16 @@ export const candidateHowItWorks: HowItWorksContent = {
           icon: TrendingUp,
           kicker: "Practical",
           title: "How to improve your score (legitimately)",
-          lede: "There's no gaming the system — but there are real ways to make your match more accurate.",
+          lede: "There's no gaming the system, but there are real ways to make your match more accurate.",
           blocks: [
             {
               kind: "list",
               items: [
-                "Keep your resume current. Add new roles, projects, and certifications as they happen — not in a burst when you start job-hunting.",
+                "Keep your resume current. Add new roles, projects, and certifications as they happen, not in a burst when you start job-hunting.",
                 "Be specific about skills. 'TypeScript' beats 'modern JavaScript frameworks.' The matcher rewards exact terms used in role criteria.",
                 "Quantify outcomes. 'Reduced p99 latency by 40%' is evidence the AI can cite; 'helped improve performance' isn't.",
                 "Match roles to your actual range. Applying to roles 3 levels above (or below) you produces low scores not because the AI is wrong, but because the criteria genuinely don't fit.",
-                "Read the breakdown. If a criterion shows a gap, ask whether your resume actually demonstrates it — sometimes you have the experience but didn't write it down.",
+                "Read the breakdown. If a criterion shows a gap, ask whether your resume actually demonstrates it, sometimes you have the experience but didn't write it down.",
               ],
             },
             {
@@ -560,13 +560,13 @@ export const candidateHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "If you believe a score doesn't reflect your application, the right move is to message the recruiter from your application detail. Because the breakdown and evidence are available to both of you, the conversation can be specific: 'The breakdown shows I scored low on Kubernetes — but my work at Acme included production K8s ops; here's a link to the case study.'",
+              text: "If you believe a score doesn't reflect your application, the right move is to message the recruiter from your application detail. Because the breakdown and evidence are available to both of you, the conversation can be specific: 'The breakdown shows I scored low on Kubernetes, but my work at Acme included production K8s ops; here's a link to the case study.'",
             },
             {
               kind: "callout",
               tone: "info",
               title: "Recruiters can override anything",
-              body: "Recruiters have the authority to advance a candidate regardless of score. The AI is an assistant, not a gatekeeper. If your evidence is stronger than the score reflects, the recruiter can — and often does — move you forward anyway.",
+              body: "Recruiters have the authority to advance a candidate regardless of score. The AI is an assistant, not a gatekeeper. If your evidence is stronger than the score reflects, the recruiter can, and often does, move you forward anyway.",
             },
           ],
         },
@@ -588,12 +588,12 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   term: "Match score",
                   definition:
-                    "0–100 number representing alignment between your application and the role's stated criteria. Quantized to the nearest 5.",
+                    "0-100 number representing alignment between your application and the role's stated criteria. Quantized to the nearest 5.",
                 },
                 {
                   term: "Match band",
                   definition:
-                    "Plain-language label for the score: Limited Match (0–39), Partial Match (40–69), Strong Match (70–100).",
+                    "Plain-language label for the score: Limited Match (0-39), Partial Match (40-69), Strong Match (70-100).",
                 },
                 {
                   term: "AI Suggested",
@@ -603,7 +603,7 @@ export const candidateHowItWorks: HowItWorksContent = {
                 {
                   term: "Bias flag",
                   definition:
-                    "A warning shown to recruiters when the job description contains potentially biased language. (You won't see these in your portal — they appear on the recruiter's editor.)",
+                    "A warning shown to recruiters when the job description contains potentially biased language. (You won't see these in your portal, they appear on the recruiter's editor.)",
                 },
                 {
                   term: "Calibration",
@@ -680,10 +680,10 @@ export const candidateHowItWorks: HowItWorksContent = {
             {
               kind: "list",
               items: [
-                "If your match score doesn't match the breakdown — message the recruiter from the application detail.",
-                "If you believe a job description contains biased language a recruiter missed — use 'Report this job' on the posting page.",
-                "If you suspect an account or recruiter is misusing the platform — email the contact below; reports are read by a human.",
-                "If you want a copy of every action taken on your data — request your audit log from Settings → Account.",
+                "If your match score doesn't match the breakdown, message the recruiter from the application detail.",
+                "If you believe a job description contains biased language a recruiter missed, use 'Report this job' on the posting page.",
+                "If you suspect an account or recruiter is misusing the platform, email the contact below; reports are read by a human.",
+                "If you want a copy of every action taken on your data, request your audit log from Settings → Account.",
               ],
             },
           ],
@@ -697,7 +697,7 @@ export const candidateHowItWorks: HowItWorksContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "If you've finished this walkthrough and still have a specific question — about an error message, a stuck application, or a settings detail — the candidate help center is the right next stop. It's organized as searchable Q&A, not a linear story.",
+              text: "If you've finished this walkthrough and still have a specific question, about an error message, a stuck application, or a settings detail, the candidate help center is the right next stop. It's organized as searchable Q&A, not a linear story.",
             },
           ],
         },
@@ -706,7 +706,7 @@ export const candidateHowItWorks: HowItWorksContent = {
   ],
   contact: {
     title: "Still wondering how something works?",
-    body: "We'd rather over-explain than leave you guessing. If a specific part of the platform isn't clear, write to us — a human reads and responds.",
+    body: "We'd rather over-explain than leave you guessing. If a specific part of the platform isn't clear, write to us, a human reads and responds.",
     email: "cjjutbaofficial@gmail.com",
     secondaryLink: {
       label: "Open the candidate help center",

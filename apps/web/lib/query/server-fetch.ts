@@ -26,7 +26,7 @@ interface ServerApiFetchInit {
   body?: unknown;
   /**
    * Optional Next.js fetch cache config. We pass `{ cache: "no-store" }` by
-   * default — the backend cache is the source of truth, and Next's data cache
+   * default, the backend cache is the source of truth, and Next's data cache
    * would shadow our Redis cache and lengthen the bust path.
    */
   cache?: RequestCache;

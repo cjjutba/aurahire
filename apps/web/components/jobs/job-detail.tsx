@@ -84,7 +84,7 @@ export function JobDetail({ job, showStatusChip, actions }: JobDetailProps) {
           {job.salaryMin !== null && job.salaryMax !== null && (
             <Meta
               icon={DollarSign}
-              text={`${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()} ${job.salaryCurrency}`}
+              text={`${job.salaryMin.toLocaleString()}-${job.salaryMax.toLocaleString()} ${job.salaryCurrency}`}
             />
           )}
           {job.applicationDeadline && (

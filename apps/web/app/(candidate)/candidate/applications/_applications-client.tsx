@@ -292,7 +292,7 @@ function ApplicationRow({ app }: { app: AppRow }) {
               {app.job?.title ?? "Job"}
             </div>
             <div className="truncate text-xs text-[var(--color-muted)]">
-              {company?.name ?? "—"}
+              {company?.name ?? "-"}
             </div>
           </div>
         </div>
@@ -322,7 +322,7 @@ function ApplicationRow({ app }: { app: AppRow }) {
             <span className="text-[var(--color-muted)]">/100</span>
           </>
         ) : (
-          <span className="text-[var(--color-muted)]">—</span>
+          <span className="text-[var(--color-muted)]">-</span>
         )}
       </td>
       <td className="px-4 py-3 text-[var(--color-muted)]">

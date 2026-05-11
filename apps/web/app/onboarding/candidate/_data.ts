@@ -10,7 +10,7 @@ import {
   type ParsedResumeV2,
 } from "./_steps";
 
-// Re-export for back-compat — callers that imported types from _data.ts keep working.
+// Re-export for back-compat, callers that imported types from _data.ts keep working.
 export {
   ONBOARDING_STEPS,
   type OnboardingStepId,
@@ -63,7 +63,7 @@ export async function fetchLatestParsedResume(): Promise<LatestParsedResume | nu
   };
   if (listBody.data.length === 0) return null;
 
-  // Onboarding always works against the most recently uploaded resume — the
+  // Onboarding always works against the most recently uploaded resume, the
   // active context for the user. `isDefault` matters on the resume manager
   // page, not here.
   let newest = listBody.data[0]!;

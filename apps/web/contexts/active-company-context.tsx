@@ -76,7 +76,7 @@ export const ActiveCompanyContextForTesting = ActiveCompanyContext;
  * Initial value flow:
  *   1. Server component fetches profile → reads `lastActiveCompanyId`.
  *   2. Provider seeds the localStorage singleton with that value the first
- *      time it mounts (only when localStorage was previously empty — we
+ *      time it mounts (only when localStorage was previously empty, we
  *      don't override a user's most recent client-side switch on a hard
  *      refresh).
  *   3. After mount, the singleton is the source of truth on the client.
@@ -85,7 +85,7 @@ export const ActiveCompanyContextForTesting = ActiveCompanyContext;
  *   1. Update the local singleton synchronously so subsequent fetches
  *      already carry the new X-Active-Company-Id header.
  *   2. Kick off PATCH /profiles/me { lastActiveCompanyId } in parallel
- *      with the SSR transition — the PATCH only matters for SSR pages
+ *      with the SSR transition, the PATCH only matters for SSR pages
  *      and the guard's profile-lookup fallback; client requests already
  *      use the localStorage singleton via the header.
  *   3. Clear TanStack Query so cached previous-company data is dropped.
@@ -119,7 +119,7 @@ export function ActiveCompanyProvider({
     }
   }
 
-  // Memberships query is gated on the access token being set — without it the
+  // Memberships query is gated on the access token being set, without it the
   // request races past AuthTokenProvider's useEffect and 401s on cold loads.
   const tokenReady = useAuthTokenReady();
   const { data, isLoading } = useMembershipsQuery(tokenReady);
@@ -174,11 +174,11 @@ export function ActiveCompanyProvider({
       setPendingCompanyName(target?.companyName ?? null);
       setIsSwitching(true);
 
-      // 1. Synchronous singleton update — next outgoing fetch carries the new header.
+      // 1. Synchronous singleton update, next outgoing fetch carries the new header.
       const previousCompanyId = activeCompanyId;
       setActiveCompanyId(companyId);
 
-      // 2. Start PATCH (don't await yet — let it race the SSR transition).
+      // 2. Start PATCH (don't await yet, let it race the SSR transition).
       const patchPromise = setActiveCompanyOnServer(companyId).catch((err) => {
         // Rollback path: restore client singleton, clear UI state, re-throw so
         // CompanySwitcher.handleSelect surfaces the toast.

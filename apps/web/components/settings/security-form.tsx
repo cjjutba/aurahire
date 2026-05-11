@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/form";
 
 /**
- * Local schema — kept inline because it mirrors a Supabase-Auth-only
+ * Local schema, kept inline because it mirrors a Supabase-Auth-only
  * concern (password updates) and is not shared with the backend.
  *
  * Supabase enforces an 8-char minimum; we mirror that. Confirmation is a
@@ -61,7 +61,7 @@ export function SecurityPasswordForm({ email }: { email: string }) {
       // Verify the current password by attempting to sign in. Supabase
       // does not expose a "verify password" primitive, so we re-auth
       // against the same email; if the credentials are wrong we surface
-      // it before issuing the update — matches the UX of every banking
+      // it before issuing the update, matches the UX of every banking
       // app's "current password" field.
       const { error: reauthError } = await supabase.auth.signInWithPassword({
         email,

@@ -28,7 +28,7 @@ export function KpiTiles({ kpis }: Props) {
     },
     {
       label: "Time-to-Hire",
-      value: kpis.avgTimeToHireDays ?? "—",
+      value: kpis.avgTimeToHireDays ?? "-",
       sub:
         kpis.avgTimeToHireDays != null ? "median (days)" : "no hires in period",
     },

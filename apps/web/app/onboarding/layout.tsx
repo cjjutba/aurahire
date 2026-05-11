@@ -25,13 +25,13 @@ export default async function OnboardingLayout({
   if (profile.profileCompleted) {
     if (profile.role === "candidate") redirect("/candidate");
     if (profile.role === "recruiter") redirect("/recruiter");
-    // Fall through for admin or unexpected roles — render the layout so any
+    // Fall through for admin or unexpected roles, render the layout so any
     // unusual state surfaces normally rather than silently 302.
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-canvas)]">
-      {/* Header — centered AuraHire wordmark, matches the auth shell. */}
+      {/* Header, centered AuraHire wordmark, matches the auth shell. */}
       <header className="border-b border-[var(--color-hairline-soft)] bg-[var(--color-canvas)]">
         <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-center px-4 sm:px-6">
           <Link href="/" aria-label="AuraHire home" className="inline-flex">

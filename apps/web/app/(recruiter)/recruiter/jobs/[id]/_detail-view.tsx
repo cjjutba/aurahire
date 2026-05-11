@@ -114,7 +114,7 @@ export function RecruiterJobDetailView({
                   {job.department ? ` · ${job.department}` : ""}
                 </p>
               </div>
-              {/* Inline header CTA — recruiters open Applications constantly */}
+              {/* Inline header CTA, recruiters open Applications constantly */}
               <Link
                 href={applicationsHref}
                 className="hidden shrink-0 items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-surface-soft)] sm:inline-flex"
@@ -195,7 +195,7 @@ export function RecruiterJobDetailView({
 
         {/* Right rail */}
         <aside className="space-y-4 lg:sticky lg:top-6 lg:h-fit">
-          {/* Actions card (hidden on mobile — sticky bottom bar handles primary action) */}
+          {/* Actions card (hidden on mobile, sticky bottom bar handles primary action) */}
           <div className="hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:block">
             <SectionLabel>Actions</SectionLabel>
             <div className="mt-4 space-y-2">
@@ -253,7 +253,7 @@ export function RecruiterJobDetailView({
                   label="Salary"
                   value={
                     <span className="font-mono text-[var(--color-ink)]">
-                      {job.salaryMin!.toLocaleString()}–
+                      {job.salaryMin!.toLocaleString()}-
                       {job.salaryMax!.toLocaleString()}{" "}
                       <span className="text-[var(--color-muted)]">
                         {job.salaryCurrency}

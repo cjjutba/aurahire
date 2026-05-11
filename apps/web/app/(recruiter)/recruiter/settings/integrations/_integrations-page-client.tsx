@@ -12,7 +12,7 @@ import { SettingsCard } from "@/components/settings/settings-card";
 import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
 
 /**
- * Integrations are stubs in Phase 5 — the webhook delivery pipeline,
+ * Integrations are stubs in Phase 5, the webhook delivery pipeline,
  * Slack incoming webhook, and CSV exporter aren't wired. Each card
  * shows the input it would persist + a save button that toasts.
  */

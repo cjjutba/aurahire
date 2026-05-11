@@ -24,10 +24,10 @@ import { SettingsRail, type SettingsRailGroup } from "./settings-rail";
  * shown; the company group is gated on the active membership's role.
  *
  * Visibility rules (per the Phase 5 spec):
- *   - Profile / Security / Notifications / Privacy — always visible
- *   - Danger Zone — always visible (recruiters get only "Leave company"
+ *   - Profile / Security / Notifications / Privacy, always visible
+ *   - Danger Zone, always visible (recruiters get only "Leave company"
  *                   inside; the page itself enforces the subsection rules)
- *   - Company / Team Members / Scoring / Bias / Integrations — only for
+ *   - Company / Team Members / Scoring / Bias / Integrations, only for
  *                   owner + admin
  *
  * The company group's heading mirrors the active company name so the rail
@@ -101,7 +101,7 @@ export function RecruiterSettingsRail() {
         },
       );
     }
-    // Danger Zone is visible to every active member — recruiter-role
+    // Danger Zone is visible to every active member, recruiter-role
     // members see the page but only "Leave company" within it.
     companyItems.push({
       href: "/recruiter/settings/danger",
@@ -119,10 +119,10 @@ export function RecruiterSettingsRail() {
   // the personal level so the user has an exit path even when they don't
   // see the Company group's other items.
   if (!isOwnerOrAdmin && companyName) {
-    // already added under the company group above — nothing extra here.
+    // already added under the company group above, nothing extra here.
   }
   if (!companyName && groups[0]) {
-    // No active company at all — surface a Danger Zone item that the page
+    // No active company at all, surface a Danger Zone item that the page
     // will gracefully no-op against.
     groups[0].items.push({
       href: "/recruiter/settings/danger",

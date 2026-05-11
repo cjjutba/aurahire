@@ -10,7 +10,7 @@ interface AiShimmerProps {
 
 /**
  * AuraHire's signature "AI is processing" affordance.
- * Always paired with a caption — silent shimmer is forbidden by design.
+ * Always paired with a caption, silent shimmer is forbidden by design.
  *
  * Usage:
  *   <AiShimmer caption="AI is parsing your resume..." height={240} />

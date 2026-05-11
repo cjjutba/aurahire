@@ -28,8 +28,8 @@ interface SettingsRailProps {
  *   - desktop (≥ lg): a 256px left rail rendered as a `<nav>` column
  *   - mobile  (< lg): a horizontal scrolling tab strip across the top
  *
- * Active state matches the existing portal-sidebar item style — primary-soft
- * background + primary text — so a settings sub-route looks visually
+ * Active state matches the existing portal-sidebar item style, primary-soft
+ * background + primary text, so a settings sub-route looks visually
  * continuous with the outer nav.
  *
  * The two rendering modes are mounted simultaneously and visibility-toggled

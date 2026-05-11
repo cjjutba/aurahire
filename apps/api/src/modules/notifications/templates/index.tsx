@@ -54,41 +54,198 @@ const buildPersonalEmail =
     );
   };
 
+// ---------------------------------------------------------------------------
+// Status-aware copy for application_status_changed.
+// Each terminal status carries its own tone: hired celebrates, rejected
+// stays empathetic and forward-looking, interview/offer signal momentum.
+// ---------------------------------------------------------------------------
+// Status strings may arrive lowercased (from the API) or title-cased (from
+// older callers), so normalize before matching to keep the copy consistent.
+function normStatus(status: string): string {
+  return status.toLowerCase();
+}
+
+function statusInAppTitle(status: string, jobTitle: string): string {
+  switch (normStatus(status)) {
+    case "hired":
+      return `Congratulations, you're hired for ${jobTitle}`;
+    case "offer":
+      return `Offer extended for ${jobTitle}`;
+    case "interview":
+      return `You advanced to the Interview stage for ${jobTitle}`;
+    case "screening":
+      return `Your application for ${jobTitle} is under review`;
+    case "rejected":
+      return `Update on your application for ${jobTitle}`;
+    case "withdrawn":
+      return `Application withdrawn for ${jobTitle}`;
+    case "applied":
+      return `Application received for ${jobTitle}`;
+    default:
+      return `Application update for ${jobTitle}`;
+  }
+}
+
+function statusInAppBody(
+  status: string,
+  jobTitle: string,
+  companyName: string,
+): string {
+  switch (normStatus(status)) {
+    case "hired":
+      return `Welcome to ${companyName}. The team is excited to have you on board for ${jobTitle}.`;
+    case "offer":
+      return `${companyName} extended you an offer for ${jobTitle}. Open it to review the details.`;
+    case "interview":
+      return `Your application for ${jobTitle} at ${companyName} advanced to the Interview stage.`;
+    case "screening":
+      return `Your application for ${jobTitle} at ${companyName} is under review.`;
+    case "rejected":
+      return `${companyName} has decided to move forward with other candidates for ${jobTitle}. Thank you for the effort you put in.`;
+    case "withdrawn":
+      return `Your application for ${jobTitle} at ${companyName} has been withdrawn.`;
+    case "applied":
+      return `Your application for ${jobTitle} at ${companyName} has been received.`;
+    default:
+      return `Your application for ${jobTitle} at ${companyName} has been updated.`;
+  }
+}
+
+function statusEmailHeadline(status: string, jobTitle: string): string {
+  switch (normStatus(status)) {
+    case "hired":
+      return `Congratulations! You're hired for ${jobTitle}`;
+    case "offer":
+      return `Great news, you have an offer for ${jobTitle}`;
+    case "interview":
+      return `You're moving to the Interview stage for ${jobTitle}`;
+    case "screening":
+      return `Your ${jobTitle} application is under review`;
+    case "rejected":
+      return `Update on your ${jobTitle} application`;
+    case "withdrawn":
+      return `Application withdrawn for ${jobTitle}`;
+    case "applied":
+      return `Application received for ${jobTitle}`;
+    default:
+      return `Update on your ${jobTitle} application`;
+  }
+}
+
+function statusEmailBody(
+  status: string,
+  jobTitle: string,
+  companyName: string,
+): string {
+  switch (normStatus(status)) {
+    case "hired":
+      return `Welcome to ${companyName}. You have been hired for ${jobTitle}. Your recruiter will reach out shortly with onboarding details. The team is thrilled to have you join.`;
+    case "offer":
+      return `${companyName} has extended you an offer for ${jobTitle}. Take a moment to review the full details and respond when you are ready.`;
+    case "interview":
+      return `Exciting update. Your application for ${jobTitle} at ${companyName} has advanced to the Interview stage. Watch for scheduling details to arrive soon.`;
+    case "screening":
+      return `Your application for ${jobTitle} at ${companyName} is now under review. The hiring team will be in touch with next steps shortly.`;
+    case "rejected":
+      return `Thank you for your interest in ${jobTitle} at ${companyName}. The team has decided to move forward with other candidates this time. We genuinely appreciate the time you invested and wish you the very best in your search.`;
+    case "withdrawn":
+      return `Your application for ${jobTitle} at ${companyName} has been withdrawn. If this was not intentional, you are welcome to apply again.`;
+    case "applied":
+      return `Your application for ${jobTitle} at ${companyName} has been received. Sit tight while the hiring team reviews it.`;
+    default:
+      return `Your application for ${jobTitle} at ${companyName} has been updated.`;
+  }
+}
+
+function statusEmailCta(status: string): string | null {
+  switch (normStatus(status)) {
+    case "hired":
+      return "View your offer details";
+    case "offer":
+      return "Review your offer";
+    case "interview":
+      return "View application";
+    case "rejected":
+      return "View application";
+    default:
+      return "View application";
+  }
+}
+
+function statusEmailSubject(status: string, jobTitle: string): string {
+  switch (normStatus(status)) {
+    case "hired":
+      return `Congratulations, you're hired! ${jobTitle}`;
+    case "offer":
+      return `You received an offer for ${jobTitle}`;
+    case "interview":
+      return `Good news about your ${jobTitle} application`;
+    case "rejected":
+      return `Update on your ${jobTitle} application`;
+    case "withdrawn":
+      return `Application withdrawn: ${jobTitle}`;
+    case "screening":
+      return `Your ${jobTitle} application is under review`;
+    case "applied":
+      return `We received your application for ${jobTitle}`;
+    default:
+      return `Application update: ${jobTitle}`;
+  }
+}
+
 export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   application_status_changed: {
     buildTitle: (md) =>
-      `Application moved to ${m(md, "newStatus", "next stage")}`,
+      statusInAppTitle(
+        m(md, "newStatus", "next stage"),
+        m(md, "jobTitle", "your role"),
+      ),
     buildBody: (md) =>
-      `${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")} — your application is now in ${m(md, "newStatus", "the next stage")}.`,
+      statusInAppBody(
+        m(md, "newStatus", "next stage"),
+        m(md, "jobTitle", "your role"),
+        m(md, "companyName", "the company"),
+      ),
     buildLink: (_role, md) =>
       `/candidate/applications/${m(md, "applicationId", "")}`,
     emailSubject: (md) =>
-      `Application update: ${m(md, "jobTitle", "your role")}`,
+      statusEmailSubject(
+        m(md, "newStatus", "next stage"),
+        m(md, "jobTitle", "your role"),
+      ),
     EmailComponent: buildPersonalEmail(
-      (md) => `Application moved to ${m(md, "newStatus", "next stage")}`,
       (md) =>
-        `Your application for ${m(md, "jobTitle", "this role")} at ${m(md, "companyName", "the company")} is now in ${m(md, "newStatus", "a new stage")}.`,
-      () => "View application",
+        statusEmailHeadline(
+          m(md, "newStatus", "next stage"),
+          m(md, "jobTitle", "your role"),
+        ),
+      (md) =>
+        statusEmailBody(
+          m(md, "newStatus", "next stage"),
+          m(md, "jobTitle", "your role"),
+          m(md, "companyName", "the company"),
+        ),
+      (md) => statusEmailCta(m(md, "newStatus", "next stage")),
       (_role, md) => `/candidate/applications/${m(md, "applicationId", "")}`,
     ),
     iconName: "Briefcase",
   },
   interview_scheduled: {
     buildTitle: (md) =>
-      `Interview scheduled — ${m(md, "jobTitle", "your role")}`,
+      `Interview scheduled for ${m(md, "jobTitle", "your role")}`,
     buildBody: (md) =>
-      `Scheduled for ${m(md, "startTime", "TBD")} (${m(md, "format", "video")}).`,
+      `Set for ${m(md, "startTime", "TBD")} (${m(md, "format", "video")}). Block off the time and prepare to bring your best.`,
     buildLink: (role, md) =>
       role === "recruiter"
         ? `/recruiter/interviews/${m(md, "interviewId", "")}`
         : `/candidate/interviews/${m(md, "interviewId", "")}`,
     emailSubject: (md) =>
-      `Interview scheduled: ${m(md, "jobTitle", "your role")}`,
+      `Your interview is scheduled: ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
-      (md) => `Interview scheduled`,
+      (md) => `Your interview is scheduled for ${m(md, "jobTitle", "your role")}`,
       (md) =>
-        `${m(md, "jobTitle", "your role")} interview on ${m(md, "startTime", "TBD")} (${m(md, "format", "video")}).`,
-      () => "View interview",
+        `You are set to meet on ${m(md, "startTime", "TBD")} (${m(md, "format", "video")}). Take a moment to prepare and arrive a few minutes early.`,
+      () => "View interview details",
       (role, md) =>
         role === "recruiter"
           ? `/recruiter/interviews/${m(md, "interviewId", "")}`
@@ -97,17 +254,17 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
     iconName: "Calendar",
   },
   interview_reminder_24h: {
-    buildTitle: () => `Interview tomorrow`,
+    buildTitle: () => `Your interview is tomorrow`,
     buildBody: (md) =>
-      `${m(md, "jobTitle", "your role")} at ${m(md, "startTime", "tomorrow")}.`,
+      `${m(md, "jobTitle", "your role")} at ${m(md, "startTime", "tomorrow")}. You've got this.`,
     buildLink: (_role, md) =>
       `/candidate/interviews/${m(md, "interviewId", "")}`,
     emailSubject: () => `Reminder: your interview is tomorrow`,
     EmailComponent: buildPersonalEmail(
       () => `Your interview is tomorrow`,
       (md) =>
-        `${m(md, "jobTitle", "your role")} on ${m(md, "startTime", "tomorrow")}.`,
-      () => "View details",
+        `${m(md, "jobTitle", "your role")} on ${m(md, "startTime", "tomorrow")}. Take a deep breath and review your notes. You've got this.`,
+      () => "View interview details",
       (_role, md) => `/candidate/interviews/${m(md, "interviewId", "")}`,
     ),
     iconName: "Clock",
@@ -115,76 +272,78 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   interview_cancelled: {
     buildTitle: () => `Interview cancelled`,
     buildBody: (md) =>
-      `Your interview for ${m(md, "jobTitle", "this role")} was cancelled.`,
+      `Your interview for ${m(md, "jobTitle", "this role")} was cancelled. The hiring team will reach out with next steps.`,
     buildLink: (_role, md) =>
       `/candidate/applications/${m(md, "applicationId", "")}`,
     emailSubject: (md) =>
       `Interview cancelled: ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
-      () => `Interview cancelled`,
+      () => `Your interview was cancelled`,
       (md) =>
-        `Your interview for ${m(md, "jobTitle", "this role")} at ${m(md, "companyName", "the company")} was cancelled.`,
+        `Your interview for ${m(md, "jobTitle", "this role")} at ${m(md, "companyName", "the company")} has been cancelled. Hang tight, the hiring team will reach out with next steps soon.`,
       () => "View application",
       (_role, md) => `/candidate/applications/${m(md, "applicationId", "")}`,
     ),
     iconName: "X",
   },
   offer_received: {
-    buildTitle: () => `Offer received`,
+    buildTitle: () => `You received an offer`,
     buildBody: (md) =>
-      `${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")} — review and respond by ${m(md, "expiresAt", "the deadline")}.`,
+      `${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")}. Review and respond by ${m(md, "expiresAt", "the deadline")}.`,
     buildLink: (_role, md) =>
       `/candidate/applications/${m(md, "applicationId", "")}`,
-    emailSubject: () => `You received an offer`,
+    emailSubject: () => `Great news, you have an offer`,
     EmailComponent: buildPersonalEmail(
-      (md) => `Offer received: ${m(md, "jobTitle", "your role")}`,
       (md) =>
-        `${m(md, "companyName", "The company")} sent you an offer. Respond by ${m(md, "expiresAt", "the deadline")}.`,
-      () => "Review offer",
+        `You have an offer for ${m(md, "jobTitle", "your role")}`,
+      (md) =>
+        `${m(md, "companyName", "The company")} extended you an offer. Take your time to review the details and respond by ${m(md, "expiresAt", "the deadline")}.`,
+      () => "Review your offer",
       (_role, md) => `/candidate/applications/${m(md, "applicationId", "")}`,
     ),
     iconName: "Check",
   },
   offer_expiring_soon: {
-    buildTitle: () => `Offer expires within 24 hours`,
+    buildTitle: () => `Your offer expires within 24 hours`,
     buildBody: (md) =>
-      `${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")} expires ${m(md, "expiresAt", "soon")}.`,
+      `${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")} expires ${m(md, "expiresAt", "soon")}. Take a moment to respond.`,
     buildLink: (_role, md) =>
       `/candidate/applications/${m(md, "applicationId", "")}`,
-    emailSubject: () => `Your offer expires within 24 hours`,
+    emailSubject: () => `Reminder: your offer expires within 24 hours`,
     EmailComponent: buildPersonalEmail(
       () => `Your offer expires within 24 hours`,
       (md) =>
-        `${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")}.`,
-      () => "Review offer",
+        `Your offer for ${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")} expires soon. Take a moment to respond before time runs out.`,
+      () => "Review your offer",
       (_role, md) => `/candidate/applications/${m(md, "applicationId", "")}`,
     ),
     iconName: "Clock",
   },
   new_application_received: {
     buildTitle: (md) =>
-      `New application: ${m(md, "candidateName", "a candidate")}`,
+      `New application from ${m(md, "candidateName", "a candidate")}`,
     buildBody: (md) => {
       const score = md.scoreValue;
       const band = md.matchBand;
       const role = m(md, "jobTitle", "your role");
-      // Score is computed asynchronously after apply; render "pending" when
-      // the worker hasn't filled it in yet rather than leaking an em-dash.
       if (score == null || band == null) {
-        return `Applied to ${role} — match score pending.`;
+        return `Applied to ${role}. Match score is being computed.`;
       }
-      return `Applied to ${role} — match score ${score} (${band}).`;
+      return `Applied to ${role}. Match score ${score} (${band}).`;
     },
     buildLink: (_role, md) =>
       `/recruiter/jobs/${m(md, "jobId", "")}/applications/${m(md, "applicationId", "")}`,
-    emailSubject: (md) => `New application — ${m(md, "jobTitle", "your role")}`,
+    emailSubject: (md) =>
+      `New application for ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
       (md) => `New application from ${m(md, "candidateName", "a candidate")}`,
       (md) => {
         const score = md.scoreValue;
         const role = m(md, "jobTitle", "your role");
-        if (score == null) return `Applied to ${role}. Match score pending.`;
-        return `Applied to ${role}. Match score ${score}.`;
+        if (score == null) {
+          return `A candidate just applied to ${role}. Their match score is being computed.`;
+        }
+        return `A candidate just applied to ${role} with a match score of ${score}. Take a look when you have a moment.`;
       },
       () => "Review application",
       (_role, md) =>
@@ -194,15 +353,17 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   },
   candidate_withdrew: {
     buildTitle: (md) => `${m(md, "candidateName", "A candidate")} withdrew`,
-    buildBody: (md) => `Withdrew from ${m(md, "jobTitle", "your role")}.`,
+    buildBody: (md) =>
+      `Withdrew from ${m(md, "jobTitle", "your role")}. The pipeline is up to date.`,
     buildLink: (_role, md) =>
       `/recruiter/jobs/${m(md, "jobId", "")}/applications/${m(md, "applicationId", "")}`,
     emailSubject: (md) =>
-      `Candidate withdrew — ${m(md, "jobTitle", "your role")}`,
+      `Candidate withdrew from ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
-      (md) => `${m(md, "candidateName", "A candidate")} withdrew`,
       (md) =>
-        `Withdrew their application for ${m(md, "jobTitle", "your role")}.`,
+        `${m(md, "candidateName", "A candidate")} withdrew their application`,
+      (md) =>
+        `${m(md, "candidateName", "A candidate")} has withdrawn from ${m(md, "jobTitle", "your role")}. Your pipeline has been updated.`,
       () => "View application",
       (_role, md) =>
         `/recruiter/jobs/${m(md, "jobId", "")}/applications/${m(md, "applicationId", "")}`,
@@ -210,16 +371,16 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
     iconName: "UserMinus",
   },
   interview_feedback_shared: {
-    buildTitle: () => `Interview feedback available`,
+    buildTitle: () => `Interview feedback is available`,
     buildBody: (md) =>
-      `Your recruiter shared their feedback summary for the ${m(md, "jobTitle", "interview")} interview.`,
+      `Your recruiter shared a feedback summary from your ${m(md, "jobTitle", "recent")} interview.`,
     buildLink: (_role, md) =>
       `/candidate/interviews/${m(md, "interviewId", "")}`,
-    emailSubject: () => `Interview feedback shared with you`,
+    emailSubject: () => `Your interview feedback is ready`,
     EmailComponent: buildPersonalEmail(
-      () => `Interview feedback available`,
+      () => `Your interview feedback is ready`,
       (md) =>
-        `Your recruiter shared feedback from your ${m(md, "jobTitle", "recent")} interview. View it in your candidate portal.`,
+        `Your recruiter shared feedback from your ${m(md, "jobTitle", "recent")} interview. Open it in the candidate portal whenever you are ready.`,
       () => "View feedback",
       (_role, md) => `/candidate/interviews/${m(md, "interviewId", "")}`,
     ),
@@ -227,36 +388,35 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   },
   interview_rescheduled: {
     buildTitle: (md) =>
-      `Interview rescheduled — ${m(md, "jobTitle", "your role")}`,
+      `Interview rescheduled for ${m(md, "jobTitle", "your role")}`,
     buildBody: (md) =>
-      `Your interview has been rescheduled to ${m(md, "newStartTime", "a new time")}.`,
+      `Your interview has been moved to ${m(md, "newStartTime", "a new time")}.`,
     buildLink: (_role, md) =>
       `/candidate/interviews/${m(md, "interviewId", "")}`,
     emailSubject: (md) =>
       `Interview rescheduled: ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
-      (md) => `Interview rescheduled`,
+      () => `Your interview was rescheduled`,
       (md) =>
-        `Your ${m(md, "jobTitle", "upcoming")} interview has been rescheduled to ${m(md, "newStartTime", "a new time")}.`,
-      () => "View interview",
+        `Your ${m(md, "jobTitle", "upcoming")} interview has been moved to ${m(md, "newStartTime", "a new time")}. Update your calendar and we will see you then.`,
+      () => "View interview details",
       (_role, md) => `/candidate/interviews/${m(md, "interviewId", "")}`,
     ),
     iconName: "CalendarClock",
   },
   interview_completed: {
     buildTitle: (md) =>
-      `Interview completed — ${m(md, "jobTitle", "your role")}`,
+      `Interview completed for ${m(md, "jobTitle", "your role")}`,
     buildBody: (md) =>
-      `Your interview for ${m(md, "jobTitle", "this role")} at ${m(md, "companyName", "the company")} has been completed.`,
+      `Your interview for ${m(md, "jobTitle", "this role")} at ${m(md, "companyName", "the company")} is in the books. The hiring team will follow up soon.`,
     buildLink: (_role, md) =>
       `/candidate/interviews/${m(md, "interviewId", "")}`,
-    // In-app only — email not sent for this event.
     emailSubject: (md) =>
       `Interview completed: ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
-      (md) => `Interview completed`,
+      () => `Your interview is in the books`,
       (md) =>
-        `Your interview for ${m(md, "jobTitle", "this role")} has been marked as completed.`,
+        `Your interview for ${m(md, "jobTitle", "this role")} has been marked complete. Nice work showing up. The hiring team will follow up with next steps.`,
       () => "View interview",
       (_role, md) => `/candidate/interviews/${m(md, "interviewId", "")}`,
     ),
@@ -264,18 +424,17 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   },
   interview_record_feedback: {
     buildTitle: (md) =>
-      `Record feedback — ${m(md, "candidateName", "candidate")}`,
+      `Record feedback for ${m(md, "candidateName", "candidate")}`,
     buildBody: (md) =>
-      `Submit your feedback for ${m(md, "candidateName", "the candidate")} (${m(md, "jobTitle", "this role")}).`,
+      `Submit your feedback for ${m(md, "candidateName", "the candidate")} on ${m(md, "jobTitle", "this role")}.`,
     buildLink: (_role, md) =>
       `/recruiter/interviews/${m(md, "interviewId", "")}`,
-    // In-app only — email not sent for this event.
     emailSubject: (md) =>
-      `Feedback required: ${m(md, "candidateName", "candidate")} — ${m(md, "jobTitle", "this role")}`,
+      `Feedback required for ${m(md, "candidateName", "candidate")} on ${m(md, "jobTitle", "this role")}`,
     EmailComponent: buildPersonalEmail(
-      (md) => `Record interview feedback`,
+      () => `Record interview feedback`,
       (md) =>
-        `Please submit feedback for ${m(md, "candidateName", "the candidate")} — ${m(md, "jobTitle", "this role")}.`,
+        `Please submit feedback for ${m(md, "candidateName", "the candidate")} on ${m(md, "jobTitle", "this role")} so the team can move quickly.`,
       () => "Submit feedback",
       (_role, md) => `/recruiter/interviews/${m(md, "interviewId", "")}`,
     ),
@@ -283,14 +442,15 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   },
   application_withdrawn: {
     buildTitle: (md) => `${m(md, "candidateName", "A candidate")} withdrew`,
-    buildBody: (md) => `Withdrew from ${m(md, "jobTitle", "your role")}.`,
+    buildBody: (md) =>
+      `Withdrew from ${m(md, "jobTitle", "your role")}. The pipeline is up to date.`,
     buildLink: (_role, md) =>
       `/recruiter/applications/${m(md, "applicationId", "")}`,
-    // In-app only — email not sent for this event.
     emailSubject: (md) =>
-      `${m(md, "candidateName", "A candidate")} withdrew — ${m(md, "jobTitle", "your role")}`,
+      `${m(md, "candidateName", "A candidate")} withdrew from ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
-      (md) => `${m(md, "candidateName", "A candidate")} withdrew`,
+      (md) =>
+        `${m(md, "candidateName", "A candidate")} withdrew their application`,
       (md) =>
         `${m(md, "candidateName", "A candidate")} withdrew their application for ${m(md, "jobTitle", "your role")}.`,
       () => "View application",
@@ -299,16 +459,16 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
     iconName: "UserMinus",
   },
   interview_feedback_due: {
-    buildTitle: () => `Interview feedback due`,
+    buildTitle: () => `Interview feedback is due`,
     buildBody: (md) =>
       `${m(md, "candidateName", "the candidate")} for ${m(md, "jobTitle", "this role")}.`,
     buildLink: (_role, md) =>
       `/recruiter/interviews/${m(md, "interviewId", "")}`,
     emailSubject: () => `Interview feedback overdue`,
     EmailComponent: buildPersonalEmail(
-      () => `Interview feedback overdue`,
+      () => `Interview feedback is overdue`,
       (md) =>
-        `Please file feedback for ${m(md, "candidateName", "the candidate")} (${m(md, "jobTitle", "this role")}).`,
+        `Please file feedback for ${m(md, "candidateName", "the candidate")} on ${m(md, "jobTitle", "this role")}. The candidate is waiting on a decision.`,
       () => "Submit feedback",
       (_role, md) => `/recruiter/interviews/${m(md, "interviewId", "")}`,
     ),
@@ -317,13 +477,16 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   offer_accepted: {
     buildTitle: (md) =>
       `${m(md, "candidateName", "Candidate")} accepted your offer`,
-    buildBody: (md) => `${m(md, "jobTitle", "your role")}.`,
+    buildBody: (md) =>
+      `${m(md, "jobTitle", "your role")} is filled. Congratulations on the hire.`,
     buildLink: (_role, md) => `/recruiter/jobs/${m(md, "jobId", "")}`,
     emailSubject: (md) =>
       `${m(md, "candidateName", "Candidate")} accepted your offer`,
     EmailComponent: buildPersonalEmail(
-      (md) => `${m(md, "candidateName", "Candidate")} accepted your offer`,
-      (md) => `Offer for ${m(md, "jobTitle", "your role")} accepted.`,
+      (md) =>
+        `${m(md, "candidateName", "Candidate")} accepted your offer`,
+      (md) =>
+        `Your offer for ${m(md, "jobTitle", "your role")} was accepted. Congratulations on closing the role.`,
       () => "View job",
       (_role, md) => `/recruiter/jobs/${m(md, "jobId", "")}`,
     ),
@@ -332,13 +495,16 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   offer_declined: {
     buildTitle: (md) =>
       `${m(md, "candidateName", "Candidate")} declined your offer`,
-    buildBody: (md) => `${m(md, "jobTitle", "your role")}.`,
+    buildBody: (md) =>
+      `${m(md, "jobTitle", "your role")}. Time to reach out to your next-best candidate.`,
     buildLink: (_role, md) => `/recruiter/jobs/${m(md, "jobId", "")}`,
     emailSubject: (md) =>
       `${m(md, "candidateName", "Candidate")} declined your offer`,
     EmailComponent: buildPersonalEmail(
-      (md) => `${m(md, "candidateName", "Candidate")} declined your offer`,
-      (md) => `Offer for ${m(md, "jobTitle", "your role")} declined.`,
+      (md) =>
+        `${m(md, "candidateName", "Candidate")} declined your offer`,
+      (md) =>
+        `Your offer for ${m(md, "jobTitle", "your role")} was declined. Consider reaching out to your next strongest candidate.`,
       () => "View job",
       (_role, md) => `/recruiter/jobs/${m(md, "jobId", "")}`,
     ),
@@ -347,16 +513,17 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   offer_expired: {
     buildTitle: () => `Offer expired`,
     buildBody: (md) =>
-      `The pending offer for ${m(md, "jobTitle", "this role")} has expired.`,
+      `The pending offer for ${m(md, "jobTitle", "this role")} expired without a response.`,
     buildLink: (role, md) =>
       role === "recruiter"
         ? `/recruiter/jobs/${m(md, "jobId", "")}`
         : `/candidate/applications/${m(md, "applicationId", "")}`,
-    emailSubject: (md) => `Offer expired — ${m(md, "jobTitle", "your role")}`,
+    emailSubject: (md) =>
+      `Offer expired for ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
-      () => `Offer expired`,
+      () => `An offer expired`,
       (md) =>
-        `The pending offer for ${m(md, "jobTitle", "this role")} has expired without a response.`,
+        `The pending offer for ${m(md, "jobTitle", "this role")} expired without a response. Take a moment to plan the next step.`,
       () => "View details",
       (role, md) =>
         role === "recruiter"
@@ -370,7 +537,8 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
     buildBody: (md) =>
       `Your published job "${m(md, "title", "this role")}" was archived because its application deadline passed.`,
     buildLink: (_role, md) => `/recruiter/jobs/${m(md, "jobId", "")}`,
-    emailSubject: (md) => `Job archived — ${m(md, "title", "your role")}`,
+    emailSubject: (md) =>
+      `Job archived for ${m(md, "title", "your role")}`,
     EmailComponent: buildPersonalEmail(
       (md) => `Job archived: ${m(md, "title", "your job")}`,
       (md) =>
@@ -383,9 +551,10 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   bias_flag_raised: {
     buildTitle: () => `Bias flag on your job description`,
     buildBody: (md) =>
-      `${m(md, "jobTitle", "your JD")} — ${m(md, "flagSummary", "review flagged language")}.`,
+      `${m(md, "jobTitle", "your JD")}: ${m(md, "flagSummary", "review flagged language")}.`,
     buildLink: (_role, md) => `/recruiter/jobs/${m(md, "jobId", "")}/bias`,
-    emailSubject: (md) => `Bias flag — ${m(md, "jobTitle", "your JD")}`,
+    emailSubject: (md) =>
+      `Bias flag on ${m(md, "jobTitle", "your JD")}`,
     EmailComponent: buildPersonalEmail(
       () => `Bias flag on your job description`,
       (md) =>
@@ -398,12 +567,14 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   team_invite_accepted: {
     buildTitle: (md) =>
       `${m(md, "memberName", "A team member")} accepted your invite`,
-    buildBody: (md) => `${m(md, "companyName", "your company")}.`,
+    buildBody: (md) => `Welcome them to ${m(md, "companyName", "your company")}.`,
     buildLink: () => `/recruiter/settings/members`,
     emailSubject: () => `Team invite accepted`,
     EmailComponent: buildPersonalEmail(
-      (md) => `${m(md, "memberName", "A team member")} accepted your invite`,
-      (md) => `Joined ${m(md, "companyName", "your company")}.`,
+      (md) =>
+        `${m(md, "memberName", "A team member")} accepted your invite`,
+      (md) =>
+        `${m(md, "memberName", "A new team member")} just joined ${m(md, "companyName", "your company")}. Drop by the team page to say hello.`,
       () => "View team",
       () => `/recruiter/settings/members`,
     ),
@@ -412,27 +583,29 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   team_invite_declined: {
     buildTitle: (md) =>
       `${m(md, "memberName", "A team member")} declined your invite`,
-    buildBody: (md) => `${m(md, "companyName", "your company")}.`,
+    buildBody: (md) => `For ${m(md, "companyName", "your company")}.`,
     buildLink: () => `/recruiter/settings/members`,
     emailSubject: () => `Team invite declined`,
     EmailComponent: buildPersonalEmail(
-      (md) => `${m(md, "memberName", "A team member")} declined your invite`,
-      (md) => `${m(md, "companyName", "your company")}.`,
+      (md) =>
+        `${m(md, "memberName", "A team member")} declined your invite`,
+      (md) =>
+        `${m(md, "memberName", "Someone")} declined the invite to ${m(md, "companyName", "your company")}. You can resend an invite anytime.`,
       () => "View team",
       () => `/recruiter/settings/members`,
     ),
     iconName: "UserMinus",
   },
   system_bias_flag_raised: {
-    buildTitle: () => `Bias flag system-wide`,
+    buildTitle: () => `System-wide bias flag raised`,
     buildBody: (md) =>
-      `${m(md, "companyName", "A company")} — ${m(md, "jobTitle", "JD")} — ${m(md, "flagSummary", "language review")}.`,
+      `${m(md, "companyName", "A company")}, ${m(md, "jobTitle", "JD")}: ${m(md, "flagSummary", "language review")}.`,
     buildLink: (_role, md) => `/admin/bias-flags/${m(md, "flagId", "")}`,
     emailSubject: () => `System bias flag`,
     EmailComponent: buildPersonalEmail(
       () => `System bias flag`,
       (md) =>
-        `${m(md, "companyName", "A company")} — ${m(md, "jobTitle", "JD")}: ${m(md, "flagSummary", "language review")}.`,
+        `${m(md, "companyName", "A company")}, ${m(md, "jobTitle", "JD")}: ${m(md, "flagSummary", "language review")}.`,
       () => "Review",
       (_role, md) => `/admin/bias-flags/${m(md, "flagId", "")}`,
     ),
@@ -468,13 +641,13 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   account_password_reset: {
     buildTitle: () => `Password reset confirmed`,
     buildBody: () =>
-      `Your password was changed. If this wasn't you, contact support immediately.`,
+      `Your password was changed. If this was not you, contact support immediately.`,
     buildLink: (role) => `/${role}/settings/security`,
     emailSubject: () => `Password reset confirmation`,
     EmailComponent: buildPersonalEmail(
-      () => `Password reset confirmed`,
+      () => `Your password was reset`,
       () =>
-        `Your AuraHire password was changed. If this wasn't you, contact support immediately.`,
+        `Your AuraHire password was just changed. If this was not you, contact support immediately to secure your account.`,
       () => "Review security settings",
       (role) => `/${role}/settings/security`,
     ),
@@ -484,11 +657,12 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
     buildTitle: () => `Email verified`,
     buildBody: () => `Your email address was successfully verified.`,
     buildLink: (role) => `/${role}/settings/security`,
-    emailSubject: () => `Email verified`,
+    emailSubject: () => `Welcome to AuraHire, your email is verified`,
     EmailComponent: buildPersonalEmail(
-      () => `Email verified`,
-      () => `Your AuraHire email address was verified.`,
-      () => "View account",
+      () => `You're all set, welcome to AuraHire`,
+      () =>
+        `Your email address was successfully verified. Your account is ready to go.`,
+      () => "Go to your dashboard",
       (role) => `/${role}/settings/security`,
     ),
     iconName: "ShieldCheck",
@@ -496,13 +670,13 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   account_login_new_device: {
     buildTitle: () => `New device login`,
     buildBody: (md) =>
-      `Login from ${m(md, "browser", "an unknown browser")} (${m(md, "location", "unknown location")}). If this wasn't you, reset your password immediately.`,
+      `Login from ${m(md, "browser", "an unknown browser")} (${m(md, "location", "unknown location")}). If this was not you, reset your password immediately.`,
     buildLink: (role) => `/${role}/settings/security`,
     emailSubject: () => `New login from an unrecognized device`,
     EmailComponent: buildPersonalEmail(
-      () => `New device login`,
+      () => `New device login detected`,
       (md) =>
-        `Login from ${m(md, "browser", "an unknown browser")} (${m(md, "location", "unknown location")}). If this wasn't you, reset your password immediately.`,
+        `Login from ${m(md, "browser", "an unknown browser")} in ${m(md, "location", "an unknown location")}. If this was not you, reset your password right away.`,
       () => "Reset password",
       (role) => `/${role}/settings/security`,
     ),

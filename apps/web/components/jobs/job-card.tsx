@@ -5,7 +5,7 @@ import { JobStatusChip } from "./job-status-chip";
 import { MatchBandChip } from "@/components/score/match-band-chip";
 
 /**
- * Map a numeric match score (0–100) to the CSS variables used to render the
+ * Map a numeric match score (0-100) to the CSS variables used to render the
  * progress bar fill + track. Mirrors the band thresholds the dashboard's
  * RecommendedJobCard uses (>= 70 → high, >= 40 → mid, else low).
  */
@@ -152,7 +152,7 @@ export function JobCard({
         )}
         {hasSalary ? (
           <div className="font-mono text-[var(--color-ink)]">
-            {job.salaryMin!.toLocaleString()}–{job.salaryMax!.toLocaleString()}{" "}
+            {job.salaryMin!.toLocaleString()}-{job.salaryMax!.toLocaleString()}{" "}
             <span className="text-[var(--color-muted)]">
               {job.salaryCurrency}
             </span>

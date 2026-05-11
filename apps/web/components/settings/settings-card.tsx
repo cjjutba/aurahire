@@ -9,7 +9,7 @@ interface SettingsCardProps {
    */
   trailing?: ReactNode;
   /**
-   * Optional. Renders the card with the danger color tinting — used by
+   * Optional. Renders the card with the danger color tinting, used by
    * the leave/transfer/delete subsections.
    */
   tone?: "default" | "danger";
@@ -20,7 +20,7 @@ interface SettingsCardProps {
 /**
  * Hairline-bordered card wrapper used by every settings sub-route. Mirrors
  * the existing portal card geometry (rounded-lg, hairline border, white
- * canvas, p-6) — so a settings page reads as a stack of these.
+ * canvas, p-6), so a settings page reads as a stack of these.
  *
  * The `tone="danger"` variant swaps the hairline for the danger color,
  * which we use on the danger-zone subsections.

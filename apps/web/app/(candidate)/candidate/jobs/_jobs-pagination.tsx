@@ -27,7 +27,7 @@ export function CandidateJobsPagination({ meta, searchParams }: Props) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
       <div className="text-xs text-[var(--color-muted)]">
-        Showing <span className="font-mono">{start}</span>–
+        Showing <span className="font-mono">{start}</span>-
         <span className="font-mono">{end}</span> of{" "}
         <span className="font-mono">{meta.total}</span>
       </div>

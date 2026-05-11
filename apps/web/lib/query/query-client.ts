@@ -8,7 +8,7 @@ import {
  *   - the client-side QueryProvider (one singleton per browser session)
  *   - Server Components that prefetch + dehydrate (a fresh instance per request)
  *
- * `staleTime: 60_000` matches the typical backend hot-tier TTL — the client
+ * `staleTime: 60_000` matches the typical backend hot-tier TTL, the client
  * trusts hydrated data for one minute before refetching in the background.
  */
 export function makeQueryClient(): QueryClient {

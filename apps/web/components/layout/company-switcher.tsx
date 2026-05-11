@@ -122,7 +122,7 @@ export function CompanySwitcher() {
             </div>
           ) : memberships.length === 0 ? (
             <div className="px-2 py-2 text-xs text-[var(--color-muted)]">
-              No companies yet — create one or accept an invitation below.
+              No companies yet, create one or accept an invitation below.
             </div>
           ) : (
             memberships.map((m) => {

@@ -188,7 +188,7 @@ export function ApplicationDetailClient({
   // Derive upcoming interview (scheduled or rescheduled, earliest first).
   // Hidden once the application has reached a terminal state (no further
   // interviews will happen) or once the interview's full duration has elapsed
-  // — without this, a stale "scheduled" row keeps the banner alive even after
+  //, without this, a stale "scheduled" row keeps the banner alive even after
   // the meeting time has passed.
   const sorted = sortInterviewsByPriority(interviews);
   const TERMINAL_APP_STATUSES = new Set(["hired", "rejected", "withdrawn"]);
@@ -253,7 +253,7 @@ export function ApplicationDetailClient({
             <p className="mt-1 truncate text-sm text-[var(--color-body)]">
               at{" "}
               <strong className="text-[var(--color-ink)]">
-                {app.job?.company.name ?? "—"}
+                {app.job?.company.name ?? "-"}
               </strong>
               {app.job?.id && (
                 <>
@@ -342,7 +342,7 @@ export function ApplicationDetailClient({
       );
     }
 
-    // scoreStatus === "completed" but matchScore is missing — unexpected.
+    // scoreStatus === "completed" but matchScore is missing, unexpected.
     return (
       <div className="mx-auto max-w-[1280px] space-y-8">
         {header}

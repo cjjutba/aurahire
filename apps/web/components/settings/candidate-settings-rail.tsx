@@ -5,7 +5,7 @@ import { Bell, Lock, ShieldCheck, User } from "lucide-react";
 import { SettingsRail, type SettingsRailGroup } from "./settings-rail";
 
 /**
- * Candidate-side rail. Candidates have no multi-tenancy — only the
+ * Candidate-side rail. Candidates have no multi-tenancy, only the
  * Personal group ships. The same SettingsRail primitive is reused so the
  * geometry matches the recruiter's rail to the pixel.
  */

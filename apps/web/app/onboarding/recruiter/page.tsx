@@ -5,7 +5,7 @@ import { getCurrentSession } from "@/lib/auth/session";
 import { fetchMyMemberships } from "@/lib/memberships-server";
 import { RECRUITER_ONBOARDING_STEPS } from "./_steps";
 
-export const metadata = { title: "About You — Onboarding" };
+export const metadata = { title: "About You, Onboarding" };
 
 export default async function RecruiterAboutPage() {
   const session = await getCurrentSession();
@@ -54,7 +54,7 @@ export default async function RecruiterAboutPage() {
       currentStepId="about"
       saveStatus="idle"
       title="Tell us about yourself"
-      subtitle="Just the basics — we'll tailor the platform to your role."
+      subtitle="Just the basics, we'll tailor the platform to your role."
     >
       <RecruiterAboutForm
         defaults={{

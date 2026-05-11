@@ -80,7 +80,7 @@ export function RedactedResumePreview({ parsedResume, redactedFields }: Props) {
   const redactedSet = new Set(redactedFields);
   const fieldRows = flattenForPreview(parsedResume, redactedSet);
 
-  // Skills + experience + education snapshots — admin only needs to confirm
+  // Skills + experience + education snapshots, admin only needs to confirm
   // they were preserved
   const skills =
     (parsedResume.skills as unknown[] | undefined)?.slice(0, 12) ?? [];
@@ -146,7 +146,7 @@ export function RedactedResumePreview({ parsedResume, redactedFields }: Props) {
           <p className="mt-1 text-[var(--color-ink)]">
             {skills.length > 0
               ? `${skills.length} skill${skills.length === 1 ? "" : "s"}`
-              : "—"}
+              : "-"}
           </p>
         </div>
         <div>

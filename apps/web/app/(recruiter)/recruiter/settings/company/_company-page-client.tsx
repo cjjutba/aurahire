@@ -11,7 +11,7 @@ import { SettingsSectionHeader } from "@/components/settings/settings-section-he
 /**
  * Client wrapper that gates the form on owner/admin. The rail already
  * hides the link for plain recruiters, but a deep link past the URL bar
- * shouldn't reveal the form — we render an explicit "no permission"
+ * shouldn't reveal the form, we render an explicit "no permission"
  * state so the URL is always honest.
  */
 export function CompanyPageClient() {

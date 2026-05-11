@@ -89,7 +89,7 @@ interface NotificationsFormProps {
 
 /**
  * Per-event toggle list. Persistence is local-only until the backend
- * notification_preferences table lands — the banner inside the page tells
+ * notification_preferences table lands, the banner inside the page tells
  * the user that. We still persist to localStorage so a session feels
  * stable; the storage key includes the audience so candidate vs recruiter
  * preferences don't collide on a shared device.
@@ -112,7 +112,7 @@ export function NotificationsForm({ audience }: NotificationsFormProps) {
         setPrefs((prev) => ({ ...prev, ...parsed }));
       }
     } catch {
-      // localStorage may be disabled (Safari private mode) — ignore.
+      // localStorage may be disabled (Safari private mode), ignore.
     }
     setHydrated(true);
   }, [storageKey]);

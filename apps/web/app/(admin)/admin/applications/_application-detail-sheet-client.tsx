@@ -354,7 +354,7 @@ export function ApplicationDetailSheetClient({
               </>
             ) : (
               <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-5 text-sm text-[var(--color-body)]">
-                No match score persisted for this application — scoring may have
+                No match score persisted for this application, scoring may have
                 failed during apply.
               </div>
             )}

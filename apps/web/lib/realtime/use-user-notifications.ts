@@ -37,9 +37,9 @@ interface UnreadCountResultRelaxed {
 }
 
 export interface UseUserNotificationsResult {
-  /** Inbox tab rows — auto-prepended on `notification.created`. */
+  /** Inbox tab rows, auto-prepended on `notification.created`. */
   inbox: NotificationItem[];
-  /** Archive tab rows — empty until `fetchArchive()` is called. */
+  /** Archive tab rows, empty until `fetchArchive()` is called. */
   archive: NotificationItem[];
   /** Live unread badge count. */
   unreadCount: number;
@@ -195,7 +195,7 @@ export function useUserNotifications(
       // Map the realtime payload onto a NotificationItem-shaped row so the
       // popover can render it without re-fetching. We deliberately fill
       // unknown fields (eventType narrowed off `kind`, scope, body, etc.)
-      // with safe defaults — the next inbox refetch overwrites this.
+      // with safe defaults, the next inbox refetch overwrites this.
       const optimistic: NotificationItem = {
         id: payload.id,
         eventType: payload.kind as NotificationItem["eventType"],

@@ -192,7 +192,7 @@ export function HowItWorksView({ variant }: HowItWorksViewProps) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search the walkthrough — try 'scoring', 'redaction', 'audit'…"
+            placeholder="Search the walkthrough, try 'scoring', 'redaction', 'audit'…"
             aria-label="Search how it works"
             className="h-11 w-full rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] pl-11 pr-24 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
           />
@@ -225,7 +225,7 @@ export function HowItWorksView({ variant }: HowItWorksViewProps) {
         </div>
       </header>
 
-      {/* Journey strip — distinguishing visual element vs. /help */}
+      {/* Journey strip, distinguishing visual element vs. /help */}
       {!query && (
         <JourneyStrip
           title={content.journey.title}

@@ -147,7 +147,7 @@ export function RescheduleModalClient({
   );
 
   // Native datetime-local min, recomputed when the modal opens so the picker
-  // disables past times. Anchor is "now" — a 60s server-side grace handles
+  // disables past times. Anchor is "now", a 60s server-side grace handles
   // submit latency.
   const minScheduledAt = useMemo(() => {
     if (!open) return undefined;
@@ -260,7 +260,7 @@ export function RescheduleModalClient({
           );
         }
       } catch {
-        // Silently swallow — conflict check is advisory only.
+        // Silently swallow, conflict check is advisory only.
       }
     }, 500);
     return () => {
@@ -439,7 +439,7 @@ export function RescheduleModalClient({
                 </p>
               ) : (
                 <p className="mt-1 text-[11px] text-[var(--color-muted)]">
-                  15–240 minutes (default 60).
+                  15-240 minutes (default 60).
                 </p>
               )}
             </div>
@@ -450,7 +450,7 @@ export function RescheduleModalClient({
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-score-mid-soft)] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-score-mid)]">
                 <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                Scheduling conflict detected — you may still proceed
+                Scheduling conflict detected, you may still proceed
               </span>
             </div>
           )}
@@ -466,7 +466,7 @@ export function RescheduleModalClient({
                 <Input
                   value={venueName}
                   onChange={(e) => setVenueName(e.target.value)}
-                  placeholder="e.g. AuraHire HQ — Floor 3"
+                  placeholder="e.g. AuraHire HQ, Floor 3"
                 />
               </div>
               <div>

@@ -182,7 +182,7 @@ function FirstRunWelcomeCard({
             {greeting}
           </h2>
           <p className="mt-2 max-w-[640px] text-sm text-[var(--color-body)]">
-            You&apos;re all set. Browse open roles to start applying — AuraHire
+            You&apos;re all set. Browse open roles to start applying, AuraHire
             will score every job against your resume and explain how strongly
             you match each one.
           </p>
@@ -237,7 +237,7 @@ function KpiTile({
           loading ? "text-[var(--color-muted)]" : valueClass
         }`}
       >
-        {loading ? "—" : value}
+        {loading ? "-" : value}
       </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
         {description}
@@ -457,7 +457,7 @@ function EmptyAppsState({ hasResume }: { hasResume: boolean }) {
       </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
         {hasResume
-          ? "Browse open roles to start applying — your applications will appear here."
+          ? "Browse open roles to start applying, your applications will appear here."
           : "Upload your resume, then browse open roles to start applying."}
       </div>
       <Link
@@ -642,7 +642,7 @@ export function CandidateDashboardClient({
         </div>
       </section>
 
-      {/* Section 2: Snapshot — profile score detail + status breakdown + interviews */}
+      {/* Section 2: Snapshot, profile score detail + status breakdown + interviews */}
       <section>
         <div className="mb-3 flex items-center gap-2">
           <BarChart3
@@ -660,7 +660,7 @@ export function CandidateDashboardClient({
         </div>
       </section>
 
-      {/* Section 2.5: Recommended for You — top auto-precomputed previews */}
+      {/* Section 2.5: Recommended for You, top auto-precomputed previews */}
       <RecommendedForYouSection
         previews={(matchPreviews.data?.data ?? []) as MatchPreviewListItem[]}
         appliedJobIds={
@@ -714,7 +714,7 @@ export function CandidateDashboardClient({
 }
 
 // ───────────────────────────────────────────────────────────────────────
-// Recommended for You — top match-score previews surfaced after resume upload
+// Recommended for You, top match-score previews surfaced after resume upload
 // ───────────────────────────────────────────────────────────────────────
 
 /**
@@ -746,7 +746,7 @@ function RecommendedForYouSection({
 }) {
   const qc = useQueryClient();
 
-  // Drop previews for jobs the candidate has already applied to — those
+  // Drop previews for jobs the candidate has already applied to, those
   // belong in Recent Applications, not in "Recommended for you".
   const filtered = previews.filter((p) => !appliedJobIds.has(p.jobId));
   const top = filtered.slice(0, RECOMMENDED_TARGET);
@@ -756,7 +756,7 @@ function RecommendedForYouSection({
   const lastSeenCountRef = useRef(0);
 
   // Reset the stall window whenever a new preview lands. A no-op once we
-  // already hit the target — there's nothing left to wait for. Stall is a
+  // already hit the target, there's nothing left to wait for. Stall is a
   // one-way transition for simplicity; if a late preview arrives after we
   // stalled, it still renders (the `.slice(0, RECOMMENDED_TARGET)` above
   // picks it up) but the caption stays at "some matches couldn't be loaded."
@@ -779,12 +779,12 @@ function RecommendedForYouSection({
   }, [top.length, stalled]);
 
   // Once we've stalled (no new previews in the timeout window), drop the
-  // shimmer slots — the candidate isn't waiting on anything that's coming.
+  // shimmer slots, the candidate isn't waiting on anything that's coming.
   const shimmerCount = stalled
     ? 0
     : Math.max(0, RECOMMENDED_TARGET - top.length);
 
-  // Hide the section entirely for first-run candidates with no resume — the
+  // Hide the section entirely for first-run candidates with no resume, the
   // welcome card already directs them to upload one.
   if (!loading && !hasResume && top.length === 0) return null;
 
@@ -792,7 +792,7 @@ function RecommendedForYouSection({
     void qc.invalidateQueries({ queryKey: queryKeys.matchPreviews.list() });
   };
 
-  // Empty state — precompute either failed or hasn't fired yet. Surfaces a
+  // Empty state, precompute either failed or hasn't fired yet. Surfaces a
   // Retry + Browse all jobs CTA so the candidate is never stuck.
   if (!loading && top.length === 0) {
     return (
@@ -901,7 +901,7 @@ function RecommendedJobCard({ preview: p }: { preview: MatchPreviewListItem }) {
               {job?.title ?? "Job"}
             </h3>
             <p className="truncate text-xs text-[var(--color-muted)]">
-              {company?.name ?? "—"}
+              {company?.name ?? "-"}
             </p>
           </div>
           <span className="font-mono text-base text-[var(--color-ink)]">

@@ -173,7 +173,7 @@ describe("ParsingProgressCard", () => {
       <ParsingProgressCard file={FILE} parseStatus="parsing" parsed={null} />,
     );
     expect(screen.getByTestId("parse-caption")).toHaveTextContent(
-      "Hang tight — this usually takes 5–15 seconds.",
+      "Hang tight, this usually takes 5-15 seconds.",
     );
     rerender(
       <ParsingProgressCard

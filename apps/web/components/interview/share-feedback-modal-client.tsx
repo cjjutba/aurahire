@@ -37,7 +37,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   interviewId: string;
-  /** Sanitized version of private feedback — used as default when no existing summary. */
+  /** Sanitized version of private feedback, used as default when no existing summary. */
   defaultSummary: string;
   /** Existing shared summary (if updating). */
   currentSummary?: string | null;

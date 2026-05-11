@@ -92,7 +92,7 @@ export function LoginForm() {
       };
       const { role, profileCompleted } = profileBody.data;
 
-      // Clear any stale active-company id from a previous session — the
+      // Clear any stale active-company id from a previous session, the
       // portal will rehydrate it from `profile.lastActiveCompanyId` on first load.
       setActiveCompanyId(null);
 

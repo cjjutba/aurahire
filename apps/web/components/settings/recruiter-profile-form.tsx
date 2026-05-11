@@ -25,7 +25,7 @@ interface Props {
 }
 
 /**
- * Recruiter profile form — moved verbatim from the old single-page
+ * Recruiter profile form, moved verbatim from the old single-page
  * settings client. The mutation calls the existing recruiter-profiles
  * controller; we keep that endpoint (rather than extending PATCH
  * /profiles/me) because Phase 5's Hard Rule prohibits new backend work.

@@ -5,7 +5,7 @@ import { OnboardingShell } from "@/components/onboarding/onboarding-shell";
 import { CompanyCreateForm } from "@/components/onboarding/recruiter/company-create-form";
 import { RECRUITER_ONBOARDING_STEPS } from "../_steps";
 
-export const metadata = { title: "Create Company — Onboarding" };
+export const metadata = { title: "Create Company, Onboarding" };
 
 interface PageProps {
   searchParams: Promise<{ from?: string }>;
@@ -41,7 +41,7 @@ export default async function RecruiterCompanyCreatePage({
   const fromSwitcher = params.from === "switcher";
 
   if (fromSwitcher) {
-    // No wizard chrome — the user is already onboarded; this is a one-off
+    // No wizard chrome, the user is already onboarded; this is a one-off
     // "create another company" action. The sidebar usually opens this as a
     // modal; this page is a deep-linkable fallback.
     return (

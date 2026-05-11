@@ -9,7 +9,7 @@ import { InviteErrorCard } from "@/components/invite/invite-error-card";
 import { PublicInviteActions } from "./_actions-client";
 import { SignupRedirectForm } from "./_signup-redirect-form";
 
-export const metadata = { title: "Invitation — AuraHire" };
+export const metadata = { title: "Invitation, AuraHire" };
 
 interface PageProps {
   params: Promise<{ token: string }>;
@@ -42,7 +42,7 @@ export default async function PublicInvitePage({ params }: PageProps) {
 
   const session = await getCurrentSession();
 
-  // Signed-out — set the cookie via server action and bounce to /register.
+  // Signed-out, set the cookie via server action and bounce to /register.
   if (!session) {
     return (
       <InvitePreviewCard preview={preview}>
@@ -51,7 +51,7 @@ export default async function PublicInvitePage({ params }: PageProps) {
     );
   }
 
-  // Signed-in — verify the user is a recruiter (or admin). Candidates can't
+  // Signed-in, verify the user is a recruiter (or admin). Candidates can't
   // join recruiter teams; we surface a clear error rather than silently
   // 403-ing on accept.
   const profile = (await getCurrentProfile()) as {

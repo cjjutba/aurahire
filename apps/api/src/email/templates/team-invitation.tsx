@@ -94,7 +94,7 @@ export function TeamInvitationEmail({
             }}
           >
             AuraHire is a recruitment platform with explainable AI scoring and
-            active bias mitigation — every decision shows its work.
+            active bias mitigation. Every decision shows its work.
           </Text>
 
           <Section style={{ textAlign: "center", margin: "32px 0" }}>
@@ -149,7 +149,7 @@ export function TeamInvitationEmail({
             }}
           >
             This invitation expires on {expiresAt}. If you didn't expect this
-            invitation, you can safely ignore this email — no account will be
+            invitation, you can safely ignore this email. No account will be
             created.
           </Text>
         </Container>

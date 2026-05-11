@@ -60,7 +60,7 @@ interface ApplyMatchSummaryProps {
    */
   selectedResumeMatchesPreview: boolean;
   /**
-   * Called when the user clicks the "switch back" ribbon — the form client
+   * Called when the user clicks the "switch back" ribbon, the form client
    * resets the resume picker to `preview.resumeId`.
    */
   onSwitchToPreviewResume: () => void;
@@ -350,7 +350,7 @@ function ActiveComponentPanel({
           {negatives.length > 0 && (
             <ApplyEvidenceGroup
               tone="gap"
-              heading="Gaps — why this isn't a perfect score"
+              heading="Gaps, why this isn't a perfect score"
               items={negatives}
               componentName={c.name}
             />

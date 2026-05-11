@@ -108,7 +108,7 @@ export function InterviewScheduledEmail({
               {durationMinutes} minutes, {formatLabel}).
             </Text>
 
-            {/* Venue card — shown when structured venue data is available */}
+            {/* Venue card: shown when structured venue data is available */}
             {hasVenueCard && (
               <Section
                 style={{
@@ -212,7 +212,7 @@ export function InterviewScheduledEmail({
             <Text
               style={{ color: "#7c828a", fontSize: "13px", lineHeight: 1.5 }}
             >
-              A calendar invite (.ics) is attached to this email — add it to
+              A calendar invite (.ics) is attached to this email. Add it to
               your calendar to keep the details handy.
             </Text>
           </Section>

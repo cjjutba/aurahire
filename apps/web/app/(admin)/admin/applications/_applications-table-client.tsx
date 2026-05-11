@@ -199,7 +199,7 @@ export function ApplicationsTableClient({ rows, meta }: Props) {
                       <MatchBandChip band={r.band} />
                     ) : (
                       <span className="text-xs text-[var(--color-muted)]">
-                        —
+                        -
                       </span>
                     )}
                   </td>

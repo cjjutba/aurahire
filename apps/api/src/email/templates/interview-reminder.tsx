@@ -91,7 +91,7 @@ export function InterviewReminderEmail({
           <Heading
             style={{ color: "#0a0b0d", fontWeight: 400, fontSize: "24px" }}
           >
-            Reminder — your interview is tomorrow
+            Quick reminder: your interview is tomorrow
           </Heading>
           <Section>
             <Text style={{ color: "#5b616e", lineHeight: 1.5 }}>
@@ -179,7 +179,7 @@ export function InterviewReminderEmail({
               </Text>
             )}
 
-            {/* Reporting instructions — prominent for reminders */}
+            {/* Reporting instructions: prominent for reminders */}
             {reportingInstructions && (
               <Section
                 style={{
@@ -205,7 +205,7 @@ export function InterviewReminderEmail({
               </Section>
             )}
 
-            {/* What to bring — prominent for reminders */}
+            {/* What to bring: prominent for reminders */}
             {whatToBring && (
               <Section
                 style={{

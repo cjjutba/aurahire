@@ -38,7 +38,7 @@ export function ReviewStepClient({
 
   // For sprint scope: review-step edits are ephemeral client state.
   // Backend's PATCH /candidate-profiles/me does NOT currently accept
-  // experience[] / education[] / skills[] arrays — those live on the parsed
+  // experience[] / education[] / skills[] arrays, those live on the parsed
   // resume. Re-uploading the resume is the canonical path to refresh them.
   // We keep the sync interface in place so wiring the endpoint later is a one-line change.
   const syncSection = async (_section: string, _payload: unknown) => {

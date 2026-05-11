@@ -13,7 +13,7 @@ interface ProfileBody {
 
 /**
  * The Security section reuses the recruiter-profiles endpoint solely to
- * resolve the caller's email — Supabase Auth does not expose `getUser()`
+ * resolve the caller's email, Supabase Auth does not expose `getUser()`
  * in a server-component-friendly form without round-tripping the JWT,
  * and the backend's profile DTO is the most direct source.
  */
@@ -65,7 +65,7 @@ export default async function RecruiterSettingsSecurityPage() {
             Two-factor authentication is on the roadmap. The toggle below is
             disabled until the integration ships.
           </p>
-          {/* Toggle placeholder — visually inert, semantically a disabled checkbox */}
+          {/* Toggle placeholder, visually inert, semantically a disabled checkbox */}
           <span
             aria-disabled="true"
             className="relative inline-flex h-6 w-11 cursor-not-allowed items-center rounded-full bg-[var(--color-surface-strong)] opacity-60"

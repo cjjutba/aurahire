@@ -117,7 +117,7 @@ export function CandidateJobDetailView({
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         {/* Main column */}
         <div className="space-y-6">
-          {/* See-my-match preview — surfaces auto-precomputed score
+          {/* See-my-match preview, surfaces auto-precomputed score
               instantly, otherwise lets candidate trigger one click. */}
           <MatchPreviewClient jobId={job.id} hidden={hasApplied} />
 
@@ -156,7 +156,7 @@ export function CandidateJobDetailView({
 
         {/* Right rail */}
         <aside className="space-y-4 lg:sticky lg:top-6 lg:h-fit">
-          {/* Apply card (hidden on mobile — replaced by sticky bottom bar) */}
+          {/* Apply card (hidden on mobile, replaced by sticky bottom bar) */}
           <div className="hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:block">
             {hasApplied ? (
               <>
@@ -203,7 +203,7 @@ export function CandidateJobDetailView({
                   label="Salary"
                   value={
                     <span className="font-mono text-[var(--color-ink)]">
-                      {job.salaryMin!.toLocaleString()}–
+                      {job.salaryMin!.toLocaleString()}-
                       {job.salaryMax!.toLocaleString()}{" "}
                       <span className="text-[var(--color-muted)]">
                         {job.salaryCurrency}

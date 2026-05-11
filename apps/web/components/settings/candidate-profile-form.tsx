@@ -29,7 +29,7 @@ interface Props {
 }
 
 /**
- * Candidate profile form — moved verbatim from the old single-page
+ * Candidate profile form, moved verbatim from the old single-page
  * settings client. Same rationale as the recruiter form: keeps using the
  * existing candidate-profiles controller because Phase 5 must not add
  * new backend endpoints.

@@ -28,7 +28,7 @@ export interface CompanyEnvelope {
 export const COMPANY_ME_QUERY_KEY = ["company-me"] as const;
 
 /**
- * GET /api/v1/companies/me — returns the caller's currently active company.
+ * GET /api/v1/companies/me, returns the caller's currently active company.
  * Re-keyed implicitly by the X-Active-Company-Id header (clientApiFetch
  * forwards it). On `switchCompany()` the QueryClient is cleared so the
  * cache can't leak across tenants.
@@ -43,7 +43,7 @@ export function useCompanyMeQuery(enabled: boolean = true) {
 }
 
 /**
- * PATCH /api/v1/companies/me — owner/admin only. Updates the editable
+ * PATCH /api/v1/companies/me, owner/admin only. Updates the editable
  * fields on the active company; on success we invalidate both the
  * /companies/me query (so the form re-seeds with normalized values) and
  * the memberships list (the sidebar switcher reads `companyName` /
@@ -69,7 +69,7 @@ interface DeleteCompanyResponse {
 }
 
 /**
- * DELETE /api/v1/companies/me — owner only. Body must echo the company
+ * DELETE /api/v1/companies/me, owner only. Body must echo the company
  * name as a typo guard. The caller is responsible for clearing the
  * active-company singleton + redirecting after success.
  */
@@ -88,7 +88,7 @@ interface LeaveCompanyResponse {
 }
 
 /**
- * POST /api/v1/companies/me/leave — any active member. Backend rejects
+ * POST /api/v1/companies/me/leave, any active member. Backend rejects
  * if the caller is the last owner of the company.
  */
 export function useLeaveCompanyMutation() {

@@ -224,7 +224,7 @@ export function FiltersClient({ initialFilters }: Props) {
           aria-label="Minimum score"
           className="w-10 bg-transparent text-center font-mono text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none"
         />
-        <span className="text-[var(--color-muted)]">–</span>
+        <span className="text-[var(--color-muted)]">-</span>
         <input
           type="number"
           min={0}
@@ -248,7 +248,7 @@ export function FiltersClient({ initialFilters }: Props) {
           aria-label="Date from"
           className="bg-transparent text-sm text-[var(--color-ink)] focus:outline-none"
         />
-        <span className="text-[var(--color-muted)]">–</span>
+        <span className="text-[var(--color-muted)]">-</span>
         <input
           type="date"
           value={dateTo}

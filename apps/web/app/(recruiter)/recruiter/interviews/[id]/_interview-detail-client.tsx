@@ -227,7 +227,7 @@ export function RecruiterInterviewDetailClient({ interview: iv }: Props) {
 
   function openIcs() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-    // Auth header can't be passed in new tab — fetch and blob instead.
+    // Auth header can't be passed in new tab, fetch and blob instead.
     (async () => {
       const supabase = createSupabaseBrowserClient();
       const {

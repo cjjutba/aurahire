@@ -4,7 +4,7 @@ import { BrandWordmark } from "@/components/brand/brand-wordmark";
 
 /**
  * Standalone shell for the public invite landing pages. Deliberately does NOT
- * use the recruiter portal layout — these pages must work for signed-out
+ * use the recruiter portal layout, these pages must work for signed-out
  * users (who don't have a profile) and for candidates who happen to click an
  * invite link. Mirrors the visual rhythm of the auth shell.
  */

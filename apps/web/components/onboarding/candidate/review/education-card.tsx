@@ -80,10 +80,10 @@ export function EducationCard({
             <div className="text-xs text-[var(--color-muted)]">
               {[entry.degree, entry.field_of_study]
                 .filter(Boolean)
-                .join(" · ") || "—"}
+                .join(" · ") || "-"}
             </div>
             <div className="font-mono text-xs text-[var(--color-muted)]">
-              {entry.start_year ?? "?"} – {entry.end_year ?? "?"}
+              {entry.start_year ?? "?"}, {entry.end_year ?? "?"}
               {entry.gpa ? ` · GPA ${entry.gpa}` : ""}
             </div>
           </div>

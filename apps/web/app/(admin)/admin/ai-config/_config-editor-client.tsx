@@ -419,7 +419,7 @@ export function ConfigEditorClient({ initial }: Props) {
         <p className="mb-3 flex items-start gap-2 text-xs text-[var(--color-muted)]">
           <Info className="mt-0.5 h-3 w-3 flex-shrink-0" />
           <span>
-            PII redaction is mandatory in this system and cannot be disabled —
+            PII redaction is mandatory in this system and cannot be disabled -
             it&rsquo;s part of the thesis-defining fairness contract. You can
             ADD additional fields to redact but cannot remove the core required
             fields ({REQUIRED_PII_FIELDS.join(", ")}).

@@ -26,7 +26,7 @@ interface ProfileScore {
 interface ProfileScoreCardClientProps {
   /**
    * The candidate's id, used to filter realtime profile-score.updated events.
-   * Pass `null` while the parent is still hydrating session — the hook becomes
+   * Pass `null` while the parent is still hydrating session, the hook becomes
    * a no-op until a real id appears.
    */
   candidateId: string | null;
@@ -57,7 +57,7 @@ export function ProfileScoreCardClient({
 
   useEffect(() => {
     if (score) {
-      // Score has landed — reset the timeout so a future stale-and-recompute
+      // Score has landed, reset the timeout so a future stale-and-recompute
       // cycle gets its own fresh 30s window.
       if (pendingTimedOut) setPendingTimedOut(false);
       return;
@@ -111,7 +111,7 @@ export function ProfileScoreCardClient({
 
   const isRecomputing = recompute.isPending;
 
-  // 1. No score yet — shimmer for the first PROFILE_SCORE_PENDING_TIMEOUT_MS,
+  // 1. No score yet, shimmer for the first PROFILE_SCORE_PENDING_TIMEOUT_MS,
   //    then transition to a calm error card with manual retry. The backend
   //    has already enqueued a recompute on the degraded path; this UI only
   //    surfaces the failure if the recompute also doesn't land in time.
@@ -154,7 +154,7 @@ export function ProfileScoreCardClient({
     );
   }
 
-  // 2. Score exists — render it. If a recompute is in flight, overlay shimmer
+  // 2. Score exists, render it. If a recompute is in flight, overlay shimmer
   //    on top of the existing number so the candidate keeps context while
   //    the new value lands.
   return (

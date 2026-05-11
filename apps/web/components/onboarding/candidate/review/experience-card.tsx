@@ -78,10 +78,10 @@ export function ExperienceCard({
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-semibold text-[var(--color-ink)]">
-              {entry.title || "Untitled"} · {entry.company || "—"}
+              {entry.title || "Untitled"} · {entry.company || "-"}
             </div>
             <div className="font-mono text-xs text-[var(--color-muted)]">
-              {entry.start_date ?? "?"} –{" "}
+              {entry.start_date ?? "?"} -{" "}
               {entry.is_current ? "Present" : (entry.end_date ?? "?")}
             </div>
           </div>

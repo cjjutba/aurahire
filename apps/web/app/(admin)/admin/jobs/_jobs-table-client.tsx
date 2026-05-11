@@ -58,7 +58,7 @@ const INTERACTIVE_SELECTOR =
   'a, button, [role="menuitem"], [role="menu"], [role="dialog"], [data-stop-row-click], input, select, textarea, label';
 
 function formatPosted(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",

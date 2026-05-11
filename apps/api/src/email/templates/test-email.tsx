@@ -22,7 +22,7 @@ export function TestEmail({
   return (
     <Html>
       <Head />
-      <Preview>AuraHire email module — test</Preview>
+      <Preview>AuraHire email module test</Preview>
       <Body
         style={{ fontFamily: "Inter, sans-serif", backgroundColor: "#f7f7f7" }}
       >

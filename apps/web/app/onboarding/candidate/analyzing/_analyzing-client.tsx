@@ -18,7 +18,7 @@ import { useCandidateRealtime } from "@/lib/realtime/use-candidate-realtime";
  * Backend codes that mean "the candidate hasn't completed enough of the
  * wizard yet." Each one maps to a step the candidate can return to in
  * order to fix the problem. We treat these as recoverable user errors
- * rather than transient failures — a "Try again" reload doesn't help
+ * rather than transient failures, a "Try again" reload doesn't help
  * because the validation will keep failing.
  */
 const ONBOARDING_VALIDATION_CODES: Record<
@@ -53,7 +53,7 @@ const ONBOARDING_VALIDATION_CODES: Record<
 type ScoreBand = "strong" | "partial" | "limited";
 
 /**
- * Just-enough shape of the Profile Score for this screen — the full DTO
+ * Just-enough shape of the Profile Score for this screen, the full DTO
  * (improvement suggestions, redacted fields, prompt version, …) is not used
  * here. Capturing only what the UI renders keeps the reducer pure and the
  * tests small.
@@ -100,7 +100,7 @@ export type AnalyzingAction =
   | { type: "REDIRECT" };
 
 /**
- * Reducer. Pure — receives `now` from the dispatcher rather than calling
+ * Reducer. Pure, receives `now` from the dispatcher rather than calling
  * `Date.now()` inside, so the wall-clock cap is testable without faking time.
  */
 export function analyzingReducer(
@@ -145,7 +145,7 @@ export function analyzingReducer(
         return { ...state, previewCount: state.previewCount + 1 };
       }
       // Match-preview events that arrive before the score is ready are
-      // silently dropped — the wall-clock cap will still fire when the
+      // silently dropped, the wall-clock cap will still fire when the
       // score arrives.
       return state;
     case "REDIRECT":
@@ -226,7 +226,7 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
         // The root <AuthTokenProvider> hydrates the module-level access
         // token asynchronously via supabase.auth.getSession() inside its
         // own useEffect. This component's effect can fire BEFORE that
-        // hydration finishes — at which point clientApiFetch sees a null
+        // hydration finishes, at which point clientApiFetch sees a null
         // token and ships the request with no Authorization header,
         // producing a 401. Read the session here directly so the call
         // is always authenticated regardless of provider ordering, and
@@ -258,7 +258,7 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
       } catch (err) {
         // Recognise the wizard-validation 400s and route the candidate
         // back to the failing step with an actionable message rather
-        // than the generic "API 400 — Try again" loop.
+        // than the generic "API 400, Try again" loop.
         if (err instanceof ClientApiError && err.status === 400) {
           const body = err.body as { code?: string; message?: string } | null;
           const code = body?.code;
@@ -312,7 +312,7 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
     return () => clearTimeout(t);
   }, [state]);
 
-  // 4. Degraded path — short pause so the candidate registers the message,
+  // 4. Degraded path, short pause so the candidate registers the message,
   //    then redirect with a query param the dashboard can pick up to nudge
   //    a retry.
   useEffect(() => {
@@ -325,14 +325,14 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
   }, [state, router]);
 
   // 5. Final redirect. Kept as a dedicated effect so the "redirecting" frame
-  //    is briefly visible — the transition feels intentional rather than
+  //    is briefly visible, the transition feels intentional rather than
   //    abrupt.
   useEffect(() => {
     if (state.kind === "redirecting") router.replace("/candidate");
   }, [state, router]);
 
   const onSkipClick = (): void => {
-    // Fire-and-forget telemetry. We deliberately do not await — a failing
+    // Fire-and-forget telemetry. We deliberately do not await, a failing
     // POST must never block the navigation. The endpoint returns 204 on
     // success and is rate-unlimited; backend swallowing the row would
     // simply mean one missing audit log.
@@ -347,7 +347,7 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
         body: { scoreReady, previewsReady },
       },
     ).catch(() => {
-      // Intentional swallow — telemetry must not block UX.
+      // Intentional swallow, telemetry must not block UX.
     });
     dispatch({ type: "REDIRECT" });
     router.replace("/candidate");
@@ -395,7 +395,7 @@ export function AnalyzingClient({ candidateId }: AnalyzingClientProps) {
 
         {state.kind === "profileScoreDegraded" && (
           <p aria-live="polite" className="text-sm text-[var(--color-body)]">
-            We&rsquo;re still working on your score — taking you to your
+            We&rsquo;re still working on your score, taking you to your
             dashboard now.
           </p>
         )}

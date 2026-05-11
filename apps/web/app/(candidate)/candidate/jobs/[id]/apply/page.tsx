@@ -126,7 +126,7 @@ export default async function ApplyPage({ params }: PageProps) {
 
       {/* Two-column body */}
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        {/* Main column — form OR no-resume state */}
+        {/* Main column, form OR no-resume state */}
         <div className="space-y-6">
           {parsedResumes.length === 0 ? (
             <NoResumesCard />
@@ -191,7 +191,7 @@ export default async function ApplyPage({ params }: PageProps) {
               {job.salaryMin !== null && job.salaryMax !== null && (
                 <RecapFact label="Salary">
                   <span className="font-mono text-[var(--color-ink)]">
-                    {job.salaryMin.toLocaleString()}–
+                    {job.salaryMin.toLocaleString()}-
                     {job.salaryMax.toLocaleString()}{" "}
                     <span className="text-[var(--color-muted)]">
                       {job.salaryCurrency}

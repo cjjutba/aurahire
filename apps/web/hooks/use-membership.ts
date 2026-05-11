@@ -31,7 +31,7 @@ export function useMembershipsQuery(enabled: boolean = true) {
 }
 
 /**
- * PATCH /profiles/me { lastActiveCompanyId } — moves the server-side
+ * PATCH /profiles/me { lastActiveCompanyId }, moves the server-side
  * `last_active_company_id` pointer so server-rendered pages and the
  * ActiveCompanyGuard fallback see the new value on the next request.
  */

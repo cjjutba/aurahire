@@ -1,4 +1,4 @@
-// Recharts ^3 — chart visualizations for /admin/analytics. Pinned per docs/main/tech-stack.md.
+// Recharts ^3, chart visualizations for /admin/analytics. Pinned per docs/main/tech-stack.md.
 "use client";
 
 import {

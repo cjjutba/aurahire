@@ -346,7 +346,7 @@ function FirstRunWelcomeCard({
           </h2>
           <p className="mt-2 max-w-[640px] text-sm text-[var(--color-body)]">
             You&apos;re all set. Post your first job to start matching with
-            qualified candidates — AuraHire will score every application against
+            qualified candidates, AuraHire will score every application against
             your criteria and explain how each candidate matched.
           </p>
         </div>
@@ -398,7 +398,7 @@ function KpiTile({
       <div
         className={`mt-3 font-mono text-3xl font-medium ${loading ? "text-[var(--color-muted)]" : valueClass}`}
       >
-        {loading ? "—" : value}
+        {loading ? "-" : value}
       </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
         {description}

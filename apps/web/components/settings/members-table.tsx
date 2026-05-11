@@ -154,8 +154,8 @@ function MemberRow({ member, isLast, callerRole }: MemberRowProps) {
         {member.joinedAt
           ? new Date(member.joinedAt).toLocaleDateString()
           : member.status === "invited"
-            ? "—"
-            : "—"}
+            ? "-"
+            : "-"}
       </td>
       {callerRole ? (
         <td className="px-2 py-3 text-right">

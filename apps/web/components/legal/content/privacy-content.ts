@@ -21,7 +21,7 @@ export const privacyPolicy: LegalDocument = {
   hero: {
     eyebrow: "Legal · Privacy Policy",
     title: "Privacy Policy",
-    lede: "How AuraHire collects, redacts, processes, and retains personal data across candidates, recruiters, and administrators — and the rights you have over that data.",
+    lede: "How AuraHire collects, redacts, processes, and retains personal data across candidates, recruiters, and administrators, and the rights you have over that data.",
     effectiveDate: "May 1, 2026",
     lastUpdated: "May 1, 2026",
     version: "v1.0",
@@ -33,7 +33,7 @@ export const privacyPolicy: LegalDocument = {
     },
     {
       label: "You stay in control",
-      body: "You can access, correct, export, or delete your personal data from your account settings — and ask us if you cannot find what you need.",
+      body: "You can access, correct, export, or delete your personal data from your account settings, and ask us if you cannot find what you need.",
     },
     {
       label: "No hidden third parties",
@@ -58,7 +58,7 @@ export const privacyPolicy: LegalDocument = {
             {
               term: "Personal data",
               definition:
-                "Information that identifies — or could reasonably be linked to — a natural person, such as name, email, phone, location, or resume content.",
+                "Information that identifies, or could reasonably be linked to, a natural person, such as name, email, phone, location, or resume content.",
             },
             {
               term: "Processing",
@@ -112,12 +112,12 @@ export const privacyPolicy: LegalDocument = {
             {
               label: "Device & log data",
               description:
-                "IP address, user-agent string, timestamps, request paths, error logs, and limited security telemetry — used to operate and protect the Platform.",
+                "IP address, user-agent string, timestamps, request paths, error logs, and limited security telemetry, used to operate and protect the Platform.",
             },
             {
               label: "Audit log entries",
               description:
-                "Records of consequential actions — publishing a job, advancing or rejecting an application, extending or rescinding an offer, configuration changes — kept for transparency and compliance.",
+                "Records of consequential actions, publishing a job, advancing or rejecting an application, extending or rescinding an offer, configuration changes, kept for transparency and compliance.",
             },
           ],
         },
@@ -133,13 +133,13 @@ export const privacyPolicy: LegalDocument = {
         {
           kind: "list",
           items: [
-            "Operating the Platform — authenticating users, presenting your dashboard, delivering applications to recruiters, and routing notifications.",
-            "Computing match scores — extracting structured evidence, redacting personal identifiers, and producing explainable scores against role criteria.",
-            "Mitigating bias — checking job descriptions for biased language and exposing aggregate fairness metrics to platform admins.",
-            "Securing the Platform — detecting abuse, throttling unusual traffic, and investigating incidents.",
-            "Communicating — sending transactional emails (verification, status updates, interview invitations) and responding to support requests.",
-            "Maintaining audit trails — recording consequential actions for transparency, dispute resolution, and regulatory compliance.",
-            "Improving the product — analyzing aggregate, de-identified usage patterns. We do not train AI models on your personal data without an explicit, opt-in basis.",
+            "Operating the Platform, authenticating users, presenting your dashboard, delivering applications to recruiters, and routing notifications.",
+            "Computing match scores, extracting structured evidence, redacting personal identifiers, and producing explainable scores against role criteria.",
+            "Mitigating bias, checking job descriptions for biased language and exposing aggregate fairness metrics to platform admins.",
+            "Securing the Platform, detecting abuse, throttling unusual traffic, and investigating incidents.",
+            "Communicating, sending transactional emails (verification, status updates, interview invitations) and responding to support requests.",
+            "Maintaining audit trails, recording consequential actions for transparency, dispute resolution, and regulatory compliance.",
+            "Improving the product, analyzing aggregate, de-identified usage patterns. We do not train AI models on your personal data without an explicit, opt-in basis.",
           ],
         },
         {
@@ -164,17 +164,17 @@ export const privacyPolicy: LegalDocument = {
         {
           kind: "list",
           items: [
-            "Names and contact details — first/last name, email, phone, postal address, social-network handles.",
-            "Demographic-correlated identifiers — date of birth, photographs, gender pronouns, marital status, nationality.",
-            "Locations beyond the granularity needed for a role match — full street addresses are reduced to city / region.",
-            "Other identifiers a recruiter does not need to score against role criteria — passport numbers, government IDs, references' personal details.",
+            "Names and contact details, first/last name, email, phone, postal address, social-network handles.",
+            "Demographic-correlated identifiers, date of birth, photographs, gender pronouns, marital status, nationality.",
+            "Locations beyond the granularity needed for a role match, full street addresses are reduced to city / region.",
+            "Other identifiers a recruiter does not need to score against role criteria, passport numbers, government IDs, references' personal details.",
           ],
         },
         {
           kind: "callout",
           tone: "info",
           title: "Redaction is recorded",
-          body: "Each scoring call records which fields were redacted, the prompt version, the model used, and the latency — so the same score can be reproduced and reviewed.",
+          body: "Each scoring call records which fields were redacted, the prompt version, the model used, and the latency, so the same score can be reproduced and reviewed.",
         },
       ],
     },
@@ -201,7 +201,7 @@ export const privacyPolicy: LegalDocument = {
             {
               label: "What the AI never decides",
               description:
-                "Hiring decisions. Advancing, rejecting, interviewing, or offering — every consequential step is taken by a human and recorded in the audit log.",
+                "Hiring decisions. Advancing, rejecting, interviewing, or offering, every consequential step is taken by a human and recorded in the audit log.",
             },
             {
               label: "Right to a human review",
@@ -217,14 +217,14 @@ export const privacyPolicy: LegalDocument = {
       number: "06",
       icon: Cookie,
       title: "Cookies & tracking",
-      lede: "We use cookies and similar technologies sparingly — only what is needed for sign-in, security, and essential functionality.",
+      lede: "We use cookies and similar technologies sparingly, only what is needed for sign-in, security, and essential functionality.",
       blocks: [
         {
           kind: "list",
           items: [
-            "Authentication cookies — set by our identity provider so you stay signed in. These are strictly necessary.",
-            "Session cookies — used to keep your in-product state (filters, drawer open/closed) consistent during a visit.",
-            "Security cookies — used for CSRF protection and to detect anomalous activity.",
+            "Authentication cookies, set by our identity provider so you stay signed in. These are strictly necessary.",
+            "Session cookies, used to keep your in-product state (filters, drawer open/closed) consistent during a visit.",
+            "Security cookies, used for CSRF protection and to detect anomalous activity.",
           ],
         },
         {
@@ -256,12 +256,12 @@ export const privacyPolicy: LegalDocument = {
             {
               label: "With service providers",
               description:
-                "A small number of vetted processors — hosting, database, transactional email, AI inference, error monitoring, and authentication. Each is bound by a data-processing agreement aligned with this Policy.",
+                "A small number of vetted processors, hosting, database, transactional email, AI inference, error monitoring, and authentication. Each is bound by a data-processing agreement aligned with this Policy.",
             },
             {
               label: "For legal reasons",
               description:
-                "If required by valid legal process, or if necessary to protect the rights, property, or safety of AuraHire, our users, or the public — we may disclose limited personal data and we will narrow the disclosure where lawful.",
+                "If required by valid legal process, or if necessary to protect the rights, property, or safety of AuraHire, our users, or the public, we may disclose limited personal data and we will narrow the disclosure where lawful.",
             },
             {
               label: "Business transfers",
@@ -316,17 +316,17 @@ export const privacyPolicy: LegalDocument = {
       number: "09",
       icon: Lock,
       title: "Security",
-      lede: "Security is layered — at the network edge, the application tier, the database, and the AI boundary.",
+      lede: "Security is layered, at the network edge, the application tier, the database, and the AI boundary.",
       blocks: [
         {
           kind: "list",
           items: [
-            "Transport security — all traffic is served over HTTPS with modern TLS configurations.",
-            "Authentication — JWT-based session tokens validated on every request, with role-based access control on protected endpoints.",
-            "Database — Postgres with row-level security policies that scope every read/write to the rows the user is allowed to see.",
-            "Backend isolation — AI keys and database credentials live only on the backend. The frontend never sees them.",
-            "Auditability — consequential mutations write to an immutable audit log.",
-            "Operational hygiene — least-privilege access for engineers, encrypted backups, and incident-response runbooks.",
+            "Transport security, all traffic is served over HTTPS with modern TLS configurations.",
+            "Authentication, JWT-based session tokens validated on every request, with role-based access control on protected endpoints.",
+            "Database, Postgres with row-level security policies that scope every read/write to the rows the user is allowed to see.",
+            "Backend isolation, AI keys and database credentials live only on the backend. The frontend never sees them.",
+            "Auditability, consequential mutations write to an immutable audit log.",
+            "Operational hygiene, least-privilege access for engineers, encrypted backups, and incident-response runbooks.",
           ],
         },
         {
@@ -370,7 +370,7 @@ export const privacyPolicy: LegalDocument = {
             {
               label: "Objection",
               description:
-                "Object to specific processing — including AI scoring — by contacting our privacy team. Where objection is feasible, we will accommodate it; where the processing is essential to the service, we will explain why.",
+                "Object to specific processing, including AI scoring, by contacting our privacy team. Where objection is feasible, we will accommodate it; where the processing is essential to the service, we will explain why.",
             },
             {
               label: "Withdraw consent",
@@ -380,7 +380,7 @@ export const privacyPolicy: LegalDocument = {
             {
               label: "Complain",
               description:
-                "Lodge a complaint with your local data-protection authority. We would prefer the chance to address your concern first — please contact us.",
+                "Lodge a complaint with your local data-protection authority. We would prefer the chance to address your concern first, please contact us.",
             },
           ],
         },
@@ -396,12 +396,12 @@ export const privacyPolicy: LegalDocument = {
         {
           kind: "list",
           items: [
-            "Cloud hosting — for compute and storage of application infrastructure.",
-            "Managed Postgres — for relational data, with row-level security and encryption at rest.",
-            "Authentication — for sign-in, JWT issuance, and password recovery.",
-            "AI inference — for resume parsing, match scoring, and bias detection. Used in inference mode only; data is not used for training.",
-            "Transactional email — for verification emails, status updates, and interview notifications.",
-            "Error monitoring — for application-error reporting; configured to scrub personal data from payloads.",
+            "Cloud hosting, for compute and storage of application infrastructure.",
+            "Managed Postgres, for relational data, with row-level security and encryption at rest.",
+            "Authentication, for sign-in, JWT issuance, and password recovery.",
+            "AI inference, for resume parsing, match scoring, and bias detection. Used in inference mode only; data is not used for training.",
+            "Transactional email, for verification emails, status updates, and interview notifications.",
+            "Error monitoring, for application-error reporting; configured to scrub personal data from payloads.",
           ],
         },
         {
@@ -442,7 +442,7 @@ export const privacyPolicy: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          text: "We may update this Policy from time to time. When we do, we will update the “Last updated” date at the top of this page and, for material changes, provide reasonable advance notice — typically by email or an in-product banner. Continued use of the Platform after the effective date of an update constitutes acceptance of the revised Policy. Prior versions are available on request.",
+          text: "We may update this Policy from time to time. When we do, we will update the “Last updated” date at the top of this page and, for material changes, provide reasonable advance notice, typically by email or an in-product banner. Continued use of the Platform after the effective date of an update constitutes acceptance of the revised Policy. Prior versions are available on request.",
         },
       ],
     },
@@ -462,7 +462,7 @@ export const privacyPolicy: LegalDocument = {
   crossLink: {
     label: "Terms of Service",
     description:
-      "Read the agreement that governs your use of AuraHire — covering accounts, AI scoring, bias mitigation, intellectual property, and liability.",
+      "Read the agreement that governs your use of AuraHire, covering accounts, AI scoring, bias mitigation, intellectual property, and liability.",
     href: "/legal/terms",
   },
   contact: {
@@ -470,7 +470,7 @@ export const privacyPolicy: LegalDocument = {
     body: "Email our privacy team to exercise your rights, ask a question, or report a concern. We respond to verified requests within thirty (30) days.",
     email: "hello@aurahire.site",
     addressLines: [
-      "AuraHire — Privacy",
+      "AuraHire, Privacy",
       "Attn: Data Protection Officer",
       "aurahire.site · responses in English",
     ],

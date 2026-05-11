@@ -22,7 +22,7 @@ export function ExperienceList({ initial, onSync }: Props) {
       await onSync(next);
     } catch {
       setEntries(prev);
-      toast.error("Couldn't save — try again");
+      toast.error("Couldn't save, try again");
     }
   };
 

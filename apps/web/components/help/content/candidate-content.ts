@@ -23,7 +23,7 @@ export const candidateHelp: HelpPageContent = {
   hero: {
     eyebrow: "Candidate help center",
     title: "Apply with confidence. Know how you're scored.",
-    lede: "AuraHire shows you the same scoring evidence the recruiter sees. No black boxes, no guessing — just clear answers about your applications, your match score, and your privacy.",
+    lede: "AuraHire shows you the same scoring evidence the recruiter sees. No black boxes, no guessing, just clear answers about your applications, your match score, and your privacy.",
   },
   groups: [
     {
@@ -34,11 +34,11 @@ export const candidateHelp: HelpPageContent = {
           icon: Sparkles,
           kicker: "Orientation",
           title: "How AuraHire works for candidates",
-          lede: "A quick tour of what the platform does — and what it doesn't — so there are no surprises.",
+          lede: "A quick tour of what the platform does, and what it doesn't, so there are no surprises.",
           blocks: [
             {
               kind: "paragraph",
-              text: "AuraHire connects you with companies that publish jobs on the platform. When you apply, the AI reads your resume, redacts personal details, and produces a match score against the role's criteria. You see the same score and the same evidence the recruiter sees — and you can always see why a number is what it is.",
+              text: "AuraHire connects you with companies that publish jobs on the platform. When you apply, the AI reads your resume, redacts personal details, and produces a match score against the role's criteria. You see the same score and the same evidence the recruiter sees, and you can always see why a number is what it is.",
             },
             {
               kind: "fields",
@@ -64,7 +64,7 @@ export const candidateHelp: HelpPageContent = {
               kind: "callout",
               tone: "info",
               title: "Your match score is not a value judgment",
-              body: "A 'Limited Match' on one role doesn't mean you're a limited candidate. It means the resume evidence didn't strongly align with that specific role's stated criteria — which is different from your worth, your potential, or your fit elsewhere.",
+              body: "A 'Limited Match' on one role doesn't mean you're a limited candidate. It means the resume evidence didn't strongly align with that specific role's stated criteria, which is different from your worth, your potential, or your fit elsewhere.",
             },
           ],
         },
@@ -73,7 +73,7 @@ export const candidateHelp: HelpPageContent = {
           icon: CircleUser,
           kicker: "Setup",
           title: "Build your profile",
-          lede: "Your profile is what recruiters and the AI start from — keeping it complete pays compounding dividends.",
+          lede: "Your profile is what recruiters and the AI start from, keeping it complete pays compounding dividends.",
           blocks: [
             {
               kind: "steps",
@@ -104,7 +104,7 @@ export const candidateHelp: HelpPageContent = {
               kind: "callout",
               tone: "ai",
               title: "What 'AI Suggested' means",
-              body: "When you upload a resume, the parser pre-fills your skills, work history, and education. Each pre-filled field shows an 'AI Suggested' chip. Edit anything — the chip becomes 'Edited' once you've reviewed it. The data is yours; the AI is just typing for you.",
+              body: "When you upload a resume, the parser pre-fills your skills, work history, and education. Each pre-filled field shows an 'AI Suggested' chip. Edit anything, the chip becomes 'Edited' once you've reviewed it. The data is yours; the AI is just typing for you.",
             },
           ],
         },
@@ -121,7 +121,7 @@ export const candidateHelp: HelpPageContent = {
                 {
                   label: "Accepted formats",
                   description:
-                    "PDF (preferred — preserves layout) or DOCX. Avoid scanned images; the parser cannot read text from a screenshot.",
+                    "PDF (preferred, preserves layout) or DOCX. Avoid scanned images; the parser cannot read text from a screenshot.",
                 },
                 {
                   label: "File size",
@@ -131,7 +131,7 @@ export const candidateHelp: HelpPageContent = {
                 {
                   label: "Versioning",
                   description:
-                    "Uploading a new resume creates a new version. The previous version stays attached to applications you submitted before the change — recruiters see exactly the resume you sent, not a moving target.",
+                    "Uploading a new resume creates a new version. The previous version stays attached to applications you submitted before the change, recruiters see exactly the resume you sent, not a moving target.",
                 },
                 {
                   label: "Re-scoring",
@@ -160,7 +160,7 @@ export const candidateHelp: HelpPageContent = {
                 "Filter by role type, work mode, salary range, location, and required skills.",
                 "Save a search to receive a daily or weekly digest of new matches.",
                 "Star a job to add it to your shortlist before deciding to apply.",
-                "The default ordering is recency, not personalized 'fit' — so you see new postings as they appear, not what an algorithm thinks you'll click.",
+                "The default ordering is recency, not personalized 'fit', so you see new postings as they appear, not what an algorithm thinks you'll click.",
               ],
             },
           ],
@@ -224,7 +224,7 @@ export const candidateHelp: HelpPageContent = {
                 ],
                 [
                   "Offer",
-                  "An offer has been extended — check your inbox and the application page.",
+                  "An offer has been extended, check your inbox and the application page.",
                 ],
                 ["Hired", "You accepted; congratulations!"],
                 [
@@ -247,7 +247,7 @@ export const candidateHelp: HelpPageContent = {
           icon: Trash2,
           kicker: "Decisions",
           title: "Withdrawing an application",
-          lede: "If you change your mind, withdrawal is one click — and not a black mark.",
+          lede: "If you change your mind, withdrawal is one click, and not a black mark.",
           blocks: [
             {
               kind: "list",
@@ -270,7 +270,7 @@ export const candidateHelp: HelpPageContent = {
           icon: Target,
           kicker: "The score",
           title: "What your match score actually measures",
-          lede: "And — just as importantly — what it doesn't.",
+          lede: "And, just as importantly, what it doesn't.",
           blocks: [
             {
               kind: "fields",
@@ -283,7 +283,7 @@ export const candidateHelp: HelpPageContent = {
                 {
                   label: "What it does not measure",
                   description:
-                    "Your worth, your future potential, your soft skills, or your fit at this company in general. It's a per-role, evidence-based number — not a verdict on you.",
+                    "Your worth, your future potential, your soft skills, or your fit at this company in general. It's a per-role, evidence-based number, not a verdict on you.",
                 },
                 {
                   label: "Why it might be lower than expected",
@@ -306,17 +306,17 @@ export const candidateHelp: HelpPageContent = {
               head: ["Score range", "Match band", "What it suggests"],
               rows: [
                 [
-                  "70 – 100",
+                  "70, 100",
                   "Strong Match",
                   "Your resume strongly aligns with this role's criteria.",
                 ],
                 [
-                  "40 – 69",
+                  "40, 69",
                   "Partial Match",
                   "Solid alignment on some criteria, gaps on others.",
                 ],
                 [
-                  "0 – 39",
+                  "0, 39",
                   "Limited Match",
                   "The evidence in your resume didn't strongly align with this specific role's criteria.",
                 ],
@@ -341,10 +341,10 @@ export const candidateHelp: HelpPageContent = {
               kind: "list",
               items: [
                 "Name the technologies and tools explicitly (the parser scores 'PostgreSQL' higher than 'a relational database').",
-                "Quantify outcomes — 'reduced p99 latency by 38%' beats 'improved performance'.",
+                "Quantify outcomes, 'reduced p99 latency by 38%' beats 'improved performance'.",
                 "Map your experience to the job's criteria language. If the job calls them 'distributed systems', use those words if they're accurate.",
-                "Surface relevant projects from any section — Personal, Open Source, Side projects all count if they're real.",
-                "Avoid skills lists with no supporting bullet — the AI looks for evidence, not just labels.",
+                "Surface relevant projects from any section, Personal, Open Source, Side projects all count if they're real.",
+                "Avoid skills lists with no supporting bullet, the AI looks for evidence, not just labels.",
               ],
             },
             {
@@ -364,7 +364,7 @@ export const candidateHelp: HelpPageContent = {
           id: "what-ai-sees",
           icon: ShieldCheck,
           kicker: "Privacy",
-          title: "What the AI sees — and what it doesn't",
+          title: "What the AI sees, and what it doesn't",
           lede: "Personal identifiers are stripped before any scoring call. Recruiters see your full resume; the AI does not.",
           blocks: [
             {
@@ -378,12 +378,12 @@ export const candidateHelp: HelpPageContent = {
                 {
                   label: "Visible to the AI",
                   description:
-                    "Skills, technologies, role titles, durations, project descriptions, certifications, languages, and explicit qualifications — the work, not the worker's identity.",
+                    "Skills, technologies, role titles, durations, project descriptions, certifications, languages, and explicit qualifications, the work, not the worker's identity.",
                 },
                 {
                   label: "Visible to recruiters",
                   description:
-                    "Your full, unredacted resume and profile. The redaction protects against AI bias, not recruiter access — recruiters need to know who they're hiring.",
+                    "Your full, unredacted resume and profile. The redaction protects against AI bias, not recruiter access, recruiters need to know who they're hiring.",
                 },
               ],
             },
@@ -399,10 +399,10 @@ export const candidateHelp: HelpPageContent = {
             {
               kind: "list",
               items: [
-                "Export — download every application, score, and resume version we have for you, in JSON.",
-                "Delete account — wipes your profile, resumes, applications, and scores. Companies you applied to retain a redacted record (audit requirement) but lose your name and contact details.",
-                "Correct — edit your profile any time. Past applications keep the resume version they were sent with, by design.",
-                "Withdraw consent — you can revoke optional consents (marketing, analytics) without affecting your active applications.",
+                "Export, download every application, score, and resume version we have for you, in JSON.",
+                "Delete account, wipes your profile, resumes, applications, and scores. Companies you applied to retain a redacted record (audit requirement) but lose your name and contact details.",
+                "Correct, edit your profile any time. Past applications keep the resume version they were sent with, by design.",
+                "Withdraw consent, you can revoke optional consents (marketing, analytics) without affecting your active applications.",
               ],
             },
             {
@@ -422,7 +422,7 @@ export const candidateHelp: HelpPageContent = {
           blocks: [
             {
               kind: "paragraph",
-              text: "Concerns are reviewed by AuraHire's fairness team. Reports are tied to your account, but your identity is not shared with the recruiter being reviewed. If a pattern is identified, the company is notified at the workspace level — not the individual application level.",
+              text: "Concerns are reviewed by AuraHire's fairness team. Reports are tied to your account, but your identity is not shared with the recruiter being reviewed. If a pattern is identified, the company is notified at the workspace level, not the individual application level.",
             },
             {
               kind: "fields",
@@ -435,7 +435,7 @@ export const candidateHelp: HelpPageContent = {
                 {
                   label: "Where to send",
                   description:
-                    "hello@aurahire.site — please use the subject line “Fairness review” so we route it to the right reviewer.",
+                    "hello@aurahire.site, please use the subject line “Fairness review” so we route it to the right reviewer.",
                 },
                 {
                   label: "What we'll do",
@@ -518,7 +518,7 @@ export const candidateHelp: HelpPageContent = {
                 {
                   label: "Negotiate",
                   description:
-                    "Email the recruiter directly — AuraHire doesn't run the negotiation, but the recruiter's contact info is on the offer page.",
+                    "Email the recruiter directly, AuraHire doesn't run the negotiation, but the recruiter's contact info is on the offer page.",
                 },
               ],
             },
@@ -565,7 +565,7 @@ export const candidateHelp: HelpPageContent = {
                 {
                   label: "Dashboard",
                   description:
-                    "A personalized snapshot — recent applications, upcoming interviews, and saved-search matches.",
+                    "A personalized snapshot, recent applications, upcoming interviews, and saved-search matches.",
                 },
                 {
                   label: "Browse Jobs",
@@ -601,7 +601,7 @@ export const candidateHelp: HelpPageContent = {
           icon: FileCheck,
           kicker: "Documentation",
           title: "Offer letter records",
-          lede: "Your offer is preserved permanently — you can always come back to it.",
+          lede: "Your offer is preserved permanently, you can always come back to it.",
           blocks: [
             {
               kind: "list",
@@ -619,7 +619,7 @@ export const candidateHelp: HelpPageContent = {
   faq: [
     {
       q: "Why is my match score lower than I expected?",
-      a: "Open the breakdown — the most common cause is that your resume doesn't name the specific technologies or outcomes the role calls for, even when you have the experience. Adding a clear bullet usually moves the score meaningfully.",
+      a: "Open the breakdown, the most common cause is that your resume doesn't name the specific technologies or outcomes the role calls for, even when you have the experience. Adding a clear bullet usually moves the score meaningfully.",
     },
     {
       q: "Does the AI see my name, age, or photo?",
@@ -639,11 +639,11 @@ export const candidateHelp: HelpPageContent = {
     },
     {
       q: "Can I delete my account and all my data?",
-      a: "Yes — Settings → Privacy → Delete account. Your profile, resumes, applications, and scores are wiped within 30 days (including backups). Companies you applied to keep a redacted audit record but lose your name and contact details.",
+      a: "Yes, Settings → Privacy → Delete account. Your profile, resumes, applications, and scores are wiped within 30 days (including backups). Companies you applied to keep a redacted audit record but lose your name and contact details.",
     },
     {
       q: "Why didn't I hear back from a company?",
-      a: "Recruiters review on their own schedule. Most send a status update within two weeks; some take longer. The application page is the source of truth — if it still says 'Applied' or 'Screening', they're still considering it. If it's been more than 30 days, a polite follow-up is reasonable.",
+      a: "Recruiters review on their own schedule. Most send a status update within two weeks; some take longer. The application page is the source of truth, if it still says 'Applied' or 'Screening', they're still considering it. If it's been more than 30 days, a polite follow-up is reasonable.",
     },
     {
       q: "Can I apply to multiple jobs at the same company?",
@@ -652,7 +652,7 @@ export const candidateHelp: HelpPageContent = {
   ],
   contact: {
     title: "Need a human?",
-    body: "Email us — we typically reply within one business day. For fairness or bias concerns, use the subject line “Fairness review” so it routes correctly.",
+    body: "Email us, we typically reply within one business day. For fairness or bias concerns, use the subject line “Fairness review” so it routes correctly.",
     email: "hello@aurahire.site",
     secondaryLink: { label: "Browse open jobs", href: "/candidate/jobs" },
   },

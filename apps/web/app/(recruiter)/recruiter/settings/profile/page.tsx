@@ -20,7 +20,7 @@ interface ProfileBody {
 }
 
 /**
- * GET /api/v1/recruiter-profiles/me — fetched server-side so the form is
+ * GET /api/v1/recruiter-profiles/me, fetched server-side so the form is
  * pre-populated on the very first paint. The active company id is
  * resolved by the API server (via ActiveCompanyGuard fallback to the
  * stored profiles.lastActiveCompanyId), so we don't need to forward
@@ -67,7 +67,7 @@ export default async function RecruiterSettingsProfilePage() {
       >
         {/*
           Email is intentionally rendered as read-only text rather than a
-          disabled input — Supabase Auth is the source of truth, and a
+          disabled input, Supabase Auth is the source of truth, and a
           changeable email field would imply we re-verify it ourselves.
         */}
         <div className="mb-5 grid gap-1">

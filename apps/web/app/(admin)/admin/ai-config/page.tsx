@@ -96,7 +96,7 @@ export default async function AiConfigPage() {
           <p className="mt-1 text-xs text-[var(--color-muted)]">
             Apply the currently saved weights to existing match scores. Each
             rescore creates a new match_scores row; the original scores remain
-            for audit. Background job — you can leave this page; check the Audit
+            for audit. Background job, you can leave this page; check the Audit
             Log for completion.
           </p>
           <div className="mt-4">

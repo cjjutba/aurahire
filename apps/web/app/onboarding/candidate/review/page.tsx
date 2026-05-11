@@ -3,7 +3,7 @@ import { ReviewStepClient } from "./_client";
 import { fetchCandidateProfileMe, fetchLatestParsedResume } from "../_data";
 import { getCurrentSession } from "@/lib/auth/session";
 
-export const metadata = { title: "Review — Onboarding" };
+export const metadata = { title: "Review, Onboarding" };
 
 export default async function Step3Page() {
   const me = await fetchCandidateProfileMe();

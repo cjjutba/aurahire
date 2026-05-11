@@ -136,7 +136,7 @@ export function ParsingProgressCard({
       >
         {isDone
           ? "Routing to your details..."
-          : "Hang tight — this usually takes 5–15 seconds."}
+          : "Hang tight, this usually takes 5-15 seconds."}
       </p>
 
       <div className="rounded-2xl border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">

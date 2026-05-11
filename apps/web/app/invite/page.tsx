@@ -4,10 +4,10 @@ import { getCurrentSession } from "@/lib/auth/session";
 
 import { PasteTokenForm } from "./_paste-token-form";
 
-export const metadata = { title: "Accept Invitation — AuraHire" };
+export const metadata = { title: "Accept Invitation, AuraHire" };
 
 /**
- * Sidebar's "Accept invitation" entry point. Strictly auth-gated — signed-out
+ * Sidebar's "Accept invitation" entry point. Strictly auth-gated, signed-out
  * users get bounced to login, then back here on completion. Signed-in users
  * get the paste-token form which forwards to /invite/{token}.
  */

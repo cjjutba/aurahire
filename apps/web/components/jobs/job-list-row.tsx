@@ -69,7 +69,7 @@ export function JobListRow({ job, href, showStatus }: JobListRowProps) {
               )}
               {job.salaryMin !== null && job.salaryMax !== null && (
                 <span className="font-mono">
-                  {job.salaryMin.toLocaleString()}–
+                  {job.salaryMin.toLocaleString()}-
                   {job.salaryMax.toLocaleString()} {job.salaryCurrency}
                 </span>
               )}

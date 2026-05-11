@@ -135,7 +135,7 @@ export function HelpView({ variant }: HelpViewProps) {
   }, [activeId]);
 
   // Track whether the TOC has overflow above/below the viewport so we can render
-  // a visible scroll affordance — macOS auto-hides custom scrollbars, so we
+  // a visible scroll affordance, macOS auto-hides custom scrollbars, so we
   // need our own indicator. Updates on scroll, on resize, and when content filters.
   useEffect(() => {
     const el = tocScrollRef.current;
@@ -204,7 +204,7 @@ export function HelpView({ variant }: HelpViewProps) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search help — try 'scoring', 'bias', 'interview'…"
+            placeholder="Search help, try 'scoring', 'bias', 'interview'…"
             aria-label="Search help"
             className="h-11 w-full rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] pl-11 pr-24 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
           />
@@ -321,7 +321,7 @@ export function HelpView({ variant }: HelpViewProps) {
               On this page
             </div>
             <div className="relative min-h-0 flex-1">
-              {/* top fade — only when content scrolled above is clipped */}
+              {/* top fade, only when content scrolled above is clipped */}
               {tocCanScrollUp && (
                 <div
                   className="pointer-events-none absolute inset-x-0 top-0 z-10 h-4 bg-gradient-to-b from-[var(--color-canvas)] to-transparent"
@@ -344,7 +344,7 @@ export function HelpView({ variant }: HelpViewProps) {
                   }
                 />
               </div>
-              {/* bottom — clickable chevron affordance when more topics exist below */}
+              {/* bottom, clickable chevron affordance when more topics exist below */}
               {tocCanScrollDown && (
                 <button
                   type="button"

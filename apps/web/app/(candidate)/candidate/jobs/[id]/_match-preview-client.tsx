@@ -107,7 +107,7 @@ function readErrorBody(
 
 interface MatchPreviewClientProps {
   jobId: string;
-  /** Hidden when the candidate has already applied — they should view their application instead. */
+  /** Hidden when the candidate has already applied, they should view their application instead. */
   hidden?: boolean;
 }
 
@@ -120,7 +120,7 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [showAllComponents, setShowAllComponents] = useState(false);
 
-  // GET — surfaces the precomputed preview if one already exists. The
+  // GET, surfaces the precomputed preview if one already exists. The
   // backend's auto-precompute path normally fills this on first view; the
   // POST below is the on-view fallback for jobs that fall outside the top-N
   // precompute window.
@@ -131,7 +131,7 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
         `/api/v1/scoring/match-preview/${jobId}`,
         { signal },
       ),
-    // Skip when the parent has hidden the card — the candidate has already
+    // Skip when the parent has hidden the card, the candidate has already
     // applied and we shouldn't even hit the endpoint.
     enabled: !hidden,
     staleTime: 60_000,
@@ -139,7 +139,7 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
 
   const preview = previewQuery.data?.data ?? null;
 
-  // POST — computes a preview if none exists, or recomputes when the user
+  // POST, computes a preview if none exists, or recomputes when the user
   // explicitly clicks "Recompute" (passes force = true via cache busting).
   const compute = useMutation<MatchPreviewEnvelope, unknown, void>({
     mutationFn: () =>
@@ -157,10 +157,10 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
   });
 
   // Effective active name: the user's explicit pick if any, otherwise the
-  // first component of the loaded preview. Pure derivation — no useEffect.
+  // first component of the loaded preview. Pure derivation, no useEffect.
   const activeName = selectedName ?? preview?.components[0]?.name ?? "";
 
-  // Auto-compute on mount when no cached preview is available — replaces the
+  // Auto-compute on mount when no cached preview is available, replaces the
   // old "See my match" button. The ref guards against React 18+ Strict Mode
   // double-invoking the effect.
   const autoFired = useRef(false);
@@ -197,7 +197,7 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
 
   if (hidden) return null;
 
-  // Initial GET still resolving — quietly skeleton the whole card so we
+  // Initial GET still resolving, quietly skeleton the whole card so we
   // don't flash the "computing" shimmer for the common cache-hit path.
   if (previewQuery.isLoading) {
     return (
@@ -211,12 +211,12 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
     );
   }
 
-  // No preview AND compute returned an error — translate to a focused error
+  // No preview AND compute returned an error, translate to a focused error
   // surface depending on the code.
   if (!preview && compute.isError) {
     const errBody = readErrorBody(compute.error);
 
-    // 429 DAILY_AI_LIMIT — daily on-view cap reached. No retry button: the
+    // 429 DAILY_AI_LIMIT, daily on-view cap reached. No retry button: the
     // candidate must apply to lock in a score.
     if (errBody?.status === 429 && errBody.code === "DAILY_AI_LIMIT") {
       return (
@@ -243,7 +243,7 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
       );
     }
 
-    // 422 / 400 NO_DEFAULT_RESUME — candidate hasn't uploaded a resume yet.
+    // 422 / 400 NO_DEFAULT_RESUME, candidate hasn't uploaded a resume yet.
     // The actual backend code is `NO_DEFAULT_RESUME` (400), but defending
     // against a future 422 variant is cheap.
     if (errBody?.code === "NO_DEFAULT_RESUME") {
@@ -268,7 +268,7 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
       );
     }
 
-    // 5xx / generic error — the cap doesn't apply since no row landed, so a
+    // 5xx / generic error, the cap doesn't apply since no row landed, so a
     // retry button is safe.
     return (
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
@@ -294,7 +294,7 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
     );
   }
 
-  // Computing — either auto-compute is in flight or we have no preview yet
+  // Computing, either auto-compute is in flight or we have no preview yet
   // and no error. Always paired with a caption per design rules.
   if (!preview || compute.isPending) {
     return (
@@ -310,7 +310,7 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
     );
   }
 
-  // Loaded — render the inline ScoreDashboard variant (compact).
+  // Loaded, render the inline ScoreDashboard variant (compact).
   const total = preview.overallScore;
 
   return (
@@ -363,12 +363,12 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
                 {preview.modelUsed}
               </p>
               <p className="text-xs text-[var(--color-muted)]">
-                Apply now to lock this score in — no recompute required.
+                Apply now to lock this score in, no recompute required.
               </p>
             </div>
           </div>
 
-          {/* Component breakdown — clickable rows */}
+          {/* Component breakdown, clickable rows */}
           <div className="mt-5 border-t border-[var(--color-hairline-soft)] pt-4">
             <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
               Component Breakdown
@@ -547,7 +547,7 @@ function ActiveComponentPanel({
           {negatives.length > 0 && (
             <PreviewEvidenceGroup
               tone="gap"
-              heading="Gaps — what kept this from a perfect score"
+              heading="Gaps, what kept this from a perfect score"
               items={negatives}
               componentName={c.name}
             />

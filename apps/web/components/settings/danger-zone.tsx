@@ -62,7 +62,7 @@ export function LeaveCompanyCard() {
 
   // Owners must transfer first if they're the last owner. We don't have
   // direct visibility into "are you the last owner?" without the members
-  // query — but the backend will tell us with a 4xx, and we surface that.
+  // query, but the backend will tell us with a 4xx, and we surface that.
   const blockReason =
     role === "owner"
       ? "Owners must transfer ownership before leaving. Use the section below."
@@ -87,7 +87,7 @@ export function LeaveCompanyCard() {
         router.push("/recruiter");
         router.refresh();
       } else {
-        // No remaining memberships — user lands back at onboarding.
+        // No remaining memberships, user lands back at onboarding.
         setActiveCompanyId(null);
         queryClient.clear();
         toastSuccess(`You left ${companyName}`);

@@ -43,7 +43,7 @@ export function ScoreDistributionAuditClient({ data, sampleSize }: Props) {
         </h3>
         <p className="mt-1 text-xs text-[var(--color-body)]">
           Match-score band distribution across all candidates this period. A
-          heavy tail in one band may indicate the weights need tuning — see{" "}
+          heavy tail in one band may indicate the weights need tuning, see{" "}
           <span className="font-mono">/admin/ai-config</span> Preview Impact.
         </p>
       </header>
