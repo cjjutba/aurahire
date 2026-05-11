@@ -19,7 +19,12 @@ interface EmailBrandHeaderProps {
   company?: { name: string; logoUrl: string | null } | null;
 }
 
-const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
+// Permanent public-bucket URL for the AuraHire logo. Hosted on Supabase
+// Storage so Gmail/Outlook/Resend fetch the asset directly from a CDN with
+// stable cache headers, instead of routing through the Vercel-hosted web
+// app where SSR/rewrites can intermittently break embedded-image rendering.
+const BRAND_LOGO_URL =
+  "https://fzjvalmouygmmnrgpgtg.supabase.co/storage/v1/object/public/brand/aurahire-logo.png";
 
 function AuraHireWordmark({
   size = "primary",
@@ -49,8 +54,8 @@ function AuraHireWordmark({
             }}
           >
             <Img
-              src={`${APP_URL}/brand/aurahire-logo.png`}
-              alt=""
+              src={BRAND_LOGO_URL}
+              alt="AuraHire"
               width={iconSize}
               height={iconSize}
               style={{ display: "block", border: 0, outline: "none" }}
