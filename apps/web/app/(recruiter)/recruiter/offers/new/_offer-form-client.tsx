@@ -27,6 +27,41 @@ function isoDatePlusDays(days: number): string {
   return new Date(Date.now() + days * 86400 * 1000).toISOString().slice(0, 10);
 }
 
+function FieldLabel({
+  children,
+  required,
+  htmlFor,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+  htmlFor?: string;
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="text-sm font-medium leading-none text-[var(--color-ink)]"
+    >
+      {children}
+      {required ? (
+        <>
+          {" "}
+          <span aria-hidden className="text-[var(--color-status-danger)]">
+            *
+          </span>
+        </>
+      ) : null}
+    </label>
+  );
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+      {children}
+    </h2>
+  );
+}
+
 export function OfferFormClient({ applicationId, defaultTitle }: Props) {
   const router = useRouter();
   const [title, setTitle] = useState(defaultTitle);
@@ -120,129 +155,126 @@ export function OfferFormClient({ applicationId, defaultTitle }: Props) {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="space-y-6 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6"
-    >
-      <div>
-        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-          Job title{" "}
-          <span aria-hidden className="text-[var(--color-status-danger)]">
-            *
-          </span>
-        </label>
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="sm:col-span-2">
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Salary{" "}
-            <span aria-hidden className="text-[var(--color-status-danger)]">
-              *
-            </span>
-          </label>
+    <form onSubmit={submit} className="space-y-8">
+      <section className="space-y-4">
+        <SectionHeading>Basics</SectionHeading>
+        <div className="grid gap-2">
+          <FieldLabel required htmlFor="offer-title">
+            Job title
+          </FieldLabel>
           <Input
-            type="number"
-            min={1}
-            step="any"
-            value={salary}
-            onChange={(e) => setSalary(e.target.value)}
-            placeholder="95000"
+            id="offer-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             required
           />
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Currency
-          </label>
-          <Select
-            value={salaryCurrency}
-            onValueChange={(v) =>
-              setSalaryCurrency(v as (typeof CURRENCY_OPTIONS)[number])
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CURRENCY_OPTIONS.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      </section>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Start date{" "}
-            <span aria-hidden className="text-[var(--color-status-danger)]">
-              *
-            </span>
-          </label>
+      <section className="space-y-4">
+        <SectionHeading>Compensation</SectionHeading>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-2 sm:col-span-2">
+            <FieldLabel required htmlFor="offer-salary">
+              Salary
+            </FieldLabel>
+            <Input
+              id="offer-salary"
+              type="number"
+              min={1}
+              step="any"
+              value={salary}
+              onChange={(e) => setSalary(e.target.value)}
+              placeholder="95000"
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <FieldLabel>Currency</FieldLabel>
+            <Select
+              value={salaryCurrency}
+              onValueChange={(v) =>
+                setSalaryCurrency(v as (typeof CURRENCY_OPTIONS)[number])
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCY_OPTIONS.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeading>Schedule</SectionHeading>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <FieldLabel required htmlFor="offer-start-date">
+              Start date
+            </FieldLabel>
+            <Input
+              id="offer-start-date"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="offer-expires-at">Offer expires</FieldLabel>
+            <Input
+              id="offer-expires-at"
+              type="date"
+              value={expiresAtDate}
+              onChange={(e) => setExpiresAtDate(e.target.value)}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeading>Details</SectionHeading>
+        <div className="grid gap-2">
+          <FieldLabel htmlFor="offer-manager">Hiring manager</FieldLabel>
           <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            required
+            id="offer-manager"
+            value={managerName}
+            onChange={(e) => setManagerName(e.target.value)}
+            placeholder="Jane Doe"
           />
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Offer expires
-          </label>
-          <Input
-            type="date"
-            value={expiresAtDate}
-            onChange={(e) => setExpiresAtDate(e.target.value)}
+        <div className="grid gap-2">
+          <FieldLabel htmlFor="offer-benefits">Benefits summary</FieldLabel>
+          <Textarea
+            id="offer-benefits"
+            value={benefitsSummary}
+            onChange={(e) => setBenefitsSummary(e.target.value)}
+            rows={3}
+            placeholder="Health, dental, 401k matching, 20 PTO days..."
           />
         </div>
-      </div>
+        <div className="grid gap-2">
+          <FieldLabel htmlFor="offer-note">
+            Personal note (optional)
+          </FieldLabel>
+          <Textarea
+            id="offer-note"
+            value={customMessage}
+            onChange={(e) => setCustomMessage(e.target.value)}
+            rows={4}
+            placeholder="We're excited to have you join the team!"
+          />
+        </div>
+      </section>
 
-      <div>
-        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-          Hiring manager
-        </label>
-        <Input
-          value={managerName}
-          onChange={(e) => setManagerName(e.target.value)}
-          placeholder="Jane Doe"
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-          Benefits summary
-        </label>
-        <Textarea
-          value={benefitsSummary}
-          onChange={(e) => setBenefitsSummary(e.target.value)}
-          rows={3}
-          placeholder="Health, dental, 401k matching, 20 PTO days..."
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-          Personal note (optional)
-        </label>
-        <Textarea
-          value={customMessage}
-          onChange={(e) => setCustomMessage(e.target.value)}
-          rows={4}
-          placeholder="We're excited to have you join the team!"
-        />
-      </div>
-
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 border-t border-[var(--color-hairline)] pt-6">
         <Button
           type="button"
           variant="outline"

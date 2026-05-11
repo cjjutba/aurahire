@@ -3,55 +3,61 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function Loading() {
   return (
     <div className="mx-auto max-w-[1280px] space-y-6">
-      <div className="max-w-[720px] space-y-6">
-        {/* Back link */}
-        <Skeleton className="h-4 w-40" />
+      {/* Back link */}
+      <Skeleton className="h-4 w-40" />
 
-        {/* Header: title + subtext */}
-        <header className="space-y-2">
-          <Skeleton className="h-9 w-44" />
-          <Skeleton className="h-4 w-96" />
-        </header>
+      {/* Header: title + subtext */}
+      <header className="space-y-2">
+        <Skeleton className="h-8 w-44" />
+        <Skeleton className="h-4 w-[28rem] max-w-full" />
+      </header>
 
-        {/* Form card */}
-        <div className="space-y-6 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6">
-          {/* Job title */}
+      {/* Form card */}
+      <div className="space-y-8 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
+        {/* Basics */}
+        <section className="space-y-4">
+          <Skeleton className="h-4 w-16" />
           <FormField labelWidth="w-20" />
+        </section>
 
-          {/* Salary + Currency */}
+        {/* Compensation */}
+        <section className="space-y-4">
+          <Skeleton className="h-4 w-32" />
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="sm:col-span-2">
               <FormField labelWidth="w-16" />
             </div>
             <FormField labelWidth="w-20" />
           </div>
+        </section>
 
-          {/* Start date + Offer expires */}
+        {/* Schedule */}
+        <section className="space-y-4">
+          <Skeleton className="h-4 w-24" />
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField labelWidth="w-24" />
             <FormField labelWidth="w-28" />
           </div>
+        </section>
 
-          {/* Hiring manager */}
+        {/* Details */}
+        <section className="space-y-4">
+          <Skeleton className="h-4 w-20" />
           <FormField labelWidth="w-32" />
-
-          {/* Benefits summary (textarea, rows=3) */}
-          <div>
-            <Skeleton className="mb-2 h-3 w-36" />
+          <div className="grid gap-2">
+            <Skeleton className="h-4 w-36" />
             <Skeleton className="h-[72px] w-full rounded-lg" />
           </div>
-
-          {/* Personal note (textarea, rows=4) */}
-          <div>
-            <Skeleton className="mb-2 h-3 w-44" />
+          <div className="grid gap-2">
+            <Skeleton className="h-4 w-44" />
             <Skeleton className="h-[96px] w-full rounded-lg" />
           </div>
+        </section>
 
-          {/* Buttons: Cancel + Send offer */}
-          <div className="flex justify-end gap-2">
-            <Skeleton className="h-9 w-20 rounded-[var(--radius-pill)]" />
-            <Skeleton className="h-9 w-28 rounded-[var(--radius-pill)]" />
-          </div>
+        {/* Buttons: Cancel + Send offer */}
+        <div className="flex justify-end gap-2 border-t border-[var(--color-hairline)] pt-6">
+          <Skeleton className="h-9 w-20 rounded-[var(--radius-pill)]" />
+          <Skeleton className="h-9 w-28 rounded-[var(--radius-pill)]" />
         </div>
       </div>
     </div>
@@ -60,9 +66,9 @@ export default function Loading() {
 
 function FormField({ labelWidth }: { labelWidth: string }) {
   return (
-    <div>
-      <Skeleton className={`mb-2 h-3 ${labelWidth}`} />
-      <Skeleton className="h-8 w-full rounded-lg" />
+    <div className="grid gap-2">
+      <Skeleton className={`h-4 ${labelWidth}`} />
+      <Skeleton className="h-9 w-full rounded-lg" />
     </div>
   );
 }
