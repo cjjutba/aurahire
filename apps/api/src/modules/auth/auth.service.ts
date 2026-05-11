@@ -523,12 +523,12 @@ export class AuthService {
         : AUDIT_ACTIONS.USER_REGISTERED_CANDIDATE;
 
     void this.auditService.log({
-      actorId: userId,
-      actorType: "user",
+      actorId: null,
+      actorType: "system",
       action: auditAction,
       entityType: "user",
       entityId: userId,
-      details: { email, status: "verification_pending" },
+      details: { email, user_id: userId, status: "verification_pending" },
       ...meta,
     });
   }
