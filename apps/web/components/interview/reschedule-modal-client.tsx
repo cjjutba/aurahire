@@ -218,6 +218,10 @@ export function RescheduleModalClient({
       setHasConflict(false);
       return;
     }
+    if (durationMinutes < 15 || durationMinutes > 240) {
+      setHasConflict(false);
+      return;
+    }
     if (conflictTimerRef.current) clearTimeout(conflictTimerRef.current);
     conflictTimerRef.current = setTimeout(async () => {
       try {
@@ -285,6 +289,14 @@ export function RescheduleModalClient({
     }
     if (!addressLine.trim()) {
       toastApiError(null, "Check your input", "Address is required.");
+      return;
+    }
+    if (durationMinutes < 15 || durationMinutes > 240) {
+      toastApiError(
+        null,
+        "Check your input",
+        "Duration must be between 15 and 240 minutes.",
+      );
       return;
     }
     const urlErr = validateMapUrl(mapUrl);

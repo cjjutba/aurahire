@@ -187,6 +187,10 @@ export function ScheduleInterviewSheetClient({
       setConflicts(null);
       return;
     }
+    if (durationMinutes < 15 || durationMinutes > 240) {
+      setConflicts(null);
+      return;
+    }
     if (conflictTimerRef.current) clearTimeout(conflictTimerRef.current);
     conflictTimerRef.current = setTimeout(async () => {
       try {
@@ -263,6 +267,14 @@ export function ScheduleInterviewSheetClient({
     }
     if (!addressLine.trim()) {
       toastApiError(null, "Check your input", "Address is required.");
+      return;
+    }
+    if (durationMinutes < 15 || durationMinutes > 240) {
+      toastApiError(
+        null,
+        "Check your input",
+        "Duration must be between 15 and 240 minutes.",
+      );
       return;
     }
     const urlErr = validateMapUrl(mapUrl);
