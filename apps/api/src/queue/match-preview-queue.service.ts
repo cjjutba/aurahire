@@ -50,7 +50,7 @@ export class MatchPreviewQueueService {
   ): Promise<string | null> {
     try {
       const job = await this.queue.add("precompute", payload, {
-        jobId: `precompute:${payload.candidateId}:${payload.resumeId}`,
+        jobId: `precompute__${payload.candidateId}__${payload.resumeId}`,
         attempts: 1,
         removeOnComplete: { age: 86400 },
         removeOnFail: { age: 7 * 86400 },
