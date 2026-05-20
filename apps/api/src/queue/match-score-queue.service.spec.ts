@@ -19,7 +19,7 @@ describe("MatchScoreQueueService.enqueue", () => {
         applicationId: "00000000-0000-4000-8000-000000000001",
       }),
       expect.objectContaining({
-        jobId: "score:00000000-0000-4000-8000-000000000001",
+        jobId: "score__00000000-0000-4000-8000-000000000001",
         attempts: 3,
       }),
     );

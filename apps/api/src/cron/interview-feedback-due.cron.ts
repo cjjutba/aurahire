@@ -38,7 +38,15 @@ export class InterviewFeedbackDueCron {
   /** Public for the dev-only debug endpoint. */
   async execute(): Promise<{ notified: number; durationMs: number }> {
     const startedAt = Date.now();
-    const cutoff = new Date(Date.now() - FEEDBACK_GRACE_PERIOD_MS);
+    // ISO string instead of a Date so the value passes through Drizzle's
+    // raw sql template (below) as a plain text param the server then casts
+    // to timestamptz. Raw Date in a `sql\`\`` template bypasses Drizzle's
+    // column encoder and confuses postgres-js (the `prepare: false` Bind
+    // path crashes with "byteLength received an instance of Date" once a
+    // server-side parameter description disagrees with the inferred type).
+    const cutoffIso = new Date(
+      Date.now() - FEEDBACK_GRACE_PERIOD_MS,
+    ).toISOString();
 
     const due = await this.db
       .select({
@@ -64,7 +72,7 @@ export class InterviewFeedbackDueCron {
           isNull(interviewsTable.feedbackDueNotifiedAt),
           // Drizzle has no native interval-arithmetic helper for column-derived values;
           // raw SQL computes interview end time = scheduledAt + durationMinutes.
-          sql`(${interviewsTable.scheduledAt} + (${interviewsTable.durationMinutes} || ' minutes')::interval) < ${cutoff}::timestamptz`,
+          sql`(${interviewsTable.scheduledAt} + (${interviewsTable.durationMinutes} || ' minutes')::interval) < ${cutoffIso}::timestamptz`,
         ),
       )
       .limit(200);

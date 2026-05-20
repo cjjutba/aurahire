@@ -1,7 +1,7 @@
 import { ConfigService } from "@nestjs/config";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
-import { and, eq, lt, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   offersTable,
   applicationsTable,
@@ -78,7 +78,10 @@ export class ExpireOffersCron {
           and(
             eq(offersTable.status, "pending"),
             sql`${offersTable.expiresAt} IS NOT NULL`,
-            lt(offersTable.expiresAt, new Date()),
+            // Server-evaluated `now()` instead of a bound Date — same intent
+            // ("offers past their expiry the moment this cron fires") with
+            // no Date-binding to postgres-js.
+            sql`${offersTable.expiresAt} < now()`,
           ),
         );
 

@@ -30,7 +30,7 @@ export class MatchScoreQueueService {
   async enqueue(payload: MatchScorePayload): Promise<void> {
     try {
       const job = await this.queue.add("score", payload, {
-        jobId: `score:${payload.applicationId}`,
+        jobId: `score__${payload.applicationId}`,
         attempts: 3,
         backoff: { type: "exponential", delay: 5_000 },
         removeOnComplete: { age: 86_400 },

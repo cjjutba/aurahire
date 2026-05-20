@@ -24,9 +24,13 @@ export interface ProfileScoreRecomputePayload {
 export interface ProfileScoreEnqueueOptions {
   /**
    * Override the BullMQ jobId used for dedupe. Defaults to the
-   * `recompute:<candidate>:<resume>:<reason>` shape so duplicate enqueues
-   * within a UI flow collapse. Pass a stable value (e.g. backfill keyed
-   * on candidate+resume only) when you want a wider dedupe window.
+   * `recompute__<candidate>__<resume>__<reason>` shape so duplicate
+   * enqueues within a UI flow collapse. Pass a stable value (e.g.
+   * backfill keyed on candidate+resume only) when you want a wider dedupe
+   * window. `__` (double underscore) is used in place of `:` because
+   * BullMQ rejects custom ids that contain a colon unless the id splits
+   * into exactly three parts — a fragile constraint, so we avoid the
+   * separator entirely.
    */
   jobId?: string;
 }
@@ -62,7 +66,7 @@ export class ProfileScoreQueueService {
     try {
       const jobId =
         options.jobId ??
-        `recompute:${payload.candidateId}:${payload.resumeId}:${payload.reason}`;
+        `recompute__${payload.candidateId}__${payload.resumeId}__${payload.reason}`;
       const job = await this.queue.add("recompute", payload, {
         jobId,
         attempts: 1,

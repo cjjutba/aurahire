@@ -88,9 +88,10 @@ export class CandidateProfilesService {
    * appears.
    *
    * Idempotency comes from the BullMQ jobId override:
-   * `profile-score:<candidate>:<resume>`. If a backfill is already
-   * queued or running, the second `add` is a no-op. Repeat dashboard
-   * hits within the same session won't pile up duplicate work.
+   * `profile-score-backfill__<candidate>__<resume>`. If a backfill is
+   * already queued or running, the second `add` is a no-op. Repeat
+   * dashboard hits within the same session won't pile up duplicate work.
+   * (`__` instead of `:` because BullMQ rejects colons in custom ids.)
    *
    * Short-circuits when:
    *   1. The candidate already has a non-stale `profile_scores` row.
@@ -117,7 +118,7 @@ export class CandidateProfilesService {
         // want a "manual_recompute" reason colliding with a parallel
         // "profile_change" job, but we DO want repeat portal hits to
         // collapse into a single backfill.
-        jobId: `profile-score-backfill:${candidateId}:${defaultResume.id}`,
+        jobId: `profile-score-backfill__${candidateId}__${defaultResume.id}`,
       },
     );
   }
