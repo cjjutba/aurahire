@@ -98,7 +98,12 @@ async function bootstrap() {
   });
 
   const port = Number(process.env.PORT ?? 3333);
-  await app.listen(port, "0.0.0.0");
+  // Bind address — defaults to 0.0.0.0 for local dev and containerized runs.
+  // In production on the shared droplet (iams-backend), this is set to
+  // 127.0.0.1 so only the on-host reverse proxy can reach the API; the
+  // public internet sees only Caddy/nginx on 80/443.
+  const host = process.env.HOST ?? "0.0.0.0";
+  await app.listen(port, host);
 
   // eslint-disable-next-line no-console
   console.log(`AuraHire API running at http://localhost:${port}`);
