@@ -14,8 +14,8 @@
 #   9. Caddy (reverse proxy with auto-HTTPS via Let's Encrypt)
 #
 # Usage from your Mac:
-#   scp deploy/provision.sh root@157.245.195.180:/root/
-#   ssh root@157.245.195.180 'bash /root/provision.sh'
+#   scp deploy/provision.sh root@167.71.217.44:/root/
+#   ssh root@167.71.217.44 'bash /root/provision.sh'
 
 set -euo pipefail
 

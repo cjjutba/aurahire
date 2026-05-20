@@ -9,7 +9,7 @@
 # Reload (no downtime):     sudo systemctl reload caddy
 # Logs:                     sudo journalctl -u caddy -f
 
-157-245-195-180.sslip.io {
+167-71-217-44.sslip.io {
     encode gzip zstd
 
     # WebSocket path — long-lived connections, keep-alive heartbeats handled
