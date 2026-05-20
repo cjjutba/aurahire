@@ -83,8 +83,16 @@ else
   pm2 save
 fi
 
-echo "==> Reload Caddy"
-sudo systemctl reload caddy || true
+echo "==> Reload reverse proxy (iams-nginx on shared droplet, Caddy elsewhere)"
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^iams-nginx$'; then
+  # Shared iams-backend droplet: aurahire rides the IAMS nginx (see
+  # deploy/nginx.aurahire.conf). A reload picks up any config tweaks
+  # appended by an updated deploy.
+  sudo docker exec iams-nginx nginx -s reload || true
+else
+  # Dedicated droplet (legacy): Caddy on the host.
+  sudo systemctl reload caddy || true
+fi
 
 echo ""
 echo "✅ Deploy complete"
