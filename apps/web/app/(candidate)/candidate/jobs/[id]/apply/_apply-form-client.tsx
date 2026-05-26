@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, FileText, Sparkles, Star } from "lucide-react";
+import { AUTO_REJECT_THRESHOLD } from "@aurahire/shared";
 
 import { Textarea } from "@/components/ui/textarea";
 import {
   ApplyMatchSummary,
   type ApplyMatchPreview,
 } from "@/components/score/apply-match-summary";
+import { BelowThresholdNotice } from "@/components/portal/below-threshold-notice";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { createSupabaseBrowserClient } from "@/lib/auth/client";
 import { toastSuccess, toastApiError } from "@/lib/toast";
 
@@ -32,6 +35,7 @@ const COVER_LETTER_MAX = 5000;
 
 export function ApplyFormClient({ jobId, resumes, preview }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const defaultResumeId =
     resumes.find((r) => r.isDefault)?.id ?? resumes[0]?.id ?? "";
   const [resumeId, setResumeId] = useState<string>(defaultResumeId);
@@ -43,6 +47,17 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
 
   const selectedResumeMatchesPreview =
     preview !== null && preview.resumeId === resumeId;
+
+  // Per thesis panel revision (May 2026): the candidate sees both an
+  // inline warning AND a confirm dialog when the preview score is below
+  // the auto-reject threshold. The inline notice is informational; the
+  // confirm dialog is the actual gate before the irreversible submit.
+  // We only gate when the selected resume matches the preview — if the
+  // candidate switched resumes the preview no longer applies.
+  const previewIsBelowThreshold =
+    preview !== null &&
+    selectedResumeMatchesPreview &&
+    preview.overallScore < AUTO_REJECT_THRESHOLD;
 
   function switchToPreviewResume() {
     if (preview) setResumeId(preview.resumeId);
@@ -64,6 +79,33 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
         `Please trim to ${COVER_LETTER_MAX.toLocaleString()} characters or less.`,
       );
       return;
+    }
+    if (previewIsBelowThreshold && preview) {
+      // Final confirm before submitting an application that will be
+      // auto-rejected. The candidate has already seen the inline notice;
+      // this is the "are you sure" gate at the irreversible moment.
+      const ok = await confirm({
+        title: "Apply with a limited match?",
+        description: (
+          <>
+            Your match score is{" "}
+            <span className="font-mono font-semibold">
+              {preview.overallScore}
+            </span>{" "}
+            / 100, below the{" "}
+            <span className="font-mono font-semibold">
+              {AUTO_REJECT_THRESHOLD}
+            </span>{" "}
+            minimum this role requires. Submitting will record your
+            application, but the system will auto-reject it as soon as
+            final scoring completes.
+          </>
+        ),
+        confirmLabel: "Submit anyway",
+        cancelLabel: "Go back",
+        variant: "warning",
+      });
+      if (!ok) return;
     }
     setSubmitting(true);
     try {
@@ -146,6 +188,13 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
           preview={preview}
           selectedResumeMatchesPreview={selectedResumeMatchesPreview}
           onSwitchToPreviewResume={switchToPreviewResume}
+        />
+      )}
+
+      {previewIsBelowThreshold && preview && (
+        <BelowThresholdNotice
+          score={preview.overallScore}
+          threshold={AUTO_REJECT_THRESHOLD}
         />
       )}
 
@@ -244,9 +293,11 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
           className="inline-flex h-11 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-6 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
         >
           <Sparkles className="h-4 w-4" />
-          {preview && selectedResumeMatchesPreview
-            ? "Lock in match & apply"
-            : "Submit application"}
+          {previewIsBelowThreshold
+            ? "Submit anyway"
+            : preview && selectedResumeMatchesPreview
+              ? "Lock in match & apply"
+              : "Submit application"}
         </button>
       </div>
 
@@ -266,9 +317,11 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
           className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-5 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)] disabled:cursor-not-allowed disabled:bg-[var(--color-primary-disabled)]"
         >
           <Sparkles className="h-4 w-4" />
-          {preview && selectedResumeMatchesPreview
-            ? "Lock in & apply"
-            : "Submit"}
+          {previewIsBelowThreshold
+            ? "Submit anyway"
+            : preview && selectedResumeMatchesPreview
+              ? "Lock in & apply"
+              : "Submit"}
         </button>
       </div>
     </>

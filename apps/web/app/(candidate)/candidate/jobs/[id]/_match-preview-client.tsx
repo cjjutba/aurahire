@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { Sparkles, ChevronRight, AlertCircle, RotateCw } from "lucide-react";
+import { AUTO_REJECT_THRESHOLD } from "@aurahire/shared";
 
 import { ScoreRing } from "@/components/score/score-ring";
 import { MatchBandChip } from "@/components/score/match-band-chip";
@@ -13,6 +14,7 @@ import {
   MATCH_SCORE_STAGES,
 } from "@/components/ai/ai-progress-indicator";
 import { Button } from "@/components/ui/button";
+import { BelowThresholdNotice } from "@/components/portal/below-threshold-notice";
 import { ClientApiError, clientApiFetch } from "@/hooks/_client-fetch";
 import { useConfirm } from "@/components/providers/confirm-provider";
 
@@ -367,6 +369,20 @@ export function MatchPreviewClient({ jobId, hidden }: MatchPreviewClientProps) {
               </p>
             </div>
           </div>
+
+          {/* Per thesis panel revision (May 2026): when the preview score
+              is below the auto-reject threshold the candidate sees a
+              warning explaining what will happen if they submit. The
+              apply flow does NOT block — the confirm dialog at the
+              submit step is the final gate. */}
+          {total < AUTO_REJECT_THRESHOLD && (
+            <div className="mt-5">
+              <BelowThresholdNotice
+                score={total}
+                threshold={AUTO_REJECT_THRESHOLD}
+              />
+            </div>
+          )}
 
           {/* Component breakdown, clickable rows */}
           <div className="mt-5 border-t border-[var(--color-hairline-soft)] pt-4">
