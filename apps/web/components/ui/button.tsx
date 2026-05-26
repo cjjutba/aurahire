@@ -1,7 +1,9 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -40,18 +42,57 @@ const buttonVariants = cva(
   },
 );
 
+/**
+ * Per thesis panel revision (May 2026): "Once the button is clicked, it
+ * should automatically be disabled and cannot be clicked again." The
+ * shared Button primitive accepts a `pending` prop that:
+ *   - sets `disabled` and `aria-busy`
+ *   - renders a leading spinner in place of any leading icon
+ *   - blocks pointer events
+ *
+ * Callers pass `pending={mutation.isPending}` (TanStack Query) or
+ * `pending={form.formState.isSubmitting}` (React Hook Form) so the same
+ * primitive enforces the double-submit guard uniformly.
+ *
+ * The prop is additive — existing call sites work unchanged. Wrap any
+ * leading `<Icon />` element with the spinner conditionally only when
+ * you want it replaced; the simplest pattern is `<Button pending={X}
+ * leadingIcon={<Icon />}>...</Button>` but this primitive keeps backward
+ * compatibility by simply prepending a spinner to children when pending.
+ */
+type ButtonBaseProps = ButtonPrimitive.Props &
+  VariantProps<typeof buttonVariants> & {
+    pending?: boolean;
+  };
+
 function Button({
   className,
   variant = "default",
   size = "default",
+  pending = false,
+  disabled,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonBaseProps) {
+  const computedDisabled = disabled || pending;
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      disabled={computedDisabled}
+      aria-busy={pending || undefined}
+      aria-disabled={computedDisabled || undefined}
       {...props}
-    />
+    >
+      {pending ? (
+        <>
+          <ButtonSpinner />
+          {children}
+        </>
+      ) : (
+        children
+      )}
+    </ButtonPrimitive>
   );
 }
 

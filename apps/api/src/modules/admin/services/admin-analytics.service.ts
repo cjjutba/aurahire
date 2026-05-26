@@ -158,16 +158,15 @@ export class AdminAnalyticsService {
   ): Array<{
     date: string;
     applied: number;
-    screening: number;
     interview: number;
     offer: number;
     hired: number;
     rejected: number;
     withdrawn: number;
   }> {
+    // Per thesis panel revision (May 2026): "screening" stage removed.
     const STATUSES = [
       "applied",
-      "screening",
       "interview",
       "offer",
       "hired",

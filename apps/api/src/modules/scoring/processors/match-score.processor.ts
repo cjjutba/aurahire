@@ -1,4 +1,4 @@
-import { Inject, Logger } from "@nestjs/common";
+import { forwardRef, Inject, Logger } from "@nestjs/common";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Job } from "bullmq";
 import { eq } from "drizzle-orm";
@@ -9,6 +9,8 @@ import { EventsService } from "../../../realtime";
 import { MATCH_SCORE_QUEUE } from "../../../queue/queue.constants";
 import type { MatchScorePayload } from "../../../queue/match-score-queue.service";
 import { ScoringService } from "../scoring.service";
+import { ApplicationsService } from "../../applications/applications.service";
+import { maybeAutoRejectByScore } from "../../applications/auto-reject-on-score.helper";
 
 /**
  * Async match-scoring worker. Triggered by ApplicationsService.apply()
@@ -29,6 +31,8 @@ export class MatchScoreProcessor extends WorkerHost {
     @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
     private readonly scoring: ScoringService,
     private readonly events: EventsService,
+    @Inject(forwardRef(() => ApplicationsService))
+    private readonly applications: ApplicationsService,
   ) {
     super();
   }
@@ -103,6 +107,34 @@ export class MatchScoreProcessor extends WorkerHost {
       band: dto.band,
       scoredAt: new Date().toISOString(),
     });
+
+    // Score-based auto-rejection (thesis panel revision, May 2026).
+    // Async path: evaluate the threshold once the score row has been
+    // written and broadcast. The helper is idempotent — if the
+    // recruiter already moved the application past `applied`, this is
+    // a no-op.
+    try {
+      const threshold = await this.applications.getAutoRejectThreshold();
+      await maybeAutoRejectByScore(
+        {
+          applicationsService: {
+            findStatus: (id) => this.applications.findStatus(id),
+            transitionFromSystem: (id, to, args) =>
+              this.applications.autoRejectByLowScore(id, to, args),
+          },
+          logger: this.logger,
+        },
+        {
+          applicationId,
+          overallScore: dto.overallScore,
+          threshold,
+        },
+      );
+    } catch (err) {
+      this.logger.warn(
+        `[score-job ${job.id}] auto-reject step failed: ${(err as Error).message}`,
+      );
+    }
 
     this.logger.log(
       `[score-job ${job.id}] ok in ${Date.now() - startedAt}ms — ${dto.overallScore}/100 ${dto.band}`,

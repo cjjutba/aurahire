@@ -14,9 +14,9 @@ import { ShortlistButtonClient } from "./_shortlist-button-client";
 import { OfferConfirmModalClient } from "./_offer-confirm-modal-client";
 import { HireConfirmationModalClient } from "./_hire-confirmation-modal-client";
 
+// Per thesis panel revision (May 2026): "Screening" stage removed.
 const PIPELINE_STAGES: Array<{ key: string; label: string }> = [
   { key: "applied", label: "Applied" },
-  { key: "screening", label: "Screening" },
   { key: "interview", label: "Interview" },
   { key: "offer", label: "Offer" },
   { key: "hired", label: "Hired" },
@@ -26,7 +26,6 @@ const PIPELINE_STAGES: Array<{ key: string; label: string }> = [
 // separate funnel stages, the recruiter still needs to mark Hired afterward.
 const STATUS_TO_STAGE_KEY: Record<string, string> = {
   applied: "applied",
-  screening: "screening",
   interview: "interview",
   offer: "offer",
   offer_accepted: "offer",
@@ -42,11 +41,9 @@ interface AdvanceAction {
 }
 
 const NEXT_POSITIVE: Record<string, AdvanceAction[] | null> = {
-  applied: [
-    { status: "screening", label: "Move to Screening" },
-    { status: "interview", label: "Move to Interview" },
-  ],
-  screening: [{ status: "interview", label: "Move to Interview" }],
+  // Screening stage removed per panel revision (May 2026) — applied
+  // goes directly to interview if score >= threshold; below = auto-reject.
+  applied: [{ status: "interview", label: "Move to Interview" }],
   interview: [
     {
       status: "offer",
@@ -89,6 +86,14 @@ interface DecisionBarProps {
   /** Used by the hire confirmation modal in Task 17. */
   candidateName?: string;
   jobTitle?: string;
+  /**
+   * Per thesis panel revision (May 2026): the resume download stays
+   * disabled until any interview on this application is `completed`.
+   * Parent computes this from `application.identityRevealed` (the
+   * server uses the same predicate). Disabled state surfaces a tooltip
+   * explaining the policy.
+   */
+  canDownloadResume?: boolean;
 }
 
 type PendingAction = "download" | `advance-${number}` | "reject";
@@ -102,6 +107,7 @@ export function DecisionBarClient({
   siblingInflightCount,
   candidateName,
   jobTitle,
+  canDownloadResume = true,
 }: DecisionBarProps) {
   const router = useRouter();
   const confirm = useConfirm();
@@ -272,8 +278,18 @@ export function DecisionBarClient({
           <button
             type="button"
             onClick={downloadResume}
-            disabled={isPending}
-            className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 text-sm font-medium text-[var(--color-body)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] disabled:opacity-60"
+            disabled={isPending || !canDownloadResume}
+            // Per thesis panel revision (May 2026): the resume becomes
+            // downloadable once an interview is completed. Native
+            // tooltip via `title` keeps the explanation discoverable
+            // without pulling in a heavyweight tooltip dependency.
+            title={
+              canDownloadResume
+                ? undefined
+                : "Available after a completed interview."
+            }
+            aria-disabled={!canDownloadResume || isPending}
+            className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 text-sm font-medium text-[var(--color-body)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {pending === "download" ? (
               <ButtonSpinner />

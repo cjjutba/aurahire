@@ -280,12 +280,14 @@ describe("ApplicationsService — notification emissions", () => {
   // ── Task 13 — updateStatus() emits application_status_changed ────────────
 
   it("updateStatus() emits 'application_status_changed' to the candidate with metadata", async () => {
+    // Per thesis panel revision (May 2026): "screening" stage was removed,
+    // so the first positive transition from "applied" is now "interview".
     const appBefore = makeApplication({ status: "applied" });
     repo.findById.mockResolvedValue(appBefore);
     jobsRepo.findById.mockResolvedValue(makeJob());
 
     await service.updateStatus(recruiterUser, COMPANY_ID, APPLICATION_ID, {
-      newStatus: "screening",
+      newStatus: "interview",
     } as any);
 
     expect(notifications.emit).toHaveBeenCalledWith(
@@ -302,8 +304,8 @@ describe("ApplicationsService — notification emissions", () => {
           jobTitle: "Software Engineer",
           companyName: "AcmeCorp",
           fromStatus: "applied",
-          newStatus: "screening",
-          toStatus: "screening",
+          newStatus: "interview",
+          toStatus: "interview",
           occurredAt: expect.any(String),
         }),
       }),

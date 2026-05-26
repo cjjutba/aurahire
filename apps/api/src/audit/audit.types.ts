@@ -77,6 +77,15 @@ export const AUDIT_ACTIONS = {
     "application.auto_transition_offer_expired",
   APPLICATION_AUTO_REJECTED_POSITION_FILLED:
     "application.auto_rejected_position_filled",
+  // Auto-rejection when the computed match score falls below the
+  // admin-configured threshold (default 75). Wired into both the sync
+  // preview-promotion path and the async match-score worker.
+  APPLICATION_AUTO_REJECTED_LOW_SCORE: "application.auto_rejected_low_score",
+  // One-shot migration: rows with status='screening' are bulk-updated to
+  // 'applied' before the screening enum value is dropped.
+  APPLICATION_MIGRATED_FROM_SCREENING: "application.migrated_from_screening",
+  // Recruiter downloaded a candidate resume — gated on a completed interview.
+  RESUME_DOWNLOADED: "resume.downloaded",
   // Cron-driven housekeeping
   JOB_ARCHIVED_BY_CRON: "job.archived_by_cron",
   USER_DELETED_UNVERIFIED_CLEANUP: "user.deleted_unverified_cleanup",

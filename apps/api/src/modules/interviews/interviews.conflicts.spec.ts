@@ -139,6 +139,16 @@ function makeService(opts: MockRepoOptions = {}) {
     events as never,
     notifications as never,
     { create: jest.fn() } as never,
+    { findMatchScoreByApplicationId: jest.fn().mockResolvedValue(null) } as never,
+    {
+      select: jest.fn().mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([{ autoRejectThreshold: 75 }]),
+          }),
+        }),
+      }),
+    } as never,
   );
 
   return { svc, interviewsRepo, applicationsRepo };

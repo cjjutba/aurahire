@@ -55,15 +55,11 @@ function extractKpis(body: RecruiterStatsResponse): KpiData {
   };
 }
 
+// Per thesis panel revision (May 2026): "Screening" stage removed.
 const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
   {
     applied: {
       label: "Applied",
-      dot: "bg-[var(--color-status-info)]",
-      text: "text-[var(--color-status-info)]",
-    },
-    screening: {
-      label: "Screening",
       dot: "bg-[var(--color-status-info)]",
       text: "text-[var(--color-status-info)]",
     },
@@ -104,7 +100,6 @@ function getAppStatus(s: string): NonNullable<(typeof APP_STATUS)[string]> {
 
 const STATUS_BAR_ORDER = [
   "applied",
-  "screening",
   "interview",
   "offer",
   "hired",

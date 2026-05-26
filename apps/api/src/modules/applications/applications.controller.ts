@@ -151,11 +151,15 @@ export class ApplicationsController {
     @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Query() query: RecentApplicationsQueryDto,
   ): Promise<ApplicationListEnvelopeDto> {
-    const data = await this.service.recentForRecruiter(
+    const raw = await this.service.recentForRecruiter(
       user,
       activeCompany.companyId,
       query.limit,
     );
+    // Per thesis panel revision: redact candidate PII for recruiter
+    // pre-interview-completion. The transformer is idempotent for
+    // already-revealed rows (offer / hired stages).
+    const data = await this.service.toDtosForRecruiterBatch(raw);
     return { data };
   }
 
@@ -173,11 +177,15 @@ export class ApplicationsController {
     data: ApplicationDto[];
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
-    return this.service.listShortlistForRecruiter(
+    const raw = await this.service.listShortlistForRecruiter(
       user,
       activeCompany.companyId,
       query,
     );
+    return {
+      data: await this.service.toDtosForRecruiterBatch(raw.data),
+      meta: raw.meta,
+    };
   }
 
   @Get("recruiter-list")
@@ -195,11 +203,15 @@ export class ApplicationsController {
     data: ApplicationDto[];
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> {
-    return this.service.listAllForRecruiter(
+    const raw = await this.service.listAllForRecruiter(
       user,
       activeCompany.companyId,
       query,
     );
+    return {
+      data: await this.service.toDtosForRecruiterBatch(raw.data),
+      meta: raw.meta,
+    };
   }
 
   @Get("by-job/:jobId")
@@ -213,11 +225,12 @@ export class ApplicationsController {
     @ActiveCompany() activeCompany: ActiveCompanyContext,
     @Param("jobId") jobId: string,
   ): Promise<ApplicationListEnvelopeDto> {
-    const data = await this.service.listForJob(
+    const raw = await this.service.listForJob(
       user,
       activeCompany.companyId,
       jobId,
     );
+    const data = await this.service.toDtosForRecruiterBatch(raw);
     return { data };
   }
 
@@ -235,7 +248,14 @@ export class ApplicationsController {
     // attaches activeCompanyId only for recruiters; pass null otherwise.
     const reqWithCtx = req as FastifyRequest & { activeCompanyId?: string };
     const companyId = reqWithCtx.activeCompanyId ?? null;
-    const data = await this.service.getById(user, companyId, id);
+    const raw = await this.service.getById(user, companyId, id);
+    // Per thesis panel revision (May 2026): recruiters see candidate PII
+    // only after an interview is completed. The viewer-aware wrapper
+    // applies redaction; candidate-self and admin views are pass-through.
+    const data =
+      user.role === "recruiter"
+        ? await this.service.toDtoForViewer(user, id)
+        : raw;
     return { data };
   }
 
@@ -380,7 +400,12 @@ export class ApplicationsController {
   ): Promise<SignedDownloadEnvelopeDto> {
     const reqWithCtx = req as FastifyRequest & { activeCompanyId?: string };
     const companyId = reqWithCtx.activeCompanyId ?? null;
-    const data = await this.service.getResumeDownload(user, companyId, id);
+    const data = await this.service.getResumeDownload(
+      user,
+      companyId,
+      id,
+      this.requestMeta(req),
+    );
     return { data };
   }
 

@@ -37,7 +37,7 @@ interface BundleBody {
       applicationsByStatus: Array<{
         date: string;
         applied: number;
-        screening: number;
+        // Per thesis panel revision (May 2026): "screening" stage removed.
         interview: number;
         offer: number;
         hired: number;

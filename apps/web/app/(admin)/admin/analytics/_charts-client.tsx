@@ -34,7 +34,7 @@ interface Props {
     applicationsByStatus: Array<{
       date: string;
       applied: number;
-      screening: number;
+      // Per thesis panel revision (May 2026): "screening" stage removed.
       interview: number;
       offer: number;
       hired: number;
@@ -64,7 +64,6 @@ const ROLE_COLORS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   applied: "var(--color-primary)",
-  screening: "var(--color-score-mid)",
   interview: "var(--color-primary-active)",
   offer: "var(--color-score-high)",
   hired: "var(--color-score-high)",
@@ -112,9 +111,9 @@ function bucketColor(bucket: string): string {
   return "var(--color-score-low)";
 }
 
+// Per thesis panel revision (May 2026): "screening" stage removed.
 const APPLICATION_STATUSES = [
   "applied",
-  "screening",
   "interview",
   "offer",
   "hired",

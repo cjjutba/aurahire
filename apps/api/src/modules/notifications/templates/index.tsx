@@ -73,8 +73,6 @@ function statusInAppTitle(status: string, jobTitle: string): string {
       return `Offer extended for ${jobTitle}`;
     case "interview":
       return `You advanced to the Interview stage for ${jobTitle}`;
-    case "screening":
-      return `Your application for ${jobTitle} is under review`;
     case "rejected":
       return `Update on your application for ${jobTitle}`;
     case "withdrawn":
@@ -98,8 +96,6 @@ function statusInAppBody(
       return `${companyName} extended you an offer for ${jobTitle}. Open it to review the details.`;
     case "interview":
       return `Your application for ${jobTitle} at ${companyName} advanced to the Interview stage.`;
-    case "screening":
-      return `Your application for ${jobTitle} at ${companyName} is under review.`;
     case "rejected":
       return `${companyName} has decided to move forward with other candidates for ${jobTitle}. Thank you for the effort you put in.`;
     case "withdrawn":
@@ -119,8 +115,6 @@ function statusEmailHeadline(status: string, jobTitle: string): string {
       return `Great news, you have an offer for ${jobTitle}`;
     case "interview":
       return `You're moving to the Interview stage for ${jobTitle}`;
-    case "screening":
-      return `Your ${jobTitle} application is under review`;
     case "rejected":
       return `Update on your ${jobTitle} application`;
     case "withdrawn":
@@ -144,8 +138,6 @@ function statusEmailBody(
       return `${companyName} has extended you an offer for ${jobTitle}. Take a moment to review the full details and respond when you are ready.`;
     case "interview":
       return `Exciting update. Your application for ${jobTitle} at ${companyName} has advanced to the Interview stage. Watch for scheduling details to arrive soon.`;
-    case "screening":
-      return `Your application for ${jobTitle} at ${companyName} is now under review. The hiring team will be in touch with next steps shortly.`;
     case "rejected":
       return `Thank you for your interest in ${jobTitle} at ${companyName}. The team has decided to move forward with other candidates this time. We genuinely appreciate the time you invested and wish you the very best in your search.`;
     case "withdrawn":
@@ -184,8 +176,6 @@ function statusEmailSubject(status: string, jobTitle: string): string {
       return `Update on your ${jobTitle} application`;
     case "withdrawn":
       return `Application withdrawn: ${jobTitle}`;
-    case "screening":
-      return `Your ${jobTitle} application is under review`;
     case "applied":
       return `We received your application for ${jobTitle}`;
     default:

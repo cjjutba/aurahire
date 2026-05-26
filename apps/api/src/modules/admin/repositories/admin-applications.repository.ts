@@ -37,7 +37,6 @@ export interface ListAdminApplicationsFilters {
   candidateId?: string;
   status?:
     | "applied"
-    | "screening"
     | "interview"
     | "offer"
     | "offer_accepted"

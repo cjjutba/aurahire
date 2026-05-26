@@ -8,6 +8,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { MatchBandChip } from "@/components/score/match-band-chip";
 import { ClickableRow } from "@/components/ui/clickable-row";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnonAvatar } from "@/components/portal/anon-avatar";
+import { RecruiterFairnessBanner } from "@/components/portal/recruiter-fairness-banner";
 import { useRecruiterApplicationsListQuery } from "@/hooks/use-applications";
 import { RealtimeEvent } from "@/lib/realtime";
 import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
@@ -20,10 +22,12 @@ interface AppRow {
   id: string;
   status: string;
   appliedAt: string;
+  // Per thesis panel revision (May 2026): PII fields nullable for the
+  // recruiter-side redacted view before interview completion.
   candidate: {
     id: string;
     fullName: string;
-    email: string;
+    email: string | null;
     headline: string | null;
   } | null;
   job: {
@@ -35,17 +39,16 @@ interface AppRow {
     band: "strong" | "partial" | "limited";
     overallScore: number;
   } | null;
+  identityRevealed?: boolean;
 }
 
+// Per thesis panel revision (May 2026): "Screening" stage removed —
+// applications go directly from "applied" to "interview" or are
+// auto-rejected at score < threshold.
 const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
   {
     applied: {
       label: "Applied",
-      dot: "bg-[var(--color-status-info)]",
-      text: "text-[var(--color-status-info)]",
-    },
-    screening: {
-      label: "Screening",
       dot: "bg-[var(--color-status-info)]",
       text: "text-[var(--color-status-info)]",
     },
@@ -137,6 +140,10 @@ export function ApplicationsListClient({
   };
 
   const filtersActive = !!(params.q || params.status || params.band);
+  // Per thesis panel revision (May 2026): if any row on the current page
+  // is still in the redacted phase (pre-interview-completion), surface
+  // the fairness banner once at the top of the page.
+  const hasHiddenIdentities = rows.some((r) => r.identityRevealed === false);
 
   if (isError) {
     return (
@@ -169,6 +176,8 @@ export function ApplicationsListClient({
         band={params.band ?? "all"}
         sort={params.sort}
       />
+
+      {hasHiddenIdentities && <RecruiterFairnessBanner />}
 
       {isLoading ? (
         <LoadingState />
@@ -232,6 +241,10 @@ function ApplicationRow({ app }: { app: AppRow }) {
   const score = app.matchScore;
   const candidateName = app.candidate?.fullName ?? "Unknown candidate";
   const initials = getInitials(candidateName);
+  // Per thesis panel revision (May 2026): the recruiter-side avatar is
+  // anonymized (skill glyph) until interview completion. Server returns
+  // `identityRevealed: false` along with a stable handle in `fullName`.
+  const identityHidden = app.identityRevealed === false;
   return (
     <ClickableRow
       href={`/recruiter/applications/${app.id}`}
@@ -239,22 +252,28 @@ function ApplicationRow({ app }: { app: AppRow }) {
     >
       <td className="px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div
-            aria-hidden
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-full)] bg-[var(--color-surface-strong)] text-[11px] font-semibold uppercase text-[var(--color-ink)]"
-          >
-            {initials !== "?" ? (
-              initials
-            ) : (
-              <User2 className="h-4 w-4 text-[var(--color-muted)]" />
-            )}
-          </div>
+          {identityHidden ? (
+            <AnonAvatar size="sm" />
+          ) : (
+            <div
+              aria-hidden
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-full)] bg-[var(--color-surface-strong)] text-[11px] font-semibold uppercase text-[var(--color-ink)]"
+            >
+              {initials !== "?" ? (
+                initials
+              ) : (
+                <User2 className="h-4 w-4 text-[var(--color-muted)]" />
+              )}
+            </div>
+          )}
           <div className="min-w-0">
             <div className="truncate font-medium text-[var(--color-ink)]">
               {candidateName}
             </div>
             <div className="truncate text-xs text-[var(--color-muted)]">
-              {app.candidate?.headline ?? app.candidate?.email ?? ""}
+              {identityHidden
+                ? "Identity hidden until interview completion"
+                : (app.candidate?.headline ?? app.candidate?.email ?? "")}
             </div>
           </div>
         </div>

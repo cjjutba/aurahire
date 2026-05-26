@@ -5,9 +5,9 @@ import type { ApplicationStatus, UserRole } from "@aurahire/shared";
  * to end users (e.g. toast descriptions, button labels). Keys mirror the
  * API enum; values are sentence-case nouns suitable for inline use.
  */
+// Per thesis panel revision (May 2026): "Screening" stage removed.
 export const APPLICATION_STATUS_DISPLAY: Record<ApplicationStatus, string> = {
   applied: "Applied",
-  screening: "Screening",
   interview: "Interview",
   offer: "Offer",
   offer_accepted: "Offer Accepted",

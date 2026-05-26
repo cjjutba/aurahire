@@ -17,10 +17,10 @@ interface ToolbarProps {
   sort: string;
 }
 
+// Per thesis panel revision (May 2026): "Screening" stage removed.
 const STATUS_OPTIONS = [
   { value: "all", label: "All Statuses" },
   { value: "applied", label: "Applied" },
-  { value: "screening", label: "Screening" },
   { value: "interview", label: "Interview" },
   { value: "offer", label: "Offer" },
   { value: "offer_accepted", label: "Offer Accepted" },

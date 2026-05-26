@@ -14,6 +14,8 @@ import {
   ScoreDashboard,
   type ScoreDashboardComponent,
 } from "@/components/score/score-dashboard";
+import { AnonAvatar } from "@/components/portal/anon-avatar";
+import { RecruiterFairnessBanner } from "@/components/portal/recruiter-fairness-banner";
 
 import {
   DecisionBarClient,
@@ -34,15 +36,11 @@ const COMPONENT_LABELS: Record<string, string> = {
   cultural_fit: "Cultural Fit",
 };
 
+// Per thesis panel revision (May 2026): "Screening" stage removed.
 const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =
   {
     applied: {
       label: "Applied",
-      dot: "bg-[var(--color-status-info)]",
-      text: "text-[var(--color-status-info)]",
-    },
-    screening: {
-      label: "Screening",
       dot: "bg-[var(--color-status-info)]",
       text: "text-[var(--color-status-info)]",
     },
@@ -123,7 +121,9 @@ export interface AppDetail {
   candidate: {
     id: string;
     fullName: string;
-    email: string;
+    // Per thesis panel revision (May 2026): nullable for the recruiter
+    // redacted view before interview completion.
+    email: string | null;
     phone: string | null;
     headline: string | null;
   } | null;
@@ -131,6 +131,12 @@ export interface AppDetail {
   matchScore: MatchScoreData | null;
   shortlistedAt: string | null;
   inflightSiblingsCount: number;
+  /**
+   * Whether the recruiter can see candidate identity and download the
+   * resume. Becomes `true` once an interview on this application is
+   * marked `completed`. Server-decided; do not infer from the status.
+   */
+  identityRevealed?: boolean;
 }
 
 interface Props {
@@ -181,6 +187,11 @@ export function RecruiterApplicationDetailClient({
   const status = APP_STATUS[app.status] ?? APP_STATUS["applied"]!;
   const candidateName = app.candidate?.fullName ?? "Unknown candidate";
   const initials = getInitials(candidateName);
+  // Per thesis panel revision (May 2026): the recruiter sees an
+  // anonymized avatar + skill-only profile until any interview on this
+  // application is marked `completed`. After completion the server flips
+  // `identityRevealed` and the full PII surfaces.
+  const identityHidden = app.identityRevealed === false;
   const latestInterview = useMemo(
     () => findLatestInterview(interviews),
     [interviews],
@@ -229,16 +240,20 @@ export function RecruiterApplicationDetailClient({
         ← Back to applications
       </Link>
       <header className="flex min-w-0 items-start gap-3">
-        <div
-          aria-hidden
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-full)] bg-[var(--color-surface-strong)] text-sm font-semibold uppercase text-[var(--color-ink)]"
-        >
-          {initials !== "?" ? (
-            initials
-          ) : (
-            <User2 className="h-5 w-5 text-[var(--color-muted)]" />
-          )}
-        </div>
+        {identityHidden ? (
+          <AnonAvatar size="lg" />
+        ) : (
+          <div
+            aria-hidden
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-full)] bg-[var(--color-surface-strong)] text-sm font-semibold uppercase text-[var(--color-ink)]"
+          >
+            {initials !== "?" ? (
+              initials
+            ) : (
+              <User2 className="h-5 w-5 text-[var(--color-muted)]" />
+            )}
+          </div>
+        )}
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-normal tracking-tight text-[var(--color-ink)]">
             {candidateName}
@@ -328,6 +343,7 @@ export function RecruiterApplicationDetailClient({
       siblingInflightCount={app.inflightSiblingsCount}
       candidateName={app.candidate?.fullName}
       jobTitle={app.job?.title}
+      canDownloadResume={!identityHidden}
     />
   );
 
@@ -335,6 +351,7 @@ export function RecruiterApplicationDetailClient({
     return (
       <div className="mx-auto max-w-[1280px] space-y-8">
         {header}
+        {identityHidden && <RecruiterFairnessBanner />}
         {decisionBar}
         <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-8 text-center">
           <h2 className="text-lg font-semibold text-[var(--color-ink)]">
@@ -356,7 +373,16 @@ export function RecruiterApplicationDetailClient({
 
   return (
     <ScoreDashboard
-      header={header}
+      header={
+        <>
+          {header}
+          {identityHidden && (
+            <div className="mt-4">
+              <RecruiterFairnessBanner />
+            </div>
+          )}
+        </>
+      }
       topActions={decisionBar}
       stickyTopClass="lg:top-28"
       overallScore={score.overallScore}

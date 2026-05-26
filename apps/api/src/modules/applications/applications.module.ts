@@ -15,7 +15,9 @@ import { ApplicationsService } from "./applications.service";
     NotificationsModule,
     ProfilesModule,
     ResumesModule,
-    ScoringModule,
+    // forwardRef: ScoringModule's MatchScoreProcessor depends back on
+    // ApplicationsService for the score-based auto-reject hook.
+    forwardRef(() => ScoringModule),
     forwardRef(() => OffersModule),
   ],
   controllers: [ApplicationsController],

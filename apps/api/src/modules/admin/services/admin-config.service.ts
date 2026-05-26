@@ -131,6 +131,12 @@ export class AdminConfigService {
     diff("profileWeights", current.profileWeights, dto.profileWeights);
     diff("bandThresholds", current.bandThresholds, dto.bandThresholds);
     diff(
+      "autoRejectThreshold",
+      (current as unknown as { autoRejectThreshold?: number })
+        .autoRejectThreshold,
+      dto.autoRejectThreshold,
+    );
+    diff(
       "biasCategoriesEnabled",
       current.biasCategoriesEnabled,
       dto.biasCategoriesEnabled,
@@ -321,11 +327,15 @@ export class AdminConfigService {
   }
 
   private toDto(row: ScoringConfigWithUpdatedBy): ScoringConfigDto {
+    const autoRejectThreshold =
+      (row as unknown as { autoRejectThreshold?: number })
+        .autoRejectThreshold ?? 75;
     return {
       id: row.id,
       matchWeights: row.matchWeights as ScoringConfigDto["matchWeights"],
       profileWeights: row.profileWeights as ScoringConfigDto["profileWeights"],
       bandThresholds: row.bandThresholds as ScoringConfigDto["bandThresholds"],
+      autoRejectThreshold,
       biasCategoriesEnabled: row.biasCategoriesEnabled,
       customFlaggedTerms: row.customFlaggedTerms,
       piiRedactionEnabled: row.piiRedactionEnabled,

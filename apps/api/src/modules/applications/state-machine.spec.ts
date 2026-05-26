@@ -1,20 +1,16 @@
+// Per thesis panel revision (May 2026): the "screening" status was
+// removed from the application status funnel. Pipeline collapses to:
+//   applied → interview → offer → offer_accepted → hired
+// with branches to rejected / withdrawn at every actionable stage.
 import { canTransition, getNextStatuses } from "./state-machine";
 
 describe("application state machine", () => {
-  it("allows applied → screening | interview | rejected | withdrawn", () => {
-    expect(canTransition("applied", "screening")).toBe(true);
+  it("allows applied → interview | rejected | withdrawn", () => {
     expect(canTransition("applied", "interview")).toBe(true);
     expect(canTransition("applied", "rejected")).toBe(true);
     expect(canTransition("applied", "withdrawn")).toBe(true);
     expect(canTransition("applied", "offer")).toBe(false);
     expect(canTransition("applied", "hired")).toBe(false);
-  });
-
-  it("allows screening → interview | rejected | withdrawn", () => {
-    expect(canTransition("screening", "interview")).toBe(true);
-    expect(canTransition("screening", "rejected")).toBe(true);
-    expect(canTransition("screening", "withdrawn")).toBe(true);
-    expect(canTransition("screening", "offer")).toBe(false);
   });
 
   it("allows interview → offer | rejected | withdrawn", () => {
@@ -37,9 +33,8 @@ describe("application state machine", () => {
     expect(canTransition("offer_accepted", "withdrawn")).toBe(true);
   });
 
-  it("disallows offer_accepted → applied | screening | interview | offer | offer_declined", () => {
+  it("disallows offer_accepted → applied | interview | offer | offer_declined", () => {
     expect(canTransition("offer_accepted", "applied")).toBe(false);
-    expect(canTransition("offer_accepted", "screening")).toBe(false);
     expect(canTransition("offer_accepted", "interview")).toBe(false);
     expect(canTransition("offer_accepted", "offer")).toBe(false);
     expect(canTransition("offer_accepted", "offer_declined")).toBe(false);
@@ -68,9 +63,8 @@ describe("application state machine", () => {
     expect(canTransition("offer_declined", "hired")).toBe(false);
   });
 
-  it("disallows offer_declined → applied | screening | interview", () => {
+  it("disallows offer_declined → applied | interview", () => {
     expect(canTransition("offer_declined", "applied")).toBe(false);
-    expect(canTransition("offer_declined", "screening")).toBe(false);
     expect(canTransition("offer_declined", "interview")).toBe(false);
   });
 

@@ -5,7 +5,7 @@
  * dependencies — no real database, no network calls.
  *
  * Flow covered:
- *  Step 1  — Recruiter schedules from `applied` (skip-screening):
+ *  Step 1  — Recruiter schedules from `applied`:
  *              status auto-advances to `interview`, interview row created.
  *  Step 2  — Autocomplete cron flips `scheduled → completed` after grace period.
  *  Step 3  — Recruiter sets feedback + recommendation=`proceed`:
@@ -47,6 +47,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { InterviewVenuesService } from "../interview-venues/interview-venues.service";
 import { ResumesRepository } from "../resumes/resumes.repository";
 import { ScoringService } from "../scoring/scoring.service";
+import { ScoringRepository } from "../scoring/scoring.repository";
 import { StorageService } from "../../storage/storage.service";
 import { MatchScoreQueueService } from "../../queue/match-score-queue.service";
 import { OffersRepository } from "../offers/offers.repository";
@@ -270,6 +271,15 @@ describe("Interview v2 — happy-path integration", () => {
           useValue: {
             scoreMatch: jest.fn(),
             getMatchScoreByApplicationId: jest.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          // Per thesis panel revision (May 2026): InterviewsService now
+          // depends on ScoringRepository for the score-based interview
+          // eligibility gate.
+          provide: ScoringRepository,
+          useValue: {
+            findMatchScoreByApplicationId: jest.fn().mockResolvedValue(null),
           },
         },
         { provide: StorageService, useValue: { getSignedUrl: jest.fn() } },

@@ -5,9 +5,13 @@
 export const USER_ROLES = ["candidate", "recruiter", "admin"] as const;
 export const USER_STATUS = ["active", "suspended", "deleted"] as const;
 
+// NOTE: "screening" was removed per thesis panel revision (May 2026).
+// The pipeline now is: applied → interview → offer → offer_accepted →
+// hired (or rejected / withdrawn at any branchable stage). The migration
+// script `apps/api/scripts/migrate-remove-screening.ts` bulk-updates legacy
+// rows from "screening" to "applied" before this constraint takes effect.
 export const APPLICATION_STATUS = [
   "applied",
-  "screening",
   "interview",
   "offer",
   "offer_accepted",

@@ -1,12 +1,13 @@
 /**
  * Unit tests for InterviewsService.schedule() auto-advance logic.
  *
+ * Per thesis panel revision (May 2026): "screening" stage removed.
+ *
  * Covers:
  *  1. applied → interview: status is updated + interview row created
- *  2. screening → interview: same advance
- *  3. interview → interview: no redundant status update (multi-round)
- *  4. Status change is audited with action "application.status_changed"
- *  5. emitApplicationStatusChanged is called with previousStatus + status:"interview"
+ *  2. interview → interview: no redundant status update (multi-round)
+ *  3. Status change is audited with action "application.status_changed"
+ *  4. emitApplicationStatusChanged is called with previousStatus + status:"interview"
  */
 
 import {
@@ -147,6 +148,18 @@ function makeService(applicationStatus: string) {
     events as never,
     notifications as never,
     { create: jest.fn() } as never,
+    // scoringRepo + db added per thesis panel revision (May 2026) for
+    // the score-based interview-eligibility gate.
+    { findMatchScoreByApplicationId: jest.fn().mockResolvedValue(null) } as never,
+    {
+      select: jest.fn().mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([{ autoRejectThreshold: 75 }]),
+          }),
+        }),
+      }),
+    } as never,
   );
 
   return { svc, applicationsRepo, interviewsRepo, audit, events };
@@ -173,17 +186,6 @@ describe("InterviewsService.schedule() auto-advance", () => {
     expect(result.id).toBe(INTERVIEW_ROW.id);
   });
 
-  it("advances application from 'screening' to 'interview'", async () => {
-    const { svc, applicationsRepo } = makeService("screening");
-
-    await svc.schedule(user, companyId, applicationId, dto);
-
-    expect(applicationsRepo.update).toHaveBeenCalledWith(
-      applicationId,
-      expect.objectContaining({ status: "interview" }),
-    );
-  });
-
   it("does NOT call applicationsRepo.update when application is already 'interview' (multi-round)", async () => {
     const { svc, applicationsRepo } = makeService("interview");
 
@@ -208,14 +210,14 @@ describe("InterviewsService.schedule() auto-advance", () => {
   });
 
   it("emits ApplicationStatusChanged with previousStatus and status:'interview' when advancing", async () => {
-    const { svc, events } = makeService("screening");
+    const { svc, events } = makeService("applied");
 
     await svc.schedule(user, companyId, applicationId, dto);
 
     expect(events.emitApplicationStatusChanged).toHaveBeenCalledWith(
       expect.objectContaining({
         applicationId,
-        previousStatus: "screening",
+        previousStatus: "applied",
         status: "interview",
       }),
     );

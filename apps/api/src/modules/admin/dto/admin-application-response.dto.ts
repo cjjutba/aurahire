@@ -20,7 +20,6 @@ export class AdminApplicationListRowDto {
   @ApiProperty({
     enum: [
       "applied",
-      "screening",
       "interview",
       "offer",
       "hired",
@@ -158,7 +157,6 @@ export class AdminApplicationDetailDto {
   @ApiProperty({
     enum: [
       "applied",
-      "screening",
       "interview",
       "offer",
       "hired",

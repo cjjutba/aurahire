@@ -6,6 +6,14 @@ export const STRONG_MATCH_THRESHOLD = 70;
 export const PARTIAL_MATCH_THRESHOLD = 40;
 // 0–39 = "limited"
 
+/**
+ * Per thesis panel revision (May 2026): applications scoring below this
+ * threshold are AUTO-REJECTED as soon as scoring completes; recruiters
+ * cannot schedule interviews for them. Admin-tunable via
+ * /admin/ai-config (column `scoring_config.auto_reject_threshold`).
+ */
+export const AUTO_REJECT_THRESHOLD = 75;
+
 export const DEFAULT_MATCH_WEIGHTS = {
   skills: 40,
   experience: 35,

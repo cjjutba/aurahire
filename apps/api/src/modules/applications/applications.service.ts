@@ -18,7 +18,13 @@ import type {
 } from "@aurahire/shared";
 
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
+import { eq, inArray } from "drizzle-orm";
+import { interviewsTable, scoringConfigTable } from "@aurahire/db";
 import { AuditService, AUDIT_ACTIONS } from "../../audit";
+import { AUTO_REJECT_THRESHOLD } from "@aurahire/shared";
+import { isIdentityRevealedForRecruiter } from "./dto/identity-reveal.helper";
+import { redactApplicationForRecruiter } from "./dto/redact-for-recruiter";
+import { maybeAutoRejectByScore } from "./auto-reject-on-score.helper";
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { EventsService } from "../../realtime";
 import { EmailService } from "../../email/email.service";
@@ -232,6 +238,33 @@ export class ApplicationsService {
         band: promotedScore.band,
         scoredAt: new Date().toISOString(),
       });
+
+      // Score-based auto-rejection (thesis panel revision, May 2026).
+      // Sync path: when the preview promotion gave us an inline score,
+      // we evaluate the threshold immediately so the candidate sees the
+      // rejection without the realtime latency of the async worker.
+      try {
+        const threshold = await this.getAutoRejectThreshold();
+        await maybeAutoRejectByScore(
+          {
+            applicationsService: {
+              findStatus: (id) => this.findStatus(id),
+              transitionFromSystem: (id, to, transitionArgs) =>
+                this.autoRejectByLowScore(id, to, transitionArgs),
+            },
+            logger: this.logger,
+          },
+          {
+            applicationId: application.id,
+            overallScore: promotedScore.overallScore,
+            threshold,
+          },
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Sync auto-reject failed for application ${application.id}: ${(err as Error).message}`,
+        );
+      }
     } else {
       // No preview to promote — defer to the async worker. The DB row
       // already has score_status='computing' from the schema default; the
@@ -443,6 +476,9 @@ export class ApplicationsService {
       candidate: null,
       job: null,
       inflightSiblingsCount: 0,
+      // Shortlist mutation returns a stripped DTO; reveal is decided
+      // by the caller's redaction wrapper when needed.
+      identityRevealed: true,
     };
   }
 
@@ -498,6 +534,7 @@ export class ApplicationsService {
       candidate: null,
       job: null,
       inflightSiblingsCount: 0,
+      identityRevealed: true,
     };
   }
 
@@ -1291,6 +1328,7 @@ export class ApplicationsService {
     user: AuthUser,
     companyId: string | null,
     applicationId: string,
+    requestMeta: RequestMeta = {},
   ): Promise<{ signedUrl: string; expiresAt: string }> {
     const app = await this.repo.findById(applicationId);
     if (!app) {
@@ -1306,6 +1344,7 @@ export class ApplicationsService {
         message: "Application not found",
       });
     }
+    let completedInterviewId: string | null = null;
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
       if (!job || job.companyId !== companyId) {
@@ -1314,6 +1353,30 @@ export class ApplicationsService {
           message: "Application not found",
         });
       }
+      // Per thesis panel revision (May 2026): recruiters can only download
+      // the resume once an interview on this application is completed.
+      // The check uses the same reveal predicate as the PII redaction so
+      // the two unlock at the same trigger.
+      const interviewRows = await this.db
+        .select({
+          id: interviewsTable.id,
+          status: interviewsTable.status,
+        })
+        .from(interviewsTable)
+        .where(eq(interviewsTable.applicationId, applicationId));
+      const identityRevealed = isIdentityRevealedForRecruiter(
+        app.status,
+        interviewRows.map((r) => r.status),
+      );
+      if (!identityRevealed) {
+        throw new ForbiddenException({
+          code: "RESUME_DOWNLOAD_REQUIRES_COMPLETED_INTERVIEW",
+          message:
+            "The resume becomes downloadable once an interview is completed.",
+        });
+      }
+      completedInterviewId =
+        interviewRows.find((r) => r.status === "completed")?.id ?? null;
     }
 
     const resume = await this.resumesRepo.findById(app.resumeId);
@@ -1331,10 +1394,245 @@ export class ApplicationsService {
       expiresIn,
     });
 
+    // Audit every recruiter download — the candidate's own download is
+    // not auditable as a security event (they own the file).
+    if (user.role === "recruiter") {
+      const job = await this.jobsRepo.findById(app.jobId);
+      await this.audit.log({
+        actorId: user.id,
+        actorType: "user",
+        action: AUDIT_ACTIONS.RESUME_DOWNLOADED,
+        entityType: "application",
+        entityId: applicationId,
+        companyId: job?.companyId ?? null,
+        details: {
+          resumeId: resume.id,
+          interviewId: completedInterviewId,
+        },
+        ipAddress: requestMeta.ipAddress ?? null,
+        userAgent: requestMeta.userAgent ?? null,
+      });
+    }
+
     return {
       signedUrl,
       expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
     };
+  }
+
+  // -----------------------------------------------------------------
+  // SYSTEM TRANSITION (auto-reject driven by scoring)
+  // -----------------------------------------------------------------
+
+  /**
+   * Lightweight status lookup used by the auto-reject helper. Avoids
+   * loading the full row + relations when we only need to verify the
+   * current status before transitioning.
+   */
+  async findStatus(applicationId: string): Promise<{
+    candidateId: string;
+    jobId: string;
+    status: ApplicationStatus;
+  } | null> {
+    const app = await this.repo.findById(applicationId);
+    if (!app) return null;
+    return {
+      candidateId: app.candidateId,
+      jobId: app.jobId,
+      status: app.status as ApplicationStatus,
+    };
+  }
+
+  /**
+   * Score-based auto-rejection. Called by the score-based auto-rejection
+   * helper (`auto-reject-on-score.helper.ts`) from both the SYNC apply
+   * path and the ASYNC match-score worker. Distinct from the generic
+   * `transitionFromSystem` (which is the offer-driven cascade) because
+   * the audit action and the rejection reason are different.
+   *
+   * Idempotent: if the application has moved past `applied`, returns
+   * without changes.
+   */
+  async autoRejectByLowScore(
+    applicationId: string,
+    toStatus: "rejected",
+    args: {
+      reason: "auto_rejected_low_score";
+      details: { overallScore: number; threshold: number };
+    },
+  ): Promise<void> {
+    const app = await this.repo.findById(applicationId);
+    if (!app) return;
+    if (app.status !== "applied") return; // idempotent
+    if (!canTransition(app.status as ApplicationStatus, toStatus)) return;
+
+    const job = await this.jobsRepo.findById(app.jobId);
+
+    await this.repo.update(applicationId, {
+      status: toStatus,
+      statusUpdatedAt: new Date(),
+    });
+
+    await this.audit.log({
+      actorId: null,
+      actorType: "system",
+      action: AUDIT_ACTIONS.APPLICATION_AUTO_REJECTED_LOW_SCORE,
+      entityType: "application",
+      entityId: applicationId,
+      companyId: job?.companyId ?? null,
+      details: {
+        fromStatus: "applied",
+        toStatus: "rejected",
+        reason: args.reason,
+        overallScore: args.details.overallScore,
+        threshold: args.details.threshold,
+      },
+    });
+
+    // Reuse the realtime + notification path: emit
+    // application.status_changed so the candidate's UI updates
+    // immediately and the rejection email lands via the same
+    // notification template path used for manual rejections.
+    this.events.emitApplicationStatusChanged({
+      applicationId,
+      jobId: app.jobId,
+      recruiterId: job?.recruiterId ?? "",
+      candidateId: app.candidateId,
+      previousStatus: "applied",
+      status: "rejected",
+      changedAt: new Date().toISOString(),
+    });
+
+    const jobWithCompany = await this.jobsRepo.findByIdWithCompany(app.jobId);
+    void this.notifications
+      .emit({
+        userId: app.candidateId,
+        eventType: "application_status_changed",
+        scope: "personal",
+        entityType: "application",
+        entityId: applicationId,
+        metadata: {
+          applicationId,
+          jobId: app.jobId,
+          jobTitle: jobWithCompany?.title ?? null,
+          companyName: jobWithCompany?.company.name ?? null,
+          fromStatus: "applied",
+          newStatus: "rejected",
+          reason: "auto_rejected_low_score",
+          occurredAt: new Date().toISOString(),
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `notifications.emit(application_status_changed auto-reject) failed: ${(err as Error).message}`,
+        );
+      });
+
+    // Bust the obvious caches so the next pipeline read for the
+    // recruiter and the candidate reflects the new status.
+    await this.cacheService.bustTags([
+      TAGS.applicationsCandidate(app.candidateId),
+      ...(job?.companyId
+        ? [
+            TAGS.companyDashboard(job.companyId),
+            TAGS.companyApplications(job.companyId),
+            TAGS.companyShortlist(job.companyId),
+          ]
+        : []),
+    ]);
+  }
+
+  /**
+   * Recruiter-aware wrapper around `toDto`. Loads the application,
+   * checks the identity-reveal predicate, and applies the redaction
+   * policy. Candidate / admin views are returned as-is from `toDto`.
+   */
+  async toDtoForViewer(
+    user: AuthUser,
+    applicationId: string,
+  ): Promise<ApplicationDto> {
+    const full = await this.toDto(applicationId);
+    if (user.role !== "recruiter") return full;
+
+    const interviewRows = await this.db
+      .select({ status: interviewsTable.status })
+      .from(interviewsTable)
+      .where(eq(interviewsTable.applicationId, applicationId));
+    const identityRevealed = isIdentityRevealedForRecruiter(
+      full.status as ApplicationStatus,
+      interviewRows.map((r) => r.status),
+    );
+    return redactApplicationForRecruiter(full, { identityRevealed });
+  }
+
+  /**
+   * Batch variant: load reveal state for a list of applications in a
+   * single round-trip and then apply the redaction policy per row. Used
+   * by recruiter-list endpoints to avoid an N+1 query.
+   */
+  async toDtosForRecruiterBatch(
+    apps: ReadonlyArray<ApplicationDto>,
+  ): Promise<ApplicationDto[]> {
+    if (apps.length === 0) return [];
+    const ids = apps.map((a) => a.id);
+
+    // Single round-trip lookup using Postgres = ANY(...) via Drizzle's
+    // `inArray`. Recruiter list pages are paginated; the worst case is
+    // limit-sized (typically ≤ 50). All retrieved interview status rows
+    // are bucketed by applicationId so the predicate sees the full set
+    // for each row.
+    const rows = await this.db
+      .select({
+        applicationId: interviewsTable.applicationId,
+        status: interviewsTable.status,
+      })
+      .from(interviewsTable)
+      .where(inArray(interviewsTable.applicationId, ids));
+
+    const interviewsByApp = new Map<string, string[]>();
+    for (const r of rows) {
+      const arr = interviewsByApp.get(r.applicationId) ?? [];
+      arr.push(r.status);
+      interviewsByApp.set(r.applicationId, arr);
+    }
+
+    return apps.map((a) =>
+      redactApplicationForRecruiter(a, {
+        identityRevealed: isIdentityRevealedForRecruiter(
+          a.status as ApplicationStatus,
+          interviewsByApp.get(a.id) ?? [],
+        ),
+      }),
+    );
+  }
+
+  /**
+   * Read the current auto-reject threshold from the active scoring
+   * config (admin-tunable). Falls back to the boot-time constant when
+   * no config row exists yet — typical only in fresh dev environments.
+   *
+   * Direct Drizzle lookup (no service indirection) to avoid the
+   * AdminModule ↔ ApplicationsModule cyclic module-load problem.
+   */
+  async getAutoRejectThreshold(): Promise<number> {
+    try {
+      const rows = await this.db
+        .select({
+          autoRejectThreshold: scoringConfigTable.autoRejectThreshold,
+        })
+        .from(scoringConfigTable)
+        .where(eq(scoringConfigTable.isActive, true))
+        .limit(1);
+      const value = rows[0]?.autoRejectThreshold;
+      if (typeof value === "number" && value >= 0 && value <= 100) {
+        return value;
+      }
+    } catch (err) {
+      this.logger.warn(
+        `getAutoRejectThreshold: failed to read active config — using fallback. ${(err as Error).message}`,
+      );
+    }
+    return AUTO_REJECT_THRESHOLD;
   }
 
   // -----------------------------------------------------------------
@@ -1405,6 +1703,9 @@ export class ApplicationsService {
       candidate,
       job,
       inflightSiblingsCount,
+      // `toDto` is the canonical full-PII shape. Recruiter-facing endpoints
+      // wrap this with `toDtoForViewer` which applies the redaction policy.
+      identityRevealed: true,
     };
   }
 
@@ -1483,6 +1784,10 @@ export class ApplicationsService {
           })
         : null,
       inflightSiblingsCount: 0,
+      // Dashboard rows are the lightweight summary shape; full PII reveal
+      // is decided at the row mapper. Controller wraps the list with
+      // `toDtoForViewer` for recruiter views.
+      identityRevealed: true,
     };
   }
 
@@ -1565,8 +1870,6 @@ export class ApplicationsService {
           return `Update on your ${jobRow.title} application`;
         case "withdrawn":
           return `Application withdrawn: ${jobRow.title}`;
-        case "screening":
-          return `Your ${jobRow.title} application is under review`;
         case "applied":
           return `We received your application for ${jobRow.title}`;
         default:

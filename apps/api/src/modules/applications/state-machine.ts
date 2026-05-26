@@ -1,11 +1,14 @@
 import type { ApplicationStatus } from "@aurahire/shared";
 
+// Per thesis panel revision (May 2026), "screening" was removed from the
+// application status funnel. The pipeline collapses to:
+//   applied → interview → offer → offer_accepted → hired
+// with branches to rejected / withdrawn at every actionable stage.
 const VALID_TRANSITIONS: Record<
   ApplicationStatus,
   readonly ApplicationStatus[]
 > = {
-  applied: ["screening", "interview", "rejected", "withdrawn"],
-  screening: ["interview", "rejected", "withdrawn"],
+  applied: ["interview", "rejected", "withdrawn"],
   interview: ["offer", "rejected", "withdrawn"],
   // Recruiter waits for the candidate at "offer". The recruiter can still
   // reject or the candidate can withdraw. Direct offer → hired is removed

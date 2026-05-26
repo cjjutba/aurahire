@@ -24,6 +24,9 @@ interface Props {
 }
 
 function statusHeadline(status: string, jobTitle: string): string {
+  // Per thesis panel revision (May 2026), the "screening" case is
+  // removed — applications now go directly applied → interview or are
+  // auto-rejected on score < threshold.
   switch (status.toLowerCase()) {
     case "hired":
       return `Congratulations, you're hired!`;
@@ -31,8 +34,6 @@ function statusHeadline(status: string, jobTitle: string): string {
       return `Great news, you have an offer`;
     case "interview":
       return `You're moving to interviews`;
-    case "screening":
-      return `Your application is under review`;
     case "rejected":
       return `Update on your application`;
     case "withdrawn":
@@ -57,8 +58,6 @@ function statusBody(
       return `${companyName} has extended you an offer for ${jobTitle}. Take a moment to review the full offer and respond when you are ready.`;
     case "interview":
       return `Exciting update, ${candidateName}. Your application for ${jobTitle} at ${companyName} has advanced to the interview stage. Watch for scheduling details to arrive shortly.`;
-    case "screening":
-      return `Your application for ${jobTitle} at ${companyName} is now under review. The hiring team will follow up with next steps.`;
     case "rejected":
       return `Thank you for your interest in ${jobTitle} at ${companyName}. After careful consideration, the team has decided to move forward with other candidates this time. We genuinely appreciate the time and effort you invested, and we wish you the very best in your search.`;
     case "withdrawn":

@@ -260,7 +260,7 @@ export const recruiterHelp: HelpPageContent = {
                 [
                   "70, 100",
                   "Strong Match",
-                  "Prioritize for screening; evidence aligns with most criteria.",
+                  "Prioritize for interview; evidence aligns with most criteria.",
                 ],
                 [
                   "40, 69",

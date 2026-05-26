@@ -49,14 +49,10 @@ interface ShortlistEnvelope {
 
 type AppStatusEntry = { label: string; dot: string; text: string };
 
+// Per thesis panel revision (May 2026): "Screening" stage removed.
 const APP_STATUS: Record<string, AppStatusEntry> = {
   applied: {
     label: "Applied",
-    dot: "bg-[var(--color-status-info)]",
-    text: "text-[var(--color-status-info)]",
-  },
-  screening: {
-    label: "Screening",
     dot: "bg-[var(--color-status-info)]",
     text: "text-[var(--color-status-info)]",
   },

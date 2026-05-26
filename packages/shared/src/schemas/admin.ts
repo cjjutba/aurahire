@@ -123,6 +123,10 @@ export const updateScoringConfigSchema = z
     matchWeights: matchWeightsSchema.optional(),
     profileWeights: profileWeightsSchema.optional(),
     bandThresholds: bandThresholdsSchema.optional(),
+    // Per thesis panel revision (May 2026): admin-tunable minimum match
+    // score for interview eligibility. Applications scoring below this
+    // are auto-rejected. Default 75 (set in the DB column default).
+    autoRejectThreshold: z.number().int().min(0).max(100).optional(),
     biasCategoriesEnabled: z
       .array(z.enum(BIAS_CATEGORY_VALUES))
       .max(5)

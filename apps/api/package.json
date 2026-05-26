@@ -13,7 +13,9 @@
     "test:ai-parse": "tsx scripts/run-ai-parse-corpus.ts",
     "generate:openapi": "node --require @swc-node/register scripts/generate-openapi.ts",
     "reset-db": "node --require @swc-node/register --env-file=.env scripts/reset-db.ts",
-    "seed-db": "node --require @swc-node/register --env-file=.env scripts/seed-db.ts"
+    "seed-db": "node --require @swc-node/register --env-file=.env scripts/seed-db.ts",
+    "migrate-remove-screening": "node --require @swc-node/register --env-file=.env scripts/migrate-remove-screening.ts",
+    "backfill-redacted-excerpts": "node --require @swc-node/register --env-file=.env scripts/backfill-redacted-excerpts.ts"
   },
   "dependencies": {
     "@aurahire/db": "workspace:*",

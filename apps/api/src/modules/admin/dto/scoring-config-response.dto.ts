@@ -32,6 +32,16 @@ export class ScoringConfigDto {
   profileWeights!: ProfileWeightsDto;
   @ApiProperty({ type: () => BandThresholdsDto })
   bandThresholds!: BandThresholdsDto;
+  /**
+   * Per thesis panel revision (May 2026): admin-tunable minimum match
+   * score (0–100) for interview eligibility. Applications scoring below
+   * this value are auto-rejected as soon as scoring completes. Default 75.
+   */
+  @ApiProperty({
+    description:
+      "Minimum match score (0–100) for interview eligibility. Below = auto-rejected. Default 75.",
+  })
+  autoRejectThreshold!: number;
   @ApiProperty({ type: [String] }) biasCategoriesEnabled!: string[];
   @ApiProperty({ type: [String] }) customFlaggedTerms!: string[];
   @ApiProperty() piiRedactionEnabled!: boolean;

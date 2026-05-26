@@ -31,7 +31,7 @@ export class JobsOverTimePointDto {
 export class ApplicationsByStatusPointDto {
   @ApiProperty() date!: string;
   @ApiProperty() applied!: number;
-  @ApiProperty() screening!: number;
+  // `screening` stage removed per thesis panel revision (May 2026).
   @ApiProperty() interview!: number;
   @ApiProperty() offer!: number;
   @ApiProperty() hired!: number;

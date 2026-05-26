@@ -22,6 +22,8 @@ import { CacheService } from "../../cache";
 import { EventsService } from "../../realtime";
 import { NotificationsService } from "../notifications/notifications.service";
 import { InterviewVenuesService } from "../interview-venues/interview-venues.service";
+import { ScoringRepository } from "../scoring/scoring.repository";
+import { DRIZZLE_CLIENT } from "../../db/db.module";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -132,6 +134,28 @@ describe("InterviewsService.updateFeedback", () => {
           useValue: { emit: jest.fn().mockResolvedValue(undefined) },
         },
         { provide: InterviewVenuesService, useValue: { create: jest.fn() } },
+        {
+          // Per thesis panel revision (May 2026): score-based interview
+          // eligibility gate — null score means the gate is a no-op.
+          provide: ScoringRepository,
+          useValue: {
+            findMatchScoreByApplicationId: jest.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          provide: DRIZZLE_CLIENT,
+          useValue: {
+            select: jest.fn().mockReturnValue({
+              from: jest.fn().mockReturnValue({
+                where: jest.fn().mockReturnValue({
+                  limit: jest
+                    .fn()
+                    .mockResolvedValue([{ autoRejectThreshold: 75 }]),
+                }),
+              }),
+            }),
+          },
+        },
       ],
     }).compile();
 

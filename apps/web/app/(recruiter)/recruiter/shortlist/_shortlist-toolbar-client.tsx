@@ -10,10 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Per thesis panel revision (May 2026): "Screening" stage removed.
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
   { value: "applied", label: "Applied" },
-  { value: "screening", label: "Screening" },
   { value: "interview", label: "Interview" },
   { value: "offer", label: "Offer" },
   { value: "hired", label: "Hired" },

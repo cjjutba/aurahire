@@ -704,6 +704,10 @@ export const evidenceExcerptsTable = pgTable(
     scoreId: uuid("score_id").notNull(), // polymorphic FK; gated via RLS + service-layer integrity
     componentName: text("component_name").notNull(),
     excerptText: text("excerpt_text").notNull(),
+    // Recruiter-safe variant: PII / company names scrubbed deterministically
+    // at write time. Nullable for backwards compatibility — older rows are
+    // backfilled by a one-shot script. New rows always populate this.
+    excerptRedacted: text("excerpt_redacted"),
     excerptSource: text("excerpt_source"),
     relevance: text("relevance", {
       enum: ["positive", "negative", "neutral"],
@@ -717,6 +721,17 @@ export const evidenceExcerptsTable = pgTable(
     scoreIdx: index("evidence_excerpts_score_idx").on(t.scoreType, t.scoreId),
   }),
 );
+
+// NOTE: `excerptRedacted` is the recruiter-safe variant of `excerptText`,
+// produced at write time by the deterministic redaction pass
+// (`apps/api/src/ai/redact-text-deterministic.ts`). It nulls names,
+// emails, phones, and company-suffix tokens so recruiters reading score
+// breakdowns before interview completion see only skills-anchored quotes.
+// Backfilled for historical rows via
+// `apps/api/scripts/backfill-redacted-excerpts.ts`.
+//
+// We keep both columns: `excerpt_text` for candidate / admin views
+// (full evidence), `excerpt_redacted` for recruiter view (skills only).
 
 export const biasFlagsTable = pgTable(
   "bias_flags",
@@ -759,6 +774,13 @@ export const scoringConfigTable = pgTable(
     matchWeights: jsonb("match_weights").notNull(),
     profileWeights: jsonb("profile_weights").notNull(),
     bandThresholds: jsonb("band_thresholds").notNull(),
+    // Applications scoring below this match-score threshold are
+    // auto-rejected (status → 'rejected') as soon as scoring completes.
+    // Admin-tunable via /admin/ai-config. Default 75 per thesis panel
+    // revision (May 2026).
+    autoRejectThreshold: integer("auto_reject_threshold")
+      .notNull()
+      .default(75),
     biasCategoriesEnabled: text("bias_categories_enabled")
       .array()
       .notNull()

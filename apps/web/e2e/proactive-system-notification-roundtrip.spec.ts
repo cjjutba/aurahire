@@ -26,8 +26,8 @@
  *     • Recruiter     — TEST_RECRUITER_EMAIL    / TEST_RECRUITER_PASSWORD
  *                       suggested: cjjutba+recruiter@test.aurahire.local
  *     • The candidate must have an *application* (status: "applied" — not
- *       already advanced past "screening") on a published job owned by the
- *       recruiter's company.
+ *       already advanced) on a published job owned by the recruiter's
+ *       company. ("screening" was removed per panel revision May 2026.)
  *
  * - The application id (so we can deep-link the recruiter directly):
  *     • TEST_APPLICATION_ID  — uuid of the application to advance.
@@ -132,15 +132,16 @@ test.describe("proactive system — notification round-trip", () => {
     await recruiterPage.goto(`/recruiter/applications/${APPLICATION_ID}`);
     await recruiterPage.waitForLoadState("networkidle");
 
-    // Advance status — the action label is "Move to Screening" when the
-    // application's current status is "applied".
+    // Advance status — per thesis panel revision (May 2026) "Screening"
+    // stage was removed. The first positive action from "applied" is now
+    // "Move to Interview".
     await recruiterPage
-      .getByRole("button", { name: /Move to Screening/i })
+      .getByRole("button", { name: /Move to Interview/i })
       .click();
 
     // Confirm dialog uses the same label for its accept button.
     await recruiterPage
-      .getByRole("button", { name: /^Move to Screening$/i })
+      .getByRole("button", { name: /^Move to Interview$/i })
       .click();
 
     // ─── Realtime assertion on the candidate side ────────────────────────
@@ -161,10 +162,10 @@ test.describe("proactive system — notification round-trip", () => {
     await bell.click();
 
     // The popover lazily renders rows for the inbox tab (default tab). The
-    // new notification ("Application moved to screening") is at the top.
+    // new notification advances to the interview stage.
     const firstRow = candidatePage.getByTestId("notification-row").first();
     await expect(firstRow).toBeVisible({ timeout: 5_000 });
-    await expect(firstRow).toHaveText(/Application moved to screening/i);
+    await expect(firstRow).toHaveText(/Interview/i);
 
     // ─── Click the row → navigate to /candidate/applications/<id> ────────
     await firstRow.click();

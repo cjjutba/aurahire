@@ -24,9 +24,9 @@ interface AnalyticsBody {
   };
 }
 
+// Per thesis panel revision (May 2026): "Screening" stage removed.
 const STATUS_COLOR: Record<string, string> = {
   applied: "var(--color-primary)",
-  screening: "var(--color-score-mid)",
   interview: "var(--color-primary-active)",
   offer: "var(--color-score-high)",
   hired: "var(--color-score-high)",
@@ -36,7 +36,6 @@ const STATUS_COLOR: Record<string, string> = {
 
 const STATUS_LABEL: Record<string, string> = {
   applied: "Applied",
-  screening: "Screening",
   interview: "Interview",
   offer: "Offer",
   hired: "Hired",

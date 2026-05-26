@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -16,10 +17,15 @@ import type {
   UpdateInterviewFeedbackInput,
   UpdateInterviewStatusInput,
 } from "@aurahire/shared";
+import { AUTO_REJECT_THRESHOLD } from "@aurahire/shared";
+import { eq } from "drizzle-orm";
+import { scoringConfigTable } from "@aurahire/db";
 
+import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
 import { AuditService } from "../../audit";
 import { AUDIT_ACTIONS } from "../../audit/audit.types";
 import { canTransition } from "../applications/state-machine";
+import { ScoringRepository } from "../scoring/scoring.repository";
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 import { EmailService } from "../../email/email.service";
 import { EventsService } from "../../realtime";
@@ -61,6 +67,8 @@ export class InterviewsService {
     private readonly events: EventsService,
     private readonly notifications: NotificationsService,
     private readonly venuesService: InterviewVenuesService,
+    private readonly scoringRepo: ScoringRepository,
+    @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
   ) {}
 
   async schedule(
@@ -106,11 +114,44 @@ export class InterviewsService {
       });
     }
 
-    // Auto-advance application status: applied | screening → interview.
+    // Score-based interview eligibility gate (thesis panel revision,
+    // May 2026). Defense in depth: the auto-rejection helper should have
+    // already removed sub-threshold applications, but if a race lets one
+    // through (e.g., the recruiter opens the schedule modal before the
+    // async worker lands), we block here too. The threshold is read from
+    // scoring_config.auto_reject_threshold (admin-tunable, default 75).
+    const matchScore =
+      await this.scoringRepo.findMatchScoreByApplicationId(applicationId);
+    if (matchScore) {
+      let threshold = AUTO_REJECT_THRESHOLD;
+      try {
+        const rows = await this.db
+          .select({
+            autoRejectThreshold: scoringConfigTable.autoRejectThreshold,
+          })
+          .from(scoringConfigTable)
+          .where(eq(scoringConfigTable.isActive, true))
+          .limit(1);
+        const value = rows[0]?.autoRejectThreshold;
+        if (typeof value === "number" && value >= 0 && value <= 100) {
+          threshold = value;
+        }
+      } catch {
+        // fall through to default constant
+      }
+      if (matchScore.overallScore < threshold) {
+        throw new BadRequestException({
+          code: "APPLICATION_BELOW_INTERVIEW_THRESHOLD",
+          message: `Application score (${matchScore.overallScore}) is below the minimum (${threshold}) for interview scheduling.`,
+        });
+      }
+    }
+
+    // Auto-advance application status: applied → interview.
     // Applications already in interview (multi-round), offer, or later states
-    // are left unchanged.
+    // are left unchanged. ("screening" was removed per panel revision.)
     const currentStatus = application.status as ApplicationStatus;
-    if (currentStatus === "applied" || currentStatus === "screening") {
+    if (currentStatus === "applied") {
       if (!canTransition(currentStatus, "interview")) {
         throw new BadRequestException({
           code: "INVALID_STATUS_TRANSITION",

@@ -80,5 +80,8 @@ import { RescoreBatchProcessor } from "./processors/rescore-batch.processor";
     AdminBiasMonitorRepository,
     AdminCompaniesRepository,
   ],
+  // AdminConfigService is consumed by ApplicationsService for the
+  // auto_reject_threshold lookup.
+  exports: [AdminConfigService],
 })
 export class AdminModule {}

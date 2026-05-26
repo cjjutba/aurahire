@@ -355,10 +355,9 @@ export function RecruiterInterviewsSection({
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [pastOpen, setPastOpen] = useState(false);
 
+  // Per thesis panel revision (May 2026): "screening" stage removed.
   const canScheduleAnother =
-    applicationStatus === "interview" ||
-    applicationStatus === "screening" ||
-    applicationStatus === "applied";
+    applicationStatus === "interview" || applicationStatus === "applied";
 
   const router = useRouter();
   const pathname = usePathname();

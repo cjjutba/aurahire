@@ -49,8 +49,15 @@ export class MatchScoreDto {
 
 export class ApplicationCandidateDto {
   @ApiProperty() id!: string;
+  // Per thesis panel revision (May 2026), PII fields are nullable so the
+  // recruiter-side redaction can null them out before interview completion.
+  // Candidates / admins always receive the full values. When redacted, the
+  // recruiter sees a stable anonymized handle in `fullName`
+  // ("Candidate #ab12cd"), and `email` / `phone` / `headline` come back as
+  // null.
   @ApiProperty() fullName!: string;
-  @ApiProperty() email!: string;
+  @ApiPropertyOptional({ nullable: true, type: String })
+  email!: string | null;
   @ApiPropertyOptional({ nullable: true }) phone!: string | null;
   @ApiPropertyOptional({ nullable: true }) headline!: string | null;
 }
@@ -80,9 +87,10 @@ export class ApplicationDto {
   @ApiProperty({
     enum: [
       "applied",
-      "screening",
       "interview",
       "offer",
+      "offer_accepted",
+      "offer_declined",
       "hired",
       "rejected",
       "withdrawn",
@@ -110,6 +118,24 @@ export class ApplicationDto {
       "Count of other in-flight applications on the same job (not yet hired/rejected/withdrawn/offer_declined). Used by the Hire confirmation modal to surface cascade impact.",
   })
   inflightSiblingsCount!: number;
+  /**
+   * Per thesis panel revision (May 2026): candidate PII (name, email, phone)
+   * is hidden from recruiters until an interview has been completed. This
+   * flag tells the UI whether the candidate fields are real or anonymized.
+   *  - false (default for recruiter on `applied` / pre-completion):
+   *    `candidate.fullName` is `Candidate #ab12cd`, contact fields are
+   *    null, and the UI surfaces the fairness banner + disables the
+   *    resume download.
+   *  - true (recruiter post-completion, plus all candidate / admin views):
+   *    full PII and resume-download access.
+   * Always `true` on candidate-self and admin endpoints regardless of
+   * interview state.
+   */
+  @ApiProperty({
+    description:
+      "Whether the viewer is authorized to see candidate identity (name, contact, raw evidence) and download the resume. Becomes true for recruiters once any interview on this application is `completed`. Always true for candidate-self and admin views.",
+  })
+  identityRevealed!: boolean;
 }
 
 export class ApplicationEnvelopeDto {
