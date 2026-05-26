@@ -15,7 +15,8 @@
     "reset-db": "node --require @swc-node/register --env-file=.env scripts/reset-db.ts",
     "seed-db": "node --require @swc-node/register --env-file=.env scripts/seed-db.ts",
     "migrate-remove-screening": "node --require @swc-node/register --env-file=.env scripts/migrate-remove-screening.ts",
-    "backfill-redacted-excerpts": "node --require @swc-node/register --env-file=.env scripts/backfill-redacted-excerpts.ts"
+    "backfill-redacted-excerpts": "node --require @swc-node/register --env-file=.env scripts/backfill-redacted-excerpts.ts",
+    "backfill-match-score-components": "node --require @swc-node/register --env-file=.env scripts/backfill-match-score-components.ts"
   },
   "dependencies": {
     "@aurahire/db": "workspace:*",

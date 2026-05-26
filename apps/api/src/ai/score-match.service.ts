@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import {
   type ParsedResume,
   type MatchScore,
+  type MatchComponent,
   matchScoreSchema,
 } from "@aurahire/shared";
 
@@ -13,6 +14,21 @@ import {
   buildScoreMatchUserPrompt,
 } from "./prompts/score-match";
 import { CacheService, TTL_SECONDS, sha256OfStable } from "../cache";
+
+/**
+ * The four match-score components the platform contracts to display.
+ * The prompt asks for all four, the schema enums all four names — but
+ * `components` is `z.array(...)` with no length floor, so the AI is
+ * occasionally returning fewer than four (production: ~80% of recent
+ * rows had only `skills`). This list drives the defensive backfill in
+ * `score()` below.
+ */
+const REQUIRED_COMPONENT_NAMES = [
+  "skills",
+  "experience",
+  "education",
+  "cultural_fit",
+] as const satisfies ReadonlyArray<MatchComponent["name"]>;
 
 export interface ScoreMatchInput {
   parsedResume: ParsedResume;
@@ -111,6 +127,95 @@ export class ScoreMatchService {
       },
     });
 
-    return { ...aiResult, redactedFields };
+    // Apply the 4-component contract guarantee OUTSIDE the cache
+    // boundary. Stale cache entries written before this fix (and any
+    // future cached results that happen to be incomplete) all flow
+    // through the same backfill — the cache stores the raw AI output,
+    // the service contract guarantees the four canonical components in
+    // canonical order.
+    return {
+      ...aiResult,
+      score: ensureAllComponents(aiResult.score, input.weights, this.logger, reqId),
+      redactedFields,
+    };
   }
+}
+
+/**
+ * Defensive backfill: the prompt asks for all four components, but the
+ * schema permits a shorter array, so the AI occasionally returns only a
+ * subset (production sample showed ~80% rows with only `skills`).
+ * Recruiters and candidates then see a broken breakdown — only one bar
+ * out of four.
+ *
+ * This helper guarantees the returned `MatchScore` has exactly the four
+ * canonical components in canonical order. Any component missing from
+ * the AI response is inserted with:
+ *
+ *   - score: 0 (the candidate genuinely got 0 from this dimension
+ *     because the AI didn't extract a signal — better than fabricating)
+ *   - max / weight: pulled from the active scoring config so the UI
+ *     bars are sized correctly
+ *   - explanation: one calm sentence acknowledging the unknown — does
+ *     not accuse the candidate of failing the dimension
+ *   - evidence: one neutral 0-point row that surfaces the same
+ *     explanation as an inline citation, so the EvidenceCallout still
+ *     renders content rather than an empty list
+ *
+ * Re-orders the components into the canonical order
+ * (skills → experience → education → cultural_fit) so the UI breakdown
+ * bars are always in the same sequence regardless of AI output order.
+ *
+ * Does NOT touch `overall_score`. The strict-sum reconciliation
+ * downstream of this call recomputes from contribution_points, so a
+ * zeroed component contributes 0 — keeping the headline arithmetic
+ * coherent.
+ */
+function ensureAllComponents(
+  score: MatchScore,
+  weights: ScoreMatchInput["weights"],
+  logger: Logger,
+  reqId: string,
+): MatchScore {
+  const byName = new Map(score.components.map((c) => [c.name, c]));
+  const missing = REQUIRED_COMPONENT_NAMES.filter((n) => !byName.has(n));
+  if (missing.length === 0) {
+    // Even when nothing is missing we re-order so the UI sequence stays
+    // canonical (skills, experience, education, cultural_fit).
+    return {
+      ...score,
+      components: REQUIRED_COMPONENT_NAMES.map((n) => byName.get(n)!),
+    };
+  }
+
+  logger.warn(
+    `[${reqId}] AI omitted ${missing.length} component(s) from match score: ${missing.join(", ")} — backfilling with zero placeholders`,
+  );
+
+  const padded = REQUIRED_COMPONENT_NAMES.map<MatchComponent>((n) => {
+    const present = byName.get(n);
+    if (present) return present;
+    const max = weights[n] ?? 0;
+    return {
+      name: n,
+      score: 0,
+      max,
+      weight: max,
+      explanation:
+        "Could not be evaluated from the candidate's resume content — the AI did not extract a signal for this component on this run.",
+      evidence: [
+        {
+          excerpt:
+            "Insufficient signal in the redacted resume content to score this component.",
+          source: "System note",
+          relevance: "neutral",
+          contribution_points: 0,
+          reasoning:
+            "Placeholder evidence inserted by the platform when the AI returned an incomplete component breakdown; surfaces the gap honestly instead of silently dropping the bar.",
+        },
+      ],
+    };
+  });
+
+  return { ...score, components: padded };
 }
