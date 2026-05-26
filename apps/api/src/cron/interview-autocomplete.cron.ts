@@ -1,6 +1,6 @@
 import { Cron } from "@nestjs/schedule";
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   interviewsTable,
   applicationsTable,
@@ -30,8 +30,10 @@ export class InterviewAutocompleteCron {
     private readonly audit: AuditService,
   ) {}
 
-  /** Hourly at minute 0. */
-  @Cron("0 * * * *", { name: CRON_NAME, timeZone: "Asia/Manila" })
+  /** Every minute. Bumped from hourly (May 2026) to keep auto-complete
+   *  responsive — interview end times are minute-precise, and the
+   *  identity-reveal + resume-download unlocks are tied to this flip. */
+  @Cron("* * * * *", { name: CRON_NAME, timeZone: "Asia/Manila" })
   async run(): Promise<{ completed: number; durationMs: number }> {
     return this.execute();
   }
@@ -40,11 +42,16 @@ export class InterviewAutocompleteCron {
   async execute(): Promise<{ completed: number; durationMs: number }> {
     const startedAt = Date.now();
 
+    // Catches interviews that ended past their scheduledAt + duration
+    // + grace, regardless of whether the start cron caught them. Both
+    // `in_progress` (normal flow) and `scheduled` (start cron missed,
+    // server was down, etc.) get swept to `completed`.
     const due = await this.db
       .select({
         id: interviewsTable.id,
         applicationId: interviewsTable.applicationId,
         scheduledBy: interviewsTable.scheduledBy,
+        previousStatus: interviewsTable.status,
         candidateId: applicationsTable.candidateId,
         jobId: applicationsTable.jobId,
         jobTitle: jobsTable.title,
@@ -64,7 +71,7 @@ export class InterviewAutocompleteCron {
       )
       .where(
         and(
-          eq(interviewsTable.status, "scheduled"),
+          inArray(interviewsTable.status, ["scheduled", "in_progress"]),
           // Drizzle has no native interval-arithmetic helper for column-derived values;
           // raw SQL computes interview end time = scheduledAt + durationMinutes + grace.
           sql`(${interviewsTable.scheduledAt} + ((${interviewsTable.durationMinutes} + ${GRACE_MINUTES}) || ' minutes')::interval) <= now()`,
@@ -81,7 +88,10 @@ export class InterviewAutocompleteCron {
           .where(
             and(
               eq(interviewsTable.id, row.id),
-              eq(interviewsTable.status, "scheduled"),
+              // Guard against a concurrent recruiter mark-complete or
+              // mark-cancelled — only the originally-observed status
+              // wins this update.
+              eq(interviewsTable.status, row.previousStatus),
             ),
           )
           .returning({ id: interviewsTable.id });
@@ -94,7 +104,10 @@ export class InterviewAutocompleteCron {
           action: AUDIT_ACTIONS.INTERVIEW_AUTO_COMPLETED,
           entityType: "interview",
           entityId: row.id,
-          details: { applicationId: row.applicationId },
+          details: {
+            applicationId: row.applicationId,
+            previousStatus: row.previousStatus,
+          },
         });
 
         const completedAt = new Date().toISOString();

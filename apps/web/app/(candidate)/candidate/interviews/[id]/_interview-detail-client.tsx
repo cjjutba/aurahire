@@ -62,6 +62,12 @@ const STATUS_STYLES: Record<
     dot: "bg-[var(--color-status-info)]",
     text: "text-[var(--color-status-info)]",
   },
+  // Per thesis panel revision (May 2026).
+  in_progress: {
+    label: "In Progress",
+    dot: "bg-[var(--color-primary)] animate-pulse",
+    text: "text-[var(--color-primary)]",
+  },
   rescheduled: {
     label: "Rescheduled",
     dot: "bg-[var(--color-status-warning)]",

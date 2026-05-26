@@ -2420,6 +2420,7 @@ export type UpdateInterviewStatusDtoNewStatus =
 
 export const UpdateInterviewStatusDtoNewStatus = {
   scheduled: "scheduled",
+  in_progress: "in_progress",
   completed: "completed",
   cancelled: "cancelled",
   "no-show": "no-show",
@@ -4542,6 +4543,7 @@ export type InterviewsControllerListForRecruiterV1Status =
 
 export const InterviewsControllerListForRecruiterV1Status = {
   scheduled: "scheduled",
+  in_progress: "in_progress",
   completed: "completed",
   cancelled: "cancelled",
   "no-show": "no-show",
@@ -4865,7 +4867,7 @@ export const AdminFeedbackControllerListV1Severity = {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * @summary DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, interview-autocomplete, notifications-retention, interview-reminder, offer-expiry-reminder, interview-feedback-due.
+ * @summary DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, interview-autocomplete, interview-start, notifications-retention, interview-reminder, offer-expiry-reminder, interview-feedback-due.
  */
 export type cronAdminControllerRunV1Response200 = {
   data: void;
@@ -4959,7 +4961,7 @@ export type CronAdminControllerRunV1MutationResult = NonNullable<
 export type CronAdminControllerRunV1MutationError = void;
 
 /**
- * @summary DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, interview-autocomplete, notifications-retention, interview-reminder, offer-expiry-reminder, interview-feedback-due.
+ * @summary DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, interview-autocomplete, interview-start, notifications-retention, interview-reminder, offer-expiry-reminder, interview-feedback-due.
  */
 export const useCronAdminControllerRunV1 = <TError = void, TContext = unknown>(
   options?: {

@@ -43,12 +43,15 @@ export interface InterviewRow {
 // Constants
 // ---------------------------------------------------------------------------
 
+// Per thesis panel revision (May 2026): `in_progress` slots between
+// scheduled and completed — the interview is happening right now.
 const STATUS_PRIORITY: Record<string, number> = {
-  scheduled: 0,
-  rescheduled: 1,
-  completed: 2,
-  cancelled: 3,
-  "no-show": 4,
+  in_progress: 0,
+  scheduled: 1,
+  rescheduled: 2,
+  completed: 3,
+  cancelled: 4,
+  "no-show": 5,
 };
 
 const STATUS_LABELS: Record<
@@ -59,6 +62,12 @@ const STATUS_LABELS: Record<
     label: "Scheduled",
     dot: "bg-[var(--color-status-info)]",
     text: "text-[var(--color-status-info)]",
+  },
+  // Animated pulsing dot to telegraph the live state.
+  in_progress: {
+    label: "In Progress",
+    dot: "bg-[var(--color-primary)] animate-pulse",
+    text: "text-[var(--color-primary)]",
   },
   rescheduled: {
     label: "Rescheduled",
@@ -168,7 +177,9 @@ function InterviewCard({
   showActions,
 }: InterviewCardProps) {
   const router = useRouter();
-  const [pending, setPending] = useState<"no-show" | "cancel" | null>(null);
+  const [pending, setPending] = useState<
+    "no-show" | "cancel" | "complete" | null
+  >(null);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const isPending = pending !== null;
 
@@ -210,7 +221,41 @@ function InterviewCard({
     }
   }
 
+  /**
+   * Mark the interview as completed before the duration ends. Per
+   * thesis panel revision (May 2026): recruiters don't have to wait
+   * for the autocomplete cron — they can flip status the moment the
+   * interview wraps up. The same path is what unlocks candidate
+   * identity reveal + resume download on the application.
+   */
+  async function patchComplete() {
+    setPending("complete");
+    try {
+      const res = await authedFetch(`/api/v1/interviews/${iv.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newStatus: "completed" }),
+      });
+      if (!res.ok) {
+        toastApiError(
+          null,
+          "Couldn't mark complete",
+          "Please try again.",
+        );
+        return;
+      }
+      toastSuccess(
+        "Interview completed",
+        "Candidate details and resume are now unlocked.",
+      );
+      router.refresh();
+    } finally {
+      setPending(null);
+    }
+  }
+
   const isScheduled = iv.status === "scheduled";
+  const isInProgress = iv.status === "in_progress";
   const isCompleted = iv.status === "completed";
   const isReadOnly =
     iv.status === "cancelled" ||
@@ -270,6 +315,14 @@ function InterviewCard({
         </p>
       )}
 
+      {/* ── Live elapsed badge (only when in_progress) ─────────────────── */}
+      {isInProgress && (
+        <ElapsedBadge
+          scheduledAt={iv.scheduledAt}
+          durationMinutes={iv.durationMinutes}
+        />
+      )}
+
       {/* ── Actions ────────────────────────────────────────────────────── */}
       {showActions && !isReadOnly && (
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--color-hairline)] pt-3">
@@ -282,6 +335,41 @@ function InterviewCard({
                 className="inline-flex h-8 items-center gap-1 rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 text-xs font-medium text-[var(--color-body)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] disabled:opacity-60"
               >
                 Reschedule
+              </button>
+              <button
+                type="button"
+                onClick={patchNoShow}
+                disabled={isPending}
+                className="inline-flex h-8 items-center gap-1 rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 text-xs font-medium text-[var(--color-body)] transition hover:bg-[var(--color-surface-strong)] hover:text-[var(--color-ink)] disabled:opacity-60"
+              >
+                {pending === "no-show" ? <ButtonSpinner /> : null}
+                Mark No-Show
+              </button>
+              <button
+                type="button"
+                onClick={patchCancel}
+                disabled={isPending}
+                className="inline-flex h-8 items-center gap-1 rounded-[var(--radius-pill)] border border-[var(--color-status-danger)] bg-[var(--color-canvas)] px-3 text-xs font-medium text-[var(--color-status-danger)] transition hover:bg-[var(--color-status-danger)] hover:text-[var(--color-on-primary)] disabled:opacity-60"
+              >
+                {pending === "cancel" ? <ButtonSpinner /> : null}
+                Cancel
+              </button>
+            </>
+          )}
+
+          {/* Per thesis panel revision (May 2026): while in_progress the
+              recruiter can mark complete early and unlock candidate
+              identity + resume download immediately. */}
+          {isInProgress && (
+            <>
+              <button
+                type="button"
+                onClick={patchComplete}
+                disabled={isPending}
+                className="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-status-success)] px-3 text-xs font-semibold text-[var(--color-on-primary)] transition hover:opacity-90 disabled:opacity-60"
+              >
+                {pending === "complete" ? <ButtonSpinner /> : null}
+                Mark as Completed
               </button>
               <button
                 type="button"
@@ -468,5 +556,66 @@ export function RecruiterInterviewsSection({
         onOpenChange={setScheduleOpen}
       />
     </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ElapsedBadge — ticking live timer while the interview is in_progress.
+// ---------------------------------------------------------------------------
+
+/**
+ * Per thesis panel revision (May 2026): while an interview is in the
+ * in_progress phase, recruiters see a live "00:23 elapsed of 60:00"
+ * readout that ticks every second. The render is cheap (one
+ * setInterval, single useState) and the badge gracefully clamps to
+ * the duration max — if the cron is late to flip to completed, the
+ * UI shows "60:00 elapsed (overrun)" rather than counting forever.
+ */
+function ElapsedBadge({
+  scheduledAt,
+  durationMinutes,
+}: {
+  scheduledAt: string;
+  durationMinutes: number;
+}) {
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const startMs = new Date(scheduledAt).getTime();
+  const elapsedSec = Math.max(0, Math.floor((now - startMs) / 1000));
+  const durationSec = durationMinutes * 60;
+  const isOverrun = elapsedSec >= durationSec;
+  const displaySec = isOverrun ? durationSec : elapsedSec;
+
+  function fmt(totalSec: number): string {
+    const m = Math.floor(totalSec / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (totalSec % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  }
+
+  return (
+    <div className="mt-2 flex items-center gap-2 text-xs">
+      <span
+        className="inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary-soft)] px-2.5 py-1 font-mono font-semibold text-[var(--color-primary)]"
+        aria-live="polite"
+      >
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse"
+          aria-hidden
+        />
+        {fmt(displaySec)} elapsed of {fmt(durationSec)}
+      </span>
+      {isOverrun && (
+        <span className="text-[11px] text-[var(--color-muted)]">
+          past scheduled end — auto-completes any moment
+        </span>
+      )}
+    </div>
   );
 }

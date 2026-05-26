@@ -41,8 +41,17 @@ export const OFFER_STATUS = [
   "withdrawn",
 ] as const;
 export const INTERVIEW_FORMAT = ["phone", "video", "in-person"] as const;
+// `in_progress` added May 2026 — the interview lifecycle now models the
+// "happening right now" phase explicitly. Two minute-resolution crons
+// own the auto-transitions (`interview-start` flips scheduled →
+// in_progress when scheduledAt arrives, `interview-autocomplete` flips
+// in_progress → completed when scheduledAt + duration + grace elapses).
+// Recruiters can also manually mark complete from either scheduled or
+// in_progress so they don't have to wait for a cron tick when an
+// interview ends early.
 export const INTERVIEW_STATUS = [
   "scheduled",
+  "in_progress",
   "completed",
   "cancelled",
   "no-show",
