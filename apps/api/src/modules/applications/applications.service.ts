@@ -159,6 +159,37 @@ export class ApplicationsService {
       });
     }
 
+    // Per thesis panel revision (May 2026): when a candidate has already
+    // computed a preview match score for this exact (candidate, job,
+    // resume) triple AND that score is below the active auto-reject
+    // threshold, refuse the apply outright. Previously the application
+    // was created and then auto-rejected milliseconds later — wasted
+    // work + confusing UX (the candidate sees the rejected status
+    // before they finish their tab switch). With this guard, the apply
+    // endpoint returns a 400 with a clear code the UI can render.
+    //
+    // We deliberately do NOT call the LLM here to score on-demand. If no
+    // preview exists yet, we let the apply through and the async worker
+    // computes + auto-rejects as before.
+    const existingPreview = await this.scoringService.findRawPreview(
+      user.id,
+      dto.jobId,
+      resumeId,
+    );
+    if (existingPreview) {
+      const threshold = await this.getAutoRejectThreshold();
+      if (existingPreview.overallScore < threshold) {
+        throw new BadRequestException({
+          code: "APPLY_BELOW_INTERVIEW_THRESHOLD",
+          message: `Your match score (${existingPreview.overallScore}/100) is below the ${threshold} minimum this role requires.`,
+          details: {
+            overallScore: existingPreview.overallScore,
+            threshold,
+          },
+        });
+      }
+    }
+
     const application = await this.repo.insert({
       jobId: dto.jobId,
       candidateId: user.id,

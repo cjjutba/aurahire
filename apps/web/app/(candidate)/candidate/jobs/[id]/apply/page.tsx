@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Building2, FileText } from "lucide-react";
+import { ArrowLeft, Building2, FileText, ShieldX } from "lucide-react";
+import { AUTO_REJECT_THRESHOLD } from "@aurahire/shared";
+
 import { getCurrentSession } from "@/lib/auth/session";
 import { ApplyFormClient } from "./_apply-form-client";
 import type { ApplyMatchPreview } from "@/components/score/apply-match-summary";
@@ -98,6 +100,24 @@ export default async function ApplyPage({ params }: PageProps) {
       data: ApplyMatchPreview | null;
     };
     preview = previewBody.data;
+  }
+
+  // Per thesis panel revision (May 2026): hard block on opening the
+  // apply form when the candidate has already computed a preview that
+  // falls below the auto-reject threshold. The server-side guard on
+  // POST /applications enforces the same rule for direct API calls;
+  // this is the user-facing version that explains *why* before the
+  // candidate fills out a form they can't submit.
+  if (preview && preview.overallScore < AUTO_REJECT_THRESHOLD) {
+    return (
+      <BelowThresholdBlocked
+        jobId={jobId}
+        jobTitle={job.title}
+        companyName={job.company.name}
+        score={preview.overallScore}
+        threshold={AUTO_REJECT_THRESHOLD}
+      />
+    );
   }
 
   return (
@@ -266,6 +286,101 @@ function NextStep({ n, children }: { n: number; children: React.ReactNode }) {
       </span>
       <span className="text-[var(--color-body)]">{children}</span>
     </li>
+  );
+}
+
+/**
+ * Server-side "you can't apply" page rendered in place of the apply
+ * form when the candidate's preview match score for this job is below
+ * the auto-reject threshold. Per thesis panel revision (May 2026), this
+ * is a hard gate, not a warning — the candidate has to either update
+ * their resume + recompute the preview, or skip this role.
+ */
+function BelowThresholdBlocked({
+  jobId,
+  jobTitle,
+  companyName,
+  score,
+  threshold,
+}: {
+  jobId: string;
+  jobTitle: string;
+  companyName: string;
+  score: number;
+  threshold: number;
+}) {
+  return (
+    <div className="mx-auto max-w-[720px] space-y-6 pb-24 lg:pb-6">
+      <Link
+        href={`/candidate/jobs/${jobId}`}
+        className="inline-flex items-center gap-1.5 text-sm text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to job detail
+      </Link>
+
+      <div className="rounded-[var(--radius-lg)] border border-[var(--color-score-mid)] bg-[var(--color-score-mid-soft)]/40 p-8">
+        <div className="flex items-start gap-4">
+          <div
+            aria-hidden
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-full)] bg-[var(--color-score-mid-soft)] text-[var(--color-score-mid)]"
+          >
+            <ShieldX className="h-6 w-6" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-normal tracking-tight text-[var(--color-ink)]">
+              You can&apos;t apply to this role yet
+            </h1>
+            <p className="mt-3 text-sm text-[var(--color-body)]">
+              Your match score for{" "}
+              <span className="font-medium text-[var(--color-ink)]">
+                {jobTitle}
+              </span>{" "}
+              at{" "}
+              <span className="font-medium text-[var(--color-ink)]">
+                {companyName}
+              </span>{" "}
+              is{" "}
+              <span className="font-mono font-semibold text-[var(--color-ink)]">
+                {score}
+              </span>{" "}
+              / 100. This role requires a minimum match of{" "}
+              <span className="font-mono font-semibold text-[var(--color-ink)]">
+                {threshold}
+              </span>{" "}
+              / 100 for an interview, so applications below the threshold
+              are blocked at submission.
+            </p>
+            <p className="mt-3 text-sm text-[var(--color-muted)]">
+              To improve your match, update your resume to highlight the
+              skills and experience this role calls out, then recompute
+              your preview from the job page.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href={`/candidate/jobs/${jobId}`}
+          className="inline-flex h-11 items-center rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-5 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
+        >
+          Back to the job
+        </Link>
+        <Link
+          href="/candidate/resume"
+          className="inline-flex h-11 items-center rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-surface-soft)]"
+        >
+          Update my resume
+        </Link>
+        <Link
+          href="/candidate/jobs"
+          className="inline-flex h-11 items-center rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-surface-soft)]"
+        >
+          Find another role
+        </Link>
+      </div>
+    </div>
   );
 }
 

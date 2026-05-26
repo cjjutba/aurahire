@@ -15,6 +15,7 @@ import type { JobStatus } from "@aurahire/shared";
 import { RichTextContent } from "@/components/jobs/rich-text-content";
 
 import { MatchPreviewClient } from "./_match-preview-client";
+import { ApplyCtaClient } from "./_apply-cta-client";
 
 interface CandidateJobDetail {
   id: string;
@@ -156,30 +157,27 @@ export function CandidateJobDetailView({
 
         {/* Right rail */}
         <aside className="space-y-4 lg:sticky lg:top-6 lg:h-fit">
-          {/* Apply card (hidden on mobile, replaced by sticky bottom bar) */}
+          {/* Apply card (hidden on mobile, replaced by sticky bottom bar).
+              Per thesis panel revision (May 2026): the Apply CTA is
+              disabled when the preview match score is below the
+              auto-reject threshold (default 75). The shared client
+              component reads the preview from the same query the
+              <MatchPreviewClient /> consumes — no duplicate fetch, no
+              prop drilling. */}
           <div className="hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:block">
-            {hasApplied ? (
-              <>
-                <div className="flex items-center justify-center gap-2 rounded-[var(--radius-pill)] bg-[var(--color-score-high-soft)] py-2.5 text-sm font-semibold text-[var(--color-status-success)]">
-                  <Check className="h-4 w-4" />
-                  You applied
-                </div>
-                <Link
-                  href={viewApplicationHref}
-                  className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-surface-soft)]"
-                >
-                  View your application
-                </Link>
-              </>
-            ) : (
-              <Link
-                href={applyHref}
-                className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-6 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
-              >
-                <Sparkles className="h-4 w-4" />
-                Apply Now
-              </Link>
+            {hasApplied && (
+              <div className="mb-3 flex items-center justify-center gap-2 rounded-[var(--radius-pill)] bg-[var(--color-score-high-soft)] py-2.5 text-sm font-semibold text-[var(--color-status-success)]">
+                <Check className="h-4 w-4" />
+                You applied
+              </div>
             )}
+            <ApplyCtaClient
+              jobId={job.id}
+              hasApplied={hasApplied}
+              applyHref={applyHref}
+              viewApplicationHref={viewApplicationHref}
+              variant="card"
+            />
             {job.publishedAt && (
               <p className="mt-3 text-center text-xs text-[var(--color-muted)]">
                 Posted{" "}
@@ -267,23 +265,13 @@ export function CandidateJobDetailView({
 
       {/* Mobile sticky apply bar */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-hairline)] bg-[var(--color-canvas)]/95 px-4 py-3 backdrop-blur lg:hidden">
-        {hasApplied ? (
-          <Link
-            href={viewApplicationHref}
-            className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-6 text-sm font-semibold text-[var(--color-ink)] transition hover:bg-[var(--color-surface-soft)]"
-          >
-            <Check className="h-4 w-4 text-[var(--color-status-success)]" />
-            View your application
-          </Link>
-        ) : (
-          <Link
-            href={applyHref}
-            className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-6 text-sm font-semibold text-[var(--color-on-primary)] transition hover:bg-[var(--color-primary-active)]"
-          >
-            <Sparkles className="h-4 w-4" />
-            Apply Now
-          </Link>
-        )}
+        <ApplyCtaClient
+          jobId={job.id}
+          hasApplied={hasApplied}
+          applyHref={applyHref}
+          viewApplicationHref={viewApplicationHref}
+          variant="sticky"
+        />
       </div>
     </div>
   );

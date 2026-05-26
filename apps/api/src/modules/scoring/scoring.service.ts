@@ -1442,6 +1442,32 @@ export class ScoringService {
   }
 
   /**
+   * Internal helper: read the raw preview row (not a DTO) for a
+   * (candidate, job, resume) triple. Used by ApplicationsService to
+   * enforce the score-based pre-apply gate (May 2026 panel revision) —
+   * returns null if no preview exists yet for the triple, in which case
+   * the apply proceeds and the async worker handles auto-reject.
+   *
+   * Distinct from `getMatchPreviewByJob` (latest by job, regardless of
+   * resume) because the pre-apply gate must use the exact resume the
+   * candidate is applying with — otherwise switching resumes after a
+   * preview would silently bypass the gate.
+   */
+  async findRawPreview(
+    candidateId: string,
+    jobId: string,
+    resumeId: string,
+  ): Promise<{ overallScore: number; band: string } | null> {
+    const row = await this.scoringRepo.findMatchPreview(
+      candidateId,
+      jobId,
+      resumeId,
+    );
+    if (!row) return null;
+    return { overallScore: row.overallScore, band: row.band };
+  }
+
+  /**
    * Read-only fetch of an existing preview for a (candidate, job) pair.
    * Returns the latest preview regardless of resume version — the UI uses
    * this to decide whether to render "See my match" or the existing score.

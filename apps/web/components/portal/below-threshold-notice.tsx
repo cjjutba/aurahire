@@ -1,22 +1,21 @@
 /**
- * Candidate-side warning surfaced when a job preview match score falls
- * below the auto-reject threshold. Per thesis panel revision (May 2026):
- * applications scoring below the threshold (default 75) are
- * automatically rejected by the system as soon as scoring completes.
+ * Inline notice surfaced inside the candidate's match-preview card when
+ * their score is below the auto-reject threshold. Per thesis panel
+ * revision (May 2026): roles set a minimum match score for interview
+ * eligibility (default 75) and applications below that floor are
+ * blocked at submission.
  *
- * This component does NOT block the apply action — candidate agency is
- * preserved (some candidates may want their application on record for
- * future jobs at the company, or believe the preview score is wrong).
- * It only makes the consequence transparent so the candidate makes an
- * informed choice. The confirm dialog at the call site is the second
- * gate.
+ * This component is purely informational — the actual block lives on
+ * the Apply button (disabled state), the apply page (renders a
+ * dedicated "below threshold" view), and the POST /applications
+ * endpoint (rejects sub-threshold submissions with
+ * APPLY_BELOW_INTERVIEW_THRESHOLD).
  *
- * Copy is deliberately calm + thesis-defensible: explains the policy in
- * the candidate's terms, references the actual numeric score, and does
- * not accuse the candidate of being a poor fit ("Limited match for this
- * role" instead of "You are not qualified").
+ * Copy is calm + thesis-defensible: explains the rule in the
+ * candidate's terms, references the actual numeric score, and does not
+ * accuse the candidate of being a poor fit.
  */
-import { AlertTriangle } from "lucide-react";
+import { ShieldX } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -42,30 +41,29 @@ export function BelowThresholdNotice({
         className,
       )}
     >
-      <AlertTriangle
+      <ShieldX
         aria-hidden="true"
         className="mt-0.5 size-5 shrink-0 text-[var(--color-score-mid)]"
       />
       <div className="min-w-0">
         <p className="font-semibold text-[var(--color-ink)]">
-          Limited match for this role
+          Apply is blocked for this role
         </p>
         <p className="mt-1 text-[var(--color-body)]">
           Your match score is{" "}
           <span className="font-mono font-semibold text-[var(--color-ink)]">
             {score}
           </span>{" "}
-          / 100, which is below the{" "}
+          / 100, below the{" "}
           <span className="font-mono font-semibold text-[var(--color-ink)]">
             {threshold}
           </span>{" "}
-          minimum this role requires for an interview. If you submit, the
-          system will auto-reject the application as soon as final
-          scoring completes &mdash; usually within a few seconds.
+          minimum this role requires for an interview. The Apply button
+          is disabled until your score reaches the threshold.
         </p>
         <p className="mt-2 text-[var(--color-muted)]">
-          You can still apply if you&apos;d like to leave the application
-          on record, or update your resume and try again.
+          Update your resume to better highlight the skills this role
+          calls out, then recompute the preview to try again.
         </p>
       </div>
     </aside>
