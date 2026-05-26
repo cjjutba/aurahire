@@ -24,6 +24,7 @@ import { NotificationsRetentionCron } from "./notifications-retention.cron";
 import { InterviewReminderCron } from "./interview-reminder.cron";
 import { OfferExpiryReminderCron } from "./offer-expiry-reminder.cron";
 import { InterviewAutocompleteCron } from "./interview-autocomplete.cron";
+import { InterviewStartCron } from "./interview-start.cron";
 import { InterviewFeedbackDueCron } from "./interview-feedback-due.cron";
 
 interface CronRunResultDto {
@@ -45,6 +46,7 @@ export class CronAdminController {
     private readonly cleanupUnverified: CleanupUnverifiedAccountsCron,
     private readonly digestEmail: DigestEmailCron,
     private readonly interviewAutocomplete: InterviewAutocompleteCron,
+    private readonly interviewStart: InterviewStartCron,
     private readonly notificationsRetention: NotificationsRetentionCron,
     private readonly interviewReminder: InterviewReminderCron,
     private readonly offerExpiryReminder: OfferExpiryReminderCron,
@@ -56,7 +58,7 @@ export class CronAdminController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, interview-autocomplete, notifications-retention, interview-reminder, offer-expiry-reminder, interview-feedback-due.",
+      "DEV ONLY: manually trigger a named cron service. Returns 403 in production. Cron names: expire-offers, archive-jobs, cleanup-unverified, digest-email, interview-autocomplete, interview-start, notifications-retention, interview-reminder, offer-expiry-reminder, interview-feedback-due.",
   })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 403, description: "Disabled in production" })
@@ -97,6 +99,9 @@ export class CronAdminController {
       case "interview-autocomplete":
         result = await this.interviewAutocomplete.execute();
         break;
+      case "interview-start":
+        result = await this.interviewStart.execute();
+        break;
       case "interview-feedback-due":
         result = await this.interviewFeedbackDue.execute();
         break;
@@ -110,6 +115,7 @@ export class CronAdminController {
             "cleanup-unverified",
             "digest-email",
             "interview-autocomplete",
+            "interview-start",
             "notifications-retention",
             "interview-reminder",
             "offer-expiry-reminder",

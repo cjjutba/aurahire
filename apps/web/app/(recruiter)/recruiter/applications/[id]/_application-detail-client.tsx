@@ -156,12 +156,16 @@ function getInitials(name: string): string {
   );
 }
 
+// Per thesis panel revision (May 2026): `in_progress` slots above
+// scheduled — the live interview is the one the recruiter is most
+// interested in when scanning the decision panel.
 const STATUS_PRIORITY: Record<string, number> = {
-  scheduled: 0,
-  rescheduled: 1,
-  completed: 2,
-  cancelled: 3,
-  "no-show": 4,
+  in_progress: 0,
+  scheduled: 1,
+  rescheduled: 2,
+  completed: 3,
+  cancelled: 4,
+  "no-show": 5,
 };
 
 function findLatestInterview(interviews: InterviewRow[]): InterviewRow | null {

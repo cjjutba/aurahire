@@ -641,10 +641,35 @@ export class InterviewsService {
       interviewId,
     );
 
-    if (interview.status !== "scheduled") {
+    // Per thesis panel revision (May 2026): the interview lifecycle now
+    // includes an explicit `in_progress` phase, and the recruiter can
+    // manually transition out of either `scheduled` or `in_progress`
+    // — typically to mark complete early. Terminal states stay locked.
+    const ALLOWED_TRANSITIONS: Record<
+      InterviewStatus,
+      ReadonlyArray<InterviewStatus>
+    > = {
+      scheduled: [
+        "in_progress",
+        "completed",
+        "cancelled",
+        "no-show",
+        "rescheduled",
+      ],
+      in_progress: ["completed", "cancelled", "no-show"],
+      // Terminal states — no manual transitions out.
+      completed: [],
+      cancelled: [],
+      "no-show": [],
+      rescheduled: [],
+    };
+
+    const allowed =
+      ALLOWED_TRANSITIONS[interview.status as InterviewStatus] ?? [];
+    if (!allowed.includes(dto.newStatus as InterviewStatus)) {
       throw new BadRequestException({
         code: "INVALID_STATUS_TRANSITION",
-        message: `Cannot change status from '${interview.status}'`,
+        message: `Cannot change status from '${interview.status}' to '${dto.newStatus}'`,
       });
     }
 
@@ -676,8 +701,8 @@ export class InterviewsService {
         applicationId: interview.applicationId,
         recruiterId: user.id,
         candidateId: app.candidateId,
-        previousStatus: interview.status,
-        status: dto.newStatus,
+        previousStatus: interview.status as InterviewStatus,
+        status: dto.newStatus as InterviewStatus,
         changedAt: new Date().toISOString(),
       });
     }

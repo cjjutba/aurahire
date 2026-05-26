@@ -54,6 +54,9 @@ export const AUDIT_ACTIONS = {
   INTERVIEW_FEEDBACK_SHARED: "interview.feedback_shared",
   INTERVIEW_RECOMMENDATION_SET: "interview.recommendation_set",
   INTERVIEW_AUTO_COMPLETED: "interview.auto_completed",
+  // Auto-transition from scheduled to in_progress when the scheduled
+  // start time arrives. Fired by the every-minute interview-start cron.
+  INTERVIEW_AUTO_STARTED: "interview.auto_started",
   INTERVIEW_NO_SHOW_MARKED: "interview.no_show_marked",
   INTERVIEW_RESCHEDULED: "interview.rescheduled",
   INTERVIEW_VENUE_CREATED: "interview_venue.created",
@@ -62,6 +65,7 @@ export const AUDIT_ACTIONS = {
   INTERVIEW_STATUS_CHANGED: "interview.status_changed",
   APPLICATION_WITHDRAWN_BY_CANDIDATE: "application.withdrawn_by_candidate",
   INTERVIEW_AUTOCOMPLETE_RUN: "cron.interview_autocomplete.executed",
+  INTERVIEW_START_RUN: "cron.interview_start.executed",
   // Offers
   OFFER_SENT: "offer.sent",
   OFFER_ACCEPTED: "offer.accepted",
