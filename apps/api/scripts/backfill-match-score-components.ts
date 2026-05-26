@@ -167,15 +167,34 @@ async function main(): Promise<void> {
       let updated = 0;
       for (const r of rows) {
         const { padded, added } = fillMissing(r.components, weights);
-        // Cast the padded array to jsonb on the server side — the
-        // postgres lib's typed parameter shape doesn't accept arrays
-        // directly, but a stringified payload + ::jsonb cast is safe.
-        const paddedJson = JSON.stringify(padded);
+        // Important: a naive `${JSON.stringify(arr)}::jsonb` round-trip
+        // double-encodes the value via postgres.js — the driver wraps
+        // the JS string in a JSONB string scalar and ::jsonb then
+        // parses THAT as a JSONB string, leaving the column with
+        // jsonb_typeof='string' instead of 'array'.
+        //
+        // `sql.json(...)` is the supported path — it serializes the JS
+        // value once and binds it as the jsonb parameter. The library's
+        // typings are too narrow for arrays so cast through `any`; the
+        // post-update typeof check below is the real guarantee.
         await sql`
           UPDATE ${sql(table)}
-          SET components = ${paddedJson}::jsonb
+          SET components = ${sql.json(padded as any)}
           WHERE id = ${r.id}
         `;
+        // Defensive sanity check — every row we write must end with a
+        // jsonb_typeof=array. If the driver / cast ever regresses, this
+        // SELECT will throw rather than corrupt rows silently.
+        const [check] = await sql<Array<{ t: string }>>`
+          SELECT jsonb_typeof(components) AS t
+          FROM ${sql(table)}
+          WHERE id = ${r.id}
+        `;
+        if (check?.t !== "array") {
+          throw new Error(
+            `[backfill] post-update row ${r.id} has jsonb_typeof=${check?.t}; refusing to corrupt data`,
+          );
+        }
         updated += 1;
         if (updated <= 5) {
           console.log(`  - ${r.id} padded with [${added.join(", ")}]`);
