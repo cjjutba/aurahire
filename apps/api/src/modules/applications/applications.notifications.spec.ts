@@ -173,6 +173,11 @@ describe("ApplicationsService — notification emissions", () => {
       tryPromoteMatchPreview: jest.fn().mockResolvedValue(null),
       getMatchScoreByApplicationId: jest.fn().mockResolvedValue(null),
       scoreMatch: jest.fn(),
+      // Per thesis panel revision (May 2026): ApplicationsService.apply()
+      // calls findRawPreview to gate sub-threshold submissions. Default
+      // to null (no preview) so the spec exercises the post-apply path
+      // — individual tests can override when verifying the block.
+      findRawPreview: jest.fn().mockResolvedValue(null),
     } as any;
 
     storage = {
