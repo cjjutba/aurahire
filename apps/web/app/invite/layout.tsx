@@ -2,6 +2,12 @@ import Link from "next/link";
 
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 
+// Invite pages (both /invite and /invite/[token]) read cookies via
+// `getCurrentSession()` to decide whether the visitor is signed in.
+// Force dynamic so Next.js 16 doesn't prerender at build time where
+// Supabase env vars aren't loaded.
+export const dynamic = "force-dynamic";
+
 /**
  * Standalone shell for the public invite landing pages. Deliberately does NOT
  * use the recruiter portal layout, these pages must work for signed-out

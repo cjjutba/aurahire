@@ -6,6 +6,11 @@ import { AuthFooter } from "@/components/auth/auth-footer";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { getCurrentProfile } from "@/lib/auth/session";
 
+// Onboarding routes read cookies via `getCurrentProfile()`. Next.js 16
+// would otherwise try to prerender these and fail when Supabase env
+// vars aren't loaded; force dynamic rendering.
+export const dynamic = "force-dynamic";
+
 export default async function OnboardingLayout({
   children,
 }: {
