@@ -19,6 +19,7 @@ import {
 } from "../auth/verify-clerk-jwt";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator";
 import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
+import { ProfileProvisioningService } from "../../clerk/profile-provisioning.service";
 
 /**
  * Validates Clerk session JWTs and attaches the AuthUser to the request.
@@ -34,6 +35,7 @@ export class ClerkAuthGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly config: ConfigService,
     @Inject(DRIZZLE_CLIENT) private readonly db: DrizzleClient,
+    private readonly provisioning: ProfileProvisioningService,
   ) {
     this.verifier = createClerkJwtVerifier({
       jwksUrl: config.getOrThrow<string>("CLERK_JWKS_URL"),
@@ -77,29 +79,26 @@ export class ClerkAuthGuard implements CanActivate {
       });
     }
 
-    const profile = await this.db
-      .select({
-        id: profilesTable.id,
-        email: profilesTable.email,
-        role: profilesTable.role,
-        status: profilesTable.status,
-        fullName: profilesTable.fullName,
-      })
-      .from(profilesTable)
-      .where(eq(profilesTable.clerkUserId, clerkUserId))
-      .limit(1);
-
-    if (profile.length === 0) {
-      // Normally the Clerk webhook has already created the profile. A missing
-      // profile here means the user.created webhook hasn't landed yet (or
-      // failed); Story 2.3 adds a lazy Clerk-Backend-API upsert fallback.
+    let p = await this.loadProfile(clerkUserId);
+    if (!p) {
+      // Lazy provision: the user.created webhook can't reach localhost in dev,
+      // and may race the first request in prod. Fetch from the Clerk Backend
+      // API + upsert, then retry once.
+      try {
+        await this.provisioning.ensureFromClerk(clerkUserId);
+        p = await this.loadProfile(clerkUserId);
+      } catch (err) {
+        this.logger.warn(
+          `Lazy profile provision failed for ${clerkUserId}: ${(err as Error).message}`,
+        );
+      }
+    }
+    if (!p) {
       throw new UnauthorizedException({
         code: "PROFILE_MISSING",
         message: "Profile not initialized for this user",
       });
     }
-
-    const p = profile[0]!;
 
     if (p.status === "suspended") {
       throw new UnauthorizedException({
@@ -125,6 +124,21 @@ export class ClerkAuthGuard implements CanActivate {
 
     req.user = authUser;
     return true;
+  }
+
+  private async loadProfile(clerkUserId: string) {
+    const rows = await this.db
+      .select({
+        id: profilesTable.id,
+        email: profilesTable.email,
+        role: profilesTable.role,
+        status: profilesTable.status,
+        fullName: profilesTable.fullName,
+      })
+      .from(profilesTable)
+      .where(eq(profilesTable.clerkUserId, clerkUserId))
+      .limit(1);
+    return rows[0] ?? null;
   }
 
   private extractToken(req: {

@@ -23,7 +23,7 @@ async function bootstrap() {
       logger: false,
       genReqId: () => undefined as unknown as string,
     }),
-    { bufferLogs: true },
+    { bufferLogs: true, rawBody: true }, // rawBody for Clerk webhook (Svix) signature verification
   );
 
   app.useLogger(app.get(Logger));

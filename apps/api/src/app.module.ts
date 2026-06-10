@@ -10,6 +10,7 @@ import { Keyv } from "keyv";
 import KeyvRedis from "@keyv/redis";
 
 import { DbModule } from "./db";
+import { ClerkModule } from "./clerk";
 import { AuditModule } from "./audit";
 import { EmailModule } from "./email";
 import { AiModule } from "./ai";
@@ -115,6 +116,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
       },
     }),
     DbModule,
+    ClerkModule,
     AuditModule,
     EmailModule,
     AiModule,
