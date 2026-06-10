@@ -12,6 +12,8 @@
     "test": "jest",
     "test:ai-parse": "tsx scripts/run-ai-parse-corpus.ts",
     "generate:openapi": "node --require @swc-node/register scripts/generate-openapi.ts",
+    "migrate": "node --require @swc-node/register --env-file=.env scripts/migrate.ts",
+    "smoke:infra": "node --require @swc-node/register --env-file=.env scripts/smoke-test-neon-upstash.ts",
     "reset-db": "node --require @swc-node/register --env-file=.env scripts/reset-db.ts",
     "seed-db": "node --require @swc-node/register --env-file=.env scripts/seed-db.ts",
     "migrate-remove-screening": "node --require @swc-node/register --env-file=.env scripts/migrate-remove-screening.ts",

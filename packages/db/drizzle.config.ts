@@ -10,9 +10,13 @@ export default defineConfig({
   schema: "./src/schema.ts",
   out: "./drizzle",
   dbCredentials: {
-    // For drizzle-kit generate, this is unused; for push/migrate it would be required.
-    // We use Supabase MCP for application, so a placeholder is fine if env is missing.
+    // drizzle-kit (generate/studio) connects via the Neon UNPOOLED (direct)
+    // endpoint — DDL + introspection must not go through the PgBouncer pooler.
+    // The 0000–0016 history is applied by scripts/migrate.ts (hand-authored SQL,
+    // no drizzle journal entries beyond 0000); use `drizzle-kit generate` going
+    // forward for new schema changes.
     url:
+      process.env.DATABASE_URL_UNPOOLED ??
       process.env.DATABASE_URL ??
       "postgresql://placeholder@localhost:5432/placeholder",
   },
