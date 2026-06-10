@@ -53,3 +53,8 @@ coverage/
 
 # Worktrees (created by superpowers:using-git-worktrees)
 .worktrees/
+
+# Claude Code: track team settings + skills + BMad framework (worktrees need them);
+# keep personal local settings out of git
+.claude/settings.local.json
+_bmad-output/**/*.local.*
