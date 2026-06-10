@@ -23,7 +23,7 @@ aurahire/
 │   └── main/                     # Project docs (PRD, architecture, etc.)
 ├── emails/                       # Reserved (templates live in apps/api/src/email/templates/)
 ├── node_modules/                 # pnpm-managed
-├── .env.example                  # Template — copied per-app to apps/web/.env.local + apps/api/.env
+├── .env.example                  # Template - copied per-app to apps/web/.env.local + apps/api/.env
 ├── .gitignore
 ├── AGENTS.md                     # Agent rules (Next.js 16 warning + monorepo rules)
 ├── CLAUDE.md                     # Claude Code project instructions
@@ -103,7 +103,7 @@ Common compiler options extended by each app/package's `tsconfig.json`.
 
 ---
 
-## `apps/web/` — Next.js Frontend
+## `apps/web/` - Next.js Frontend
 
 ```
 apps/web/
@@ -215,13 +215,13 @@ apps/web/
 **Frontend rules:**
 
 - No imports from `apps/api/`
-- No imports from `packages/db/` (unless purely type imports — rare; prefer Zod schemas in `packages/shared/`)
+- No imports from `packages/db/` (unless purely type imports - rare; prefer Zod schemas in `packages/shared/`)
 - All API calls go through `lib/api/` which wraps `packages/shared/api-client/`
 - Forms import Zod schemas from `packages/shared/`
 
 ---
 
-## `apps/api/` — NestJS Backend
+## `apps/api/` - NestJS Backend
 
 ```
 apps/api/
@@ -340,7 +340,7 @@ apps/api/
 │       ├── health.controller.ts      # GET /api/health (Caddy + PM2 probes on the Droplet)
 │       └── health.module.ts
 ├── test/
-│   └── (deferred to Phase 2 — no tests in sprint)
+│   └── (deferred to Phase 2 - no tests in sprint)
 ├── tsconfig.json
 ├── tsconfig.build.json
 ├── nest-cli.json
@@ -359,7 +359,7 @@ apps/api/
 
 ---
 
-## `packages/shared/` — Shared Schemas + Client
+## `packages/shared/` - Shared Schemas + Client
 
 ```
 packages/shared/
@@ -388,7 +388,7 @@ packages/shared/
 │   │   ├── ai-limits.ts
 │   │   └── pagination.ts
 │   ├── api-client/               # Auto-generated via orval
-│   │   ├── (generated files — DO NOT EDIT)
+│   │   ├── (generated files - DO NOT EDIT)
 │   │   ├── hooks.ts              # TanStack Query hooks
 │   │   ├── client.ts             # Base fetch client
 │   │   └── types.ts              # OpenAPI-derived types
@@ -407,7 +407,7 @@ packages/shared/
 
 ---
 
-## `packages/db/` — Drizzle Schema
+## `packages/db/` - Drizzle Schema
 
 ```
 packages/db/
@@ -429,7 +429,7 @@ packages/db/
 └── package.json
 ```
 
-**Naming:** package is `@aurahire/db`. Backend imports both schema (for queries) and types. Frontend imports types only when needed (rare — Zod schemas in `packages/shared/` are usually sufficient).
+**Naming:** package is `@aurahire/db`. Backend imports both schema (for queries) and types. Frontend imports types only when needed (rare - Zod schemas in `packages/shared/` are usually sufficient).
 
 ```ts
 // In apps/api/.../jobs.repository.ts
@@ -489,7 +489,7 @@ import type { Job } from "@aurahire/db/types";
 - **One concern per file.** Don't bundle unrelated components.
 - **Components don't reach across feature boundaries.** Candidate components shouldn't import recruiter components. Use `components/shared/*` for crossover.
 - **Server Components by default in Next.js.** Add `"use client"` only when interactivity, hooks, or browser APIs needed.
-- **NestJS modules don't import from each other's services directly** — use exported providers + module imports.
+- **NestJS modules don't import from each other's services directly** - use exported providers + module imports.
 
 ---
 
@@ -573,10 +573,10 @@ The human runs this. Claude does not start dev servers.
 
 ## Known Gaps (Sprint Scope)
 
-- **No `apps/api-worker/`** — workers run in-process with the API. Phase 2 split if needed.
-- **No `tests/` packages** — no Vitest / Playwright in sprint.
-- **No `packages/eslint-config/` shared lint config** — each app has its own; can normalize Phase 2.
-- **No Storybook** — component documentation lives in `ui-patterns.md`.
+- **No `apps/api-worker/`** - workers run in-process with the API. Phase 2 split if needed.
+- **No `tests/` packages** - no Vitest / Playwright in sprint.
+- **No `packages/eslint-config/` shared lint config** - each app has its own; can normalize Phase 2.
+- **No Storybook** - component documentation lives in `ui-patterns.md`.
 - **No barrel `index.ts` re-exports** beyond what's needed for cross-package imports.
 
 ---

@@ -55,7 +55,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
         const logger = new Logger("CacheModule");
         try {
           // Use @keyv/redis as the cache-manager v7 store adapter. We probe the
-          // connection here so a Redis outage surfaces clearly on boot — the
+          // connection here so a Redis outage surfaces clearly on boot - the
           // backend still starts, but cached aggregations fall back to memory.
           const keyvRedis = new KeyvRedis(url, {
             throwOnConnectError: true,
@@ -82,13 +82,13 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
         const url = config.get<string>("REDIS_URL") ?? "redis://localhost:6379";
         return {
           throttlers: [
-            // Default per-IP global limit — basic abuse protection.
+            // Default per-IP global limit - basic abuse protection.
             { name: "default", limit: 100, ttl: 60_000 },
             // Named throttlers must be registered globally so that the
             // @Throttle({ <name>: ... }) decorators on specific endpoints can
             // override them. @nestjs/throttler applies every registered
             // throttler to every route by default, so the global limits here
-            // are intentionally permissive — the actual restrictive limits
+            // are intentionally permissive - the actual restrictive limits
             // live on the @Throttle decorators of the routes that need them
             // (auth controller, scoring/profile/compute, resumes/upload).
             { name: "auth", limit: 1000, ttl: 60_000 },

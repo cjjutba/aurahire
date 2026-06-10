@@ -230,7 +230,7 @@ async function main(): Promise<void> {
   if (files.length === 0) {
     // eslint-disable-next-line no-console
     console.log(
-      `No fixtures found — drop .pdf/.docx files into ${FIXTURES_DIR}`,
+      `No fixtures found - drop .pdf/.docx files into ${FIXTURES_DIR}`,
     );
     return;
   }
@@ -238,7 +238,7 @@ async function main(): Promise<void> {
   // Bootstrap a stand-alone Nest application context so we can resolve
   // ParseResumeService + StorageService through the real DI graph (with
   // OpenAIService, CacheService, ConfigService, etc. wired correctly).
-  // Application context = no HTTP server, no port binding — exactly what we
+  // Application context = no HTTP server, no port binding - exactly what we
   // want for a one-shot CLI script.
   const ctx = await NestFactory.createApplicationContext(AppModule, {
     logger: ["error", "warn", "log"],

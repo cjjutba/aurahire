@@ -1,10 +1,10 @@
-# Apply Page — Surface Match Preview, Stop Misleading "Computing" Shimmer · Implementation Plan
+# Apply Page - Surface Match Preview, Stop Misleading "Computing" Shimmer · Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Stop the candidate apply page from rendering "Computing your match…" copy when the backend is silently reusing a cached preview, by (a) surfacing the existing preview as a read-only summary panel above the form and (b) branching the submit indicator and button label on whether the chosen resume actually matches the preview.
 
-**Architecture:** Frontend-only change. The Next.js server component for the apply page (`apply/page.tsx`) gains a 4th parallel fetch to `GET /api/v1/scoring/match-preview/{jobId}` and forwards the preview (or `null`) to the existing `_apply-form-client.tsx`. A new presentational component, `apps/web/components/score/apply-match-summary.tsx`, renders a read-only mirror of the job-detail Match Preview card — same `ScoreRing`, `MatchBandChip`, `EvidenceCallout` — minus the Recompute button. The form client compares `preview.resumeId` against the picker selection to drive a banner ("locked-in" / "fresh-compute warning" / "no preview yet") and to branch the submit indicator between a plain `Loader2` spinner ("Submitting application…") and the existing `AiShimmer`. Backend is unchanged: the promotion path in `scoring.service.ts:381-409` already reuses the cached AI result when the `(candidate, job, resume)` triple matches.
+**Architecture:** Frontend-only change. The Next.js server component for the apply page (`apply/page.tsx`) gains a 4th parallel fetch to `GET /api/v1/scoring/match-preview/{jobId}` and forwards the preview (or `null`) to the existing `_apply-form-client.tsx`. A new presentational component, `apps/web/components/score/apply-match-summary.tsx`, renders a read-only mirror of the job-detail Match Preview card - same `ScoreRing`, `MatchBandChip`, `EvidenceCallout` - minus the Recompute button. The form client compares `preview.resumeId` against the picker selection to drive a banner ("locked-in" / "fresh-compute warning" / "no preview yet") and to branch the submit indicator between a plain `Loader2` spinner ("Submitting application…") and the existing `AiShimmer`. Backend is unchanged: the promotion path in `scoring.service.ts:381-409` already reuses the cached AI result when the `(candidate, job, resume)` triple matches.
 
 **Tech Stack:** Next.js 16 App Router (RSC for `page.tsx`, `"use client"` for the form + summary component), React 19, TypeScript strict, Tailwind v4 with brand CSS variables, `lucide-react` for icons, `@aurahire/shared` types. No new dependencies.
 
@@ -16,23 +16,23 @@
 
 ### New file
 
-- `apps/web/components/score/apply-match-summary.tsx` — read-only summary panel + the `ApplyMatchPreview` type that both `page.tsx` and `_apply-form-client.tsx` consume.
+- `apps/web/components/score/apply-match-summary.tsx` - read-only summary panel + the `ApplyMatchPreview` type that both `page.tsx` and `_apply-form-client.tsx` consume.
 
 ### Modified files
 
-- `apps/web/app/(candidate)/candidate/jobs/[id]/apply/page.tsx` — add the 4th parallel fetch and forward the preview to the form.
-- `apps/web/app/(candidate)/candidate/jobs/[id]/apply/_apply-form-client.tsx` — accept `preview` prop, render the summary, derive `selectedResumeMatchesPreview`, render the banner, branch submit indicator + button copy.
+- `apps/web/app/(candidate)/candidate/jobs/[id]/apply/page.tsx` - add the 4th parallel fetch and forward the preview to the form.
+- `apps/web/app/(candidate)/candidate/jobs/[id]/apply/_apply-form-client.tsx` - accept `preview` prop, render the summary, derive `selectedResumeMatchesPreview`, render the banner, branch submit indicator + button copy.
 
 ### Untouched (intentionally)
 
 - All NestJS code under `apps/api/`. The backend promotion path already covers everything server-side; touching it would re-open scope.
-- `apps/web/app/(candidate)/candidate/jobs/[id]/_match-preview-client.tsx` — the job-detail Match Preview is unchanged.
-- `apps/web/components/score/score-ring.tsx`, `match-band-chip.tsx`, `evidence-callout.tsx` — reused as-is.
-- `apps/web/components/ai/ai-shimmer.tsx` — used unchanged in the fresh-compute branch only.
+- `apps/web/app/(candidate)/candidate/jobs/[id]/_match-preview-client.tsx` - the job-detail Match Preview is unchanged.
+- `apps/web/components/score/score-ring.tsx`, `match-band-chip.tsx`, `evidence-callout.tsx` - reused as-is.
+- `apps/web/components/ai/ai-shimmer.tsx` - used unchanged in the fresh-compute branch only.
 
 ### Why a new component, not extracting from `_match-preview-client.tsx`
 
-The job-detail variant has fetch/refetch state, a Recompute button, an empty/loading skeleton, and a "system vs candidate source" badge. The apply variant is purely presentational, has no fetch, has a "switch back to default resume" ribbon when the picker doesn't match, and has a "Locked-in on apply" badge instead of "Auto". Extracting one shared component would require parameterising those differences and would obscure both call-sites. We duplicate the inner `ComponentRow` + `ActiveComponentPanel` markup (~60 LOC) — DRY at the right granularity, not at the page level.
+The job-detail variant has fetch/refetch state, a Recompute button, an empty/loading skeleton, and a "system vs candidate source" badge. The apply variant is purely presentational, has no fetch, has a "switch back to default resume" ribbon when the picker doesn't match, and has a "Locked-in on apply" badge instead of "Auto". Extracting one shared component would require parameterising those differences and would obscure both call-sites. We duplicate the inner `ComponentRow` + `ActiveComponentPanel` markup (~60 LOC) - DRY at the right granularity, not at the page level.
 
 ---
 
@@ -42,7 +42,7 @@ The job-detail variant has fetch/refetch state, a Recompute button, an empty/loa
 - **Radius tokens:** `var(--radius-md)` (12 px) for the banner and ribbon buttons, `var(--radius-lg)` (16 px) on existing cards, `var(--radius-xl)` (24 px) on the summary panel, `var(--radius-pill)` for buttons. Already in use.
 - **Strict TS:** no `any`, no new `as` casts. The existing single cast in `_apply-form-client.tsx` (`(await res.json()) as { data: { id: string } }`) stays as-is.
 - **No new dependencies.** All needed icons (`Loader2`, `Sparkles`, `ChevronRight`, `AlertCircle`, `RotateCcw`) are already exported by `lucide-react` (which is at `^1.14.0` in `apps/web/package.json`).
-- **`Promise.all` failure mode:** if any of the four parallel fetches throws, the whole page errors. Per the spec, the preview fetch is non-fatal — we only treat `ok` responses as successful and otherwise fall through to `null`. If the fetch throws (network error), we let it bubble; this matches the existing fetch contracts for `jobRes` / `resumesRes` / `appsRes` and Next.js will render the route's error boundary.
+- **`Promise.all` failure mode:** if any of the four parallel fetches throws, the whole page errors. Per the spec, the preview fetch is non-fatal - we only treat `ok` responses as successful and otherwise fall through to `null`. If the fetch throws (network error), we let it bubble; this matches the existing fetch contracts for `jobRes` / `resumesRes` / `appsRes` and Next.js will render the route's error boundary.
 - **No unit tests added.** The codebase pattern for UI work is `pnpm --filter web type-check` + `pnpm --filter web lint` + manual browser verification by the human. The two existing `*.test.ts` files in `apps/web` cover pure utilities, not React components. This plan follows that pattern; the human is responsible for the manual verification step at the end.
 - **No dev-server commands in this plan.** Per `CLAUDE.md` § Hard rules, Claude does not run dev servers. The final verification task documents the human-driven browser test.
 
@@ -116,7 +116,7 @@ interface ApplyMatchSummaryProps {
    */
   selectedResumeMatchesPreview: boolean;
   /**
-   * Called when the user clicks the "switch back" ribbon — the form client
+   * Called when the user clicks the "switch back" ribbon - the form client
    * resets the resume picker to `preview.resumeId`.
    */
   onSwitchToPreviewResume: () => void;
@@ -407,7 +407,7 @@ function ActiveComponentPanel({
 Notes:
 
 - The `trimQuotes` regex uses Unicode escape sequences (`\u201c\u201d\u2018\u2019`) instead of the literal smart-quote glyphs; both are valid but the escape form survives clipboard round-trips reliably.
-- `dimmed` is derived locally from the prop — no extra state, no extra prop, no contradiction risk.
+- `dimmed` is derived locally from the prop - no extra state, no extra prop, no contradiction risk.
 - The component never fetches or imports `createSupabaseBrowserClient`. It is purely presentational.
 
 - [ ] **Step 2: Type-check the new file**
@@ -430,7 +430,7 @@ feat(candidate-apply): add read-only ApplyMatchSummary component
 Mirrors the job-detail Match Preview card layout (ScoreRing + breakdown
 + evidence) but stripped of fetch state and the Recompute button.
 Exports the ApplyMatchPreview type for the apply page server component
-and form client to share. Not yet wired into the apply flow — that
+and form client to share. Not yet wired into the apply flow - that
 happens in the next commits.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
@@ -462,11 +462,11 @@ Add directly under it:
 import type { ApplyMatchPreview } from "@/components/score/apply-match-summary";
 ```
 
-This is a type-only import — safe inside a server component because TypeScript erases it before the React Server Components boundary.
+This is a type-only import - safe inside a server component because TypeScript erases it before the React Server Components boundary.
 
 - [ ] **Step 2: Add the 4th parallel fetch**
 
-Find the existing `Promise.all` block (currently lines 46–59):
+Find the existing `Promise.all` block (currently lines 46-59):
 
 ```ts
 const [jobRes, resumesRes, appsRes] = await Promise.all([
@@ -510,7 +510,7 @@ const [jobRes, resumesRes, appsRes, previewRes] = await Promise.all([
 
 - [ ] **Step 3: Parse the preview response**
 
-Find the existing job/resume body parsing (currently lines 82–86):
+Find the existing job/resume body parsing (currently lines 82-86):
 
 ```ts
 const jobBody = (await jobRes.json()) as { data: JobRecap };
@@ -537,7 +537,7 @@ if (previewRes.ok) {
 Notes:
 
 - A 401/404/5xx response returns `null` silently (matches spec edge case "Server-side preview fetch fails (5xx, network error). Treat as no-preview.").
-- An empty body — i.e. backend returned 200 with `data: null` because no preview exists yet — also yields `null`. Both code paths converge.
+- An empty body - i.e. backend returned 200 with `data: null` because no preview exists yet - also yields `null`. Both code paths converge.
 
 - [ ] **Step 4: Forward the prop to `ApplyFormClient`**
 
@@ -561,7 +561,7 @@ Run from repo root:
 pnpm --filter web type-check
 ```
 
-Expected: PASS. (At this point `ApplyFormClient` does not yet accept `preview`, so TypeScript will likely **fail** here with `Property 'preview' does not exist on type 'IntrinsicAttributes & Props'`. **That's expected and fine for this task — it will pass once Task 3 lands.**)
+Expected: PASS. (At this point `ApplyFormClient` does not yet accept `preview`, so TypeScript will likely **fail** here with `Property 'preview' does not exist on type 'IntrinsicAttributes & Props'`. **That's expected and fine for this task - it will pass once Task 3 lands.**)
 
 If you want a clean type-check between commits, you can defer this commit until Task 3 finishes and combine the two. The recommended path is: commit now (failing type-check is acceptable mid-feature), continue to Task 3.
 
@@ -574,7 +574,7 @@ feat(candidate-apply): fetch match preview server-side, pass to form
 
 Adds a 4th parallel fetch to GET /api/v1/scoring/match-preview/{jobId}
 in the apply page. Non-fatal on failure (treated as no-preview). The
-ApplyFormClient now receives a preview prop it does not yet read —
+ApplyFormClient now receives a preview prop it does not yet read -
 that's wired in the next commit.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
@@ -584,7 +584,7 @@ EOF
 
 ---
 
-## Task 3: Wire `preview` into `ApplyFormClient` — accept prop, render summary, derive match flag
+## Task 3: Wire `preview` into `ApplyFormClient` - accept prop, render summary, derive match flag
 
 **Files:**
 
@@ -594,7 +594,7 @@ EOF
 
 - [ ] **Step 1: Add the import**
 
-Open `apps/web/app/(candidate)/candidate/jobs/[id]/apply/_apply-form-client.tsx`. Find the existing imports block (lines 1–11):
+Open `apps/web/app/(candidate)/candidate/jobs/[id]/apply/_apply-form-client.tsx`. Find the existing imports block (lines 1-11):
 
 ```tsx
 "use client";
@@ -629,7 +629,7 @@ import {
 
 - [ ] **Step 2: Update the `Props` interface**
 
-Find the existing `Props` interface (currently lines 22–25):
+Find the existing `Props` interface (currently lines 22-25):
 
 ```tsx
 interface Props {
@@ -664,7 +664,7 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
 
 - [ ] **Step 4: Derive `selectedResumeMatchesPreview` and the switch-back callback**
 
-Find the existing state declarations (currently lines 30–37):
+Find the existing state declarations (currently lines 30-37):
 
 ```tsx
 const router = useRouter();
@@ -691,7 +691,7 @@ function switchToPreviewResume() {
 
 Notes:
 
-- The callback is a regular function declaration (not memoised) because `<ApplyMatchSummary>` doesn't memoise its props — there's nothing to gain from `useCallback` here.
+- The callback is a regular function declaration (not memoised) because `<ApplyMatchSummary>` doesn't memoise its props - there's nothing to gain from `useCallback` here.
 - `selectedResumeMatchesPreview` is derived per-render. With at most a handful of resumes the comparison is free.
 
 - [ ] **Step 5: Render `<ApplyMatchSummary>` above the resume picker**
@@ -732,7 +732,7 @@ Run from repo root:
 pnpm --filter web type-check
 ```
 
-Expected: PASS. Both Task 2 and Task 3 changes now align — `Props.preview` is declared, `page.tsx` passes it, and `ApplyMatchSummary` consumes the matching shape.
+Expected: PASS. Both Task 2 and Task 3 changes now align - `Props.preview` is declared, `page.tsx` passes it, and `ApplyMatchSummary` consumes the matching shape.
 
 - [ ] **Step 7: Lint**
 
@@ -742,7 +742,7 @@ Run:
 pnpm --filter web lint
 ```
 
-Expected: PASS. Note: if the linter flags `selectedResumeMatchesPreview` or `switchToPreviewResume` as unused (they're consumed by `<ApplyMatchSummary>`, but TS-aware ESLint should see that), no action needed — they're definitely used.
+Expected: PASS. Note: if the linter flags `selectedResumeMatchesPreview` or `switchToPreviewResume` as unused (they're consumed by `<ApplyMatchSummary>`, but TS-aware ESLint should see that), no action needed - they're definitely used.
 
 - [ ] **Step 8: Commit**
 
@@ -757,7 +757,7 @@ derives selectedResumeMatchesPreview from the picker selection, and
 exposes a switch-back callback so candidates can return to the
 default-resume preview with one click.
 
-The summary is read-only — no Recompute button. Banner copy and
+The summary is read-only - no Recompute button. Banner copy and
 submit-indicator branching are added in the next commits.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
@@ -777,7 +777,7 @@ EOF
 
 - [ ] **Step 1: Add the banner render block**
 
-Find the resume picker card's closing `</section>` followed by the cover letter card's opening `<section>` (these are adjacent — no whitespace lines between them today). The structure looks like:
+Find the resume picker card's closing `</section>` followed by the cover letter card's opening `<section>` (these are adjacent - no whitespace lines between them today). The structure looks like:
 
 ```tsx
         </div>
@@ -820,7 +820,7 @@ function ResumeMatchBanner({
         <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <span>
           <strong className="font-semibold">
-            Apply to lock in this score — no recompute needed.
+            Apply to lock in this score - no recompute needed.
           </strong>{" "}
           We&apos;ll attach the match preview shown above to your application.
         </span>
@@ -861,7 +861,7 @@ function ResumeMatchBanner({
 Notes:
 
 - The function is a colocated helper, not exported. It only consumes the two props the form already has, so no extra plumbing.
-- The neutral state (no preview) still uses `<Sparkles>` in primary blue — the badge of "AI is involved here" — which matches the project's `badge-ai-suggested` voice in `DESIGN.md`.
+- The neutral state (no preview) still uses `<Sparkles>` in primary blue - the badge of "AI is involved here" - which matches the project's `badge-ai-suggested` voice in `DESIGN.md`.
 
 - [ ] **Step 3: Type-check**
 
@@ -908,14 +908,14 @@ EOF
 
 - [ ] **Step 1: Replace the `submitting` early-return**
 
-Find the existing `submitting` block (currently lines 108–117):
+Find the existing `submitting` block (currently lines 108-117):
 
 ```tsx
 if (submitting) {
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
       <AiShimmer
-        caption="Computing your match against this job — analyzing skills, experience, education, and cultural fit..."
+        caption="Computing your match against this job - analyzing skills, experience, education, and cultural fit..."
         height={240}
       />
     </div>
@@ -941,7 +941,7 @@ if (submitting) {
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
       <AiShimmer
-        caption="Computing your match against this job — analyzing skills, experience, education, and cultural fit..."
+        caption="Computing your match against this job - analyzing skills, experience, education, and cultural fit..."
         height={240}
       />
     </div>
@@ -956,7 +956,7 @@ Notes:
 
 - [ ] **Step 2: Branch the desktop submit button label**
 
-Find the desktop action bar's submit button (currently lines 204–212):
+Find the desktop action bar's submit button (currently lines 204-212):
 
 ```tsx
 <button
@@ -988,7 +988,7 @@ Replace with:
 
 - [ ] **Step 3: Branch the mobile sticky submit button label**
 
-Find the mobile sticky submit button (currently lines 224–232):
+Find the mobile sticky submit button (currently lines 224-232):
 
 ```tsx
 <button
@@ -1016,7 +1016,7 @@ Replace with:
 </button>
 ```
 
-(Mobile uses the shorter `"Lock in & apply"` because the sticky bar shares horizontal space with the Cancel button — keeping the label concise prevents wrapping on small viewports.)
+(Mobile uses the shorter `"Lock in & apply"` because the sticky bar shares horizontal space with the Cancel button - keeping the label concise prevents wrapping on small viewports.)
 
 - [ ] **Step 4: Type-check**
 
@@ -1074,18 +1074,18 @@ Expected: both PASS.
 
 Tell the human: "Type-check and lint are clean. Please run `pnpm dev` and verify the three apply-page paths below in the browser. Report any deviation from the expected behavior so I can fix it."
 
-**Path A — Default resume + existing preview (the original bug case):**
+**Path A - Default resume + existing preview (the original bug case):**
 
 1. Visit a job detail page where the candidate already computed a Match Preview against the default resume. The Match Preview card should show a score (e.g., 76 / 100).
 2. Click **Apply Now**.
 3. **Expect:** The apply page renders the read-only `Match Summary` panel above the resume picker, with a `Locked-in on apply` pill in the header. The summary shows the same score, breakdown, and evidence as the job-detail Match Preview.
-4. **Expect:** The banner under the resume picker says "Apply to lock in this score — no recompute needed." (primary-soft background, primary text).
+4. **Expect:** The banner under the resume picker says "Apply to lock in this score - no recompute needed." (primary-soft background, primary text).
 5. **Expect:** The submit button reads **"Lock in match & apply"**.
 6. Click it.
-7. **Expect:** A plain spinner with "Submitting application…" — **no AI shimmer, no "Computing your match…" copy**.
-8. After redirect, the application detail page shows the same score; no duplicate `score.match.computed` audit row was created (verifiable by checking the `audit_logs` table — the row's `details.promotedFromPreviewId` should be non-null).
+7. **Expect:** A plain spinner with "Submitting application…" - **no AI shimmer, no "Computing your match…" copy**.
+8. After redirect, the application detail page shows the same score; no duplicate `score.match.computed` audit row was created (verifiable by checking the `audit_logs` table - the row's `details.promotedFromPreviewId` should be non-null).
 
-**Path B — Non-default resume picked, preview exists against default:**
+**Path B - Non-default resume picked, preview exists against default:**
 
 1. Visit a job detail page with an existing Match Preview.
 2. Click **Apply Now**.
@@ -1093,11 +1093,11 @@ Tell the human: "Type-check and lint are clean. Please run `pnpm dev` and verify
 4. **Expect:** The summary panel dims (60% opacity), and a small ribbon appears at the top of the panel: "This was scored against your default resume. Switching back will lock in this score." with a "Switch back" affordance.
 5. **Expect:** The banner under the picker is amber: "You picked a different resume than the one your match was scored against. We'll compute a fresh match when you submit."
 6. **Expect:** Submit button reads **"Submit application"**.
-7. Click "Switch back" on the ribbon — the picker should jump back to the default resume, the panel un-dims, and the banner returns to the locked-in state.
+7. Click "Switch back" on the ribbon - the picker should jump back to the default resume, the panel un-dims, and the banner returns to the locked-in state.
 8. Switch resumes again, click submit.
-9. **Expect:** The `AiShimmer` runs with "Computing your match…" copy — **this branch is honest** (a fresh OpenAI call really is happening).
+9. **Expect:** The `AiShimmer` runs with "Computing your match…" copy - **this branch is honest** (a fresh OpenAI call really is happening).
 
-**Path C — No preview at all:**
+**Path C - No preview at all:**
 
 1. Visit a job detail page where the candidate has _not_ yet computed a Match Preview (the empty "See my match" state).
 2. Click **Apply Now** (the apply button is reachable because `MatchPreviewClient` is empty-state, not blocking).
@@ -1105,9 +1105,9 @@ Tell the human: "Type-check and lint are clean. Please run `pnpm dev` and verify
 4. **Expect:** The banner under the picker is neutral: "No match preview yet. We'll score your resume against this job when you submit."
 5. **Expect:** Submit button reads **"Submit application"**.
 6. Click submit.
-7. **Expect:** `AiShimmer` runs with "Computing your match…" copy. Honest — there's no cached score to promote.
+7. **Expect:** `AiShimmer` runs with "Computing your match…" copy. Honest - there's no cached score to promote.
 
-**Path D — Cross-cutting checks for all three paths:**
+**Path D - Cross-cutting checks for all three paths:**
 
 - The 409 conflict path (already-applied race) still toasts "Already applied" and redirects back to the job detail page.
 - Cancel button on desktop and mobile still pops history.
@@ -1122,11 +1122,11 @@ If the human reports a deviation, treat it as a bug-fix follow-up, not a re-plan
 
 - _Score panel collapsed flat with no padding._ → Check the parent `<div className="space-y-6">` in `apply/page.tsx` is wrapping the form output; the `<>` fragment in the form client doesn't add a gap, the parent must.
 - _Banner not appearing._ → Confirm `<ResumeMatchBanner>` is between `</section>` of the resume picker and `<section>` of the cover letter, and that the prop spread is correct.
-- _Submit button label flickers between two values during submit._ → Don't treat `submitting` as a third state for the label — the label is stable based on `(preview, selectedResumeMatchesPreview)`, not on `submitting`. Re-check the boolean expression.
+- _Submit button label flickers between two values during submit._ → Don't treat `submitting` as a third state for the label - the label is stable based on `(preview, selectedResumeMatchesPreview)`, not on `submitting`. Re-check the boolean expression.
 
 - [ ] **Step 4: Once verified, no further commit needed**
 
-The five commits from Tasks 1–5 already cover the entire feature. Manual verification is acceptance, not code.
+The five commits from Tasks 1-5 already cover the entire feature. Manual verification is acceptance, not code.
 
 ---
 
@@ -1144,7 +1144,7 @@ The five commits from Tasks 1–5 already cover the entire feature. Manual verif
 | Mobile sticky bar follows the same rule                                        | Task 5, Step 3                                              |
 | Resume-mismatch dimmed panel + ribbon                                          | Task 1 (component built-in) + Task 3 (switch-back callback) |
 | No backend changes                                                             | Confirmed in "Untouched (intentionally)"                    |
-| No new audit events                                                            | Confirmed — backend already logs `promotedFromPreviewId`    |
+| No new audit events                                                            | Confirmed - backend already logs `promotedFromPreviewId`    |
 | `ApplyMatchPreview` type re-used by `page.tsx` and form client                 | Task 1 exports it; Tasks 2 + 3 import it                    |
 | Acceptance criteria from spec                                                  | Task 6 verification checklist                               |
 
@@ -1153,7 +1153,7 @@ The five commits from Tasks 1–5 already cover the entire feature. Manual verif
 **Type consistency:**
 
 - `ApplyMatchPreview` is defined exactly once (`apply-match-summary.tsx`, Task 1) and imported via type-only import in two places (`page.tsx` Task 2 Step 1, `_apply-form-client.tsx` Task 3 Step 1).
-- `selectedResumeMatchesPreview` is computed once (Task 3 Step 4) and consumed in Task 4 (`ResumeMatchBanner` prop), Task 5 Steps 1–3 (submit indicator + button labels). All call sites use the same boolean expression.
+- `selectedResumeMatchesPreview` is computed once (Task 3 Step 4) and consumed in Task 4 (`ResumeMatchBanner` prop), Task 5 Steps 1-3 (submit indicator + button labels). All call sites use the same boolean expression.
 - `switchToPreviewResume` is declared once (Task 3 Step 4) and passed once (Task 3 Step 5 to `<ApplyMatchSummary>`'s `onSwitchToPreviewResume` prop).
 
 No inconsistencies found.

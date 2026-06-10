@@ -188,7 +188,7 @@ export class EventsService {
           // Gateway not yet initialized (boot path or test); silently drop.
           return;
         }
-        // Socket.io accepts a readonly tuple-of-rooms — no copy needed.
+        // Socket.io accepts a readonly tuple-of-rooms - no copy needed.
         server.to(rooms as string[]).emit(event, payload);
       } catch (err) {
         // Include rooms + payload-key set so an ops alert points at the

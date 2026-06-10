@@ -1,12 +1,12 @@
-# Help Page "On this page" TOC — Bounded, Scrollable, Auto-Tracking
+# Help Page "On this page" TOC - Bounded, Scrollable, Auto-Tracking
 
 **Date:** 2026-05-07
 **Owner:** UX polish, help/docs surfaces (candidate · recruiter · admin)
-**Status:** approved (option A — bounded scrollable TOC with active auto-tracking)
+**Status:** approved (option A - bounded scrollable TOC with active auto-tracking)
 
 ## Problem
 
-`apps/web/components/help/help-view.tsx` powers all three help pages (`/candidate/help`, `/recruiter/help`, `/admin/help`). The desktop right rail (`<aside>`, lines 270–286) renders an "On this page" TOC built from a flat `<TocList>` of every section across every group:
+`apps/web/components/help/help-view.tsx` powers all three help pages (`/candidate/help`, `/recruiter/help`, `/admin/help`). The desktop right rail (`<aside>`, lines 270-286) renders an "On this page" TOC built from a flat `<TocList>` of every section across every group:
 
 | Variant   | Sections | Groups |
 | --------- | -------- | ------ |
@@ -14,12 +14,12 @@
 | Recruiter | 17       | 6      |
 | Admin     | 18       | 6      |
 
-The aside uses `sticky top-8` but is **not height-bounded**. Once the section list exceeds viewport height, the bottom of the TOC sits below the fold and the items there are unreachable until the user scrolls the _page_. On a 13" laptop (~720 px content height after browser chrome) the candidate TOC clips at "Tracking your applications" — the user cannot click "Notifications" or "Report a bias concern" without first scrolling the page far enough that the sticky aside re-anchors. That's the failure shown in the two screenshots.
+The aside uses `sticky top-8` but is **not height-bounded**. Once the section list exceeds viewport height, the bottom of the TOC sits below the fold and the items there are unreachable until the user scrolls the _page_. On a 13" laptop (~720 px content height after browser chrome) the candidate TOC clips at "Tracking your applications" - the user cannot click "Notifications" or "Report a bias concern" without first scrolling the page far enough that the sticky aside re-anchors. That's the failure shown in the two screenshots.
 
 Secondary issues:
 
 1. **Active item can scroll out of TOC view.** Even with bounding, on long lists the active item drifts off-screen as page-scroll moves through later sections.
-2. **Visual indicator is heavy.** The current active state is a full `bg-[var(--color-primary-soft)]` pill on the TOC item. Enterprise patterns (Vercel, Linear, Stripe, GitHub Docs) use a **2-px left rail bar** with text-color shift — quieter, scans faster on a long list.
+2. **Visual indicator is heavy.** The current active state is a full `bg-[var(--color-primary-soft)]` pill on the TOC item. Enterprise patterns (Vercel, Linear, Stripe, GitHub Docs) use a **2-px left rail bar** with text-color shift - quieter, scans faster on a long list.
 3. **Cut-off content is unsignaled.** When the TOC scrolls internally, there's no visual hint that more items exist above/below.
 
 ## Goal
@@ -32,7 +32,7 @@ Replace the unbounded sticky aside with a height-bounded, internally-scrollable 
 - adopts a quieter active-state indicator that scans well on long lists,
 - changes nothing else about the help page (content, search, mobile disclosure, FAQ, contact card all unaffected).
 
-This is presentation-only — no content, route, schema, or backend change.
+This is presentation-only - no content, route, schema, or backend change.
 
 ## Scope
 
@@ -53,7 +53,7 @@ This is presentation-only — no content, route, schema, or backend change.
 - Mobile TOC layout changes.
 - Search behavior, FAQ, contact card, hero, scroll-spy threshold logic.
 - Cross-page navigation (the TOC remains within-page anchors only).
-- Adding new design tokens — uses only existing `{colors.*}` and `{rounded.*}` from `DESIGN.md`.
+- Adding new design tokens - uses only existing `{colors.*}` and `{rounded.*}` from `DESIGN.md`.
 
 ## Design
 
@@ -80,7 +80,7 @@ The desktop right column becomes a fixed-height bounded region:
 └─────────────────────────────┘
 ```
 
-The header ("ON THIS PAGE") sits **outside** the scroll area so it never scrolls with the list — same pattern as Vercel and Linear docs.
+The header ("ON THIS PAGE") sits **outside** the scroll area so it never scrolls with the list - same pattern as Vercel and Linear docs.
 
 ### Container math
 
@@ -100,7 +100,7 @@ The header ("ON THIS PAGE") sits **outside** the scroll area so it never scrolls
 </aside>
 ```
 
-- `max-h-[calc(100vh-4rem)]` — viewport minus 32 px sticky offset minus 32 px breathing room.
+- `max-h-[calc(100vh-4rem)]` - viewport minus 32 px sticky offset minus 32 px breathing room.
 - `flex flex-col` with the header `shrink-0` and the scroll wrapper `flex-1 min-h-0` keeps the header pinned and lets only the list scroll.
 - `pr-2` on the scroll wrapper reserves space for the scrollbar so list items don't shift width when the scrollbar appears (Vercel pattern).
 
@@ -118,9 +118,9 @@ useEffect(() => {
 }, [activeId]);
 ```
 
-Each TOC `<button>` carries `data-toc-id={s.id}` so the lookup is stable. `block: "nearest"` is the canonical choice — it only scrolls if the item is outside the visible region, so it doesn't fight the user when they scroll the TOC manually (Stripe pattern).
+Each TOC `<button>` carries `data-toc-id={s.id}` so the lookup is stable. `block: "nearest"` is the canonical choice - it only scrolls if the item is outside the visible region, so it doesn't fight the user when they scroll the TOC manually (Stripe pattern).
 
-`behavior: "smooth"` keeps it calm. Active state is driven by the existing scroll-spy `IntersectionObserver` (lines 89–110) — that logic doesn't change.
+`behavior: "smooth"` keeps it calm. Active state is driven by the existing scroll-spy `IntersectionObserver` (lines 89-110) - that logic doesn't change.
 
 ### Active-state indicator (TOC item)
 
@@ -145,8 +145,8 @@ New:
 
 Rationale:
 
-- 2-px primary rail is quieter and scans faster than the filled pill — matches Vercel, Linear, Stripe, GitHub Docs.
-- Inactive items lose the hover background fill (`hover:bg-surface-strong`) — on a long list of 17–18 items, fills create visual noise. Hover becomes text-color shift only.
+- 2-px primary rail is quieter and scans faster than the filled pill - matches Vercel, Linear, Stripe, GitHub Docs.
+- Inactive items lose the hover background fill (`hover:bg-surface-strong`) - on a long list of 17-18 items, fills create visual noise. Hover becomes text-color shift only.
 - Group labels (`{group.label}`, e.g., "GETTING STARTED") keep their existing caption-strong style, unchanged.
 - Indent goes from `px-2` to `pl-3 pr-2` so the 2-px rail has room to breathe without overlapping the text.
 
@@ -159,7 +159,7 @@ Two absolutely-positioned 12-px gradient overlays in the scroll wrapper:
 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-[var(--color-canvas)] to-transparent" />
 ```
 
-Both are always rendered. They effectively fade the first/last few pixels of any clipped content. We do not toggle them based on scroll position — keeping them permanent matches Vercel/Linear and avoids a scroll-listener for a marginal effect. `pointer-events-none` so they don't block clicks on the top/bottom items.
+Both are always rendered. They effectively fade the first/last few pixels of any clipped content. We do not toggle them based on scroll position - keeping them permanent matches Vercel/Linear and avoids a scroll-listener for a marginal effect. `pointer-events-none` so they don't block clicks on the top/bottom items.
 
 ### TOC dimension and rhythm
 
@@ -174,17 +174,17 @@ The aside column width stays 240 px (line 218 grid template untouched).
 | TOC fits in viewport      | No internal scroll. Identical to current rendering minus the active-pill fill (now left-rail bar).                         |
 | TOC exceeds viewport      | Internal scroll engaged. Top + bottom fade masks visible. Header pinned.                                                   |
 | User scrolls page         | Scroll-spy updates `activeId`. Effect scrolls active TOC item into view (`block: "nearest"`, smooth).                      |
-| User scrolls TOC manually | No fight — `block: "nearest"` is a no-op when target is already visible.                                                   |
-| User clicks TOC item      | Existing `handleTocClick` (lines 112–121) runs unchanged: smooth-scroll to section + history.replaceState.                 |
+| User scrolls TOC manually | No fight - `block: "nearest"` is a no-op when target is already visible.                                                   |
+| User clicks TOC item      | Existing `handleTocClick` (lines 112-121) runs unchanged: smooth-scroll to section + history.replaceState.                 |
 | Mobile (< 1024 px)        | `<details>` disclosure unchanged. The scrollable bounded pattern is desktop-only.                                          |
 | Search filters list       | TOC re-renders against `filtered.groups` (existing). Bounded scroll still applies; auto-track fires on next active change. |
 
 ## Accessibility
 
-- Buttons keep their existing semantics (`<button type="button">`) — no role changes.
+- Buttons keep their existing semantics (`<button type="button">`) - no role changes.
 - Scroll container is `tabindex` defaulted (not focusable itself), but every nested button is keyboard-reachable.
-- `aria-current="location"` added to the active TOC button for screen readers (currently absent — minor a11y win folded in here).
-- Edge fades use `pointer-events-none` and are decorative — no aria treatment needed.
+- `aria-current="location"` added to the active TOC button for screen readers (currently absent - minor a11y win folded in here).
+- Edge fades use `pointer-events-none` and are decorative - no aria treatment needed.
 - Reduced-motion: browser support for `prefers-reduced-motion` on programmatic `scrollIntoView` is inconsistent (Safari respects it; Chrome/Firefox often do not). Implementation guards via `window.matchMedia("(prefers-reduced-motion: reduce)").matches` and falls back to `behavior: "auto"` (instant) when reduce is set. Same guard applied to `handleTocClick`'s smooth scroll for consistency.
 
 ## Files touched
@@ -193,7 +193,7 @@ The aside column width stays 240 px (line 218 grid template untouched).
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/web/components/help/help-view.tsx` | Bounded sticky aside, auto-track effect, restyled `<TocList>` active state, edge fade masks, `aria-current` on active item, `data-toc-id` attribute on buttons. |
 
-No other file touched. The mobile `<details>` block at lines 192–215 keeps using the same `<TocList>` and inherits the new active-state styling automatically — that's correct (a quieter active indicator works on mobile too).
+No other file touched. The mobile `<details>` block at lines 192-215 keeps using the same `<TocList>` and inherits the new active-state styling automatically - that's correct (a quieter active indicator works on mobile too).
 
 ## Risk
 

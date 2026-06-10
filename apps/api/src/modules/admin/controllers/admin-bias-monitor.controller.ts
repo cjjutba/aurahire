@@ -22,7 +22,7 @@ export class AdminBiasMonitorController {
   @Roles("admin")
   @ApiOperation({
     summary:
-      "Aggregate fairness metrics — KPIs, breakdowns, top flagged terms, recent overrides. Cached 5 min.",
+      "Aggregate fairness metrics - KPIs, breakdowns, top flagged terms, recent overrides. Cached 5 min.",
   })
   @ApiResponse({ status: 200, type: BiasMonitorBundleEnvelopeDto })
   async overview(

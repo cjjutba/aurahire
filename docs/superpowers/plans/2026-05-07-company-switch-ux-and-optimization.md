@@ -1,10 +1,10 @@
-# Company Switch — UX Overlay + Backend Optimization Plan
+# Company Switch - UX Overlay + Backend Optimization Plan
 
 > **For agentic workers:** Use `superpowers:executing-plans` to work through this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make recruiter company switching feel deliberate (overlay during transition) and be measurably faster (membership cache, hover prefetch, single-roundtrip `companyStats`, parallelized PATCH + refresh).
 
-**Architecture:** Two halves wired loosely — a frontend half in `apps/web` (overlay, lifted context state, `useTransition`, hover prefetch) and a backend half in `apps/api` (`ActiveCompanyGuard` membership cache, `companyStats` CTE consolidation). No schema changes, no API contract changes.
+**Architecture:** Two halves wired loosely - a frontend half in `apps/web` (overlay, lifted context state, `useTransition`, hover prefetch) and a backend half in `apps/api` (`ActiveCompanyGuard` membership cache, `companyStats` CTE consolidation). No schema changes, no API contract changes.
 
 **Tech Stack:** Next.js 16 App Router, React 19 `useTransition`, TanStack Query (existing), NestJS, Drizzle ORM with `db.execute(sql\`...\`)`, ioredis via existing `CacheService`, Tailwind (existing tokens; no new keyframes).
 
@@ -36,7 +36,7 @@
 
 ---
 
-## Phase 1 — Frontend UX (overlay + transition + concurrent PATCH)
+## Phase 1 - Frontend UX (overlay + transition + concurrent PATCH)
 
 User-visible win: overlay appears during the switch and stays up until the new tree renders. The switch click is no longer blocked by the PATCH roundtrip.
 
@@ -65,7 +65,7 @@ import { useActiveCompany } from "@/contexts/active-company-context";
  * Visual: white-canvas blurred backdrop + centered card with an AuraHire
  * Blue ring spinner. Echoes the design-system "Score Ring" cadence
  * (800ms rotation, primary on primary-soft track) without being a Score
- * Ring — this is a process indicator, not an evaluation surface.
+ * Ring - this is a process indicator, not an evaluation surface.
  */
 export function CompanySwitchOverlay() {
   const ctx = useActiveCompany();
@@ -170,7 +170,7 @@ describe("CompanySwitchOverlay", () => {
 });
 ```
 
-The test imports `ActiveCompanyContextForTesting` — we'll export the bare `Context` from the context module in Task 1.2 specifically for this test harness.
+The test imports `ActiveCompanyContextForTesting` - we'll export the bare `Context` from the context module in Task 1.2 specifically for this test harness.
 
 ### Task 1.2: Lift switching state into the context + wire `useTransition`
 
@@ -253,10 +253,10 @@ const switchCompany = useCallback(
     setPendingCompanyName(target?.companyName ?? null);
     setIsSwitching(true);
 
-    // 1. Synchronous singleton update — next outgoing fetch carries the new header.
+    // 1. Synchronous singleton update - next outgoing fetch carries the new header.
     setActiveCompanyId(companyId);
 
-    // 2. Start PATCH (don't await yet — let it run in parallel with the transition).
+    // 2. Start PATCH (don't await yet - let it run in parallel with the transition).
     const previousCompanyId = activeCompanyId;
     const patchPromise = setActiveCompanyOnServer(companyId).catch((err) => {
       // Rollback path: restore client singleton, clear UI state, re-throw so
@@ -357,7 +357,7 @@ const DASHBOARD_PATHS = [
 
 /**
  * Fire-and-forget GETs to the three recruiter-dashboard endpoints with
- * `X-Active-Company-Id: companyId`. Result is discarded — purpose is to
+ * `X-Active-Company-Id: companyId`. Result is discarded - purpose is to
  * populate the API's Redis cache before the user actually clicks switch.
  *
  * Errors are swallowed; this is a best-effort warmer.
@@ -411,7 +411,7 @@ Add at the top:
 import { CompanySwitchOverlay } from "@/components/layout/company-switch-overlay";
 ```
 
-Inside the layout JSX (anywhere inside `<ActiveCompanyProvider>` — typically as a sibling of the sidebar/main content, but BEFORE the closing provider tag):
+Inside the layout JSX (anywhere inside `<ActiveCompanyProvider>` - typically as a sibling of the sidebar/main content, but BEFORE the closing provider tag):
 
 ```tsx
 <ActiveCompanyProvider initialActiveCompanyId={...}>
@@ -463,7 +463,7 @@ const {
 
 Replace `disabled={switching}` on the trigger button with `disabled={isSwitching}`.
 
-Replace `if (switching) return;` in `handleSelect` with `if (isSwitching) return;`. Remove the `try { ... finally { setSwitching(false); }` wrapper — the context owns that lifecycle now. The body becomes:
+Replace `if (switching) return;` in `handleSelect` with `if (isSwitching) return;`. Remove the `try { ... finally { setSwitching(false); }` wrapper - the context owns that lifecycle now. The body becomes:
 
 ```ts
 async function handleSelect(companyId: string) {
@@ -550,7 +550,7 @@ pnpm --filter @aurahire/web lint
 
 ---
 
-## Phase 2 — Backend membership cache
+## Phase 2 - Backend membership cache
 
 User-visible win: every authenticated recruiter request drops one Postgres roundtrip after the first within the 5-minute TTL. Concretely this trims ~3 DB queries from each cold dashboard refresh (3 endpoints, 3 guard hits).
 
@@ -606,7 +606,7 @@ const membership = await this.cacheService.getOrSet<
 });
 ```
 
-The cached value can be `null` (no membership). `cacheService.getOrSet` stores `null` as JSON `null` and returns it on hit — that path is critical because it caches the _negative_ answer, preventing repeated DB hits for users probing companies they don't belong to.
+The cached value can be `null` (no membership). `cacheService.getOrSet` stores `null` as JSON `null` and returns it on hit - that path is critical because it caches the _negative_ answer, preventing repeated DB hits for users probing companies they don't belong to.
 
 - [ ] **Step 4: Cache the profile lookup fallback**
 
@@ -678,7 +678,7 @@ After both write sites (the line ~138 update and the line ~159 update), add:
 ```ts
 await this.cacheService.bustTags([TAGS.userMemberships(user.id)]);
 // or, in the line-159 path where `companyId` is the only parameter and
-// `userId` is implicit on the caller — confirm with the actual signature.
+// `userId` is implicit on the caller - confirm with the actual signature.
 ```
 
 Read the current method bodies first; the exact bust call signature follows the user-id available in the local scope. If the method only takes `(userId, companyId)`, use `userId`. If it takes a profile object, use `profile.id`.
@@ -720,7 +720,7 @@ pnpm --filter @aurahire/api lint
 
 ---
 
-## Phase 3 — `companyStats` CTE consolidation
+## Phase 3 - `companyStats` CTE consolidation
 
 User-visible win: ~100ms shaved off cold dashboard load (one Postgres roundtrip instead of four).
 
@@ -814,7 +814,7 @@ async companyStats(
 
   // Drizzle's execute returns { rows } for postgres-js / { rowCount, rows } for pg.
   // The project's existing pattern in applications.repository.ts (search for db.execute)
-  // shows the access path — confirm and follow.
+  // shows the access path - confirm and follow.
   const row = result.rows?.[0] ?? result[0];
 
   if (!row) {
@@ -902,7 +902,7 @@ pnpm --filter @aurahire/api lint
 
 ---
 
-## Phase 4 — Final integration verification
+## Phase 4 - Final integration verification
 
 ### Task 4.1: Full build verification
 
@@ -934,7 +934,7 @@ The agent cannot run `pnpm dev` or restart Docker containers. Hand off to the hu
 
 Human runs `pnpm dev` from repo root. Both Next.js (`:3000`) and NestJS (`:3333`) come up. Mailpit + Redis already running per project setup.
 
-- [ ] **Step 2: Smoke test — overlay**
+- [ ] **Step 2: Smoke test - overlay**
 
 Log in as a recruiter with two memberships. Click switch from A → B in the sidebar. Verify:
 
@@ -944,7 +944,7 @@ Log in as a recruiter with two memberships. Click switch from A → B in the sid
 - The overlay disappears once the new dashboard renders.
 - The dashboard numbers (ACTIVE JOBS / TOTAL APPLICATIONS / etc.) match B's data.
 
-- [ ] **Step 3: Smoke test — detail-page redirect**
+- [ ] **Step 3: Smoke test - detail-page redirect**
 
 Switch from A → B while on `/recruiter/jobs/{some-job-id-from-A}`. Verify:
 
@@ -952,18 +952,18 @@ Switch from A → B while on `/recruiter/jobs/{some-job-id-from-A}`. Verify:
 - Overlay appears once (no double-render).
 - Dashboard shows B's data.
 
-- [ ] **Step 4: Smoke test — hover prefetch**
+- [ ] **Step 4: Smoke test - hover prefetch**
 
 Open browser devtools Network tab. Open the company switcher dropdown, hover (don't click) a non-active row, hold for 200 ms. Verify:
 
 - Three GETs to `/api/v1/applications/recruiter-stats`, `/recruiter-analytics`, `/recent` fire with `X-Active-Company-Id` set to the hovered company.
 - Now click that row to switch. Verify the resulting switch is faster than a no-prefetch switch.
 
-- [ ] **Step 5: Smoke test — backend cache hit**
+- [ ] **Step 5: Smoke test - backend cache hit**
 
 With one terminal tailing the NestJS logs, switch back and forth between two companies a few times. Verify log lines like `[guard:membership] HIT key=membership:{userId}:{companyId}` appear after the first miss.
 
-- [ ] **Step 6: Smoke test — Redis fail-open**
+- [ ] **Step 6: Smoke test - Redis fail-open**
 
 Stop the Redis container (`docker compose -f docker-compose.dev.yml stop redis`). Switch companies. Verify:
 
@@ -984,4 +984,4 @@ Restart Redis. Verify cache hits resume.
 - No animation polish beyond the 800 ms spinner rotation.
 - No mobile drawer-specific overlay changes (drawer inherits via the layout-level mount).
 - No removal of `queryClient.clear()` in the switch flow.
-- No tuning of `TTL_SECONDS.warm` — using the existing constant.
+- No tuning of `TTL_SECONDS.warm` - using the existing constant.

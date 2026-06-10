@@ -67,7 +67,7 @@ async function bootstrap() {
     ],
   });
 
-  // WebSocket adapter — must run before listen(). Connects the Redis
+  // WebSocket adapter - must run before listen(). Connects the Redis
   // pub/sub backing for Socket.io rooms across instances.
   const wsAdapter = new RedisIoAdapter(app);
   await wsAdapter.connectToRedis();
@@ -80,14 +80,14 @@ async function bootstrap() {
   // Global Zod validation pipe (replaces basic ValidationPipe from Slice 1.1)
   app.useGlobalPipes(new ZodValidationPipe());
 
-  // Global exception filter — normalizes errors to standard envelope
+  // Global exception filter - normalizes errors to standard envelope
   app.useGlobalFilters(new HttpExceptionFilter());
 
   // Swagger
   const config = new DocumentBuilder()
     .setTitle("AuraHire API")
     .setDescription(
-      "Backend API for AuraHire — Explainable + Fair AI-Powered Recruitment",
+      "Backend API for AuraHire - Explainable + Fair AI-Powered Recruitment",
     )
     .setVersion("0.1.0")
     .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" })
@@ -98,7 +98,7 @@ async function bootstrap() {
   });
 
   const port = Number(process.env.PORT ?? 3333);
-  // Bind address — defaults to 0.0.0.0 for local dev and containerized runs.
+  // Bind address - defaults to 0.0.0.0 for local dev and containerized runs.
   // In production on the shared droplet (iams-backend), this is set to
   // 127.0.0.1 so only the on-host reverse proxy can reach the API; the
   // public internet sees only Caddy/nginx on 80/443.

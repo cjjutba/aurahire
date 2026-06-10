@@ -1,4 +1,4 @@
-# Schedule Interview — Center Modal → Right-Side Sheet Implementation Plan
+# Schedule Interview - Center Modal → Right-Side Sheet Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -16,25 +16,25 @@
 
 ### New file
 
-- `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-sheet-client.tsx` — sheet-shelled Schedule Interview form. Replaces the modal version.
+- `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-sheet-client.tsx` - sheet-shelled Schedule Interview form. Replaces the modal version.
 
 ### Modified file
 
-- `apps/web/app/(recruiter)/recruiter/applications/[id]/_interviews-section-client.tsx` — single import + JSX symbol update (`ScheduleInterviewModalClient` → `ScheduleInterviewSheetClient`).
+- `apps/web/app/(recruiter)/recruiter/applications/[id]/_interviews-section-client.tsx` - single import + JSX symbol update (`ScheduleInterviewModalClient` → `ScheduleInterviewSheetClient`).
 
 ### Deleted file
 
-- `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx` — superseded by the sheet client.
+- `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx` - superseded by the sheet client.
 
 ### Untouched (intentionally)
 
-- `apps/web/components/ui/sheet.tsx` — primitive is already correct; the per-usage width override goes on `<SheetContent>`'s `className`, not on the primitive.
-- `apps/web/components/ui/dialog.tsx` — still used elsewhere (Reject confirm, reschedule modal, other dialogs).
-- `apps/web/components/interview/reschedule-modal-client.tsx` — different flow, untouched.
-- `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx` — already redirects to `?schedule=1` after Move to Interview; behavior preserved.
-- `apps/web/components/providers/confirm-provider.tsx` — still used by Reject and other destructive paths; only the schedule-submit nested call goes away.
-- `apps/api/**` — backend is unchanged. No DTO, controller, service, queue, audit, or email change.
-- `packages/shared/**` and `packages/db/**` — unchanged.
+- `apps/web/components/ui/sheet.tsx` - primitive is already correct; the per-usage width override goes on `<SheetContent>`'s `className`, not on the primitive.
+- `apps/web/components/ui/dialog.tsx` - still used elsewhere (Reject confirm, reschedule modal, other dialogs).
+- `apps/web/components/interview/reschedule-modal-client.tsx` - different flow, untouched.
+- `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx` - already redirects to `?schedule=1` after Move to Interview; behavior preserved.
+- `apps/web/components/providers/confirm-provider.tsx` - still used by Reject and other destructive paths; only the schedule-submit nested call goes away.
+- `apps/api/**` - backend is unchanged. No DTO, controller, service, queue, audit, or email change.
+- `packages/shared/**` and `packages/db/**` - unchanged.
 
 ### No new files beyond the one above
 
@@ -47,9 +47,9 @@ The sheet width override is local to one usage; we are not extracting a shared "
 - **Brand tokens only:** `var(--color-primary)`, `var(--color-primary-active)`, `var(--color-primary-soft)`, `var(--color-on-primary)`, `var(--color-ink)`, `var(--color-body)`, `var(--color-muted)`, `var(--color-muted-soft)`, `var(--color-canvas)`, `var(--color-surface-soft)`, `var(--color-hairline)`, `var(--color-status-danger)`, `var(--color-score-mid)`, `var(--color-score-mid-soft)`. No raw hex.
 - **Radius tokens:** `var(--radius-pill)` for buttons, `var(--radius-md)` for inputs/textareas. The Sheet primitive's container does not use a radius (full-height edge panel).
 - **No new imports beyond the Sheet replacements.** The new file removes `Dialog*` imports from `@/components/ui/dialog` and adds `Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle` from `@/components/ui/sheet`. It also removes `useConfirm` from `@/components/providers/confirm-provider` (no longer used). Everything else is identical.
-- **Strict TS:** no `any`, no `as` casts beyond what the modal already had (`session.user.user_metadata?.full_name as string | undefined` at line 139 — preserved verbatim).
+- **Strict TS:** no `any`, no `as` casts beyond what the modal already had (`session.user.user_metadata?.full_name as string | undefined` at line 139 - preserved verbatim).
 - **Engineer cannot run dev servers, migrations, or deploys** (per `CLAUDE.md` Hard Rules). Verification is `pnpm tsc --noEmit`, `pnpm lint`, and a manual browser smoke-test by the human.
-- **Each task ends with a commit step.** Commits are atomic per task — if the human asks the engineer to skip a commit, mark the step manually skipped and continue.
+- **Each task ends with a commit step.** Commits are atomic per task - if the human asks the engineer to skip a commit, mark the step manually skipped and continue.
 
 ---
 
@@ -69,9 +69,9 @@ Run:
 wc -l apps/web/app/\(recruiter\)/recruiter/applications/\[id\]/_schedule-interview-modal-client.tsx
 ```
 
-Expected: `565 apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx` (or close; confirms you're working from the same starting point as this plan). If the line count differs by more than ±20, stop and reconcile with the spec before continuing — the modal may have been modified since the spec was written.
+Expected: `565 apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx` (or close; confirms you're working from the same starting point as this plan). If the line count differs by more than ±20, stop and reconcile with the spec before continuing - the modal may have been modified since the spec was written.
 
-Read the imports block (lines 1–32) and the prop interface (line 59–63). The `Props` interface should be:
+Read the imports block (lines 1-32) and the prop interface (line 59-63). The `Props` interface should be:
 
 ```ts
 interface Props {
@@ -296,7 +296,7 @@ export function ScheduleInterviewSheetClient({
           setConflicts(body.data);
         }
       } catch {
-        // Silently swallow — conflict check is advisory only.
+        // Silently swallow - conflict check is advisory only.
       }
     }, 500);
     return () => {
@@ -499,7 +499,7 @@ export function ScheduleInterviewSheetClient({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-score-mid-soft)] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-score-mid)]">
                   <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                  Scheduling conflict detected — you may still proceed
+                  Scheduling conflict detected - you may still proceed
                 </span>
               </div>
             )}
@@ -515,7 +515,7 @@ export function ScheduleInterviewSheetClient({
                   <Input
                     value={venueName}
                     onChange={(e) => setVenueName(e.target.value)}
-                    placeholder="e.g. AuraHire HQ — Floor 3"
+                    placeholder="e.g. AuraHire HQ - Floor 3"
                   />
                 </div>
                 <div>
@@ -628,7 +628,7 @@ export function ScheduleInterviewSheetClient({
                   <Input
                     value={templateLabel}
                     onChange={(e) => setTemplateLabel(e.target.value)}
-                    placeholder="e.g. Main Office — Conference Room A"
+                    placeholder="e.g. Main Office - Conference Room A"
                   />
                 </div>
               )}
@@ -688,7 +688,7 @@ Run:
 pnpm --filter web lint
 ```
 
-Expected: clean exit. If `react-hooks/exhaustive-deps` warns on the seed-interviewer `useEffect` (because the IIFE inside has no deps tracking), that's the same warning the old modal had (or the same eslint-disable comment). Match the existing modal's behavior — do not add new disable comments unless the old file already had them.
+Expected: clean exit. If `react-hooks/exhaustive-deps` warns on the seed-interviewer `useEffect` (because the IIFE inside has no deps tracking), that's the same warning the old modal had (or the same eslint-disable comment). Match the existing modal's behavior - do not add new disable comments unless the old file already had them.
 
 - [ ] **Step 5: Commit Task 1**
 
@@ -736,14 +736,14 @@ Run:
 grep -n "ScheduleInterviewModalClient" apps/web/app/\(recruiter\)/recruiter/applications/\[id\]/_interviews-section-client.tsx
 ```
 
-Expected output (exact line numbers may differ if the file changed since plan-write — match by content):
+Expected output (exact line numbers may differ if the file changed since plan-write - match by content):
 
 ```
 19:import { ScheduleInterviewModalClient } from "./_schedule-interview-modal-client";
 453:      <ScheduleInterviewModalClient
 ```
 
-- [ ] **Step 2: Edit line 19 — update the import**
+- [ ] **Step 2: Edit line 19 - update the import**
 
 Replace:
 
@@ -757,7 +757,7 @@ With:
 import { ScheduleInterviewSheetClient } from "./_schedule-interview-sheet-client";
 ```
 
-- [ ] **Step 3: Edit line 453 — update the JSX symbol**
+- [ ] **Step 3: Edit line 453 - update the JSX symbol**
 
 Replace:
 
@@ -805,7 +805,7 @@ Run:
 pnpm --filter web tsc --noEmit
 ```
 
-Expected: clean exit. If TS complains that the import path doesn't exist, you forgot to do Task 1 Step 2 first — go back.
+Expected: clean exit. If TS complains that the import path doesn't exist, you forgot to do Task 1 Step 2 first - go back.
 
 - [ ] **Step 6: Commit Task 2**
 
@@ -832,7 +832,7 @@ EOF
 
 **What:** Removes the superseded modal client. Nothing imports it anymore (verified in Task 2 Step 4).
 
-- [ ] **Step 1: Final guard — confirm no references**
+- [ ] **Step 1: Final guard - confirm no references**
 
 Run:
 
@@ -864,7 +864,7 @@ Run:
 pnpm --filter web tsc --noEmit
 ```
 
-Expected: clean exit. If TS now complains about a missing module, you missed an import — restore the file (`git checkout HEAD -- <path>`) and find/fix the import you missed, then redo Steps 1–2.
+Expected: clean exit. If TS now complains about a missing module, you missed an import - restore the file (`git checkout HEAD -- <path>`) and find/fix the import you missed, then redo Steps 1-2.
 
 - [ ] **Step 4: Lint**
 
@@ -890,7 +890,7 @@ EOF
 )"
 ```
 
-(Note: `git add -A <path>` is correct here because the path is being deleted — this stages the deletion. We are not using `git add -A` against a directory.)
+(Note: `git add -A <path>` is correct here because the path is being deleted - this stages the deletion. We are not using `git add -A` against a directory.)
 
 ---
 
@@ -938,14 +938,14 @@ Tell the human: "Implementation done. Please run `pnpm dev` and verify the follo
 2. Click **Move to Interview** → confirm dialog → **Move to Interview** in the dialog.
 3. The status flips to `interview` and a **right-side sheet** slides in (not a centered modal). The sheet should be ~672px wide on desktop with a sticky header reading 'Schedule Interview', a scrollable body, and a sticky footer with Cancel + Schedule interview pill.
 4. Fill in date/time and a venue name + address. Click **Schedule interview** in the footer.
-5. The interview should be scheduled in **one click** — there should NOT be a second 'Are you sure?' dialog. The candidate should receive the email per existing behavior, and a success toast should fire.
+5. The interview should be scheduled in **one click** - there should NOT be a second 'Are you sure?' dialog. The candidate should receive the email per existing behavior, and a success toast should fire.
 6. Open the sheet again, check the **Save as venue template** checkbox, type a label, schedule. The next time the sheet opens it should appear in the saved-venues dropdown.
-7. Close the sheet via ✕, Escape, backdrop click, and Cancel — all should dismiss it.
+7. Close the sheet via ✕, Escape, backdrop click, and Cancel - all should dismiss it.
 8. The **Reject** action's confirm dialog should still work (test on a separate application). The **Reschedule** modal on existing interviews should still work."
 
 - [ ] **Step 5: If smoke-test passes, mark plan complete**
 
-No commit needed for this task — it's verification only. If the human reports issues, capture them as follow-up tasks rather than amending committed work.
+No commit needed for this task - it's verification only. If the human reports issues, capture them as follow-up tasks rather than amending committed work.
 
 ---
 
@@ -954,9 +954,9 @@ No commit needed for this task — it's verification only. If the human reports 
 1. Move to Interview from `/recruiter/applications/[id]` → status changes to `interview` → URL gains `?schedule=1` → a right-side sheet slides in (not a centered modal).
 2. The sheet is ~672px wide on desktop, slides full-width-ish on mobile, has a sticky header with title and description, a scrollable body, and a sticky footer with Cancel + primary pill.
 3. All form fields, validation, conflict-detection chip, saved-venue dropdown, and save-as-template behavior work exactly as before.
-4. Clicking the primary "Schedule interview" pill submits in one click — there is no second confirm dialog.
+4. Clicking the primary "Schedule interview" pill submits in one click - there is no second confirm dialog.
 5. The save-as-template area is a flat checkbox on the sheet body (no inset gray card).
-6. Closing the sheet via any affordance (✕, Escape, backdrop click, Cancel) sets `scheduleOpen = false` and unmounts the sheet body. The `?schedule=1` URL scrub already happens on auto-open detection — no change needed there.
+6. Closing the sheet via any affordance (✕, Escape, backdrop click, Cancel) sets `scheduleOpen = false` and unmounts the sheet body. The `?schedule=1` URL scrub already happens on auto-open detection - no change needed there.
 7. No regressions to interview-list rendering, no regressions to the reschedule modal, no regressions to the Reject confirm dialog.
 8. `pnpm tsc --noEmit` and `pnpm lint` both pass.
 
@@ -964,7 +964,7 @@ No commit needed for this task — it's verification only. If the human reports 
 
 ## Self-review notes
 
-**Spec coverage check:** Each acceptance criterion in the spec has a task that implements it (Tasks 1 + 2 produce AC 1–6; Task 3 produces AC 7 by removing the superseded file; Task 4 verifies AC 8 + provides the smoke-test for AC 1–7).
+**Spec coverage check:** Each acceptance criterion in the spec has a task that implements it (Tasks 1 + 2 produce AC 1-6; Task 3 produces AC 7 by removing the superseded file; Task 4 verifies AC 8 + provides the smoke-test for AC 1-7).
 
 **Type consistency check:** The new component is named `ScheduleInterviewSheetClient` and lives in `_schedule-interview-sheet-client.tsx`. The single consumer (`_interviews-section-client.tsx`) imports the same name. The prop contract `{ applicationId: string; open: boolean; onOpenChange: (open: boolean) => void }` is identical between Task 1 and Task 2. No name drift.
 

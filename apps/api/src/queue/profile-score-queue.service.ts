@@ -29,7 +29,7 @@ export interface ProfileScoreEnqueueOptions {
    * backfill keyed on candidate+resume only) when you want a wider dedupe
    * window. `__` (double underscore) is used in place of `:` because
    * BullMQ rejects custom ids that contain a colon unless the id splits
-   * into exactly three parts — a fragile constraint, so we avoid the
+   * into exactly three parts - a fragile constraint, so we avoid the
    * separator entirely.
    */
   jobId?: string;
@@ -55,7 +55,7 @@ export class ProfileScoreQueueService {
    * reason): a duplicate within a short window is collapsed by jobId so we
    * don't burn OpenAI calls when several inputs flip in the same UI flow.
    *
-   * Pass `options.jobId` to override the dedupe key — used by the
+   * Pass `options.jobId` to override the dedupe key - used by the
    * portal-entry backfill guard (Task 12) which wants a candidate+resume
    * dedupe so repeat dashboard hits don't enqueue parallel backfills.
    */

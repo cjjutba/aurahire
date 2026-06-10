@@ -11,9 +11,9 @@ import { CACHE_REDIS } from "./cache.constants";
  * Connection strategy:
  * - Lazy connect: ioredis connects on first command, so an outage at boot
  *   doesn't crash the API.
- * - retryStrategy: exponential backoff capped at 2s; never gives up — the
+ * - retryStrategy: exponential backoff capped at 2s; never gives up - the
  *   client keeps reconnecting in the background.
- * - maxRetriesPerRequest: 1 — fail fast on individual commands so a
+ * - maxRetriesPerRequest: 1 - fail fast on individual commands so a
  *   wedged Redis doesn't pile up unbounded promises (CacheService catches
  *   the error and falls back to the data source).
  */

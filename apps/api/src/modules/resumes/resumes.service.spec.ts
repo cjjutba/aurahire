@@ -527,7 +527,7 @@ describe("ResumesService.getSignedDownloadUrl", () => {
   });
 });
 
-describe("ResumesService.setDefault — default change cascade", () => {
+describe("ResumesService.setDefault - default change cascade", () => {
   const candidateUser: AuthUser = {
     id: "11111111-1111-1111-1111-111111111111",
     email: "candidate@example.com",
@@ -688,7 +688,7 @@ describe("ResumesService.setDefault — default change cascade", () => {
     await svc.setDefault(candidateUser, R2_ID);
 
     expect(matchPreviewQueue.cancelByResumeId).not.toHaveBeenCalled();
-    // Recompute still enqueued — first-time default still needs the score.
+    // Recompute still enqueued - first-time default still needs the score.
     expect(profileScoreQueue.enqueueRecompute).toHaveBeenCalledTimes(1);
     expect(matchPreviewQueue.enqueuePrecompute).toHaveBeenCalledTimes(1);
   });
@@ -723,7 +723,7 @@ describe("ResumesService.setDefault — default change cascade", () => {
   });
 });
 
-describe("ResumesService.delete — default delete cascade", () => {
+describe("ResumesService.delete - default delete cascade", () => {
   const candidateUser: AuthUser = {
     id: "11111111-1111-1111-1111-111111111111",
     email: "candidate@example.com",
@@ -845,7 +845,7 @@ describe("ResumesService.delete — default delete cascade", () => {
 
   it("delete-default with replacement: auto-promotes replacement and triggers recompute chain", async () => {
     const target = buildResume(R3_ID, true, 0); // today, default
-    const replacement = buildResume(R2_ID, false, 1); // 1 day ago — most recent remaining
+    const replacement = buildResume(R2_ID, false, 1); // 1 day ago - most recent remaining
     const {
       svc,
       repo,
@@ -906,7 +906,7 @@ describe("ResumesService.delete — default delete cascade", () => {
       status: 409,
     });
 
-    // No side effects — storage untouched, repo.setDefault never called,
+    // No side effects - storage untouched, repo.setDefault never called,
     // queues never enqueued.
     expect(storage.delete).not.toHaveBeenCalled();
     expect(repo.setDefault).not.toHaveBeenCalled();
@@ -922,7 +922,7 @@ describe("ResumesService.delete — default delete cascade", () => {
 
     await svc.delete(candidateUser, R2_ID);
 
-    // Standard delete path — repo.delete (hard-delete) called, storage cleaned.
+    // Standard delete path - repo.delete (hard-delete) called, storage cleaned.
     expect(repo.delete).toHaveBeenCalledWith(R2_ID);
     expect(storage.delete).toHaveBeenCalledWith({
       bucket: "resumes",

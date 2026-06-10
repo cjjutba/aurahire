@@ -1,5 +1,5 @@
 -- =============================================================================
--- Notifications system — in-app bell, /notifications page, email + digest.
+-- Notifications system - in-app bell, /notifications page, email + digest.
 -- =============================================================================
 --
 -- WHAT THIS MIGRATION DOES
@@ -11,7 +11,7 @@
 --   Enables RLS on both new tables and adds owner-scoped policies.
 --
 -- WHY
---   1. AuraHire today has zero user-facing notification surface — applications
+--   1. AuraHire today has zero user-facing notification surface - applications
 --      change status, interviews schedule, offers send, bias flags raise, and
 --      users never know unless they refresh the right page. Email infra
 --      exists but is wired to nothing. This migration is the foundation.
@@ -20,14 +20,14 @@
 --      `created_at` index is sized for that scan.
 --   3. Per-event-type Instant/Digest/Off preferences live in a separate
 --      table so default modes apply to events the user has never explicitly
---      configured (sparse-by-design — missing rows = use code defaults).
+--      configured (sparse-by-design - missing rows = use code defaults).
 --
 -- KEY SHAPE
 --   * `notifications` is partitioned naturally by user_id; the
 --     (user_id, read_at, created_at) composite index drives both the
 --     unread-count badge and the Unread tab.
---   * `digest_pending` is a partial index — `WHERE digest_pending = true`
---     — sized for the daily digest cron's batch scan.
+--   * `digest_pending` is a partial index - `WHERE digest_pending = true`
+--     - sized for the daily digest cron's batch scan.
 --   * `dismissed_at` is a soft-delete; rows survive until the retention
 --     cron's 90-day cutoff so a user's "remove from list" doesn't lose
 --     forensic context immediately.
@@ -38,13 +38,13 @@
 --     writes via service role bypassing RLS for the create/fanout path.
 --
 -- INDEXES (notifications)
---   * (user_id, read_at, created_at) — unread-count + Unread tab
---   * (user_id, created_at)          — All tab
---   * (created_at)                   — retention cron scan
---   * (digest_pending) PARTIAL       — digest cron scan
+--   * (user_id, read_at, created_at) - unread-count + Unread tab
+--   * (user_id, created_at)          - All tab
+--   * (created_at)                   - retention cron scan
+--   * (digest_pending) PARTIAL       - digest cron scan
 --
 -- INDEXES (notification_preferences)
---   * UNIQUE (user_id, event_type)   — natural key + ON CONFLICT support
+--   * UNIQUE (user_id, event_type)   - natural key + ON CONFLICT support
 
 CREATE TABLE notifications (
   id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),

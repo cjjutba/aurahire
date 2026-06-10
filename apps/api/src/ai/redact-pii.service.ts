@@ -24,7 +24,7 @@ const ALWAYS_REDACTED_PATHS = [
 
 /**
  * Sentinel that replaces redacted PII content. Preserves the *presence*
- * signal — completeness scoring needs to know a field was filled — while
+ * signal - completeness scoring needs to know a field was filled - while
  * removing the demographic *content* that bias mitigation requires.
  * AI prompts must treat "[REDACTED]" as "field was provided, content withheld".
  */
@@ -77,7 +77,7 @@ export class RedactPiiService {
    * ordering is stable.
    *
    * Best-effort: if the batch call fails or returns missing ids, the
-   * affected fields keep their originals — contact-field redactions still
+   * affected fields keep their originals - contact-field redactions still
    * apply, and the worker continues with whatever cleaning landed.
    */
   async redactResume(

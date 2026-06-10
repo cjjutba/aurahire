@@ -12,7 +12,7 @@
  * persistence); this script repairs already-stored rows.
  *
  * The placeholder uses score=0 with one neutral evidence row that
- * explains the gap honestly — never fabricates score points.
+ * explains the gap honestly - never fabricates score points.
  *
  * Idempotent: re-running picks up nothing (rows are skipped once they
  * have all four component names).
@@ -66,7 +66,7 @@ function placeholder(name: ComponentName, weight: number): StoredComponent {
     max: weight,
     weight,
     explanation:
-      "Could not be evaluated from the candidate's resume content — the AI did not extract a signal for this component on this run.",
+      "Could not be evaluated from the candidate's resume content - the AI did not extract a signal for this component on this run.",
     evidence: [
       {
         excerpt:
@@ -133,7 +133,7 @@ async function main(): Promise<void> {
       }
     } catch (err) {
       console.warn(
-        `[backfill] could not read scoring_config — using defaults. ${(err as Error).message}`,
+        `[backfill] could not read scoring_config - using defaults. ${(err as Error).message}`,
       );
     }
 
@@ -168,12 +168,12 @@ async function main(): Promise<void> {
       for (const r of rows) {
         const { padded, added } = fillMissing(r.components, weights);
         // Important: a naive `${JSON.stringify(arr)}::jsonb` round-trip
-        // double-encodes the value via postgres.js — the driver wraps
+        // double-encodes the value via postgres.js - the driver wraps
         // the JS string in a JSONB string scalar and ::jsonb then
         // parses THAT as a JSONB string, leaving the column with
         // jsonb_typeof='string' instead of 'array'.
         //
-        // `sql.json(...)` is the supported path — it serializes the JS
+        // `sql.json(...)` is the supported path - it serializes the JS
         // value once and binds it as the jsonb parameter. The library's
         // typings are too narrow for arrays so cast through `any`; the
         // post-update typeof check below is the real guarantee.
@@ -182,7 +182,7 @@ async function main(): Promise<void> {
           SET components = ${sql.json(padded as any)}
           WHERE id = ${r.id}
         `;
-        // Defensive sanity check — every row we write must end with a
+        // Defensive sanity check - every row we write must end with a
         // jsonb_typeof=array. If the driver / cast ever regresses, this
         // SELECT will throw rather than corrupt rows silently.
         const [check] = await sql<Array<{ t: string }>>`
@@ -205,10 +205,10 @@ async function main(): Promise<void> {
 
     if (!apply) {
       console.log(
-        "\n[backfill] DRY RUN — pass --yes to apply the backfill.",
+        "\n[backfill] DRY RUN - pass --yes to apply the backfill.",
       );
     } else {
-      console.log("\n[backfill] OK — done.");
+      console.log("\n[backfill] OK - done.");
     }
   } finally {
     await sql.end({ timeout: 5 });

@@ -153,7 +153,7 @@ export class JobsController {
   // -------------------------------------------- RECRUITER LIST + DETAIL
 
   /**
-   * Phase 2c: URL preserved as `/jobs/mine` for frontend stability — the
+   * Phase 2c: URL preserved as `/jobs/mine` for frontend stability - the
    * recruiter UI ships against this path and Phase 3 will reconsider the
    * URL semantics. The implementation is now company-scoped: returns
    * every job owned by the caller's active company, regardless of which

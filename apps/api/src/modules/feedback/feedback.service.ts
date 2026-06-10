@@ -182,7 +182,7 @@ export class FeedbackService {
     }
 
     if (Object.keys(patch).length === 0) {
-      // No-op update — return the existing row without an audit entry to
+      // No-op update - return the existing row without an audit entry to
       // keep the trail focused on actual state transitions.
       return { data: await this.toDto(id) };
     }

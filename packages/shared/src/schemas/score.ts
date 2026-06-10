@@ -16,14 +16,14 @@ export const evidenceSchema = z.object({
 
 /**
  * Evidence that contributes a quantified delta to a component score.
- * `contribution_points` is a SIGNED INTEGER and a MULTIPLE OF 5 — positive when
+ * `contribution_points` is a SIGNED INTEGER and a MULTIPLE OF 5 - positive when
  * the quote helped, negative when it represents a gap, 0 when neutral.
  *
  * The engine derives `component.score = clamp(sum(contribution_points), 0, max)`
  * so this field is the source of truth for a component's numeric score.
  *
- * `reasoning` is a 10–280 char sentence on every row explaining WHY this row
- * helps or hurts — surfacing per-evidence transparency the chip alone can't.
+ * `reasoning` is a 10-280 char sentence on every row explaining WHY this row
+ * helps or hurts - surfacing per-evidence transparency the chip alone can't.
  *
  * Used by profile components (since v1.4.0) and match components (since v1.3.0).
  */
@@ -33,13 +33,13 @@ export const scoredEvidenceSchema = evidenceSchema.extend({
 });
 
 /**
- * @deprecated Transitional alias — use `scoredEvidenceSchema`.
+ * @deprecated Transitional alias - use `scoredEvidenceSchema`.
  * Kept so existing imports don't break in the same PR; remove in a follow-up.
  */
 export const matchEvidenceSchema = scoredEvidenceSchema;
 
 // ============================================================================
-// PROFILE SCORE — output of profile scoring AI call
+// PROFILE SCORE - output of profile scoring AI call
 // ============================================================================
 
 export const profileComponentSchema = z.object({
@@ -76,7 +76,7 @@ export type ProfileScore = z.infer<typeof profileScoreSchema>;
 export type Evidence = z.infer<typeof evidenceSchema>;
 
 // ============================================================================
-// MATCH SCORE — output of match scoring AI call
+// MATCH SCORE - output of match scoring AI call
 // ============================================================================
 
 export const matchComponentSchema = z.object({
@@ -102,7 +102,7 @@ export type MatchScore = z.infer<typeof matchScoreSchema>;
 export type MatchEvidence = z.infer<typeof matchEvidenceSchema>;
 
 // ============================================================================
-// CALIBRATION WARNINGS — advisory signals on score quality
+// CALIBRATION WARNINGS - advisory signals on score quality
 // ============================================================================
 
 /**

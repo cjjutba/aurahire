@@ -88,7 +88,7 @@ export class ArchivePastDeadlineJobsCron {
           },
         });
 
-        // Notify the owning recruiter — best-effort; errors don't fail the cron.
+        // Notify the owning recruiter - best-effort; errors don't fail the cron.
         try {
           await this.notifications.emit({
             userId: c.recruiterId,

@@ -36,7 +36,7 @@ describe("ParseResumeService.computeSourceCoverage", () => {
       languages: [],
       parse_confidence: "high" as const,
     };
-    const rawText = "Resume of Jane Doe — Software Engineer";
+    const rawText = "Resume of Jane Doe - Software Engineer";
     const result = (svc as any).computeSourceCoverage(parsed, rawText);
     expect(result.coverage).toBe(1);
     expect(result.hallucinations).toHaveLength(0);
@@ -68,7 +68,7 @@ describe("ParseResumeService.computeSourceCoverage", () => {
       languages: [],
       parse_confidence: "high" as const,
     };
-    const rawText = "Jane Doe — JavaScript engineer"; // TypeScript NOT in rawText
+    const rawText = "Jane Doe - JavaScript engineer"; // TypeScript NOT in rawText
     const result = (svc as any).computeSourceCoverage(parsed, rawText);
     expect(result.coverage).toBeCloseTo(0.5, 1); // 1/2 found
     expect(result.hallucinations).toContain("skills.0: TypeScript");

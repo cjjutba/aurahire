@@ -72,7 +72,7 @@ export interface ListJobsFilters {
   /**
    * Phase 2c access-control axis. When set, only rows whose
    * `jobs.company_id` matches are returned. Replaces the prior
-   * `recruiterId` scoping field — `recruiter_id` remains on the row as
+   * `recruiterId` scoping field - `recruiter_id` remains on the row as
    * audit trail (who created it) but is no longer a filter.
    */
   companyId?: string;
@@ -315,7 +315,7 @@ export class JobsRepository {
   }
 
   async incrementViewCount(id: string): Promise<void> {
-    // Atomic increment via SQL expression — avoids read-then-write races.
+    // Atomic increment via SQL expression - avoids read-then-write races.
     await this.db
       .update(jobsTable)
       .set({

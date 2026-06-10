@@ -2,7 +2,7 @@
  * Deterministic (regex-based) PII redaction for resume evidence excerpts.
  *
  * Runs server-side at WRITE time on every evidence excerpt before it is
- * returned to a recruiter. Strictly heuristic — over-redacts rather than
+ * returned to a recruiter. Strictly heuristic - over-redacts rather than
  * under-redacts. The full (unscrubbed) excerpt remains in
  * `evidence_excerpts.excerpt_text` for candidate and admin consumption;
  * this function populates `excerpt_redacted` for recruiter consumption.
@@ -12,17 +12,17 @@
  *   - phones:         `+63 917 123 4567` → `[phone]`
  *   - URLs:           `linkedin.com/in/...` → `[link]`
  *   - company tokens: any `Word Inc|Corp|LLC|Ltd|GmbH|Co|Company` → `[company]`
- *   - personal names: 2–3 consecutive Capital-Cased tokens not on a safelist
+ *   - personal names: 2-3 consecutive Capital-Cased tokens not on a safelist
  *                     → `[name]` (skips known job/tech terms)
  *
- * This is intentionally conservative — when in doubt, redact. Recruiters
+ * This is intentionally conservative - when in doubt, redact. Recruiters
  * still see the SKILL signal (technologies, job titles, durations) because
  * the safelist preserves the canonical skill vocabulary.
  *
  * NOTE: not a security boundary on its own. The real defense is that
  * the recruiter DTO transformer only returns `excerpt_redacted`. If this
  * heuristic misses something, the candidate's name (if mentioned in the
- * raw excerpt) might leak — which is precisely what we want to prevent.
+ * raw excerpt) might leak - which is precisely what we want to prevent.
  * Keep the safelist tight.
  */
 
@@ -34,10 +34,10 @@ const URL_RE =
 // "Acme Corp", "Globex Inc", "Wayne Enterprises LLC", "BCBSA Ltd", etc.
 const COMPANY_SUFFIX_RE =
   /\b([A-Z][A-Za-z0-9&.]{1,30}(?:\s+[A-Z][A-Za-z0-9&.]{1,30}){0,3})\s+(Inc|Incorporated|Corp|Corporation|LLC|L\.L\.C\.|Ltd|Limited|GmbH|S\.A\.|S\.r\.l\.|Co|Company|PLC|N\.V\.|B\.V\.|Pte|Pty|AG|Holdings|Group|Enterprises|Industries|Solutions|Systems|Services|Technologies|Tech)\b/g;
-// 2–3 Capital-Cased tokens in a row — heuristic for personal names
+// 2-3 Capital-Cased tokens in a row - heuristic for personal names
 const NAME_RE = /\b([A-Z][a-z]{1,20})(\s+[A-Z][a-z]{1,20}){1,2}\b/g;
 
-// Tokens we KEEP — skill / tech / role vocabulary that would otherwise be
+// Tokens we KEEP - skill / tech / role vocabulary that would otherwise be
 // caught by the NAME_RE heuristic. Order matters only for grep clarity.
 const SAFE_TOKENS = new Set<string>([
   // Languages
@@ -190,7 +190,7 @@ const SAFE_TOKENS = new Set<string>([
 
 function isSafeName(match: string): boolean {
   if (SAFE_TOKENS.has(match)) return true;
-  // Multi-word forms too — case-insensitive lookup
+  // Multi-word forms too - case-insensitive lookup
   const tokens = match.split(/\s+/);
   for (let len = tokens.length; len > 0; len--) {
     for (let start = 0; start + len <= tokens.length; start++) {

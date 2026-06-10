@@ -1,4 +1,4 @@
-# Notifications System — In-App Bell, Notifications Page, Email + Digest
+# Notifications System - In-App Bell, Notifications Page, Email + Digest
 
 **Date:** 2026-05-07
 **Owner:** Cross-portal (candidate · recruiter · admin)
@@ -6,9 +6,9 @@
 
 ## Problem
 
-AuraHire has zero user-facing notification surface today. The platform performs many consequential actions on behalf of users — applications get reviewed, interviews are scheduled, offers are sent, bias flags are raised, AI scoring completes — but the only feedback channels are: (1) the user happens to revisit the right page and sees a changed status, (2) email infrastructure exists (`apps/api/src/email/email.service.ts` with React Email + Mailpit/Resend) but is not wired to any module, (3) `audit_logs` records what happened but is invisible to users. The recruiter settings page has a notification-preferences form (`apps/web/components/settings/notifications-form.tsx`) that writes to `localStorage` only and shows a banner reading "Notification preferences will sync to the email service in a future release."
+AuraHire has zero user-facing notification surface today. The platform performs many consequential actions on behalf of users - applications get reviewed, interviews are scheduled, offers are sent, bias flags are raised, AI scoring completes - but the only feedback channels are: (1) the user happens to revisit the right page and sees a changed status, (2) email infrastructure exists (`apps/api/src/email/email.service.ts` with React Email + Mailpit/Resend) but is not wired to any module, (3) `audit_logs` records what happened but is invisible to users. The recruiter settings page has a notification-preferences form (`apps/web/components/settings/notifications-form.tsx`) that writes to `localStorage` only and shows a banner reading "Notification preferences will sync to the email service in a future release."
 
-This is a fundamental gap for a recruitment platform. Candidates miss interview invitations because they don't get pinged. Recruiters miss bias flags raised on JDs they published. Admins have no surface for system-wide events (cross-tenant bias flags, AI scoring failures). The thesis story — "explainable, fair AI-powered recruitment" — is undermined when users never learn that an AI decision affected them.
+This is a fundamental gap for a recruitment platform. Candidates miss interview invitations because they don't get pinged. Recruiters miss bias flags raised on JDs they published. Admins have no surface for system-wide events (cross-tenant bias flags, AI scoring failures). The thesis story - "explainable, fair AI-powered recruitment" - is undermined when users never learn that an AI decision affected them.
 
 ## Goal
 
@@ -16,9 +16,9 @@ Ship a notification system that:
 
 - Surfaces a bell badge in every portal sidebar showing unread count (capped at `99+`).
 - Provides a dedicated `/notifications` page per role with Unread/All tabs (admin gets a third System tab), click-to-mark-read row navigation, mark-all-read, and soft-dismiss.
-- Sends emails through the existing React Email + Mailpit/Resend infrastructure, with three modes per event type — Instant, Digest, Off — configurable in the existing settings page (replacing the localStorage-only form).
+- Sends emails through the existing React Email + Mailpit/Resend infrastructure, with three modes per event type - Instant, Digest, Off - configurable in the existing settings page (replacing the localStorage-only form).
 - Wires notifications into the same service-layer call sites that already write `audit_logs`, with non-blocking failure semantics (a failed notification never breaks a user action).
-- Adds nothing new to the dependency graph — uses existing BullMQ, `@nestjs/schedule`, React Email, Orval, TanStack Query, Drizzle, Supabase.
+- Adds nothing new to the dependency graph - uses existing BullMQ, `@nestjs/schedule`, React Email, Orval, TanStack Query, Drizzle, Supabase.
 
 ## Scope
 
@@ -38,9 +38,9 @@ Ship a notification system that:
 
 **Out of scope (explicit):**
 
-- Supabase Realtime subscription for the bell — polling only at MVP. Schema is forward-compatible.
-- Team-wide fanout for `new_application_received` and `bias_flag_raised` — MVP notifies the job's owning recruiter only.
-- Per-user digest cadence (daily vs weekly) and per-user digest delivery time — server-wide daily 08:00 Asia/Manila for MVP.
+- Supabase Realtime subscription for the bell - polling only at MVP. Schema is forward-compatible.
+- Team-wide fanout for `new_application_received` and `bias_flag_raised` - MVP notifies the job's owning recruiter only.
+- Per-user digest cadence (daily vs weekly) and per-user digest delivery time - server-wide daily 08:00 Asia/Manila for MVP.
 - Resend bounce/complaint webhook handling.
 - Browser push or native push notifications.
 - Recruiter-side read receipts ("candidate has seen this notification").
@@ -69,54 +69,54 @@ apps/api/src/modules/
 ├── notifications/                          (new)
 │   ├── notifications.module.ts
 │   ├── notifications.controller.ts
-│   ├── notifications.service.ts            — emit(), emitMany(), list, count, mark-read, dismiss
+│   ├── notifications.service.ts            - emit(), emitMany(), list, count, mark-read, dismiss
 │   ├── notifications.repository.ts
-│   ├── event-defaults.ts                   — DEFAULT_MODES, SECURITY_EVENTS
-│   ├── queues.ts                           — NOTIFICATION_EMAIL_QUEUE constant
-│   ├── notification-email.processor.ts     — BullMQ worker for instant + digest emails
+│   ├── event-defaults.ts                   - DEFAULT_MODES, SECURITY_EVENTS
+│   ├── queues.ts                           - NOTIFICATION_EMAIL_QUEUE constant
+│   ├── notification-email.processor.ts     - BullMQ worker for instant + digest emails
 │   ├── templates/
-│   │   ├── index.ts                        — buildTitle/buildBody/buildLink registry
-│   │   ├── base-layout.tsx                 — shared React Email layout
+│   │   ├── index.ts                        - buildTitle/buildBody/buildLink registry
+│   │   ├── base-layout.tsx                 - shared React Email layout
 │   │   ├── application-status-changed-email.tsx
 │   │   ├── interview-scheduled-email.tsx
 │   │   ├── ... one file per event type
-│   │   └── digest-email.tsx                — multi-event digest template
+│   │   └── digest-email.tsx                - multi-event digest template
 │   └── dto/
-│       └── list-notifications.dto.ts       — query DTO for the list endpoint
+│       └── list-notifications.dto.ts       - query DTO for the list endpoint
 │
 ├── notification-preferences/               (new)
 │   ├── notification-preferences.module.ts
 │   ├── notification-preferences.controller.ts
-│   ├── notification-preferences.service.ts — getEffectiveMode(), upsert, restoreDefaults
+│   ├── notification-preferences.service.ts - getEffectiveMode(), upsert, restoreDefaults
 │   └── dto/upsert-preference.dto.ts
 │
 apps/api/src/cron/                          (additions)
-├── digest-email.cron.ts                    (new) — daily 08:00 Asia/Manila
-├── notifications-retention.cron.ts         (new) — daily 03:00 Asia/Manila
-├── interview-reminder.cron.ts              (new) — hourly
-├── offer-expiry-reminder.cron.ts           (new) — hourly
-└── interview-feedback-due.cron.ts          (new) — hourly
+├── digest-email.cron.ts                    (new) - daily 08:00 Asia/Manila
+├── notifications-retention.cron.ts         (new) - daily 03:00 Asia/Manila
+├── interview-reminder.cron.ts              (new) - hourly
+├── offer-expiry-reminder.cron.ts           (new) - hourly
+└── interview-feedback-due.cron.ts          (new) - hourly
 ```
 
 ### Frontend layout
 
 ```
 apps/web/components/notifications/          (new)
-├── notifications-page.tsx                  — orchestration: header, tabs, list
-├── notifications-list.tsx                  — infinite-scroll list calling useGetNotifications
-├── notification-row.tsx                    — single row (icon + title + body + chip + dismiss)
+├── notifications-page.tsx                  - orchestration: header, tabs, list
+├── notifications-list.tsx                  - infinite-scroll list calling useGetNotifications
+├── notification-row.tsx                    - single row (icon + title + body + chip + dismiss)
 ├── notifications-empty-state.tsx
-└── notification-icon-map.ts                — eventType → Lucide icon
+└── notification-icon-map.ts                - eventType → Lucide icon
 
 apps/web/components/layout/                 (additions)
-└── nav-item-badge.tsx                      (new) — bell badge polling unread count
+└── nav-item-badge.tsx                      (new) - bell badge polling unread count
 
 apps/web/app/(candidate)/candidate/notifications/page.tsx  (new)
 apps/web/app/(recruiter)/recruiter/notifications/page.tsx  (new)
 apps/web/app/(admin)/admin/notifications/page.tsx          (new)
 
 apps/web/components/settings/notifications-form.tsx        (rewrite)
-apps/web/components/layout/portal-sidebar.tsx              (edit — add nav item per role)
+apps/web/components/layout/portal-sidebar.tsx              (edit - add nav item per role)
 ```
 
 ### Data flow (instant path)
@@ -190,17 +190,17 @@ export const NOTIFICATION_SCOPE = ["personal", "system"] as const;
 {
   id: uuid PK defaultRandom()
   userId: uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
-  eventType: text NOT NULL — enum NOTIFICATION_EVENT_TYPE
-  scope: text NOT NULL DEFAULT 'personal' — enum NOTIFICATION_SCOPE
-  title: text NOT NULL                   — rendered headline
-  body: text NOT NULL                    — 1–2 sentence summary
-  link: text NULL                        — destination URL on row click
-  entityType: text NULL                  — 'application' | 'interview' | 'offer' | 'job' | 'bias_flag'
+  eventType: text NOT NULL - enum NOTIFICATION_EVENT_TYPE
+  scope: text NOT NULL DEFAULT 'personal' - enum NOTIFICATION_SCOPE
+  title: text NOT NULL                   - rendered headline
+  body: text NOT NULL                    - 1-2 sentence summary
+  link: text NULL                        - destination URL on row click
+  entityType: text NULL                  - 'application' | 'interview' | 'offer' | 'job' | 'bias_flag'
   entityId: uuid NULL
   actorId: uuid NULL REFERENCES profiles(id) ON DELETE SET NULL
-  metadata: jsonb NULL                   — { scoreValue, matchBand, companyName, ... }
+  metadata: jsonb NULL                   - { scoreValue, matchBand, companyName, ... }
   readAt: timestamptz NULL
-  dismissedAt: timestamptz NULL          — soft-delete; hidden from list, kept until retention cron
+  dismissedAt: timestamptz NULL          - soft-delete; hidden from list, kept until retention cron
   digestPending: boolean NOT NULL DEFAULT false
   emailSentAt: timestamptz NULL
   createdAt: timestamptz NOT NULL DEFAULT now()
@@ -209,10 +209,10 @@ export const NOTIFICATION_SCOPE = ["personal", "system"] as const;
 
 Indexes:
 
-- `notifications_user_unread_idx` on `(userId, readAt, createdAt DESC)` — drives unread-count and Unread-tab queries
-- `notifications_user_created_idx` on `(userId, createdAt DESC)` — drives All-tab queries
-- `notifications_created_at_idx` on `(createdAt)` — drives retention cron
-- `notifications_digest_pending_idx` on `(digestPending) WHERE digestPending = true` — partial index for digest cron
+- `notifications_user_unread_idx` on `(userId, readAt, createdAt DESC)` - drives unread-count and Unread-tab queries
+- `notifications_user_created_idx` on `(userId, createdAt DESC)` - drives All-tab queries
+- `notifications_created_at_idx` on `(createdAt)` - drives retention cron
+- `notifications_digest_pending_idx` on `(digestPending) WHERE digestPending = true` - partial index for digest cron
 
 ### `notification_preferences` table
 
@@ -220,8 +220,8 @@ Indexes:
 {
   id: uuid PK defaultRandom()
   userId: uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
-  eventType: text NOT NULL — enum NOTIFICATION_EVENT_TYPE
-  mode: text NOT NULL — enum NOTIFICATION_MODE
+  eventType: text NOT NULL - enum NOTIFICATION_EVENT_TYPE
+  mode: text NOT NULL - enum NOTIFICATION_MODE
   createdAt: timestamptz NOT NULL DEFAULT now()
   updatedAt: timestamptz NOT NULL DEFAULT now()
   UNIQUE(userId, eventType)
@@ -234,9 +234,9 @@ Sparse by design: a missing row means "use the system default for this event typ
 
 Three small flag columns prevent cron duplicate-firing:
 
-- `interviewsTable.reminderSentAt: timestamptz NULL` — set when InterviewReminderCron emits
-- `interviewsTable.feedbackDueNotifiedAt: timestamptz NULL` — set when InterviewFeedbackDueCron emits
-- `offersTable.expiryReminderSentAt: timestamptz NULL` — set when OfferExpiryReminderCron emits
+- `interviewsTable.reminderSentAt: timestamptz NULL` - set when InterviewReminderCron emits
+- `interviewsTable.feedbackDueNotifiedAt: timestamptz NULL` - set when InterviewFeedbackDueCron emits
+- `offersTable.expiryReminderSentAt: timestamptz NULL` - set when OfferExpiryReminderCron emits
 
 ### Default modes (in code, `event-defaults.ts`)
 
@@ -310,17 +310,17 @@ Each event type's title/body/link is rendered from a single source in `templates
 | `account_email_verified`       | personal | `auth.service.verifyEmail()`                                                             | acting user                    |
 | `account_login_new_device`     | personal | `auth.service.recordLogin()` (unseen fingerprint)                                        | acting user                    |
 
-> **Service-name verification (during plan execution).** `bias.service.flag()` and `moderation.service.queue()` are conceptual call sites — the actual file paths and method names are confirmed by reading the existing modules during plan execution. If the moderation module isn't built yet at implementation time, `system_moderation_queue_item` becomes a phase-2 hookup (the event type still ships in the enum but no producer wires it). Similarly for `auth.service.recordLogin()` device-fingerprinting: if device tracking isn't already implemented, `account_login_new_device` waits for that capability and the spec's three other security events still ship.
+> **Service-name verification (during plan execution).** `bias.service.flag()` and `moderation.service.queue()` are conceptual call sites - the actual file paths and method names are confirmed by reading the existing modules during plan execution. If the moderation module isn't built yet at implementation time, `system_moderation_queue_item` becomes a phase-2 hookup (the event type still ships in the enum but no producer wires it). Similarly for `auth.service.recordLogin()` device-fingerprinting: if device tracking isn't already implemented, `account_login_new_device` waits for that capability and the spec's three other security events still ship.
 
 ### Cron-driven events
 
 All five new crons live under `apps/api/src/cron/` and follow the existing project pattern (audit-log on each run):
 
-- **`InterviewReminderCron`** — `@Cron("0 * * * *")` (hourly). Selects `interviews` where `startTime BETWEEN now() AND now() + interval '24 hours' AND reminderSentAt IS NULL`. For each, calls `notifications.emit(...)` and sets `reminderSentAt = now()` in the same transaction.
-- **`OfferExpiryReminderCron`** — hourly. Same pattern keyed off `offers.expiresAt` and `expiryReminderSentAt`.
-- **`InterviewFeedbackDueCron`** — hourly. Selects interviews where `endTime + interval '24 hours' < now() AND feedback IS NULL AND feedbackDueNotifiedAt IS NULL`.
-- **`DigestEmailCron`** — `@Cron(CronExpression.EVERY_DAY_AT_8AM, { timeZone: 'Asia/Manila' })`. Batches all `digest_pending = true` rows per user, enqueues one digest email per user, flips `digest_pending = false`.
-- **`NotificationsRetentionCron`** — daily at 03:00 Asia/Manila. `DELETE FROM notifications WHERE created_at < now() - interval '90 days'`.
+- **`InterviewReminderCron`** - `@Cron("0 * * * *")` (hourly). Selects `interviews` where `startTime BETWEEN now() AND now() + interval '24 hours' AND reminderSentAt IS NULL`. For each, calls `notifications.emit(...)` and sets `reminderSentAt = now()` in the same transaction.
+- **`OfferExpiryReminderCron`** - hourly. Same pattern keyed off `offers.expiresAt` and `expiryReminderSentAt`.
+- **`InterviewFeedbackDueCron`** - hourly. Selects interviews where `endTime + interval '24 hours' < now() AND feedback IS NULL AND feedbackDueNotifiedAt IS NULL`.
+- **`DigestEmailCron`** - `@Cron(CronExpression.EVERY_DAY_AT_8AM, { timeZone: 'Asia/Manila' })`. Batches all `digest_pending = true` rows per user, enqueues one digest email per user, flips `digest_pending = false`.
+- **`NotificationsRetentionCron`** - daily at 03:00 Asia/Manila. `DELETE FROM notifications WHERE created_at < now() - interval '90 days'`.
 
 ## API surface
 
@@ -331,21 +331,21 @@ All routes live under the existing global guard chain (`SupabaseAuthGuard` then 
 | Method   | Path                          | Body / Query                                | Returns                                          |
 | -------- | ----------------------------- | ------------------------------------------- | ------------------------------------------------ |
 | `GET`    | `/notifications`              | `?tab=unread\|all&limit=20&cursor=<base64>` | `{ items: Notification[], nextCursor?: string }` |
-| `GET`    | `/notifications/unread-count` | —                                           | `{ count: number, displayCount: string }`        |
-| `POST`   | `/notifications/:id/read`     | —                                           | `{ unreadCount: number, displayCount: string }`  |
-| `POST`   | `/notifications/read-all`     | —                                           | `{ unreadCount: 0, displayCount: "0" }`          |
-| `DELETE` | `/notifications/:id`          | —                                           | `{ unreadCount: number, displayCount: string }`  |
+| `GET`    | `/notifications/unread-count` | -                                           | `{ count: number, displayCount: string }`        |
+| `POST`   | `/notifications/:id/read`     | -                                           | `{ unreadCount: number, displayCount: string }`  |
+| `POST`   | `/notifications/read-all`     | -                                           | `{ unreadCount: 0, displayCount: "0" }`          |
+| `DELETE` | `/notifications/:id`          | -                                           | `{ unreadCount: number, displayCount: string }`  |
 
 - All queries scope `WHERE userId = req.user.id AND dismissedAt IS NULL`; RLS provides defense-in-depth.
-- Pagination is cursor-based on `(createdAt DESC, id)` — works with the `(userId, createdAt DESC)` index. Cursor is `base64(<createdAt>|<id>)`.
-- `displayCount` is server-rendered as `"99+"` when count > 99 — keeps the cap rule invariant across clients.
+- Pagination is cursor-based on `(createdAt DESC, id)` - works with the `(userId, createdAt DESC)` index. Cursor is `base64(<createdAt>|<id>)`.
+- `displayCount` is server-rendered as `"99+"` when count > 99 - keeps the cap rule invariant across clients.
 - `mark-read` and `read-all` return the new count so TanStack Query can `setQueryData` immediately.
 
 ### `notification-preferences.controller.ts`
 
 | Method | Path                                         | Body                                                                             | Returns                                                             |
 | ------ | -------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `GET`  | `/notification-preferences`                  | —                                                                                | `Array<{ eventType, mode, isDefault, isSecurityLocked, category }>` |
+| `GET`  | `/notification-preferences`                  | -                                                                                | `Array<{ eventType, mode, isDefault, isSecurityLocked, category }>` |
 | `PUT`  | `/notification-preferences`                  | `{ eventType, mode }`                                                            | `{ eventType, mode, isDefault: false }`                             |
 | `POST` | `/notification-preferences/restore-defaults` | `{ category?: 'applications'\|'interviews'\|'offers'\|'bias'\|'system'\|'all' }` | `{ deleted: number }`                                               |
 
@@ -373,7 +373,7 @@ useGetNotificationPreferences, usePutNotificationPreferences,
 usePostNotificationPreferencesRestoreDefaults
 ```
 
-> Hook names follow Orval's path-derived convention. The exact final names are produced by `orval` from `openapi.json` and may differ slightly from this listing — the implementation plan reconciles names against the regenerated client.
+> Hook names follow Orval's path-derived convention. The exact final names are produced by `orval` from `openapi.json` and may differ slightly from this listing - the implementation plan reconciles names against the regenerated client.
 
 ## Frontend
 
@@ -395,7 +395,7 @@ function NavItemBadge() {
 }
 ```
 
-Badge geometry uses `{rounded.pill}`, AuraHire Blue background, white text — the indicator reads as a brand-consistent count, not an error/danger signal. When count is 0, the component returns `null` and the row visually matches every other nav item.
+Badge geometry uses `{rounded.pill}`, AuraHire Blue background, white text - the indicator reads as a brand-consistent count, not an error/danger signal. When count is 0, the component returns `null` and the row visually matches every other nav item.
 
 ### `/[role]/notifications/page.tsx`
 
@@ -413,7 +413,7 @@ Three thin route files, each importing one shared client component `<Notificatio
 - **Center:** `{typography.title-sm}` title, `{typography.body-sm}` body, `{typography.caption}` muted relative timestamp ("2h ago")
 - **Right:** match-band chip if `metadata.matchBand` exists, score value in JetBrains Mono if `metadata.scoreValue` exists, hover-revealed `X` dismiss button
 - **Unread indicator:** 6px solid AuraHire Blue dot at the leftmost edge; absent when `readAt` is set
-- **Whole row is a button:** click fires `usePostNotificationsRead` mutation AND `router.push(link)` in parallel — navigation does not block on the mutation
+- **Whole row is a button:** click fires `usePostNotificationsRead` mutation AND `router.push(link)` in parallel - navigation does not block on the mutation
 
 ### Mutation patterns
 
@@ -427,7 +427,7 @@ All mutations are optimistic with `onMutate`/`onError` rollback:
 
 `apps/web/components/settings/notifications-form.tsx` is rewritten in place:
 
-1. Fetches preferences via `useGetNotificationPreferences` — server returns the effective view including security-locked rows and category labels.
+1. Fetches preferences via `useGetNotificationPreferences` - server returns the effective view including security-locked rows and category labels.
 2. Groups rows by `category` field returned from the server.
 3. Each row renders a 3-way segmented control (Instant / Digest / Off). Security-locked rows render disabled with the `Required for security` caption. Always-instant rows for hardcoded events also render disabled.
 4. **Saves on change** via `usePutNotificationPreferences` with optimistic update; 300ms debounce per row to avoid thrash.
@@ -445,8 +445,8 @@ Both instant and digest emails route through one new BullMQ queue: `NOTIFICATION
 
 ```
 apps/api/src/modules/notifications/templates/
-├── index.ts                                — buildTitle/buildBody/buildLink registry
-├── base-layout.tsx                         — shared header (AuraHire wordmark) + footer
+├── index.ts                                - buildTitle/buildBody/buildLink registry
+├── base-layout.tsx                         - shared header (AuraHire wordmark) + footer
 ├── application-status-changed-email.tsx
 ├── interview-scheduled-email.tsx
 ├── interview-reminder-email.tsx
@@ -467,7 +467,7 @@ apps/api/src/modules/notifications/templates/
 ├── account-password-reset-email.tsx
 ├── account-email-verified-email.tsx
 ├── account-login-new-device-email.tsx
-└── digest-email.tsx                        — multi-event composite
+└── digest-email.tsx                        - multi-event composite
 ```
 
 All extend `base-layout.tsx`, establishing brand styling (Inter body, AuraHire Blue CTA pills, surface palette, footer with link to `/[role]/settings/notifications` for unsubscribe). The digest template renders sections per category, with each notification as a compact row.
@@ -475,7 +475,7 @@ All extend `base-layout.tsx`, establishing brand styling (Inter body, AuraHire B
 ### Idempotency
 
 - **Instant:** processor early-returns if `email_sent_at IS NOT NULL`. Prevents BullMQ retries from double-sending after a partial failure.
-- **Digest:** `digest_pending = false` update happens inside the same transaction as the enqueue; cron rerun won't re-batch the same rows. If the queue job permanently fails after retries, the rows are already flipped — in-app notification is the source of truth.
+- **Digest:** `digest_pending = false` update happens inside the same transaction as the enqueue; cron rerun won't re-batch the same rows. If the queue job permanently fails after retries, the rows are already flipped - in-app notification is the source of truth.
 
 ## Error handling and edge cases
 
@@ -498,20 +498,20 @@ The same posture applies in the email processor: a Resend timeout retries 3× th
 
 ### Specific edge cases
 
-- **Self-targeting** — `emit()` early-returns when `userId === actorId`. Future internal-hire flows shouldn't notify the recruiter about their own application.
-- **Rapid status flapping** — two rapid status changes stack in the in-app stream (acceptable at MVP). Phase 2 could collapse via 60s debounce per `(userId, applicationId)`.
-- **Deleted entities** — processor checks the entity exists before rendering; if missing, marks `email_sent_at = now()` with `metadata.delivery_skipped_reason = 'entity_missing'` so the job stops retrying.
-- **Suspended users** — `emit()` checks `users.status` before insert; never creates rows for `suspended` or `deleted` users.
-- **Cron deduplication** — every cron-driven event uses a flag column on its source table (`reminderSentAt`, `feedbackDueNotifiedAt`, `expiryReminderSentAt`) updated in the same transaction as `emit()`.
-- **Daylight-saving** — `@nestjs/schedule` `timeZone` option handles transitions correctly. Asia/Manila doesn't observe DST, so this is moot today; documented for future locales.
-- **Email bounces** — out of MVP. A Resend webhook handler is phase-2 work.
+- **Self-targeting** - `emit()` early-returns when `userId === actorId`. Future internal-hire flows shouldn't notify the recruiter about their own application.
+- **Rapid status flapping** - two rapid status changes stack in the in-app stream (acceptable at MVP). Phase 2 could collapse via 60s debounce per `(userId, applicationId)`.
+- **Deleted entities** - processor checks the entity exists before rendering; if missing, marks `email_sent_at = now()` with `metadata.delivery_skipped_reason = 'entity_missing'` so the job stops retrying.
+- **Suspended users** - `emit()` checks `users.status` before insert; never creates rows for `suspended` or `deleted` users.
+- **Cron deduplication** - every cron-driven event uses a flag column on its source table (`reminderSentAt`, `feedbackDueNotifiedAt`, `expiryReminderSentAt`) updated in the same transaction as `emit()`.
+- **Daylight-saving** - `@nestjs/schedule` `timeZone` option handles transitions correctly. Asia/Manila doesn't observe DST, so this is moot today; documented for future locales.
+- **Email bounces** - out of MVP. A Resend webhook handler is phase-2 work.
 
 ### Observability
 
-- **`audit_logs`** — every cron run, every digest batch, every preference change writes an audit row.
-- **Pino logger** — every `emit()` logs at debug level with eventType, userId, resulting mode, deliveryPath; errors at error level with stack.
-- **BullMQ dashboard** — existing queue-monitoring path covers `notification-email` automatically.
-- **Prometheus counters** — phase 2.
+- **`audit_logs`** - every cron run, every digest batch, every preference change writes an audit row.
+- **Pino logger** - every `emit()` logs at debug level with eventType, userId, resulting mode, deliveryPath; errors at error level with stack.
+- **BullMQ dashboard** - existing queue-monitoring path covers `notification-email` automatically.
+- **Prometheus counters** - phase 2.
 
 ### Acceptance behaviors
 
@@ -529,42 +529,42 @@ The same posture applies in the email processor: a Resend timeout retries 3× th
 
 `apps/api/src/modules/notifications/__tests__/`
 
-- `notifications.service.spec.ts` — `emit()` route correctness for instant/digest/off, security-event override, suspended-user skip, self-targeting skip, swallowed failures.
-- `event-defaults.spec.ts` — `getEffectiveMode()` falls back to `DEFAULT_MODES`, returns `'instant'` for `SECURITY_EVENTS` regardless of stored preference.
-- `templates.spec.ts` — each event-type's `buildTitle/buildBody/buildLink` produces expected strings for representative metadata fixtures.
-- `notifications.controller.spec.ts` — cursor pagination ordering and next-cursor; `unread-count` cap rule; user-scoping enforcement; dismissed rows excluded.
-- `notification-preferences.controller.spec.ts` — security-event PUT returns 400; restore-defaults with `category='all'` deletes all rows.
+- `notifications.service.spec.ts` - `emit()` route correctness for instant/digest/off, security-event override, suspended-user skip, self-targeting skip, swallowed failures.
+- `event-defaults.spec.ts` - `getEffectiveMode()` falls back to `DEFAULT_MODES`, returns `'instant'` for `SECURITY_EVENTS` regardless of stored preference.
+- `templates.spec.ts` - each event-type's `buildTitle/buildBody/buildLink` produces expected strings for representative metadata fixtures.
+- `notifications.controller.spec.ts` - cursor pagination ordering and next-cursor; `unread-count` cap rule; user-scoping enforcement; dismissed rows excluded.
+- `notification-preferences.controller.spec.ts` - security-event PUT returns 400; restore-defaults with `category='all'` deletes all rows.
 
 ### Backend cron tests
 
-`apps/api/src/cron/__tests__/` — each new cron asserts: side effects on seeded DB state, idempotency on second run, audit-log entries written.
+`apps/api/src/cron/__tests__/` - each new cron asserts: side effects on seeded DB state, idempotency on second run, audit-log entries written.
 
 ### Backend integration
 
-`apps/api/test/notifications.e2e-spec.ts` — full HTTP path against a real Postgres test database:
+`apps/api/test/notifications.e2e-spec.ts` - full HTTP path against a real Postgres test database:
 
 - Status change as recruiter → candidate's `GET /notifications` shows the row + bell count = 1
 - Mark read → bell count = 0
 - Set preference Off → repeat status change → no row appears
 
-### Frontend tests (matching project's existing setup — Vitest + Testing Library expected, confirmed during plan execution)
+### Frontend tests (matching project's existing setup - Vitest + Testing Library expected, confirmed during plan execution)
 
 `apps/web/components/notifications/__tests__/`
 
-- `notification-bell.spec.tsx` — badge hides at count=0, shows `99+` when > 99, polls every 30s while focused (mock timers), pauses when blurred.
-- `notification-row.spec.tsx` — click triggers mark-read mutation and navigation; unread dot hides after `readAt`; X button only on hover.
-- `notifications-page.spec.tsx` — Unread is default tab; "Mark all as read" only renders when unread > 0; tab switch refetches with correct query param.
-- `notifications-form.spec.tsx` — security rows disabled with caption; row change triggers debounced PUT after 300ms; "Restore defaults" calls correct endpoint.
+- `notification-bell.spec.tsx` - badge hides at count=0, shows `99+` when > 99, polls every 30s while focused (mock timers), pauses when blurred.
+- `notification-row.spec.tsx` - click triggers mark-read mutation and navigation; unread dot hides after `readAt`; X button only on hover.
+- `notifications-page.spec.tsx` - Unread is default tab; "Mark all as read" only renders when unread > 0; tab switch refetches with correct query param.
+- `notifications-form.spec.tsx` - security rows disabled with caption; row change triggers debounced PUT after 300ms; "Restore defaults" calls correct endpoint.
 
 ### E2E (gated on Playwright presence)
 
-`apps/web/tests/notifications.spec.ts` — sign in as candidate, see empty state, recruiter changes status, candidate sees notification within poll window, click navigates, badge clears, settings toggle Off, repeat status change, no new notification.
+`apps/web/tests/notifications.spec.ts` - sign in as candidate, see empty state, recruiter changes status, candidate sees notification within poll window, click navigates, badge clears, settings toggle Off, repeat status change, no new notification.
 
 ## Migration
 
 The existing `notifications-form.tsx` writes legacy boolean toggles to `localStorage` under keys like `notif-prefs:recruiter`. Rollout:
 
-1. Ship the new system with empty `notification_preferences` table — every user gets default modes server-side.
+1. Ship the new system with empty `notification_preferences` table - every user gets default modes server-side.
 2. The rewritten form, on first mount, reads any `notif-prefs:*` keys from `localStorage`, maps the legacy booleans to the new 3-mode space (`true → instant`, `false → off`), POSTs the resulting preferences, then deletes the legacy keys.
 3. The legacy banner is removed as part of the form rewrite.
 
@@ -572,7 +572,7 @@ Migration runs once per browser per user. Absence of legacy keys means defaults 
 
 ## Phase 2 (named, not scoped)
 
-1. Supabase Realtime subscription for the bell — single-component upgrade in `<NavItemBadge>`.
+1. Supabase Realtime subscription for the bell - single-component upgrade in `<NavItemBadge>`.
 2. Team-wide fanout for `new_application_received` and `bias_flag_raised`.
 3. Per-user digest cadence (daily/weekly/off) and per-user delivery time.
 4. Per-tenant timezone for digest delivery.
@@ -613,7 +613,7 @@ Migration runs once per browser per user. Absence of legacy keys means defaults 
 - `apps/api/src/modules/bias/bias.service.ts`
 - `apps/api/src/modules/auth/auth.service.ts`
 - `apps/api/src/modules/invitations/invitations.service.ts`
-- The existing match-preview-precompute worker (`MatchPreviewQueueService`) — catch-block emit (exact path resolved during plan execution)
+- The existing match-preview-precompute worker (`MatchPreviewQueueService`) - catch-block emit (exact path resolved during plan execution)
 - `apps/web/components/layout/portal-sidebar.tsx` (nav additions, all three roles)
 - `apps/web/components/settings/notifications-form.tsx` (full rewrite)
 - `packages/shared/src/index.ts` (re-export new schemas)

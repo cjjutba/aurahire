@@ -13,7 +13,7 @@ test("candidate skips resume upload, fills profile manually, completes onboardin
 }) => {
   await page.goto("/onboarding/candidate");
 
-  // Click the "Skip — I'll fill in manually" link.
+  // Click the "Skip - I'll fill in manually" link.
   await page.getByRole("button", { name: /Skip.*manually/i }).click();
   await expect(page).toHaveURL(/\/onboarding\/candidate\/personal$/);
 
@@ -22,7 +22,7 @@ test("candidate skips resume upload, fills profile manually, completes onboardin
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
   await expect(page).toHaveURL(/\/onboarding\/candidate\/review$/);
-  // Skills cloud — add 3 skills to satisfy review-completion schema.
+  // Skills cloud - add 3 skills to satisfy review-completion schema.
   const skillInput = page.getByPlaceholder(/Add a skill/i);
   for (const skill of ["TypeScript", "React", "Node.js"]) {
     await skillInput.fill(skill);

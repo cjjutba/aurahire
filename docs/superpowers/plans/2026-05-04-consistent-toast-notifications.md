@@ -16,11 +16,11 @@
 
 ### New file
 
-- `apps/web/lib/toast.ts` — exports `toastSuccess` and `toastApiError`. Single source of truth for the convention.
+- `apps/web/lib/toast.ts` - exports `toastSuccess` and `toastApiError`. Single source of truth for the convention.
 
 ### Modified files (32 confirmed)
 
-Grouped by area; full list with exact change per file lives in Tasks 3–8.
+Grouped by area; full list with exact change per file lives in Tasks 3-8.
 
 - **Auth (7):** `login-form.tsx`, `register-candidate-form.tsx`, `register-recruiter-form.tsx`, `forgot-password-form.tsx`, `reset-password-form.tsx`, `verify-email-client.tsx`, `portal-topbar.tsx`.
 - **Onboarding (6):** `resume-upload.tsx`, `personal-info-form.tsx`, `preferences-form.tsx`, `about-form.tsx`, `company-form.tsx`, `focus-form.tsx`.
@@ -82,13 +82,13 @@ If the wording does not match the spec inventory, **rewrite it to match the spec
 | `toast.error("Title")`                                             | `toastApiError(null, "Title")`                            |
 | `toast.error("Validation failed", { description: zodMessages })`   | `toastApiError(null, "Check your input", zodMessages)`    |
 
-Where `err` is the variable in scope (from `catch (err)` or `onError: (err) =>`). If the call site has access to a parsed JSON error body via manual fetch, prefer passing the raw error object (`err`) — `toastApiError` extracts `.body.message` automatically.
+Where `err` is the variable in scope (from `catch (err)` or `onError: (err) =>`). If the call site has access to a parsed JSON error body via manual fetch, prefer passing the raw error object (`err`) - `toastApiError` extracts `.body.message` automatically.
 
 For sites that build a custom error message (e.g. `body.message ?? "fallback"`), pass the already-built string as the third arg: `toastApiError(null, "Title", customMessage)`.
 
 ### 4. Add a success toast where currently silent
 
-Only at the sites listed in Tasks 3–4 (auth + onboarding final steps). Never invent new toast sites — the inventory is closed.
+Only at the sites listed in Tasks 3-4 (auth + onboarding final steps). Never invent new toast sites - the inventory is closed.
 
 ### 5. After every task, type-check
 
@@ -137,7 +137,7 @@ Append the findings to this plan file as a new sub-section titled "Task 1 result
 
 Apply this rule per finding:
 
-- **Has mutation, has toast** → add to Task 4 file list. Migrate (error toast only — intermediate step, no success toast).
+- **Has mutation, has toast** → add to Task 4 file list. Migrate (error toast only - intermediate step, no success toast).
 - **Has mutation, no toast** → add to Task 4 file list. Add `toastApiError(err, "Couldn't save <step>")` only.
 - **No mutation** (server component or pure rendering) → no change needed.
 
@@ -301,7 +301,7 @@ Same as Step 2 but in the recruiter registration form. Apply identical title/des
 
 Read the file. Replace the silent error swallow `.catch(() => {})` with proper error handling and add success + error toasts.
 
-Before (around lines 29–40):
+Before (around lines 29-40):
 
 ```ts
 async function onSubmit(values: ForgotPasswordInput) {
@@ -338,7 +338,7 @@ async function onSubmit(values: ForgotPasswordInput) {
 }
 ```
 
-Apply the import migration. Note the security model from the spec edge cases: the API always returns success regardless of whether the email exists. Do not branch on existence — the `try` succeeds either way.
+Apply the import migration. Note the security model from the spec edge cases: the API always returns success regardless of whether the email exists. Do not branch on existence - the `try` succeeds either way.
 
 - [ ] **Step 5: Migrate `reset-password-form.tsx`**
 
@@ -664,7 +664,7 @@ Errors:
 
 Apply the import migration.
 
-Success: `toast.success("Interview scheduled — candidate notified")` → `toastSuccess("Interview scheduled", "Candidate notified.")`.
+Success: `toast.success("Interview scheduled - candidate notified")` → `toastSuccess("Interview scheduled", "Candidate notified.")`.
 
 Errors (3): wherever each error fires, use:
 
@@ -676,7 +676,7 @@ Errors (3): wherever each error fires, use:
 
 Apply the import migration. Remove the em-dash from the success toast and split title/description.
 
-Success: `toast.success("Offer sent — candidate notified")` → `toastSuccess("Offer sent", "Candidate notified.")`.
+Success: `toast.success("Offer sent - candidate notified")` → `toastSuccess("Offer sent", "Candidate notified.")`.
 
 Six errors. Map each by current title:
 
@@ -774,7 +774,7 @@ If the existing wording deviates from "Couldn't recalculate", the engineer shoul
 
 Apply the import migration. **Remove the em-dash** from the existing success.
 
-Accept success: `toast.success("Offer accepted — welcome aboard!")` → `toastSuccess("Offer accepted", "Welcome aboard.")`.
+Accept success: `toast.success("Offer accepted - welcome aboard!")` → `toastSuccess("Offer accepted", "Welcome aboard.")`.
 Accept error: `toastApiError(err, "Couldn't accept offer")`.
 Decline success: `toast.success("Offer declined")` → `toastSuccess("Offer declined")`.
 Decline error: `toastApiError(err, "Couldn't decline offer")`.
@@ -966,7 +966,7 @@ Run from repo root:
 grep -rn "from \"sonner\"" apps/web/components apps/web/app apps/web/lib --include="*.tsx" --include="*.ts" || echo "No matches"
 ```
 
-Expected: only one match — `apps/web/components/ui/sonner.tsx` (the Toaster component itself, which legitimately imports from sonner). No other file should import from `sonner` directly.
+Expected: only one match - `apps/web/components/ui/sonner.tsx` (the Toaster component itself, which legitimately imports from sonner). No other file should import from `sonner` directly.
 
 If any other file appears in the grep output, it was missed. Re-read the spec's "Files affected" section and apply the migration to that file before continuing.
 
@@ -1037,7 +1037,7 @@ Audit of the three read-only review pages in the candidate onboarding wizard.
 **`apps/web/app/onboarding/candidate/education/page.tsx`**
 
 - Component type: async server component (no `"use client"` directive)
-- Mutation handler: none — page fetches parsed resume data server-side and renders a static list of education entries or an empty-state card
+- Mutation handler: none - page fetches parsed resume data server-side and renders a static list of education entries or an empty-state card
 - Toast usage: none
 - No client component imported with mutations
 - Classification: **(c) no mutation** → no change needed
@@ -1045,7 +1045,7 @@ Audit of the three read-only review pages in the candidate onboarding wizard.
 **`apps/web/app/onboarding/candidate/experience/page.tsx`**
 
 - Component type: async server component (no `"use client"` directive)
-- Mutation handler: none — page fetches parsed resume data server-side and renders a static list of work experience entries or an empty-state card
+- Mutation handler: none - page fetches parsed resume data server-side and renders a static list of work experience entries or an empty-state card
 - Toast usage: none
 - No client component imported with mutations
 - Classification: **(c) no mutation** → no change needed
@@ -1053,9 +1053,9 @@ Audit of the three read-only review pages in the candidate onboarding wizard.
 **`apps/web/app/onboarding/candidate/skills/page.tsx`**
 
 - Component type: async server component (no `"use client"` directive)
-- Mutation handler: none — page fetches parsed resume data server-side and renders skill chips and certification entries or an empty-state card
+- Mutation handler: none - page fetches parsed resume data server-side and renders skill chips and certification entries or an empty-state card
 - Toast usage: none
 - No client component imported with mutations
 - Classification: **(c) no mutation** → no change needed
 
-**Summary:** All three pages are pure server-rendered review steps in the wizard. They display data already parsed from the resume (fetched via `fetchLatestParsedResume`) and provide only `<Link>` navigation (Back / Continue). There are no `useMutation` hooks, no `fetch(` calls, no `@aurahire/shared` controller imports, and no rendered client components with mutation logic. Task 4 Step 7 ("Apply Task 1 results") is a no-op — no additional files need to be added to Task 4.
+**Summary:** All three pages are pure server-rendered review steps in the wizard. They display data already parsed from the resume (fetched via `fetchLatestParsedResume`) and provide only `<Link>` navigation (Back / Continue). There are no `useMutation` hooks, no `fetch(` calls, no `@aurahire/shared` controller imports, and no rendered client components with mutation logic. Task 4 Step 7 ("Apply Task 1 results") is a no-op - no additional files need to be added to Task 4.

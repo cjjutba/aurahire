@@ -40,7 +40,7 @@ test("candidate completes onboarding via PDF resume upload", async ({
   await expect(page.getByText(/Review what we found/i)).toBeVisible();
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
-  // Step 4: Preferences — fill required fields then Finish.
+  // Step 4: Preferences - fill required fields then Finish.
   await expect(page).toHaveURL(/\/onboarding\/candidate\/preferences$/);
   await page.getByLabel(/desired roles/i).fill("Software Engineer");
   await page.getByLabel(/^full-time$/i).check();

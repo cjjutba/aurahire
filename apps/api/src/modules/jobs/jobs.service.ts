@@ -194,7 +194,7 @@ export class JobsService {
     await this.biasService.scanJob(user, companyId, id, requestMeta);
 
     // Severity-aware gate: only medium/high bias flags block publish.
-    // Low-severity flags are informational — they persist into bias_flags for
+    // Low-severity flags are informational - they persist into bias_flags for
     // the audit trail and surface in the editor preview, but the recruiter
     // can publish without an override. This matches the "info / warning /
     // error" calibration in the v1.2.0 prompt: low = soft phrasing in

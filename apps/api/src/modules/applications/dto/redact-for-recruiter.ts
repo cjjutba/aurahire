@@ -19,7 +19,7 @@
  * `apps/api/src/ai/redact-text-deterministic.ts` (with a backfill script
  * covering historical rows).
  *
- * This file is a PURE transformation — no DB access, no async I/O. The
+ * This file is a PURE transformation - no DB access, no async I/O. The
  * caller is responsible for the identity-reveal predicate, computed by
  * `identity-reveal.helper.ts`.
  */
@@ -33,7 +33,7 @@ export interface RedactOptions {
 
 /**
  * Apply the recruiter-side redaction policy to a single application
- * DTO. Returns a new object — never mutates the input.
+ * DTO. Returns a new object - never mutates the input.
  */
 export function redactApplicationForRecruiter(
   app: ApplicationDto,
@@ -45,7 +45,7 @@ export function redactApplicationForRecruiter(
     return { ...app, identityRevealed: true };
   }
 
-  // Hidden mode — null out PII, keep skills + score breakdown intact.
+  // Hidden mode - null out PII, keep skills + score breakdown intact.
   const redactedCandidate = app.candidate
     ? {
         id: app.candidate.id,
@@ -59,7 +59,7 @@ export function redactApplicationForRecruiter(
   // Scrub evidence excerpts on the match score: prefer the
   // `excerpt_redacted` column when the scoring service populated it;
   // otherwise fall back to the existing excerpt (still better than
-  // leaking raw PII — the deterministic redactor over-redacts on
+  // leaking raw PII - the deterministic redactor over-redacts on
   // ambiguity).
   const redactedScore = app.matchScore
     ? {
@@ -69,7 +69,7 @@ export function redactApplicationForRecruiter(
           evidence: c.evidence.map((e) => ({
             ...e,
             // Some callers (e.g., score-dashboard for the candidate)
-            // also accept an `excerptRedacted` field — if present we
+            // also accept an `excerptRedacted` field - if present we
             // surface it; otherwise we re-redact at the view layer.
             // This service does not call the LLM; the regex helper is
             // applied at evidence write time. Here we just pass through

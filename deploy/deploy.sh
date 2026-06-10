@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# AuraHire — Pull, build, validate env, and reload the API on the droplet.
+# AuraHire - Pull, build, validate env, and reload the API on the droplet.
 # Run as the deploy user from /home/deploy/aurahire:
 #   bash deploy/deploy.sh
 
@@ -61,7 +61,7 @@ if ! grep -E "^ALLOWED_ORIGINS=" "${ENV_FILE}" | grep -q "https://aurahire.site"
   exit 1
 fi
 
-# FROM_EMAIL must be on the verified Resend domain (aurahire.site) — Resend
+# FROM_EMAIL must be on the verified Resend domain (aurahire.site) - Resend
 # rejects sends from unverified senders, so a mismatch surfaces as silent
 # delivery failures in production logs rather than at deploy time.
 from_email=$(grep -E "^FROM_EMAIL=" "${ENV_FILE}" | head -n 1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs || true)

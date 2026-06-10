@@ -14,7 +14,7 @@ export interface ActiveCompanyContext {
 /**
  * Param decorator that pulls the resolved active-company context off the
  * request. Throws if used on a route that didn't go through
- * `ActiveCompanyGuard` — that's a developer error, not a runtime case.
+ * `ActiveCompanyGuard` - that's a developer error, not a runtime case.
  *
  * Usage:
  *   @Get("/jobs")

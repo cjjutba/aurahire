@@ -169,7 +169,7 @@ export class NotificationsService {
   }
 
   /**
-   * Archive a single notification — popover vocabulary. The DB column is
+   * Archive a single notification - popover vocabulary. The DB column is
    * `dismissed_at`; the realtime event is `notification.archived`. Also
    * marks unread rows as read on archive (handled in the repository) so
    * we never strand "unread but hidden" rows.

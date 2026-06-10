@@ -7,7 +7,7 @@
  *  2. isUpdate: true in audit details when re-sharing (sharedWithCandidateAt already set).
  *  3. Throws ForbiddenException when user is not a recruiter.
  *
- * No database is hit — all dependencies are mocked.
+ * No database is hit - all dependencies are mocked.
  */
 
 import { ForbiddenException } from "@nestjs/common";
@@ -153,7 +153,7 @@ describe("InterviewsService.shareFeedback", () => {
         { provide: InterviewVenuesService, useValue: { create: jest.fn() } },
         {
           // Per thesis panel revision (May 2026): score-based interview
-          // eligibility gate — null score means the gate is a no-op.
+          // eligibility gate - null score means the gate is a no-op.
           provide: ScoringRepository,
           useValue: {
             findMatchScoreByApplicationId: jest.fn().mockResolvedValue(null),

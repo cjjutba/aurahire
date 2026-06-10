@@ -153,7 +153,7 @@ Every feature follows this template:
 | Case | Handling |
 |---|---|
 | JWT not found | 401 |
-| Profile already exists | 409 — return existing profile |
+| Profile already exists | 409 - return existing profile |
 | Phone format invalid | 400 with error |
 
 ---
@@ -225,7 +225,7 @@ Backend logs the event when the next protected request fails (no separate endpoi
 
 ### Forgot / Reset Password / Verify Email
 
-These flows happen entirely between frontend and Supabase Auth — backend not involved beyond the eventual `GET /profiles/me` after login. No custom endpoints needed.
+These flows happen entirely between frontend and Supabase Auth - backend not involved beyond the eventual `GET /profiles/me` after login. No custom endpoints needed.
 
 ---
 
@@ -249,7 +249,7 @@ These flows happen entirely between frontend and Supabase Auth — backend not i
 
 1. Upload to Supabase Storage path `resumes/{candidateId}/{uuid}.pdf` (service role)
 2. INSERT `resumes` row (parse_status='pending', is_default=true if first resume)
-3. Synchronously call `ParseResumeService.parse()` — extract text + AI structured output
+3. Synchronously call `ParseResumeService.parse()` - extract text + AI structured output
 4. UPDATE `resumes` SET parsed_data, parse_status='parsed' (or 'failed' on error)
 5. Audit logs: `resume.uploaded`, `resume.parsed` (or `resume.parse_failed`)
 
@@ -305,7 +305,7 @@ These flows happen entirely between frontend and Supabase Auth — backend not i
 **Side effects:**
 
 1. UPDATE `candidate_profiles` for the relevant fields
-2. (Skills/experience may be embedded JSONB or separate tables — see `database-schema.md`)
+2. (Skills/experience may be embedded JSONB or separate tables - see `database-schema.md`)
 3. Audit log if material change
 
 **Response:** Updated section payload.
@@ -499,9 +499,9 @@ Standard form-per-step Server Action endpoints; no AI involvement.
 
 ### Update / Archive / Duplicate Job
 
-- `PATCH /api/v1/jobs/:id` — same validation as create; re-runs bias check on save
-- `POST /api/v1/jobs/:id/archive` — sets status='archived'
-- `POST /api/v1/jobs/:id/duplicate` — creates new draft from existing
+- `PATCH /api/v1/jobs/:id` - same validation as create; re-runs bias check on save
+- `POST /api/v1/jobs/:id/archive` - sets status='archived'
+- `POST /api/v1/jobs/:id/duplicate` - creates new draft from existing
 
 All write audit logs, invalidate cache.
 
@@ -544,9 +544,9 @@ Same as public listing but each job includes a `matchScorePreview` (lazily compu
 
 **Endpoints:**
 
-- `GET /api/v1/jobs/:id` — public
-- `GET /api/v1/jobs/:id/for-candidate` — candidate-specific (includes match score)
-- `GET /api/v1/jobs/:id/for-recruiter` — recruiter ownership view (includes draft analytics, applications count)
+- `GET /api/v1/jobs/:id` - public
+- `GET /api/v1/jobs/:id/for-candidate` - candidate-specific (includes match score)
+- `GET /api/v1/jobs/:id/for-recruiter` - recruiter ownership view (includes draft analytics, applications count)
 
 ---
 
@@ -748,7 +748,7 @@ Returns 1-hour signed URL. Authorization: candidate owns OR recruiter views in a
 
 ### List Interviews
 
-- `GET /api/v1/interviews/mine` (candidate or recruiter — different query)
+- `GET /api/v1/interviews/mine` (candidate or recruiter - different query)
 - Filter: upcoming / past / cancelled
 
 ---
@@ -816,12 +816,12 @@ Cached 5min. Returns aggregated KPIs: total users, active jobs, applications, av
 
 ### User Management
 
-- `GET /api/v1/admin/users` — list with filters, pagination
-- `GET /api/v1/admin/users/:id` — full user detail
-- `POST /api/v1/admin/users/:id/suspend` — body: `{ reason }`
+- `GET /api/v1/admin/users` - list with filters, pagination
+- `GET /api/v1/admin/users/:id` - full user detail
+- `POST /api/v1/admin/users/:id/suspend` - body: `{ reason }`
 - `POST /api/v1/admin/users/:id/reactivate`
-- `PATCH /api/v1/admin/users/:id/role` — body: `{ newRole }`
-- `DELETE /api/v1/admin/users/:id` — body: `{ confirmation: email }`; cascades + storage cleanup
+- `PATCH /api/v1/admin/users/:id/role` - body: `{ newRole }`
+- `DELETE /api/v1/admin/users/:id` - body: `{ confirmation: email }`; cascades + storage cleanup
 - `POST /api/v1/admin/users/:id/force-password-reset`
 
 All write audit logs.
@@ -830,16 +830,16 @@ All write audit logs.
 
 ### Job Moderation
 
-- `GET /api/v1/admin/jobs` — all jobs with filters
+- `GET /api/v1/admin/jobs` - all jobs with filters
 - `POST /api/v1/admin/jobs/:id/archive`
-- `POST /api/v1/admin/jobs/:id/flag` — admin-flagged for review
+- `POST /api/v1/admin/jobs/:id/flag` - admin-flagged for review
 
 ---
 
 ### Application Oversight
 
-- `GET /api/v1/admin/applications` — system-wide list with filters (score range, status, date)
-- `GET /api/v1/admin/applications/:id` — full breakdown including raw AI output
+- `GET /api/v1/admin/applications` - system-wide list with filters (score range, status, date)
+- `GET /api/v1/admin/applications/:id` - full breakdown including raw AI output
 
 ---
 
@@ -951,8 +951,8 @@ Returns: flag counts, breakdown by category, top flagged terms, override rate, s
 
 ## Health & Misc
 
-- `GET /api/health` — health check probed by Caddy + PM2 on the Digital Ocean Droplet; returns `{ status: "ok", uptime, version }` (Public, not under /api/v1)
-- `GET /api/v1/version` — `{ version, commitSha }`
+- `GET /api/health` - health check probed by Caddy + PM2 on the Digital Ocean Droplet; returns `{ status: "ok", uptime, version }` (Public, not under /api/v1)
+- `GET /api/v1/version` - `{ version, commitSha }`
 
 ---
 
@@ -973,7 +973,7 @@ await this.auditService.log({
 });
 ```
 
-Inserts into `audit_logs` (RLS bypassed via service role). Non-blocking — failures logged but don't fail the parent transaction.
+Inserts into `audit_logs` (RLS bypassed via service role). Non-blocking - failures logged but don't fail the parent transaction.
 
 ### Rate Limiting
 

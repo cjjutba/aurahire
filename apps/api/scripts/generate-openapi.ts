@@ -32,7 +32,7 @@ async function main() {
   const config = new DocumentBuilder()
     .setTitle("AuraHire API")
     .setDescription(
-      "Backend API for AuraHire — Explainable + Fair AI-Powered Recruitment",
+      "Backend API for AuraHire - Explainable + Fair AI-Powered Recruitment",
     )
     .setVersion("0.1.0")
     .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" })

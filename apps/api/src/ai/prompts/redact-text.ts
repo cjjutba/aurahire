@@ -17,7 +17,7 @@ Do NOT redact:
 - Industry jargon
 - Generic terms (engineer, developer, manager)
 
-Return ONLY the cleaned text. No commentary, no JSON, no preface — just the redacted text.`;
+Return ONLY the cleaned text. No commentary, no JSON, no preface - just the redacted text.`;
 
 export function buildRedactTextUserPrompt(text: string): string {
   return `Text to redact:\n"""\n${text}\n"""`;

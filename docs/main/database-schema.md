@@ -7,7 +7,7 @@
 
 This document is the authoritative source for the AuraHire database schema. Tables, columns, indexes, foreign keys, and Row-Level Security (RLS) policies are defined here.
 
-> **Schema location:** Drizzle schema lives in **`packages/db/src/schema.ts`** (consumed by `apps/api`). RLS policies live in **`packages/db/src/rls/*.sql`** and are applied via Supabase SQL editor by the human (Drizzle does not generate or apply RLS policies). The frontend (`apps/web`) imports types only when needed — most type sharing happens through Zod schemas in `packages/shared/`.
+> **Schema location:** Drizzle schema lives in **`packages/db/src/schema.ts`** (consumed by `apps/api`). RLS policies live in **`packages/db/src/rls/*.sql`** and are applied via Supabase SQL editor by the human (Drizzle does not generate or apply RLS policies). The frontend (`apps/web`) imports types only when needed - most type sharing happens through Zod schemas in `packages/shared/`.
 
 > **Database access:** Only `apps/api` queries the database. The frontend never connects directly. All data flows through REST endpoints documented in `technical-specifications.md`.
 
@@ -311,7 +311,7 @@ CREATE POLICY "jobs_admin_all"
 
 **Constraints:**
 
-- `applications_unique_candidate_job` UNIQUE `(candidate_id, job_id)` — one application per pair
+- `applications_unique_candidate_job` UNIQUE `(candidate_id, job_id)` - one application per pair
 
 **Indexes:**
 
@@ -542,7 +542,7 @@ The candidate's overall Profile Score, computed from their resume + preferences.
 
 **Indexes:**
 
-- `profile_scores_candidate_idx` on `(candidate_id, created_at DESC)` — most recent first
+- `profile_scores_candidate_idx` on `(candidate_id, created_at DESC)` - most recent first
 - `profile_scores_resume_idx` on `(resume_id)`
 
 **RLS Policies:**
@@ -637,7 +637,7 @@ Resume excerpts that drove component scores. Critical for explainability.
 
 **Indexes:**
 
-- `evidence_excerpts_score_idx` on `(score_type, score_id)` — fetch all evidence for a score
+- `evidence_excerpts_score_idx` on `(score_type, score_id)` - fetch all evidence for a score
 
 **RLS Policies:**
 
@@ -829,8 +829,8 @@ CREATE POLICY "audit_logs_admin_select"
   USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
 
 -- Server inserts via service role (bypasses RLS)
--- No INSERT policy from anon/authenticated — must use service role
--- No UPDATE / DELETE policies — append-only
+-- No INSERT policy from anon/authenticated - must use service role
+-- No UPDATE / DELETE policies - append-only
 ```
 
 ---
@@ -989,7 +989,7 @@ export const applicationsTable = pgTable(
 ### Sprint approach (the human runs all DB commands; Claude does not)
 
 ```bash
-# From repo root — generate migrations
+# From repo root - generate migrations
 pnpm --filter @aurahire/db drizzle-kit generate
 
 # OR push directly (sprint speed)
@@ -1078,9 +1078,9 @@ Sample data (5 candidates, 2 recruiters, 10 jobs, 25 applications) optionally ge
 
 ## Known Gaps (Sprint Scope)
 
-- **No `notifications` table** in sprint — using email + toasts. Phase 2 adds in-app inbox table.
-- **No `teams` table** — single-recruiter mode. Phase 2 deliverable.
-- **No `messages` / chat** — out of scope.
-- **No `skills` lookup table** — using text arrays. Phase 2 may normalize.
+- **No `notifications` table** in sprint - using email + toasts. Phase 2 adds in-app inbox table.
+- **No `teams` table** - single-recruiter mode. Phase 2 deliverable.
+- **No `messages` / chat** - out of scope.
+- **No `skills` lookup table** - using text arrays. Phase 2 may normalize.
 - **No vector columns** (pgvector). Out of scope per architecture decision.
-- **No partition tables for `audit_logs`** — Phase 2 if log volume grows.
+- **No partition tables for `audit_logs`** - Phase 2 if log volume grows.

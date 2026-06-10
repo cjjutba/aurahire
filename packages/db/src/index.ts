@@ -1,4 +1,4 @@
-// AuraHire database — Drizzle schema, relations, enums, and types.
+// AuraHire database - Drizzle schema, relations, enums, and types.
 
 export * from "./enums";
 export * from "./schema";

@@ -20,24 +20,24 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-## Pre-Sprint (Day 0 — May 1, evening, already done)
+## Pre-Sprint (Day 0 - May 1, evening, already done)
 
 - [x] Sprint scope locked
 - [x] Architecture confirmed (NestJS + Next.js + Turborepo + Digital Ocean Droplet + Mailpit + Redis)
 - [x] All 13 docs in `docs/main/` written + 3 root files (`CLAUDE.md`, `AGENTS.md`, `DESIGN.md`) + `docker-compose.dev.yml`
 - [x] Service accounts created (Supabase, Resend, OpenAI)
 - [ ] **Human action:** install pnpm 9 globally; create Digital Ocean account + provision the production Droplet; ensure Docker Desktop is running locally
-- [ ] **Human action:** start local services — `docker compose -f docker-compose.dev.yml up -d` (boots Mailpit + Redis)
+- [ ] **Human action:** start local services - `docker compose -f docker-compose.dev.yml up -d` (boots Mailpit + Redis)
 - [ ] **Human action:** populate `apps/web/.env.local` and `apps/api/.env`
 
 ---
 
-## Day 1 (May 2) — Monorepo, Backend Foundation, Auth End-to-End
+## Day 1 (May 2) - Monorepo, Backend Foundation, Auth End-to-End
 
 **Total: 12 hours, 8 slices.**
 **Goal at end of Day 1:** Monorepo runs `pnpm dev` for both apps. Backend has health check, Swagger UI, auth guards, profiles module. Frontend has portal shells, auth forms wired to backend, registration → verification → login → onboarding redirect works end-to-end.
 
-### Slice 1.1 — Monorepo Init (90 min)
+### Slice 1.1 - Monorepo Init (90 min)
 
 - [ ] Create root `package.json` with workspace config + scripts (`dev`, `build`, `lint`, `type-check`, `format`)
 - [ ] Create `pnpm-workspace.yaml`
@@ -59,9 +59,9 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 1.2 — Database Schema + Drizzle Foundation (90 min)
+### Slice 1.2 - Database Schema + Drizzle Foundation (90 min)
 
-- [ ] Add Drizzle schema in `packages/db/src/schema.ts` — all 15 tables per `database-schema.md`
+- [ ] Add Drizzle schema in `packages/db/src/schema.ts` - all 15 tables per `database-schema.md`
 - [ ] Add Drizzle relations in `packages/db/src/relations.ts`
 - [ ] Add enum exports in `packages/db/src/enums.ts`
 - [ ] Configure `packages/db/drizzle.config.ts` to read DATABASE_URL from env
@@ -69,7 +69,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 - [ ] Configure `apps/api` to consume `@aurahire/db` (DI provider for Drizzle client)
 - [ ] **Human action:** run `pnpm --filter @aurahire/db drizzle-kit push` against Supabase dev project
 - [ ] **Human action:** run RLS policies SQL via Supabase Dashboard SQL editor
-- [ ] **Human action:** verify in Supabase dashboard — all tables exist with RLS enabled
+- [ ] **Human action:** verify in Supabase dashboard - all tables exist with RLS enabled
 - [ ] **Human action:** insert seed `scoring_config` row, manually create admin user
 - [ ] Commit: "feat: db schema + rls + drizzle integration"
 
@@ -77,7 +77,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 1.3 — Shared Schemas + Auth Guards (90 min)
+### Slice 1.3 - Shared Schemas + Auth Guards (90 min)
 
 - [ ] Add Zod schemas to `packages/shared/src/schemas/auth.ts`, `shared.ts`, `onboarding.ts`
 - [ ] Add enums to `packages/shared/src/enums/`
@@ -99,7 +99,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 1.4 — Profiles Module (Backend) + Auth Wiring (Frontend) (120 min)
+### Slice 1.4 - Profiles Module (Backend) + Auth Wiring (Frontend) (120 min)
 
 - [ ] Backend: create `ProfilesModule` with controller + service + repository
   - `POST /auth/register-candidate`
@@ -119,29 +119,29 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 1.5 — Auth UI: Login, Register, Forgot, Reset, Verify (120 min)
+### Slice 1.5 - Auth UI: Login, Register, Forgot, Reset, Verify (120 min)
 
-- [ ] Frontend: `apps/web/app/(auth)/layout.tsx` — centered card layout
-- [ ] Frontend: pages — `login`, `register`, `register/candidate`, `register/recruiter`, `forgot-password`, `reset-password`, `verify-email`, `verify-email/sent`
-- [ ] Frontend: forms in `apps/web/components/auth/` — RHF + Zod from `packages/shared`
+- [ ] Frontend: `apps/web/app/(auth)/layout.tsx` - centered card layout
+- [ ] Frontend: pages - `login`, `register`, `register/candidate`, `register/recruiter`, `forgot-password`, `reset-password`, `verify-email`, `verify-email/sent`
+- [ ] Frontend: forms in `apps/web/components/auth/` - RHF + Zod from `packages/shared`
 - [ ] Frontend: register flow:
   - call `supabase.auth.signUp(...)`
   - then call backend `POST /auth/register-candidate` (or recruiter) with new JWT
   - redirect to `/verify-email/sent`
 - [ ] Frontend: login flow → `supabase.auth.signInWithPassword(...)` → `GET /profiles/me` → redirect based on `profileCompleted` + role
-- [ ] Backend: implement email module — Mailpit (dev) + Resend (prod) transport switching
+- [ ] Backend: implement email module - Mailpit (dev) + Resend (prod) transport switching
 - [ ] Backend: react-email templates: `verify-email.tsx`, `password-reset.tsx`
 - [ ] Backend: override Supabase auth email templates to use ours via Resend (prod) / Mailpit (dev)
-- [ ] **Human action:** test full flow — register → email arrives in Mailpit (localhost:8025) → click verify → redirected to onboarding
+- [ ] **Human action:** test full flow - register → email arrives in Mailpit (localhost:8025) → click verify → redirected to onboarding
 - [ ] Commit: "feat: auth flows e2e"
 
 **DoD:** Full register → verify → login → onboarding-redirect works against real Supabase + Mailpit.
 
 ---
 
-### Slice 1.6 — Portal Shells (90 min)
+### Slice 1.6 - Portal Shells (90 min)
 
-- [ ] Frontend: `components/layout/portal-sidebar.tsx` — role-aware nav
+- [ ] Frontend: `components/layout/portal-sidebar.tsx` - role-aware nav
 - [ ] Frontend: `components/layout/portal-topbar.tsx`
 - [ ] Frontend: `components/layout/portal-footer.tsx`
 - [ ] Frontend: `components/layout/marketing-nav.tsx`
@@ -157,11 +157,11 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 1.7 — Recruiter Onboarding Wizard (60 min)
+### Slice 1.7 - Recruiter Onboarding Wizard (60 min)
 
 - [ ] Frontend: `components/onboarding/wizard-shell.tsx`, `wizard-progress.tsx`
 - [ ] Backend: create `RecruiterProfilesModule` with patch endpoints per step
-- [ ] Frontend: 3-step recruiter wizard pages — about / company / focus
+- [ ] Frontend: 3-step recruiter wizard pages - about / company / focus
 - [ ] On final step: `recruiter_profiles.profile_completed=true` → redirect `/recruiter`
 - [ ] Commit: "feat: recruiter onboarding"
 
@@ -169,10 +169,10 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 1.8 — Candidate Onboarding (Manual, no AI yet) (60 min)
+### Slice 1.8 - Candidate Onboarding (Manual, no AI yet) (60 min)
 
 - [ ] Backend: create `CandidateProfilesModule` with patch endpoints per step (skipping resume parse)
-- [ ] Frontend: 6-step candidate wizard — placeholder for step 1 ("Skip" link), forms for steps 2-6
+- [ ] Frontend: 6-step candidate wizard - placeholder for step 1 ("Skip" link), forms for steps 2-6
 - [ ] Stub Profile Score reveal page with "Score will be computed when you upload a resume"
 - [ ] On final: `candidate_profiles.profile_completed=true` → redirect `/candidate`
 - [ ] Commit: "feat: candidate onboarding (manual)"
@@ -194,12 +194,12 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-## Day 2 (May 3) — Jobs, Applications, AI Layer
+## Day 2 (May 3) - Jobs, Applications, AI Layer
 
 **Total: 12 hours, 8 slices.**
 **Goal at end of Day 2:** Jobs CRUD with bias check, resume upload + parse, profile + match scoring, application flow, scoring breakdown UI all working.
 
-### Slice 2.1 — Jobs Module Backend (60 min)
+### Slice 2.1 - Jobs Module Backend (60 min)
 
 - [ ] Backend: create `JobsModule` with controller + service + repository + DTOs
 - [ ] Endpoints: `POST /jobs`, `PATCH /jobs/:id`, `POST /jobs/:id/publish`, `POST /jobs/:id/archive`, `GET /jobs`, `GET /jobs/:id`, `GET /jobs/for-candidate`, `GET /jobs/:id/for-candidate`
@@ -210,7 +210,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 2.2 — Jobs Frontend (Recruiter + Public Browse) (90 min)
+### Slice 2.2 - Jobs Frontend (Recruiter + Public Browse) (90 min)
 
 - [ ] Frontend: `apps/web/app/(recruiter)/recruiter/jobs/new/page.tsx` with form + Tiptap editor
 - [ ] Frontend: list/edit/detail/archive pages
@@ -223,7 +223,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 2.3 — AI Foundation (60 min)
+### Slice 2.3 - AI Foundation (60 min)
 
 - [ ] Backend: install `openai`, `pdf-parse`, `mammoth`
 - [ ] Backend: implement `AiModule`:
@@ -232,18 +232,18 @@ This document is the hour-by-hour execution plan for the split-architecture spri
   - Stub `ParseResumeService`, `ScoreProfileService`, `ScoreMatchService`, `DetectBiasService`
 - [ ] Backend: prompts in `apps/api/src/ai/prompts/`
 - [ ] Backend: schemas in `packages/shared/src/schemas/score.ts`, `bias.ts`
-- [ ] Backend: smoke test — manual call to OpenAI returns valid JSON
+- [ ] Backend: smoke test - manual call to OpenAI returns valid JSON
 - [ ] Commit: "feat: ai foundation"
 
 ---
 
-### Slice 2.4 — Resume Upload + Parse (90 min)
+### Slice 2.4 - Resume Upload + Parse (90 min)
 
 - [ ] Backend: `ResumesModule` with multipart upload via `@nestjs/platform-fastify` multipart plugin
-- [ ] Backend: `POST /resumes/upload` — validate, store in Supabase Storage, parse synchronously, insert row
+- [ ] Backend: `POST /resumes/upload` - validate, store in Supabase Storage, parse synchronously, insert row
 - [ ] Backend: `GET /resumes/mine`, `POST /resumes/:id/set-default`, `GET /resumes/:id/download` (signed URL)
 - [ ] Frontend: `components/onboarding/candidate/upload-resume-step.tsx`
-- [ ] Frontend: candidate onboarding step 1 — replace "Skip" with real upload + AI Shimmer
+- [ ] Frontend: candidate onboarding step 1 - replace "Skip" with real upload + AI Shimmer
 - [ ] Frontend: parse success → prefill subsequent steps with `badge-ai-suggested` markers
 - [ ] Frontend: `apps/web/app/(candidate)/candidate/resume/page.tsx` resume manager
 - [ ] Commit: "feat: resume upload + parse"
@@ -252,7 +252,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 2.5 — Profile Scoring + Score UI Components (90 min)
+### Slice 2.5 - Profile Scoring + Score UI Components (90 min)
 
 - [ ] Backend: `ScoringModule` with `POST /scoring/profile/compute`
 - [ ] Backend: implement profile scoring with PII redaction
@@ -260,7 +260,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 - [ ] Frontend: `components/score/score-breakdown-bar.tsx`
 - [ ] Frontend: `components/score/evidence-callout.tsx`
 - [ ] Frontend: `components/score/match-band-chip.tsx`
-- [ ] Frontend: onboarding step 7 — Profile Score reveal with full breakdown
+- [ ] Frontend: onboarding step 7 - Profile Score reveal with full breakdown
 - [ ] Frontend: `/candidate/profile` page showing current Profile Score
 - [ ] Commit: "feat: profile scoring + score UI"
 
@@ -268,10 +268,10 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 2.6 — Match Scoring on Apply (90 min)
+### Slice 2.6 - Match Scoring on Apply (90 min)
 
 - [ ] Backend: `ApplicationsModule` with controller + service + repository
-- [ ] Backend: `POST /applications` — creates application + computes match score inline
+- [ ] Backend: `POST /applications` - creates application + computes match score inline
 - [ ] Backend: `GET /applications/mine`, `GET /applications/:id`, `PATCH /applications/:id/status`, `POST /applications/:id/withdraw`
 - [ ] Backend: send `application-received` email via Mailpit/Resend
 - [ ] Frontend: `apps/web/app/(candidate)/candidate/jobs/[id]/apply/page.tsx`
@@ -285,20 +285,20 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 2.7 — Bias Check + Job Publishing (75 min)
+### Slice 2.7 - Bias Check + Job Publishing (75 min)
 
 - [ ] Backend: `BiasModule` with `POST /bias/check`
-- [ ] Backend: update `POST /jobs/:id/publish` — re-runs bias check, requires overrides if flagged
+- [ ] Backend: update `POST /jobs/:id/publish` - re-runs bias check, requires overrides if flagged
 - [ ] Frontend: `components/bias/bias-flag-chip.tsx` + popover
 - [ ] Frontend: update job description editor with debounced bias check
-- [ ] Frontend: publish flow — modal showing flags + override form on 422
+- [ ] Frontend: publish flow - modal showing flags + override form on 422
 - [ ] Commit: "feat: bias detection on jobs"
 
 **DoD:** Type "rockstar" in description → flag appears → publish blocked until edit or override.
 
 ---
 
-### Slice 2.8 — Day 2 Polish (45 min)
+### Slice 2.8 - Day 2 Polish (45 min)
 
 - [ ] Frontend: empty states + loading states for critical pages
 - [ ] Mobile responsiveness pass on auth + onboarding
@@ -314,16 +314,16 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 - [ ] Recruiter sees applications sorted by match score
 - [ ] All AI surfaces show evidence
 
-**Slip strategy if behind 2-3 hours:** Drop bias detection (slice 2.7) — replace with hard-coded flagged-term list (no AI bias call). Bias monitor in admin will show those entries instead.
+**Slip strategy if behind 2-3 hours:** Drop bias detection (slice 2.7) - replace with hard-coded flagged-term list (no AI bias call). Bias monitor in admin will show those entries instead.
 
 ---
 
-## Day 3 (May 4) — Admin Portal, Background Jobs, Cron, Caching, Demo Path
+## Day 3 (May 4) - Admin Portal, Background Jobs, Cron, Caching, Demo Path
 
 **Total: 12 hours, 8 slices.**
 **Goal at end of Day 3:** Full admin portal, BullMQ batch re-score, cron for cleanup, Redis caching wired, full demo path verified.
 
-### Slice 3.1 — Admin Foundation: Stats + User Mgmt + Job Moderation (90 min)
+### Slice 3.1 - Admin Foundation: Stats + User Mgmt + Job Moderation (90 min)
 
 - [ ] Backend: `AdminModule` with sub-controllers
 - [ ] Endpoints: `GET /admin/stats/overview`, `GET /admin/users`, `POST /admin/users/:id/suspend`, `POST /admin/users/:id/reactivate`, `PATCH /admin/users/:id/role`, `DELETE /admin/users/:id`, `POST /admin/users/:id/force-password-reset`
@@ -334,7 +334,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 3.2 — Admin Application Oversight (60 min)
+### Slice 3.2 - Admin Application Oversight (60 min)
 
 - [ ] Backend: `GET /admin/applications`, `GET /admin/applications/:id` with full breakdown including raw AI output
 - [ ] Frontend: `/admin/applications` table with score range filter
@@ -343,7 +343,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 3.3 — AI Scoring Configuration + Preview Impact (90 min)
+### Slice 3.3 - AI Scoring Configuration + Preview Impact (90 min)
 
 - [ ] Backend: `GET /admin/scoring-config`, `PATCH /admin/scoring-config`, `POST /admin/scoring-config/preview-impact`
 - [ ] Frontend: `/admin/ai-config` page with sliders + Preview Impact button
@@ -354,7 +354,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 3.4 — Audit Log + System Analytics (75 min)
+### Slice 3.4 - Audit Log + System Analytics (75 min)
 
 - [ ] Backend: `GET /admin/audit` (filters + pagination), `GET /admin/audit/export`
 - [ ] Backend: `GET /admin/analytics` with cached aggregations
@@ -364,7 +364,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 3.5 — Bias & Fairness Monitor (60 min)
+### Slice 3.5 - Bias & Fairness Monitor (60 min)
 
 - [ ] Backend: `GET /admin/bias-monitor` with cached aggregations
 - [ ] Frontend: `/admin/bias-monitor` page with KPI tiles, breakdown by category, top flagged terms, override decisions
@@ -372,10 +372,10 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 3.6 — Background Jobs (BullMQ) (90 min)
+### Slice 3.6 - Background Jobs (BullMQ) (90 min)
 
 - [ ] Backend: `QueueModule` with BullMQ + Redis connection
-- [ ] Backend: `RescoreBatchProcessor` — re-scores last N applications with current weights
+- [ ] Backend: `RescoreBatchProcessor` - re-scores last N applications with current weights
 - [ ] Backend: `POST /admin/scoring/rescore-batch` enqueues job and returns jobId
 - [ ] Backend: `GET /admin/jobs/:jobId/status` for polling progress
 - [ ] Frontend: `/admin/ai-config` "Apply to existing" button → enqueues + shows progress
@@ -385,10 +385,10 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 3.7 — Cron Tasks + Cache Wiring (60 min)
+### Slice 3.7 - Cron Tasks + Cache Wiring (60 min)
 
 - [ ] Backend: `CronModule`:
-  - `expireOffersHourly` — sets offers status='expired' past expires_at
+  - `expireOffersHourly` - sets offers status='expired' past expires_at
   - `archivePastDeadlineJobs` daily
   - `cleanupUnverifiedAccounts` weekly
 - [ ] Backend: extend `@nestjs/cache-manager` to admin analytics endpoints
@@ -398,7 +398,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-### Slice 3.8 — Interview, Offer, Final Polish (75 min)
+### Slice 3.8 - Interview, Offer, Final Polish (75 min)
 
 - [ ] Backend: `InterviewsModule`: `POST /applications/:id/interviews`, `PATCH /interviews/:id/feedback`, list endpoints
 - [ ] Backend: `OffersModule`: `POST /applications/:id/offers`, `POST /offers/:id/accept`, `POST /offers/:id/decline`
@@ -422,18 +422,18 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 
 ---
 
-## Day 4 (May 5) — Polish, Smoke Test, Demo Path Verification, Deployment
+## Day 4 (May 5) - Polish, Smoke Test, Demo Path Verification, Deployment
 
 **Total: 8-12 hours.**
 **Goal:** verify full demo path works end-to-end against deployed environments; run smoke test; capture thesis appendix items.
 
-### Slice 4.1 — Frontend Deployment (60 min)
+### Slice 4.1 - Frontend Deployment (60 min)
 
-- [ ] Connect repo to Vercel; configure env vars (NEXT_PUBLIC_SUPABASE_URL, ANON_KEY, NEXT_PUBLIC_API_URL pointing at the DO Droplet API URL — `https://api.<your-domain>`)
+- [ ] Connect repo to Vercel; configure env vars (NEXT_PUBLIC_SUPABASE_URL, ANON_KEY, NEXT_PUBLIC_API_URL pointing at the DO Droplet API URL - `https://api.<your-domain>`)
 - [ ] Push to main → auto-deploy → preview URL
 - [ ] Verify auth + portal loads work in preview
 
-### Slice 4.2 — Backend Deployment (Digital Ocean Droplet, 90 min)
+### Slice 4.2 - Backend Deployment (Digital Ocean Droplet, 90 min)
 
 - [ ] Provision Droplet (Ubuntu 22.04 LTS, 2 vCPU / 2GB), SSH key auth, UFW allowing only 22/80/443
 - [ ] DNS: A-record `api.<your-domain>` → Droplet IPv4
@@ -446,7 +446,7 @@ This document is the hour-by-hour execution plan for the split-architecture spri
 - [ ] Verify `https://api.<your-domain>/api/health` and `/api/docs` reachable; TLS green
 - [ ] Update Vercel `NEXT_PUBLIC_API_URL` to `https://api.<your-domain>` and redeploy
 
-### Slice 4.3 — End-to-End Demo Path Verification (90 min)
+### Slice 4.3 - End-to-End Demo Path Verification (90 min)
 
 Run the full thesis demo path against deployed environment:
 
@@ -472,7 +472,7 @@ Run the full thesis demo path against deployed environment:
 
 If any step fails: triage. Critical failures = fix immediately. Cosmetic = log for Phase 2.
 
-### Slice 4.4 — Thesis Smoke Test (90 min)
+### Slice 4.4 - Thesis Smoke Test (90 min)
 
 - [ ] Curate 10 resumes (per `ai-design.md` § 9): software engineer 5y, recent grad, career changer, designer, data scientist, sales manager, 3 weak/sparse, 1 OCR-garbled, 1 with bias-trigger words
 - [ ] Curate 5 jobs: senior eng, entry eng, data scientist, sales mgr, 1 with deliberate biased language
@@ -486,7 +486,7 @@ If any step fails: triage. Critical failures = fix immediately. Cosmetic = log f
   - AI Config preview impact delta
   - Audit log filtered to AI events
 
-### Slice 4.5 — Documentation Pass + Buffer (variable)
+### Slice 4.5 - Documentation Pass + Buffer (variable)
 
 - [ ] Update README.md with project description + run instructions
 - [ ] Verify all `docs/main/` files are current
@@ -555,4 +555,4 @@ The sprint succeeds if:
 
 ## Iteration Guide
 
-Update this plan if scope shifts during execution. Don't silently fall behind — communicate, recut, commit.
+Update this plan if scope shifts during execution. Don't silently fall behind - communicate, recut, commit.

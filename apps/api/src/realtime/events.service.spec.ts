@@ -53,7 +53,7 @@ describe("EventsService.emitApplicationScored", () => {
   });
 });
 
-describe("EventsService — proactive system events", () => {
+describe("EventsService - proactive system events", () => {
   function makeService() {
     const emit = jest.fn();
     const to = jest.fn(() => ({ emit }));

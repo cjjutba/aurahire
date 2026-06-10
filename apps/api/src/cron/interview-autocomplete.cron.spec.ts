@@ -143,7 +143,7 @@ describe("InterviewAutocompleteCron", () => {
     );
   });
 
-  it("is idempotent — returns completed: 0 when the UPDATE guard finds no row", async () => {
+  it("is idempotent - returns completed: 0 when the UPDATE guard finds no row", async () => {
     const due: DueRow[] = [
       {
         id: "i1",

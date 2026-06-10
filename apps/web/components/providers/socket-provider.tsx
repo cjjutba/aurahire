@@ -55,7 +55,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   // The Supabase browser client is constructed inside the effect rather
   // than via `useMemo` at render time. Next.js 16 static prerender runs
   // this component on the server, and the Supabase factory throws
-  // synchronously when NEXT_PUBLIC_SUPABASE_URL/KEY are absent — which
+  // synchronously when NEXT_PUBLIC_SUPABASE_URL/KEY are absent - which
   // is the case during the Vercel build. Deferring to the effect keeps
   // construction client-side, where env vars are real.
   useEffect(() => {

@@ -24,7 +24,7 @@ grep -n "JobCard" -r apps/web --include="*.tsx" | grep -v node_modules
 #   - apps/web/components/jobs/job-card.tsx (definition)
 #   - apps/web/app/(candidate)/candidate/jobs/_jobs-list-client.tsx (only consumer)
 #   - apps/web/app/(candidate)/candidate/jobs/loading.tsx (skeleton, unaffected)
-#   - apps/web/app/(candidate)/candidate/_dashboard-client.tsx (RecommendedJobCard — distinct symbol)
+#   - apps/web/app/(candidate)/candidate/_dashboard-client.tsx (RecommendedJobCard - distinct symbol)
 ```
 
 If a fourth consumer of `<JobCard>` exists, halt and re-evaluate before adding props.
@@ -98,7 +98,7 @@ describe("matchScoreColors", () => {
 cd /Users/cjjutba/Projects/aurahire/apps/web && pnpm vitest run components/jobs/job-card.test.tsx
 ```
 
-Expected: FAIL — `matchScoreColors is not a function` (or `does not provide an export named 'matchScoreColors'`).
+Expected: FAIL - `matchScoreColors is not a function` (or `does not provide an export named 'matchScoreColors'`).
 
 - [ ] **Step 3: Implement the helper in `job-card.tsx`**
 
@@ -106,7 +106,7 @@ Open `apps/web/components/jobs/job-card.tsx`. Just above the existing `interface
 
 ```tsx
 /**
- * Map a numeric match score (0–100) to the CSS variables used to render the
+ * Map a numeric match score (0-100) to the CSS variables used to render the
  * progress bar fill + track. Mirrors the band thresholds the dashboard's
  * RecommendedJobCard uses (>= 70 → high, >= 40 → mid, else low).
  */
@@ -275,7 +275,7 @@ Expected: the four new tests fail (the existing `matchScoreColors` ones still pa
 
 - [ ] **Step 3: Extend `JobCardProps` and the destructuring**
 
-In `apps/web/components/jobs/job-card.tsx`, replace the existing `JobCardProps` interface (currently at lines 6–25) with:
+In `apps/web/components/jobs/job-card.tsx`, replace the existing `JobCardProps` interface (currently at lines 6-25) with:
 
 ```tsx
 interface JobCardProps {
@@ -325,11 +325,11 @@ export function JobCard({
 
 - [ ] **Step 4: Add the score-row JSX**
 
-Still in `apps/web/components/jobs/job-card.tsx`, locate the meta-chips block — the `<div className="flex flex-wrap items-center gap-1.5">` currently at line 80, which closes at the matching `</div>` (line 88). Immediately after that closing `</div>`, and **before** the footer `<div className="mt-auto space-y-1.5 border-t …` block, insert:
+Still in `apps/web/components/jobs/job-card.tsx`, locate the meta-chips block - the `<div className="flex flex-wrap items-center gap-1.5">` currently at line 80, which closes at the matching `</div>` (line 88). Immediately after that closing `</div>`, and **before** the footer `<div className="mt-auto space-y-1.5 border-t …` block, insert:
 
 ```tsx
 {
-  /* Match score row — only on candidate-facing usage that passes matchPreview */
+  /* Match score row - only on candidate-facing usage that passes matchPreview */
 }
 {
   matchPreview ? (
@@ -394,7 +394,7 @@ Expected: all 7 tests pass (3 from Task 1, 4 from this task).
 cd /Users/cjjutba/Projects/aurahire/apps/web && pnpm type-check
 ```
 
-Expected: no errors. (The candidate Browse Jobs client component does not yet pass the new props — that's fine because they're optional.)
+Expected: no errors. (The candidate Browse Jobs client component does not yet pass the new props - that's fine because they're optional.)
 
 - [ ] **Step 7: Commit**
 
@@ -456,7 +456,7 @@ Place this line near the other top-level imports (after `import Link from "next/
 
 - [ ] **Step 2: Pass previews to each `<JobCard>`**
 
-Locate the existing `<JobCard ... />` block inside the rows map (around lines 89–95). Replace it with:
+Locate the existing `<JobCard ... />` block inside the rows map (around lines 89-95). Replace it with:
 
 ```tsx
 {
@@ -512,7 +512,7 @@ The current subtitle (line 71 region) reads:
 ```tsx
 <p className="mt-2 text-sm text-[var(--color-body)]">
   {isLoading
-    ? "—"
+    ? "-"
     : meta.total === 0
       ? "No jobs available"
       : `${meta.total} job${meta.total === 1 ? "" : "s"} · match scoring arrives in a future slice`}
@@ -526,7 +526,7 @@ Replace the entire `<p>` block above with:
 ```tsx
 <p className="mt-2 text-sm text-[var(--color-body)]">
   {(() => {
-    if (isLoading) return "—";
+    if (isLoading) return "-";
     if (meta.total === 0) return "No jobs available";
 
     const base = `${meta.total} job${meta.total === 1 ? "" : "s"}`;
@@ -560,7 +560,7 @@ Expected: no errors.
 cd /Users/cjjutba/Projects/aurahire/apps/web && pnpm lint
 ```
 
-Expected: no errors. If `next lint` flags the IIFE pattern (it shouldn't — this pattern exists elsewhere in the codebase), refactor to a named local function `renderSubtitle()` defined just above the `return` of `CandidateJobsListClient`.
+Expected: no errors. If `next lint` flags the IIFE pattern (it shouldn't - this pattern exists elsewhere in the codebase), refactor to a named local function `renderSubtitle()` defined just above the `return` of `CandidateJobsListClient`.
 
 - [ ] **Step 5: Commit**
 
@@ -574,7 +574,7 @@ git -C /Users/cjjutba/Projects/aurahire commit -m "fix(candidate): replace stale
 
 ## Task 5: Final verification
 
-**Files:** none modified — this is a verification-only task.
+**Files:** none modified - this is a verification-only task.
 
 - [ ] **Step 1: Run the full apps/web test suite**
 
@@ -614,7 +614,7 @@ If all five checks pass, the slice is complete.
 
 - [ ] **Step 5: No commit needed**
 
-This task is verification only — nothing to commit.
+This task is verification only - nothing to commit.
 
 ---
 

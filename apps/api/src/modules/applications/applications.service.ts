@@ -147,7 +147,7 @@ export class ApplicationsService {
     if (resume.parseStatus !== "parsed") {
       throw new BadRequestException({
         code: "RESUME_NOT_PARSED",
-        message: "Resume hasn't been parsed yet — try again in a moment",
+        message: "Resume hasn't been parsed yet - try again in a moment",
       });
     }
 
@@ -163,7 +163,7 @@ export class ApplicationsService {
     // computed a preview match score for this exact (candidate, job,
     // resume) triple AND that score is below the active auto-reject
     // threshold, refuse the apply outright. Previously the application
-    // was created and then auto-rejected milliseconds later — wasted
+    // was created and then auto-rejected milliseconds later - wasted
     // work + confusing UX (the candidate sees the rejected status
     // before they finish their tab switch). With this guard, the apply
     // endpoint returns a 400 with a clear code the UI can render.
@@ -205,7 +205,7 @@ export class ApplicationsService {
       entityType: "application",
       entityId: application.id,
       // Audit logs use the *job's* company so admin per-tenant queries
-      // catch every application that landed under company X — even if the
+      // catch every application that landed under company X - even if the
       // applying candidate isn't a member of any tenant.
       companyId: job.companyId,
       details: { jobId: dto.jobId, resumeId },
@@ -230,8 +230,8 @@ export class ApplicationsService {
     });
 
     // Synchronous fast-path: if a preview already covers this exact
-    // (candidate, job, resume) triple — i.e. the candidate saw "See my match"
-    // before applying, or it was auto-pre-computed during resume parse — we
+    // (candidate, job, resume) triple - i.e. the candidate saw "See my match"
+    // before applying, or it was auto-pre-computed during resume parse - we
     // promote it inline. No OpenAI call, no queue, no shimmer on the detail
     // page. The async worker stays as the fallback for first-time scoring.
     let promotedScore: MatchScoreDto | null = null;
@@ -297,7 +297,7 @@ export class ApplicationsService {
         );
       }
     } else {
-      // No preview to promote — defer to the async worker. The DB row
+      // No preview to promote - defer to the async worker. The DB row
       // already has score_status='computing' from the schema default; the
       // worker will flip it to 'completed' (or 'failed') and broadcast
       // application.scored when done.
@@ -314,7 +314,7 @@ export class ApplicationsService {
     });
 
     // In-app notification to the recruiter team (currently the single hiring
-    // recruiter who owns the job — the data model will expand to multi-member
+    // recruiter who owns the job - the data model will expand to multi-member
     // hiring teams later, at which point emitMany already supports it).
     const recruiterUserIds = [job.recruiterId].filter((id): id is string =>
       Boolean(id),
@@ -784,7 +784,7 @@ export class ApplicationsService {
       if (!latestOffer || latestOffer.status !== "accepted") {
         throw new BadRequestException({
           code: "OFFER_NOT_ACCEPTED",
-          message: "Cannot mark hired — candidate has not accepted an offer.",
+          message: "Cannot mark hired - candidate has not accepted an offer.",
         });
       }
 
@@ -812,7 +812,7 @@ export class ApplicationsService {
         ...requestMeta,
       });
 
-      // 2) Cascade — auto-reject other in-flight applicants on the same job
+      // 2) Cascade - auto-reject other in-flight applicants on the same job
       let cascaded: Array<{ id: string; candidateId: string }> = [];
       if (dto.autoRejectOthers) {
         const others = await this.repo.findInflightByJobId(
@@ -988,7 +988,7 @@ export class ApplicationsService {
 
     await this.email.send({
       to: candidate.email,
-      subject: `Update on your application — ${jobRow.title}`,
+      subject: `Update on your application - ${jobRow.title}`,
       template: PositionFilledEmail({
         candidateName: candidate.fullName,
         jobTitle: jobRow.title,
@@ -1040,7 +1040,7 @@ export class ApplicationsService {
       if (!latestOffer || latestOffer.status !== "accepted") {
         throw new BadRequestException({
           code: "OFFER_NOT_ACCEPTED",
-          message: "Cannot mark hired — candidate has not accepted an offer.",
+          message: "Cannot mark hired - candidate has not accepted an offer.",
         });
       }
     }
@@ -1216,7 +1216,7 @@ export class ApplicationsService {
       entityId: id,
       // Pull tenant from the job since the system actor (often the
       // recruiter who triggered an offer event) may not have an active
-      // company context for the same tenant — the *application* belongs
+      // company context for the same tenant - the *application* belongs
       // to job.companyId either way.
       companyId: job?.companyId ?? null,
       details: { from: app.status, to: newStatus, note, system: true },
@@ -1425,7 +1425,7 @@ export class ApplicationsService {
       expiresIn,
     });
 
-    // Audit every recruiter download — the candidate's own download is
+    // Audit every recruiter download - the candidate's own download is
     // not auditable as a security event (they own the file).
     if (user.role === "recruiter") {
       const job = await this.jobsRepo.findById(app.jobId);
@@ -1640,7 +1640,7 @@ export class ApplicationsService {
   /**
    * Read the current auto-reject threshold from the active scoring
    * config (admin-tunable). Falls back to the boot-time constant when
-   * no config row exists yet — typical only in fresh dev environments.
+   * no config row exists yet - typical only in fresh dev environments.
    *
    * Direct Drizzle lookup (no service indirection) to avoid the
    * AdminModule ↔ ApplicationsModule cyclic module-load problem.
@@ -1660,7 +1660,7 @@ export class ApplicationsService {
       }
     } catch (err) {
       this.logger.warn(
-        `getAutoRejectThreshold: failed to read active config — using fallback. ${(err as Error).message}`,
+        `getAutoRejectThreshold: failed to read active config - using fallback. ${(err as Error).message}`,
       );
     }
     return AUTO_REJECT_THRESHOLD;
@@ -1778,7 +1778,7 @@ export class ApplicationsService {
             id: row.matchScore.id,
             overallScore: row.matchScore.overallScore,
             band: row.matchScore.band,
-            // Dashboard rows do not need the full breakdown — only score + band.
+            // Dashboard rows do not need the full breakdown - only score + band.
             components: [],
             summary: "",
             redFlags: null,

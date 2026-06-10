@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# AuraHire — One-shot droplet provisioning (run as root on a fresh Ubuntu 24.04 droplet).
+# AuraHire - One-shot droplet provisioning (run as root on a fresh Ubuntu 24.04 droplet).
 #
 # What this does:
 #   1. System update
@@ -30,7 +30,7 @@ echo "==> 2/9 Creating ${DEPLOY_USER} user"
 if ! id -u "${DEPLOY_USER}" >/dev/null 2>&1; then
   adduser --disabled-password --gecos "" "${DEPLOY_USER}"
   usermod -aG sudo "${DEPLOY_USER}"
-  # Passwordless sudo — needed by deploy.sh to reload caddy
+  # Passwordless sudo - needed by deploy.sh to reload caddy
   echo "${DEPLOY_USER} ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/${DEPLOY_USER}"
   chmod 0440 "/etc/sudoers.d/${DEPLOY_USER}"
 fi

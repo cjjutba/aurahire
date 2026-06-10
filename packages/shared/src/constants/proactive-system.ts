@@ -6,7 +6,7 @@
 // than as columns on `scoring_config` because:
 //
 //   1. They control downstream behavior (cron lead-time, on-view daily caps,
-//      onboarding wallclock budgets) — not the scoring math itself, which is
+//      onboarding wallclock budgets) - not the scoring math itself, which is
 //      what the structured `scoring_config` table is for.
 //   2. They're read at call-sites that don't otherwise need to hit the DB
 //      (cron schedulers, on-view rate-limit checks). Keeping them as static
@@ -19,8 +19,8 @@
  * Per-candidate per-day cap for on-view match-preview computes.
  *
  * Each time a candidate views a job detail page we may auto-compute a match
- * preview against their default resume. To keep AI spend bounded — and to
- * avoid a hostile candidate burning budget by hammering refresh — we cap
+ * preview against their default resume. To keep AI spend bounded - and to
+ * avoid a hostile candidate burning budget by hammering refresh - we cap
  * computes at 100 per UTC day per candidate. The 101st view in the same day
  * renders the existing preview if one exists, otherwise the no-preview
  * placeholder.
@@ -52,7 +52,7 @@ export const OFFER_EXPIRY_WARNING_LEAD_HOURS = 24;
 
 /**
  * Lead time (hours) after an interview ends before we nudge the recruiter to
- * submit feedback. Distinct from the legacy "feedback due" notification —
+ * submit feedback. Distinct from the legacy "feedback due" notification -
  * this is the periodic nag the proactive-system slice introduces.
  */
 export const FEEDBACK_REMINDER_LEAD_HOURS = 24;

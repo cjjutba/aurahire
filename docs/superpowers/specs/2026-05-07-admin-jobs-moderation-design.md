@@ -1,4 +1,4 @@
-# Admin Job Moderation — Visual Parity with Recruiter Jobs
+# Admin Job Moderation - Visual Parity with Recruiter Jobs
 
 **Date:** 2026-05-07
 **Surface:** `/admin/jobs` (Job Moderation)
@@ -15,7 +15,7 @@ Today the admin moderation list reads as a different generation of UI than the r
 - Plain `← Prev / Next →` link pagination.
 - A skeleton that does not resemble the rendered layout.
 
-The recruiter jobs page (`apps/web/app/(recruiter)/recruiter/jobs/_jobs-list-client.tsx`) already implements the platform pattern: pill-shaped toolbar with debounced search and inline filter dropdowns, surface-soft table header, dot+label status pills, numbered pagination, and a skeleton aligned to the same grid as the rendered table. Both surfaces are table-based, so admin should adopt the recruiter pattern verbatim — adapted to the admin's columns and signals (recruiter, company, bias count).
+The recruiter jobs page (`apps/web/app/(recruiter)/recruiter/jobs/_jobs-list-client.tsx`) already implements the platform pattern: pill-shaped toolbar with debounced search and inline filter dropdowns, surface-soft table header, dot+label status pills, numbered pagination, and a skeleton aligned to the same grid as the rendered table. Both surfaces are table-based, so admin should adopt the recruiter pattern verbatim - adapted to the admin's columns and signals (recruiter, company, bias count).
 
 Out of scope: the detail sheet (`_job-detail-sheet-client.tsx`) is already styled and functional.
 
@@ -27,8 +27,8 @@ Out of scope: the detail sheet (`_job-detail-sheet-client.tsx`) is already style
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Header       | Step `h1` from `text-3xl` to `text-2xl` (recruiter rhythm); same flex layout, no right-side CTA.                                                                                                 |
 | Filters      | Replace `_filters-client.tsx` with `_jobs-toolbar-client.tsx` matching recruiter toolbar (pill row, dropdowns, debounced search, no Apply button).                                               |
-| Table        | Refactor `_jobs-table-client.tsx` — surface-soft header band, dot+label status pills, mono numbers with conditional muted-soft, clickable-row a11y pattern that opens the existing detail sheet. |
-| Pagination   | New `_jobs-pagination.tsx` — copy of recruiter pattern, route prefix `/admin/jobs`.                                                                                                              |
+| Table        | Refactor `_jobs-table-client.tsx` - surface-soft header band, dot+label status pills, mono numbers with conditional muted-soft, clickable-row a11y pattern that opens the existing detail sheet. |
+| Pagination   | New `_jobs-pagination.tsx` - copy of recruiter pattern, route prefix `/admin/jobs`.                                                                                                              |
 | Skeleton     | Rebuild `loading.tsx` to mirror the final layout (header, toolbar pills, table header band + grid rows).                                                                                         |
 | Backend      | One small tri-state tweak in `jobs.repository.ts` so the Bias filter can express _Clean_ (no flags) in addition to _Flagged_.                                                                    |
 | Out of scope | Detail sheet, archive flow, sort (no backend support).                                                                                                                                           |
@@ -43,23 +43,23 @@ Out of scope: the detail sheet (`_job-detail-sheet-client.tsx`) is already style
   - Right: empty (admin does not create jobs).
 - Server-side fetch unchanged in semantics. The toolbar takes over query-param ownership.
 
-The page reads `searchParams` and forwards them as `initialFilters` to the toolbar. It still renders `JobsTableClient` plus the new `JobsPagination`. The empty-state block (lines 80–88 today) is replaced by the two new components below.
+The page reads `searchParams` and forwards them as `initialFilters` to the toolbar. It still renders `JobsTableClient` plus the new `JobsPagination`. The empty-state block (lines 80-88 today) is replaced by the two new components below.
 
 ---
 
-## 4. Toolbar — `_jobs-toolbar-client.tsx` (new)
+## 4. Toolbar - `_jobs-toolbar-client.tsx` (new)
 
 Replaces `_filters-client.tsx` (delete it after the new toolbar is wired in).
 
 ### Behavior
 
 - Pill row: `flex flex-wrap items-center gap-2`, with `style={{ opacity: isPending ? 0.6 : 1 }}` while transitions are pending.
-- Search input: pill, `h-10 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] pl-9 pr-4 text-sm`. Lucide `Search` icon at `left-3`. Debounced 300 ms — pushes `q` (or removes it if empty) and resets `page`.
+- Search input: pill, `h-10 rounded-[var(--radius-pill)] bg-[var(--color-surface-strong)] pl-9 pr-4 text-sm`. Lucide `Search` icon at `left-3`. Debounced 300 ms - pushes `q` (or removes it if empty) and resets `page`.
 - Filter dropdowns implemented with the same `FilterDropdown` shape recruiter uses (`DropdownMenu` + `DropdownMenuTrigger` rendering a pill with `bg-surface-strong` and chevron):
   - **Status**: All Statuses · Draft · Published · Archived · Closed.
   - **Bias**: All Bias · Flagged · Clean.
-- Spacer `flex-1` after the filter pills (no Sort dropdown — backend has no `sort` param; adding one is explicitly out of scope).
-- Filter changes immediately push the new query string and call `router.push(...)` inside `startTransition` — no Apply / Reset buttons. The `Reset` affordance lives on the empty-state CTA when filters are active.
+- Spacer `flex-1` after the filter pills (no Sort dropdown - backend has no `sort` param; adding one is explicitly out of scope).
+- Filter changes immediately push the new query string and call `router.push(...)` inside `startTransition` - no Apply / Reset buttons. The `Reset` affordance lives on the empty-state CTA when filters are active.
 - The toolbar starts from `new URLSearchParams(searchParams.toString())` on every mutation so query keys it does not surface in the UI (e.g. `recruiterId`, used for deep-link filtering by recruiter) round-trip untouched.
 
 ### Mapping URL → state
@@ -73,17 +73,17 @@ The toolbar receives `initialFilters` from the page and reads/writes the same qu
 | Bias (`all` / `flagged` / `clean`)                             | `hasBiasFlags=true` for _flagged_, `hasBiasFlags=false` for _clean_, omitted for _all_ |
 | Page (any change in filters)                                   | `page` deleted on every filter mutation                                                |
 
-The Zod schema (`packages/shared/src/schemas/admin.ts:40` — `listAdminJobsQuerySchema`) already accepts `hasBiasFlags` as `z.coerce.boolean().optional()`. No schema change is required.
+The Zod schema (`packages/shared/src/schemas/admin.ts:40` - `listAdminJobsQuerySchema`) already accepts `hasBiasFlags` as `z.coerce.boolean().optional()`. No schema change is required.
 
 ### Files
 
 - **New:** `apps/web/app/(admin)/admin/jobs/_jobs-toolbar-client.tsx`.
 - **Delete:** `apps/web/app/(admin)/admin/jobs/_filters-client.tsx` (no other consumers).
-- **Edit:** `apps/web/app/(admin)/admin/jobs/page.tsx` — replace `<FiltersClient />` with `<JobsToolbarClient initialFilters={...} />` and forward `hasBiasFlags` (string `"true"` / `"false"` / undefined) plus the existing `status` and `q`.
+- **Edit:** `apps/web/app/(admin)/admin/jobs/page.tsx` - replace `<FiltersClient />` with `<JobsToolbarClient initialFilters={...} />` and forward `hasBiasFlags` (string `"true"` / `"false"` / undefined) plus the existing `status` and `q`.
 
 ---
 
-## 5. Table — `_jobs-table-client.tsx` (refactor)
+## 5. Table - `_jobs-table-client.tsx` (refactor)
 
 ### Container
 
@@ -125,9 +125,9 @@ Columns and approximate widths (used for the skeleton grid as well):
   - `published` → dot `bg-[var(--color-status-success)]`, text `text-[var(--color-status-success)]`, label `Published`.
   - `closed` → dot `bg-[var(--color-status-danger)]`, text `text-[var(--color-status-danger)]`, label `Closed`.
   - `archived` → dot `bg-[var(--color-muted)]`, text `text-[var(--color-muted)]`, label `Archived`.
-- **Bias** (`px-4 py-3 text-right font-mono text-sm`): when `biasFlagsCount > 0` the value renders in `text-[var(--color-score-mid)]`; when `0` it renders as `0` in `text-[var(--color-muted-soft)]`. (Renders the number only — no icon — to keep the column dense; flag detail lives in the sheet.)
+- **Bias** (`px-4 py-3 text-right font-mono text-sm`): when `biasFlagsCount > 0` the value renders in `text-[var(--color-score-mid)]`; when `0` it renders as `0` in `text-[var(--color-muted-soft)]`. (Renders the number only - no icon - to keep the column dense; flag detail lives in the sheet.)
 - **Apps** (`px-4 py-3 text-right font-mono text-sm`): `text-[var(--color-ink)]` when `> 0`, `text-[var(--color-muted-soft)]` when `0`.
-- **Posted** (`px-4 py-3 text-[var(--color-muted)] text-sm`): formatted via `new Date(publishedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })`. When `publishedAt` is null, render `<span class="text-[var(--color-muted)]">—</span>`.
+- **Posted** (`px-4 py-3 text-[var(--color-muted)] text-sm`): formatted via `new Date(publishedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })`. When `publishedAt` is null, render `<span class="text-[var(--color-muted)]">-</span>`.
 - **Actions** (`px-2 py-3 text-right`): unchanged DropdownMenu containing `View Details`. Archive remains inside the sheet.
 
 ### Drop the inline pagination from this file
@@ -136,9 +136,9 @@ The current implementation embeds pagination at the bottom of `JobsTableClient`.
 
 ---
 
-## 6. Pagination — `_jobs-pagination.tsx` (new)
+## 6. Pagination - `_jobs-pagination.tsx` (new)
 
-Mirror `apps/web/app/(recruiter)/recruiter/jobs/_jobs-pagination.tsx` — same component skeleton (`JobsPagination`, `PageLink`, `pageWindow`) — with two route differences:
+Mirror `apps/web/app/(recruiter)/recruiter/jobs/_jobs-pagination.tsx` - same component skeleton (`JobsPagination`, `PageLink`, `pageWindow`) - with two route differences:
 
 - `hrefFor(page)` builds links against `/admin/jobs` instead of `/recruiter/jobs`.
 - The component's `searchParams` prop forwards admin-specific keys: `q`, `status`, `hasBiasFlags`.
@@ -146,7 +146,7 @@ Mirror `apps/web/app/(recruiter)/recruiter/jobs/_jobs-pagination.tsx` — same c
 Visual contract:
 
 - Wrapper: `flex flex-wrap items-center justify-between gap-3 pt-2`.
-- Left text: `Showing <mono>{start}</mono>–<mono>{end}</mono> of <mono>{total}</mono>` in `text-xs text-[var(--color-muted)]`.
+- Left text: `Showing <mono>{start}</mono>-<mono>{end}</mono> of <mono>{total}</mono>` in `text-xs text-[var(--color-muted)]`.
 - Right cluster: chevron prev, numbered links, chevron next. Active page uses `bg-[var(--color-primary-soft)] font-semibold text-[var(--color-primary)]`. Disabled pages render as `<span>` with `pointer-events-none opacity-40`.
 - `pageWindow` rule (unchanged from recruiter): show all pages when `total <= 7`, otherwise `[1, "...", current ± 2, "...", total]` with the ellipses elided when adjacent.
 
@@ -171,7 +171,7 @@ Both states live in `_jobs-table-client.tsx` (or a new `_jobs-empty-states.tsx` 
 
 ---
 
-## 8. Loading skeleton — `loading.tsx` (rebuild)
+## 8. Loading skeleton - `loading.tsx` (rebuild)
 
 Replace the current three-block placeholder with a layout that traces the final markup. Use the same column hint grid as the table (`grid-cols-[2fr_1fr_1fr_0.9fr_0.5fr_0.5fr_1fr_40px]`) so column widths animate into the real data without a layout shift.
 
@@ -228,7 +228,7 @@ Replace the current three-block placeholder with a layout that traces the final 
 
 ---
 
-## 9. Backend — tri-state Bias filter
+## 9. Backend - tri-state Bias filter
 
 `apps/api/src/modules/jobs/jobs.repository.ts:258` currently treats `hasBiasFlags` as a truthy gate:
 
@@ -267,7 +267,7 @@ This is the only backend change required.
 - Selecting Bias = _Flagged_ returns only jobs with at least one row in `bias_flags`; _Clean_ returns only jobs with zero. _All Bias_ returns the full set.
 - Status pills render as dot+label in `bg-surface-strong`; the `Published` pill uses `status-success` (green dot + green text), not the previous `score-high-soft` green chip.
 - Bias and Apps cells render in JetBrains Mono, right-aligned, with `muted-soft` zeros and `score-mid` non-zero bias counts.
-- Posted column renders short dates (`May 7, 2026`) or `—` when not yet published.
+- Posted column renders short dates (`May 7, 2026`) or `-` when not yet published.
 - Pagination renders the recruiter-style numbered control with primary-soft active state.
 - Hovering a row tints to `surface-soft`; clicking the row (anywhere except the actions menu and any link/button inside) opens the existing detail sheet. Tab focus shows a primary inset ring; Enter / Space activate.
 - `loading.tsx` renders a skeleton whose column widths align with the final table grid so there is no layout jump on hydration.
@@ -291,6 +291,6 @@ This is the only backend change required.
 ## 12. Risks and edge cases
 
 - **A11y of clickable rows.** The row already toggles a sheet via `onClick`. Keeping that behavior while inheriting the recruiter `ClickableRow` a11y pattern requires inlining the selector check; a thin reused helper is optional but the inline path is fine and matches what other admin tables do.
-- **Bias = Clean correctness.** The new SQL `NOT EXISTS` returns rows that have never had a flag _or_ whose flags were resolved/overridden — `bias_flags` rows are not deleted on resolve. The list copy (`Clean`) means "no flags on record". If product later wants "Clean = no active flags", swap the predicate to `NOT EXISTS (... AND status = 'flagged')`. Acceptable for the current sprint; flag in the implementation plan.
+- **Bias = Clean correctness.** The new SQL `NOT EXISTS` returns rows that have never had a flag _or_ whose flags were resolved/overridden - `bias_flags` rows are not deleted on resolve. The list copy (`Clean`) means "no flags on record". If product later wants "Clean = no active flags", swap the predicate to `NOT EXISTS (... AND status = 'flagged')`. Acceptable for the current sprint; flag in the implementation plan.
 - **No sort param.** The recruiter toolbar exposes a Sort dropdown; the admin one intentionally does not. If product later asks for sort-by-newest / sort-by-most-flagged, that's a separate slice that touches `listAdminJobsQuerySchema`, the service, and the repo.
-- **Status copy parity.** Recruiter uses `Published` in `status-success`; admin previously used `PUBLISHED` in `score-high-soft`. The change makes the moderation status semantically correct (lifecycle state, not a score band) — one of the explicit DESIGN.md rules.
+- **Status copy parity.** Recruiter uses `Published` in `status-success`; admin previously used `PUBLISHED` in `score-high-soft`. The change makes the moderation status semantically correct (lifecycle state, not a score band) - one of the explicit DESIGN.md rules.

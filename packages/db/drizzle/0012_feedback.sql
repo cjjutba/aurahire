@@ -1,5 +1,5 @@
 -- =============================================================================
--- In-app feedback — sidebar popover "Send feedback" → admin inbox.
+-- In-app feedback - sidebar popover "Send feedback" → admin inbox.
 -- =============================================================================
 --
 -- WHAT THIS MIGRATION DOES
@@ -11,38 +11,38 @@
 --   the admin-only tables (audit_logs, scoring_config).
 --
 -- WHY
---   1. Mail-client dialogs are jarring and lossy — many users never had a
+--   1. Mail-client dialogs are jarring and lossy - many users never had a
 --      mail client open and the link silently failed.
 --   2. Auto-captured page URL, user-agent, and submitter role + active
 --      company turn raw "X is broken" reports into actionable triage.
 --   3. Status workflow (new → reviewing → resolved | dismissed) lets an
 --      admin work the queue from /admin/feedback the same way they triage
---      bias flags or audit entries — no separate inbox.
+--      bias flags or audit entries - no separate inbox.
 --
 -- KEY SHAPE
 --   * `submitter_id` is nullable (ON DELETE SET NULL): rows survive user
 --     deletion for forensic/historical context. `submitter_email` and
 --     `submitter_name` are snapshotted at insert time so the row stays
 --     readable after the FK clears. `submitter_role` and `company_id` are
---     snapshotted for the same reason — a user may switch role or leave a
+--     snapshotted for the same reason - a user may switch role or leave a
 --     tenant after submitting feedback.
 --   * `severity` is nullable and only meaningful when `type = 'bug'`. The
---     CHECK constraint enforces this invariant — non-bug rows must have
+--     CHECK constraint enforces this invariant - non-bug rows must have
 --     NULL severity, bug rows must have a non-NULL severity.
 --   * `resolved_at` / `resolved_by` are set together when status moves to
 --     'resolved' or 'dismissed'. Status reverts (e.g. resolved → reviewing)
 --     clear them.
 --   * RLS: INSERT is open to any authenticated user (with auth.uid() =
 --     submitter_id); SELECT/UPDATE are admin-only. Backend writes via the
---     service role and bypasses RLS for both — the policies exist as the
+--     service role and bypasses RLS for both - the policies exist as the
 --     defense-in-depth tier in case a client ever queries directly.
 --
 -- INDEXES
---   * (status, created_at) — the admin inbox default sort + status filter
---   * (type)               — type filter
---   * (submitter_id)       — "feedback by this user" lookups
---   * (company_id)         — tenant-scoped admin reports
---   * (created_at)         — global recency
+--   * (status, created_at) - the admin inbox default sort + status filter
+--   * (type)               - type filter
+--   * (submitter_id)       - "feedback by this user" lookups
+--   * (company_id)         - tenant-scoped admin reports
+--   * (created_at)         - global recency
 
 CREATE TABLE feedback (
   id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),

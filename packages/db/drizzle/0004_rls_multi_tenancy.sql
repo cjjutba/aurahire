@@ -1,24 +1,24 @@
 -- =============================================================================
--- Multi-tenancy RLS rewrite — Phase 2c of the multi-tenancy overhaul
+-- Multi-tenancy RLS rewrite - Phase 2c of the multi-tenancy overhaul
 -- =============================================================================
 --
 -- WHAT THIS MIGRATION DOES
 --   Enables Row Level Security on the eight tables that hold per-tenant data
 --   and adds policies that read membership through `company_members`.
 --   The matching backend refactor (apps/api/src/modules/{jobs,applications,
---   interviews,offers,scoring,bias}) lands in the same commit as this file —
+--   interviews,offers,scoring,bias}) lands in the same commit as this file -
 --   the two halves complete the schema-level cutover.
 --
 --   Tables covered:
---     1. jobs                — company_id direct
---     2. applications        — via jobs.company_id JOIN
---     3. match_scores        — via jobs.company_id JOIN
---     4. interviews          — via applications → jobs.company_id JOIN
---     5. offers              — via applications → jobs.company_id JOIN
---     6. scoring_config      — global (single active config); read open to all
+--     1. jobs                - company_id direct
+--     2. applications        - via jobs.company_id JOIN
+--     3. match_scores        - via jobs.company_id JOIN
+--     4. interviews          - via applications → jobs.company_id JOIN
+--     5. offers              - via applications → jobs.company_id JOIN
+--     6. scoring_config      - global (single active config); read open to all
 --                              authenticated users; writes admin-only
---     7. bias_flags          — via jobs.company_id JOIN
---     8. audit_logs          — admin sees all; company members see rows
+--     7. bias_flags          - via jobs.company_id JOIN
+--     8. audit_logs          - admin sees all; company members see rows
 --                              tagged to their tenant
 --
 -- WHY THIS DESIGN
@@ -26,7 +26,7 @@
 --   `app.module.ts` Phase 2c). RLS exists as a third defense layer behind
 --   the guard + service-layer scope checks. Service-role connections
 --   bypass RLS entirely, so the NestJS backend (which uses the service
---   role) is not affected by these policies — the backend decides who can
+--   role) is not affected by these policies - the backend decides who can
 --   read what. The policies guard against:
 --     - direct queries from a poorly-scoped `anon`/`authenticated` JWT
 --     - future Supabase-client-side reads (e.g. realtime subscriptions)
@@ -49,12 +49,12 @@
 --   `audit_logs` mixes admin (cross-tenant) reads with member (per-tenant)
 --   reads, so its SELECT policy ORs the two together. For the other
 --   tables, admin reads happen through the backend's service-role
---   connection — no in-policy admin OR is needed.
+--   connection - no in-policy admin OR is needed.
 --
 -- PRIOR STATE
 --   `0000_initial.sql` did not enable RLS on these tables (the backend
 --   relied on service-role connections + service-layer scope checks).
---   This migration is therefore additive — there are no `recruiter_id =
+--   This migration is therefore additive - there are no `recruiter_id =
 --   auth.uid()` policies to drop. The DROP POLICY statements below are
 --   defensive (IF EXISTS) so re-running the migration is idempotent.
 --
@@ -70,7 +70,7 @@
 BEGIN;
 
 -- -----------------------------------------------------------------------------
--- 1. jobs — company_id direct
+-- 1. jobs - company_id direct
 -- -----------------------------------------------------------------------------
 
 ALTER TABLE "jobs" ENABLE ROW LEVEL SECURITY;
@@ -85,7 +85,7 @@ DROP POLICY IF EXISTS "jobs_company_member_update"  ON "jobs";
 DROP POLICY IF EXISTS "jobs_company_member_delete"  ON "jobs";
 DROP POLICY IF EXISTS "jobs_public_published_read"  ON "jobs";
 
--- Public read of published jobs — candidates browse without authentication
+-- Public read of published jobs - candidates browse without authentication
 -- against the homepage and /jobs index. RLS is bypassed by service role
 -- anyway, but this policy lets a future client-side direct read work too.
 CREATE POLICY "jobs_public_published_read" ON "jobs"
@@ -150,7 +150,7 @@ CREATE POLICY "jobs_company_member_delete" ON "jobs"
   );
 
 -- -----------------------------------------------------------------------------
--- 2. applications — company access via jobs.company_id JOIN
+-- 2. applications - company access via jobs.company_id JOIN
 --    Plus candidate-self access for "my applications" reads/writes.
 -- -----------------------------------------------------------------------------
 
@@ -223,7 +223,7 @@ CREATE POLICY "applications_company_member_update" ON "applications"
   );
 
 -- -----------------------------------------------------------------------------
--- 3. match_scores — via jobs.company_id JOIN
+-- 3. match_scores - via jobs.company_id JOIN
 --    Plus candidate-self read for "my match scores".
 -- -----------------------------------------------------------------------------
 
@@ -254,7 +254,7 @@ CREATE POLICY "match_scores_company_member_select" ON "match_scores"
   );
 
 -- -----------------------------------------------------------------------------
--- 4. interviews — via applications → jobs.company_id JOIN
+-- 4. interviews - via applications → jobs.company_id JOIN
 --    Plus candidate-self read for "my interviews".
 -- -----------------------------------------------------------------------------
 
@@ -319,7 +319,7 @@ CREATE POLICY "interviews_company_member_modify" ON "interviews"
   );
 
 -- -----------------------------------------------------------------------------
--- 5. offers — via applications → jobs.company_id JOIN
+-- 5. offers - via applications → jobs.company_id JOIN
 --    Plus candidate-self read+update for accept/decline flows.
 -- -----------------------------------------------------------------------------
 
@@ -403,7 +403,7 @@ CREATE POLICY "offers_company_member_modify" ON "offers"
   );
 
 -- -----------------------------------------------------------------------------
--- 6. scoring_config — global, single active row.
+-- 6. scoring_config - global, single active row.
 --    Read is open to any authenticated user (frontend fetches active config
 --    to render Score Ring weight breakdowns). Writes are admin-only and
 --    happen via the service-role connection from the admin module.
@@ -433,7 +433,7 @@ CREATE POLICY "scoring_config_admin_modify" ON "scoring_config"
   );
 
 -- -----------------------------------------------------------------------------
--- 7. bias_flags — via jobs.company_id JOIN
+-- 7. bias_flags - via jobs.company_id JOIN
 -- -----------------------------------------------------------------------------
 
 ALTER TABLE "bias_flags" ENABLE ROW LEVEL SECURITY;
@@ -485,7 +485,7 @@ CREATE POLICY "bias_flags_company_member_modify" ON "bias_flags"
   );
 
 -- -----------------------------------------------------------------------------
--- 8. audit_logs — admin sees all; company members see rows tagged to their
+-- 8. audit_logs - admin sees all; company members see rows tagged to their
 --    tenant. Writes always come from the service-role backend; no in-RLS
 --    write policy beyond the default deny.
 -- -----------------------------------------------------------------------------

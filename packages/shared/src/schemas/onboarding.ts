@@ -67,7 +67,7 @@ export const recruiterFocusSchema = z.object({
 export type RecruiterFocus = z.infer<typeof recruiterFocusSchema>;
 
 // ============================================================================
-// CANDIDATE ONBOARDING — analyzing-screen skip telemetry (Skip-to-Dashboard)
+// CANDIDATE ONBOARDING - analyzing-screen skip telemetry (Skip-to-Dashboard)
 // ============================================================================
 
 /**

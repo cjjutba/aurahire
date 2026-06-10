@@ -5,7 +5,7 @@ import { EventsService } from "./events.service";
 import { WsJwtUtil } from "./ws-jwt.util";
 
 /**
- * Global module — feature modules inject `EventsService` without importing
+ * Global module - feature modules inject `EventsService` without importing
  * this module explicitly. `DRIZZLE_CLIENT` and `ConfigService` come from the
  * already-global `DbModule` and `ConfigModule.forRoot({ isGlobal: true })`.
  */

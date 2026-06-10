@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // ============================================================================
-// PRIMITIVE ATOMS — composed by feature schemas
+// PRIMITIVE ATOMS - composed by feature schemas
 // ============================================================================
 
 export const uuidSchema = z.string().uuid({ message: "Must be a valid UUID" });

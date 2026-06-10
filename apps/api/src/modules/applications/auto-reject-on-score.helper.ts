@@ -15,7 +15,7 @@
  * Idempotency: only transitions an application currently in `applied`.
  * If the recruiter has already moved it past `applied` (e.g., manually
  * to interview before the async worker landed the score), we leave it
- * alone — the recruiter's action wins.
+ * alone - the recruiter's action wins.
  *
  * Defense in depth: the interview scheduling endpoint independently
  * re-checks the threshold (`apps/api/src/modules/interviews/interviews.service.ts`).
@@ -90,7 +90,7 @@ export async function maybeAutoRejectByScore(
   });
 
   deps.logger.log(
-    `[auto-reject-on-score] application ${applicationId} auto-rejected — score=${overallScore} < threshold=${threshold}`,
+    `[auto-reject-on-score] application ${applicationId} auto-rejected - score=${overallScore} < threshold=${threshold}`,
   );
   return { rejected: true };
 }

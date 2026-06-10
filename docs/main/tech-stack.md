@@ -34,8 +34,8 @@ This document is the single source of truth for every dependency in AuraHire. Ve
 | **Auth**                      | Supabase Auth (frontend SDK)                                                                     |
 | **Object Storage**            | Supabase Storage                                                                                 |
 | **Cache + Queue store**       | Redis 7 (Docker container on the production Droplet)                                             |
-| **Email — dev**               | Mailpit (SMTP catcher) + Nodemailer                                                              |
-| **Email — prod**              | Resend                                                                                           |
+| **Email - dev**               | Mailpit (SMTP catcher) + Nodemailer                                                              |
+| **Email - prod**              | Resend                                                                                           |
 | **Email templates**           | React Email (rendered to HTML, sent via either transport)                                        |
 | **AI**                        | OpenAI API (`gpt-4o-mini`)                                                                       |
 | **File parsing**              | pdf-parse (PDF), mammoth (DOCX)                                                                  |
@@ -43,8 +43,8 @@ This document is the single source of truth for every dependency in AuraHire. Ve
 | **Icons**                     | Lucide React                                                                                     |
 | **Rich text editor**          | Tiptap                                                                                           |
 | **Dates**                     | date-fns                                                                                         |
-| **Hosting — frontend**        | Vercel                                                                                           |
-| **Hosting — backend**         | Digital Ocean Droplet (Ubuntu, PM2-managed Node + Docker for Redis/Mailpit, Caddy reverse proxy) |
+| **Hosting - frontend**        | Vercel                                                                                           |
+| **Hosting - backend**         | Digital Ocean Droplet (Ubuntu, PM2-managed Node + Docker for Redis/Mailpit, Caddy reverse proxy) |
 
 ---
 
@@ -65,7 +65,7 @@ This document is the single source of truth for every dependency in AuraHire. Ve
 
 ### concurrently (alternative consideration)
 
-Skipped — Turborepo handles parallel scripts natively with better caching and dependency graphing.
+Skipped - Turborepo handles parallel scripts natively with better caching and dependency graphing.
 
 ---
 
@@ -73,7 +73,7 @@ Skipped — Turborepo handles parallel scripts natively with better caching and 
 
 ### Next.js 16.2.4
 
-- **Role:** Frontend framework — App Router for routes, Server Components for SSR, Server Actions for low-latency form submissions to backend, Route Handlers (none in our case — backend lives in `apps/api`).
+- **Role:** Frontend framework - App Router for routes, Server Components for SSR, Server Actions for low-latency form submissions to backend, Route Handlers (none in our case - backend lives in `apps/api`).
 - **Why:** Already installed; modern routing; React Server Components reduce bundle size.
 - **Important:** Frontend has **no direct database access** in this architecture. All data fetching goes through the backend via the auto-generated REST client.
 
@@ -97,7 +97,7 @@ Skipped — Turborepo handles parallel scripts natively with better caching and 
 
 ### React Hook Form ^7
 
-- **`@hookform/resolvers`** — Zod resolver glue.
+- **`@hookform/resolvers`** - Zod resolver glue.
 
 ### Zod ^3.23
 
@@ -111,8 +111,8 @@ Skipped — Turborepo handles parallel scripts natively with better caching and 
 
 Two options, pick one:
 
-- **`orval`** — generates TanStack Query hooks from OpenAPI spec. Most ergonomic.
-- **`openapi-typescript-codegen`** — simpler, generates a typed fetch client; we wrap with TanStack Query manually.
+- **`orval`** - generates TanStack Query hooks from OpenAPI spec. Most ergonomic.
+- **`openapi-typescript-codegen`** - simpler, generates a typed fetch client; we wrap with TanStack Query manually.
 
 Recommendation: **orval** for sprint speed. Generated to `packages/shared/api-client/`.
 
@@ -145,7 +145,7 @@ Recommendation: **orval** for sprint speed. Generated to `packages/shared/api-cl
 
 - **Role:** Backend framework.
 - **Why:** Decorator-based modular architecture matches our 10 features cleanly; first-party plugins for queue, cron, cache, throttle, swagger; Dependency Injection; testable.
-- **Adapter:** Fastify (`@nestjs/platform-fastify`) for performance — same NestJS DX with 2× faster baseline req/s than Express.
+- **Adapter:** Fastify (`@nestjs/platform-fastify`) for performance - same NestJS DX with 2× faster baseline req/s than Express.
 
 ### `@nestjs/swagger` ^7
 
@@ -181,12 +181,12 @@ Recommendation: **orval** for sprint speed. Generated to `packages/shared/api-cl
 ### `nestjs-zod` ^3
 
 - **Role:** Bridge between Zod schemas (in `packages/shared/`) and NestJS DTOs.
-- **Why:** Single source of truth — same Zod schema validates frontend forms AND backend request bodies.
+- **Why:** Single source of truth - same Zod schema validates frontend forms AND backend request bodies.
 
 ### Drizzle ORM ^0.36
 
 - **Role:** Type-safe SQL builder for Postgres.
-- **Schema:** lives in `packages/db/` so types can be exported for any cross-app needs (e.g., `JobStatus` enum). Backend imports queries; frontend imports types only (rare — most types come through Zod schemas).
+- **Schema:** lives in `packages/db/` so types can be exported for any cross-app needs (e.g., `JobStatus` enum). Backend imports queries; frontend imports types only (rare - most types come through Zod schemas).
 
 ### `postgres` ^3.4
 
@@ -238,17 +238,17 @@ Recommendation: **orval** for sprint speed. Generated to `packages/shared/api-cl
 
 ### `class-validator` + `class-transformer`
 
-- Used minimally — most validation goes through `nestjs-zod`. Kept in dependency tree because some NestJS internals use them.
+- Used minimally - most validation goes through `nestjs-zod`. Kept in dependency tree because some NestJS internals use them.
 
 ---
 
 ## Shared (`packages/shared`)
 
-- **Zod schemas** — auth, onboarding, jobs, applications, interviews, offers, AI configs
-- **Enums** — `UserRole`, `ApplicationStatus`, `JobStatus`, `ScoreBand`, `BiasCategory`, etc.
-- **Constants** — `STRONG_MATCH_THRESHOLD`, `MAX_RESUME_SIZE_BYTES`, etc.
-- **Auto-generated API client** (built from OpenAPI spec) — TanStack Query hooks
-- **Common types** — `AuthUser`, `Pagination`, `ApiError`
+- **Zod schemas** - auth, onboarding, jobs, applications, interviews, offers, AI configs
+- **Enums** - `UserRole`, `ApplicationStatus`, `JobStatus`, `ScoreBand`, `BiasCategory`, etc.
+- **Constants** - `STRONG_MATCH_THRESHOLD`, `MAX_RESUME_SIZE_BYTES`, etc.
+- **Auto-generated API client** (built from OpenAPI spec) - TanStack Query hooks
+- **Common types** - `AuthUser`, `Pagination`, `ApiError`
 
 Built once, imported by both apps. No runtime code beyond schemas + utility types.
 
@@ -256,9 +256,9 @@ Built once, imported by both apps. No runtime code beyond schemas + utility type
 
 ## Database / Schema (`packages/db`)
 
-- **Drizzle schema definitions** — all 15 tables (see `database-schema.md`)
-- **RLS policies** — applied via Supabase SQL (deployed by human, not by Drizzle)
-- **Type exports** — `typeof <table>.$inferSelect` types for both apps
+- **Drizzle schema definitions** - all 15 tables (see `database-schema.md`)
+- **RLS policies** - applied via Supabase SQL (deployed by human, not by Drizzle)
+- **Type exports** - `typeof <table>.$inferSelect` types for both apps
 
 Backend imports query helpers AND types. Frontend imports types only (where shared types haven't been factored into Zod schemas already).
 
@@ -268,9 +268,9 @@ Backend imports query helpers AND types. Frontend imports types only (where shar
 
 ### Supabase (Free Tier)
 
-- **Postgres** — primary DB (500MB free)
-- **Auth** — email/password authentication, password reset, email verification, JWT issuance
-- **Storage** — resume PDFs, avatars, company logos (1GB free)
+- **Postgres** - primary DB (500MB free)
+- **Auth** - email/password authentication, password reset, email verification, JWT issuance
+- **Storage** - resume PDFs, avatars, company logos (1GB free)
 
 ### Redis
 
@@ -278,7 +278,7 @@ Backend imports query helpers AND types. Frontend imports types only (where shar
 - **Queue store** for BullMQ
 - **Rate limit store** for `@nestjs/throttler`
 - **Local dev:** Redis 7-alpine container managed via `docker-compose.dev.yml` (`localhost:6379`, persistent volume, 256MB LRU eviction). The human starts/stops via `docker compose`.
-- **Production:** Redis 7-alpine container on the Digital Ocean Droplet via `deploy/docker-compose.prod.yml` — bound to `127.0.0.1:6379` (never exposed to the public internet), password-protected via `REDIS_PASSWORD`, AOF persistence on, `noeviction` policy (BullMQ requires queued jobs not be silently dropped under memory pressure), 512MB max memory. NestJS API runs as a PM2 process on the same host and connects via `redis://:${REDIS_PASSWORD}@127.0.0.1:6379`.
+- **Production:** Redis 7-alpine container on the Digital Ocean Droplet via `deploy/docker-compose.prod.yml` - bound to `127.0.0.1:6379` (never exposed to the public internet), password-protected via `REDIS_PASSWORD`, AOF persistence on, `noeviction` policy (BullMQ requires queued jobs not be silently dropped under memory pressure), 512MB max memory. NestJS API runs as a PM2 process on the same host and connects via `redis://:${REDIS_PASSWORD}@127.0.0.1:6379`.
 
 ### OpenAI
 
@@ -304,7 +304,7 @@ Backend imports query helpers AND types. Frontend imports types only (where shar
 
 ### Vercel (Frontend)
 
-- **Hobby tier** — sufficient for thesis demo
+- **Hobby tier** - sufficient for thesis demo
 - **Auto-deploy** from `main` branch
 - **Preview URLs** per commit
 - **Env vars** managed in Vercel dashboard
@@ -313,12 +313,12 @@ Backend imports query helpers AND types. Frontend imports types only (where shar
 
 - **Tier:** Basic Droplet (Ubuntu 22.04 LTS), 2 vCPU / 2GB RAM tier is sufficient for thesis-scale traffic.
 - **NestJS API:** runs directly on the host as a Node 20 process under **PM2** (auto-restart, log files in `/home/deploy/.pm2/logs/`). Built from `apps/api/Dockerfile`'s same source via `pnpm --filter @aurahire/api build`; the human pulls + builds + `pm2 reload aurahire-api`.
-- **Redis + Mailpit:** Docker containers on the same host via `deploy/docker-compose.prod.yml`. Both bind to `127.0.0.1` only — never reachable from the public internet. The API connects via localhost.
+- **Redis + Mailpit:** Docker containers on the same host via `deploy/docker-compose.prod.yml`. Both bind to `127.0.0.1` only - never reachable from the public internet. The API connects via localhost.
 - **Reverse proxy:** **Caddy** terminates TLS on `0.0.0.0:80/443` (auto-renews Let's Encrypt) and proxies to `127.0.0.1:3333` (NestJS). Caddy is the only thing exposed publicly.
 - **DNS:** A-record points `api.<your-domain>` at the Droplet's public IPv4.
 - **Postgres:** not on the Droplet (we use Supabase Cloud).
 - **Health checks:** `/api/health` is monitored by Caddy / external uptime check; PM2 watches the Node process.
-- **Why this shape (not App Platform / Kubernetes):** explicit, demo-defensible infrastructure for a thesis — every moving part visible and editable; no PaaS magic to explain to a panel.
+- **Why this shape (not App Platform / Kubernetes):** explicit, demo-defensible infrastructure for a thesis - every moving part visible and editable; no PaaS magic to explain to a panel.
 
 ### Supabase Cloud
 
@@ -340,9 +340,9 @@ Backend imports query helpers AND types. Frontend imports types only (where shar
 
 - **Commands:** `drizzle-kit generate`, `drizzle-kit push`, `drizzle-kit studio`.
 - **Run from:** `packages/db` (where the schema lives).
-- **Run by:** the human only — Claude does not run migrations.
+- **Run by:** the human only - Claude does not run migrations.
 
-### TypeScript-only — no test framework in sprint
+### TypeScript-only - no test framework in sprint
 
 - Phase 2 introduces Vitest (unit) + Playwright (E2E).
 - Manual QA covers the sprint per the test plan in `sprint-plan.md`.
@@ -470,14 +470,14 @@ pnpm add -D drizzle-kit
 
 ## Version Pinning
 
-Pin **major versions** in `package.json` (`^16.2.4`, `^10.4.0`). After sprint completes, freeze to exact versions in lockfile — no auto-upgrade during thesis defense window.
+Pin **major versions** in `package.json` (`^16.2.4`, `^10.4.0`). After sprint completes, freeze to exact versions in lockfile - no auto-upgrade during thesis defense window.
 
 ---
 
 ## Known Gaps
 
-- **No background AI scoring queue used during demo** — match scores compute inline (better demo UX). Queue exists for batch re-score and weekly digests only.
+- **No background AI scoring queue used during demo** - match scores compute inline (better demo UX). Queue exists for batch re-score and weekly digests only.
 - **No observability stack** (Sentry, Datadog) in sprint. Pino logs go to Vercel (frontend) and PM2 log files on the Droplet (backend); the human tails them via SSH.
 - **No CI/CD beyond Vercel auto-deploy + manual `git pull && pnpm build && pm2 reload` on the Droplet** in sprint. Phase 2 adds GitHub Actions to build the API container and deploy via `doctl`/SSH.
 - **No test framework** in sprint (Vitest + Playwright = Phase 2).
-- **No Storybook** — component documentation lives in `ui-patterns.md`.
+- **No Storybook** - component documentation lives in `ui-patterns.md`.

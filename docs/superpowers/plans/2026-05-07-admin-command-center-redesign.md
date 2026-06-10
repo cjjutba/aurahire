@@ -14,7 +14,7 @@
 
 - The implementer must NOT run any dev server, migration, or deploy command. Type-check and lint only.
 - The user runs `pnpm dev` themselves and verifies visual results in the browser.
-- Commits are written into the plan as steps, but agents must defer to CLAUDE.md's commit policy in the executing session — the user authorizes commits explicitly.
+- Commits are written into the plan as steps, but agents must defer to CLAUDE.md's commit policy in the executing session - the user authorizes commits explicitly.
 
 ---
 
@@ -40,7 +40,7 @@ Each task below produces self-contained, type-clean changes.
 - Create: `apps/web/lib/audit/humanize-action.ts`
 - Test: `apps/web/lib/audit/humanize-action.test.ts`
 
-The utility is a pure function — perfect for vitest. The codebase has precedent for co-located tests next to source (e.g., `apps/web/components/onboarding/resume-preview/find-text-spans.test.ts`). Test runner is `vitest`, invoked via `pnpm --filter @aurahire/web test`.
+The utility is a pure function - perfect for vitest. The codebase has precedent for co-located tests next to source (e.g., `apps/web/components/onboarding/resume-preview/find-text-spans.test.ts`). Test runner is `vitest`, invoked via `pnpm --filter @aurahire/web test`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -147,7 +147,7 @@ describe("humanizeAuditAction", () => {
 
   describe("edge cases", () => {
     it("returns an em-dash for an empty string", () => {
-      expect(humanizeAuditAction("")).toBe("—");
+      expect(humanizeAuditAction("")).toBe("-");
     });
 
     it("trims whitespace before processing", () => {
@@ -161,7 +161,7 @@ describe("humanizeAuditAction", () => {
 
 Run: `pnpm --filter @aurahire/web test apps/web/lib/audit/humanize-action.test.ts`
 
-Expected: FAIL — `Cannot find module './humanize-action'` or equivalent.
+Expected: FAIL - `Cannot find module './humanize-action'` or equivalent.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -175,7 +175,7 @@ Create `apps/web/lib/audit/humanize-action.ts`:
  *
  * Keep this map in sync with AUDIT_ACTIONS in the API. If a backend code
  * appears that isn't in this map, the fallback formatter still renders
- * it cleanly (Title Cased Words) — losing nuance but never readability.
+ * it cleanly (Title Cased Words) - losing nuance but never readability.
  */
 const KNOWN_LABELS: Record<string, string> = {
   // Identity & accounts
@@ -295,11 +295,11 @@ function titleCaseFallback(action: string): string {
 /**
  * Returns a plain-English label for a known audit action code.
  * Falls back to Title Cased Words for unknown codes (forward compatibility).
- * Returns "—" for empty input.
+ * Returns "-" for empty input.
  */
 export function humanizeAuditAction(action: string): string {
   const trimmed = action.trim();
-  if (trimmed.length === 0) return "—";
+  if (trimmed.length === 0) return "-";
   const known = KNOWN_LABELS[trimmed];
   if (known) return known;
   return titleCaseFallback(trimmed);
@@ -310,7 +310,7 @@ export function humanizeAuditAction(action: string): string {
 
 Run: `pnpm --filter @aurahire/web test apps/web/lib/audit/humanize-action.test.ts`
 
-Expected: PASS — all describe/it blocks green.
+Expected: PASS - all describe/it blocks green.
 
 - [ ] **Step 5: Type-check**
 
@@ -499,7 +499,7 @@ function KpiTile({
           loading ? "text-[var(--color-muted)]" : valueClass
         }`}
       >
-        {loading ? "—" : value}
+        {loading ? "-" : value}
       </div>
       <div className="mt-1 text-xs text-[var(--color-muted)]">
         {description}
@@ -886,7 +886,7 @@ function RecentAuditWidget({
 }
 ```
 
-> **Why no click-to-detail on dashboard rows in this slice:** the `RecentAuditEntryDto` returned by `/admin/stats/overview` does not include the audit entry `id` (see `apps/api/src/modules/admin/dto/admin-stats-response.dto.ts`). Wiring click-through would require either widening the DTO (backend change — out of scope per spec) or refetching the latest entries by `(action, createdAt)` (brittle). The spec already commits to "View all →" as the navigation affordance, which gives admins one click to the full audit table where rows ARE clickable.
+> **Why no click-to-detail on dashboard rows in this slice:** the `RecentAuditEntryDto` returned by `/admin/stats/overview` does not include the audit entry `id` (see `apps/api/src/modules/admin/dto/admin-stats-response.dto.ts`). Wiring click-through would require either widening the DTO (backend change - out of scope per spec) or refetching the latest entries by `(action, createdAt)` (brittle). The spec already commits to "View all →" as the navigation affordance, which gives admins one click to the full audit table where rows ARE clickable.
 
 - [ ] **Step 3: Type-check**
 
@@ -1135,9 +1135,9 @@ Tell the user (verbatim or close to it):
 
 > Ready for browser verification. Please run `pnpm dev` from the repo root and check:
 >
-> 1. **/admin** — Command Center should show two grouped 3-up KPI rows (Footprint, Today & AI Quality) with icons + descriptions, then a 3-up snapshot row. Bias Flags should now have horizontal bars matching Score Distribution. Recent Audit Events should show plain-English labels (e.g. "Job match preview computed" instead of `score.match.preview.computed`), with actor-icon plates on the left, actor pill on the right, and a "View all →" link going to /admin/audit.
-> 2. **/admin/audit** — table Action column should show plain-English labels; hovering reveals the raw code in the tooltip.
-> 3. **/admin/audit → click any row** — sheet title should be the plain-English label; the raw action code should appear as a small muted mono sub-line below the title.
+> 1. **/admin** - Command Center should show two grouped 3-up KPI rows (Footprint, Today & AI Quality) with icons + descriptions, then a 3-up snapshot row. Bias Flags should now have horizontal bars matching Score Distribution. Recent Audit Events should show plain-English labels (e.g. "Job match preview computed" instead of `score.match.preview.computed`), with actor-icon plates on the left, actor pill on the right, and a "View all →" link going to /admin/audit.
+> 2. **/admin/audit** - table Action column should show plain-English labels; hovering reveals the raw code in the tooltip.
+> 3. **/admin/audit → click any row** - sheet title should be the plain-English label; the raw action code should appear as a small muted mono sub-line below the title.
 >
 > Confirm at narrow viewports (mobile + tablet) that the KPI rows collapse from 3-up → 2-up → 1-up, and the snapshot row stacks to 1-up. Confirm no console warnings about missing keys, hydration mismatches, or duplicate ids.
 
@@ -1149,25 +1149,25 @@ Tell the user (verbatim or close to it):
 
 Walking each spec section:
 
-- §4.1 Page header — unchanged. (`page.tsx` already has the right copy; not touched in this plan.) ✓
-- §4.2 KPI grid — Task 2 ✓
-- §4.3.1 Score Distribution — Task 2 (widget retained, section header upgraded) ✓
-- §4.3.2 Bias Flags (bar pattern) — Task 2 ✓
-- §4.3.3 Recent Audit Events (humanized + actor icon + view-all link) — Task 2 ✓
-- §4.4 Loading skeleton — Task 3 ✓
-- §5.1–5.5 Humanizer (utility + dashboard + table + sheet) — Tasks 1, 2, 4, 5 ✓
-- §6 Affected files — all five files appear in tasks ✓
-- §7 Realtime/caching — preserved verbatim in Task 2 ✓
-- §8 Accessibility — `title=` for raw codes, semantic headings preserved, color-not-only signaling preserved ✓
-- §9 Implementation order — matches plan order ✓
-- §10 Risks — addressed inline (truncate + min-w-0 in audit row, fallback for unknown codes, intentional `0 → muted` tone) ✓
-- §11 Out of scope — no plan task touches `apps/api/`, `packages/shared/`, or `packages/db/` ✓
+- §4.1 Page header - unchanged. (`page.tsx` already has the right copy; not touched in this plan.) ✓
+- §4.2 KPI grid - Task 2 ✓
+- §4.3.1 Score Distribution - Task 2 (widget retained, section header upgraded) ✓
+- §4.3.2 Bias Flags (bar pattern) - Task 2 ✓
+- §4.3.3 Recent Audit Events (humanized + actor icon + view-all link) - Task 2 ✓
+- §4.4 Loading skeleton - Task 3 ✓
+- §5.1-5.5 Humanizer (utility + dashboard + table + sheet) - Tasks 1, 2, 4, 5 ✓
+- §6 Affected files - all five files appear in tasks ✓
+- §7 Realtime/caching - preserved verbatim in Task 2 ✓
+- §8 Accessibility - `title=` for raw codes, semantic headings preserved, color-not-only signaling preserved ✓
+- §9 Implementation order - matches plan order ✓
+- §10 Risks - addressed inline (truncate + min-w-0 in audit row, fallback for unknown codes, intentional `0 → muted` tone) ✓
+- §11 Out of scope - no plan task touches `apps/api/`, `packages/shared/`, or `packages/db/` ✓
 
-One spec divergence (intentional & documented inline): **§4.3.3 says "Whole row is clickable — opens the audit detail sheet."** The plan explicitly does not wire that in this slice because the `RecentAuditEntryDto` returned by `/admin/stats/overview` lacks the entry id. The "View all →" link is the documented escape hatch in §4.3.3 itself. If the user objects, the fix is a separate slice that widens the DTO — I'll flag this when handing off so it's a conscious decision.
+One spec divergence (intentional & documented inline): **§4.3.3 says "Whole row is clickable - opens the audit detail sheet."** The plan explicitly does not wire that in this slice because the `RecentAuditEntryDto` returned by `/admin/stats/overview` lacks the entry id. The "View all →" link is the documented escape hatch in §4.3.3 itself. If the user objects, the fix is a separate slice that widens the DTO - I'll flag this when handing off so it's a conscious decision.
 
-**2. Placeholder scan** — no "TBD", "TODO", or "implement appropriate X" placeholders. Every step has the actual code or command. ✓
+**2. Placeholder scan** - no "TBD", "TODO", or "implement appropriate X" placeholders. Every step has the actual code or command. ✓
 
-**3. Type consistency** — `KpiTile` props (`label, value, icon, description, tone, loading`) are used identically in `FOOTPRINT_TILES` / `QUALITY_TILES`. `humanizeAuditAction` signature `(action: string) => string` is identical at all four call sites. `RecentAuditEntryDto` shape (`action, actorType, entityType, createdAt`) matches what's in `apps/api/src/modules/admin/dto/admin-stats-response.dto.ts`. ✓
+**3. Type consistency** - `KpiTile` props (`label, value, icon, description, tone, loading`) are used identically in `FOOTPRINT_TILES` / `QUALITY_TILES`. `humanizeAuditAction` signature `(action: string) => string` is identical at all four call sites. `RecentAuditEntryDto` shape (`action, actorType, entityType, createdAt`) matches what's in `apps/api/src/modules/admin/dto/admin-stats-response.dto.ts`. ✓
 
 ---
 
@@ -1175,8 +1175,8 @@ One spec divergence (intentional & documented inline): **§4.3.3 says "Whole row
 
 Plan complete and saved to `docs/superpowers/plans/2026-05-07-admin-command-center-redesign.md`. Two execution options:
 
-**1. Subagent-Driven (recommended)** — I dispatch a fresh subagent per task, review between tasks, fast iteration
+**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
 
-**2. Inline Execution** — Execute tasks in this session using `superpowers:executing-plans`, batch execution with checkpoints
+**2. Inline Execution** - Execute tasks in this session using `superpowers:executing-plans`, batch execution with checkpoints
 
 **Which approach?**

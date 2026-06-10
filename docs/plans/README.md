@@ -2,7 +2,7 @@
 
 This directory holds **per-slice implementation plans** for the AuraHire sprint, written using the `superpowers:writing-plans` skill and intended to be executed using `superpowers:subagent-driven-development` (this session) or `superpowers:executing-plans` (separate session).
 
-Each slice from `docs/main/sprint-plan.md` gets a dedicated plan in this folder. Plans are created **just-in-time** — typically the next 1-2 slices ahead of execution — so each plan reflects the most recent learnings from prior slices.
+Each slice from `docs/main/sprint-plan.md` gets a dedicated plan in this folder. Plans are created **just-in-time** - typically the next 1-2 slices ahead of execution - so each plan reflects the most recent learnings from prior slices.
 
 ---
 
@@ -14,13 +14,13 @@ docs/plans/YYYY-MM-DD-slice-<n.n>-<short-name>.md
 
 Example: `2026-05-02-slice-1.1-monorepo-init.md`
 
-The date is the planned execution date (not the writing date — writing happens earlier).
+The date is the planned execution date (not the writing date - writing happens earlier).
 
 ---
 
 ## Plan Index
 
-### Day 1 — May 2, 2026 (Monorepo, Backend Foundation, Auth E2E)
+### Day 1 - May 2, 2026 (Monorepo, Backend Foundation, Auth E2E)
 
 | Slice | Title                                           | Plan File                                                                                                    | Status      |
 | ----- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------- |
@@ -33,7 +33,7 @@ The date is the planned execution date (not the writing date — writing happens
 | 1.7   | Recruiter Onboarding Wizard                     | [2026-05-02-slice-1.7-recruiter-onboarding.md](./2026-05-02-slice-1.7-recruiter-onboarding.md)               | ✅ Complete |
 | 1.8   | Candidate Onboarding (Manual, no AI)            | [2026-05-02-slice-1.8-candidate-onboarding.md](./2026-05-02-slice-1.8-candidate-onboarding.md)               | ✅ Complete |
 
-### Day 2 — May 3, 2026 (Jobs, Applications, AI Layer)
+### Day 2 - May 3, 2026 (Jobs, Applications, AI Layer)
 
 | Slice | Title                                     | Plan File                                                                                                | Status      |
 | ----- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------- |
@@ -46,7 +46,7 @@ The date is the planned execution date (not the writing date — writing happens
 | 2.7   | Bias Check + Job Publishing               | [2026-05-03-slice-2.7-bias-check-job-publishing.md](./2026-05-03-slice-2.7-bias-check-job-publishing.md) | ✅ Complete |
 | 2.8   | Day 2 Polish                              | [2026-05-03-slice-2.8-day-2-polish.md](./2026-05-03-slice-2.8-day-2-polish.md)                           | ✅ Complete |
 
-### Day 3 — May 4, 2026 (Admin, Background Jobs, Cron, Caching)
+### Day 3 - May 4, 2026 (Admin, Background Jobs, Cron, Caching)
 
 | Slice | Title                                                | Plan File                                                                                                          | Status       |
 | ----- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
@@ -59,7 +59,7 @@ The date is the planned execution date (not the writing date — writing happens
 | 3.7   | Cron Tasks + Cache Wiring                            | [2026-05-04-slice-3.7-cron-cache-throttle.md](./2026-05-04-slice-3.7-cron-cache-throttle.md)                       | 🔄 Executing |
 | 3.8   | Interview, Offer, Final Polish                       | [2026-05-04-slice-3.8-interviews-offers-final-polish.md](./2026-05-04-slice-3.8-interviews-offers-final-polish.md) | 🔄 Executing |
 
-### Day 4 — May 5, 2026 (Polish, Smoke Test, Deployment)
+### Day 4 - May 5, 2026 (Polish, Smoke Test, Deployment)
 
 | Slice | Title                             | Plan File                                                                                        | Status        |
 | ----- | --------------------------------- | ------------------------------------------------------------------------------------------------ | ------------- |
@@ -71,11 +71,11 @@ The date is the planned execution date (not the writing date — writing happens
 
 **Status legend:**
 
-- ⏳ Not started — plan not yet written
-- 📝 Plan ready — written, awaiting execution
-- 🔄 Executing — currently being worked on
-- ✅ Complete — code shipped, slice DoD met
-- ⚠️ Blocked — execution paused (see notes in plan file)
+- ⏳ Not started - plan not yet written
+- 📝 Plan ready - written, awaiting execution
+- 🔄 Executing - currently being worked on
+- ✅ Complete - code shipped, slice DoD met
+- ⚠️ Blocked - execution paused (see notes in plan file)
 
 ---
 
@@ -95,20 +95,20 @@ A separate Claude Code session opens in the same repo, reads the plan, and execu
 
 ## Cross-Reference
 
-The authoritative source for **what** each slice does and **why** is `docs/main/sprint-plan.md`. The plans in this folder are the **how** — the bite-sized executable steps.
+The authoritative source for **what** each slice does and **why** is `docs/main/sprint-plan.md`. The plans in this folder are the **how** - the bite-sized executable steps.
 
 Other relevant references for plan execution:
 
-- `CLAUDE.md` — hard rules (no dev servers, no Docker commands, etc.)
-- `AGENTS.md` — Next.js 16 caveat and module patterns
-- `docs/main/architecture.md` — system architecture
-- `docs/main/tech-stack.md` — every dependency
-- `docs/main/project-structure.md` — folder layout
-- `docs/main/best-practices.md` — engineering standards
-- `docs/main/database-schema.md` — DB schema
-- `docs/main/ai-design.md` — AI engines (thesis-critical)
-- `docs/main/technical-specifications.md` — REST API spec
-- `docs/main/design-system.md`, `ui-patterns.md`, `page-inventory.md` — design canon
+- `CLAUDE.md` - hard rules (no dev servers, no Docker commands, etc.)
+- `AGENTS.md` - Next.js 16 caveat and module patterns
+- `docs/main/architecture.md` - system architecture
+- `docs/main/tech-stack.md` - every dependency
+- `docs/main/project-structure.md` - folder layout
+- `docs/main/best-practices.md` - engineering standards
+- `docs/main/database-schema.md` - DB schema
+- `docs/main/ai-design.md` - AI engines (thesis-critical)
+- `docs/main/technical-specifications.md` - REST API spec
+- `docs/main/design-system.md`, `ui-patterns.md`, `page-inventory.md` - design canon
 
 ---
 

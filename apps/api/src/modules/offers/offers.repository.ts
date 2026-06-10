@@ -54,7 +54,7 @@ export class OffersRepository {
   }
 
   /**
-   * Most recent offer (by sentAt DESC) for an application — or null if no
+   * Most recent offer (by sentAt DESC) for an application - or null if no
    * offer has ever been sent. Used by ApplicationsService to enforce that
    * a "hired" transition requires an accepted offer. When invoked inside
    * an application-row transaction (e.g., hire()), pass `tx` so the read

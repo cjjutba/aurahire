@@ -78,7 +78,7 @@ export class ExpireOffersCron {
           and(
             eq(offersTable.status, "pending"),
             sql`${offersTable.expiresAt} IS NOT NULL`,
-            // Server-evaluated `now()` instead of a bound Date — same intent
+            // Server-evaluated `now()` instead of a bound Date - same intent
             // ("offers past their expiry the moment this cron fires") with
             // no Date-binding to postgres-js.
             sql`${offersTable.expiresAt} < now()`,
@@ -109,7 +109,7 @@ export class ExpireOffersCron {
         this.config.get<string>("APP_URL") ?? "http://localhost:3000";
 
       // Per-offer audit + email + in-app notify (both candidate and recruiter)
-      // — best-effort; one failure doesn't fail the cron.
+      // - best-effort; one failure doesn't fail the cron.
       for (const c of candidates) {
         try {
           await this.audit.log({

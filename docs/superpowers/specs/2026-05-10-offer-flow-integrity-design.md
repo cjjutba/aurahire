@@ -1,4 +1,4 @@
-# Offer Flow Integrity — Design
+# Offer Flow Integrity - Design
 
 **Status:** Proposed
 **Date:** 2026-05-10
@@ -15,7 +15,7 @@ Three integrity holes exist in the offer/hiring flow:
 2. **Candidate Decline (and offer expiry) leaves the application stuck at `offer`.** `OffersService.decline` only updates the offer row. The application status remains `offer` indefinitely, polluting recruiter pipelines and giving the candidate a confusing "Offer Extended" UI even though they declined.
 3. **Marking one candidate hired does not affect other applicants on the same job.** Other open applications stay in flight, leading to mixed signals (candidates think they're still being considered after the role is filled).
 
-A fourth latent issue — concurrent Accept ↔ Mark Hired writes — produces the right end state today but emits double notifications and double audit rows. Closing the integrity holes also requires solving the race because the new guards depend on consistent reads.
+A fourth latent issue - concurrent Accept ↔ Mark Hired writes - produces the right end state today but emits double notifications and double audit rows. Closing the integrity holes also requires solving the race because the new guards depend on consistent reads.
 
 The expire-offers cron already runs hourly (`apps/api/src/cron/expire-offers.cron.ts`), so the only gap on offer expiry is propagating the expiry into the application's lifecycle.
 
@@ -45,7 +45,7 @@ The expire-offers cron already runs hourly (`apps/api/src/cron/expire-offers.cro
 
 Add one terminal-but-revivable status. It captures both candidate decline and system-driven offer expiry. The audit log + the offer row's own `status` distinguish the cause for UI copy and reporting.
 
-This is preferred over reusing `rejected` because `rejected` carries a recruiter-action connotation in the existing UI ("Reject" button); muddling it with candidate-driven outcomes hurts explainability — a thesis-load-bearing principle.
+This is preferred over reusing `rejected` because `rejected` carries a recruiter-action connotation in the existing UI ("Reject" button); muddling it with candidate-driven outcomes hurts explainability - a thesis-load-bearing principle.
 
 **Enum addition** in `packages/db/src/enums.ts`:
 
@@ -62,9 +62,9 @@ export const APPLICATION_STATUS = [
 ] as const;
 ```
 
-Mirror the same value in `packages/shared/src/enums/index.ts` (it re-exports from `@aurahire/db`, so this should be automatic — verify during implementation).
+Mirror the same value in `packages/shared/src/enums/index.ts` (it re-exports from `@aurahire/db`, so this should be automatic - verify during implementation).
 
-**Migration** — `packages/db/drizzle/0013_offer_declined_status.sql`:
+**Migration** - `packages/db/drizzle/0013_offer_declined_status.sql`:
 
 `applications.status` is currently `text` constrained by Drizzle's `text({ enum })` (string list). No DB-level enum to alter. The migration is a no-op SQL file documenting the schema bump (Drizzle uses the TS-side enum at write time). If a CHECK constraint is later introduced, this is where it would live.
 
@@ -93,15 +93,15 @@ export const STATUSES_REQUIRING_ACCEPTED_OFFER: ReadonlyArray<ApplicationStatus>
 
 Two new edges:
 
-- `offer → offer_declined` — system action when candidate declines or offer expires.
-- `offer_declined → offer` — recruiter re-extends a new offer (the existing `OffersService.create` auto-advance handles the transition).
-- `offer_declined → rejected` and `offer_declined → withdrawn` — terminal closures.
+- `offer → offer_declined` - system action when candidate declines or offer expires.
+- `offer_declined → offer` - recruiter re-extends a new offer (the existing `OffersService.create` auto-advance handles the transition).
+- `offer_declined → rejected` and `offer_declined → withdrawn` - terminal closures.
 
 The accepted-offer guard layers _on top_ of the state machine; it is checked only when transitioning into a status in `STATUSES_REQUIRING_ACCEPTED_OFFER`.
 
 ### 3.3 Backend service changes
 
-**`OffersService.decline`** — wrap in `db.transaction` with `SELECT … FOR UPDATE` on the application row, then append app auto-transition after the offer update:
+**`OffersService.decline`** - wrap in `db.transaction` with `SELECT … FOR UPDATE` on the application row, then append app auto-transition after the offer update:
 
 ```ts
 return this.db.transaction(async (tx) => {
@@ -124,9 +124,9 @@ return this.db.transaction(async (tx) => {
 
 The lock prevents a Decline arriving in the narrow window between Accept's offer-update and Accept's app-update from observing inconsistent state.
 
-**`OffersService.create`** — already calls `transitionFromSystem(... "offer", ...)`. With `offer_declined → offer` now valid, the same call works for the re-extend path. No code change needed; the state machine permits it.
+**`OffersService.create`** - already calls `transitionFromSystem(... "offer", ...)`. With `offer_declined → offer` now valid, the same call works for the re-extend path. No code change needed; the state machine permits it.
 
-**`ExpireOffersCron.execute`** — for each expired offer, after the offer row UPDATE, transition the app inside its own per-offer transaction (the cron processes offers in a loop; one failure should not poison sibling rows):
+**`ExpireOffersCron.execute`** - for each expired offer, after the offer row UPDATE, transition the app inside its own per-offer transaction (the cron processes offers in a loop; one failure should not poison sibling rows):
 
 ```ts
 await this.db.transaction(async (tx) => {
@@ -144,7 +144,7 @@ await this.db.transaction(async (tx) => {
 
 Add an audit action `application.auto_transition_offer_expired` (distinct from the candidate-driven decline path) so reports can separate the two. The cron's existing `OFFER_EXPIRED` audit row stays.
 
-**`ApplicationsService.updateStatus`** — accepted-offer guard:
+**`ApplicationsService.updateStatus`** - accepted-offer guard:
 
 ```ts
 if (STATUSES_REQUIRING_ACCEPTED_OFFER.includes(dto.newStatus)) {
@@ -152,7 +152,7 @@ if (STATUSES_REQUIRING_ACCEPTED_OFFER.includes(dto.newStatus)) {
   if (!latestOffer || latestOffer.status !== "accepted") {
     throw new BadRequestException({
       code: "OFFER_NOT_ACCEPTED",
-      message: "Cannot mark hired — candidate has not accepted an offer.",
+      message: "Cannot mark hired - candidate has not accepted an offer.",
     });
   }
 }
@@ -160,7 +160,7 @@ if (STATUSES_REQUIRING_ACCEPTED_OFFER.includes(dto.newStatus)) {
 
 The check happens **inside the row-locking transaction** (see §3.4) so a concurrent accept can't slip in between the read and the write.
 
-**`ApplicationsService.hire`** — extracted method (called from the controller when `newStatus === "hired"`):
+**`ApplicationsService.hire`** - extracted method (called from the controller when `newStatus === "hired"`):
 
 ```ts
 async hire(
@@ -174,7 +174,7 @@ async hire(
     // 1. Lock + re-validate inside the transaction
     const app = await this.repo.findByIdForUpdate(tx, applicationId);
     if (!app) throw new NotFoundException(...);
-    // (company ownership, state machine, accepted-offer guard — same as updateStatus)
+    // (company ownership, state machine, accepted-offer guard - same as updateStatus)
 
     // 2. Hire the chosen candidate
     await this.repo.update(tx, applicationId, { status: "hired", statusUpdatedAt: now() });
@@ -214,7 +214,7 @@ Notes:
 - Side effects (cache bust, realtime emit, email send, in-app notify) happen **after commit**, not inside the transaction. A failed email must not roll back the hire.
 - The bulk-reject loop is a tight `for` rather than a single `UPDATE` because each row needs a distinct audit row and notification; the loop is bounded by typical job applicant counts (sprint scale: tens, not thousands).
 
-**`OffersService.accept`** — wrap in the same transaction shape, locking the application row before reading offer status. The candidate path becomes:
+**`OffersService.accept`** - wrap in the same transaction shape, locking the application row before reading offer status. The candidate path becomes:
 
 ```ts
 return this.db.transaction(async (tx) => {
@@ -230,7 +230,7 @@ return this.db.transaction(async (tx) => {
 
 Side effects (audit write, recruiter email, in-app notify) happen after commit.
 
-**Endpoint change** — `PATCH /applications/:id/status`:
+**Endpoint change** - `PATCH /applications/:id/status`:
 
 DTO extension in `packages/shared/src/schemas/applications.ts`:
 
@@ -253,13 +253,13 @@ Response shape extension when `newStatus === "hired"`:
 
 For all other status transitions, the response keeps its current shape (returns the `ApplicationDto` directly). The controller branches on `newStatus === "hired"` and calls `hire()` instead of `updateStatus()`.
 
-**`OffersRepository.findLatestByApplicationId`** — new method returning the most recent offer (by `sentAt DESC`) for an application, or null. Used by the accepted-offer guard.
+**`OffersRepository.findLatestByApplicationId`** - new method returning the most recent offer (by `sentAt DESC`) for an application, or null. Used by the accepted-offer guard.
 
-**`ApplicationsRepository.findByIdForUpdate(tx, id)`** — new method using `SELECT … FOR UPDATE` via Drizzle's `.for("update")`.
+**`ApplicationsRepository.findByIdForUpdate(tx, id)`** - new method using `SELECT … FOR UPDATE` via Drizzle's `.for("update")`.
 
-**`ApplicationsRepository.findInflightByJobId(tx, jobId, excludeId)`** — new method returning all applications on a job whose status is not in (`hired`, `rejected`, `withdrawn`, `offer_declined`), excluding the one passed in.
+**`ApplicationsRepository.findInflightByJobId(tx, jobId, excludeId)`** - new method returning all applications on a job whose status is not in (`hired`, `rejected`, `withdrawn`, `offer_declined`), excluding the one passed in.
 
-**`ApplicationsService.transitionFromSystem` signature change** — accept an optional final `tx?: DrizzleTransaction` parameter. When passed, the auto-transition's UPDATE + audit row writes to the transaction handle instead of the root `db` client. Existing call sites (offers `accept`, `create`, etc.) pass `tx` when they themselves run in a transaction; the cron does the same. Backward-compatible: omitting the argument falls back to the existing root-client behavior.
+**`ApplicationsService.transitionFromSystem` signature change** - accept an optional final `tx?: DrizzleTransaction` parameter. When passed, the auto-transition's UPDATE + audit row writes to the transaction handle instead of the root `db` client. Existing call sites (offers `accept`, `create`, etc.) pass `tx` when they themselves run in a transaction; the cron does the same. Backward-compatible: omitting the argument falls back to the existing root-client behavior.
 
 ### 3.4 Concurrency strategy
 
@@ -270,7 +270,7 @@ Both write paths into `applications` for hire-related transitions (`OffersServic
 
 Either path yields exactly one application UPDATE that matters and one set of side-effect notifications.
 
-This avoids a version column and retry loop — both add complexity disproportionate to the contention level (one application, one candidate accept, at most a handful of recruiters per company per second).
+This avoids a version column and retry loop - both add complexity disproportionate to the contention level (one application, one candidate accept, at most a handful of recruiters per company per second).
 
 ### 3.5 Frontend changes
 
@@ -278,10 +278,10 @@ This avoids a version column and retry loop — both add complexity disproportio
 
 Pass `latestOffer.status` from the server-rendered application page (already loaded for the offer card) into the client component. Two new behaviors:
 
-- **App at `offer` AND `latestOffer.status !== "accepted"`** — Mark Hired button rendered as `disabled` with a tooltip: _"Waiting for candidate to accept the offer."_ Reject button stays enabled.
-- **App at `offer_declined`** — replace the `[Mark Hired] [Reject]` button pair with `[Re-extend Offer] [Close as Rejected]`. "Re-extend Offer" opens the existing offer creation modal pre-filled with the prior offer's terms (title, salary, start date, manager) so the recruiter can adjust. "Close as Rejected" calls `PATCH /applications/:id/status` with `newStatus: "rejected"`.
+- **App at `offer` AND `latestOffer.status !== "accepted"`** - Mark Hired button rendered as `disabled` with a tooltip: _"Waiting for candidate to accept the offer."_ Reject button stays enabled.
+- **App at `offer_declined`** - replace the `[Mark Hired] [Reject]` button pair with `[Re-extend Offer] [Close as Rejected]`. "Re-extend Offer" opens the existing offer creation modal pre-filled with the prior offer's terms (title, salary, start date, manager) so the recruiter can adjust. "Close as Rejected" calls `PATCH /applications/:id/status` with `newStatus: "rejected"`.
 
-**Recruiter Hire confirmation modal** — new file `apps/web/components/recruiter/hire-confirmation-modal.tsx`:
+**Recruiter Hire confirmation modal** - new file `apps/web/components/recruiter/hire-confirmation-modal.tsx`:
 
 ```
 ┌───────────────────────────────────────────────┐
@@ -302,7 +302,7 @@ The recruiter can uncheck the auto-reject box. On Confirm, the client calls the 
 
 The "47 other open applicants" count comes from a small new endpoint `GET /applications/:id/sibling-count` (or is added to the existing application detail payload). Choose whichever requires fewer changes during implementation.
 
-**Candidate `/candidate/applications/[id]`** — when `app.status === "offer_declined"`:
+**Candidate `/candidate/applications/[id]`** - when `app.status === "offer_declined"`:
 
 Replace the "OFFER EXTENDED" card with an "OFFER CLOSED" card that shows the offer terms (read-only) and one of two footers based on `offer.status`:
 
@@ -311,13 +311,13 @@ Replace the "OFFER EXTENDED" card with an "OFFER CLOSED" card that shows the off
 
 No action buttons.
 
-**Recruiter pipeline** — kanban + filter chips (`apps/web/app/(recruiter)/recruiter/applications/`):
+**Recruiter pipeline** - kanban + filter chips (`apps/web/app/(recruiter)/recruiter/applications/`):
 
 - Add a new column `"Offer Declined"` between `"Offer"` and `"Hired"`.
 - Add a filter chip `"Offer Declined"` to the list-view filter set.
 - Pipeline counts naturally exclude `offer_declined` from the "active offers" total because they are computed from `app.status`.
 
-**Status chip token** — new variant in `apps/web/components/ui/status-chip.tsx`:
+**Status chip token** - new variant in `apps/web/components/ui/status-chip.tsx`:
 
 `offer_declined` → background `{colors.score-mid-soft}` (amber), text `{colors.score-mid}` (amber), label `"Offer Declined"`. Slots between `Offer` (info-blue) and `Rejected` (danger-red).
 
@@ -337,12 +337,12 @@ Each carries enough metadata to reconstruct the cause:
 - `offer_expired`: `{ offerId, applicationId, expiresAt }`
 - `auto_rejected_position_filled`: `{ hiredApplicationId, hiredCandidateId, jobId }`
 
-**New email template** — `apps/api/src/email/templates/position-filled.tsx`:
+**New email template** - `apps/api/src/email/templates/position-filled.tsx`:
 
-Subject: `Update on your application — {{jobTitle}} at {{companyName}}`
+Subject: `Update on your application - {{jobTitle}} at {{companyName}}`
 Body: warm, neutral copy explaining that another candidate was selected; thanks them for applying; offers a link to browse other open roles.
 
-**Notification reuse** — bulk-rejected candidates receive one `application_status_changed` notification with `metadata.reason = "position_filled"` and `metadata.hiredJobTitle = "..."`. The notifications panel can render a slightly different copy for this reason without needing a new event type.
+**Notification reuse** - bulk-rejected candidates receive one `application_status_changed` notification with `metadata.reason = "position_filled"` and `metadata.hiredJobTitle = "..."`. The notifications panel can render a slightly different copy for this reason without needing a new event type.
 
 ---
 
@@ -372,7 +372,7 @@ Body: warm, neutral copy explaining that another candidate was selected; thanks 
 
 ## 5. Tests
 
-**Unit — state machine** (`state-machine.spec.ts`):
+**Unit - state machine** (`state-machine.spec.ts`):
 
 - `canTransition("offer", "offer_declined")` → true
 - `canTransition("offer_declined", "offer")` → true
@@ -380,7 +380,7 @@ Body: warm, neutral copy explaining that another candidate was selected; thanks 
 - `canTransition("offer_declined", "hired")` → false
 - All other transitions out of `offer_declined` to non-allowed states → false
 
-**Unit — applications service**:
+**Unit - applications service**:
 
 - `updateStatus` with `newStatus: "hired"` and no offer → throws `OFFER_NOT_ACCEPTED`
 - `updateStatus` with `newStatus: "hired"` and offer in `pending` → throws `OFFER_NOT_ACCEPTED`
@@ -389,7 +389,7 @@ Body: warm, neutral copy explaining that another candidate was selected; thanks 
 - `hire()` with `autoRejectOthers: false` leaves other apps untouched
 - `hire()` skips already-terminal applications (`rejected`, `withdrawn`, `hired`, `offer_declined`)
 
-**Unit — offers service**:
+**Unit - offers service**:
 
 - `decline` transitions app from `offer` to `offer_declined`
 - `accept` transitions app from `offer` to `hired` (existing test, verify still passes)
@@ -400,7 +400,7 @@ Body: warm, neutral copy explaining that another candidate was selected; thanks 
 - Expired offer triggers app transition to `offer_declined`
 - App already in non-`offer` state when cron fires → transition skipped (logged but no error)
 
-**Integration — controller**:
+**Integration - controller**:
 
 - `PATCH /applications/:id/status` body `{ newStatus: "hired", autoRejectOthers: true }` returns `{ application, otherApplicationsRejected: N }`
 - Same body without an accepted offer → 400 `OFFER_NOT_ACCEPTED`
@@ -413,7 +413,7 @@ Body: warm, neutral copy explaining that another candidate was selected; thanks 
 2. Deploy backend with the new state machine + guards.
 3. Deploy frontend with the new chip variant, modal, and offer-closed card.
 4. No existing data carries `offer_declined` status, so no backfill is required.
-5. Existing applications stuck at `offer` (with declined or expired offers) can be optionally backfilled by a one-time admin script — out of scope for this design but trivial to write later.
+5. Existing applications stuck at `offer` (with declined or expired offers) can be optionally backfilled by a one-time admin script - out of scope for this design but trivial to write later.
 
 ---
 

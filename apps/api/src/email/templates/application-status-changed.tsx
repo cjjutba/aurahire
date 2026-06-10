@@ -25,7 +25,7 @@ interface Props {
 
 function statusHeadline(status: string, jobTitle: string): string {
   // Per thesis panel revision (May 2026), the "screening" case is
-  // removed — applications now go directly applied → interview or are
+  // removed - applications now go directly applied → interview or are
   // auto-rejected on score < threshold.
   switch (status.toLowerCase()) {
     case "hired":

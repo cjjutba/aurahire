@@ -59,11 +59,11 @@ export function buildInterviewIcs(input: BuildIcsInput): string {
   );
   const dtstamp = formatIcsDate(new Date());
 
-  // Stable UID across reschedule chain — always anchored to the original interview id.
+  // Stable UID across reschedule chain - always anchored to the original interview id.
   const uidId = interview.rescheduledFromId ?? interview.id;
   const uid = `interview-${uidId}@aurahire.site`;
 
-  // Build LOCATION: "Venue, Address (Room)" — commas come BEFORE escaping.
+  // Build LOCATION: "Venue, Address (Room)" - commas come BEFORE escaping.
   const locationParts = [interview.venueName, interview.addressLine].filter(
     Boolean,
   );
@@ -105,7 +105,7 @@ export function buildInterviewIcs(input: BuildIcsInput): string {
     `SUMMARY:${escapeText(`Interview: ${job.title} at ${company.name}`)}`,
     `LOCATION:${location}`,
     // DESCRIPTION is folded per RFC-5545 §3.1 (75-octet line limit).
-    // Other property lines are left unfolded — they remain within practical
+    // Other property lines are left unfolded - they remain within practical
     // consumer limits and the test suite asserts their values as full substrings.
     foldLine(`DESCRIPTION:${description}`),
     `ORGANIZER;CN=${escapeText(company.name)}:mailto:${company.recruiterEmail}`,

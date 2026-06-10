@@ -12,7 +12,7 @@ export function AuthTokenProvider({ children }: { children: React.ReactNode }) {
   // only) rather than via `useMemo` at render time. Next.js 16's static
   // pre-render still runs this component on the server, and the Supabase
   // factory throws synchronously when NEXT_PUBLIC_SUPABASE_URL/KEY are
-  // missing — which is the case during the Vercel build where build-time
+  // missing - which is the case during the Vercel build where build-time
   // env strips NEXT_PUBLIC_* for static optimization. Deferring to the
   // effect keeps the construction client-side, where env vars are real.
   useEffect(() => {

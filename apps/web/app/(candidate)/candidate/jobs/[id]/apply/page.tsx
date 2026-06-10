@@ -293,7 +293,7 @@ function NextStep({ n, children }: { n: number; children: React.ReactNode }) {
  * Server-side "you can't apply" page rendered in place of the apply
  * form when the candidate's preview match score for this job is below
  * the auto-reject threshold. Per thesis panel revision (May 2026), this
- * is a hard gate, not a warning — the candidate has to either update
+ * is a hard gate, not a warning - the candidate has to either update
  * their resume + recompute the preview, or skip this role.
  */
 function BelowThresholdBlocked({

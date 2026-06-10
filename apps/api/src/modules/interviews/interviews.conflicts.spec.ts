@@ -9,7 +9,7 @@
  *  3. Returns empty arrays when no overlap (windows abut but don't intersect).
  *  4. excludeInterviewId excludes the specified interview from the recruiter set.
  *
- * No database is hit — the repository is fully mocked.
+ * No database is hit - the repository is fully mocked.
  */
 
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
@@ -162,7 +162,7 @@ const DURATION = 60;
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe("InterviewsService — conflict detection", () => {
+describe("InterviewsService - conflict detection", () => {
   const user = makeRecruiter();
 
   describe("checkConflictsForApplication", () => {
@@ -242,7 +242,7 @@ describe("InterviewsService — conflict detection", () => {
     });
 
     it("returns empty arrays when windows abut but do not intersect", async () => {
-      // Both recruiterRows and candidateRows default to [] — simulates no overlap
+      // Both recruiterRows and candidateRows default to [] - simulates no overlap
       const { svc } = makeService();
 
       const result = await svc.checkConflictsForApplication(

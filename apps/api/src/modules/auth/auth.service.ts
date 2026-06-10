@@ -59,7 +59,7 @@ export class AuthService {
   }
 
   // ==========================================================================
-  // SIGNUP — CANDIDATE
+  // SIGNUP - CANDIDATE
   // ==========================================================================
 
   async signupCandidate(
@@ -97,7 +97,7 @@ export class AuthService {
   }
 
   // ==========================================================================
-  // SIGNUP — RECRUITER
+  // SIGNUP - RECRUITER
   // ==========================================================================
 
   async signupRecruiter(
@@ -231,7 +231,7 @@ export class AuthService {
       });
     if (!user) {
       this.logger.log(
-        `resend-verification: no user found for ${email} — silent no-op`,
+        `resend-verification: no user found for ${email} - silent no-op`,
       );
       return {
         message:
@@ -240,7 +240,7 @@ export class AuthService {
     }
     if (user.emailConfirmedAt) {
       this.logger.log(
-        `resend-verification: ${email} already confirmed at ${user.emailConfirmedAt} — silent no-op`,
+        `resend-verification: ${email} already confirmed at ${user.emailConfirmedAt} - silent no-op`,
       );
       return {
         message:
@@ -250,7 +250,7 @@ export class AuthService {
 
     // Reuse the metadata from the most recent verification token if present;
     // otherwise we cannot rebuild the signup payload, so the user must redo
-    // the form. (Edge case — happens only if an op manually pruned tokens.)
+    // the form. (Edge case - happens only if an op manually pruned tokens.)
     const recent = await this.db
       .select()
       .from(authTokensTable)
@@ -265,7 +265,7 @@ export class AuthService {
 
     if (recent.length === 0) {
       this.logger.warn(
-        `resend-verification: no prior verification token for user ${user.id} (${email}) — cannot rebuild signup metadata`,
+        `resend-verification: no prior verification token for user ${user.id} (${email}) - cannot rebuild signup metadata`,
       );
       return {
         message:
@@ -602,7 +602,7 @@ export class AuthService {
       typeof obj.phone === "string"
     ) {
       // Older tokens (issued before company creation moved to /onboarding/start)
-      // may still carry a `companyName` field; we ignore it — the verify path
+      // may still carry a `companyName` field; we ignore it - the verify path
       // no longer creates a company.
       return {
         role: "recruiter",
@@ -618,14 +618,14 @@ export class AuthService {
 
   /**
    * If a profile already exists (e.g. a duplicate verify click after the row
-   * was created), don't fail the verification — the user is already onboarded.
+   * was created), don't fail the verification - the user is already onboarded.
    */
   private swallowProfileConflict(err: unknown, userId: string): void {
     const isConflict =
       (err as { status?: number; getStatus?: () => number })?.status === 409 ||
       (err as { getStatus?: () => number })?.getStatus?.() === 409;
     if (!isConflict) throw err;
-    this.logger.log(`Profile already exists for ${userId} — verify reused.`);
+    this.logger.log(`Profile already exists for ${userId} - verify reused.`);
   }
 
   private generateRawToken(): string {

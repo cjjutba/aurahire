@@ -18,10 +18,10 @@ import { CompanyMembersRepository } from "./company-members.repository";
  *   - InvitationsModule joins membership writes through the same repo
  *
  * Forward-ref on ProfilesModule because ProfilesModule depends on this
- * module for `CompanyMembersRepository` — both halves need each other's
+ * module for `CompanyMembersRepository` - both halves need each other's
  * repositories.
  *
- * `DbModule` is imported defensively even though it's @Global — if the
+ * `DbModule` is imported defensively even though it's @Global - if the
  * global decorator is ever removed, this module keeps working.
  */
 @Module({

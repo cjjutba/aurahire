@@ -155,7 +155,7 @@ describe("canSkip", () => {
     expect(canSkip({ kind: "error", message: "Network down" })).toBe(false);
   });
 
-  it("is false in the validation-error state — the user must fix the wizard step", () => {
+  it("is false in the validation-error state - the user must fix the wizard step", () => {
     expect(
       canSkip({
         kind: "validationError",

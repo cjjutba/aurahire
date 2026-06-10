@@ -6,7 +6,7 @@
  *  2. Marks completed → no-show: same behaviour.
  *  3. Throws BadRequestException (INVALID_STATUS_TRANSITION) from cancelled / no-show / rescheduled.
  *
- * No database is hit — all dependencies are mocked.
+ * No database is hit - all dependencies are mocked.
  */
 
 import { BadRequestException } from "@nestjs/common";
@@ -134,7 +134,7 @@ describe("InterviewsService.markNoShow", () => {
         { provide: InterviewVenuesService, useValue: { create: jest.fn() } },
         {
           // Per thesis panel revision (May 2026): score-based interview
-          // eligibility gate — null score means the gate is a no-op.
+          // eligibility gate - null score means the gate is a no-op.
           provide: ScoringRepository,
           useValue: {
             findMatchScoreByApplicationId: jest.fn().mockResolvedValue(null),

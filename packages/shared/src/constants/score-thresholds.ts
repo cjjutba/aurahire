@@ -1,10 +1,10 @@
-// Score band thresholds — match defaults in scoring_config DB row.
+// Score band thresholds - match defaults in scoring_config DB row.
 // Admin can tune these via /admin/ai-config; runtime always reads from DB.
 // These constants are the fallback / default values.
 
 export const STRONG_MATCH_THRESHOLD = 70;
 export const PARTIAL_MATCH_THRESHOLD = 40;
-// 0–39 = "limited"
+// 0-39 = "limited"
 
 /**
  * Per thesis panel revision (May 2026): applications scoring below this

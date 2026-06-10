@@ -6,12 +6,12 @@
  * Flow under test
  * ───────────────
  * 1. Sign-in (already-completed via auth-state OR via UI with TEST_EMAIL/TEST_PASSWORD).
- * 2. /onboarding/candidate                    (Step 1 — resume upload)
+ * 2. /onboarding/candidate                    (Step 1 - resume upload)
  * 3. /onboarding/candidate/personal           (Step 2)
  * 4. /onboarding/candidate/review             (Step 3)
- * 5. /onboarding/candidate/preferences        (Step 4 — click "Finish")
+ * 5. /onboarding/candidate/preferences        (Step 4 - click "Finish")
  * 6. /onboarding/candidate/analyzing          (Computing your Profile Score…)
- * 7. /candidate                               (dashboard — Score Ring + Recommended jobs)
+ * 7. /candidate                               (dashboard - Score Ring + Recommended jobs)
  *
  * Prerequisites (human-managed)
  * ─────────────────────────────
@@ -31,10 +31,10 @@
  *
  * Env flags
  * ─────────
- * - `E2E_REQUIRE_RECOMMENDATIONS=true` — assert at least one Recommended job
+ * - `E2E_REQUIRE_RECOMMENDATIONS=true` - assert at least one Recommended job
  *   card renders. Set to `false` (default) to allow the empty/retry state when
  *   the precompute queue has no candidate jobs.
- * - `E2E_SKIP_AI=true`                — skip this spec entirely (e.g. CI without OPENAI).
+ * - `E2E_SKIP_AI=true`                - skip this spec entirely (e.g. CI without OPENAI).
  *
  * How to run
  * ──────────
@@ -42,7 +42,7 @@
  *
  * Selector strategy
  * ─────────────────
- * - Score Ring exposes `role="progressbar"` with `aria-label="Score N out of 100"` —
+ * - Score Ring exposes `role="progressbar"` with `aria-label="Score N out of 100"` -
  *   we target it via role instead of a brittle `data-testid`.
  * - Buttons targeted by accessible name (text/role).
  */
@@ -68,7 +68,7 @@ async function loginIfCredentialsPresent(page: Page): Promise<void> {
   await page.getByLabel(/email address/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole("button", { name: /^sign in$/i }).click();
-  // Either lands on /candidate (already onboarded — should not happen for this spec)
+  // Either lands on /candidate (already onboarded - should not happen for this spec)
   // or /onboarding/candidate. Accept either; the test will fail loudly if the
   // candidate has already finished onboarding.
   await page.waitForURL(/\/(candidate|onboarding\/candidate)/, {
@@ -76,15 +76,15 @@ async function loginIfCredentialsPresent(page: Page): Promise<void> {
   });
 }
 
-test.describe("proactive system — onboarding to dashboard", () => {
-  test.skip(SHOULD_SKIP, "E2E_SKIP_AI=true — skipping AI-dependent flow");
+test.describe("proactive system - onboarding to dashboard", () => {
+  test.skip(SHOULD_SKIP, "E2E_SKIP_AI=true - skipping AI-dependent flow");
 
   test("candidate completes onboarding, sees analyzing screen, lands on dashboard with score + recommendations", async ({
     page,
   }) => {
     await loginIfCredentialsPresent(page);
 
-    // Step 1 — resume upload.
+    // Step 1 - resume upload.
     await page.goto("/onboarding/candidate");
     await page.locator('input[type="file"]').setInputFiles(SAMPLE_PDF);
 
@@ -94,19 +94,19 @@ test.describe("proactive system — onboarding to dashboard", () => {
     });
     await page.getByRole("link", { name: /^Continue$/ }).click();
 
-    // Step 2 — personal.
+    // Step 2 - personal.
     await expect(page).toHaveURL(/\/onboarding\/candidate\/personal$/);
     // Resume parsing prefills full name; if not, the spec should still continue
     // because the inline-score path is what's under test here, not the parser.
     await expect(page.getByLabel(/full name/i)).toHaveValue(/.+/);
     await page.getByRole("button", { name: /^Continue$/ }).click();
 
-    // Step 3 — review.
+    // Step 3 - review.
     await expect(page).toHaveURL(/\/onboarding\/candidate\/review$/);
     await expect(page.getByText(/Review what we found/i)).toBeVisible();
     await page.getByRole("button", { name: /^Continue$/ }).click();
 
-    // Step 4 — preferences. Required fields then Finish.
+    // Step 4 - preferences. Required fields then Finish.
     await expect(page).toHaveURL(/\/onboarding\/candidate\/preferences$/);
     await page.getByLabel(/desired roles/i).fill("Software Engineer");
     await page.getByLabel(/^full-time$/i).check();
@@ -132,7 +132,7 @@ test.describe("proactive system — onboarding to dashboard", () => {
 
     // Score Ring exposes role="progressbar" with aria-label="Score N out of 100".
     // The dashboard renders it inside the Profile Score card *and* the analyzing
-    // screen rendered one too — by the time we're here the analyzing screen is
+    // screen rendered one too - by the time we're here the analyzing screen is
     // gone. We accept any progressbar matching the score pattern.
     await expect(
       page.getByRole("progressbar", { name: /Score \d+ out of 100/i }).first(),

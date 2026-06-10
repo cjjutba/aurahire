@@ -1,7 +1,7 @@
 /**
  * Tiny in-memory token-bucket-style limiter, scoped per Socket.io client id
  * AND per message kind. Used only for inbound `subscribe`/`unsubscribe`
- * messages — server-emitted events are server-trusted and unlimited.
+ * messages - server-emitted events are server-trusted and unlimited.
  *
  * Limit: 30 messages per 60s rolling window per (socket, kind). Subscribe and
  * unsubscribe get separate budgets so a user rapidly switching between job
@@ -12,7 +12,7 @@ export type SocketMessageKind = "subscribe" | "unsubscribe";
 export class SocketRateLimiter {
   private readonly windowMs = 60_000;
   private readonly limit = 30;
-  // Composite key: `${socketId}:${kind}` — keeps the data structure flat
+  // Composite key: `${socketId}:${kind}` - keeps the data structure flat
   // while giving subscribe and unsubscribe independent budgets.
   private readonly hits = new Map<string, number[]>();
 

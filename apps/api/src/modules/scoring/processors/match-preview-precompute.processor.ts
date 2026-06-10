@@ -29,14 +29,14 @@ export interface MatchPreviewPrecomputeResult {
  * visible jobs immediately after their resume is parsed.
  *
  * Selection: published jobs the candidate hasn't applied to and doesn't
- * already have a preview for under this resume — ordered by recency.
+ * already have a preview for under this resume - ordered by recency.
  *
  * Boundaries:
  *   * Sequential per job (concurrency: 1) so we never burst the OpenAI
  *     account with N parallel calls per resume parse.
  *   * Existing previews for the same (candidate, job, resume) triple are
- *     skipped — re-running this job is idempotent.
- *   * Failures of one job don't fail the whole batch — they're logged and
+ *     skipped - re-running this job is idempotent.
+ *   * Failures of one job don't fail the whole batch - they're logged and
  *     counted in the result.
  */
 @Processor(MATCH_PREVIEW_PRECOMPUTE_QUEUE, { concurrency: 1 })
@@ -59,7 +59,7 @@ export class MatchPreviewPrecomputeProcessor extends WorkerHost {
       `[job ${job.id}] precomputing top-${MATCH_PREVIEW_TOP_N} previews for candidate=${candidateId} resume=${resumeId}`,
     );
 
-    // Jobs the candidate has already applied to — skip.
+    // Jobs the candidate has already applied to - skip.
     const appliedRows = await this.db
       .select({ jobId: applicationsTable.jobId })
       .from(applicationsTable)

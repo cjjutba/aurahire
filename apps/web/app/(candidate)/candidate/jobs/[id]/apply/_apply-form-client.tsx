@@ -45,7 +45,7 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
     preview !== null && preview.resumeId === resumeId;
 
   // Per thesis panel revision (May 2026): sub-threshold candidates are
-  // hard-blocked by the page-level guard in apply/page.tsx — this form
+  // hard-blocked by the page-level guard in apply/page.tsx - this form
   // never renders for them. The server-side guard on POST /applications
   // is the third layer of defense (catches direct-API or
   // resume-swap-after-page-load edge cases) and surfaces the error
@@ -118,7 +118,7 @@ export function ApplyFormClient({ jobId, resumes, preview }: Props) {
         };
         // Per thesis panel revision (May 2026): the server enforces the
         // auto-reject threshold as a hard gate on POST /applications.
-        // This branch is the defense-in-depth path — the page-level
+        // This branch is the defense-in-depth path - the page-level
         // guard in apply/page.tsx should catch this first, but if a
         // direct API call or a resume swap after page-load slipped
         // through, we push the candidate back to the job detail where

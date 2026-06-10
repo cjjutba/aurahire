@@ -153,7 +153,7 @@ export interface ApplicationDetailProps {
 }
 
 // Per thesis panel revision (May 2026): `in_progress` slots above
-// scheduled — the live interview is the most relevant to surface.
+// scheduled - the live interview is the most relevant to surface.
 const INTERVIEW_STATUS_PRIORITY: Record<string, number> = {
   in_progress: 0,
   scheduled: 1,

@@ -14,9 +14,9 @@ This guide takes you from a fresh repo clone to a working `pnpm dev` (running bo
 Before starting:
 
 - macOS, Linux, or WSL2 on Windows
-- **Node.js 20.x or higher** (LTS recommended) — verify: `node --version`
-- **pnpm 9+** — install: `npm install -g pnpm@9`
-- **Docker Desktop** (running) — used for **Mailpit** (local email catcher) and **Redis** (cache + queue + throttle). Both orchestrated via `docker-compose.dev.yml` at repo root.
+- **Node.js 20.x or higher** (LTS recommended) - verify: `node --version`
+- **pnpm 9+** - install: `npm install -g pnpm@9`
+- **Docker Desktop** (running) - used for **Mailpit** (local email catcher) and **Redis** (cache + queue + throttle). Both orchestrated via `docker-compose.dev.yml` at repo root.
 - Git
 - A modern browser
 - An email address you have access to
@@ -25,7 +25,7 @@ Before starting:
 
 ## Required Service Accounts (all free tier)
 
-Sign up for **four accounts** before starting — verification can take time.
+Sign up for **four accounts** before starting - verification can take time.
 
 ### 1. Supabase (Database + Auth + Storage)
 
@@ -40,14 +40,14 @@ Sign up for **four accounts** before starting — verification can take time.
 ### 3. OpenAI (AI Inference)
 
 - Sign up at https://platform.openai.com
-- **Add $10–20 in billing credits** (free trial credits expire fast)
+- **Add $10-20 in billing credits** (free trial credits expire fast)
 
 ### 4. Digital Ocean (Backend Hosting)
 
 - Sign up at https://cloud.digitalocean.com
 - Provision a Basic Droplet (Ubuntu 22.04 LTS, 2 vCPU / 2GB RAM is sufficient for thesis-scale traffic).
 - We deploy `apps/api` directly on the Droplet under PM2; Redis + Mailpit run as Docker containers via `deploy/docker-compose.prod.yml` on the same host. Caddy terminates TLS in front.
-- An A-record (`api.<your-domain>`) on a domain you control should point at the Droplet's public IPv4 — Caddy uses it to fetch a Let's Encrypt cert.
+- An A-record (`api.<your-domain>`) on a domain you control should point at the Droplet's public IPv4 - Caddy uses it to fetch a Let's Encrypt cert.
 
 (Vercel signup deferred until Day 4 deployment.)
 
@@ -132,9 +132,9 @@ Authentication → **URL Configuration**:
 
 Storage → **New bucket**:
 
-- `resumes` — Public: OFF (private)
-- `avatars` — Public: ON
-- `company-logos` — Public: ON
+- `resumes` - Public: OFF (private)
+- `avatars` - Public: ON
+- `company-logos` - Public: ON
 
 ---
 
@@ -162,7 +162,7 @@ Storage → **New bucket**:
 
 ## Step 5: Start Local Services (Mailpit + Redis via Docker Compose)
 
-Local dev services — Mailpit (SMTP catcher) and Redis (cache + queue + throttle store) — run as Docker containers orchestrated by `docker-compose.dev.yml` at the repo root.
+Local dev services - Mailpit (SMTP catcher) and Redis (cache + queue + throttle store) - run as Docker containers orchestrated by `docker-compose.dev.yml` at the repo root.
 
 **Prerequisite:** Docker Desktop must be running.
 
@@ -175,8 +175,8 @@ docker compose -f docker-compose.dev.yml up -d
 
 This starts:
 
-- **Mailpit** — SMTP server on `localhost:1025`, web UI on http://localhost:8025
-- **Redis 7-alpine** — `localhost:6379`, with persistent volume + LRU eviction at 256MB
+- **Mailpit** - SMTP server on `localhost:1025`, web UI on http://localhost:8025
+- **Redis 7-alpine** - `localhost:6379`, with persistent volume + LRU eviction at 256MB
 
 Both containers `restart: unless-stopped`, so they survive Docker Desktop restarts. Health checks ensure they're ready before `pnpm dev` connects.
 
@@ -189,7 +189,7 @@ docker compose -f docker-compose.dev.yml ps
 # Should show both 'aurahire-mailpit' and 'aurahire-redis' as healthy
 ```
 
-- Open http://localhost:8025 — Mailpit inbox UI loads (empty initially)
+- Open http://localhost:8025 - Mailpit inbox UI loads (empty initially)
 - Verify Redis: `docker exec aurahire-redis redis-cli ping` → returns `PONG`
 
 ### 5c. Common commands
@@ -210,10 +210,10 @@ docker compose -f docker-compose.dev.yml restart redis
 
 ### 5d. Why Docker for these (not local installs)
 
-- **Reproducible** — exact same Mailpit + Redis versions across all dev environments
-- **Cleanup-friendly** — `docker compose down -v` resets state; no leftover system services
-- **No system pollution** — nothing installed via `brew`/`apt` for these services
-- **Production parity** — the production Droplet runs the same `redis:7-alpine` and `axllent/mailpit` images via `deploy/docker-compose.prod.yml`; behavior matches.
+- **Reproducible** - exact same Mailpit + Redis versions across all dev environments
+- **Cleanup-friendly** - `docker compose down -v` resets state; no leftover system services
+- **No system pollution** - nothing installed via `brew`/`apt` for these services
+- **Production parity** - the production Droplet runs the same `redis:7-alpine` and `axllent/mailpit` images via `deploy/docker-compose.prod.yml`; behavior matches.
 
 In production, real outbound email goes through **Resend** (`NODE_ENV=production` switches the transport), but the same Mailpit container is also kept on the Droplet bound to localhost as an internal SMTP fallback / inspector. `apps/api` targets the same `REDIS_URL` and SMTP environment variable shape in both environments.
 
@@ -226,7 +226,7 @@ You need **two** `.env` files (one per app) plus a root `.env` for shared values
 ### `apps/web/.env.local`
 
 ```bash
-# apps/web/.env.local — frontend secrets
+# apps/web/.env.local - frontend secrets
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6...
 
@@ -241,7 +241,7 @@ NODE_ENV=development
 ### `apps/api/.env`
 
 ```bash
-# apps/api/.env — backend secrets
+# apps/api/.env - backend secrets
 
 # Database (Supabase)
 DATABASE_URL=postgresql://postgres.xxxxx:yourpassword@aws-0-region.pooler.supabase.com:6543/postgres
@@ -374,7 +374,7 @@ If anything fails, see Troubleshooting.
 
 ### Backend → Digital Ocean Droplet
 
-The backend deploy is **manual SSH + PM2 + Docker Compose** — no PaaS, no auto-deploy from GitHub. This is intentional for the thesis (every moving part is visible and editable; nothing hidden behind a control plane).
+The backend deploy is **manual SSH + PM2 + Docker Compose** - no PaaS, no auto-deploy from GitHub. This is intentional for the thesis (every moving part is visible and editable; nothing hidden behind a control plane).
 
 1. **Create the Droplet:** at https://cloud.digitalocean.com → **Create → Droplets** → Ubuntu 22.04 LTS, Basic plan (2 vCPU / 2GB RAM), region closest to your users, SSH key auth (no password).
 2. **DNS:** point `api.<your-domain>` (A-record) at the Droplet's public IPv4. Caddy needs the hostname resolvable to fetch a Let's Encrypt cert.
@@ -386,7 +386,7 @@ The backend deploy is **manual SSH + PM2 + Docker Compose** — no PaaS, no auto
    - Install Caddy (https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
    - Install PM2: `npm install -g pm2`
    - Create non-root `deploy` user, add to `docker` group, copy SSH key
-   - UFW firewall: allow `22, 80, 443` only — Redis (6379) and Mailpit (1025/8025) stay inside the host
+   - UFW firewall: allow `22, 80, 443` only - Redis (6379) and Mailpit (1025/8025) stay inside the host
 4. **Clone the repo** as `deploy@<droplet>` to `/home/deploy/aurahire`.
 5. **Create `deploy/.env`** with production values (DATABASE_URL Supabase pooler, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY, REDIS_PASSWORD, REDIS_URL=`redis://:${REDIS_PASSWORD}@127.0.0.1:6379`, SMTP_HOST=127.0.0.1, SMTP_PORT=1025, NODE_ENV=production, NEXT_PUBLIC_APP_URL=`https://aurahire.vercel.app`, ALLOWED_ORIGINS=`https://aurahire.vercel.app`). `chmod 600 deploy/.env`.
 6. **Bring up Redis + Mailpit:** `docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d`
@@ -442,7 +442,7 @@ pnpm format
 Stop dev:
 
 - `Ctrl+C` in the `pnpm dev` terminal
-- Optional: `docker compose -f docker-compose.dev.yml down` to stop Mailpit + Redis (or leave them running across sessions — they persist data via volumes)
+- Optional: `docker compose -f docker-compose.dev.yml down` to stop Mailpit + Redis (or leave them running across sessions - they persist data via volumes)
 
 ---
 
@@ -482,12 +482,12 @@ Stop dev:
 
 ### Docker Compose: port already in use
 
-- Another process is bound to 1025/8025/6379 — find and stop it: `lsof -i :6379`
+- Another process is bound to 1025/8025/6379 - find and stop it: `lsof -i :6379`
 - Or change the host port in `docker-compose.dev.yml` (e.g. `"6380:6379"`) and update `REDIS_URL` accordingly
 
 ### Backend `Row-level security policy violated`
 
-- Service role client should be used for system operations (audit log, admin queries) — verify the right Supabase client is used
+- Service role client should be used for system operations (audit log, admin queries) - verify the right Supabase client is used
 - Verify RLS policies match the operation being performed
 
 ### Resume parsing fails
@@ -512,7 +512,7 @@ Stop dev:
 For later:
 
 - Custom domain on Vercel; bare-domain (apex) DNS for `api.<your-domain>` already covered above
-- Verified Resend sender domain (`aurahire.site` — already DNS-verified on GoDaddy)
+- Verified Resend sender domain (`aurahire.site` - already DNS-verified on GoDaddy)
 - Sentry for error tracking
 - Upstash QStash (or moving to a larger Droplet / horizontal-scale via DOKS) if BullMQ throughput on a single Droplet becomes the bottleneck
 - DNS records (SPF/DKIM/DMARC) for email deliverability

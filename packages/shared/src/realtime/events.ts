@@ -17,7 +17,7 @@ import type {
   NotificationReadPayload,
 } from "./notification-payloads";
 
-// Event names — the single source of truth used by both backend emitters and
+// Event names - the single source of truth used by both backend emitters and
 // frontend listeners. Past-tense, dotted-namespace.
 export const RealtimeEvent = {
   ApplicationCreated: "application.created",
@@ -122,7 +122,7 @@ export type OfferSentPayload = z.infer<typeof offerSentSchema>;
 
 // `actorId` is nullable (system-generated entries have no human actor).
 // `entityId` is NOT nullable to match the DB column constraint
-// (audit_logs.entity_id is NOT NULL — every audit row references a concrete
+// (audit_logs.entity_id is NOT NULL - every audit row references a concrete
 // entity).
 export const auditEntrySchema = z.object({
   auditId: z.string().uuid(),

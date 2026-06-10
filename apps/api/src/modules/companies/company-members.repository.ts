@@ -20,7 +20,7 @@ import { DRIZZLE_CLIENT, type DrizzleClient } from "../../db/db.module";
  *
  * Read methods filter by `status='active'` only when the suffix says so;
  * `findActiveMembership` returns null for invited/suspended/left rows so
- * the guard rejects them — pending invitees are not authorized to act on
+ * the guard rejects them - pending invitees are not authorized to act on
  * the company yet.
  */
 @Injectable()
@@ -115,11 +115,11 @@ export class CompanyMembersRepository {
   }
 
   /**
-   * Every membership row in a company — active members AND pending invites.
+   * Every membership row in a company - active members AND pending invites.
    * `user` is null for pending invitations (no user_id yet).
    * `inviterName` reads through a second profiles join keyed off `invited_by`.
    * Sort: active members first (joined_at desc), then pending invites
-   * (invited_at desc) — NULLS LAST keeps invites trailing.
+   * (invited_at desc) - NULLS LAST keeps invites trailing.
    */
   async listForCompany(
     companyId: string,

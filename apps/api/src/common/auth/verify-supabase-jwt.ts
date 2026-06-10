@@ -12,7 +12,7 @@ export interface SupabaseJwtVerifier {
 /**
  * Builds a verifier that validates Supabase-issued JWTs against the project's
  * JWKS. Used by both the REST guard (`SupabaseAuthGuard`) and the WebSocket
- * handshake — keeps a single source of truth for issuer/audience/JWKS caching.
+ * handshake - keeps a single source of truth for issuer/audience/JWKS caching.
  */
 export function createSupabaseJwtVerifier(
   options: SupabaseJwtVerifierOptions,

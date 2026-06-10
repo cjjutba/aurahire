@@ -41,7 +41,7 @@ interface AdvanceAction {
 }
 
 const NEXT_POSITIVE: Record<string, AdvanceAction[] | null> = {
-  // Screening stage removed per panel revision (May 2026) — applied
+  // Screening stage removed per panel revision (May 2026) - applied
   // goes directly to interview if score >= threshold; below = auto-reject.
   applied: [{ status: "interview", label: "Move to Interview" }],
   interview: [

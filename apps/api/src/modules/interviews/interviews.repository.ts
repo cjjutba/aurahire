@@ -285,7 +285,7 @@ export class InterviewsRepository {
           ),
         );
     }
-    // No filter combination supplied — return empty rather than scanning all interviews.
+    // No filter combination supplied - return empty rather than scanning all interviews.
     return [];
   }
 }

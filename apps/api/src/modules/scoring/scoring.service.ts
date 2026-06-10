@@ -48,7 +48,7 @@ type MatchPreviewSource = "system" | "candidate" | "candidate_view";
 /**
  * Redis TTL (seconds) for the on-view daily counter.
  *
- * 90,000s ≈ 25h — slightly more than a calendar day so the key safely
+ * 90,000s ≈ 25h - slightly more than a calendar day so the key safely
  * outlives the UTC date boundary it's bucketed under. Date-bucketed keys
  * expire on their own; this TTL is a belt-and-suspenders cleanup so a
  * disconnected user's stale key doesn't accumulate indefinitely.
@@ -84,7 +84,7 @@ interface RequestMeta {
  *
  * Returns the weighted sum normalized to 0..100 by component maxes. With
  * configured weights summing to 100 (enforced by the Zod validator), this is
- * just the score sum — but the normalization makes it robust to any AI
+ * just the score sum - but the normalization makes it robust to any AI
  * deviation from the configured maxes and prevents silent clamping when
  * sums overflow.
  */
@@ -199,15 +199,15 @@ export type CalibrationWarningReason =
 
 /**
  * Surface known model-misbehavior patterns as advisory warnings.
- * Warnings do NOT auto-adjust the score — they're written to the audit
+ * Warnings do NOT auto-adjust the score - they're written to the audit
  * row's `details.calibrationWarnings` array and aggregated in
  * /admin/bias-monitor's "Scoring Quality" panel for human review.
  *
  * Two heuristics:
- *   1. ceiling_with_thin_evidence — Component scored at max but the model
+ *   1. ceiling_with_thin_evidence - Component scored at max but the model
  *      only cited one positive evidence item. The prompt v1.2.0 rule
  *      requires at least two positives at ceiling.
- *   2. deduction_without_negative_evidence — Component below max but no
+ *   2. deduction_without_negative_evidence - Component below max but no
  *      evidence row carries a negative contribution. The deduction has no
  *      visible justification.
  */
@@ -270,7 +270,7 @@ export function deriveBand(
 /**
  * Build the Completeness component deterministically from the parsed resume's
  * structural shape. Completeness measures whether a candidate filled the
- * canonical resume sections; that is structural data, not a judgment call —
+ * canonical resume sections; that is structural data, not a judgment call -
  * it doesn't need an LLM, and asking the LLM made it brittle (post-PII-redaction
  * the model couldn't see contact content and scored 0/25 even on full resumes).
  *
@@ -442,7 +442,7 @@ export class ScoringService {
    *
    * The queue-driven recompute path (Task 9 processor) calls
    * `computeProfileScore` directly with an explicit `(candidateId, resumeId)`
-   * pair — system-driven recomputes don't need the user-keyed rate limit
+   * pair - system-driven recomputes don't need the user-keyed rate limit
    * because BullMQ already collapses duplicate jobs by jobId at enqueue time.
    */
   async computeProfileScoreForUser(
@@ -458,7 +458,7 @@ export class ScoringService {
 
     // Defense in depth: this manual check enforces 1/60s PER USER. The
     // ThrottlerGuard on ScoringController.computeProfile enforces 1/60s PER IP.
-    // Both layers are valuable — a determined attacker rotating IPs would
+    // Both layers are valuable - a determined attacker rotating IPs would
     // bypass Throttler but not this user-keyed check.
     const lastScore = await this.scoringRepo.findMostRecentProfileScore(
       user.id,
@@ -494,7 +494,7 @@ export class ScoringService {
   }
 
   /**
-   * Core Profile Score compute — runs the AI, persists a fresh
+   * Core Profile Score compute - runs the AI, persists a fresh
    * `profile_scores` row, writes the audit row, busts the candidate's
    * profile-score cache. Used by both the user-facing wrapper above and the
    * queue-driven recompute processor (Task 9).
@@ -559,8 +559,8 @@ export class ScoringService {
       requestId: `score-profile:${candidateId}`,
     });
 
-    // Completeness is structural — whether canonical resume sections were
-    // filled — and post-PII-redaction the model cannot reliably see contact
+    // Completeness is structural - whether canonical resume sections were
+    // filled - and post-PII-redaction the model cannot reliably see contact
     // content. Engine-side override using the original parsed resume keeps the
     // component honest without leaking redacted data back to the AI.
     const completenessOverride = buildDeterministicCompletenessComponent(
@@ -833,7 +833,7 @@ export class ScoringService {
   }
 
   // -----------------------------------------------------------------
-  // MATCH SCORE — orchestrator called by ApplicationsService.apply()
+  // MATCH SCORE - orchestrator called by ApplicationsService.apply()
   // -----------------------------------------------------------------
 
   async computeMatchScore(
@@ -876,7 +876,7 @@ export class ScoringService {
     const weights = config.matchWeights as MatchWeights;
     const bandThresholds = config.bandThresholds as BandThresholds;
 
-    // Promotion path — if the candidate ran "See my match" or we
+    // Promotion path - if the candidate ran "See my match" or we
     // auto-pre-computed during resume parse for the same (candidate, job,
     // resume) triple, reuse the already-paid-for AI result instead of
     // burning a fresh OpenAI call. Apply becomes effectively instant.
@@ -909,13 +909,13 @@ export class ScoringService {
       });
     }
 
-    // Engine-enforced arithmetic — see deriveOverallScore note above.
+    // Engine-enforced arithmetic - see deriveOverallScore note above.
     const normalizedMatchComponents = normalizeComponentsToWeights(
       aiResult.score.components,
       weights as unknown as Record<string, number>,
     );
 
-    // Strict-sum reconciliation — mirrors the pattern in computeProfileScore.
+    // Strict-sum reconciliation - mirrors the pattern in computeProfileScore.
     // component.score becomes the (quantized, clamped) sum of evidence
     // contribution_points; AI's score is discarded; residuals + warnings
     // flow into the audit row.
@@ -1027,7 +1027,7 @@ export class ScoringService {
    * Synchronous preview-promotion fast-path used by ApplicationsService.apply().
    *
    * If a preview already exists for this exact (candidate, job, resume) triple,
-   * materialize it as a real `match_scores` row tied to the new application —
+   * materialize it as a real `match_scores` row tied to the new application -
    * no OpenAI call, no queue, no shimmer on the detail page. Returns null when
    * no preview is available, in which case the caller should defer to the
    * async worker.
@@ -1123,13 +1123,13 @@ export class ScoringService {
   }
 
   // -----------------------------------------------------------------
-  // MATCH-SCORE PREVIEWS — pre-application "See my match" + auto-precompute
+  // MATCH-SCORE PREVIEWS - pre-application "See my match" + auto-precompute
   // -----------------------------------------------------------------
 
   /**
    * Compute a match-score preview for the current candidate against `jobId`
    * using the candidate's default resume. Idempotent per (candidate, job,
-   * resume) — repeated calls for the same triple UPSERT and bump the row's
+   * resume) - repeated calls for the same triple UPSERT and bump the row's
    * createdAt. Skips computation entirely if a fresh preview already exists.
    */
   async computeMatchPreview(
@@ -1156,7 +1156,7 @@ export class ScoringService {
    *
    * Behavior contract (Phase 1 proactive system):
    *   1. If a preview row already exists for `(candidateId, jobId, current
-   *      default resume)`, return it immediately — no AI call, and no
+   *      default resume)`, return it immediately - no AI call, and no
    *      increment to the daily counter (cache hit cost is zero).
    *   2. Otherwise check the per-UTC-day counter
    *      `scoring:onview:{candidateId}:{YYYY-MM-DD}`. Atomic INCR; first
@@ -1205,7 +1205,7 @@ export class ScoringService {
       });
     }
 
-    // 2. Cache-hit short-circuit — return without touching the daily counter.
+    // 2. Cache-hit short-circuit - return without touching the daily counter.
     const existing = await this.scoringRepo.findMatchPreview(
       candidateId,
       jobId,
@@ -1221,7 +1221,7 @@ export class ScoringService {
     const key = `scoring:onview:${candidateId}:${today}`;
     const count = await this.redis.incr(key);
     if (count === 1) {
-      // Best-effort TTL — if EXPIRE fails the key still gets a fresh INCR
+      // Best-effort TTL - if EXPIRE fails the key still gets a fresh INCR
       // tomorrow under a different date-bucketed name, so we don't bail.
       await this.redis.expire(key, ONVIEW_COUNTER_TTL_SECONDS);
     }
@@ -1327,7 +1327,7 @@ export class ScoringService {
       weights as unknown as Record<string, number>,
     );
 
-    // Strict-sum reconciliation — same pattern as computeProfileScore /
+    // Strict-sum reconciliation - same pattern as computeProfileScore /
     // computeMatchScore. component.score becomes the (quantized, clamped)
     // sum of evidence contribution_points; AI's score is discarded.
     const previewReconciliations = normalizedPreviewComponents.map((c) =>
@@ -1386,7 +1386,7 @@ export class ScoringService {
     // both log `actorType: "ai"` for AI-driven writes regardless of whether a
     // human triggered the request. The legacy "candidate" branch is kept for
     // historical rows that flowed through that path before the buttonless
-    // redesign — no new writes should land on `source = "candidate"`.
+    // redesign - no new writes should land on `source = "candidate"`.
     const actorType = (() => {
       switch (source) {
         case "candidate":
@@ -1444,13 +1444,13 @@ export class ScoringService {
   /**
    * Internal helper: read the raw preview row (not a DTO) for a
    * (candidate, job, resume) triple. Used by ApplicationsService to
-   * enforce the score-based pre-apply gate (May 2026 panel revision) —
+   * enforce the score-based pre-apply gate (May 2026 panel revision) -
    * returns null if no preview exists yet for the triple, in which case
    * the apply proceeds and the async worker handles auto-reject.
    *
    * Distinct from `getMatchPreviewByJob` (latest by job, regardless of
    * resume) because the pre-apply gate must use the exact resume the
-   * candidate is applying with — otherwise switching resumes after a
+   * candidate is applying with - otherwise switching resumes after a
    * preview would silently bypass the gate.
    */
   async findRawPreview(
@@ -1469,7 +1469,7 @@ export class ScoringService {
 
   /**
    * Read-only fetch of an existing preview for a (candidate, job) pair.
-   * Returns the latest preview regardless of resume version — the UI uses
+   * Returns the latest preview regardless of resume version - the UI uses
    * this to decide whether to render "See my match" or the existing score.
    */
   async getMatchPreviewByJob(

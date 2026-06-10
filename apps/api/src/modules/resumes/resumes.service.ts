@@ -116,7 +116,7 @@ export class ResumesService {
           `DOCX to PDF conversion failed: ${(err as Error).message}`,
         );
         canonicalPdfPath = null;
-        // Continue without canonical PDF — frontend will fall back to LinearizedResumeView.
+        // Continue without canonical PDF - frontend will fall back to LinearizedResumeView.
       }
     }
 
@@ -183,7 +183,7 @@ export class ResumesService {
 
       // Fire-and-forget: queue the top-N match-preview precompute pass so
       // candidates see "Recommended for you" populated by the time they
-      // visit the dashboard. Failure to enqueue is non-fatal — the parse
+      // visit the dashboard. Failure to enqueue is non-fatal - the parse
       // itself succeeded.
       void this.matchPreviewQueue.enqueuePrecompute({
         candidateId: user.id,
@@ -362,7 +362,7 @@ export class ResumesService {
     // Wrap the DB writes (default-flag flip + profile_scores stale_at) in a
     // single transaction so a failure on either side rolls the other back.
     // BullMQ enqueues and queue cancellations are intentionally OUTSIDE the
-    // tx — Redis isn't transactional with Postgres, and we'd rather emit a
+    // tx - Redis isn't transactional with Postgres, and we'd rather emit a
     // duplicate enqueue (idempotent) than miss one if the tx commit happens
     // and a queue op throws. Queue cancellation goes BEFORE the tx so an
     // observer never sees a stale resume's job racing the new flag.
@@ -454,7 +454,7 @@ export class ResumesService {
       return;
     }
 
-    // Non-default resume — straight delete, no cascade.
+    // Non-default resume - straight delete, no cascade.
     await this.storage.delete({
       bucket: RESUMES_BUCKET,
       path: resume.storagePath,
@@ -524,17 +524,17 @@ export class ResumesService {
 
   /**
    * Shared cascade for any flow that changes which resume is the candidate's
-   * default — both `setDefault` (Task 6) and the delete-default auto-promote
+   * default - both `setDefault` (Task 6) and the delete-default auto-promote
    * path (Task 7) call this. Steps:
    *   1. Cancel any in-flight match-preview-precompute work for the resume
-   *      we're moving away from. Best-effort — the worker UPSERTs anyway.
+   *      we're moving away from. Best-effort - the worker UPSERTs anyway.
    *   2. Inside one Postgres transaction: run the caller's default-flag flip
    *      (caller-supplied closure) AND mark non-stale profile_scores stale.
    *   3. Enqueue a fresh profile-score recompute + match-preview precompute
    *      against the new default.
    *
    * Queue cancellation runs OUTSIDE the tx because Redis isn't transactional
-   * with Postgres — we'd rather emit a duplicate (idempotent) than miss one.
+   * with Postgres - we'd rather emit a duplicate (idempotent) than miss one.
    */
   private async applyDefaultChange(opts: {
     candidateId: string;
@@ -578,7 +578,7 @@ export class ResumesService {
         );
     });
 
-    // Best-effort enqueues — failures are logged inside the queue services.
+    // Best-effort enqueues - failures are logged inside the queue services.
     await this.profileScoreQueue.enqueueRecompute({
       candidateId,
       resumeId: newResumeId,

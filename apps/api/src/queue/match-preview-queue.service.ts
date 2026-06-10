@@ -36,13 +36,13 @@ export class MatchPreviewQueueService {
 
   /**
    * Enqueue a precompute pass for (candidate, resume). Idempotent on the
-   * queue side because the worker UPSERTs and skips existing previews —
+   * queue side because the worker UPSERTs and skips existing previews -
    * duplicate enqueues at most cost a few cheap reads. Failures are
    * non-fatal: the candidate's resume parse already succeeded; the
    * auto-preview is best-effort.
    *
    * Returns the BullMQ job id (for callers that need to surface it in a
-   * synchronous response — e.g. the onboarding-completion handshake), or
+   * synchronous response - e.g. the onboarding-completion handshake), or
    * `null` when enqueue fails or the queue declines to assign an id.
    */
   async enqueuePrecompute(
@@ -69,7 +69,7 @@ export class MatchPreviewQueueService {
 
   /**
    * Cancel any in-flight precompute jobs scoped to a specific resume id.
-   * Called when the candidate's default resume changes — work scheduled
+   * Called when the candidate's default resume changes - work scheduled
    * against the OLD resume is now wasted because the on-screen feed will
    * be driven by previews against the NEW resume.
    *
@@ -94,7 +94,7 @@ export class MatchPreviewQueueService {
             await job.remove();
             cancelled++;
           } catch (err) {
-            // BullMQ's remove() can race with the worker locking the job —
+            // BullMQ's remove() can race with the worker locking the job -
             // failures here are non-fatal; the worker may have already
             // started processing it.
             this.logger.warn(

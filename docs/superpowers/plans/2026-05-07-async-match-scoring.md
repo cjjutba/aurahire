@@ -4,7 +4,7 @@
 
 **Goal:** Move the 34-second synchronous `POST /api/v1/applications` flow off the request path. Collapse the 10-call serial redaction loop into one batched structured call (prompt v2.0.0). Push the match-score AI call into a BullMQ worker. Stream the completed score to the candidate, recruiter, and admins via the existing `RealtimeGateway` using a new `application.scored` event. Result: apply request returns ~200ms; the score appears live ~13s later without a refresh.
 
-**Architecture:** Three durable changes. (1) **Batched redaction** — one OpenAI structured call returns scrubbed `summary` + every responsibility in a single response keyed by index, replacing 10 sequential text completions. (2) **Async scoring** — apply persists `applications.score_status='computing'`, enqueues a `match-score` BullMQ job, returns 201 immediately; the worker performs redaction + scoring + persistence + audit, then the existing realtime gateway broadcasts `application.scored` to `user:{candidateId}`, `recruiter:{recruiterId}`, `job:{jobId}`. (3) **Frontend live update** — apply page redirects on 201, application detail page shows `AiShimmer` while `score_status='computing'`, subscribes to `application.scored`, replaces shimmer with the live score on event arrival. TanStack Query cache invalidation ensures even windows that joined late catch up.
+**Architecture:** Three durable changes. (1) **Batched redaction** - one OpenAI structured call returns scrubbed `summary` + every responsibility in a single response keyed by index, replacing 10 sequential text completions. (2) **Async scoring** - apply persists `applications.score_status='computing'`, enqueues a `match-score` BullMQ job, returns 201 immediately; the worker performs redaction + scoring + persistence + audit, then the existing realtime gateway broadcasts `application.scored` to `user:{candidateId}`, `recruiter:{recruiterId}`, `job:{jobId}`. (3) **Frontend live update** - apply page redirects on 201, application detail page shows `AiShimmer` while `score_status='computing'`, subscribes to `application.scored`, replaces shimmer with the live score on event arrival. TanStack Query cache invalidation ensures even windows that joined late catch up.
 
 **Tech Stack:** NestJS 10, BullMQ 5 (Redis), OpenAI structured outputs (gpt-4o-mini), Drizzle ORM, Zod, Supabase Postgres + Auth, Socket.io 4 with Redis adapter, Next.js 16, TanStack Query 5.
 
@@ -154,7 +154,7 @@ describe("RealtimeEvent.ApplicationScored", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm --filter @aurahire/shared test -- --testPathPatterns=events`
-Expected: FAIL — `applicationScoredSchema` is not exported.
+Expected: FAIL - `applicationScoredSchema` is not exported.
 
 - [ ] **Step 3: Add schema, type, and event constant**
 
@@ -269,7 +269,7 @@ Create `packages/db/drizzle/0008_application_score_status.sql`:
 
 ```sql
 -- =============================================================================
--- Async match scoring — score_status lifecycle column on applications.
+-- Async match scoring - score_status lifecycle column on applications.
 -- =============================================================================
 --
 -- WHAT THIS MIGRATION DOES
@@ -381,7 +381,7 @@ Do NOT redact:
 - Industry jargon
 - Generic terms (engineer, developer, manager)
 
-Return the array of { id, scrubbed } objects exactly mirroring the input ids — do not drop, reorder, or merge entries.`;
+Return the array of { id, scrubbed } objects exactly mirroring the input ids - do not drop, reorder, or merge entries.`;
 
 export const redactBatchInputItemSchema = z.object({
   id: z.string(),
@@ -512,12 +512,12 @@ describe("RedactPiiService.redactResume batching", () => {
 });
 ```
 
-Delete the previous `RedactPiiService.redactResume parallelism` describe block — it's superseded by the batching block above.
+Delete the previous `RedactPiiService.redactResume parallelism` describe block - it's superseded by the batching block above.
 
 - [ ] **Step 3: Run the spec to verify RED**
 
 Run: `cd apps/api && pnpm test -- --testPathPatterns=redact-pii`
-Expected: FAIL — current code calls `generateText` not `generateStructured`.
+Expected: FAIL - current code calls `generateText` not `generateStructured`.
 
 - [ ] **Step 4: Rewrite `redactResume` to use the batched call**
 
@@ -668,7 +668,7 @@ export class RedactPiiService {
 }
 ```
 
-- [ ] **Step 5: Update audit fields downstream — `prompt_version`**
+- [ ] **Step 5: Update audit fields downstream - `prompt_version`**
 
 The `match_scores.prompt_version` audit column has historically pointed at the _match_ prompt, not the redaction prompt. Redaction tracking lives in `redacted_fields`. No code change is required here, but a thesis appendix note should record the bump 1.0.0 → 2.0.0.
 
@@ -765,7 +765,7 @@ describe("MatchScoreQueueService.enqueue", () => {
 - [ ] **Step 3: Run test to verify it fails**
 
 Run: `cd apps/api && pnpm test -- --testPathPatterns=match-score-queue`
-Expected: FAIL — `MatchScoreQueueService` doesn't exist yet.
+Expected: FAIL - `MatchScoreQueueService` doesn't exist yet.
 
 - [ ] **Step 4: Implement the facade**
 
@@ -812,7 +812,7 @@ export class MatchScoreQueueService {
         `Enqueued match-score job ${job.id} for application=${payload.applicationId}`,
       );
     } catch (err) {
-      // Never propagate to caller — apply already succeeded; the cron
+      // Never propagate to caller - apply already succeeded; the cron
       // backstop / manual rescore path will catch orphaned 'computing' rows.
       this.logger.warn(
         `Failed to enqueue match-score: ${(err as Error).message}`,
@@ -892,7 +892,7 @@ git commit -m "feat(api): add match-score BullMQ queue + enqueue facade"
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `apps/api/src/realtime/events.service.spec.ts` (create if absent — pattern below works either way):
+Append to `apps/api/src/realtime/events.service.spec.ts` (create if absent - pattern below works either way):
 
 ```ts
 import { EventsService } from "./events.service";
@@ -935,7 +935,7 @@ describe("EventsService.emitApplicationScored", () => {
 - [ ] **Step 2: Run to confirm RED**
 
 Run: `cd apps/api && pnpm test -- --testPathPatterns=events.service`
-Expected: FAIL — `emitApplicationScored` is not a method.
+Expected: FAIL - `emitApplicationScored` is not a method.
 
 - [ ] **Step 3: Implement**
 
@@ -990,7 +990,7 @@ git commit -m "feat(api): emit application.scored event over realtime gateway"
 
 ---
 
-## Task 7: `MatchScoreProcessor` — the BullMQ worker
+## Task 7: `MatchScoreProcessor` - the BullMQ worker
 
 **Files:**
 
@@ -1000,7 +1000,7 @@ git commit -m "feat(api): emit application.scored event over realtime gateway"
 - [ ] **Step 1: Locate the scoring module**
 
 Run: `cat apps/api/src/modules/scoring/scoring.module.ts`
-Note its current `providers:` list — the new processor must be added.
+Note its current `providers:` list - the new processor must be added.
 
 - [ ] **Step 2: Create the processor**
 
@@ -1024,7 +1024,7 @@ import { ScoringService } from "../scoring.service";
  * is created. On success: persists the score, sets applications.score_status
  * = 'completed', and emits application.scored over the realtime gateway.
  * On terminal failure (after attempts exhausted): sets score_status='failed'
- * — the UI shows a manual retry affordance.
+ * - the UI shows a manual retry affordance.
  *
  * Concurrency 3 keeps OpenAI calls bounded; backoff is configured at the
  * enqueue site (3 attempts, exponential 5s base).
@@ -1113,7 +1113,7 @@ export class MatchScoreProcessor extends WorkerHost {
     });
 
     this.logger.log(
-      `[score-job ${job.id}] ok in ${Date.now() - startedAt}ms — ${dto.overallScore}/100`,
+      `[score-job ${job.id}] ok in ${Date.now() - startedAt}ms - ${dto.overallScore}/100`,
     );
   }
 
@@ -1146,13 +1146,13 @@ export class ScoringModule {}
 - [ ] **Step 4: Type-check**
 
 Run: `pnpm --filter @aurahire/api type-check`
-Expected: silent success. If `EventsService` isn't visible from the scoring module, ensure `RealtimeModule` is in scoring's `imports` list (or that EventsService is `@Global()` exported — check the existing realtime module).
+Expected: silent success. If `EventsService` isn't visible from the scoring module, ensure `RealtimeModule` is in scoring's `imports` list (or that EventsService is `@Global()` exported - check the existing realtime module).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/modules/scoring/processors/match-score.processor.ts apps/api/src/modules/scoring/scoring.module.ts
-git commit -m "feat(api): MatchScoreProcessor — async BullMQ worker for match scoring"
+git commit -m "feat(api): MatchScoreProcessor - async BullMQ worker for match scoring"
 ```
 
 ---
@@ -1167,7 +1167,7 @@ git commit -m "feat(api): MatchScoreProcessor — async BullMQ worker for match 
 
 - [ ] **Step 1: Surface `scoreStatus` on `ApplicationDto`**
 
-In `apps/api/src/modules/applications/dto/application-response.dto.ts`, find the `ApplicationDto` class. Add the field (mirror its existing decorator style — likely `@ApiProperty(...)` from `@nestjs/swagger`). Insert near `status`:
+In `apps/api/src/modules/applications/dto/application-response.dto.ts`, find the `ApplicationDto` class. Add the field (mirror its existing decorator style - likely `@ApiProperty(...)` from `@nestjs/swagger`). Insert near `status`:
 
 ```ts
 @ApiProperty({ enum: APPLICATION_SCORE_STATUS })
@@ -1185,7 +1185,7 @@ import {
 
 - [ ] **Step 2: Update the repository to expose `scoreStatus`**
 
-In `apps/api/src/modules/applications/applications.repository.ts`, locate `insert()`. Confirm it uses the `applicationsTable` schema and include the new column in the inserted shape (the Drizzle default of `'computing'` will fire if you omit it — recommended). For the `findById`/`findByCandidateId` selects, confirm `scoreStatus` is included by `.select()` (it is — Drizzle `.select()` with no projection grabs all columns).
+In `apps/api/src/modules/applications/applications.repository.ts`, locate `insert()`. Confirm it uses the `applicationsTable` schema and include the new column in the inserted shape (the Drizzle default of `'computing'` will fire if you omit it - recommended). For the `findById`/`findByCandidateId` selects, confirm `scoreStatus` is included by `.select()` (it is - Drizzle `.select()` with no projection grabs all columns).
 
 Add a focused method:
 
@@ -1205,7 +1205,7 @@ async updateScoreStatus(
 
 - [ ] **Step 3: Write the failing service test**
 
-Update `apps/api/src/modules/applications/applications.service.spec.ts` (or create if absent — follow the pattern from existing `*.service.spec.ts` files in the repo):
+Update `apps/api/src/modules/applications/applications.service.spec.ts` (or create if absent - follow the pattern from existing `*.service.spec.ts` files in the repo):
 
 ```ts
 describe("ApplicationsService.apply (async scoring)", () => {
@@ -1238,7 +1238,7 @@ describe("ApplicationsService.apply (async scoring)", () => {
 - [ ] **Step 4: Run to confirm RED**
 
 Run: `cd apps/api && pnpm test -- --testPathPatterns=applications.service`
-Expected: FAIL — apply still calls `computeMatchScore` synchronously.
+Expected: FAIL - apply still calls `computeMatchScore` synchronously.
 
 - [ ] **Step 5: Refactor `apply()`**
 
@@ -1268,7 +1268,7 @@ constructor(
 ) {}
 ```
 
-3. Replace the existing match-score block (lines 167–189) with:
+3. Replace the existing match-score block (lines 167-189) with:
 
 ```ts
 await this.matchScoreQueue.enqueue({
@@ -1279,9 +1279,9 @@ await this.matchScoreQueue.enqueue({
 });
 ```
 
-4. The fire-and-forget `notifyRecruiterOfApplication(...)` call stays as-is — recruiter email shouldn't wait on scoring (they get a separate notification when the score is ready, via the realtime + notifications pipeline).
+4. The fire-and-forget `notifyRecruiterOfApplication(...)` call stays as-is - recruiter email shouldn't wait on scoring (they get a separate notification when the score is ready, via the realtime + notifications pipeline).
 
-5. Update the final return — `toDto` already pulls all DB columns, so it will surface the new `scoreStatus='computing'` automatically. Strip the `{ matchScore: matchScoreDto }` argument because there is no synchronous match score now.
+5. Update the final return - `toDto` already pulls all DB columns, so it will surface the new `scoreStatus='computing'` automatically. Strip the `{ matchScore: matchScoreDto }` argument because there is no synchronous match score now.
 
 ```ts
 return this.toDto(application.id);
@@ -1306,7 +1306,7 @@ git commit -m "feat(api): apply enqueues match-score job; returns 201 immediatel
 
 ---
 
-## Task 9: Frontend — apply page redirects immediately
+## Task 9: Frontend - apply page redirects immediately
 
 **Files:**
 
@@ -1314,7 +1314,7 @@ git commit -m "feat(api): apply enqueues match-score job; returns 201 immediatel
 
 - [ ] **Step 1: Strip the synchronous AiShimmer wait state**
 
-In `_apply-form-client.tsx`, the `if (submitting) { … }` block (lines 120–144 currently) renders either a Loader2 spinner ("Submitting application…") or AiShimmer ("Computing your match…"). Since the apply request now returns in ~200ms, we no longer need the AiShimmer fallback here — the wait UI lives on the application detail page.
+In `_apply-form-client.tsx`, the `if (submitting) { … }` block (lines 120-144 currently) renders either a Loader2 spinner ("Submitting application…") or AiShimmer ("Computing your match…"). Since the apply request now returns in ~200ms, we no longer need the AiShimmer fallback here - the wait UI lives on the application detail page.
 
 Replace the entire `if (submitting) { … }` block with a single Loader2 fallback:
 
@@ -1336,7 +1336,7 @@ if (submitting) {
 }
 ```
 
-The redirect on success (`router.push(\`/candidate/applications/${body.data.id}\`)`) already exists at the bottom of the `submit()` function — no change needed there. Remove now-unused imports (`AiShimmer` is gone from this file).
+The redirect on success (`router.push(\`/candidate/applications/${body.data.id}\`)`) already exists at the bottom of the `submit()` function - no change needed there. Remove now-unused imports (`AiShimmer` is gone from this file).
 
 - [ ] **Step 2: Type-check**
 
@@ -1352,7 +1352,7 @@ git commit -m "feat(web): apply page redirects immediately; wait UI moves to det
 
 ---
 
-## Task 10: Frontend — application detail page shows shimmer + listens for `application.scored`
+## Task 10: Frontend - application detail page shows shimmer + listens for `application.scored`
 
 **Files:**
 
@@ -1420,7 +1420,7 @@ describe("ApplicationScoredClient", () => {
 - [ ] **Step 3: Run to confirm RED**
 
 Run: `pnpm --filter @aurahire/web test -- --testPathPatterns=application-scored-client`
-Expected: FAIL — component not implemented.
+Expected: FAIL - component not implemented.
 
 - [ ] **Step 4: Implement the headless client**
 
@@ -1470,7 +1470,7 @@ import { AiShimmer } from "@/components/ai/ai-shimmer";
 {application.scoreStatus === "computing" && (
   <div className="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8">
     <AiShimmer
-      caption="Computing your match against this job — analyzing skills, experience, education, and cultural fit..."
+      caption="Computing your match against this job - analyzing skills, experience, education, and cultural fit..."
       height={240}
     />
   </div>
@@ -1489,7 +1489,7 @@ import { AiShimmer } from "@/components/ai/ai-shimmer";
 <ApplicationScoredClient applicationId={application.id} />
 ```
 
-(Wire the manual retry to the existing rescore endpoint if one exists; if not, defer to a follow-up — flag it in the commit message.)
+(Wire the manual retry to the existing rescore endpoint if one exists; if not, defer to a follow-up - flag it in the commit message.)
 
 - [ ] **Step 6: Run to confirm GREEN**
 
@@ -1581,7 +1581,7 @@ If not opening a PR, leave the branch as-is for review.
 
 Before handing off to execution:
 
-1. **Spec coverage:** Every recommendation from the synthesis (batched redaction, `scoreStatus`, queue, `application.scored`, frontend wiring, smoke test) → mapped to Tasks 1–11. ✓
+1. **Spec coverage:** Every recommendation from the synthesis (batched redaction, `scoreStatus`, queue, `application.scored`, frontend wiring, smoke test) → mapped to Tasks 1-11. ✓
 2. **Placeholder scan:** No "TBD" / "implement later" / "similar to Task X" placeholders. Code blocks present in every code step. ✓
 3. **Type consistency:** `APPLICATION_SCORE_STATUS` (Task 1) → consumed by Task 3 (DB column), Task 8 (DTO), Task 10 (frontend type). `ApplicationScoredPayload` (Task 2) → consumed by Tasks 6 (emit) and 10 (frontend listener). `MatchScorePayload` (Task 5) → consumed by Task 7 (processor) and Task 8 (enqueue call). All names match across tasks. ✓
 4. **Migration discipline:** Task 3 is the only DDL step; explicitly scoped to one migration; verification queries included. ✓

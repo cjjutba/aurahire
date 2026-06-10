@@ -41,7 +41,7 @@ The detail sheet (`_job-detail-sheet-client.tsx`) is **not** modified.
 
 ---
 
-## Task 1: Backend — tri-state `hasBiasFlags` filter
+## Task 1: Backend - tri-state `hasBiasFlags` filter
 
 **Files:**
 
@@ -146,7 +146,7 @@ export function JobsPagination({ meta, searchParams }: Props) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
       <div className="text-xs text-[var(--color-muted)]">
-        Showing <span className="font-mono">{start}</span>–
+        Showing <span className="font-mono">{start}</span>-
         <span className="font-mono">{end}</span> of{" "}
         <span className="font-mono">{meta.total}</span>
       </div>
@@ -444,7 +444,7 @@ Notes for the implementer:
 
 - The toolbar starts every URL mutation from `new URLSearchParams(searchParams.toString())`, so any param it does not surface (today: `recruiterId`) round-trips through filter changes.
 - The Bias dropdown maps three labels to two URL states: `flagged` → `hasBiasFlags=true`, `clean` → `hasBiasFlags=false`, `all` → param deleted.
-- `pushParams` always deletes `page` so any filter mutation drops the user back to page 1 — same behavior as recruiter.
+- `pushParams` always deletes `page` so any filter mutation drops the user back to page 1 - same behavior as recruiter.
 
 - [ ] **Step 2: Type-check the web workspace**
 
@@ -479,7 +479,7 @@ git commit -m "feat(web): admin jobs pill toolbar with debounced search and drop
 
 - Modify: `apps/web/app/(admin)/admin/jobs/_jobs-table-client.tsx`
 
-Refactor the table to the recruiter-style markup: surface-soft header band, dot+label status pills, mono right-aligned Bias and Apps cells, formatted Posted, accessible row that opens the existing detail sheet. Strip the inline pagination block — pagination is rendered by the parent now.
+Refactor the table to the recruiter-style markup: surface-soft header band, dot+label status pills, mono right-aligned Bias and Apps cells, formatted Posted, accessible row that opens the existing detail sheet. Strip the inline pagination block - pagination is rendered by the parent now.
 
 - [ ] **Step 1: Replace the file contents**
 
@@ -546,7 +546,7 @@ const INTERACTIVE_SELECTOR =
   'a, button, [role="menuitem"], [role="menu"], [role="dialog"], [data-stop-row-click], input, select, textarea, label';
 
 function formatPosted(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -708,7 +708,7 @@ export function JobsTableClient({ rows }: Props) {
 
 Notes:
 
-- The `Props` interface drops `meta` — pagination moves to the parent. The parent (`page.tsx`) will be updated in Task 5 to render `<JobsPagination>` as a sibling.
+- The `Props` interface drops `meta` - pagination moves to the parent. The parent (`page.tsx`) will be updated in Task 5 to render `<JobsPagination>` as a sibling.
 - The interactive selector mirrors `apps/web/components/ui/clickable-row.tsx:14`. Inline rather than wrapping `ClickableRow` because that component navigates via `router.push(href)`, while this row opens a state-controlled sheet.
 - The actions cell uses `e.stopPropagation()` on the trigger button so a click on the kebab does not also fire the row's `onClick`.
 
@@ -901,7 +901,7 @@ function EmptyFiltered() {
 
 Notes:
 
-- `hasBiasFlags` is forwarded to the backend as the literal `sp.hasBiasFlags` string (`"true"` / `"false"`) — Zod's `z.coerce.boolean()` parses both. The previous code only forwarded the param when it equalled `"true"`; that branch is no longer correct because the new "Clean" filter sends `"false"`.
+- `hasBiasFlags` is forwarded to the backend as the literal `sp.hasBiasFlags` string (`"true"` / `"false"`) - Zod's `z.coerce.boolean()` parses both. The previous code only forwarded the param when it equalled `"true"`; that branch is no longer correct because the new "Clean" filter sends `"false"`.
 - `recruiterId` is now part of the `filtersActive` check so deep links from elsewhere in the admin portal (e.g., a future "see this recruiter's jobs" link) display the filtered empty state instead of the bare "No jobs to moderate yet" copy.
 - The wrapper `mx-auto max-w-[1280px] space-y-6` is unchanged from the previous implementation.
 
@@ -1095,25 +1095,25 @@ Expected: clean.
 pnpm --filter @aurahire/web build
 ```
 
-Expected: exit code 0. (This is allowed by `CLAUDE.md` — it's a build, not a server.)
+Expected: exit code 0. (This is allowed by `CLAUDE.md` - it's a build, not a server.)
 
 - [ ] **Step 4: Hand off to the user for visual + behavioral verification**
 
 Hand the user this checklist (matches the spec's acceptance criteria, with the exact paths to navigate). Tell them you cannot run the dev server yourself and ask them to start it (`pnpm dev`) and confirm:
 
 1. Navigate to `/admin/jobs`. The h1 reads "Job Moderation" at the same visual weight as `/recruiter/jobs`'s "My Jobs" (text-2xl). The subtext reads `{N} jobs` or `No jobs to moderate yet`.
-2. The filter row is a single pill toolbar — search pill on the left with a magnifying-glass icon, then `Status: All Statuses` dropdown, then `Bias: All Bias` dropdown, then empty space. There is no Apply or Reset button.
-3. Type into the search pill — the URL updates to include `?q=...` after ~300 ms and the page transitions with a 0.6 opacity fade.
-4. Open the Status dropdown — it lists `All Statuses · Draft · Published · Archived · Closed`. Picking one updates the URL and the table.
-5. Open the Bias dropdown — it lists `All Bias · Flagged · Clean`. Picking `Flagged` filters to jobs with `biasFlagsCount > 0`. Picking `Clean` filters to jobs with `biasFlagsCount === 0`. Picking `All Bias` clears the filter.
+2. The filter row is a single pill toolbar - search pill on the left with a magnifying-glass icon, then `Status: All Statuses` dropdown, then `Bias: All Bias` dropdown, then empty space. There is no Apply or Reset button.
+3. Type into the search pill - the URL updates to include `?q=...` after ~300 ms and the page transitions with a 0.6 opacity fade.
+4. Open the Status dropdown - it lists `All Statuses · Draft · Published · Archived · Closed`. Picking one updates the URL and the table.
+5. Open the Bias dropdown - it lists `All Bias · Flagged · Clean`. Picking `Flagged` filters to jobs with `biasFlagsCount > 0`. Picking `Clean` filters to jobs with `biasFlagsCount === 0`. Picking `All Bias` clears the filter.
 6. The table header row uses a soft-gray background band; column labels are uppercase. Each row reveals a `surface-soft` hover tint.
 7. Status pills render as a colored dot followed by a label (`Published` = green, `Draft` / `Archived` = muted, `Closed` = danger). The pills use a soft-gray surface, not the previous green-soft chip.
 8. Bias and Apps numbers render in JetBrains Mono and right-aligned. Zeros render in `muted-soft`; non-zero bias counts render in `score-mid` (amber).
-9. The Posted column shows short dates like `May 7, 2026`, or `—` when not yet published.
-10. Pagination renders only when there are 2+ pages. The control shows `Showing X–Y of Z`, a numbered window with primary-soft active state, and chevron prev/next that disable on the boundaries.
+9. The Posted column shows short dates like `May 7, 2026`, or `-` when not yet published.
+10. Pagination renders only when there are 2+ pages. The control shows `Showing X-Y of Z`, a numbered window with primary-soft active state, and chevron prev/next that disable on the boundaries.
 11. Clicking anywhere on a row that is not the kebab opens the existing detail sheet. Pressing Tab, then Enter or Space on a focused row, opens the sheet.
 12. With dev tools throttling enabled, refresh `/admin/jobs`. The skeleton matches the final layout: header (title + count, no right-side button), pill toolbar (search + 2 dropdowns), table (header band + 8 rows). The columns line up so there is no layout jump on hydration.
-13. Apply a filter that returns no rows — the empty state reads `No jobs match your filters` with a `Clear filters` link that navigates back to `/admin/jobs`.
+13. Apply a filter that returns no rows - the empty state reads `No jobs match your filters` with a `Clear filters` link that navigates back to `/admin/jobs`.
 
 If any of these fail, the user reports the regression and the implementer re-opens the relevant task.
 
@@ -1124,7 +1124,7 @@ If any of these fail, the user reports the regression and the implementer re-ope
 After writing this plan, the spec was checked section by section:
 
 - §1 Why this change → covered narratively, not a task.
-- §2 Scope summary → covered by the file structure table and tasks 1–7.
+- §2 Scope summary → covered by the file structure table and tasks 1-7.
 - §3 Page header → Task 5.
 - §4 Toolbar → Task 3 (creates), Task 5 (wires), Task 6 (deletes the old `FiltersClient`).
 - §5 Table → Task 4.

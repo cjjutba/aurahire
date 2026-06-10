@@ -162,7 +162,7 @@ export function CandidateJobDetailView({
               disabled when the preview match score is below the
               auto-reject threshold (default 75). The shared client
               component reads the preview from the same query the
-              <MatchPreviewClient /> consumes — no duplicate fetch, no
+              <MatchPreviewClient /> consumes - no duplicate fetch, no
               prop drilling. */}
           <div className="hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:block">
             {hasApplied && (

@@ -1,5 +1,5 @@
 -- =============================================================================
--- 0010_proactive_system.sql — schema additions for the proactive-system slice.
+-- 0010_proactive_system.sql - schema additions for the proactive-system slice.
 -- =============================================================================
 --
 -- Phase 1, Task 1 of the 2026-05-08 "Proactive System" plan.
@@ -16,10 +16,10 @@
 --      with the same semantics the spec calls `archived_at`; we reuse the
 --      existing column rather than add a duplicate. The indexes therefore
 --      key on `dismissed_at` and the controller will treat dismiss = archive.
---   4. Adds interviews.feedback_reminder_sent_at — drives the periodic
+--   4. Adds interviews.feedback_reminder_sent_at - drives the periodic
 --      post-interview feedback reminder cron added by this slice
 --      (distinct from the legacy `feedback_due_notified_at`).
---   5. Adds jobs.archived_reason — lets audit logs distinguish manual
+--   5. Adds jobs.archived_reason - lets audit logs distinguish manual
 --      archive from cron-driven (e.g. deadline_passed) archive.
 --
 -- INVARIANTS PRESERVED
@@ -30,7 +30,7 @@
 --     widened to admit a new value.
 -- =============================================================================
 
--- 1. Match preview source — widen the CHECK constraint (this column is a
+-- 1. Match preview source - widen the CHECK constraint (this column is a
 --    text + CHECK, NOT a postgres enum type, so we drop and recreate the
 --    constraint rather than ALTER TYPE).
 ALTER TABLE public.match_score_previews
@@ -48,7 +48,7 @@ ALTER TABLE public.profile_scores
 -- Rationale: keys on (candidate_id, created_at DESC) WHERE stale_at IS NULL
 -- so the dashboard can fetch the latest non-stale score in one index scan.
 -- (Spec §G mentions `computed_at`; this table's authoritative timestamp is
--- `created_at` — the column-of-record for "when the score landed".)
+-- `created_at` - the column-of-record for "when the score landed".)
 CREATE INDEX IF NOT EXISTS idx_profile_scores_candidate_current
   ON public.profile_scores (candidate_id, created_at DESC)
   WHERE stale_at IS NULL;

@@ -188,7 +188,7 @@ export class InterviewsService {
       });
     }
 
-    // mapUrl is optional — sanitizer throws if non-http/https scheme is supplied.
+    // mapUrl is optional - sanitizer throws if non-http/https scheme is supplied.
     const sanitizedMapUrl = dto.mapUrl ? sanitizeMapUrl(dto.mapUrl) : null;
 
     // Default interviewerName to the scheduling recruiter's full name when not provided.
@@ -595,7 +595,7 @@ export class InterviewsService {
 
       // In-app notification to candidate.
       // event-defaults.ts marks interview_rescheduled as `instant` so emit() also
-      // enqueues a notification email job — the dedicated rich email below carries
+      // enqueues a notification email job - the dedicated rich email below carries
       // the ICS attachment and full venue details that the generic queue email omits.
       const jobRow = await this.jobsRepo.findByIdWithCompany(app.jobId);
       void this.notifications
@@ -644,7 +644,7 @@ export class InterviewsService {
     // Per thesis panel revision (May 2026): the interview lifecycle now
     // includes an explicit `in_progress` phase, and the recruiter can
     // manually transition out of either `scheduled` or `in_progress`
-    // — typically to mark complete early. Terminal states stay locked.
+    // - typically to mark complete early. Terminal states stay locked.
     const ALLOWED_TRANSITIONS: Record<
       InterviewStatus,
       ReadonlyArray<InterviewStatus>
@@ -657,7 +657,7 @@ export class InterviewsService {
         "rescheduled",
       ],
       in_progress: ["completed", "cancelled", "no-show"],
-      // Terminal states — no manual transitions out.
+      // Terminal states - no manual transitions out.
       completed: [],
       cancelled: [],
       "no-show": [],

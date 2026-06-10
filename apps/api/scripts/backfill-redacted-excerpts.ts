@@ -1,7 +1,7 @@
 /**
  * Backfill `evidence_excerpts.excerpt_redacted` for historical rows.
  *
- * The May 2026 thesis panel revision added the `excerpt_redacted` column —
+ * The May 2026 thesis panel revision added the `excerpt_redacted` column -
  * a recruiter-safe variant of the verbatim resume quote. New rows always
  * populate both columns at write time. This script populates the redacted
  * column for rows written before the change so existing pipelines render
@@ -61,7 +61,7 @@ async function main(): Promise<void> {
       );
       if (!apply) {
         console.log(
-          "[backfill-redacted-excerpts] DRY RUN — pass --yes to apply the backfill.",
+          "[backfill-redacted-excerpts] DRY RUN - pass --yes to apply the backfill.",
         );
         for (const row of rows.slice(0, 3)) {
           const sample = redactExcerptDeterministic(row.excerpt_text);
@@ -86,12 +86,12 @@ async function main(): Promise<void> {
       });
       totalProcessed += rows.length;
 
-      // Safety stop if the page didn't fill — we're done.
+      // Safety stop if the page didn't fill - we're done.
       if (rows.length < PAGE_SIZE) break;
     }
 
     console.log(
-      `[backfill-redacted-excerpts] OK — backfilled ${totalProcessed} row(s).`,
+      `[backfill-redacted-excerpts] OK - backfilled ${totalProcessed} row(s).`,
     );
   } finally {
     await sql.end({ timeout: 5 });

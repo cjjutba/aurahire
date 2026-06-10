@@ -18,7 +18,7 @@
 
 ## File Structure
 
-### Create — Backend
+### Create - Backend
 
 | Path                                                                        | Responsibility                                                                                         |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
@@ -28,9 +28,9 @@
 | `apps/api/test/fixtures/resumes/README.md`                                  | Golden corpus documentation                                                                            |
 | `apps/api/test/fixtures/resumes/01-clean-pdf.pdf` _(human supplies binary)_ | Sample fixture                                                                                         |
 | `apps/api/test/fixtures/resumes/01-clean-pdf.expected.json`                 | Expected extraction for fixture 01                                                                     |
-| `apps/api/scripts/run-ai-parse-corpus.ts`                                   | `pnpm test:ai-parse` entrypoint — runs prompt against golden corpus, asserts thresholds                |
+| `apps/api/scripts/run-ai-parse-corpus.ts`                                   | `pnpm test:ai-parse` entrypoint - runs prompt against golden corpus, asserts thresholds                |
 
-### Create — Shared
+### Create - Shared
 
 | Path                                                            | Responsibility                                          |
 | --------------------------------------------------------------- | ------------------------------------------------------- |
@@ -39,7 +39,7 @@
 | `packages/shared/src/onboarding/review-complete.schema.ts`      | Per-step completion schema                              |
 | `packages/shared/src/onboarding/preferences-complete.schema.ts` | Per-step completion schema                              |
 
-### Create — Frontend (foundation)
+### Create - Frontend (foundation)
 
 | Path                                                         | Responsibility                                                      |
 | ------------------------------------------------------------ | ------------------------------------------------------------------- |
@@ -49,7 +49,7 @@
 | `apps/web/components/onboarding/use-autosave.ts`             | Hook: debounced PATCH on form blur with status callback             |
 | `apps/web/components/onboarding/use-tab-close-protection.ts` | Hook: `beforeunload` listener, only fires after dirty > 750ms       |
 
-### Create — Frontend (resume preview)
+### Create - Frontend (resume preview)
 
 | Path                                                                       | Responsibility                                                                                 |
 | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -57,12 +57,12 @@
 | `apps/web/components/onboarding/resume-preview/derive-highlights.ts`       | Pure fn: parsed-resume JSON → `Highlight[]`                                                    |
 | `apps/web/components/onboarding/resume-preview/find-text-spans.ts`         | Pure fn: text-layer items + source string → `Rect[]` (whitespace-tolerant, accent-insensitive) |
 | `apps/web/components/onboarding/resume-preview/find-text-spans.test.ts`    | Vitest tests for matcher                                                                       |
-| `apps/web/components/onboarding/resume-preview/pdf-renderer.tsx`           | PDF.js wrapper — renders pages + text layer, exposes text items via callback                   |
+| `apps/web/components/onboarding/resume-preview/pdf-renderer.tsx`           | PDF.js wrapper - renders pages + text layer, exposes text items via callback                   |
 | `apps/web/components/onboarding/resume-preview/highlight-overlay.tsx`      | Renders rect overlays on top of text layer with per-category opacity                           |
 | `apps/web/components/onboarding/resume-preview/linearized-resume-view.tsx` | Fallback for image-only PDFs / DOCX-conversion failures                                        |
 | `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx`    | Orchestrator: loads PDF, derives highlights, owns state machine                                |
 
-### Create — Frontend (steps)
+### Create - Frontend (steps)
 
 | Path                                                                      | Responsibility                                                                    |
 | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
@@ -98,15 +98,15 @@
 | `apps/api/src/modules/candidate-profiles/candidate-profiles.service.ts`            | Add `completeOnboarding()` method                                                                                                                                |
 | `apps/api/Dockerfile`                                                              | Install `libreoffice-core libreoffice-writer fonts-liberation`                                                                                                   |
 | `apps/api/package.json`                                                            | (no new deps; LibreOffice spawned via child_process)                                                                                                             |
-| `apps/web/package.json`                                                            | Add `pdfjs-dist`, `mammoth` (only for linearized DOCX fallback if needed — defer to Task 24)                                                                     |
+| `apps/web/package.json`                                                            | Add `pdfjs-dist`, `mammoth` (only for linearized DOCX fallback if needed - defer to Task 24)                                                                     |
 | `apps/web/app/onboarding/candidate/_data.ts`                                       | Update `ONBOARDING_STEPS` to 4 entries; widen `LatestParsedResume` type to include `*_source` fields                                                             |
-| `apps/web/app/onboarding/candidate/page.tsx`                                       | Step 1 — replace current shell with `OnboardingShell`, use `ResumeUploadCard`                                                                                    |
-| `apps/web/app/onboarding/candidate/personal/page.tsx`                              | Step 2 — `OnboardingShell` + `ResumePreviewPane` with `activeCategories=["contact","summary"]`                                                                   |
-| `apps/web/app/onboarding/candidate/preferences/page.tsx`                           | Step 4 — `OnboardingShell` + `ProfilePreviewPane`                                                                                                                |
+| `apps/web/app/onboarding/candidate/page.tsx`                                       | Step 1 - replace current shell with `OnboardingShell`, use `ResumeUploadCard`                                                                                    |
+| `apps/web/app/onboarding/candidate/personal/page.tsx`                              | Step 2 - `OnboardingShell` + `ResumePreviewPane` with `activeCategories=["contact","summary"]`                                                                   |
+| `apps/web/app/onboarding/candidate/preferences/page.tsx`                           | Step 4 - `OnboardingShell` + `ProfilePreviewPane`                                                                                                                |
 | `apps/web/components/onboarding/candidate/personal-info-form.tsx`                  | Restyle to 2-col grid; integrate `HighlightContext` for hover linking; use `useAutosave` hook                                                                    |
 | `apps/web/components/onboarding/candidate/preferences-form.tsx`                    | Restyle; use `useAutosave`                                                                                                                                       |
 | `apps/web/middleware.ts`                                                           | Add onboarding-route guards per spec §G                                                                                                                          |
-| `apps/web/app/onboarding/layout.tsx`                                               | Trim — `OnboardingShell` now owns the chrome; layout becomes minimal                                                                                             |
+| `apps/web/app/onboarding/layout.tsx`                                               | Trim - `OnboardingShell` now owns the chrome; layout becomes minimal                                                                                             |
 
 ### Delete
 
@@ -121,7 +121,7 @@
 
 ---
 
-## Task 1: Schema — add `canonicalPdfPath` column
+## Task 1: Schema - add `canonicalPdfPath` column
 
 **Goal:** Make `resumes.canonical_pdf_path` available in Drizzle schema and types. Human runs the migration.
 
@@ -139,7 +139,7 @@ canonicalPdfPath: text("canonical_pdf_path"),  // null for PDF uploads, set for 
 - [ ] **Step 1.2: Type-check**
 
 Run: `pnpm tsc --noEmit`
-Expected: PASS — `Resume` and `NewResume` types now include `canonicalPdfPath`.
+Expected: PASS - `Resume` and `NewResume` types now include `canonicalPdfPath`.
 
 - [ ] **Step 1.3: Write the SQL migration file**
 
@@ -149,7 +149,7 @@ Create `packages/db/drizzle/<next_number>_add_canonical_pdf_path.sql`:
 ALTER TABLE resumes ADD COLUMN canonical_pdf_path text;
 ```
 
-(Use whatever migration generator the repo uses — likely `drizzle-kit generate`. The plan asks the human to run `pnpm drizzle-kit generate` then commit the result. Claude only authors the column change above.)
+(Use whatever migration generator the repo uses - likely `drizzle-kit generate`. The plan asks the human to run `pnpm drizzle-kit generate` then commit the result. Claude only authors the column change above.)
 
 - [ ] **Step 1.4: Hand to human**
 
@@ -157,7 +157,7 @@ Stop and tell the human: _"Schema column added. Please run `pnpm --filter @aurah
 
 ---
 
-## Task 2: `DocxToPdfService` — LibreOffice wrapper
+## Task 2: `DocxToPdfService` - LibreOffice wrapper
 
 **Goal:** Convert DOCX → PDF via headless LibreOffice. Serialized via in-memory mutex (one conversion at a time per process).
 
@@ -165,7 +165,7 @@ Stop and tell the human: _"Schema column added. Please run `pnpm --filter @aurah
 
 - Create: `apps/api/src/storage/docx-to-pdf.service.ts`
 - Create: `apps/api/src/storage/docx-to-pdf.service.spec.ts`
-- Modify: `apps/api/src/storage/storage.module.ts` (or wherever the storage providers register — register the new service)
+- Modify: `apps/api/src/storage/storage.module.ts` (or wherever the storage providers register - register the new service)
 
 - [ ] **Step 2.1: Write failing test**
 
@@ -224,7 +224,7 @@ describe("DocxToPdfService", () => {
 - [ ] **Step 2.2: Run test to verify it fails**
 
 Run: `pnpm --filter @aurahire/api test docx-to-pdf.service.spec`
-Expected: FAIL — `Cannot find module './docx-to-pdf.service'`.
+Expected: FAIL - `Cannot find module './docx-to-pdf.service'`.
 
 - [ ] **Step 2.3: Implement `DocxToPdfService`**
 
@@ -256,7 +256,7 @@ export class DocxToPdfService {
   private mutex: Promise<unknown> = Promise.resolve();
 
   async convert(docxBuffer: Buffer): Promise<Buffer> {
-    // Serialize via mutex — LibreOffice doesn't share state cleanly between concurrent jobs.
+    // Serialize via mutex - LibreOffice doesn't share state cleanly between concurrent jobs.
     const release = this.acquire();
     try {
       return await this.runConversion(docxBuffer);
@@ -350,7 +350,7 @@ Expected: PASS.
 
 - [ ] **Step 2.6: Add Dockerfile entry**
 
-Modify `apps/api/Dockerfile` — add LibreOffice install step. Find the apt-get layer (or add one) and append:
+Modify `apps/api/Dockerfile` - add LibreOffice install step. Find the apt-get layer (or add one) and append:
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -378,7 +378,7 @@ Tell the human: _"`DocxToPdfService` ready. The Dockerfile now installs LibreOff
 - [ ] **Step 3.1: Add `canonicalPdfPath` to `ResumeResponseDto`**
 
 ```ts
-// dto/resume-response.dto.ts — add after storagePath:
+// dto/resume-response.dto.ts - add after storagePath:
 canonicalPdfPath: string | null;
 ```
 
@@ -401,7 +401,7 @@ Register in `resumes.module.ts` providers if not auto-discovered.
 
 - [ ] **Step 3.3: Run conversion in upload flow**
 
-In `ResumesService.upload()`, after the `await this.storage.upload(...)` for the original (line 80–85 area), insert:
+In `ResumesService.upload()`, after the `await this.storage.upload(...)` for the original (line 80-85 area), insert:
 
 ```ts
 let canonicalPdfPath: string | null = null;
@@ -422,7 +422,7 @@ if (
     this.logger.warn(
       `DOCX→PDF conversion failed for resume upload: ${(err as Error).message}`,
     );
-    // Continue without canonical PDF — frontend will fall back to LinearizedResumeView.
+    // Continue without canonical PDF - frontend will fall back to LinearizedResumeView.
   }
 }
 ```
@@ -486,7 +486,7 @@ Expected: PASS.
 
 ## Task 4: Extended download-url endpoint returns `signedPdfUrl`
 
-**Goal:** Frontend always renders `signedPdfUrl` — for PDF uploads it equals `signedUrl`; for DOCX uploads it points to the canonical PDF.
+**Goal:** Frontend always renders `signedPdfUrl` - for PDF uploads it equals `signedUrl`; for DOCX uploads it points to the canonical PDF.
 
 **Files:**
 
@@ -530,13 +530,13 @@ async getSignedDownloadUrl(user: AuthUser, id: string): Promise<{
 Run: `pnpm tsc --noEmit`
 Expected: PASS.
 
-- [ ] **Step 4.3: Hand to human — regenerate API client**
+- [ ] **Step 4.3: Hand to human - regenerate API client**
 
 Tell the human: _"Backend response shape changed. Run `pnpm --filter @aurahire/api openapi:generate && pnpm --filter @aurahire/shared client:generate` (or whatever the repo's regen command is) to refresh `packages/shared/src/api-client/generated.ts`."_
 
 ---
 
-## Task 5: AI prompt v2 — `*_source` fields, parsed-resume schema update
+## Task 5: AI prompt v2 - `*_source` fields, parsed-resume schema update
 
 **Goal:** Bump the parse-resume prompt to v2 so every extracted field carries a verbatim `*_source` string. The OpenAI structured-output schema enforces them as required.
 
@@ -655,7 +655,7 @@ GENERAL RULES
   - "high": clear sections, dates, well-formatted
   - "medium": readable but ambiguous in places
   - "low": OCR garble, missing sections, or unclear formatting
-- If a field has no information, return null (or empty array for collections) — never invent.
+- If a field has no information, return null (or empty array for collections) - never invent.
 
 SOURCE-STRING RULES (CRITICAL)
 For every extracted value, also return its verbatim source string in the matching *_source field:
@@ -663,11 +663,11 @@ For every extracted value, also return its verbatim source string in the matchin
 - DO NOT paraphrase, normalize, or fix typos in source strings.
 - DO NOT add or remove whitespace beyond what appears in the resume.
 - If a value is null, the corresponding *_source MUST also be null.
-- For "period_source" on experience/education, return the verbatim date range exactly as written (e.g., "Jan 2022 – Present", "2019 – 2022").
-- For "responsibilities_source", each entry must be 1:1 aligned with "responsibilities" — same length, same order — and each source string verbatim.
+- For "period_source" on experience/education, return the verbatim date range exactly as written (e.g., "Jan 2022 - Present", "2019 - 2022").
+- For "responsibilities_source", each entry must be 1:1 aligned with "responsibilities" - same length, same order - and each source string verbatim.
 - For skills, the "source" field is the verbatim mention of the skill in the resume (use the most prominent occurrence if mentioned multiple times).
 
-Source strings are used to highlight extracted entities in the rendered PDF — accuracy matters more than completeness. If you can't find a verbatim source for a value, set both the value and its source to null rather than inventing.`;
+Source strings are used to highlight extracted entities in the rendered PDF - accuracy matters more than completeness. If you can't find a verbatim source for a value, set both the value and its source to null rather than inventing.`;
 
 export function buildParseResumeV2UserPrompt(resumeText: string): string {
   return `Resume text:\n"""\n${resumeText}\n"""`;
@@ -775,7 +775,7 @@ return {
 - [ ] **Step 5.5: Type-check**
 
 Run: `pnpm tsc --noEmit`
-Expected: PASS — no errors. The existing `LatestParsedResume` type in the frontend will need updating in Task 17.
+Expected: PASS - no errors. The existing `LatestParsedResume` type in the frontend will need updating in Task 17.
 
 - [ ] **Step 5.6: Update audit log to record `sourceFieldCoverage`**
 
@@ -876,7 +876,7 @@ async reparse(user: AuthUser, id: string, requestMeta: RequestMeta = {}): Promis
 - [ ] **Step 6.2: Add controller route**
 
 ```ts
-// resumes.controller.ts — inside the controller class:
+// resumes.controller.ts - inside the controller class:
 @Post(":id/reparse")
 @HttpCode(HttpStatus.OK)
 async reparse(
@@ -982,7 +982,7 @@ async completeOnboarding(user: AuthUser, requestMeta: RequestMeta = {}): Promise
 }
 ```
 
-(Adjust property accesses — `profile.experiences` etc. — to whatever the repo's hydrated profile shape actually is. If the repo doesn't fetch related arrays, fetch them explicitly here.)
+(Adjust property accesses - `profile.experiences` etc. - to whatever the repo's hydrated profile shape actually is. If the repo doesn't fetch related arrays, fetch them explicitly here.)
 
 - [ ] **Step 7.3: Add controller route**
 
@@ -1017,7 +1017,7 @@ _"Backend onboarding endpoints ready. Please regenerate the API client (`pnpm op
 **Files:**
 
 - Create: `apps/api/test/fixtures/resumes/README.md`
-- Create: `apps/api/test/fixtures/resumes/01-clean-pdf.expected.json` (and 14 more — author at least 1 fully, leave others as TODO entries inside the README so the human can populate fixtures over time)
+- Create: `apps/api/test/fixtures/resumes/01-clean-pdf.expected.json` (and 14 more - author at least 1 fully, leave others as TODO entries inside the README so the human can populate fixtures over time)
 - Create: `apps/api/scripts/run-ai-parse-corpus.ts`
 - Modify: `apps/api/package.json` (add `test:ai-parse` script)
 
@@ -1072,7 +1072,7 @@ async function main() {
         "utf8",
       ),
     );
-    // ... call service.parse(...) — see ParseResumeService for the contract.
+    // ... call service.parse(...) - see ParseResumeService for the contract.
     // ... compare contact, experience.length, education.length, jaccard(skills, expected.skills).
     // ... track sourceFieldCoverage, hallucination count.
     // ... pass/fail per fixture.
@@ -1151,8 +1151,8 @@ Author `01-clean-pdf.expected.json` based on whatever PDF the human supplies. Pa
 
 Used by `pnpm test:ai-parse`. Each fixture has:
 
-- `<id>-<slug>.pdf` (or `.docx`) — the binary
-- `<id>-<slug>.expected.json` — hand-annotated canonical extraction
+- `<id>-<slug>.pdf` (or `.docx`) - the binary
+- `<id>-<slug>.expected.json` - hand-annotated canonical extraction
 
 ## Thresholds (assertions)
 
@@ -1331,12 +1331,12 @@ export const SKILLS_TAXONOMY: readonly string[] = [
 ];
 ```
 
-(The list above is a starting set — `~120` skills cover most candidates. Expanding to 500 is a future task as real candidate data flows in.)
+(The list above is a starting set - `~120` skills cover most candidates. Expanding to 500 is a future task as real candidate data flows in.)
 
 - [ ] **Step 9.2: Re-export from index**
 
 ```ts
-// packages/shared/src/index.ts — add:
+// packages/shared/src/index.ts - add:
 export { SKILLS_TAXONOMY } from "./skills-taxonomy";
 ```
 
@@ -1412,7 +1412,7 @@ export async function fetchCandidateProfileMe(): Promise<CandidateProfileMe> {
 }
 
 // ============================================================================
-// Parsed resume — v2 shape (with *_source fields)
+// Parsed resume - v2 shape (with *_source fields)
 // ============================================================================
 
 export interface LatestParsedResume {
@@ -1509,7 +1509,7 @@ export async function fetchLatestParsedResume(): Promise<LatestParsedResume | nu
   );
   const candidate = sorted.find((r) => r.isDefault) ?? sorted[0]!;
 
-  // Fetch signed URLs (cheap — 1 round trip).
+  // Fetch signed URLs (cheap - 1 round trip).
   const urlRes = await fetch(
     `${apiUrl}/api/v1/resumes/${candidate.id}/download-url`,
     {
@@ -1538,7 +1538,7 @@ export async function fetchLatestParsedResume(): Promise<LatestParsedResume | nu
 - [ ] **Step 10.2: Type-check**
 
 Run: `pnpm tsc --noEmit`
-Expected: existing step pages will fail (`Step 1Page`, `Step 2Page` etc. import `ONBOARDING_STEPS` and pass it via `[...ONBOARDING_STEPS]` — that still works). The deleted-route pages and the old `LatestParsedResume.parsed.contact?` property accesses may break — those will be fixed in Tasks 23–43. For now, type-check failures inside `app/onboarding/candidate/{education,experience,skills}/page.tsx` are expected and will be resolved when those routes are deleted in Task 50.
+Expected: existing step pages will fail (`Step 1Page`, `Step 2Page` etc. import `ONBOARDING_STEPS` and pass it via `[...ONBOARDING_STEPS]` - that still works). The deleted-route pages and the old `LatestParsedResume.parsed.contact?` property accesses may break - those will be fixed in Tasks 23-43. For now, type-check failures inside `app/onboarding/candidate/{education,experience,skills}/page.tsx` are expected and will be resolved when those routes are deleted in Task 50.
 
 ---
 
@@ -1597,7 +1597,7 @@ describe("OnboardingProgress", () => {
 - [ ] **Step 11.2: Run test (fails)**
 
 Run: `pnpm --filter web test onboarding-progress`
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 11.3: Implement**
 
@@ -1759,7 +1759,7 @@ describe("SaveStatusIndicator", () => {
 - [ ] **Step 12.2: Run test (fails)**
 
 Run: `pnpm --filter web test save-status-indicator`
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 12.3: Implement**
 
@@ -1798,7 +1798,7 @@ export function SaveStatusIndicator({ status, onRetry, className }: Props) {
     return (
       <span className={cls}>
         <AlertCircle className="h-3.5 w-3.5" />
-        Couldn't save —{" "}
+        Couldn't save -{" "}
         <button onClick={onRetry} className="font-semibold underline">
           Retry
         </button>
@@ -1849,7 +1849,7 @@ interface Props {
   onSaveRetry?: () => void;
   /** Right pane content. If null, the body becomes single-column. */
   rightPane?: ReactNode;
-  /** Mobile-only "View resume" / "View preview" affordance — see Task 36. */
+  /** Mobile-only "View resume" / "View preview" affordance - see Task 36. */
   mobileRightPaneToggle?: ReactNode;
   children: ReactNode;
 }
@@ -2443,7 +2443,7 @@ export function findTextSpans(
   const stripped = stripPunctuation(buffer);
   const strippedSrc = stripPunctuation(source);
   if (strippedSrc && stripped.includes(strippedSrc)) {
-    // Map stripped index back to original buffer — find the first item whose stripped concatenation includes the source.
+    // Map stripped index back to original buffer - find the first item whose stripped concatenation includes the source.
     // Simpler heuristic: return the item whose stripped str contains the stripped source.
     for (let i = 0; i < items.length; i++) {
       if (stripPunctuation(items[i]!.str).includes(strippedSrc)) {
@@ -2525,7 +2525,7 @@ function spansFromCharRange(
 Run: `pnpm --filter web test find-text-spans`
 Expected: PASS.
 
-(If matching turns out brittle with real PDFs, treat this implementation as a starting point — the test suite should be expanded with realistic PDF.js fixtures during Task 24's manual verification.)
+(If matching turns out brittle with real PDFs, treat this implementation as a starting point - the test suite should be expanded with realistic PDF.js fixtures during Task 24's manual verification.)
 
 ---
 
@@ -2547,7 +2547,7 @@ The PDF.js worker needs a URL. Two options:
 - (preferred) Use the `import.meta.url`-driven worker import: `import * as pdfjs from "pdfjs-dist"; pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();`
 - (fallback) Copy `pdf.worker.min.mjs` to `apps/web/public/` and reference as `/pdf.worker.min.mjs`.
 
-Confirm Next.js 16 webpack config supports the URL import (it does — but this needs verification). If not, use the public-folder fallback.
+Confirm Next.js 16 webpack config supports the URL import (it does - but this needs verification). If not, use the public-folder fallback.
 
 - [ ] **Step 19.3: Type-check**
 
@@ -3260,11 +3260,11 @@ export function ResumeStaleRecoveryCard({
 }
 ```
 
-(Note: `Authorization: Bearer ${session.access_token}` is the project's pattern — use that. The `credentials: "include"` above is illustrative; mirror the existing fetch pattern.)
+(Note: `Authorization: Bearer ${session.access_token}` is the project's pattern - use that. The `credentials: "include"` above is illustrative; mirror the existing fetch pattern.)
 
 - [ ] **Step 24.4: Implement `resume-upload-card.tsx`**
 
-This is the largest component — orchestrates dropzone + the four sub-states. Uses the existing upload pattern from `resume-upload.tsx` (which will be deleted in Task 50).
+This is the largest component - orchestrates dropzone + the four sub-states. Uses the existing upload pattern from `resume-upload.tsx` (which will be deleted in Task 50).
 
 ```tsx
 "use client";
@@ -3358,7 +3358,7 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
           Reading your resume
         </h1>
         <p className="mt-2 text-sm text-[var(--color-body)]">
-          This usually takes 5–15 seconds.
+          This usually takes 5-15 seconds.
         </p>
         <div className="mt-6">
           <ParsingShimmer />
@@ -3405,7 +3405,7 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
       </h1>
       <p className="mt-2 text-sm text-[var(--color-body)]">
         We'll extract your contact info, experience, education, and skills
-        automatically. The AI takes 5–15 seconds.
+        automatically. The AI takes 5-15 seconds.
       </p>
       <label
         className="mt-6 flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-hairline)] bg-[var(--color-canvas)] p-8 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-soft)]/30"
@@ -3448,7 +3448,7 @@ export function ResumeUploadCard({ latestResume, accessToken }: Props) {
         onClick={() => router.push("/onboarding/candidate/personal")}
         className="mt-6 text-sm text-[var(--color-muted)] underline"
       >
-        Skip — I'll fill in manually
+        Skip - I'll fill in manually
       </button>
     </div>
   );
@@ -3478,7 +3478,7 @@ import { ResumeUploadCard } from "@/components/onboarding/candidate/resume-uploa
 import { fetchCandidateProfileMe, fetchLatestParsedResume } from "./_data";
 import { getCurrentSession } from "@/lib/auth/session";
 
-export const metadata = { title: "Upload Resume — Onboarding" };
+export const metadata = { title: "Upload Resume - Onboarding" };
 
 export default async function Step1Page() {
   const me = await fetchCandidateProfileMe();
@@ -3541,7 +3541,7 @@ Expected: PASS.
 
 ---
 
-## Task 27: Step 2 — restyle `personal-info-form.tsx` + integrate highlight context
+## Task 27: Step 2 - restyle `personal-info-form.tsx` + integrate highlight context
 
 **Files:**
 
@@ -3717,7 +3717,7 @@ import { fetchCandidateProfileMe, fetchLatestParsedResume } from "../_data";
 import { getCurrentSession } from "@/lib/auth/session";
 import { PersonalStepClient } from "./_client";
 
-export const metadata = { title: "Personal Info — Onboarding" };
+export const metadata = { title: "Personal Info - Onboarding" };
 
 export default async function Step2Page() {
   const me = await fetchCandidateProfileMe();
@@ -3726,7 +3726,7 @@ export default async function Step2Page() {
   const session = await getCurrentSession();
   const latestResume = await fetchLatestParsedResume();
 
-  // ... derive defaults + aiSuggestedFields from latestResume + me (same logic as before — keep the existing block).
+  // ... derive defaults + aiSuggestedFields from latestResume + me (same logic as before - keep the existing block).
   // For brevity, omit; copy from the current personal/page.tsx.
 
   return (
@@ -3755,7 +3755,7 @@ Expected: PASS.
 
 ---
 
-## Task 28: Review step — `experience-card.tsx` + `experience-list.tsx`
+## Task 28: Review step - `experience-card.tsx` + `experience-list.tsx`
 
 **Files:**
 
@@ -3810,7 +3810,7 @@ export function ExperienceCard({
               {entry.title} · {entry.company}
             </div>
             <div className="text-xs font-mono text-[var(--color-muted)]">
-              {entry.start_date ?? "?"} –{" "}
+              {entry.start_date ?? "?"} -{" "}
               {entry.is_current ? "Present" : (entry.end_date ?? "?")}
             </div>
           </div>
@@ -3986,7 +3986,7 @@ export function ExperienceList({ initial, onSync }: Props) {
     try {
       await onSync(next);
     } catch {
-      toast.error("Couldn't save — try again");
+      toast.error("Couldn't save - try again");
     }
   };
 
@@ -4060,7 +4060,7 @@ Expected: PASS.
 
 ---
 
-## Task 29: Review step — `education-card.tsx` + `education-list.tsx`
+## Task 29: Review step - `education-card.tsx` + `education-list.tsx`
 
 Same pattern as Task 28, with fields: `institution`, `degree`, `field_of_study`, `start_year`, `end_year`, `gpa`. Mirror the structure exactly.
 
@@ -4070,12 +4070,12 @@ Same pattern as Task 28, with fields: `institution`, `degree`, `field_of_study`,
 - Create: `apps/web/components/onboarding/candidate/review/education-list.tsx`
 
 - [ ] **Step 29.1: Implement `education-card.tsx`** (same pattern as ExperienceCard)
-- [ ] **Step 29.2: Implement `education-list.tsx`** (same pattern as ExperienceList — empty state, add, delete with undo, sync)
+- [ ] **Step 29.2: Implement `education-list.tsx`** (same pattern as ExperienceList - empty state, add, delete with undo, sync)
 - [ ] **Step 29.3: Type-check**
 
 ---
 
-## Task 30: Review step — `skills-cloud.tsx`
+## Task 30: Review step - `skills-cloud.tsx`
 
 **Files:**
 
@@ -4160,7 +4160,7 @@ export function SkillsCloud({ initial, onSync }: Props) {
               if (!skills.includes(query.trim())) add(query.trim());
             }
           }}
-          placeholder="Add a skill — e.g. TypeScript"
+          placeholder="Add a skill - e.g. TypeScript"
           className="w-full rounded-full border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-4 py-2 text-sm focus:border-[var(--color-primary)] focus:outline-none"
         />
         {suggestions.length > 0 && (
@@ -4186,7 +4186,7 @@ export function SkillsCloud({ initial, onSync }: Props) {
 
 ---
 
-## Task 31: Review step — `review-step.tsx` orchestrator
+## Task 31: Review step - `review-step.tsx` orchestrator
 
 **Files:**
 
@@ -4304,7 +4304,7 @@ export function ReviewStep({
 
 ---
 
-## Task 32: Step 3 — `/onboarding/candidate/review/page.tsx`
+## Task 32: Step 3 - `/onboarding/candidate/review/page.tsx`
 
 **Files:**
 
@@ -4318,7 +4318,7 @@ import { fetchCandidateProfileMe, fetchLatestParsedResume } from "../_data";
 import { getCurrentSession } from "@/lib/auth/session";
 import { ReviewStepClient } from "./_client";
 
-export const metadata = { title: "Review — Onboarding" };
+export const metadata = { title: "Review - Onboarding" };
 
 export default async function Step3Page() {
   const me = await fetchCandidateProfileMe();
@@ -4328,7 +4328,7 @@ export default async function Step3Page() {
   const session = await getCurrentSession();
   const latestResume = await fetchLatestParsedResume();
 
-  // Read existing experiences/educations/skills from candidate-profile (the candidate-profiles endpoint already exposes these — confirm by reading the response shape).
+  // Read existing experiences/educations/skills from candidate-profile (the candidate-profiles endpoint already exposes these - confirm by reading the response shape).
   // For brevity: assume they're nested on `me`. If not, fetch separately.
   return (
     <ReviewStepClient
@@ -4409,7 +4409,7 @@ export function ProfilePreviewPane({ me, experience, skills }: Props) {
               <li key={e.id}>
                 <div className="text-sm font-semibold">{e.title}</div>
                 <div className="text-xs text-[var(--color-muted)]">
-                  {e.company} · {e.start_date} –{" "}
+                  {e.company} · {e.start_date} -{" "}
                   {e.is_current ? "Present" : e.end_date}
                 </div>
               </li>
@@ -4443,7 +4443,7 @@ export function ProfilePreviewPane({ me, experience, skills }: Props) {
 
 ---
 
-## Task 34: Step 4 — restyle `preferences-form.tsx` + page rewrite
+## Task 34: Step 4 - restyle `preferences-form.tsx` + page rewrite
 
 **Files:**
 
@@ -4480,7 +4480,7 @@ Wraps with `<HighlightProvider>`, renders `<OnboardingShell rightPane={<ProfileP
 
 ---
 
-## Task 35: Mobile drawer — `resume-sheet.tsx`
+## Task 35: Mobile drawer - `resume-sheet.tsx`
 
 **Files:**
 
@@ -4535,7 +4535,7 @@ export function ResumeSheet({ triggerLabel, children }: Props) {
 
 - [ ] **Step 35.2: Hook up `mobileRightPaneToggle` in pages**
 
-In `_client.tsx` for steps 2–4, pass:
+In `_client.tsx` for steps 2-4, pass:
 
 ```tsx
 mobileRightPaneToggle={<ResumeSheet triggerLabel="View resume">{rightPane}</ResumeSheet>}
@@ -4554,9 +4554,9 @@ mobileRightPaneToggle={<ResumeSheet triggerLabel="View resume">{rightPane}</Resu
 - [ ] **Step 36.1: Add guards**
 
 ```ts
-// apps/web/middleware.ts — inside the existing matcher logic
+// apps/web/middleware.ts - inside the existing matcher logic
 if (pathname.startsWith("/onboarding/candidate")) {
-  // Fetch profile completion state — the existing middleware likely already loads session/profile.
+  // Fetch profile completion state - the existing middleware likely already loads session/profile.
   // Add the redirect rules:
   // 1. profileCompleted=true → /candidate
   // 2. /review with empty fullName → /personal
@@ -4564,7 +4564,7 @@ if (pathname.startsWith("/onboarding/candidate")) {
 }
 ```
 
-(The exact code depends on the existing middleware structure — read `apps/web/middleware.ts` first and graft the rules onto its profile-fetching path.)
+(The exact code depends on the existing middleware structure - read `apps/web/middleware.ts` first and graft the rules onto its profile-fetching path.)
 
 - [ ] **Step 36.2: Type-check + smoke-build**
 
@@ -4597,7 +4597,7 @@ Expected: PASS.
 
 ---
 
-## Task 38: E2E — Happy path PDF (Playwright)
+## Task 38: E2E - Happy path PDF (Playwright)
 
 **Files:**
 
@@ -4645,7 +4645,7 @@ _"E2E test authored. Please run `pnpm --filter web e2e:onboarding-happy-pdf` aga
 
 ---
 
-## Task 39: E2E — Skip-resume + Re-upload mid-flow + Mobile
+## Task 39: E2E - Skip-resume + Re-upload mid-flow + Mobile
 
 **Files:**
 
@@ -4682,17 +4682,17 @@ Expected: all green.
 Run: `pnpm test`
 Expected: all green.
 
-- [ ] **Step 40.3: Hand to human — manual verification**
+- [ ] **Step 40.3: Hand to human - manual verification**
 
 Tell the human to walk through the manual checklist from the spec:
 
-1. Upload 5 real resumes (mixed PDF/DOCX, different layouts) — confirm highlights land on correct text.
+1. Upload 5 real resumes (mixed PDF/DOCX, different layouts) - confirm highlights land on correct text.
 2. Verify per-step filter visually re-focuses highlights on each step transition.
 3. Hover form fields → confirm corresponding resume highlight pulses; click highlights → confirm form field focuses.
-4. Throttle network to "Slow 3G" — verify autosave still feels responsive.
-5. Test in Safari, Chrome, Firefox — confirm PDF.js renders consistently.
-6. Run on a real iPhone Safari — confirm drawer gestures, keyboard scroll, sticky dock work.
-7. Run `pnpm test:ai-parse` — confirm hallucination rate is 0% and source-field-coverage ≥ 90% across the corpus.
+4. Throttle network to "Slow 3G" - verify autosave still feels responsive.
+5. Test in Safari, Chrome, Firefox - confirm PDF.js renders consistently.
+6. Run on a real iPhone Safari - confirm drawer gestures, keyboard scroll, sticky dock work.
+7. Run `pnpm test:ai-parse` - confirm hallucination rate is 0% and source-field-coverage ≥ 90% across the corpus.
 
 - [ ] **Step 40.4: Suggested commit boundaries**
 
@@ -4700,23 +4700,23 @@ If the human wants to commit the work in chunks rather than all at once:
 
 | Boundary            | Files       | Suggested message                                                                                                             |
 | ------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Backend foundation  | Tasks 1–7   | `feat(api): add canonical PDF column + DOCX→PDF conversion + parse v2 with source spans + reparse + complete-onboarding`      |
+| Backend foundation  | Tasks 1-7   | `feat(api): add canonical PDF column + DOCX→PDF conversion + parse v2 with source spans + reparse + complete-onboarding`      |
 | AI quality gates    | Task 8      | `test(api): add golden-corpus AI parse runner`                                                                                |
-| Shared package      | Tasks 9–10  | `feat(shared): skills taxonomy + onboarding completion schemas + parsed-resume v2 types`                                      |
-| Frontend foundation | Tasks 11–18 | `feat(web): onboarding shell, progress, save indicator, autosave hook, highlight context, derive-highlights, find-text-spans` |
-| Resume preview      | Tasks 19–23 | `feat(web): ResumePreviewPane with PDF.js + highlight overlay + linearized fallback`                                          |
-| Step 1              | Tasks 24–26 | `feat(web): redesign onboarding step 1 (resume upload)`                                                                       |
+| Shared package      | Tasks 9-10  | `feat(shared): skills taxonomy + onboarding completion schemas + parsed-resume v2 types`                                      |
+| Frontend foundation | Tasks 11-18 | `feat(web): onboarding shell, progress, save indicator, autosave hook, highlight context, derive-highlights, find-text-spans` |
+| Resume preview      | Tasks 19-23 | `feat(web): ResumePreviewPane with PDF.js + highlight overlay + linearized fallback`                                          |
+| Step 1              | Tasks 24-26 | `feat(web): redesign onboarding step 1 (resume upload)`                                                                       |
 | Step 2              | Task 27     | `feat(web): redesign onboarding step 2 (personal)`                                                                            |
-| Step 3              | Tasks 28–32 | `feat(web): new onboarding review step (consolidated experience/education/skills)`                                            |
-| Step 4              | Tasks 33–34 | `feat(web): redesign onboarding step 4 (preferences) with profile preview`                                                    |
-| Mobile + cleanup    | Tasks 35–37 | `feat(web): mobile resume sheet drawer + middleware guards + delete legacy routes`                                            |
-| E2E                 | Tasks 38–39 | `test(web): e2e onboarding flows (happy / skip / reupload / mobile)`                                                          |
+| Step 3              | Tasks 28-32 | `feat(web): new onboarding review step (consolidated experience/education/skills)`                                            |
+| Step 4              | Tasks 33-34 | `feat(web): redesign onboarding step 4 (preferences) with profile preview`                                                    |
+| Mobile + cleanup    | Tasks 35-37 | `feat(web): mobile resume sheet drawer + middleware guards + delete legacy routes`                                            |
+| E2E                 | Tasks 38-39 | `test(web): e2e onboarding flows (happy / skip / reupload / mobile)`                                                          |
 
 ---
 
 ## Self-Review Notes (post-write)
 
-- **Spec coverage**: every spec section maps to one or more tasks (architecture → Tasks 11–37, ResumePreviewPane → 19–23, backend → 1–7, AI quality → 8, mobile → 35, error states → 24+27+34+resume-preview-pane state machine, telemetry → audit logs in Tasks 5/6/7).
-- **Placeholder scan**: clean. Two notable concessions: skills taxonomy ships at ~120 entries (target 500 — flagged in the file's comment); golden corpus ships with 1 fixture + a contribution guide for the human to expand to 15.
+- **Spec coverage**: every spec section maps to one or more tasks (architecture → Tasks 11-37, ResumePreviewPane → 19-23, backend → 1-7, AI quality → 8, mobile → 35, error states → 24+27+34+resume-preview-pane state machine, telemetry → audit logs in Tasks 5/6/7).
+- **Placeholder scan**: clean. Two notable concessions: skills taxonomy ships at ~120 entries (target 500 - flagged in the file's comment); golden corpus ships with 1 fixture + a contribution guide for the human to expand to 15.
 - **Type consistency**: `ExperienceEntry` is defined in `experience-card.tsx` and re-imported elsewhere; the parsed-resume v2 types in `_data.ts` use `responsibilities`/`responsibilities_source` matching the existing schema's `responsibilities`/`technologies_used` fields. `Highlight.fieldRef` strings (e.g. `"experience.0.title"`) match the form `data-field-id` strings used in `personal-info-form.tsx` and `useHighlightContext().registerField` keys.
-- **Known soft spots**: Task 18's `findTextSpans` algorithm is intentionally a starting point — the multi-line bounding-box logic is best validated against real PDFs during manual verification (Task 40.3). The spec acknowledges this; the test suite should be expanded as edge cases surface.
+- **Known soft spots**: Task 18's `findTextSpans` algorithm is intentionally a starting point - the multi-line bounding-box logic is best validated against real PDFs during manual verification (Task 40.3). The spec acknowledges this; the test suite should be expanded as edge cases surface.

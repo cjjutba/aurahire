@@ -1,4 +1,4 @@
-# Admin Command Center Redesign — Design Spec
+# Admin Command Center Redesign - Design Spec
 
 **Date:** 2026-05-07
 **Status:** Draft → ready for implementation plan
@@ -11,9 +11,9 @@ The admin Command Center (`/admin`) is the single entry point for system adminis
 
 Concretely, today the page renders:
 
-- **Six cramped KPI tiles in a single row** — label-only, no icons, no descriptions, no tone color. They read like a debug console next to the candidate / recruiter tiles, which carry icons, descriptions, and score-band tone coloring.
+- **Six cramped KPI tiles in a single row** - label-only, no icons, no descriptions, no tone color. They read like a debug console next to the candidate / recruiter tiles, which carry icons, descriptions, and score-band tone coloring.
 - **A "Recent Audit Events" widget that surfaces raw action codes** like `score.match.preview.computed`, `resume.parsed`, `user.registered.candidate` rendered inside a monospace `<code>` pill. These codes are part of the engineering vocabulary; they are not legible to a human admin scanning the dashboard. The same raw codes also appear, unprocessed, in the `/admin/audit` table and audit detail sheet.
-- A **Bias Flags widget** that's a plain `<ul>` of category-count rows, while the **Score Distribution widget** beside it uses bar visualizations — making the row visually inconsistent.
+- A **Bias Flags widget** that's a plain `<ul>` of category-count rows, while the **Score Distribution widget** beside it uses bar visualizations - making the row visually inconsistent.
 - **Section headers** that don't match the tiny-icon + uppercase-tracking pattern used in the candidate / recruiter dashboards.
 
 The result is an admin portal that feels mechanically different from the rest of the platform, despite using the same color tokens and radii.
@@ -21,7 +21,7 @@ The result is an admin portal that feels mechanically different from the rest of
 ## 2. Goals
 
 1. **Visual + interaction consistency** with the candidate and recruiter portal dashboards, achieved through reuse of the same component vocabulary (KpiTile shape, section headers, card padding/radii).
-2. **Plain-English audit events** across the entire admin portal — the user sees "Job match preview computed", not `score.match.preview.computed`.
+2. **Plain-English audit events** across the entire admin portal - the user sees "Job match preview computed", not `score.match.preview.computed`.
 3. **No backend changes.** All humanization is a frontend presentation concern. `AdminStatsOverviewDto` shape is unchanged. No new endpoints. No DB migrations.
 4. **No regressions** to existing realtime, loading, or empty-state behavior.
 
@@ -44,11 +44,11 @@ Command Center
 System health at a glance.
 ```
 
-### 4.2 KPI grid — 2 rows of 3, semantically grouped
+### 4.2 KPI grid - 2 rows of 3, semantically grouped
 
 Replace the existing single-row 6-up grid (`grid md:grid-cols-3 lg:grid-cols-6`) with two stacked sections, each rendered as a 3-up grid (`grid md:grid-cols-2 lg:grid-cols-3`). Each row gets a small section header.
 
-**Row 1 — Footprint** (icon `BarChart3`, label `FOOTPRINT`)
+**Row 1 - Footprint** (icon `BarChart3`, label `FOOTPRINT`)
 
 | Tile           | Source field                 | Icon         | Tone    | Description              |
 | -------------- | ---------------------------- | ------------ | ------- | ------------------------ |
@@ -56,7 +56,7 @@ Replace the existing single-row 6-up grid (`grid md:grid-cols-3 lg:grid-cols-6`)
 | Active Jobs    | `stats.activeJobs`           | `Briefcase`  | neutral | Currently published      |
 | Apps This Week | `stats.applicationsThisWeek` | `TrendingUp` | neutral | Submitted in last 7 days |
 
-**Row 2 — Today & AI Quality** (icon `Sparkles`, label `TODAY & AI QUALITY`)
+**Row 2 - Today & AI Quality** (icon `Sparkles`, label `TODAY & AI QUALITY`)
 
 | Tile              | Source field              | Icon        | Tone      | Description           |
 | ----------------- | ------------------------- | ----------- | --------- | --------------------- |
@@ -78,9 +78,9 @@ The `KpiTile` shape is the canonical form already used by the candidate dashboar
 - `value < 70` → `score-mid`
 - `value >= 70` → `score-high`
 
-Loading state: render `—` in muted color (matches candidate behavior). The existing `<Skeleton>` rectangle can be removed in favor of the muted dash, since the layout no longer needs to reserve a precise visual height.
+Loading state: render `-` in muted color (matches candidate behavior). The existing `<Skeleton>` rectangle can be removed in favor of the muted dash, since the layout no longer needs to reserve a precise visual height.
 
-### 4.3 Snapshot row — 3-up below KPIs
+### 4.3 Snapshot row - 3-up below KPIs
 
 Section header: tiny icon + uppercase label (`SNAPSHOT`), matching the candidate dashboard's "Snapshot" section.
 
@@ -88,7 +88,7 @@ Three cards, all sharing the same outer card style as the KPI tiles. Order: Scor
 
 #### 4.3.1 Score Distribution (Last 30 Days)
 
-Existing visualization is sound — preserve the per-band bar (limited / partial / strong, color-tied to score-low / mid / high). Changes are visual:
+Existing visualization is sound - preserve the per-band bar (limited / partial / strong, color-tied to score-low / mid / high). Changes are visual:
 
 - Replace the inline `<h3>` with the small-icon + uppercase-tracking section header used elsewhere (icon `BarChart3`).
 - Surface the `0 total` line as a smaller mono caption directly under the header.
@@ -96,7 +96,7 @@ Existing visualization is sound — preserve the per-band bar (limited / partial
 
 #### 4.3.2 Bias Flags This Week
 
-Today this is a plain row list (`category — count`). Upgrade to match the Score Distribution pattern: each category gets a horizontal bar proportional to the in-card max, plus a count on the right.
+Today this is a plain row list (`category - count`). Upgrade to match the Score Distribution pattern: each category gets a horizontal bar proportional to the in-card max, plus a count on the right.
 
 - Section header: small icon (`AlertTriangle`) + uppercase `BIAS FLAGS THIS WEEK`.
 - Total caption beneath: `0 total` in mono muted.
@@ -128,7 +128,7 @@ Concretely:
 - Center: the **plain-English label** from `humanizeAuditAction(e.action)`, in `text-sm text-[var(--color-ink)]`.
 - Right: actor-type pill (uppercase, existing styling) + relative timestamp (`12m ago`) in mono muted.
 
-Whole row is clickable — opens the audit detail sheet (`AuditDetailSheetClient`) same as the audit table. Hover reveals the **raw action code** via `title=` attribute for engineering inspection.
+Whole row is clickable - opens the audit detail sheet (`AuditDetailSheetClient`) same as the audit table. Hover reveals the **raw action code** via `title=` attribute for engineering inspection.
 
 Section header gets a `View all →` link to `/admin/audit`, matching the candidate dashboard's "Recent Applications" header.
 
@@ -138,7 +138,7 @@ Empty state copy unchanged.
 
 Adapt to the new structure:
 
-- Title block (`h-8 w-64` + `h-5 w-96`) — unchanged
+- Title block (`h-8 w-64` + `h-5 w-96`) - unchanged
 - 2 KPI rows: each renders a 3-up skeleton grid of `h-28` tiles
 - Snapshot row: 3-up `h-72` cards (slightly taller than today's `h-64` to match the richer content)
 
@@ -146,7 +146,7 @@ Adapt to the new structure:
 
 ### 5.1 Location
 
-New file: `apps/web/lib/audit/humanize-action.ts`. Frontend-only — humanization is a presentation concern. The backend continues to write canonical action codes (the `AUDIT_ACTIONS` vocabulary in `apps/api/src/audit/audit.types.ts`).
+New file: `apps/web/lib/audit/humanize-action.ts`. Frontend-only - humanization is a presentation concern. The backend continues to write canonical action codes (the `AUDIT_ACTIONS` vocabulary in `apps/api/src/audit/audit.types.ts`).
 
 ### 5.2 API
 
@@ -156,7 +156,7 @@ New file: `apps/web/lib/audit/humanize-action.ts`. Frontend-only — humanizatio
 export function humanizeAuditAction(action: string): string;
 ```
 
-### 5.3 Lookup map (initial — covers every action emitted today)
+### 5.3 Lookup map (initial - covers every action emitted today)
 
 This list reflects every `action: "..."` literal in `apps/api/src/` plus the full `AUDIT_ACTIONS` constant. Items grouped by domain.
 
@@ -300,9 +300,9 @@ If an action code is not in the lookup map, render it as Title-Cased Words by sp
 
 ### 5.5 Consumers
 
-1. **Recent Audit Events widget** (`_dashboard-client.tsx`) — primary label.
-2. **Audit table** (`apps/web/app/(admin)/admin/audit/_audit-table-client.tsx`) — replaces the `<code>` pill in the `Action` cell with the humanized label. Raw code remains accessible via `title=` tooltip.
-3. **Audit detail sheet** (`apps/web/app/(admin)/admin/audit/_audit-detail-sheet-client.tsx`) — the sheet header shows the humanized label as the prominent title, with the raw action code as a smaller monospace sub-line beneath, so engineers can still grep server logs by exact string.
+1. **Recent Audit Events widget** (`_dashboard-client.tsx`) - primary label.
+2. **Audit table** (`apps/web/app/(admin)/admin/audit/_audit-table-client.tsx`) - replaces the `<code>` pill in the `Action` cell with the humanized label. Raw code remains accessible via `title=` tooltip.
+3. **Audit detail sheet** (`apps/web/app/(admin)/admin/audit/_audit-detail-sheet-client.tsx`) - the sheet header shows the humanized label as the prominent title, with the raw action code as a smaller monospace sub-line beneath, so engineers can still grep server logs by exact string.
 
 ## 6. Affected files
 
@@ -320,21 +320,21 @@ No backend changes. No `packages/shared` changes. No `packages/db` changes.
 
 All preserved as-is:
 
-- `useAdminStatsControllerOverviewV1({ query: { staleTime: 60_000, enabled: tokenReady } })` — same.
-- `useRealtimeChannel(RealtimeEvent.AuditEntry, ...)` invalidates the overview query — same.
-- `useRealtimeChannel(RealtimeEvent.BiasFlagCreated, ...)` invalidates the overview query — same.
+- `useAdminStatsControllerOverviewV1({ query: { staleTime: 60_000, enabled: tokenReady } })` - same.
+- `useRealtimeChannel(RealtimeEvent.AuditEntry, ...)` invalidates the overview query - same.
+- `useRealtimeChannel(RealtimeEvent.BiasFlagCreated, ...)` invalidates the overview query - same.
 - Failure path renders the existing `Failed to load admin overview.` line in `status-danger`.
 
-No new error states are required — all humanization is a pure transformation over data the page already has.
+No new error states are required - all humanization is a pure transformation over data the page already has.
 
 ## 8. Accessibility
 
-- Each KPI tile remains a static `<div>` (no interactivity) — same as today.
+- Each KPI tile remains a static `<div>` (no interactivity) - same as today.
 - Recent Audit rows become clickable `<button>` elements (today they are non-interactive). They open the detail sheet, matching the audit-table row behavior. Each button gets an accessible label of the form `View details for ${humanizedLabel}, ${actorType}, ${relativeTime}`.
 - Section headers use semantic `<h2>` (snapshot row) / `<h3>` (widget heads) for screen-reader navigation, same as candidate dashboard.
-- Color is never the only carrier of meaning — the actor pill text label is always present alongside the colored plate.
+- Color is never the only carrier of meaning - the actor pill text label is always present alongside the colored plate.
 
-## 9. Implementation order (sketch — refined in writing-plans)
+## 9. Implementation order (sketch - refined in writing-plans)
 
 1. Add `humanizeAuditAction` utility + unit-style verification in dev mode (a simple test file is optional; this is a pure function).
 2. Update `_dashboard-client.tsx`: new `KpiTile` + restructured KPI grid first, verify visually, then the three widgets.
@@ -347,10 +347,10 @@ No new error states are required — all humanization is a pure transformation o
 
 | Risk                                                                                                                                                                                                                 | Mitigation                                                                                                                                                                          |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Adding a new `humanizeAuditAction` fork point — if backend adds a new action, frontend label is missing.                                                                                                             | Fallback Title-Casing renders cleanly even for unknown codes; new actions just appear as `Foo Bar Baz` until the map is updated. Acceptable tradeoff for not requiring API changes. |
-| Widget widths shift — Recent Audit Events widget today is the rightmost narrow column; new layout puts it in a 3-up grid alongside Score Distribution and Bias Flags. Need to verify Audit list rows don't overflow. | Use `min-w-0` + `truncate` on the label text; relative timestamp is right-aligned and shrink-0. Long action labels truncate with ellipsis; full label visible in detail sheet.      |
-| Realtime invalidation behavior unchanged — but visual flash if rerender pattern changes.                                                                                                                             | No data-shape changes; React Query reuses existing keys; rerenders identical to today.                                                                                              |
-| `score` tone applied to absolute counts (Avg Profile Score, Avg Match Score) means an empty system shows muted `—` rather than red `0`.                                                                              | Intentional — matches the candidate dashboard rule (`value === 0` → muted). Empty system shouldn't read "low" tone.                                                                 |
+| Adding a new `humanizeAuditAction` fork point - if backend adds a new action, frontend label is missing.                                                                                                             | Fallback Title-Casing renders cleanly even for unknown codes; new actions just appear as `Foo Bar Baz` until the map is updated. Acceptable tradeoff for not requiring API changes. |
+| Widget widths shift - Recent Audit Events widget today is the rightmost narrow column; new layout puts it in a 3-up grid alongside Score Distribution and Bias Flags. Need to verify Audit list rows don't overflow. | Use `min-w-0` + `truncate` on the label text; relative timestamp is right-aligned and shrink-0. Long action labels truncate with ellipsis; full label visible in detail sheet.      |
+| Realtime invalidation behavior unchanged - but visual flash if rerender pattern changes.                                                                                                                             | No data-shape changes; React Query reuses existing keys; rerenders identical to today.                                                                                              |
+| `score` tone applied to absolute counts (Avg Profile Score, Avg Match Score) means an empty system shows muted `-` rather than red `0`.                                                                              | Intentional - matches the candidate dashboard rule (`value === 0` → muted). Empty system shouldn't read "low" tone.                                                                 |
 
 ## 11. Out of scope (re-stated for the implementer)
 
@@ -359,4 +359,4 @@ No new error states are required — all humanization is a pure transformation o
 - No date-range filter on the admin dashboard.
 - No greeting or personalization on the page header.
 - No drill-down from KPI tiles.
-- No changes to `/admin/bias-monitor` or `/admin/analytics` — they're separate surfaces with their own design specs.
+- No changes to `/admin/bias-monitor` or `/admin/analytics` - they're separate surfaces with their own design specs.

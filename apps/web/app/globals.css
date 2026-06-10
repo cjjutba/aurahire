@@ -60,7 +60,7 @@
   --font-body: var(--font-inter), -apple-system, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), "Geist Mono", monospace;
 
-  /* shadcn token bridge — maps shadcn's expected token names to AuraHire palette
+  /* shadcn token bridge - maps shadcn's expected token names to AuraHire palette
      so generated primitives (bg-primary, border-input, text-muted-foreground, etc.)
      resolve to the correct AuraHire colors. */
   --color-background: #ffffff;
@@ -101,7 +101,7 @@ body {
   outline-offset: 2px;
 }
 
-/* AI Shimmer animation — used by ai-shimmer.tsx during AI processing */
+/* AI Shimmer animation - used by ai-shimmer.tsx during AI processing */
 @keyframes shimmer {
   0% {
     background-position: 200% 0;
@@ -125,7 +125,7 @@ body {
   }
 }
 
-/* Indeterminate progress sweep — used by parsing-progress-card.tsx */
+/* Indeterminate progress sweep - used by parsing-progress-card.tsx */
 @keyframes indeterminate-sweep {
   0% {
     transform: translateX(-100%);
@@ -139,7 +139,7 @@ body {
   animation: indeterminate-sweep 1.6s ease-in-out infinite;
 }
 
-/* Stage check pop — used when a parsing stage flips to done */
+/* Stage check pop - used when a parsing stage flips to done */
 @keyframes stage-check-pop {
   0% {
     transform: scale(0.6);

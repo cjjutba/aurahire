@@ -109,7 +109,7 @@ async function main() {
   // Sanity assertions
   if (parseResult.data.skills.length === 0) {
     throw new Error(
-      "Parse result has zero skills — unexpected for the test resume",
+      "Parse result has zero skills - unexpected for the test resume",
     );
   }
   if (biasResult.data.flags.length < 2) {

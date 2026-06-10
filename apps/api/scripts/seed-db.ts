@@ -4,7 +4,7 @@
  *
  * Resulting accounts:
  *   admin@admin.com / password123 (admin)
- *   recruiter@gmail.com / password123 (recruiter — owns TechCorp company + 19 jobs)
+ *   recruiter@gmail.com / password123 (recruiter - owns TechCorp company + 19 jobs)
  *
  * Plus:
  *   - 1 active scoring_config row (canonical weights: skills 40 / experience 35 / education 15 / cultural_fit 10)
@@ -24,7 +24,7 @@
 import "reflect-metadata";
 import postgres from "postgres";
 
-// Order matters only for clarity — TRUNCATE ... CASCADE handles FK dependencies.
+// Order matters only for clarity - TRUNCATE ... CASCADE handles FK dependencies.
 const PUBLIC_TABLES = [
   "auth_tokens",
   "audit_logs",
@@ -159,7 +159,7 @@ const JOBS: SeedJob[] = [
       "We're building the next generation of our developer dashboard. You'll own the React/Next.js codebase that thousands of engineers use daily to debug their distributed systems. What you'll do: Design and ship features end-to-end across our React + TypeScript codebase. Partner with design + product to define interactions, not just implement them. Mentor mid-level engineers through code review and pair programming. Drive frontend architecture decisions (state management, performance, accessibility). What we're looking for: 5+ years of professional React experience. Strong TypeScript fundamentals. Experience with Next.js (App Router preferred) and modern React patterns (Server Components, Suspense). Comfortable with GraphQL clients (Apollo, urql, or similar). Track record of shipping production UI at scale.",
   },
   {
-    title: "Frontend Engineer — Design Systems",
+    title: "Frontend Engineer - Design Systems",
     department: "Engineering",
     employmentType: "full-time",
     workMode: "remote",
@@ -305,7 +305,7 @@ const JOBS: SeedJob[] = [
       "Join our Makati office working on the analytics backend. We process billions of events per day through a Python data pipeline. What you'll do: Build and maintain Django REST APIs. Write Celery tasks for async event processing. Optimize complex Postgres queries on time-series data. Pair with data engineers to define new metrics. What we're looking for: 3+ years of Django + DRF experience. Comfortable with Celery + Redis-backed task queues. Strong PostgreSQL skills (window functions, indexing). Test-driven mindset (pytest).",
   },
   {
-    title: "Go Backend Engineer — Infrastructure",
+    title: "Go Backend Engineer - Infrastructure",
     department: "Infrastructure",
     employmentType: "full-time",
     workMode: "remote",
@@ -324,9 +324,9 @@ const JOBS: SeedJob[] = [
       "Protocol Buffers",
     ],
     description:
-      "<p>Work on the Go services that form the backbone of our observability platform. These services ingest, route, and store telemetry from thousands of customer clusters.</p><h3>What you'll do</h3><ul><li>Design Go microservices that handle 100k+ req/sec sustained</li><li>Define gRPC contracts between internal services</li><li>Tune for latency (p99 budget is 50ms)</li><li>Operate services in production (you're on a small on-call rotation)</li></ul><h3>What we're looking for</h3><ul><li>4+ years of Go production experience</li><li>Distributed systems intuition (consensus, partitioning, failure modes)</li><li>Kubernetes operational experience (not just deploying — debugging)</li><li>Comfortable with gRPC and Protocol Buffers</li></ul>",
+      "<p>Work on the Go services that form the backbone of our observability platform. These services ingest, route, and store telemetry from thousands of customer clusters.</p><h3>What you'll do</h3><ul><li>Design Go microservices that handle 100k+ req/sec sustained</li><li>Define gRPC contracts between internal services</li><li>Tune for latency (p99 budget is 50ms)</li><li>Operate services in production (you're on a small on-call rotation)</li></ul><h3>What we're looking for</h3><ul><li>4+ years of Go production experience</li><li>Distributed systems intuition (consensus, partitioning, failure modes)</li><li>Kubernetes operational experience (not just deploying - debugging)</li><li>Comfortable with gRPC and Protocol Buffers</li></ul>",
     descriptionPlain:
-      "Work on the Go services that form the backbone of our observability platform. These services ingest, route, and store telemetry from thousands of customer clusters. What you'll do: Design Go microservices that handle 100k+ req/sec sustained. Define gRPC contracts between internal services. Tune for latency (p99 budget is 50ms). Operate services in production (you're on a small on-call rotation). What we're looking for: 4+ years of Go production experience. Distributed systems intuition (consensus, partitioning, failure modes). Kubernetes operational experience (not just deploying — debugging). Comfortable with gRPC and Protocol Buffers.",
+      "Work on the Go services that form the backbone of our observability platform. These services ingest, route, and store telemetry from thousands of customer clusters. What you'll do: Design Go microservices that handle 100k+ req/sec sustained. Define gRPC contracts between internal services. Tune for latency (p99 budget is 50ms). Operate services in production (you're on a small on-call rotation). What we're looking for: 4+ years of Go production experience. Distributed systems intuition (consensus, partitioning, failure modes). Kubernetes operational experience (not just deploying - debugging). Comfortable with gRPC and Protocol Buffers.",
   },
   // ─── Full-stack ─────────────────────────────────────────────────
   {
@@ -349,9 +349,9 @@ const JOBS: SeedJob[] = [
       "Git",
     ],
     description:
-      "<p>Work across our entire TypeScript stack — React on the frontend, Node.js on the backend. Ideal for engineers who like ownership of features end-to-end.</p><h3>What you'll do</h3><ul><li>Build features that span database → API → UI</li><li>Pair with design + PM to scope work</li><li>Write tests at every layer (unit, integration, e2e)</li><li>Participate in product reviews; bring an engineering perspective</li></ul><h3>What we're looking for</h3><ul><li>3+ years building full-stack products in TypeScript</li><li>React + Node.js comfortable in production</li><li>SQL proficiency (you can write JOINs without consulting docs)</li><li>You enjoy ownership across the stack rather than specializing</li></ul>",
+      "<p>Work across our entire TypeScript stack - React on the frontend, Node.js on the backend. Ideal for engineers who like ownership of features end-to-end.</p><h3>What you'll do</h3><ul><li>Build features that span database → API → UI</li><li>Pair with design + PM to scope work</li><li>Write tests at every layer (unit, integration, e2e)</li><li>Participate in product reviews; bring an engineering perspective</li></ul><h3>What we're looking for</h3><ul><li>3+ years building full-stack products in TypeScript</li><li>React + Node.js comfortable in production</li><li>SQL proficiency (you can write JOINs without consulting docs)</li><li>You enjoy ownership across the stack rather than specializing</li></ul>",
     descriptionPlain:
-      "Work across our entire TypeScript stack — React on the frontend, Node.js on the backend. Ideal for engineers who like ownership of features end-to-end. What you'll do: Build features that span database → API → UI. Pair with design + PM to scope work. Write tests at every layer (unit, integration, e2e). Participate in product reviews; bring an engineering perspective. What we're looking for: 3+ years building full-stack products in TypeScript. React + Node.js comfortable in production. SQL proficiency (you can write JOINs without consulting docs). You enjoy ownership across the stack rather than specializing.",
+      "Work across our entire TypeScript stack - React on the frontend, Node.js on the backend. Ideal for engineers who like ownership of features end-to-end. What you'll do: Build features that span database → API → UI. Pair with design + PM to scope work. Write tests at every layer (unit, integration, e2e). Participate in product reviews; bring an engineering perspective. What we're looking for: 3+ years building full-stack products in TypeScript. React + Node.js comfortable in production. SQL proficiency (you can write JOINs without consulting docs). You enjoy ownership across the stack rather than specializing.",
   },
   {
     title: "Junior Full Stack Engineer",
@@ -373,9 +373,9 @@ const JOBS: SeedJob[] = [
       "SQL basics",
     ],
     description:
-      "<p>Start your career on a tight team that mentors deliberately. You'll pair with senior engineers daily and own features within your first 30 days.</p><h3>What you'll do</h3><ul><li>Pair with senior engineers on real features (not just bug fixes)</li><li>Own one or two small features per quarter end-to-end</li><li>Learn our TypeScript + React + Node.js stack</li><li>Participate in code review (give and receive feedback)</li></ul><h3>What we're looking for</h3><ul><li>1-2 years of professional experience OR a strong CS degree + 1 internship</li><li>Comfortable with JavaScript/TypeScript</li><li>Curiosity about the full stack — frontend AND backend</li><li>Comfort asking questions and saying when you don't know something</li></ul>",
+      "<p>Start your career on a tight team that mentors deliberately. You'll pair with senior engineers daily and own features within your first 30 days.</p><h3>What you'll do</h3><ul><li>Pair with senior engineers on real features (not just bug fixes)</li><li>Own one or two small features per quarter end-to-end</li><li>Learn our TypeScript + React + Node.js stack</li><li>Participate in code review (give and receive feedback)</li></ul><h3>What we're looking for</h3><ul><li>1-2 years of professional experience OR a strong CS degree + 1 internship</li><li>Comfortable with JavaScript/TypeScript</li><li>Curiosity about the full stack - frontend AND backend</li><li>Comfort asking questions and saying when you don't know something</li></ul>",
     descriptionPlain:
-      "Start your career on a tight team that mentors deliberately. You'll pair with senior engineers daily and own features within your first 30 days. What you'll do: Pair with senior engineers on real features (not just bug fixes). Own one or two small features per quarter end-to-end. Learn our TypeScript + React + Node.js stack. Participate in code review (give and receive feedback). What we're looking for: 1-2 years of professional experience OR a strong CS degree + 1 internship. Comfortable with JavaScript/TypeScript. Curiosity about the full stack — frontend AND backend. Comfort asking questions and saying when you don't know something.",
+      "Start your career on a tight team that mentors deliberately. You'll pair with senior engineers daily and own features within your first 30 days. What you'll do: Pair with senior engineers on real features (not just bug fixes). Own one or two small features per quarter end-to-end. Learn our TypeScript + React + Node.js stack. Participate in code review (give and receive feedback). What we're looking for: 1-2 years of professional experience OR a strong CS degree + 1 internship. Comfortable with JavaScript/TypeScript. Curiosity about the full stack - frontend AND backend. Comfort asking questions and saying when you don't know something.",
   },
   // ─── DevOps / Cloud / SRE ───────────────────────────────────────
   {
@@ -424,9 +424,9 @@ const JOBS: SeedJob[] = [
       "PagerDuty",
     ],
     description:
-      "<p>Be the reliability voice for the Go services that power our platform. You'll define SLOs, run game days, and tune for the long tail.</p><h3>What you'll do</h3><ul><li>Define and track SLOs for our top 5 customer-facing services</li><li>Run quarterly game days (chaos engineering exercises)</li><li>Improve observability — metrics, logs, traces — across the platform</li><li>Coach service owners on production-readiness reviews</li></ul><h3>What we're looking for</h3><ul><li>4+ years of SRE / production engineering experience</li><li>Strong Linux + Kubernetes operational skills</li><li>Comfortable with Go (you can read service code, write small tools)</li><li>Prometheus + Grafana fluency</li></ul>",
+      "<p>Be the reliability voice for the Go services that power our platform. You'll define SLOs, run game days, and tune for the long tail.</p><h3>What you'll do</h3><ul><li>Define and track SLOs for our top 5 customer-facing services</li><li>Run quarterly game days (chaos engineering exercises)</li><li>Improve observability - metrics, logs, traces - across the platform</li><li>Coach service owners on production-readiness reviews</li></ul><h3>What we're looking for</h3><ul><li>4+ years of SRE / production engineering experience</li><li>Strong Linux + Kubernetes operational skills</li><li>Comfortable with Go (you can read service code, write small tools)</li><li>Prometheus + Grafana fluency</li></ul>",
     descriptionPlain:
-      "Be the reliability voice for the Go services that power our platform. You'll define SLOs, run game days, and tune for the long tail. What you'll do: Define and track SLOs for our top 5 customer-facing services. Run quarterly game days (chaos engineering exercises). Improve observability — metrics, logs, traces — across the platform. Coach service owners on production-readiness reviews. What we're looking for: 4+ years of SRE / production engineering experience. Strong Linux + Kubernetes operational skills. Comfortable with Go (you can read service code, write small tools). Prometheus + Grafana fluency.",
+      "Be the reliability voice for the Go services that power our platform. You'll define SLOs, run game days, and tune for the long tail. What you'll do: Define and track SLOs for our top 5 customer-facing services. Run quarterly game days (chaos engineering exercises). Improve observability - metrics, logs, traces - across the platform. Coach service owners on production-readiness reviews. What we're looking for: 4+ years of SRE / production engineering experience. Strong Linux + Kubernetes operational skills. Comfortable with Go (you can read service code, write small tools). Prometheus + Grafana fluency.",
   },
   {
     title: "Cloud Engineer (GCP)",
@@ -453,7 +453,7 @@ const JOBS: SeedJob[] = [
       "Help us build out our Southeast Asia GCP footprint. You'll work on data pipelines and serverless services from our Bonifacio Global City office. What you'll do: Stand up new GCP services (Cloud Run, Pub/Sub, BigQuery) for product teams. Manage Terraform modules for our GCP resources. Build cost-tracking dashboards for engineering leadership. Partner with our AWS team on multi-cloud strategy. What we're looking for: 3+ years of cloud infrastructure experience. GCP-first preferred; AWS-fluent transitioning to GCP also welcome. Terraform comfortable. Comfortable in BigQuery (you've written analytical SQL at scale).",
   },
   {
-    title: "Platform Engineer — Developer Experience",
+    title: "Platform Engineer - Developer Experience",
     department: "Infrastructure",
     employmentType: "full-time",
     workMode: "remote",
@@ -472,9 +472,9 @@ const JOBS: SeedJob[] = [
       "TypeScript",
     ],
     description:
-      "<p>Build the internal platform that 200+ TechCorp engineers use to ship code. This is a high-leverage role: every productivity improvement multiplies across the org.</p><h3>What you'll do</h3><ul><li>Maintain our Backstage developer portal</li><li>Design templates for new service scaffolding</li><li>Improve build times in our Bazel monorepo</li><li>Listen to engineers' pain points and prioritize fixes</li></ul><h3>What we're looking for</h3><ul><li>3+ years of platform / DX work</li><li>Comfortable in Go and TypeScript</li><li>You enjoy tooling work and have shipped internal tools before</li><li>Strong communication — you'll write a lot of docs</li></ul>",
+      "<p>Build the internal platform that 200+ TechCorp engineers use to ship code. This is a high-leverage role: every productivity improvement multiplies across the org.</p><h3>What you'll do</h3><ul><li>Maintain our Backstage developer portal</li><li>Design templates for new service scaffolding</li><li>Improve build times in our Bazel monorepo</li><li>Listen to engineers' pain points and prioritize fixes</li></ul><h3>What we're looking for</h3><ul><li>3+ years of platform / DX work</li><li>Comfortable in Go and TypeScript</li><li>You enjoy tooling work and have shipped internal tools before</li><li>Strong communication - you'll write a lot of docs</li></ul>",
     descriptionPlain:
-      "Build the internal platform that 200+ TechCorp engineers use to ship code. This is a high-leverage role: every productivity improvement multiplies across the org. What you'll do: Maintain our Backstage developer portal. Design templates for new service scaffolding. Improve build times in our Bazel monorepo. Listen to engineers' pain points and prioritize fixes. What we're looking for: 3+ years of platform / DX work. Comfortable in Go and TypeScript. You enjoy tooling work and have shipped internal tools before. Strong communication — you'll write a lot of docs.",
+      "Build the internal platform that 200+ TechCorp engineers use to ship code. This is a high-leverage role: every productivity improvement multiplies across the org. What you'll do: Maintain our Backstage developer portal. Design templates for new service scaffolding. Improve build times in our Bazel monorepo. Listen to engineers' pain points and prioritize fixes. What we're looking for: 3+ years of platform / DX work. Comfortable in Go and TypeScript. You enjoy tooling work and have shipped internal tools before. Strong communication - you'll write a lot of docs.",
   },
   // ─── Data ───────────────────────────────────────────────────────
   {
@@ -545,7 +545,7 @@ const JOBS: SeedJob[] = [
   },
   // ─── Lead / Staff ───────────────────────────────────────────────
   {
-    title: "Engineering Manager — Frontend Platform",
+    title: "Engineering Manager - Frontend Platform",
     department: "Engineering",
     employmentType: "full-time",
     workMode: "remote",
@@ -626,7 +626,7 @@ async function deleteAllAuthUsers(
     if (!listRes.ok) {
       const errBody = await listRes.text();
       throw new Error(
-        `List users failed: ${listRes.status} ${listRes.statusText} — ${errBody}`,
+        `List users failed: ${listRes.status} ${listRes.statusText} - ${errBody}`,
       );
     }
     const body = (await listRes.json()) as { users: AuthUser[] };
@@ -685,7 +685,7 @@ async function createAuthUser(
   if (!res.ok) {
     const errBody = await res.text();
     throw new Error(
-      `Create auth user (${params.email}) failed: ${res.status} ${res.statusText} — ${errBody}`,
+      `Create auth user (${params.email}) failed: ${res.status} ${res.statusText} - ${errBody}`,
     );
   }
 
@@ -726,7 +726,7 @@ async function main(): Promise<void> {
   const redactedDb = dbUrl.replace(/:[^:@/]+@/, ":****@");
   process.stdout.write(`Target DB:       ${redactedDb}\n`);
   process.stdout.write(`Target Supabase: ${supabaseUrl}\n`);
-  process.stdout.write("\nStarting seed in 3 seconds — Ctrl+C to abort.\n");
+  process.stdout.write("\nStarting seed in 3 seconds - Ctrl+C to abort.\n");
   await new Promise((r) => setTimeout(r, 3000));
 
   // ─── 1. Truncate ────────────────────────────────────────────
@@ -929,7 +929,7 @@ async function main(): Promise<void> {
   );
   process.stdout.write("\n");
   process.stdout.write(
-    `Company:   ${COMPANY.name} — HQ ${COMPANY.headquartersLocation}\n`,
+    `Company:   ${COMPANY.name} - HQ ${COMPANY.headquartersLocation}\n`,
   );
   process.stdout.write(
     `Jobs:      ${JOBS.length} published, all Philippine-based, monthly PHP salaries\n`,

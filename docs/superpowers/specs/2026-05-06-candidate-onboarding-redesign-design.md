@@ -1,8 +1,8 @@
-# Candidate Onboarding Redesign — Two-Pane Wizard with Live Resume Highlights
+# Candidate Onboarding Redesign - Two-Pane Wizard with Live Resume Highlights
 
 **Date:** 2026-05-06
 **Scope:** All pages under `apps/web/app/onboarding/candidate/`, the shared onboarding layout, supporting components in `apps/web/components/onboarding/`, and targeted backend changes in `apps/api/` (parse-resume prompt, DOCX→PDF conversion, schema, API surface).
-**Thesis tie-in:** Doubles as a live demonstration of explainable AI — the candidate sees exactly which fragments of their resume the AI extracted, in their actual document, with per-step focus.
+**Thesis tie-in:** Doubles as a live demonstration of explainable AI - the candidate sees exactly which fragments of their resume the AI extracted, in their actual document, with per-step focus.
 
 ---
 
@@ -11,10 +11,10 @@
 1. Replace the current 6-step single-column form with a **4-step two-pane wizard**: form on the left, live `ResumePreviewPane` on the right with AI-extracted entities highlighted directly on the rendered PDF.
 2. Per-step **highlight filtering**: only the entities relevant to the current step are emphasized; others fade.
 3. **Bidirectional hover linking** between form fields and resume highlights.
-4. Fix the read-only-looking parsed sections — Education, Experience, Skills get **inline-edit** with add/delete affordances inside a single consolidated **Review** step.
+4. Fix the read-only-looking parsed sections - Education, Experience, Skills get **inline-edit** with add/delete affordances inside a single consolidated **Review** step.
 5. **Mobile parity**: < 1024px renders form-only with the resume preview accessible as a slide-in sheet.
 6. **Autosave** on every form blur (debounced) so closing the tab is always safe.
-7. Maintain AuraHire's design system exactly — no new tokens, no new accent colors, AuraHire Blue stays scarce.
+7. Maintain AuraHire's design system exactly - no new tokens, no new accent colors, AuraHire Blue stays scarce.
 
 ## Non-Goals
 
@@ -23,7 +23,7 @@
 - New design tokens, fonts, or color additions.
 - Real-time multiplayer editing (only single-tab → conflict banner if a second tab saves).
 - AI prompt rewrites beyond adding `*_source` fields and bumping the version.
-- New AI models — same `gpt-4o-mini` baseline.
+- New AI models - same `gpt-4o-mini` baseline.
 - OAuth / SSO changes.
 
 ---
@@ -39,7 +39,7 @@ Routes under `apps/web/app/onboarding/candidate/`:
 | `/onboarding/candidate/review`      | 3 · Review (Education + Experience + Skills as accordion sections) | replaces `/education` + `/experience` + `/skills` |
 | `/onboarding/candidate/preferences` | 4 · Preferences                                                    | unchanged route, redesigned                       |
 
-The three deleted routes (`/education`, `/experience`, `/skills`) get removed; their components fold into the Review page. No redirects required — these were not externally linked.
+The three deleted routes (`/education`, `/experience`, `/skills`) get removed; their components fold into the Review page. No redirects required - these were not externally linked.
 
 ---
 
@@ -48,7 +48,7 @@ The three deleted routes (`/education`, `/experience`, `/skills`) get removed; t
 ```
 apps/web/
 ├── app/onboarding/
-│   ├── layout.tsx                          # unchanged — auth + brand wordmark
+│   ├── layout.tsx                          # unchanged - auth + brand wordmark
 │   └── candidate/
 │       ├── _data.ts                        # updated step list (4 entries)
 │       ├── page.tsx                        # step 1
@@ -56,31 +56,31 @@ apps/web/
 │       ├── review/page.tsx                 # step 3 (NEW)
 │       └── preferences/page.tsx            # step 4
 └── components/onboarding/
-    ├── onboarding-shell.tsx                # NEW — top bar + two-pane body
-    ├── onboarding-progress.tsx             # NEW — horizontal 4-segment progress
-    ├── save-status-indicator.tsx           # NEW — top-bar autosave indicator
+    ├── onboarding-shell.tsx                # NEW - top bar + two-pane body
+    ├── onboarding-progress.tsx             # NEW - horizontal 4-segment progress
+    ├── save-status-indicator.tsx           # NEW - top-bar autosave indicator
     ├── resume-preview/
-    │   ├── resume-preview-pane.tsx         # NEW — orchestrator
-    │   ├── pdf-renderer.tsx                # NEW — PDF.js wrapper
-    │   ├── highlight-overlay.tsx           # NEW — colored rects on top of text layer
-    │   ├── linearized-resume-view.tsx      # NEW — fallback for image-only / no-PDF
-    │   ├── highlight-context.tsx           # NEW — hover-link context provider
-    │   └── derive-highlights.ts            # NEW — turns parsed JSON into Highlight[]
+    │   ├── resume-preview-pane.tsx         # NEW - orchestrator
+    │   ├── pdf-renderer.tsx                # NEW - PDF.js wrapper
+    │   ├── highlight-overlay.tsx           # NEW - colored rects on top of text layer
+    │   ├── linearized-resume-view.tsx      # NEW - fallback for image-only / no-PDF
+    │   ├── highlight-context.tsx           # NEW - hover-link context provider
+    │   └── derive-highlights.ts            # NEW - turns parsed JSON into Highlight[]
     ├── candidate/
-    │   ├── resume-upload-card.tsx          # restyled — replaces resume-upload.tsx
-    │   ├── resume-upload-progress.tsx      # NEW — parse phase shimmer + cycling captions
+    │   ├── resume-upload-card.tsx          # restyled - replaces resume-upload.tsx
+    │   ├── resume-upload-progress.tsx      # NEW - parse phase shimmer + cycling captions
     │   ├── personal-info-form.tsx          # restyled, 2-col grid, AI_SUGGESTED chips
     │   ├── preferences-form.tsx            # restyled
-    │   ├── profile-preview-pane.tsx        # NEW — used as right pane on step 4
+    │   ├── profile-preview-pane.tsx        # NEW - used as right pane on step 4
     │   └── review/
-    │       ├── review-step.tsx             # NEW — orchestrates the 3 sections
-    │       ├── experience-list.tsx         # NEW — inline-edit cards
-    │       ├── experience-card.tsx         # NEW — collapsed/expanded states
+    │       ├── review-step.tsx             # NEW - orchestrates the 3 sections
+    │       ├── experience-list.tsx         # NEW - inline-edit cards
+    │       ├── experience-card.tsx         # NEW - collapsed/expanded states
     │       ├── education-list.tsx          # NEW
     │       ├── education-card.tsx          # NEW
-    │       └── skills-cloud.tsx            # NEW — chips + typeahead
+    │       └── skills-cloud.tsx            # NEW - chips + typeahead
     └── mobile/
-        └── resume-sheet.tsx                # NEW — Radix Dialog drawer for < 1024px
+        └── resume-sheet.tsx                # NEW - Radix Dialog drawer for < 1024px
 ```
 
 The existing `wizard-shell.tsx` and `wizard-progress.tsx` get **deleted**; replaced by `onboarding-shell.tsx` + `onboarding-progress.tsx`. Old `resume-upload.tsx` is **deleted** (folded into `resume-upload-card.tsx`).
@@ -96,9 +96,9 @@ The right pane is collapsed; the left pane is wide and centered. The whole conte
 On upload:
 
 1. Frontend posts the file to `POST /resumes/upload` and awaits the response. The existing service runs parse synchronously inside the upload request, so the response carries the final `parseStatus` (no polling needed in the happy path).
-2. While the request is in flight: dropzone replaced by a "parsing" card — `ai-shimmer` band with a caption that cycles every 1.5s through _"Reading your resume… → Extracting experience… → Detecting skills… → Almost done…"_
-3. On response with `parseStatus = "parsed"`: layout transitions into the two-pane view. Left pane shows a success card — _"Found N items"_ with chips for `5 work experiences · 1 school · 12 skills · 1 cert` — plus a primary "Continue" pill. Right pane fades in the rendered PDF with **all** highlights visible at once (no per-step filter on this step).
-4. On response with `parseStatus = "failed"`: error card with two CTAs — `Try again` (re-runs `POST /resumes/:id/reparse`) and `Continue without parsing` (routes to step 2 with empty defaults).
+2. While the request is in flight: dropzone replaced by a "parsing" card - `ai-shimmer` band with a caption that cycles every 1.5s through _"Reading your resume… → Extracting experience… → Detecting skills… → Almost done…"_
+3. On response with `parseStatus = "parsed"`: layout transitions into the two-pane view. Left pane shows a success card - _"Found N items"_ with chips for `5 work experiences · 1 school · 12 skills · 1 cert` - plus a primary "Continue" pill. Right pane fades in the rendered PDF with **all** highlights visible at once (no per-step filter on this step).
+4. On response with `parseStatus = "failed"`: error card with two CTAs - `Try again` (re-runs `POST /resumes/:id/reparse`) and `Continue without parsing` (routes to step 2 with empty defaults).
 5. **Recovery from a stale `parsing` row**: if `fetchLatestParsedResume()` on page-load returns a row with `parseStatus = "parsing"` (user closed tab mid-upload, server crashed mid-parse), step 1 renders a recovery card: _"A previous upload didn't complete"_ + `Retry parse` (calls `POST /resumes/:id/reparse`) and `Upload a different file` (returns to dropzone).
 
 ### Step 2 · Personal (`/onboarding/candidate/personal`)
@@ -109,15 +109,15 @@ Right: `ResumePreviewPane` with `activeCategories=["contact","summary"]`. All ot
 
 ### Step 3 · Review (`/onboarding/candidate/review`)
 
-Left: three sections stacked — Experience, Education, Skills — each with a section header showing item count.
+Left: three sections stacked - Experience, Education, Skills - each with a section header showing item count.
 
-**Experience / Education** — inline-expand cards:
+**Experience / Education** - inline-expand cards:
 
 ```
 Collapsed (default):
 ┌────────────────────────────────────────────────────────────┐
 │ Senior Software Engineer · Acme Corp           [✏] [🗑]   │  ← icons visible on hover
-│ 2022-01 – Present                                         │
+│ 2022-01 - Present                                         │
 └────────────────────────────────────────────────────────────┘
 
 Expanded (click → edit mode):
@@ -136,7 +136,7 @@ Expanded (click → edit mode):
 
 State machine: `collapsed → click → expanded(editing) → Save (PATCH) → collapsed | Cancel → collapsed (revert)`.
 
-**Skills** — chip cloud + typeahead:
+**Skills** - chip cloud + typeahead:
 
 - Each chip: `primary-soft` bg, `primary` text, X on hover.
 - Below the cloud: `<input>` with autocomplete sourced from `packages/shared/skills-taxonomy.ts` plus skills already on the profile.
@@ -148,16 +148,16 @@ State machine: `collapsed → click → expanded(editing) → Save (PATCH) → c
 
 ### Step 4 · Preferences (`/onboarding/candidate/preferences`)
 
-Left: form (Desired Roles textarea/comma-separated, Seniority select, Open To checkboxes — Full-time / Part-time / Contract / Remote / Hybrid / On-site, Salary Min / Max / Currency, Available Start Date). Same fields as today, restyled to match the new design.
+Left: form (Desired Roles textarea/comma-separated, Seniority select, Open To checkboxes - Full-time / Part-time / Contract / Remote / Hybrid / On-site, Salary Min / Max / Currency, Available Start Date). Same fields as today, restyled to match the new design.
 
-Right: right pane swaps to `ProfilePreviewPane` showing the recruiter view — avatar + name + headline (or initials avatar plate if no avatar), summary excerpt, top 3 most-recent experiences, top 8 skills as chips, location. This is the candidate's "you're about to be on the platform" moment.
+Right: right pane swaps to `ProfilePreviewPane` showing the recruiter view - avatar + name + headline (or initials avatar plate if no avatar), summary excerpt, top 3 most-recent experiences, top 8 skills as chips, location. This is the candidate's "you're about to be on the platform" moment.
 
 **Finish** button submits to `PATCH /candidate-profiles/me/complete-onboarding` (existing endpoint behavior moved here under a dedicated route for clarity) and routes to `/candidate`.
 
 ### Cross-step UX
 
-- **Auto-save** on every form blur (debounced 500ms) → `PATCH /candidate-profiles/me`. Visual feedback: top-bar `save-status-indicator` shows `idle="All changes saved"` / `saving="Saving…"` / `error="Couldn't save — Retry"`.
-- **Browser back / forward / direct-URL** all work — each step is a real route with server-rendered defaults from `fetchCandidateProfileMe()` + `fetchLatestParsedResume()`. Form state is local, reseeded from server on mount.
+- **Auto-save** on every form blur (debounced 500ms) → `PATCH /candidate-profiles/me`. Visual feedback: top-bar `save-status-indicator` shows `idle="All changes saved"` / `saving="Saving…"` / `error="Couldn't save - Retry"`.
+- **Browser back / forward / direct-URL** all work - each step is a real route with server-rendered defaults from `fetchCandidateProfileMe()` + `fetchLatestParsedResume()`. Form state is local, reseeded from server on mount.
 - **Step indicator**: completed steps clickable (jumps back), future steps locked with a small lock glyph, current step highlighted in `primary`.
 - **Closing the tab** is safe (everything autosaved). On return, candidate lands on the same step. Tab-close protection (`beforeunload`) only fires if any RHF form has been dirty for > 750ms.
 
@@ -190,7 +190,7 @@ Right: right pane swaps to `ProfilePreviewPane` showing the recruiter view — a
 **Top bar** (`64px` height):
 
 - AuraHire wordmark left, links to `/`.
-- Center: `OnboardingProgress` — 4 horizontal segments, `12px` circles connected by `2px` rules. Each circle: completed = `primary` fill with check; current = `primary` ring on `canvas`; upcoming = `hairline` fill. Labels below segments at `≥ 1024px`. Current label in `primary`, others in `muted`.
+- Center: `OnboardingProgress` - 4 horizontal segments, `12px` circles connected by `2px` rules. Each circle: completed = `primary` fill with check; current = `primary` ring on `canvas`; upcoming = `hairline` fill. Labels below segments at `≥ 1024px`. Current label in `primary`, others in `muted`.
 - Right: `SaveStatusIndicator` + JetBrains-Mono `2 / 4` counter.
 - 1px `hairline-soft` bottom border.
 
@@ -203,7 +203,7 @@ Right: right pane swaps to `ProfilePreviewPane` showing the recruiter view — a
 
 ---
 
-## `ResumePreviewPane` — Implementation Detail
+## `ResumePreviewPane` - Implementation Detail
 
 **Library:** `pdfjs-dist` (PDF.js), worker mode, lazy-loaded only on onboarding pages via `next/dynamic` so it doesn't bloat the rest of the app.
 
@@ -224,7 +224,7 @@ type HighlightCategory =
   | "skill";
 
 type Highlight = {
-  id: string; // stable, used for hover linking — e.g. "experience.0.title"
+  id: string; // stable, used for hover linking - e.g. "experience.0.title"
   category: HighlightCategory;
   source: string; // verbatim text from resume to find in the PDF
   fieldRef: string; // form field id to focus on click
@@ -260,9 +260,9 @@ Whitespace-tolerant, case-insensitive, accent-insensitive (NFD-normalized). Mult
 - The pane subscribes; on change, finds matching highlight, scrolls it into view via `scrollIntoView({ block: 'center' })`, applies a 600ms pulse animation (CSS keyframe).
 - Each highlight has `data-field-id`. On click, it calls `focusField(id)` which dispatches a custom event that form-field components listen for to call `inputRef.current.focus()`.
 
-**Fallback for image-only PDFs** (`linearized-resume-view.tsx`): If text-layer extraction yields `< 50` total characters across all pages, the pane renders `LinearizedResumeView` instead — `rawText` formatted as styled HTML (preserving line breaks and rough section detection), with substring highlights. Same UX, lower fidelity, no positions.
+**Fallback for image-only PDFs** (`linearized-resume-view.tsx`): If text-layer extraction yields `< 50` total characters across all pages, the pane renders `LinearizedResumeView` instead - `rawText` formatted as styled HTML (preserving line breaks and rough section detection), with substring highlights. Same UX, lower fidelity, no positions.
 
-**State machine:** `loading → ready | error | image-only`. Errors retain the form (left pane keeps working — the resume preview is enrichment, not blocking).
+**State machine:** `loading → ready | error | image-only`. Errors retain the form (left pane keeps working - the resume preview is enrichment, not blocking).
 
 **Component contract:**
 
@@ -302,7 +302,7 @@ experience: Array<{
   title: string; title_source: string;
   company: string; company_source: string;
   start_date: string; end_date: string | null;   // normalized ISO
-  period_source: string;                          // verbatim, e.g. "Jan 2022 – Present"
+  period_source: string;                          // verbatim, e.g. "Jan 2022 - Present"
   bullets: string[];
   bullets_source: string[];                       // 1:1 with bullets, verbatim
   skills: string[];
@@ -345,7 +345,7 @@ export class DocxToPdfService {
 
 LibreOffice serializes per-process (concurrent jobs cause lock contention). Wrap calls behind a simple in-memory mutex queue (1 conversion at a time per container). For volume, this can later move to a dedicated BullMQ queue with a worker, but for sprint scope a mutex is enough.
 
-**Docker image** (`apps/api/Dockerfile`): adds `libreoffice-core libreoffice-writer fonts-liberation` (Debian package list). Adds ~400MB to the API image. Acceptable — single API container.
+**Docker image** (`apps/api/Dockerfile`): adds `libreoffice-core libreoffice-writer fonts-liberation` (Debian package list). Adds ~400MB to the API image. Acceptable - single API container.
 
 `ResumesService.upload()` flow becomes:
 
@@ -374,7 +374,7 @@ Nullable. `null` for PDF uploads (frontend uses `storage_path` directly); popula
 
 ### 4. API surface
 
-**Existing** `GET /resumes/:id/download-url` — extended response:
+**Existing** `GET /resumes/:id/download-url` - extended response:
 
 ```ts
 // Before:
@@ -386,18 +386,18 @@ Nullable. `null` for PDF uploads (frontend uses `storage_path` directly); popula
 // After:
 {
   signedUrl: string; // original (for download button)
-  signedPdfUrl: string; // canonical PDF (for ResumePreviewPane) — same as signedUrl for PDF uploads
+  signedPdfUrl: string; // canonical PDF (for ResumePreviewPane) - same as signedUrl for PDF uploads
   expiresAt: string;
 }
 ```
 
 `signedPdfUrl` always points to `canonical_pdf_path` if set, else `storage_path`. Frontend uses `signedPdfUrl` exclusively for preview rendering.
 
-**New** `POST /resumes/:id/reparse` — re-runs the parse with the current prompt version against the existing stored resume. Returns the updated resume row. Used by the Step 1 retry CTA and the "New AI suggestion available" mid-flow re-parse.
+**New** `POST /resumes/:id/reparse` - re-runs the parse with the current prompt version against the existing stored resume. Returns the updated resume row. Used by the Step 1 retry CTA and the "New AI suggestion available" mid-flow re-parse.
 
-**Existing** `PATCH /candidate-profiles/me` — already accepts the full profile shape. Stays the patch endpoint for autosave.
+**Existing** `PATCH /candidate-profiles/me` - already accepts the full profile shape. Stays the patch endpoint for autosave.
 
-**Renamed/clarified** `PATCH /candidate-profiles/me/complete-onboarding` — dedicated endpoint for the Finish button. Validates final completion (Zod check: `profileCompleted` requirements per design system). Sets `profileCompleted = true` and writes the `onboarding.completed` audit log.
+**Renamed/clarified** `PATCH /candidate-profiles/me/complete-onboarding` - dedicated endpoint for the Finish button. Validates final completion (Zod check: `profileCompleted` requirements per design system). Sets `profileCompleted = true` and writes the `onboarding.completed` audit log.
 
 ### 5. Backwards compat for existing parsed resumes
 
@@ -410,10 +410,10 @@ Resumes already parsed with the old prompt will not have `*_source` fields. The 
 | Step                       | Save trigger                       | Endpoint                              | Behavior                                                                         |
 | -------------------------- | ---------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
 | 2 · Personal               | Field `onBlur`, debounced 500ms    | `PATCH /candidate-profiles/me`        | Single-field patch payload                                                       |
-| 3 · Review (cards)         | "Save" button inside expanded card | `PATCH /candidate-profiles/me`        | Sends the full updated `experience[]` / `education[]` array — atomic per section |
+| 3 · Review (cards)         | "Save" button inside expanded card | `PATCH /candidate-profiles/me`        | Sends the full updated `experience[]` / `education[]` array - atomic per section |
 | 3 · Review (skills)        | Chip add/remove                    | `PATCH /candidate-profiles/me`        | Sends full updated `skills[]` array, debounced 300ms to coalesce rapid edits     |
 | 4 · Preferences            | Field `onBlur`, debounced 500ms    | `PATCH /candidate-profiles/me`        | Single-field patch                                                               |
-| Step transition (Continue) | Click                              | flushes pending debounce, then routes | —                                                                                |
+| Step transition (Continue) | Click                              | flushes pending debounce, then routes | -                                                                                |
 
 **Inline edit state machine** (each card):
 
@@ -430,7 +430,7 @@ collapsed → click → expanded(editing)
 
 **Skills typeahead:** Static common-skills list at `packages/shared/src/skills-taxonomy.ts` (~500 common tech skills as a starting set). Fuzzy match on input. Plus existing profile skills (avoid suggesting already-added).
 
-**Validation:** Zod schemas in `packages/shared/onboarding/` are the single source of truth — used by `nestjs-zod` on the backend and `@hookform/resolvers/zod` on the frontend. Per-step "completion schemas" gate the Continue button:
+**Validation:** Zod schemas in `packages/shared/onboarding/` are the single source of truth - used by `nestjs-zod` on the backend and `@hookform/resolvers/zod` on the frontend. Per-step "completion schemas" gate the Continue button:
 
 ```ts
 // packages/shared/src/onboarding/personal.schema.ts
@@ -446,13 +446,13 @@ export const personalCompleteSchema = z.object({
 
 Missing required field → Continue button disabled with tooltip "Add your full name to continue". Inline field errors use design system error pattern: 2px `status-danger` border + alert-circle icon + red helper text below.
 
-**`AI_SUGGESTED` chip lifecycle:** Field starts with chip if value came from parsing. On first user keystroke (`formState.dirtyFields[name] === true`), chip flips to `EDITED` (`muted` text, no icon). Reset to original value flips back. Pure local state — not persisted.
+**`AI_SUGGESTED` chip lifecycle:** Field starts with chip if value came from parsing. On first user keystroke (`formState.dirtyFields[name] === true`), chip flips to `EDITED` (`muted` text, no icon). Reset to original value flips back. Pure local state - not persisted.
 
-**Save status indicator** — single global indicator in the top bar:
+**Save status indicator** - single global indicator in the top bar:
 
 - `idle` → "All changes saved" with check icon
 - `saving` → "Saving…" with spinner
-- `error` → "Couldn't save — Retry" link
+- `error` → "Couldn't save - Retry" link
 
 **Tab-close protection:** `beforeunload` listener triggers when any RHF form has been dirty for > 750ms (avoids prompts during normal typing). Inline edit cards count: closing while a card is expanded with unsaved edits also triggers.
 
@@ -461,7 +461,7 @@ Missing required field → Continue button disabled with tooltip "Add your full 
 - Network error → in-flight Save retries 1× silently, then surfaces inline retry button.
 - 401 (token expired) → toast + redirect to `/login?next=/onboarding/candidate/<step>`.
 - Validation error from server → field-level error mapping; if no field can be matched, generic banner.
-- 409 (conflict, second tab saved) → non-blocking banner: _"Profile changed in another window — refresh to see the latest"_ + Refresh link.
+- 409 (conflict, second tab saved) → non-blocking banner: _"Profile changed in another window - refresh to see the latest"_ + Refresh link.
 
 ---
 
@@ -470,8 +470,8 @@ Missing required field → Continue button disabled with tooltip "Add your full 
 | Range         | Treatment                                                                                 |
 | ------------- | ----------------------------------------------------------------------------------------- |
 | ≥ 1280px      | Wide: max content cap 1280px, two-pane 1.3 : 1                                            |
-| 1024 – 1280px | Desktop: full two-pane, same ratio                                                        |
-| 640 – 1024px  | Tablet: single column, resume → slide-in sheet, form fields stay 2-col where space allows |
+| 1024 - 1280px | Desktop: full two-pane, same ratio                                                        |
+| 640 - 1024px  | Tablet: single column, resume → slide-in sheet, form fields stay 2-col where space allows |
 | < 640px       | Phone: single column, resume → slide-in sheet, all form fields stack 1-col                |
 
 **Top bar at < 1024px:** wordmark + step counter only. The 4-segment progress collapses to a single slim 4px progress bar that spans the full viewport width directly under the header.
@@ -514,7 +514,7 @@ Missing required field → Continue button disabled with tooltip "Add your full 
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Parse timeout (> 60s)                   | Loading caption changes to "Parse is taking too long" → CTAs surface: **Try again** + **Continue without parsing**.                                          |
 | Parse error (invalid JSON, OpenAI down) | `parseStatus = 'failed'`. Banner with retry. Subsequent steps still navigable; right pane shows "Couldn't parse this resume" empty state with re-parse link. |
-| `parse_confidence < 0.4`                | Soft warning above step-2 form: "We had a hard time reading this resume — please double-check the prefilled values."                                         |
+| `parse_confidence < 0.4`                | Soft warning above step-2 form: "We had a hard time reading this resume - please double-check the prefilled values."                                         |
 
 ### C. PDF render failures (`ResumePreviewPane`)
 
@@ -527,14 +527,14 @@ Missing required field → Continue button disabled with tooltip "Add your full 
 
 ### D. Skip / no resume
 
-A small "Skip — I'll fill in manually" text link at the bottom of step 1. Routes to step 2. Right pane on subsequent steps shows: _"No resume uploaded yet — your prefill suggestions will be more accurate with one"_ + small upload button.
+A small "Skip - I'll fill in manually" text link at the bottom of step 1. Routes to step 2. Right pane on subsequent steps shows: _"No resume uploaded yet - your prefill suggestions will be more accurate with one"_ + small upload button.
 
 ### E. Re-upload mid-flow
 
 Right-pane header has an inline "Replace resume" link visible on every step ≥ 2. Triggers same upload flow as step 1. On successful re-parse:
 
 - **Pristine fields** (form value matches old prefill) get refreshed; `AI_SUGGESTED` chip pulses briefly.
-- **Dirty fields** (user edited them) keep the user's value untouched. A "New AI suggestion available — apply?" indicator appears.
+- **Dirty fields** (user edited them) keep the user's value untouched. A "New AI suggestion available - apply?" indicator appears.
 - New parsed arrays (experience, education, skills) merge into existing arrays via id-stable diff: items the user added/edited preserved, AI re-extractions added as new entries.
 
 ### F. Empty parsed sections
@@ -601,7 +601,7 @@ Supabase token expires after 1h; refresh happens silently via `@supabase/ssr`. I
 
 - `POST /resumes/upload` PDF end-to-end: parsed result includes `*_source` fields, audit logs written.
 - DOCX upload → canonical PDF generated, both files in storage, `canonical_pdf_path` set.
-- `PATCH /candidate-profiles/me` array replacement (experience, education, skills) — atomic, validated, audit-logged.
+- `PATCH /candidate-profiles/me` array replacement (experience, education, skills) - atomic, validated, audit-logged.
 - Re-parse flow: `POST /resumes/:id/reparse` preserves dirty fields semantics (frontend test).
 
 ### E2E tests (Playwright, against the dev stack the human runs)
@@ -626,13 +626,13 @@ A **golden corpus** of 15 fixture resumes at `apps/api/test/fixtures/resumes/`, 
 | Experience entries (count match)                                          | exact              |
 | Skills (Jaccard with expected)                                            | ≥ 0.85             |
 | `source_field_coverage`                                                   | ≥ 0.90             |
-| **Source-string hallucination rate** (sources not substring of `rawText`) | **0% — hard fail** |
+| **Source-string hallucination rate** (sources not substring of `rawText`) | **0% - hard fail** |
 
 Prompt-version bumps cannot land unless the corpus passes. Result CSV attached to the PR for review.
 
 ### Accessibility
 
-`@axe-core/playwright` — every step page asserted with zero axe violations on both desktop and mobile viewports. Manual keyboard-only walkthrough: Tab → Enter → Esc → focus restored.
+`@axe-core/playwright` - every step page asserted with zero axe violations on both desktop and mobile viewports. Manual keyboard-only walkthrough: Tab → Enter → Esc → focus restored.
 
 ### Visual regression
 
@@ -646,12 +646,12 @@ Playwright screenshots checked into the repo for each step at 1280px / 768px / 3
 
 Before sign-off:
 
-1. Upload 5 real resumes (mixed PDF/DOCX, different layouts) — confirm highlights land on correct text.
+1. Upload 5 real resumes (mixed PDF/DOCX, different layouts) - confirm highlights land on correct text.
 2. Verify per-step filter visually re-focuses highlights on each step transition.
 3. Hover form fields → confirm corresponding resume highlight pulses; click highlights → confirm form field focuses.
-4. Throttle network to "Slow 3G" — verify autosave still feels responsive or surfaces clear status.
-5. Test in Safari, Chrome, Firefox — confirm PDF.js renders consistently.
-6. Run on a real iPhone Safari — confirm drawer gestures, keyboard scroll, sticky dock work.
+4. Throttle network to "Slow 3G" - verify autosave still feels responsive or surfaces clear status.
+5. Test in Safari, Chrome, Firefox - confirm PDF.js renders consistently.
+6. Run on a real iPhone Safari - confirm drawer gestures, keyboard scroll, sticky dock work.
 
 ---
 
@@ -659,7 +659,7 @@ Before sign-off:
 
 - No DB data migration required. New column is nullable.
 - Existing parsed resumes work without highlights (graceful degradation).
-- No flag-gating — the redesign ships as a single drop. Existing in-flight onboarding sessions (rare given onboarding is short) will see a state transition; their saved data is preserved.
+- No flag-gating - the redesign ships as a single drop. Existing in-flight onboarding sessions (rare given onboarding is short) will see a state transition; their saved data is preserved.
 - The 3 deleted routes (`/education`, `/experience`, `/skills`) get removed in the same PR. They are not externally linked.
 
 ---
@@ -669,7 +669,7 @@ Before sign-off:
 - Recruiter onboarding redesign (separate spec).
 - Real-time collaborative editing (multi-tab today gets conflict banner only).
 - Per-recruiter "view as recruiter" preview on Step 4 (currently shows generic profile).
-- Saving the source-position computation server-side (currently client-side every load — acceptable for a 4-page flow).
+- Saving the source-position computation server-side (currently client-side every load - acceptable for a 4-page flow).
 - Beefier image-only PDF support via OCR (currently falls back to linearized text).
 - Undo stack beyond the 5s toast on delete.
 

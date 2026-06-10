@@ -33,7 +33,7 @@ test("candidate can re-upload resume mid-flow", async ({ page }) => {
   await page.getByLabel(/headline/i).fill("Custom Headline I Edited");
 
   // TODO: trigger the "Replace resume" affordance from the right pane header.
-  // The implementation of that affordance is in Task 24+ — once present, click it,
+  // The implementation of that affordance is in Task 24+ - once present, click it,
   // upload a different fixture, and assert:
   //   - the dirty "Custom Headline" field is preserved
   //   - other fields refresh from new AI suggestions

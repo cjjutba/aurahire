@@ -54,7 +54,7 @@ const buttonVariants = cva(
  * `pending={form.formState.isSubmitting}` (React Hook Form) so the same
  * primitive enforces the double-submit guard uniformly.
  *
- * The prop is additive — existing call sites work unchanged. Wrap any
+ * The prop is additive - existing call sites work unchanged. Wrap any
  * leading `<Icon />` element with the spinner conditionally only when
  * you want it replaced; the simplest pattern is `<Button pending={X}
  * leadingIcon={<Icon />}>...</Button>` but this primitive keeps backward

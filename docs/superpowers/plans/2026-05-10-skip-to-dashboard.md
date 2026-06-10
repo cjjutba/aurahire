@@ -1,10 +1,10 @@
-# Skip-to-Dashboard from Analyzing — Implementation Plan
+# Skip-to-Dashboard from Analyzing - Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a "Skip to dashboard" affordance on `/onboarding/candidate/analyzing` that lets the candidate proceed to `/candidate` while match-preview computation continues in the background. Make the dashboard's pending and failure states calm and self-healing so a skipped candidate is never stranded.
 
-**Architecture:** Frontend-heavy slice. The reducer state machine in `_analyzing-client.tsx` already has a `REDIRECT` action — the skip button dispatches it and uses `router.replace()` (not `push`) so `/analyzing` is dropped from history. A small backend endpoint `POST /candidate-profiles/me/onboarding/skipped-analyzing` records an audit row for thesis-defense data ("how often candidates skip, at what point"). The dashboard's `ProfileScoreCardClient` and the `RecommendedForYouSection` gain a 30-second pending-then-error timeout so a wedged AI call surfaces a calm retry path rather than an infinite shimmer. A new layout-level guard at `apps/web/app/onboarding/layout.tsx` redirects already-completed candidates forward to `/candidate` so back-button presses can't land on stale onboarding pages.
+**Architecture:** Frontend-heavy slice. The reducer state machine in `_analyzing-client.tsx` already has a `REDIRECT` action - the skip button dispatches it and uses `router.replace()` (not `push`) so `/analyzing` is dropped from history. A small backend endpoint `POST /candidate-profiles/me/onboarding/skipped-analyzing` records an audit row for thesis-defense data ("how often candidates skip, at what point"). The dashboard's `ProfileScoreCardClient` and the `RecommendedForYouSection` gain a 30-second pending-then-error timeout so a wedged AI call surfaces a calm retry path rather than an infinite shimmer. A new layout-level guard at `apps/web/app/onboarding/layout.tsx` redirects already-completed candidates forward to `/candidate` so back-button presses can't land on stale onboarding pages.
 
 **Tech Stack:** Next.js 16 App Router, React 19, TypeScript strict, Zod schemas in `@aurahire/shared`, NestJS + nestjs-zod DTOs, Drizzle ORM, Vitest for FE unit tests, Vitest for BE service spec, TanStack Query (existing), Supabase Realtime (existing). No new dependencies.
 
@@ -16,29 +16,29 @@
 
 ### New files
 
-- `apps/api/src/modules/candidate-profiles/dto/onboarding-skipped.dto.ts` — `nestjs-zod` DTO wrapping the new shared schema.
+- `apps/api/src/modules/candidate-profiles/dto/onboarding-skipped.dto.ts` - `nestjs-zod` DTO wrapping the new shared schema.
 
 ### Modified files
 
-- `packages/shared/src/schemas/onboarding.ts` — add `onboardingSkippedAnalyzingSchema` Zod schema and inferred `OnboardingSkippedAnalyzing` type.
-- `packages/shared/src/index.ts` — re-export the new schema and type (auto-handled by the `schemas` barrel re-export; verify).
-- `apps/api/src/audit/audit.types.ts` — add `USER_ONBOARDING_SKIPPED_ANALYZING` to the `AUDIT_ACTIONS` constant.
-- `apps/api/src/modules/candidate-profiles/candidate-profiles.controller.ts` — add `POST me/onboarding/skipped-analyzing` endpoint.
-- `apps/api/src/modules/candidate-profiles/candidate-profiles.service.ts` — add `recordOnboardingSkipped(user, payload, requestMeta)` method.
-- `apps/api/src/modules/candidate-profiles/candidate-profiles.service.spec.ts` — add unit test for the new method.
-- `apps/web/app/onboarding/layout.tsx` — add `profileCompleted=true` redirect to `/candidate`.
-- `apps/web/app/onboarding/candidate/analyzing/_analyzing-client.tsx` — add `canSkip(state)` exported helper, skip button JSX, click handler with audit fire + `router.replace`. Switch the auto-redirect's `router.push` to `router.replace` for symmetry.
-- `apps/web/app/onboarding/candidate/analyzing/_analyzing-client.test.tsx` — add unit tests for `canSkip(state)`.
-- `apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx` — add 30-second shimmer-then-error transition with a `[Try again]` button wired to the existing recompute mutation.
-- `apps/web/app/(candidate)/candidate/_dashboard-client.tsx` — add inline `· N of 5 ready` counter on the `Recommended for You` section header, and a 30-second stall handler that drops shimmer placeholder slots + shows a small "Some matches couldn't be loaded — browse all jobs →" caption.
+- `packages/shared/src/schemas/onboarding.ts` - add `onboardingSkippedAnalyzingSchema` Zod schema and inferred `OnboardingSkippedAnalyzing` type.
+- `packages/shared/src/index.ts` - re-export the new schema and type (auto-handled by the `schemas` barrel re-export; verify).
+- `apps/api/src/audit/audit.types.ts` - add `USER_ONBOARDING_SKIPPED_ANALYZING` to the `AUDIT_ACTIONS` constant.
+- `apps/api/src/modules/candidate-profiles/candidate-profiles.controller.ts` - add `POST me/onboarding/skipped-analyzing` endpoint.
+- `apps/api/src/modules/candidate-profiles/candidate-profiles.service.ts` - add `recordOnboardingSkipped(user, payload, requestMeta)` method.
+- `apps/api/src/modules/candidate-profiles/candidate-profiles.service.spec.ts` - add unit test for the new method.
+- `apps/web/app/onboarding/layout.tsx` - add `profileCompleted=true` redirect to `/candidate`.
+- `apps/web/app/onboarding/candidate/analyzing/_analyzing-client.tsx` - add `canSkip(state)` exported helper, skip button JSX, click handler with audit fire + `router.replace`. Switch the auto-redirect's `router.push` to `router.replace` for symmetry.
+- `apps/web/app/onboarding/candidate/analyzing/_analyzing-client.test.tsx` - add unit tests for `canSkip(state)`.
+- `apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx` - add 30-second shimmer-then-error transition with a `[Try again]` button wired to the existing recompute mutation.
+- `apps/web/app/(candidate)/candidate/_dashboard-client.tsx` - add inline `· N of 5 ready` counter on the `Recommended for You` section header, and a 30-second stall handler that drops shimmer placeholder slots + shows a small "Some matches couldn't be loaded - browse all jobs →" caption.
 
 ### Untouched (intentionally)
 
-- `apps/api/src/modules/candidate-profiles/candidate-profiles.module.ts` — no new providers needed; `AuditService` is already injected into the service.
-- `packages/db/**` — no schema, RLS, or migration changes.
-- All other backend modules (scoring, queue, resumes, …) — unchanged.
-- `apps/web/app/(candidate)/candidate/profile/page.tsx` and `_profile-score-dashboard-client.tsx` — the deep-dive view receives a non-null `data` prop from its server component, so the null-state shimmer-then-error path never runs there. No change.
-- The existing 10-second `ANALYZING_SCREEN_WALLCLOCK_MS` cap — unchanged. Skip is purely additive.
+- `apps/api/src/modules/candidate-profiles/candidate-profiles.module.ts` - no new providers needed; `AuditService` is already injected into the service.
+- `packages/db/**` - no schema, RLS, or migration changes.
+- All other backend modules (scoring, queue, resumes, …) - unchanged.
+- `apps/web/app/(candidate)/candidate/profile/page.tsx` and `_profile-score-dashboard-client.tsx` - the deep-dive view receives a non-null `data` prop from its server component, so the null-state shimmer-then-error path never runs there. No change.
+- The existing 10-second `ANALYZING_SCREEN_WALLCLOCK_MS` cap - unchanged. Skip is purely additive.
 
 ---
 
@@ -146,7 +146,7 @@ Open `packages/shared/src/schemas/onboarding.ts` and append at the end of the fi
 
 ```ts
 // ============================================================================
-// CANDIDATE ONBOARDING — analyzing-screen skip telemetry (Skip-to-Dashboard)
+// CANDIDATE ONBOARDING - analyzing-screen skip telemetry (Skip-to-Dashboard)
 // ============================================================================
 
 /**
@@ -227,7 +227,7 @@ EOF
 
 - [ ] **Step 1: Modify the constant**
 
-In `apps/api/src/audit/audit.types.ts`, find the `AUDIT_ACTIONS` constant (starts at line 32). Add a new entry inside the user-related cluster — insert after line 33's `USER_REGISTERED_CANDIDATE: "user.registered.candidate",`:
+In `apps/api/src/audit/audit.types.ts`, find the `AUDIT_ACTIONS` constant (starts at line 32). Add a new entry inside the user-related cluster - insert after line 33's `USER_REGISTERED_CANDIDATE: "user.registered.candidate",`:
 
 ```ts
   USER_REGISTERED_CANDIDATE: "user.registered.candidate",
@@ -243,7 +243,7 @@ Run:
 pnpm --filter @aurahire/api tsc --noEmit
 ```
 
-Expected: clean exit. (No callers exist yet — that's Task 4.)
+Expected: clean exit. (No callers exist yet - that's Task 4.)
 
 - [ ] **Step 3: Commit**
 
@@ -395,7 +395,7 @@ In `apps/api/src/modules/candidate-profiles/candidate-profiles.service.ts`, find
 ```ts
   /**
    * Records an audit row when the candidate manually clicks "Skip to
-   * dashboard" on the analyzing screen. Pure telemetry — no DB writes
+   * dashboard" on the analyzing screen. Pure telemetry - no DB writes
    * besides the audit log, no scoring side effects, no notifications.
    *
    * Returns void. Callers should fire-and-forget; a failing audit write
@@ -519,7 +519,7 @@ EOF
 
 ---
 
-## Task 6: Layout-level guard — redirect completed candidates away from `/onboarding/*`
+## Task 6: Layout-level guard - redirect completed candidates away from `/onboarding/*`
 
 **Files:**
 
@@ -551,13 +551,13 @@ export default async function OnboardingLayout({
   if (profile.profileCompleted) {
     if (profile.role === "candidate") redirect("/candidate");
     if (profile.role === "recruiter") redirect("/recruiter");
-    // Fall through for admin or unexpected roles — render the layout so any
+    // Fall through for admin or unexpected roles - render the layout so any
     // unusual state surfaces normally rather than silently 302.
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-canvas)]">
-      {/* Header — centered AuraHire wordmark, matches the auth shell. */}
+      {/* Header - centered AuraHire wordmark, matches the auth shell. */}
       <header className="border-b border-[var(--color-hairline-soft)] bg-[var(--color-canvas)]">
         <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-center px-4 sm:px-6">
           <Link href="/" aria-label="AuraHire home" className="inline-flex">
@@ -649,7 +649,7 @@ describe("canSkip", () => {
     expect(canSkip({ kind: "error", message: "Network down" })).toBe(false);
   });
 
-  it("is false in the validation-error state — the user must fix the wizard step", () => {
+  it("is false in the validation-error state - the user must fix the wizard step", () => {
     expect(
       canSkip({
         kind: "validationError",
@@ -666,7 +666,7 @@ describe("canSkip", () => {
 });
 ```
 
-The top of the file already imports `analyzingReducer`, `AnalyzingProfileScore`, `AnalyzingState`. Adding the `canSkip` import to the existing import block is fine, but the new `import { canSkip } …` line above keeps the diff scoped — pick whichever style matches the file's existing convention.
+The top of the file already imports `analyzingReducer`, `AnalyzingProfileScore`, `AnalyzingState`. Adding the `canSkip` import to the existing import block is fine, but the new `import { canSkip } …` line above keeps the diff scoped - pick whichever style matches the file's existing convention.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
@@ -750,7 +750,7 @@ The component already has `state` from the reducer. We'll derive `canSkip(state)
 
 - [ ] **Step 2: Switch the auto-redirect from push to replace**
 
-Find the redirecting effect at the bottom of the component (currently around line 288–290):
+Find the redirecting effect at the bottom of the component (currently around line 288-290):
 
 ```tsx
 useEffect(() => {
@@ -766,7 +766,7 @@ useEffect(() => {
 }, [state, router]);
 ```
 
-Also find the degraded redirect effect (currently around line 279–283):
+Also find the degraded redirect effect (currently around line 279-283):
 
 ```tsx
 useEffect(() => {
@@ -779,7 +779,7 @@ useEffect(() => {
 }, [state, router]);
 ```
 
-Leave that one alone — `router.push` here preserves the `?profileScoreRetry=1` query param and the 2s pause, both deliberate. The skip button supersedes this path because clicking Skip dispatches `REDIRECT`, which clears the degraded state via the redirecting effect (which now uses `replace`).
+Leave that one alone - `router.push` here preserves the `?profileScoreRetry=1` query param and the 2s pause, both deliberate. The skip button supersedes this path because clicking Skip dispatches `REDIRECT`, which clears the degraded state via the redirecting effect (which now uses `replace`).
 
 - [ ] **Step 3: Add the click handler**
 
@@ -787,7 +787,7 @@ Inside `AnalyzingClient`, just above the `return (` line (around line 292), add:
 
 ```tsx
 const onSkipClick = (): void => {
-  // Fire-and-forget telemetry. We deliberately do not await — a failing
+  // Fire-and-forget telemetry. We deliberately do not await - a failing
   // POST must never block the navigation. The endpoint returns 204 on
   // success and is rate-unlimited; backend swallowing the row would
   // simply mean one missing audit log.
@@ -803,14 +803,14 @@ const onSkipClick = (): void => {
       headers: { "Content-Type": "application/json" },
     },
   ).catch(() => {
-    // Intentional swallow — telemetry must not block UX.
+    // Intentional swallow - telemetry must not block UX.
   });
   dispatch({ type: "REDIRECT" });
   router.replace("/candidate");
 };
 ```
 
-Note: `previewsReady=0` on the degraded path matches the spec — we don't have a preview count there.
+Note: `previewsReady=0` on the degraded path matches the spec - we don't have a preview count there.
 
 - [ ] **Step 4: Render the skip link**
 
@@ -861,7 +861,7 @@ return (
 
       {state.kind === "profileScoreDegraded" && (
         <p aria-live="polite" className="text-sm text-[var(--color-body)]">
-          We&rsquo;re still working on your score — taking you to your dashboard
+          We&rsquo;re still working on your score - taking you to your dashboard
           now.
         </p>
       )}
@@ -949,7 +949,7 @@ new skipped-analyzing telemetry endpoint (fire-and-forget), dispatches
 REDIRECT, and uses router.replace so /analyzing drops out of history.
 
 Also switches the existing auto-redirect from push to replace for
-symmetry — the wall-clock cap should leave the same back-button shape
+symmetry - the wall-clock cap should leave the same back-button shape
 as a manual skip.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
@@ -959,7 +959,7 @@ EOF
 
 ---
 
-## Task 9: Profile Score card — 30s shimmer-then-error transition
+## Task 9: Profile Score card - 30s shimmer-then-error transition
 
 **Files:**
 
@@ -986,7 +986,7 @@ const [pendingTimedOut, setPendingTimedOut] = useState(false);
 
 useEffect(() => {
   if (score) {
-    // Score has landed — reset the timeout so a future stale-and-recompute
+    // Score has landed - reset the timeout so a future stale-and-recompute
     // cycle gets its own fresh 30s window.
     if (pendingTimedOut) setPendingTimedOut(false);
     return;
@@ -1005,10 +1005,10 @@ useEffect(() => {
 
 - [ ] **Step 2: Replace the null-score branch**
 
-The current null-score branch (around lines 86–97) renders an indefinite shimmer. Replace it so the shimmer becomes the error state once `pendingTimedOut` is true:
+The current null-score branch (around lines 86-97) renders an indefinite shimmer. Replace it so the shimmer becomes the error state once `pendingTimedOut` is true:
 
 ```tsx
-// 1. No score yet — shimmer for the first PROFILE_SCORE_PENDING_TIMEOUT_MS,
+// 1. No score yet - shimmer for the first PROFILE_SCORE_PENDING_TIMEOUT_MS,
 //    then transition to a calm error card with manual retry. The backend
 //    has already enqueued a recompute on the degraded path; this UI only
 //    surfaces the failure if the recompute also doesn't land in time.
@@ -1052,7 +1052,7 @@ if (!score) {
 }
 ```
 
-The second `return` (the existing rendering when `score` is truthy, currently lines 102–145) stays as is.
+The second `return` (the existing rendering when `score` is truthy, currently lines 102-145) stays as is.
 
 - [ ] **Step 3: Verify type-check + lint**
 
@@ -1070,12 +1070,12 @@ Expected: both clean.
 ```bash
 git add apps/web/app/\(candidate\)/candidate/_components/profile-score-card-client.tsx
 git commit -m "$(cat <<'EOF'
-feat(web): Profile Score card — 30s shimmer-then-error fallback
+feat(web): Profile Score card - 30s shimmer-then-error fallback
 
 If the score is still null 30 seconds after the dashboard mounts, swap
 the indefinite shimmer for a calm error state with a manual [Try again]
 button (uses the existing recompute mutation). Realtime arrival of the
-score resets the timer naturally — the happy path is unchanged.
+score resets the timer naturally - the happy path is unchanged.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
@@ -1084,7 +1084,7 @@ EOF
 
 ---
 
-## Task 10: Recommended-for-You — inline `N of 5 ready` counter + 30s stall
+## Task 10: Recommended-for-You - inline `N of 5 ready` counter + 30s stall
 
 **Files:**
 
@@ -1102,7 +1102,7 @@ const [stalled, setStalled] = useState(false);
 const lastSeenCountRef = useRef(0);
 
 // Reset the stall window whenever a new preview lands. A no-op once we
-// already hit the target — there's nothing left to wait for. Stall is a
+// already hit the target - there's nothing left to wait for. Stall is a
 // one-way transition for simplicity; if a late preview arrives after we
 // stalled, it still renders (the `.slice(0, RECOMMENDED_TARGET)` above
 // picks it up) but the caption stays at "some matches couldn't be loaded."
@@ -1143,7 +1143,7 @@ Replace with:
 
 ```tsx
 // Once we've stalled (no new previews in the timeout window), drop the
-// shimmer slots — the candidate isn't waiting on anything that's coming.
+// shimmer slots - the candidate isn't waiting on anything that's coming.
 const shimmerCount = stalled ? 0 : Math.max(0, RECOMMENDED_TARGET - top.length);
 ```
 
@@ -1261,7 +1261,7 @@ Expected: all green.
 Hand the human this checklist. Do not start the dev server yourself.
 
 ```
-HUMAN QA CHECKLIST — Skip-to-Dashboard
+HUMAN QA CHECKLIST - Skip-to-Dashboard
 
 Setup:
   - Sign in as a fresh candidate with no profile completed.
@@ -1288,14 +1288,14 @@ Back button:
   ✓ You should NOT land on /analyzing. You should land on /onboarding/candidate/preferences,
     which then redirects you forward to /candidate (because profileCompleted=true).
 
-Failure path — Profile Score:
+Failure path - Profile Score:
   ✓ With network DevTools, throttle the API or block POST /scoring/profile/compute.
   ✓ Land on /candidate with a null Profile Score. Card shows shimmer for 30s.
   ✓ At ~30s, swaps to "We couldn't compute your score yet" + [Try again] button.
   ✓ Click [Try again]. Mutation fires. On 200, score appears. On 429, toast says
     "Please wait a moment before recalculating."
 
-Failure path — Match previews:
+Failure path - Match previews:
   ✓ With network DevTools, drop the Supabase Realtime channel after the first
     preview lands.
   ✓ Header shows "1 of 5 ready" for 30s.
@@ -1323,7 +1323,7 @@ If any tracked file changed during verification (e.g., snapshots regenerated), c
 
 ## Out-of-scope reminders
 
-(Repeated from the spec — do **not** implement any of these, even if they look easy.)
+(Repeated from the spec - do **not** implement any of these, even if they look easy.)
 
 - No banner on the dashboard announcing "matches still streaming." Inline-only.
 - No toast on "matches ready." Inline-only.
@@ -1333,4 +1333,4 @@ If any tracked file changed during verification (e.g., snapshots regenerated), c
 - No DB schema or RLS changes.
 - No recruiter or admin portal changes.
 - No "apply gated until score ready" rule.
-- No new Profile Score card on `/candidate/profile` — that page renders the deep-dive view from a non-null `data` prop.
+- No new Profile Score card on `/candidate/profile` - that page renders the deep-dive view from a non-null `data` prop.

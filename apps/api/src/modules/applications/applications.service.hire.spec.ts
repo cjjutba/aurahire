@@ -152,7 +152,7 @@ describe("ApplicationsService.hire()", () => {
     repo.findInflightByJobId.mockResolvedValue([]);
     repo.update.mockResolvedValue({ id: "a-1", status: "hired" });
 
-    // toDto will call findById again — mock it too
+    // toDto will call findById again - mock it too
     repo.findById.mockResolvedValue({
       id: "a-1",
       status: "hired",
@@ -183,7 +183,7 @@ describe("ApplicationsService.hire()", () => {
     expect(result.otherApplicationsRejected).toBe(0);
   });
 
-  it("cascades — auto-rejects in-flight siblings when autoRejectOthers=true", async () => {
+  it("cascades - auto-rejects in-flight siblings when autoRejectOthers=true", async () => {
     repo.findByIdForUpdate.mockResolvedValue({
       id: "a-1",
       status: "offer_accepted",

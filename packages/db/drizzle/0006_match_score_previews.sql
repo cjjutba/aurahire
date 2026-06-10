@@ -1,18 +1,18 @@
 -- =============================================================================
--- Match-score previews — pre-application "See my match" results.
+-- Match-score previews - pre-application "See my match" results.
 -- =============================================================================
 --
 -- WHAT THIS MIGRATION DOES
 --   Creates the `match_score_previews` table. A preview holds the full
 --   explainable AI score (overall + per-component + evidence + provenance)
 --   for a (candidate, job, resume) tuple computed BEFORE the candidate
---   applies — either explicitly via the candidate-facing "See my match"
+--   applies - either explicitly via the candidate-facing "See my match"
 --   button or auto-computed in the background after a resume parse.
 --
 -- WHY
---   1. UX: Apply becomes instant for candidates who previewed first — the
+--   1. UX: Apply becomes instant for candidates who previewed first - the
 --      preview is promoted into match_scores at apply time instead of a
---      blocking 10–15s OpenAI call.
+--      blocking 10-15s OpenAI call.
 --   2. Discovery: enables a candidate "Recommended for you" feed by listing
 --      the candidate's own previews ordered by score.
 --   3. Audit: previews are first-class explainable scores with the same
@@ -21,10 +21,10 @@
 --      transparency invariants are preserved.
 --
 -- KEY SHAPE
---   * One preview per (candidate_id, job_id, resume_id) tuple — re-running
+--   * One preview per (candidate_id, job_id, resume_id) tuple - re-running
 --     for the same resume hits the existing row (UPSERT in the service).
 --   * resume_id is part of the natural key so previews against an old
---     resume become "stale" automatically when a new resume is uploaded —
+--     resume become "stale" automatically when a new resume is uploaded -
 --     they remain valid for that historical resume but won't be promoted
 --     to a future apply that uses a different resume_id.
 --   * source is "candidate" (explicit click) or "system" (background
@@ -36,11 +36,11 @@
 --     enforced for match_scores).
 --
 -- INDEXES
---   * Unique (candidate_id, job_id, resume_id) — natural key.
---   * (candidate_id) — list previews for one candidate (recommended feed).
---   * (candidate_id, overall_score) — order by score within a candidate.
---   * (job_id) — recruiter-side analytics (future: who previewed this job).
---   * (resume_id) — fast cleanup when a resume is replaced.
+--   * Unique (candidate_id, job_id, resume_id) - natural key.
+--   * (candidate_id) - list previews for one candidate (recommended feed).
+--   * (candidate_id, overall_score) - order by score within a candidate.
+--   * (job_id) - recruiter-side analytics (future: who previewed this job).
+--   * (resume_id) - fast cleanup when a resume is replaced.
 
 CREATE TABLE match_score_previews (
   id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -87,8 +87,8 @@ CREATE INDEX match_score_previews_resume_idx
 -- =============================================================================
 -- Candidates: see only their own previews.
 -- Recruiters: no access via RLS at this layer (preview previews are a
---   candidate-facing concept; recruiter-side surfacing — e.g. "candidates
---   who previewed your job" — is a future enhancement that will require
+--   candidate-facing concept; recruiter-side surfacing - e.g. "candidates
+--   who previewed your job" - is a future enhancement that will require
 --   its own grant + service-layer scoping).
 -- Service role: bypasses RLS for backend-issued queries.
 

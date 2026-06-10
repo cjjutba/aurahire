@@ -15,7 +15,7 @@ export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    // @Public() bypass — defense in depth; SupabaseAuthGuard runs first and already returns true
+    // @Public() bypass - defense in depth; SupabaseAuthGuard runs first and already returns true
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -26,13 +26,13 @@ export class RolesGuard implements CanActivate {
       UserRole[] | undefined
     >(ROLES_KEY, [context.getHandler(), context.getClass()]);
 
-    // No @Roles() means "any authenticated user" — already covered by SupabaseAuthGuard.
+    // No @Roles() means "any authenticated user" - already covered by SupabaseAuthGuard.
     if (!requiredRoles || requiredRoles.length === 0) return true;
 
     const req = context.switchToHttp().getRequest();
     const user = req.user as AuthUser | undefined;
     if (!user) {
-      // Should be unreachable — SupabaseAuthGuard runs before this
+      // Should be unreachable - SupabaseAuthGuard runs before this
       throw new ForbiddenException({
         code: "FORBIDDEN",
         message: "No authenticated user",

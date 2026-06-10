@@ -1,5 +1,5 @@
 -- =============================================================================
--- Async match scoring — score_status lifecycle column on applications.
+-- Async match scoring - score_status lifecycle column on applications.
 -- =============================================================================
 --
 -- WHAT THIS MIGRATION DOES
@@ -22,7 +22,7 @@
 --   is 'computing' for new rows; this UPDATE pins existing rows that already
 --   have a match_score row to 'completed'. Rows without a match_score (which
 --   would only occur if a prior scoring AI call failed silently) stay at the
---   default 'computing' — they will be picked up by a future rescore pass.
+--   default 'computing' - they will be picked up by a future rescore pass.
 
 ALTER TABLE applications
   ADD COLUMN score_status text NOT NULL DEFAULT 'computing'

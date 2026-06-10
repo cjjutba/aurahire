@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 /**
- * Stable JSON stringify — sorts object keys recursively so two structurally-
+ * Stable JSON stringify - sorts object keys recursively so two structurally-
  * equal objects with different insertion order produce identical strings.
  *
  * Preserves array order (arrays are positional). Treats `undefined` properties

@@ -1,4 +1,4 @@
--- AuraHire — Row-Level Security policies
+-- AuraHire - Row-Level Security policies
 -- Generated to match docs/main/database-schema.md
 -- Apply via Supabase MCP apply_migration; do not run manually in dashboard.
 
@@ -319,7 +319,7 @@ CREATE POLICY "audit_logs_admin_select" ON public.audit_logs
 -- ============================================================================
 -- Inserts open to authenticated users (own row only).
 -- Selects + updates restricted to admins. Backend writes via service role
--- bypass RLS for both — policies are defense-in-depth.
+-- bypass RLS for both - policies are defense-in-depth.
 
 ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
 

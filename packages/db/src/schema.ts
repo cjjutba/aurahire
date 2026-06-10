@@ -180,7 +180,7 @@ export const recruiterProfilesTable = pgTable("recruiter_profiles", {
 
 // One row per (user, company) membership. Replaces the old 1:1 link from
 // `recruiter_profiles.company_id`. user_id is NULLABLE so a row can represent
-// a pending invitation (no user account yet) — `email` is snapshotted at
+// a pending invitation (no user account yet) - `email` is snapshotted at
 // invite time so the row survives `profiles` deletion.
 export const companyMembersTable = pgTable(
   "company_members",
@@ -231,7 +231,7 @@ export const companyMembersTable = pgTable(
       t.companyId,
       t.status,
     ),
-    // No separate index on invitationToken — the .unique() above is backed by
+    // No separate index on invitationToken - the .unique() above is backed by
     // an automatic btree index sufficient for token lookups.
   }),
 );
@@ -413,7 +413,7 @@ export const interviewsTable = pgTable(
     /**
      * Set when the post-interview feedback reminder notification has been
      * dispatched to the recruiter. Distinct from `feedbackDueNotifiedAt`
-     * (the legacy initial nudge) — this one drives the periodic reminder
+     * (the legacy initial nudge) - this one drives the periodic reminder
      * cron added by the proactive-system slice.
      */
     feedbackReminderSentAt: timestamp("feedback_reminder_sent_at", {
@@ -629,12 +629,12 @@ export const matchScoresTable = pgTable(
 );
 
 /**
- * Match-score previews — pre-application "See my match" results.
+ * Match-score previews - pre-application "See my match" results.
  *
  * A preview is an explainable AI score computed *before* the candidate
  * applies, scoped by (candidate_id, job_id, resume_id). When the candidate
  * later applies and submits using the same resume, the preview is promoted
- * into match_scores instead of triggering a fresh AI call — making Apply
+ * into match_scores instead of triggering a fresh AI call - making Apply
  * instant. Old previews are eligible for cleanup when the candidate's
  * default resume changes.
  */
@@ -677,7 +677,7 @@ export const matchScorePreviewsTable = pgTable(
       .defaultNow(),
   },
   (t) => ({
-    // One preview per (candidate, job, resume) tuple — re-computing for the
+    // One preview per (candidate, job, resume) tuple - re-computing for the
     // same resume hits the existing row.
     uniqueByResume: uniqueIndex(
       "match_score_previews_candidate_job_resume_uniq",
@@ -705,7 +705,7 @@ export const evidenceExcerptsTable = pgTable(
     componentName: text("component_name").notNull(),
     excerptText: text("excerpt_text").notNull(),
     // Recruiter-safe variant: PII / company names scrubbed deterministically
-    // at write time. Nullable for backwards compatibility — older rows are
+    // at write time. Nullable for backwards compatibility - older rows are
     // backfilled by a one-shot script. New rows always populate this.
     excerptRedacted: text("excerpt_redacted"),
     excerptSource: text("excerpt_source"),
@@ -814,7 +814,7 @@ export const scoringConfigTable = pgTable(
 // ============================================================================
 
 // Single-purpose, single-use tokens for backend-owned email verification and
-// password reset flows. Raw tokens are never stored — only their SHA-256 hash.
+// password reset flows. Raw tokens are never stored - only their SHA-256 hash.
 export const authTokensTable = pgTable(
   "auth_tokens",
   {
@@ -890,7 +890,7 @@ export const auditLogsTable = pgTable(
 // profile popover. The submitter's role + active company are snapshotted at
 // submission time so admin reports stay coherent even if the user later
 // switches role or leaves a tenant. The submitterId is set null on user
-// delete so the row survives forensically — submitterEmail is captured at
+// delete so the row survives forensically - submitterEmail is captured at
 // write time for the same reason.
 
 export const feedbackTable = pgTable(

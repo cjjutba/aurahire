@@ -4,7 +4,7 @@
 
 **Goal:** Re-skin all 8 auth pages to OpenAI Platform's no-card editorial layout while preserving every existing form behavior, validation, and redirect.
 
-**Architecture:** Five new auth-only components (`AuthShell`, `AuthInput`, `AuthFooter`, `AuthRoleTag`, `AuthRoleCard`) replace the boxed `AuthCard`. Layout swaps to top-left wordmark + dark Terms · Privacy footer. Every form keeps its Zod schema, RHF resolver, submit handler, and post-submit navigation untouched — the redesign is purely presentational.
+**Architecture:** Five new auth-only components (`AuthShell`, `AuthInput`, `AuthFooter`, `AuthRoleTag`, `AuthRoleCard`) replace the boxed `AuthCard`. Layout swaps to top-left wordmark + dark Terms · Privacy footer. Every form keeps its Zod schema, RHF resolver, submit handler, and post-submit navigation untouched - the redesign is purely presentational.
 
 **Tech Stack:** Next.js 16 (App Router), Tailwind v4, react-hook-form, Zod, lucide-react. CSS variables come from `apps/web/app/globals.css` `@theme` block.
 
@@ -57,7 +57,7 @@
 
 ## Task 1: New auth components
 
-**Goal:** Author all five new components in isolation. They have no consumers yet, so verification is just `tsc --noEmit` (type-check) — they cannot break anything.
+**Goal:** Author all five new components in isolation. They have no consumers yet, so verification is just `tsc --noEmit` (type-check) - they cannot break anything.
 
 **Files:**
 
@@ -153,7 +153,7 @@ export function AuthShell({
 
 - [ ] **Step 1.3: Create `auth-input.tsx` (floating-label pill, RHF-compatible)**
 
-The `placeholder=" "` (single space) is essential — the `:placeholder-shown` CSS selector needs a non-empty placeholder to detect "input is empty." The label uses Tailwind `peer` utilities to float when the input is focused or filled.
+The `placeholder=" "` (single space) is essential - the `:placeholder-shown` CSS selector needs a non-empty placeholder to detect "input is empty." The label uses Tailwind `peer` utilities to float when the input is focused or filled.
 
 ```tsx
 "use client";
@@ -1475,7 +1475,7 @@ Expected: passes.
 - [ ] **Step 11.5: Final build**
 
 Run: `pnpm --filter @aurahire/web build`
-Expected: build succeeds end-to-end. This is the strongest non-runtime verification — Next.js compiles every page, validates server-component vs client-component boundaries, and surfaces any module errors.
+Expected: build succeeds end-to-end. This is the strongest non-runtime verification - Next.js compiles every page, validates server-component vs client-component boundaries, and surfaces any module errors.
 
 ---
 
@@ -1489,14 +1489,14 @@ pnpm dev
 
 …then opens the following URLs and verifies:
 
-- [ ] `http://localhost:3000/login` — wordmark top-left, white canvas, two pill inputs with floating labels, "Forgot password?" link below password, blue "Sign In" pill, dark Terms · Privacy footer.
-- [ ] `http://localhost:3000/register` — two stacked pill role cards with leading icons + chevrons.
-- [ ] `http://localhost:3000/register/candidate` — "CANDIDATE" tag above H1, 5 pill inputs, terms blurb, "Create Account".
-- [ ] `http://localhost:3000/register/recruiter` — "RECRUITER" tag, 6 pill inputs, "Create Account".
-- [ ] `http://localhost:3000/forgot-password` — single email input + "Send reset link". Submit shows "Check your email" message inline.
-- [ ] `http://localhost:3000/reset-password?token=test` — two password pill inputs + "Set new password". Without token: shows "missing token" error.
-- [ ] `http://localhost:3000/verify-email` (no token) — shows "Verification failed" + "Back to sign in" CTA.
-- [ ] `http://localhost:3000/verify-email/sent?email=test@x.com` — bolded email in subtitle, body copy, "Back to sign in" CTA.
+- [ ] `http://localhost:3000/login` - wordmark top-left, white canvas, two pill inputs with floating labels, "Forgot password?" link below password, blue "Sign In" pill, dark Terms · Privacy footer.
+- [ ] `http://localhost:3000/register` - two stacked pill role cards with leading icons + chevrons.
+- [ ] `http://localhost:3000/register/candidate` - "CANDIDATE" tag above H1, 5 pill inputs, terms blurb, "Create Account".
+- [ ] `http://localhost:3000/register/recruiter` - "RECRUITER" tag, 6 pill inputs, "Create Account".
+- [ ] `http://localhost:3000/forgot-password` - single email input + "Send reset link". Submit shows "Check your email" message inline.
+- [ ] `http://localhost:3000/reset-password?token=test` - two password pill inputs + "Set new password". Without token: shows "missing token" error.
+- [ ] `http://localhost:3000/verify-email` (no token) - shows "Verification failed" + "Back to sign in" CTA.
+- [ ] `http://localhost:3000/verify-email/sent?email=test@x.com` - bolded email in subtitle, body copy, "Back to sign in" CTA.
 - [ ] Floating labels animate on focus and stay floated when filled.
 - [ ] Error states: submit empty form → red 2px border + red error text below input.
 - [ ] Tab order is sane on every page.
@@ -1529,7 +1529,7 @@ Plan: docs/superpowers/plans/2026-05-04-auth-redesign.md
 
 ## Self-review (done before plan was saved)
 
-- ✅ **Spec coverage:** every section of the design spec maps to a task. Layout chrome → Task 2; floating-label pill → Task 1.3; per-page specs → Tasks 3–10; AuthCard removal → Task 11.
+- ✅ **Spec coverage:** every section of the design spec maps to a task. Layout chrome → Task 2; floating-label pill → Task 1.3; per-page specs → Tasks 3-10; AuthCard removal → Task 11.
 - ✅ **No placeholders:** every step contains complete code or an exact command.
-- ✅ **Type consistency:** `AuthShell` props (`title`, `subtitle`, `topSlot`, `children`, `footer`) are referenced consistently across Tasks 3–10. `AuthInput` props (`id`, `label`, `error`, plus standard input props) match between Task 1.3 (definition) and Tasks 3, 5, 6, 7, 8 (consumers).
+- ✅ **Type consistency:** `AuthShell` props (`title`, `subtitle`, `topSlot`, `children`, `footer`) are referenced consistently across Tasks 3-10. `AuthInput` props (`id`, `label`, `error`, plus standard input props) match between Task 1.3 (definition) and Tasks 3, 5, 6, 7, 8 (consumers).
 - ✅ **Verification reality:** uses commands Claude is permitted to run (type-check, lint, build); flags manual browser check as human's job per CLAUDE.md.

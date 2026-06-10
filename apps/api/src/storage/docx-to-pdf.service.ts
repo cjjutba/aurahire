@@ -21,7 +21,7 @@ export class DocxConversionError extends Error {
 @Injectable()
 export class DocxToPdfService {
   private readonly logger = new Logger(DocxToPdfService.name);
-  // Serialize calls — LibreOffice doesn't share state cleanly across concurrent jobs.
+  // Serialize calls - LibreOffice doesn't share state cleanly across concurrent jobs.
   private mutex: Promise<unknown> = Promise.resolve();
 
   async convert(docxBuffer: Buffer): Promise<Buffer> {

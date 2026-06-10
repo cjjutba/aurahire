@@ -89,7 +89,7 @@ export class ProfilesService {
    * Initialize a candidate profile after Supabase signUp() succeeded on the frontend.
    * Optimized: skips the pre-insert existence SELECT (the PK conflict is detected
    * by the INSERT itself) and builds the response from the rows returned by the
-   * transaction — no post-insert re-fetch.
+   * transaction - no post-insert re-fetch.
    */
   async initCandidateProfile(
     authUserId: string,
@@ -127,7 +127,7 @@ export class ProfilesService {
       throw err;
     }
 
-    // Audit is non-blocking by contract — fire and forget so the response
+    // Audit is non-blocking by contract - fire and forget so the response
     // doesn't pay another round-trip.
     void this.audit.log({
       actorId: profile.id,
@@ -284,7 +284,7 @@ export class ProfilesService {
   /**
    * Phase 2b: PATCH /profiles/me only accepts `lastActiveCompanyId` for now;
    * full profile editing arrives in Phase 5. Validates membership before
-   * saving — a user cannot point at a company they don't actively belong to.
+   * saving - a user cannot point at a company they don't actively belong to.
    */
   async updateMyProfile(
     user: AuthUser,
@@ -292,7 +292,7 @@ export class ProfilesService {
     requestMeta: { ipAddress?: string | null; userAgent?: string | null } = {},
   ): Promise<ProfileResponseDto> {
     if (dto.lastActiveCompanyId !== undefined) {
-      // Reject for non-recruiters — candidates and admins don't have an
+      // Reject for non-recruiters - candidates and admins don't have an
       // active-company concept.
       if (user.role !== "recruiter" && user.role !== "admin") {
         throw new ForbiddenException({

@@ -45,7 +45,7 @@ export class CandidateProfilesController {
   ): Promise<CandidateProfileEnvelopeDto> {
     const data = await this.service.getMe(user);
 
-    // Phase 1 Task 12 — backfill guard. Legacy candidates (completed
+    // Phase 1 Task 12 - backfill guard. Legacy candidates (completed
     // onboarding before the proactive-system rollout) may have
     // profile_completed=true but no profile_scores row. Fire and forget
     // an idempotent backfill enqueue so their score eventually appears
@@ -120,7 +120,7 @@ export class CandidateProfilesController {
   @ApiOperation({
     summary: "Complete onboarding (sets profile_completed = true)",
     description:
-      "Validates per-step onboarding minimums (personal name, at least one experience/education/3 skills, desired roles), marks the profile complete, then synchronously runs the Profile Score compute and enqueues the match-preview precompute job. Returns the score + the precompute job id so the analyzing screen can hand off to the dashboard with a populated stat. AI failures are surfaced in `errors.profileScore` rather than as HTTP errors — the candidate is never trapped in onboarding limbo.",
+      "Validates per-step onboarding minimums (personal name, at least one experience/education/3 skills, desired roles), marks the profile complete, then synchronously runs the Profile Score compute and enqueues the match-preview precompute job. Returns the score + the precompute job id so the analyzing screen can hand off to the dashboard with a populated stat. AI failures are surfaced in `errors.profileScore` rather than as HTTP errors - the candidate is never trapped in onboarding limbo.",
   })
   @ApiResponse({ status: 200, type: CompleteOnboardingEnvelopeDto })
   async completeOnboarding(

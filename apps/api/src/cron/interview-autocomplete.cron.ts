@@ -31,7 +31,7 @@ export class InterviewAutocompleteCron {
   ) {}
 
   /** Every minute. Bumped from hourly (May 2026) to keep auto-complete
-   *  responsive — interview end times are minute-precise, and the
+   *  responsive - interview end times are minute-precise, and the
    *  identity-reveal + resume-download unlocks are tied to this flip. */
   @Cron("* * * * *", { name: CRON_NAME, timeZone: "Asia/Manila" })
   async run(): Promise<{ completed: number; durationMs: number }> {
@@ -89,14 +89,14 @@ export class InterviewAutocompleteCron {
             and(
               eq(interviewsTable.id, row.id),
               // Guard against a concurrent recruiter mark-complete or
-              // mark-cancelled — only the originally-observed status
+              // mark-cancelled - only the originally-observed status
               // wins this update.
               eq(interviewsTable.status, row.previousStatus),
             ),
           )
           .returning({ id: interviewsTable.id });
 
-        if (!updated) continue; // race lost — already moved by another path.
+        if (!updated) continue; // race lost - already moved by another path.
 
         await this.audit.log({
           actorId: null,

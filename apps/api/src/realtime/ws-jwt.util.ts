@@ -27,7 +27,7 @@ export class WsJwtUtil {
   /**
    * Verifies the JWT from a Socket.io handshake and returns the AuthUser, or
    * null on any failure (invalid token, missing profile, suspended account).
-   * Logs at warn level for ops visibility but does not throw — the gateway
+   * Logs at warn level for ops visibility but does not throw - the gateway
    * decides what to do with a null (disconnect).
    */
   async authenticate(token: string | undefined): Promise<AuthUser | null> {

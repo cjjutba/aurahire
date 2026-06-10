@@ -1,14 +1,14 @@
-# Redis Caching Strategy — Implementation Plan
+# Redis Caching Strategy - Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a production-grade two-layer caching system — a tagged Redis cache-aside layer in the NestJS backend (cuts OpenAI costs, DB load, and aggregate latency) and a TanStack-Query SSR-prefetch + hydration layer in the Next.js 16 frontend (eliminates the skeleton-on-refresh flash) — applied across the recruiter, candidate, and admin portals.
+**Goal:** Build a production-grade two-layer caching system - a tagged Redis cache-aside layer in the NestJS backend (cuts OpenAI costs, DB load, and aggregate latency) and a TanStack-Query SSR-prefetch + hydration layer in the Next.js 16 frontend (eliminates the skeleton-on-refresh flash) - applied across the recruiter, candidate, and admin portals.
 
 **Architecture:**
 
 - **Backend (NestJS):** A new project-local `CacheModule` exports a typed `CacheService` with a `getOrSet<T>()` cache-aside primitive, tag-based invalidation (Redis SETs index keys per tag), in-process single-flight to prevent stampedes, fail-open behavior on Redis outage, and pino-logged hit/miss telemetry. The existing `@nestjs/cache-manager` + `@keyv/redis` global stays untouched (used elsewhere); `CacheService` owns its own `ioredis` client so it has the raw primitives needed for tag indexing and atomic operations.
-- **Backend cache targets:** AI services (resume parse, profile score, match score, bias detect) keyed by `sha256(input)` with 24h TTL — biggest cost win. `scoring_config` cached 1h with bust-on-update. Recruiter dashboard aggregates (`recruiter-stats`, `recruiter-analytics`, `recent`) cached 60s with tag `dashboard:recruiter:{userId}` busted on application/job mutations. Jobs `listMine`/`getForRecruiter`/`listPublic`/`getPublic` cached 60s with tags `jobs:recruiter:{userId}` and `jobs:public` busted on create/update/publish/archive.
-- **Frontend (Next.js):** Server Components prefetch via `prefetchQuery` against a typed `QueryClient`, dehydrate, and pass dehydrated state into a `<HydrationBoundary>` that wraps the page. Client components reading the same query key see filled cache on first render — no skeleton flash on refresh. A new `lib/query/` package centralizes query keys, query functions, and the server-side fetch helper. Mutations declare `invalidateKeys` so the client cache stays consistent.
+- **Backend cache targets:** AI services (resume parse, profile score, match score, bias detect) keyed by `sha256(input)` with 24h TTL - biggest cost win. `scoring_config` cached 1h with bust-on-update. Recruiter dashboard aggregates (`recruiter-stats`, `recruiter-analytics`, `recent`) cached 60s with tag `dashboard:recruiter:{userId}` busted on application/job mutations. Jobs `listMine`/`getForRecruiter`/`listPublic`/`getPublic` cached 60s with tags `jobs:recruiter:{userId}` and `jobs:public` busted on create/update/publish/archive.
+- **Frontend (Next.js):** Server Components prefetch via `prefetchQuery` against a typed `QueryClient`, dehydrate, and pass dehydrated state into a `<HydrationBoundary>` that wraps the page. Client components reading the same query key see filled cache on first render - no skeleton flash on refresh. A new `lib/query/` package centralizes query keys, query functions, and the server-side fetch helper. Mutations declare `invalidateKeys` so the client cache stays consistent.
 
 **Tech Stack:**
 
@@ -19,7 +19,7 @@
 **Hard rules from CLAUDE.md that govern this plan:**
 
 - Claude does NOT run dev servers, Docker commands, DB mutations, or deploys. The human runs `pnpm dev` and verifies.
-- Claude does NOT make billed external calls (OpenAI, Resend) for testing — leave AI cache warming to the human's manual smoke.
+- Claude does NOT make billed external calls (OpenAI, Resend) for testing - leave AI cache warming to the human's manual smoke.
 - `pnpm tsc --noEmit` and `pnpm lint` are the automated gates Claude runs.
 
 ---
@@ -57,7 +57,7 @@ Conversation context with the user (May 5, 2026):
 | `apps/api/src/modules/applications/applications.service.ts`     | Cache recruiter-stats / recruiter-analytics / recent + tag bust on apply/status               | Modify             |
 | `apps/web/lib/query/query-client.ts`                            | `makeQueryClient()` shared between server prefetch + client provider                          | Create             |
 | `apps/web/lib/query/keys.ts`                                    | Centralized typed query-key factories (jobs, applications, dashboard, etc.)                   | Create             |
-| `apps/web/lib/query/server-fetch.ts`                            | `serverApiFetch<T>(path, init)` — Bearer-attaches Supabase session, used in Server Components | Create             |
+| `apps/web/lib/query/server-fetch.ts`                            | `serverApiFetch<T>(path, init)` - Bearer-attaches Supabase session, used in Server Components | Create             |
 | `apps/web/lib/query/queries.ts`                                 | Per-domain query functions (typed, used by both `prefetchQuery` and `useQuery`)               | Create             |
 | `apps/web/lib/query/hydration.tsx`                              | `<PrefetchedHydration>` wrapper helper + `dehydratePrefetched`                                | Create             |
 | `apps/web/lib/query/index.ts`                                   | Barrel export                                                                                 | Create             |
@@ -74,7 +74,7 @@ Conversation context with the user (May 5, 2026):
 | `apps/web/app/(candidate)/candidate/jobs/[id]/page.tsx`         | Prefetch single job                                                                           | Modify             |
 | `apps/web/app/(candidate)/candidate/applications/page.tsx`      | Prefetch applications                                                                         | Modify             |
 | `apps/web/app/(candidate)/candidate/interviews/page.tsx`        | Prefetch interviews                                                                           | Modify             |
-| `apps/web/hooks/use-recruiter-jobs.ts`                          | `useRecruiterJobsQuery(params)` — used by client list + filter                                | Create             |
+| `apps/web/hooks/use-recruiter-jobs.ts`                          | `useRecruiterJobsQuery(params)` - used by client list + filter                                | Create             |
 | `apps/web/hooks/use-candidate-jobs.ts`                          | `useCandidateJobsQuery(params)`                                                               | Create             |
 | `apps/web/hooks/use-applications.ts`                            | `useMyApplicationsQuery`, `useRecruiterRecentApplicationsQuery`                               | Create             |
 | `apps/web/hooks/use-dashboard.ts`                               | `useRecruiterStatsQuery`, `useRecruiterAnalyticsQuery`                                        | Create             |
@@ -85,7 +85,7 @@ Conversation context with the user (May 5, 2026):
 
 ---
 
-## Phase A — Backend Cache Foundation
+## Phase A - Backend Cache Foundation
 
 Builds the `CacheService` and its Redis provider. Phase A delivers a usable caching primitive but doesn't change any feature behavior yet.
 
@@ -109,7 +109,7 @@ Create `apps/api/src/cache/hash.util.ts`:
 import { createHash } from "node:crypto";
 
 /**
- * Stable JSON stringify — sorts object keys recursively so two structurally-
+ * Stable JSON stringify - sorts object keys recursively so two structurally-
  * equal objects with different insertion order produce identical strings.
  *
  * Preserves array order (arrays are positional). Treats `undefined` properties
@@ -165,27 +165,27 @@ Create `apps/api/src/cache/cache.constants.ts`:
 
 ```ts
 /**
- * Cache namespace prefix — every key written by CacheService starts with this.
+ * Cache namespace prefix - every key written by CacheService starts with this.
  * Bumping the version invalidates the entire cache namespace at once
  * (useful when serialized DTO shapes change in a way that would break
  * deserialization of stale entries).
  */
 export const CACHE_NAMESPACE = "ah:v1" as const;
 
-/** TTL bands. Use seconds — ioredis SET EX takes seconds. */
+/** TTL bands. Use seconds - ioredis SET EX takes seconds. */
 export const TTL_SECONDS = {
-  /** Hot aggregates that change with every write — recruiter stats, recent apps. */
+  /** Hot aggregates that change with every write - recruiter stats, recent apps. */
   hot: 60,
-  /** Warm reads — list pages, single-entity reads. */
+  /** Warm reads - list pages, single-entity reads. */
   warm: 5 * 60,
-  /** Slow-changing config — scoring_config, system flags. */
+  /** Slow-changing config - scoring_config, system flags. */
   cool: 60 * 60,
-  /** AI outputs keyed by content hash — same input → same output, very long TTL. */
+  /** AI outputs keyed by content hash - same input → same output, very long TTL. */
   ai: 24 * 60 * 60,
 } as const;
 
 /**
- * Tag templates — call with the dynamic id to materialize the tag string.
+ * Tag templates - call with the dynamic id to materialize the tag string.
  * One key may be tagged with multiple tags; bustTag removes every key that
  * carries that tag.
  */
@@ -231,9 +231,9 @@ import { CACHE_REDIS } from "./cache.constants";
  * Connection strategy:
  * - Lazy connect: ioredis connects on first command, so an outage at boot
  *   doesn't crash the API.
- * - retryStrategy: exponential backoff capped at 2s; never gives up — the
+ * - retryStrategy: exponential backoff capped at 2s; never gives up - the
  *   client keeps reconnecting in the background.
- * - maxRetriesPerRequest: 1 — fail fast on individual commands so a
+ * - maxRetriesPerRequest: 1 - fail fast on individual commands so a
  *   wedged Redis doesn't pile up unbounded promises (CacheService catches
  *   the error and falls back to the data source).
  */
@@ -274,7 +274,7 @@ git commit -m "feat(api/cache): add cache constants (TTL bands, tag templates) a
 
 ---
 
-## Task 3: CacheService — getOrSet, tag invalidation, single-flight, fail-open
+## Task 3: CacheService - getOrSet, tag invalidation, single-flight, fail-open
 
 The core. Cache-aside pattern with stampede protection and graceful Redis-down behavior.
 
@@ -308,7 +308,7 @@ export interface CacheGetOrSetOptions {
    * routes that want fresh data but don't want to pollute or evict the cache.
    */
   bypass?: boolean;
-  /** Tag for telemetry log lines — defaults to the first tag or "untagged". */
+  /** Tag for telemetry log lines - defaults to the first tag or "untagged". */
   telemetryName?: string;
 }
 
@@ -359,7 +359,7 @@ export class CacheService {
 
     const loadPromise = (async () => {
       const value = await opts.load();
-      // 3. Store + index tags. Failures here MUST NOT propagate — we have the
+      // 3. Store + index tags. Failures here MUST NOT propagate - we have the
       // value, the cache write is a side benefit.
       await this.safeSet(fullKey, value, opts.ttlSeconds, opts.tags ?? []);
       return value;
@@ -504,7 +504,7 @@ import { IORedisProvider } from "./redis.provider";
 
 /**
  * Project-local cache module. Distinct from `@nestjs/cache-manager` (which is
- * also registered globally and used elsewhere) — this one owns its own
+ * also registered globally and used elsewhere) - this one owns its own
  * ioredis client so it can do tag indexing and atomic operations the
  * cache-manager abstraction doesn't expose.
  *
@@ -563,7 +563,7 @@ git commit -m "feat(api/cache): register CacheModule globally"
 
 ---
 
-## Phase B — Apply Backend Caching
+## Phase B - Apply Backend Caching
 
 Apply `CacheService` to the highest-leverage targets. Order: scoring_config (cheap and clear), AI services (biggest cost win), jobs (highest-frequency reads), dashboard aggregates.
 
@@ -583,7 +583,7 @@ Apply `CacheService` to the highest-leverage targets. Order: scoring_config (che
 
 Run: `cat apps/api/src/modules/admin/services/admin-config.service.ts`
 
-Expect it to expose `getActive()` and `update(...)` methods. The exact field names and DTO shape come from the file — do not invent. If `getActive` is named `getActiveConfig` or similar, use whatever name exists.
+Expect it to expose `getActive()` and `update(...)` methods. The exact field names and DTO shape come from the file - do not invent. If `getActive` is named `getActiveConfig` or similar, use whatever name exists.
 
 - [ ] **Step 2: Wrap `getActive` with cache + add tag bust on `update`**
 
@@ -593,7 +593,7 @@ Open `apps/api/src/modules/admin/services/admin-config.service.ts`. Add the impo
 import { CacheService, TTL_SECONDS, TAGS } from "../../../cache";
 ```
 
-Inject `CacheService` in the constructor (add to the existing parameter list — preserve all existing dependencies):
+Inject `CacheService` in the constructor (add to the existing parameter list - preserve all existing dependencies):
 
 ```ts
 constructor(
@@ -602,7 +602,7 @@ constructor(
 ) {}
 ```
 
-Wrap the read method. The exact method body depends on what's there — find the method that returns the active config (call it `getActive` here; rename if the codebase uses a different name) and replace its body:
+Wrap the read method. The exact method body depends on what's there - find the method that returns the active config (call it `getActive` here; rename if the codebase uses a different name) and replace its body:
 
 ```ts
 async getActive(): Promise<ScoringConfigDto> {
@@ -640,7 +640,7 @@ git commit -m "feat(api/admin): cache scoring_config.getActive (1h TTL, bust on 
 
 ## Task 6: Cache AI resume parsing
 
-Resume parsing by raw text → same input always produces same parsed output. 24h TTL, content-hash key. No tags — content-keyed entries naturally invalidate when the input changes.
+Resume parsing by raw text → same input always produces same parsed output. 24h TTL, content-hash key. No tags - content-keyed entries naturally invalidate when the input changes.
 
 **Files:**
 
@@ -732,7 +732,7 @@ import { CacheService, TTL_SECONDS, sha256OfStable } from "../cache";
 
 Add `CacheService` to the constructor parameter list (preserve existing deps like `OpenAIService` and `RedactPiiService`).
 
-Wrap the public score method. The redacted resume goes into the hash, not the original — so we redact first, then hash, then check cache:
+Wrap the public score method. The redacted resume goes into the hash, not the original - so we redact first, then hash, then check cache:
 
 ```ts
 async score(input: ScoreProfileInput): Promise<ScoreProfileOutput> {
@@ -912,7 +912,7 @@ Open the file. Add imports:
 import { CacheService, TTL_SECONDS, sha256OfStable } from "../cache";
 ```
 
-Add `CacheService` to constructor. Wrap the public method (assume it's `detect(input)` — adjust to actual name):
+Add `CacheService` to constructor. Wrap the public method (assume it's `detect(input)` - adjust to actual name):
 
 ```ts
 async detect(input: DetectBiasInput): Promise<DetectBiasOutput> {
@@ -975,7 +975,7 @@ Add:
 import { CacheService, TTL_SECONDS, TAGS } from "../../cache";
 ```
 
-Update the constructor parameter list — replace the `@Inject(CACHE_MANAGER) cache: Cache` parameter with:
+Update the constructor parameter list - replace the `@Inject(CACHE_MANAGER) cache: Cache` parameter with:
 
 ```ts
 private readonly cacheService: CacheService,
@@ -1126,7 +1126,7 @@ Find every call site of `await this.invalidatePublicCache();` (in `create`, `upd
 
 ```ts
 await this.invalidateAfterWrite({ recruiterId: user.id, jobId: id }); // for update/publish/archive
-await this.invalidateAfterWrite({ recruiterId: user.id, jobId: job.id }); // for create — uses freshly-inserted job.id
+await this.invalidateAfterWrite({ recruiterId: user.id, jobId: job.id }); // for create - uses freshly-inserted job.id
 ```
 
 - [ ] **Step 6: Verify it compiles**
@@ -1228,7 +1228,7 @@ await this.cacheService.bustTags([
 ]);
 ```
 
-In `withdraw` / `updateNotes` etc., apply the same pattern — bust the side that owns the read.
+In `withdraw` / `updateNotes` etc., apply the same pattern - bust the side that owns the read.
 
 - [ ] **Step 4: Verify it compiles**
 
@@ -1267,7 +1267,7 @@ The shortlist is "applications a recruiter has explicitly shortlisted." Likely a
 
 Bust `TAGS.shortlistRecruiter(user.id)` whenever the shortlist boolean is toggled (find the toggle/star method and add a `bustTag` call).
 
-- [ ] **Step 2: Cache interviews — recruiter and candidate**
+- [ ] **Step 2: Cache interviews - recruiter and candidate**
 
 Open `apps/api/src/modules/interviews/interviews.service.ts`. Add imports + `CacheService` to constructor.
 
@@ -1291,7 +1291,7 @@ await this.cacheService.bustTags([
 ]);
 ```
 
-The exact field names (`interview.recruiterId`, `interview.candidateId`) come from whatever `interview` row is being mutated — adjust to actual field names.
+The exact field names (`interview.recruiterId`, `interview.candidateId`) come from whatever `interview` row is being mutated - adjust to actual field names.
 
 - [ ] **Step 3: Verify it compiles**
 
@@ -1333,7 +1333,7 @@ Wrap the read method:
 async getProfileScoreForUser(user: AuthUser): Promise<ProfileScoreDto | null> {
   return this.cacheService.getOrSet({
     key: `profile-score:${user.id}`,
-    ttlSeconds: TTL_SECONDS.warm, // 5 min — recomputed on demand
+    ttlSeconds: TTL_SECONDS.warm, // 5 min - recomputed on demand
     tags: [TAGS.profileScore(user.id)],
     telemetryName: "profile-score:read",
     load: async () => {
@@ -1363,9 +1363,9 @@ git commit -m "feat(api/scoring): cache profile-score read, bust on recompute"
 
 ---
 
-## Phase C — Frontend SSR Prefetch + Hydration
+## Phase C - Frontend SSR Prefetch + Hydration
 
-Builds the shared query plumbing, then refactors each portal page to prefetch on the server, dehydrate, and rehydrate on the client. After this phase, refreshing any dashboard page renders with data already in the cache — no skeleton flash.
+Builds the shared query plumbing, then refactors each portal page to prefetch on the server, dehydrate, and rehydrate on the client. After this phase, refreshing any dashboard page renders with data already in the cache - no skeleton flash.
 
 ---
 
@@ -1395,7 +1395,7 @@ import {
  *   - the client-side QueryProvider (one singleton per browser session)
  *   - Server Components that prefetch + dehydrate (a fresh instance per request)
  *
- * `staleTime: 60_000` matches the typical backend hot-tier TTL — the client
+ * `staleTime: 60_000` matches the typical backend hot-tier TTL - the client
  * trusts hydrated data for one minute before refetching in the background.
  */
 export function makeQueryClient(): QueryClient {
@@ -1515,7 +1515,7 @@ interface ServerApiFetchInit {
   body?: unknown;
   /**
    * Optional Next.js fetch cache config. We pass `{ cache: "no-store" }` by
-   * default — the backend cache is the source of truth, and Next's data cache
+   * default - the backend cache is the source of truth, and Next's data cache
    * would shadow our Redis cache and lengthen the bust path.
    */
   cache?: RequestCache;
@@ -1594,7 +1594,7 @@ git commit -m "feat(web/query): add serverApiFetch helper for Server Component p
 
 ## Task 16: Query keys + query functions catalog
 
-Centralize keys and queryFns so both the Server Component prefetch and the client `useQuery` reach for the same key + same function. This is what makes hydration work — keys must match exactly.
+Centralize keys and queryFns so both the Server Component prefetch and the client `useQuery` reach for the same key + same function. This is what makes hydration work - keys must match exactly.
 
 **Files:**
 
@@ -1614,7 +1614,7 @@ Create `apps/web/lib/query/keys.ts`:
  * so that prefetch (server) and useQuery (client) can never drift.
  *
  * Convention: arrays of [domain, scope, ...params]. Keep params stable and
- * primitives only — TanStack Query hashes the array.
+ * primitives only - TanStack Query hashes the array.
  */
 export const queryKeys = {
   recruiterDashboard: {
@@ -1721,7 +1721,7 @@ import type {
  *   identical so dehydrated data hydrates without type drift.
  */
 
-// Type aliases — sourced from the backend response shapes. These are locally
+// Type aliases - sourced from the backend response shapes. These are locally
 // declared to avoid leaking the backend's DTO classes into the web package.
 // Adjust if `@aurahire/shared` exports DTO types you can import directly.
 
@@ -1977,7 +1977,7 @@ import { getAccessToken } from "@aurahire/shared/api-client/fetcher";
 
 /**
  * Client-side typed fetch. Mirrors serverApiFetch but reads the token from
- * the in-memory store maintained by AuthTokenProvider — no cookies path,
+ * the in-memory store maintained by AuthTokenProvider - no cookies path,
  * no Server Component imports.
  */
 export class ClientApiError extends Error {
@@ -2083,7 +2083,7 @@ export function useRecruiterJobDetailQuery(id: string) {
 
 - [ ] **Step 3: Create `use-candidate-jobs.ts`, `use-applications.ts`, `use-dashboard.ts`, `use-interviews.ts`, `use-shortlist.ts`, `use-profile-score.ts`**
 
-Apply the same shape — one named hook per query key. Each calls `useQuery` with the matching `queryKeys.<domain>.<scope>(...)` and `clientApiFetch` to the same path the server query function used. Keep the response generic (`unknown[]`) for now; tighten types in a follow-up if shared types become available.
+Apply the same shape - one named hook per query key. Each calls `useQuery` with the matching `queryKeys.<domain>.<scope>(...)` and `clientApiFetch` to the same path the server query function used. Keep the response generic (`unknown[]`) for now; tighten types in a follow-up if shared types become available.
 
 Example for `use-dashboard.ts`:
 
@@ -2203,7 +2203,7 @@ interface JobsListClientProps {
 export function JobsListClient({ status, page }: JobsListClientProps) {
   const { data, isLoading, isError } = useRecruiterJobsQuery({ status, page });
 
-  // Hydrated cache populates `data` on first render — no skeleton flash.
+  // Hydrated cache populates `data` on first render - no skeleton flash.
   // `isLoading` only fires when the cache miss is real (e.g. initial CSR navigation).
   if (isError) {
     return (
@@ -2224,7 +2224,7 @@ export function JobsListClient({ status, page }: JobsListClientProps) {
             My Jobs
           </h1>
           <p className="mt-1 text-sm text-[var(--color-body)]">
-            {isLoading ? "—" : `${total} job${total === 1 ? "" : "s"}`}
+            {isLoading ? "-" : `${total} job${total === 1 ? "" : "s"}`}
           </p>
         </div>
         <Link
@@ -2402,7 +2402,7 @@ export default async function RecruiterDashboardPage() {
 
 - [ ] **Step 3: Rewrite `_dashboard-client.tsx`**
 
-Replace its contents (preserving the visual structure of the existing three sections — Active Jobs, Pipeline Analytics, Recent Applications — but reading from `useQuery` instead of props):
+Replace its contents (preserving the visual structure of the existing three sections - Active Jobs, Pipeline Analytics, Recent Applications - but reading from `useQuery` instead of props):
 
 ```tsx
 "use client";
@@ -2449,7 +2449,7 @@ export function RecruiterDashboardClient({
 
         - stats.data → drives "Active Jobs" inline metric strips per job
         - analytics.data → drives "Pipeline Analytics" with the date-range filter
-          (the date-range filter calls setRange — useRecruiterStatsQuery already
+          (the date-range filter calls setRange - useRecruiterStatsQuery already
           re-runs when range changes; analytics is range-independent today)
         - recent.data → drives "Recent Applications"
       */}
@@ -2465,7 +2465,7 @@ export function RecruiterDashboardClient({
 }
 ```
 
-The literal section JSX should be ported verbatim from the existing `_dashboard-client.tsx` — only the data sources change. After porting, every place that previously read `props.stats`, `props.analytics`, `props.recent` now reads `stats.data`, `analytics.data`, `recent.data`. Every place that called the existing `fetchKpis` Server Action becomes `setRange(newRange)`.
+The literal section JSX should be ported verbatim from the existing `_dashboard-client.tsx` - only the data sources change. After porting, every place that previously read `props.stats`, `props.analytics`, `props.recent` now reads `stats.data`, `analytics.data`, `recent.data`. Every place that called the existing `fetchKpis` Server Action becomes `setRange(newRange)`.
 
 - [ ] **Step 4: Verify it compiles**
 
@@ -2574,7 +2574,7 @@ git commit -m "feat(web/recruiter): prefetch+hydrate /recruiter/jobs/[id]"
 
 ## Task 22: Refactor remaining recruiter pages (shortlist, interviews)
 
-Identical pattern — Server Component prefetches via `serverQueries`, wraps a small `_*-client.tsx` in `<PrefetchedHydration>`. Each client component uses the matching hook from Task 18.
+Identical pattern - Server Component prefetches via `serverQueries`, wraps a small `_*-client.tsx` in `<PrefetchedHydration>`. Each client component uses the matching hook from Task 18.
 
 **Files:**
 
@@ -2780,7 +2780,7 @@ git commit -m "feat(web): invalidate React Query cache on mutation success"
 
 ---
 
-## Phase D — Documentation + Verification
+## Phase D - Documentation + Verification
 
 ---
 
@@ -2810,20 +2810,20 @@ Two layers, owned by two different parts of the stack:
 
 ## Backend cache (NestJS + ioredis)
 
-**Module:** `apps/api/src/cache/cache.module.ts` — registered globally.
+**Module:** `apps/api/src/cache/cache.module.ts` - registered globally.
 
 **Service:** `CacheService` (injectable). Three primitives:
 
-- `getOrSet({ key, ttlSeconds, tags?, load })` — cache-aside with single-flight
-- `bustTag(tag)` — evict every key indexed under a tag
-- `bustKey(key)` — evict a single key
+- `getOrSet({ key, ttlSeconds, tags?, load })` - cache-aside with single-flight
+- `bustTag(tag)` - evict every key indexed under a tag
+- `bustKey(key)` - evict a single key
 
 **TTL bands** (`apps/api/src/cache/cache.constants.ts`):
 
-- `hot` (60s) — recruiter aggregates, list pages
-- `warm` (5m) — single-entity reads when cheap to recompute
-- `cool` (1h) — admin config, system flags
-- `ai` (24h) — content-hash-keyed AI outputs
+- `hot` (60s) - recruiter aggregates, list pages
+- `warm` (5m) - single-entity reads when cheap to recompute
+- `cool` (1h) - admin config, system flags
+- `ai` (24h) - content-hash-keyed AI outputs
 
 **Tag conventions** (always use `TAGS.<name>(...)` from constants):
 
@@ -2845,13 +2845,13 @@ Two layers, owned by two different parts of the stack:
 | Profile score recompute | `profile-score:{userId}` |
 | Scoring config update | `scoring-config:active` |
 
-**AI caching** uses content-hash keys built via `sha256OfStable({...})` — same input always returns same output. Inputs MUST include the prompt version constant so prompt edits invalidate cleanly.
+**AI caching** uses content-hash keys built via `sha256OfStable({...})` - same input always returns same output. Inputs MUST include the prompt version constant so prompt edits invalidate cleanly.
 
-**Failure mode:** Redis down → CacheService logs at warn and falls through to the loader. The API stays up. Tag bust failures log but don't throw — entries fall off via TTL.
+**Failure mode:** Redis down → CacheService logs at warn and falls through to the loader. The API stays up. Tag bust failures log but don't throw - entries fall off via TTL.
 
 ## Frontend cache (TanStack Query)
 
-**QueryClient factory:** `apps/web/lib/query/query-client.ts` — same config server + client. `staleTime: 60_000` matches the backend hot-tier TTL.
+**QueryClient factory:** `apps/web/lib/query/query-client.ts` - same config server + client. `staleTime: 60_000` matches the backend hot-tier TTL.
 
 **Server prefetch pattern (Server Component pages):**
 
@@ -2919,19 +2919,19 @@ After all phases land, the human runs through this checklist.
 
 Human runs (in a separate terminal): `pnpm dev`. Then exercises:
 
-- Sign in as recruiter. Open `/recruiter/jobs`. Watch backend logs — first request shows `MISS` for the jobs:recruiter list cache; second request (refresh) shows `HIT`.
-- Apply as a candidate to a job. Watch logs — backend logs `bustTag tag=applications:candidate:* count=N` and `dashboard:recruiter:* count=M`.
-- Recruiter refreshes dashboard — first request after the bust shows `MISS`, then subsequent shows `HIT`.
+- Sign in as recruiter. Open `/recruiter/jobs`. Watch backend logs - first request shows `MISS` for the jobs:recruiter list cache; second request (refresh) shows `HIT`.
+- Apply as a candidate to a job. Watch logs - backend logs `bustTag tag=applications:candidate:* count=N` and `dashboard:recruiter:* count=M`.
+- Recruiter refreshes dashboard - first request after the bust shows `MISS`, then subsequent shows `HIT`.
 - Admin updates `scoring_config`. Recruiter triggers a profile-score recompute. Backend logs show `bustTag tag=scoring-config:active` and the next read shows `MISS`.
-- Stop Redis (`docker compose -f docker-compose.dev.yml stop redis` from a SEPARATE terminal — claude does NOT run this). Hit `/recruiter/jobs` again. Backend should still serve data (loader runs every time, no crash). Backend logs warn-level "cache GET failed". Restart Redis when done.
+- Stop Redis (`docker compose -f docker-compose.dev.yml stop redis` from a SEPARATE terminal - claude does NOT run this). Hit `/recruiter/jobs` again. Backend should still serve data (loader runs every time, no crash). Backend logs warn-level "cache GET failed". Restart Redis when done.
 
 - [ ] **Step 2: Frontend smoke**
 
-- Refresh `/recruiter/jobs` — no skeleton flash; data renders immediately.
-- Refresh `/recruiter` (dashboard) — no skeleton flash on any of the three sections.
+- Refresh `/recruiter/jobs` - no skeleton flash; data renders immediately.
+- Refresh `/recruiter` (dashboard) - no skeleton flash on any of the three sections.
 - Same for `/recruiter/jobs/[id]`, `/recruiter/shortlist`, `/recruiter/interviews`.
 - Same for all five candidate pages.
-- Change date-range filter on `/recruiter` — UI updates without a hard reload.
+- Change date-range filter on `/recruiter` - UI updates without a hard reload.
 - Publish a job → recruiter jobs list reflects the published status without a manual refresh.
 - Apply to a job as candidate → candidate applications list shows the new row without a manual refresh.
 
@@ -2954,11 +2954,11 @@ git log --oneline v0.6-caching~30..v0.6-caching
 
 **Spec coverage:** Every page named in the user's intent (recruiter dashboard, jobs, plus the rest of the recruiter portal, the entire candidate portal) has an explicit refactor task. Backend AI caching covers all four AI services. Cache invalidation is wired at every mutation call site documented in the architecture report.
 
-**Placeholder scan:** Tasks 5, 6, 7, 9, 11, 12, 13 each say "find the actual method name and field names from the file" instead of inventing names — this is intentional because those services weren't fully read at plan time. The pattern (`getOrSet` with TTL band + tag) is fully spelled out; only the local variable names need the executor to read the file. Task 20 has placeholder section blocks for the dashboard re-render — that's because the existing `_dashboard-client.tsx` (per the prior recruiter portal redesign plan) has visual code that should be ported verbatim. The task explicitly says "port the existing implementation" rather than "write something new."
+**Placeholder scan:** Tasks 5, 6, 7, 9, 11, 12, 13 each say "find the actual method name and field names from the file" instead of inventing names - this is intentional because those services weren't fully read at plan time. The pattern (`getOrSet` with TTL band + tag) is fully spelled out; only the local variable names need the executor to read the file. Task 20 has placeholder section blocks for the dashboard re-render - that's because the existing `_dashboard-client.tsx` (per the prior recruiter portal redesign plan) has visual code that should be ported verbatim. The task explicitly says "port the existing implementation" rather than "write something new."
 
 **Type consistency:** `CacheService.getOrSet` signature is consistent across all backend tasks. `serverQueries.*` and `useTask*Query` keys mirror each other across Tasks 16 and 18. `queryKeys` factory is the single source of truth for both server and client.
 
-**Admin pages:** Excluded from frontend SSR-prefetch refactor in this plan because admin pages currently live behind a "use client" wrapper (per the architecture report). Admin caching wins are entirely on the backend (scoring-config, audit log lists). If admin SSR-prefetch is needed later, apply the Task 19 template — no architectural change required.
+**Admin pages:** Excluded from frontend SSR-prefetch refactor in this plan because admin pages currently live behind a "use client" wrapper (per the architecture report). Admin caching wins are entirely on the backend (scoring-config, audit log lists). If admin SSR-prefetch is needed later, apply the Task 19 template - no architectural change required.
 
 ---
 
@@ -2968,8 +2968,8 @@ Plan complete and saved to `docs/superpowers/plans/2026-05-05-redis-caching-stra
 
 Two execution options:
 
-**1. Subagent-Driven (recommended)** — Dispatch a fresh subagent per task, review between tasks, fast iteration. Best for this plan because backend tasks (5–13) read service files at execution time and Phase C frontend tasks each touch a distinct page.
+**1. Subagent-Driven (recommended)** - Dispatch a fresh subagent per task, review between tasks, fast iteration. Best for this plan because backend tasks (5-13) read service files at execution time and Phase C frontend tasks each touch a distinct page.
 
-**2. Inline Execution** — Execute tasks in this session using executing-plans, batch through phases with checkpoints between Phase A→B, B→C, C→D.
+**2. Inline Execution** - Execute tasks in this session using executing-plans, batch through phases with checkpoints between Phase A→B, B→C, C→D.
 
 Which approach?

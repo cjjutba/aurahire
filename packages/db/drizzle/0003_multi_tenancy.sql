@@ -1,16 +1,16 @@
 -- =============================================================================
--- Multi-tenancy cutover — Phase 1 of the multi-tenancy overhaul
+-- Multi-tenancy cutover - Phase 1 of the multi-tenancy overhaul
 -- =============================================================================
 --
 -- WHAT THIS MIGRATION DOES
---   1. Creates the `company_members` join table — a many-to-many membership row
+--   1. Creates the `company_members` join table - a many-to-many membership row
 --      between `profiles` (users) and `companies`, carrying role + lifecycle
 --      status + invitation token. Replaces the implicit 1:1 link previously
 --      stored on `recruiter_profiles.company_id`.
---   2. Adds `profiles.last_active_company_id` — the per-user active-company
+--   2. Adds `profiles.last_active_company_id` - the per-user active-company
 --      pointer that the `ActiveCompanyGuard` will read when a request omits
 --      the `X-Active-Company-Id` header.
---   3. Adds `audit_logs.company_id` — every per-tenant action now records the
+--   3. Adds `audit_logs.company_id` - every per-tenant action now records the
 --      company it belongs to, enabling the explainability surface in
 --      `/admin/audit` (cross-tenant) and `/recruiter/settings/audit`
 --      (per-tenant) without join gymnastics.
@@ -32,7 +32,7 @@
 --   - Every existing row in `recruiter_profiles` produces exactly one
 --     `company_members` row with role='owner', status='active'.
 --   - `joined_at` is set from `profiles.created_at` (the user's own creation
---     timestamp — the closest signal we have for "when did this person start
+--     timestamp - the closest signal we have for "when did this person start
 --     working in this company").
 --   - `email` is snapshotted from `profiles.email` so the row survives
 --     `profiles` row deletion (FK is ON DELETE CASCADE on user_id; the row
@@ -43,7 +43,7 @@
 --     remain NULL and are visible to admin-only views. Forward audit entries
 --     (post-cutover) will populate company_id via the audit service in Phase 2.
 --
--- WARNING — ONE-WAY CUTOVER
+-- WARNING - ONE-WAY CUTOVER
 --   Once this migration is applied, the column `recruiter_profiles.company_id`
 --   is GONE. Any single-tenant code path that reads or writes that column
 --   will break immediately. In particular, `apps/api/src/modules/profiles/
@@ -57,7 +57,7 @@
 BEGIN;
 
 -- -----------------------------------------------------------------------------
--- 1. company_members — the join table
+-- 1. company_members - the join table
 -- -----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS "company_members" (
@@ -103,11 +103,11 @@ CREATE INDEX IF NOT EXISTS "company_members_user_status_idx"
   ON "company_members" ("user_id", "status");
 CREATE INDEX IF NOT EXISTS "company_members_company_status_idx"
   ON "company_members" ("company_id", "status");
--- Note: no separate index on "invitation_token" — the UNIQUE constraint above
+-- Note: no separate index on "invitation_token" - the UNIQUE constraint above
 -- (company_members_invitation_token_unique) is backed by an automatic btree
 -- index, which is sufficient for token lookups.
 
--- RLS — service role only for now. Phase 2 will add member-readable policies.
+-- RLS - service role only for now. Phase 2 will add member-readable policies.
 -- Service-role connections bypass RLS, so the backend can read/write freely.
 ALTER TABLE "company_members" ENABLE ROW LEVEL SECURITY;
 
@@ -118,7 +118,7 @@ CREATE POLICY "company_members_no_anon" ON "company_members"
   WITH CHECK (false);
 
 -- -----------------------------------------------------------------------------
--- 2. profiles.last_active_company_id — per-user active company pointer
+-- 2. profiles.last_active_company_id - per-user active company pointer
 -- -----------------------------------------------------------------------------
 
 ALTER TABLE "profiles"
@@ -133,7 +133,7 @@ CREATE INDEX IF NOT EXISTS "profiles_last_active_company_idx"
   ON "profiles" ("last_active_company_id");
 
 -- -----------------------------------------------------------------------------
--- 3. audit_logs.company_id — per-tenant explainability
+-- 3. audit_logs.company_id - per-tenant explainability
 -- -----------------------------------------------------------------------------
 
 ALTER TABLE "audit_logs"
@@ -148,7 +148,7 @@ CREATE INDEX IF NOT EXISTS "audit_logs_company_id_idx"
   ON "audit_logs" ("company_id");
 
 -- -----------------------------------------------------------------------------
--- 4. BACKFILL — recruiters become owners; last_active_company_id populated
+-- 4. BACKFILL - recruiters become owners; last_active_company_id populated
 -- -----------------------------------------------------------------------------
 --
 -- One CTE inserts the membership rows and returns (company_id, user_id);

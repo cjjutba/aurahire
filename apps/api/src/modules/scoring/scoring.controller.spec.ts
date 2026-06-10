@@ -79,7 +79,7 @@ describe("ScoringController.computeMatchPreview (POST match-preview/:jobId)", ()
     const user = buildCandidate();
     const result = await controller.computeMatchPreview(user, jobId);
 
-    // The new on-view method gets called with (user, jobId) — and only that signature.
+    // The new on-view method gets called with (user, jobId) - and only that signature.
     expect(service.computeMatchPreviewOnView).toHaveBeenCalledTimes(1);
     expect(service.computeMatchPreviewOnView).toHaveBeenCalledWith(user, jobId);
 

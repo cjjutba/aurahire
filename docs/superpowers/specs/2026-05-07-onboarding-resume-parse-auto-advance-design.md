@@ -2,14 +2,14 @@
 
 **Date:** 2026-05-07
 **Owner:** UX polish, candidate onboarding step 1 → step 2 transition
-**Status:** approved (option B — auto-advance with done-state flash; option C — replace-via-URL-param; option A — done state inside the parsing card; option A — replace link in preview pane; option A — low-confidence banner on step 2/3)
-**Supersedes parts of:** [Resume Parsing Loader Redesign](./2026-05-06-resume-parsing-loader-redesign-design.md) — that spec explicitly deferred "Animating into the success card (handled separately by `ParseSuccessCard`)" as out of scope. This spec resolves that handoff by removing `ParseSuccessCard` entirely.
+**Status:** approved (option B - auto-advance with done-state flash; option C - replace-via-URL-param; option A - done state inside the parsing card; option A - replace link in preview pane; option A - low-confidence banner on step 2/3)
+**Supersedes parts of:** [Resume Parsing Loader Redesign](./2026-05-06-resume-parsing-loader-redesign-design.md) - that spec explicitly deferred "Animating into the success card (handled separately by `ParseSuccessCard`)" as out of scope. This spec resolves that handoff by removing `ParseSuccessCard` entirely.
 
 ## Problem
 
 The `ParseSuccessCard` interstitial on `/onboarding/candidate` (rendered when a resume parse completes) is the weakest moment in an otherwise considered onboarding flow:
 
-1. **Redundant relative to Step 2.** Its single job is to confirm "we extracted things" via four count-chips (`3 experiences`, `1 school`, `12 skills`, `1 cert`). The brand's canonical "explainable AI" surface — the `badge-ai-suggested` pattern from `DESIGN.md` — already lives on Step 2 next to the actual prefilled values. The interstitial duplicates a concept Step 2 does better.
+1. **Redundant relative to Step 2.** Its single job is to confirm "we extracted things" via four count-chips (`3 experiences`, `1 school`, `12 skills`, `1 cert`). The brand's canonical "explainable AI" surface - the `badge-ai-suggested` pattern from `DESIGN.md` - already lives on Step 2 next to the actual prefilled values. The interstitial duplicates a concept Step 2 does better.
 2. **Visual discontinuity.** The `ParsingProgressCard` builds anticipation through a four-stage progress arc with `animate-stage-check-pop` checkmarks; that arc is then cut short by a card swap to a flat "We've read your resume" panel with no closure animation on the fourth stage.
 3. **Adds a click to the happy path.** The user must read the chips and click `Continue` for every successful parse, even though the next step is a fixed route. There is no decision being made on this screen.
 4. **No replace-file affordance.** Once on Step 2 or Step 3, the user has no way to re-upload a different resume short of manual URL navigation back to Step 1 (which silently lands them on the same `ParseSuccessCard` again).
@@ -43,14 +43,14 @@ The redesign is presentation-only and routing-only: no API change, no schema cha
 
 - Backend changes: no new endpoints, no DTO changes, no schema migrations.
 - AI prompt changes: `parse_confidence` calibration stays as-is.
-- Mobile-specific replace flow — the existing `ResumeSheet` wraps `ResumePreviewPane`, so the new link is inherited automatically.
+- Mobile-specific replace flow - the existing `ResumeSheet` wraps `ResumePreviewPane`, so the new link is inherited automatically.
 - Animation polish beyond `animate-stage-check-pop` (already shipped) plus a simple opacity fade-in for the new `Done · ...` summary line.
 - Recruiter onboarding (separate flow, no parsed resume).
 - Step 3 review-step copy or layout changes beyond inserting the banner above the existing layout.
-- Stale-parse recovery (`ResumeStaleRecoveryCard`) — unchanged.
-- Failed-parse path — unchanged (still stays on Step 1 with retry/skip buttons).
-- Skip-fill-manually path — unchanged (still routes to Step 2 with no parsed data and no badges).
-- Backend medium-confidence handling — explicitly excluded; only `low` triggers the banner.
+- Stale-parse recovery (`ResumeStaleRecoveryCard`) - unchanged.
+- Failed-parse path - unchanged (still stays on Step 1 with retry/skip buttons).
+- Skip-fill-manually path - unchanged (still routes to Step 2 with no parsed data and no badges).
+- Backend medium-confidence handling - explicitly excluded; only `low` triggers the banner.
 
 ## Architecture
 
@@ -91,10 +91,10 @@ interface ParsingProgressCardProps {
 1. Stage 4 transitions from `active → done`. The existing `StageRow` component already renders `animate-stage-check-pop` when its `state` prop becomes `"done"`. The internal `activeIdx` state is force-set to `STAGES.length` (i.e. past the last index) via a `useEffect` watching `parseStatus`, which makes all four stages compute as `state === "done"`.
 2. The indeterminate sweep bar (currently `<div className="animate-indeterminate-sweep h-full w-1/3 ..." />` inside a `h-[2px]` track) is replaced by a static `100%`-wide bar in `var(--color-primary)`: `<div className="h-full w-full bg-[var(--color-primary)]" />`. Track height stays 2 px.
 3. A new line renders below the stage list, after a one-time 200 ms opacity fade-in:
-   - High/medium confidence: `Done · {N} {experience|experiences}, {N} {school|schools}, {N} {skill|skills}, {N} {cert|certs} extracted` — counts in JetBrains Mono via `font-mono tabular-nums`. Order matches existing `ParseSuccessCard` chip order (experience → schools → skills → certs) so users moving from old to new flow see consistent terminology.
+   - High/medium confidence: `Done · {N} {experience|experiences}, {N} {school|schools}, {N} {skill|skills}, {N} {cert|certs} extracted` - counts in JetBrains Mono via `font-mono tabular-nums`. Order matches existing `ParseSuccessCard` chip order (experience → schools → skills → certs) so users moving from old to new flow see consistent terminology.
    - Low confidence: same counts, plus suffix ` · Some fields may need review` rendered in `var(--color-score-mid)`.
    - Empty categories are omitted from the line (no `0 certs` noise). If every category is zero (degenerate empty parse), the whole summary line is suppressed and the suffix `Some fields may need review` is shown alone on low confidence.
-4. The card's caption above (currently `"Hang tight — this usually takes 5–15 seconds."` rendered by `ResumeUploadCard`) becomes `"Routing to your details..."` during done. Caption rendering moves into `ParsingProgressCard` so it swaps with state. `ResumeUploadCard` no longer renders this `<p>` tag.
+4. The card's caption above (currently `"Hang tight - this usually takes 5-15 seconds."` rendered by `ResumeUploadCard`) becomes `"Routing to your details..."` during done. Caption rendering moves into `ParsingProgressCard` so it swaps with state. `ResumeUploadCard` no longer renders this `<p>` tag.
 5. `useEffect` on `parseStatus === "done"` schedules `setTimeout(onAutoAdvance, 1500)`; cleanup clears the timer on unmount or status change. The effect runs at most once per `parseStatus` transition.
 
 #### `LowConfidenceBanner`
@@ -110,7 +110,7 @@ Returns `null` unless `confidence === "low"`. Otherwise renders an amber-bordere
 - 1px left border in `var(--color-score-mid)`, 4px wide accent.
 - Background `var(--color-score-mid-soft)`.
 - Lucide `AlertTriangle` icon, `var(--color-score-mid)`.
-- Headline (title-sm): `Heads up — low-confidence parse`.
+- Headline (title-sm): `Heads up - low-confidence parse`.
 - Body (body-sm): `The AI wasn't sure about parts of this resume. Double-check every prefilled field before continuing.`
 - Geometry: `rounded-xl`, padding 16px, single-row flex on desktop, stacked on mobile.
 
@@ -225,16 +225,16 @@ Sibling of the segmented toggle, right-aligned via the existing flex row.
 
 ### Edge cases
 
-- **`?replace=1` with no existing parsed resume:** `forceIdle` is irrelevant — the dropzone would render anyway. No-op.
-- **User on `?replace=1` clicks Step 1 in the wizard nav (which routes back to `/onboarding/candidate`):** Server redirect kicks in (parsed resume still exists), they land on Step 2. This is correct — they navigated away from the replace flow.
+- **`?replace=1` with no existing parsed resume:** `forceIdle` is irrelevant - the dropzone would render anyway. No-op.
+- **User on `?replace=1` clicks Step 1 in the wizard nav (which routes back to `/onboarding/candidate`):** Server redirect kicks in (parsed resume still exists), they land on Step 2. This is correct - they navigated away from the replace flow.
 - **`parse_confidence` is `null` or undefined:** `LowConfidenceBanner` returns `null`. (The type allows for legacy resume rows from before the v2 schema.)
-- **User reaches Step 2 with a low-confidence parse, then edits all suggested fields:** Banner stays — the parse confidence isn't reduced by edits. This is acceptable; the banner is about the parse itself, not the user's progress.
+- **User reaches Step 2 with a low-confidence parse, then edits all suggested fields:** Banner stays - the parse confidence isn't reduced by edits. This is acceptable; the banner is about the parse itself, not the user's progress.
 - **Auto-advance fires while user is rapidly clicking elsewhere:** `router.push` is idempotent; multiple invocations are harmless.
 - **User refreshes during the 1500 ms hold:** Server redirect on next load takes them to Step 2 directly. They lose the "done flash" but land in the right place.
 
 ### Error handling
 
-- If `router.push` fails (network blip, etc.), Next.js's own error boundary handles it. The done state remains visible — user can manually click anywhere or refresh.
+- If `router.push` fails (network blip, etc.), Next.js's own error boundary handles it. The done state remains visible - user can manually click anywhere or refresh.
 - If the upload POST fails, `ResumeUploadCard` already handles via `stage: "failed"`. No new failure mode introduced.
 - If `ParsingProgressCard` is unmounted before its 1500 ms timer fires (e.g. user navigates away via the browser back button), the cleanup function clears the timeout. No leaked timers.
 
@@ -273,6 +273,6 @@ Sibling of the segmented toggle, right-aligned via the existing flex row.
 
 ## Migration / rollout
 
-Single PR. No feature flag — the change is presentation-only and backward-compatible with all existing parsed resume rows. The replace flow uses an additive URL param; old links with no param continue to work exactly as before (returning users now redirect, which was the intended behavior anyway).
+Single PR. No feature flag - the change is presentation-only and backward-compatible with all existing parsed resume rows. The replace flow uses an additive URL param; old links with no param continue to work exactly as before (returning users now redirect, which was the intended behavior anyway).
 
 If a regression appears, revert the PR; no data cleanup required.

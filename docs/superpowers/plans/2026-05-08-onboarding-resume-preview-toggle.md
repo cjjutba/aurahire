@@ -1,4 +1,4 @@
-# Onboarding Resume Preview — Always-on Original / Parsed Text Toggle Implementation Plan
+# Onboarding Resume Preview - Always-on Original / Parsed Text Toggle Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -16,20 +16,20 @@
 
 ### Modified file
 
-- `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx` — the only file touched.
+- `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx` - the only file touched.
 
 ### Untouched (intentionally)
 
-- `apps/web/components/onboarding/resume-preview/pdf-renderer.tsx` — PDF.js wrapper, no changes needed.
-- `apps/web/components/onboarding/resume-preview/highlight-overlay.tsx` — overlay logic unchanged.
-- `apps/web/components/onboarding/resume-preview/linearized-resume-view.tsx` — text-fallback view unchanged.
-- `apps/web/components/onboarding/resume-preview/highlight-context.tsx` — context unchanged.
-- `apps/web/components/onboarding/resume-preview/derive-highlights.ts` — highlight derivation unchanged.
-- `apps/web/components/onboarding/resume-preview/find-text-spans.ts` — text-span search unchanged.
-- `apps/web/app/onboarding/candidate/personal/_client.tsx` — already passes the right props.
-- `apps/web/app/onboarding/candidate/review/_client.tsx` — already passes the right props.
-- `apps/web/components/onboarding/mobile/resume-sheet.tsx` — forwards children, inherits the change.
-- `apps/web/app/(candidate)/candidate/resume/_resume-client.tsx` — `/candidate/resume` is intentionally untouched.
+- `apps/web/components/onboarding/resume-preview/pdf-renderer.tsx` - PDF.js wrapper, no changes needed.
+- `apps/web/components/onboarding/resume-preview/highlight-overlay.tsx` - overlay logic unchanged.
+- `apps/web/components/onboarding/resume-preview/linearized-resume-view.tsx` - text-fallback view unchanged.
+- `apps/web/components/onboarding/resume-preview/highlight-context.tsx` - context unchanged.
+- `apps/web/components/onboarding/resume-preview/derive-highlights.ts` - highlight derivation unchanged.
+- `apps/web/components/onboarding/resume-preview/find-text-spans.ts` - text-span search unchanged.
+- `apps/web/app/onboarding/candidate/personal/_client.tsx` - already passes the right props.
+- `apps/web/app/onboarding/candidate/review/_client.tsx` - already passes the right props.
+- `apps/web/components/onboarding/mobile/resume-sheet.tsx` - forwards children, inherits the change.
+- `apps/web/app/(candidate)/candidate/resume/_resume-client.tsx` - `/candidate/resume` is intentionally untouched.
 
 ### No new files
 
@@ -63,9 +63,9 @@ Run:
 wc -l apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx
 ```
 
-Expected output: `267 apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx` (or close to it — confirms you're working against the same starting point as the plan).
+Expected output: `267 apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx` (or close to it - confirms you're working against the same starting point as the plan).
 
-Read lines 1–60 to verify the imports and prop shape match what you're about to replace:
+Read lines 1-60 to verify the imports and prop shape match what you're about to replace:
 
 ```bash
 sed -n '1,60p' apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx
@@ -110,10 +110,10 @@ const IMAGE_ONLY_PDF_THRESHOLD = 50;
  * Right-pane resume preview shown on `/onboarding/candidate/personal` and
  * `/onboarding/candidate/review`. Two tabs:
  *
- *   • Original     — PDF.js-rendered canonical PDF with field-tied highlight
+ *   • Original     - PDF.js-rendered canonical PDF with field-tied highlight
  *                    overlays. For DOCX uploads the backend exposes a canonical
  *                    PDF derivative, so DOCX renders here too.
- *   • Parsed Text  — linearized rawText with inline highlights.
+ *   • Parsed Text  - linearized rawText with inline highlights.
  *
  * The toggle is always visible when at least one source is available; each
  * tab handles its own empty state and offers a one-click jump to the other
@@ -317,7 +317,7 @@ export function ResumePreviewPane({
       {/* Image-only banner (Original tab, image-only PDFs only). */}
       {displayedMode === "pdf" && pdfStatus === "image-only" && (
         <p className="mt-3 rounded-md border border-[var(--color-hairline)] bg-[var(--color-canvas)] px-3 py-2 text-xs text-[var(--color-muted)]">
-          This PDF appears to be image-only — highlights aren&apos;t available
+          This PDF appears to be image-only - highlights aren&apos;t available
           on the document. Switch to <strong>Parsed Text</strong> for the
           highlighted content.
         </p>
@@ -325,7 +325,7 @@ export function ResumePreviewPane({
 
       {/*
         PDF renderer. Mounted whenever a URL exists, even when Parsed Text is
-        showing — this keeps the canvas + text layer warm so toggling back to
+        showing - this keeps the canvas + text layer warm so toggling back to
         Original is instant. Hidden via display:none when not visible.
       */}
       {hasPdf && (
@@ -431,7 +431,7 @@ Run:
 pnpm --filter @aurahire/web type-check
 ```
 
-Expected: exits 0 with no errors. If you see "Cannot find module" errors for `./pdf-renderer`, `./highlight-overlay`, etc., you mistyped one of the relative imports — re-check Step 2's import block byte-for-byte. If you see "Property '...' does not exist on type 'Props'" errors, you broke the consumer prop contract — `signedPdfUrl`, `parsed`, `rawText`, `activeCategories`, `className` must all stay.
+Expected: exits 0 with no errors. If you see "Cannot find module" errors for `./pdf-renderer`, `./highlight-overlay`, etc., you mistyped one of the relative imports - re-check Step 2's import block byte-for-byte. If you see "Property '...' does not exist on type 'Props'" errors, you broke the consumer prop contract - `signedPdfUrl`, `parsed`, `rawText`, `activeCategories`, `className` must all stay.
 
 - [ ] **Step 4: Verify ESLint passes**
 
@@ -455,9 +455,9 @@ Run:
 pnpm --filter @aurahire/web test -- --run resume-preview
 ```
 
-Expected: both `find-text-spans.test.ts` and `derive-highlights.test.ts` pass. The component itself has no tests in the repo — that's intentional per the spec (the change is conditional render + copy; the underlying highlight math is unchanged and remains covered by the helper tests).
+Expected: both `find-text-spans.test.ts` and `derive-highlights.test.ts` pass. The component itself has no tests in the repo - that's intentional per the spec (the change is conditional render + copy; the underlying highlight math is unchanged and remains covered by the helper tests).
 
-If a test fails: stop. Do not "fix the test" — diagnose whether the change unintentionally touched derived data. Revert the file and reconcile with the spec.
+If a test fails: stop. Do not "fix the test" - diagnose whether the change unintentionally touched derived data. Revert the file and reconcile with the spec.
 
 - [ ] **Step 6: Commit**
 
@@ -483,7 +483,7 @@ Expected: commit succeeds, hooks (if any) pass.
 
 ## Task 2: Manual verification handoff
 
-**Files:** none — verification only.
+**Files:** none - verification only.
 
 **What:** The dev server isn't startable from this session (per CLAUDE.md, the human runs all servers). Hand the change off for manual verification covering each branch of the new state matrix.
 
@@ -505,7 +505,7 @@ For each scenario the human should report `✅` (matches spec) or describe the d
 
 2. **Image-only PDF.** Upload a scanned/image-only PDF.
    - Toggle visible.
-   - On Original: PDF renders below a small banner: _"This PDF appears to be image-only — highlights aren't available on the document. Switch to Parsed Text for the highlighted content."_
+   - On Original: PDF renders below a small banner: _"This PDF appears to be image-only - highlights aren't available on the document. Switch to Parsed Text for the highlighted content."_
    - On Parsed Text: highlights work as expected.
 
 3. **DOCX upload.** Upload a `.docx` resume.
@@ -518,7 +518,7 @@ For each scenario the human should report `✅` (matches spec) or describe the d
    - Original tab disabled with tooltip "Original document couldn't be loaded."
    - Parsed Text is the default and renders.
 
-5. **Empty rawText.** (Rare — simulate by editing the parsed resume row in DB to have empty `rawText`.)
+5. **Empty rawText.** (Rare - simulate by editing the parsed resume row in DB to have empty `rawText`.)
    - Toggle visible.
    - Parsed Text tab disabled with tooltip.
    - Original tab is the default.
@@ -545,19 +545,19 @@ This section is my (the planner's) check, run before handing the plan off.
 
 | Spec section                                                                                      | Plan task                                                                             |
 | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| "Drop the `canToggle` conditional"                                                                | Task 1 / Step 2 — `anyAvailable` replaces `canToggle`; toggle renders unconditionally |
-| "Rename tab labels"                                                                               | Task 1 / Step 2 — `Original` and `Parsed Text` literal labels                         |
-| "Disable tab button when source unavailable"                                                      | Task 1 / Step 2 — `ViewToggleButton` accepts `disabled` + `disabledReason`            |
-| "Empty state with CTA to other tab"                                                               | Task 1 / Step 2 — `PreviewEmptyState` helper + per-tab branches                       |
-| "Image-only banner only on Original"                                                              | Task 1 / Step 2 — banner gated by `displayedMode === "pdf"`                           |
-| "Default tab uses existing auto-routing; userMode wins"                                           | Task 1 / Step 2 — `displayedMode` useMemo preserves the auto-routing chain            |
-| "PDF renderer stays mounted to keep state warm"                                                   | Task 1 / Step 2 — container kept under `display:none` via `showPdfDocument` flag      |
-| "Header right-side actions unchanged"                                                             | Task 1 / Step 2 — `Replace resume` Link + `Open` external link preserved              |
-| "DOCX uses canonical-PDF derivative; no DOCX-specific code"                                       | Task 1 / Step 2 — same `signedPdfUrl` path; no branch added                           |
+| "Drop the `canToggle` conditional"                                                                | Task 1 / Step 2 - `anyAvailable` replaces `canToggle`; toggle renders unconditionally |
+| "Rename tab labels"                                                                               | Task 1 / Step 2 - `Original` and `Parsed Text` literal labels                         |
+| "Disable tab button when source unavailable"                                                      | Task 1 / Step 2 - `ViewToggleButton` accepts `disabled` + `disabledReason`            |
+| "Empty state with CTA to other tab"                                                               | Task 1 / Step 2 - `PreviewEmptyState` helper + per-tab branches                       |
+| "Image-only banner only on Original"                                                              | Task 1 / Step 2 - banner gated by `displayedMode === "pdf"`                           |
+| "Default tab uses existing auto-routing; userMode wins"                                           | Task 1 / Step 2 - `displayedMode` useMemo preserves the auto-routing chain            |
+| "PDF renderer stays mounted to keep state warm"                                                   | Task 1 / Step 2 - container kept under `display:none` via `showPdfDocument` flag      |
+| "Header right-side actions unchanged"                                                             | Task 1 / Step 2 - `Replace resume` Link + `Open` external link preserved              |
+| "DOCX uses canonical-PDF derivative; no DOCX-specific code"                                       | Task 1 / Step 2 - same `signedPdfUrl` path; no branch added                           |
 | "Existing unit tests stay green"                                                                  | Task 1 / Step 5                                                                       |
 | "Manual verification scenarios"                                                                   | Task 2 / Step 2                                                                       |
-| Out-of-scope — `/candidate/resume`, structured-cards tab, native DOCX, post-onboarding highlights | "Untouched (intentionally)" + "No new files"                                          |
+| Out-of-scope - `/candidate/resume`, structured-cards tab, native DOCX, post-onboarding highlights | "Untouched (intentionally)" + "No new files"                                          |
 
-**2. Placeholder scan:** Plan contains complete code for the file rewrite (no "fill in"), exact commands for typecheck/lint/test/commit (no "run the appropriate tests"), exact failure-mode hints in Steps 3–5. No "TBD," no "similar to," no "handle edge cases" without showing how.
+**2. Placeholder scan:** Plan contains complete code for the file rewrite (no "fill in"), exact commands for typecheck/lint/test/commit (no "run the appropriate tests"), exact failure-mode hints in Steps 3-5. No "TBD," no "similar to," no "handle edge cases" without showing how.
 
 **3. Type consistency:** `ViewMode` (line in code: `type ViewMode = "pdf" | "text"`) is used identically by `userMode`, `displayedMode`, and `setUserMode`. `PdfStatus` literals are used consistently in `useState<PdfStatus>`, `setPdfStatus(...)`, and the `displayedMode` switch. `PreviewEmptyState`'s prop names (`message`, `ctaLabel`, `onCta`, `ctaDisabled`) match all four call sites. `ViewToggleButton`'s new props (`disabled`, `disabledReason`) match both call sites.

@@ -46,7 +46,7 @@ import {
  * Companies + member-management endpoints.
  *
  * The controller is split between routes that resolve to the caller's
- * active company (`/companies/me/...` — covered by the global
+ * active company (`/companies/me/...` - covered by the global
  * `ActiveCompanyGuard`) and `POST /companies` which creates a new
  * company and is reachable before the caller has any active company
  * (annotated `@SkipActiveCompany`).
@@ -263,7 +263,7 @@ export class CompaniesController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "Leave the active company. Blocked if you are the last owner — transfer first.",
+      "Leave the active company. Blocked if you are the last owner - transfer first.",
   })
   async leave(
     @CurrentUser() user: AuthUser,

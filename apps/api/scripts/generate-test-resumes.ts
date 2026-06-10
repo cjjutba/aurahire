@@ -2,9 +2,9 @@
  * Generate three realistic test resume PDFs for AI smoke-test fixtures.
  *
  * Output: apps/api/test/fixtures/resumes/
- *   01-strong-senior-engineer.pdf — Maria Reyes (polished senior)
- *   02-recent-graduate-sparse.pdf — Jordan Cruz (entry-level, sparse)
- *   03-career-changer-mixed.pdf  — Sam Chen (PM transitioning to eng)
+ *   01-strong-senior-engineer.pdf - Maria Reyes (polished senior)
+ *   02-recent-graduate-sparse.pdf - Jordan Cruz (entry-level, sparse)
+ *   03-career-changer-mixed.pdf  - Sam Chen (PM transitioning to eng)
  *
  * Run: pnpm --filter @aurahire/api tsx scripts/generate-test-resumes.ts
  */
@@ -71,7 +71,7 @@ const resumes: Resume[] = [
       {
         title: "Senior Software Engineer",
         company: "Acme Corp",
-        dates: "2022 – Present",
+        dates: "2022 - Present",
         bullets: [
           "Led 4-engineer team migrating a legacy Express monolith to a NestJS-based service mesh, reducing p95 latency by 38%.",
           "Designed multi-tenant PostgreSQL schema with row-level security, supporting 12k+ active organizations.",
@@ -82,7 +82,7 @@ const resumes: Resume[] = [
       {
         title: "Software Engineer",
         company: "TechCo",
-        dates: "2019 – 2022",
+        dates: "2019 - 2022",
         bullets: [
           "Built customer-facing React/Redux dashboard consumed by 8k DAU.",
           "Containerized 14 microservices with Docker; reduced cold-start time by 60%.",
@@ -92,7 +92,7 @@ const resumes: Resume[] = [
       {
         title: "Junior Engineer",
         company: "StartupX",
-        dates: "2018 – 2019",
+        dates: "2018 - 2019",
         bullets: [
           "Shipped Django-based admin tooling for internal ops team.",
           "Migrated legacy MySQL data into a normalized analytics schema.",
@@ -103,7 +103,7 @@ const resumes: Resume[] = [
       {
         degree: "BS Computer Science",
         school: "University of the Philippines",
-        dates: "2014 – 2018",
+        dates: "2014 - 2018",
         gpa: "3.7",
       },
     ],
@@ -150,7 +150,7 @@ const resumes: Resume[] = [
       {
         degree: "BS Information Technology",
         school: "Mapua University",
-        dates: "2020 – 2024",
+        dates: "2020 - 2024",
         gpa: "3.2",
       },
     ],
@@ -180,7 +180,7 @@ const resumes: Resume[] = [
       {
         title: "Senior Product Manager",
         company: "FinTechCo",
-        dates: "2020 – 2024",
+        dates: "2020 - 2024",
         bullets: [
           "Led 3 product launches across web and mobile, owning roadmap and KPIs.",
           "Wrote SQL queries against the data warehouse for weekly product reviews.",
@@ -191,7 +191,7 @@ const resumes: Resume[] = [
       {
         title: "Product Manager",
         company: "MarketingCo",
-        dates: "2017 – 2020",
+        dates: "2017 - 2020",
         bullets: [
           "Owned A/B testing program across the marketing site (150+ experiments).",
           "Managed stakeholder alignment across marketing, design, and engineering.",
@@ -200,7 +200,7 @@ const resumes: Resume[] = [
       {
         title: "Associate Product Manager",
         company: "ConsumerCo",
-        dates: "2015 – 2017",
+        dates: "2015 - 2017",
         bullets: [
           "Conducted 40+ user research interviews; synthesized into product briefs.",
           "Built clickable prototypes in Figma for early concept validation.",
@@ -211,7 +211,7 @@ const resumes: Resume[] = [
       {
         degree: "MBA",
         school: "De La Salle University",
-        dates: "2013 – 2015",
+        dates: "2013 - 2015",
       },
       {
         degree: "Full-Stack Engineering Bootcamp Cert",
@@ -299,7 +299,7 @@ function drawExperience(doc: PDFKit.PDFDocument, items: ExperienceEntry[]) {
       .fillColor(BODY)
       .font("Helvetica")
       .fontSize(11)
-      .text(`  —  ${item.company}`);
+      .text(`  -  ${item.company}`);
     doc
       .fillColor(MUTED)
       .font("Helvetica-Oblique")
@@ -327,7 +327,7 @@ function drawEducation(doc: PDFKit.PDFDocument, items: EducationEntry[]) {
       .fillColor(BODY)
       .font("Helvetica")
       .fontSize(11)
-      .text(`  —  ${item.school}`);
+      .text(`  -  ${item.school}`);
     const trailing = item.gpa
       ? `${item.dates}  ·  GPA ${item.gpa}`
       : item.dates;
@@ -375,7 +375,7 @@ async function generate(
     margins: { top: 56, bottom: 56, left: 56, right: 56 },
     compress: false,
     info: {
-      Title: `${resume.name} — Resume`,
+      Title: `${resume.name} - Resume`,
       Author: resume.name,
     },
   });
@@ -412,7 +412,7 @@ async function main() {
   for (const resume of resumes) {
     const { path, bytes } = await generate(resume);
     const kb = (bytes / 1024).toFixed(1);
-    console.log(`  ✓ ${resume.filename}  (${kb} KB)  — ${path}`);
+    console.log(`  ✓ ${resume.filename}  (${kb} KB)  - ${path}`);
   }
   console.log("\nDone.");
 }

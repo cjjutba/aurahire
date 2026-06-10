@@ -3,7 +3,7 @@ import type { AuditActorType } from "@aurahire/shared";
 /**
  * Standard audit-log entry payload. The AuditService inserts rows shaped like this.
  *
- * `details` is freeform JSONB — convention is to include a `before` and `after`
+ * `details` is freeform JSONB - convention is to include a `before` and `after`
  * for updates, or relevant scalar fields (jobId, scoreId, ...) for create events.
  */
 export interface AuditLogInput {
@@ -88,7 +88,7 @@ export const AUDIT_ACTIONS = {
   // One-shot migration: rows with status='screening' are bulk-updated to
   // 'applied' before the screening enum value is dropped.
   APPLICATION_MIGRATED_FROM_SCREENING: "application.migrated_from_screening",
-  // Recruiter downloaded a candidate resume — gated on a completed interview.
+  // Recruiter downloaded a candidate resume - gated on a completed interview.
   RESUME_DOWNLOADED: "resume.downloaded",
   // Cron-driven housekeeping
   JOB_ARCHIVED_BY_CRON: "job.archived_by_cron",

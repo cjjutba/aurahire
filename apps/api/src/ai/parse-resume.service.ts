@@ -35,7 +35,7 @@ export interface ParseResumeOutput {
   latencyMs: number;
   model: string;
   promptVersion: string;
-  /** 0..1 — fraction of populated *_source strings that substring-match rawText. */
+  /** 0..1 - fraction of populated *_source strings that substring-match rawText. */
   sourceFieldCoverage: number;
   /** "field: source" entries that did not substring-match rawText. */
   sourceHallucinations: string[];

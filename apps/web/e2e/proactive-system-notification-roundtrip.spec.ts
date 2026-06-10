@@ -6,8 +6,8 @@
  *
  * Flow under test
  * ───────────────
- * 1. Candidate context — sign in, snapshot bell unread state.
- * 2. Recruiter context — sign in, open the target application detail page.
+ * 1. Candidate context - sign in, snapshot bell unread state.
+ * 2. Recruiter context - sign in, open the target application detail page.
  * 3. Recruiter clicks "Move to Screening" → confirm modal → confirm.
  * 4. Candidate page should see the bell badge auto-update via realtime within 5s.
  * 5. Candidate clicks the bell → popover opens → notification row visible in inbox.
@@ -21,23 +21,23 @@
  *
  * - Two seeded users in the DB (or signed-up via the UI), connected by *one*
  *   live application:
- *     • Candidate     — TEST_CANDIDATE_EMAIL    / TEST_CANDIDATE_PASSWORD
+ *     • Candidate     - TEST_CANDIDATE_EMAIL    / TEST_CANDIDATE_PASSWORD
  *                       suggested: cjjutba+candidate@test.aurahire.local
- *     • Recruiter     — TEST_RECRUITER_EMAIL    / TEST_RECRUITER_PASSWORD
+ *     • Recruiter     - TEST_RECRUITER_EMAIL    / TEST_RECRUITER_PASSWORD
  *                       suggested: cjjutba+recruiter@test.aurahire.local
- *     • The candidate must have an *application* (status: "applied" — not
+ *     • The candidate must have an *application* (status: "applied" - not
  *       already advanced) on a published job owned by the recruiter's
  *       company. ("screening" was removed per panel revision May 2026.)
  *
  * - The application id (so we can deep-link the recruiter directly):
- *     • TEST_APPLICATION_ID  — uuid of the application to advance.
+ *     • TEST_APPLICATION_ID  - uuid of the application to advance.
  *
  * - Notification fan-out for "application_status_changed" must be enabled
  *   for the candidate (the default; configurable per user via settings).
  *
  * Env flags
  * ─────────
- * - `E2E_SKIP_NOTIFICATION_ROUNDTRIP=true` — skip when realtime/Redis is unavailable.
+ * - `E2E_SKIP_NOTIFICATION_ROUNDTRIP=true` - skip when realtime/Redis is unavailable.
  * - `TEST_CANDIDATE_EMAIL`, `TEST_CANDIDATE_PASSWORD`
  * - `TEST_RECRUITER_EMAIL`, `TEST_RECRUITER_PASSWORD`
  * - `TEST_APPLICATION_ID`
@@ -94,7 +94,7 @@ async function loginViaUi(
   });
 }
 
-test.describe("proactive system — notification round-trip", () => {
+test.describe("proactive system - notification round-trip", () => {
   test.skip(
     SHOULD_SKIP,
     "Skipping: requires TEST_CANDIDATE_*/TEST_RECRUITER_* env vars and TEST_APPLICATION_ID, plus a running realtime stack.",
@@ -117,8 +117,8 @@ test.describe("proactive system — notification round-trip", () => {
     const bell = candidatePage.getByTestId("bell-button");
     await expect(bell).toBeVisible({ timeout: 10_000 });
 
-    // Snapshot the unread state. We assert it CHANGES — not that it goes from
-    // a specific number to another — so the spec works regardless of any
+    // Snapshot the unread state. We assert it CHANGES - not that it goes from
+    // a specific number to another - so the spec works regardless of any
     // pre-existing notifications on the seeded account.
     const initialUnreadCount = await bell.getAttribute("data-unread-count");
 
@@ -132,7 +132,7 @@ test.describe("proactive system — notification round-trip", () => {
     await recruiterPage.goto(`/recruiter/applications/${APPLICATION_ID}`);
     await recruiterPage.waitForLoadState("networkidle");
 
-    // Advance status — per thesis panel revision (May 2026) "Screening"
+    // Advance status - per thesis panel revision (May 2026) "Screening"
     // stage was removed. The first positive action from "applied" is now
     // "Move to Interview".
     await recruiterPage

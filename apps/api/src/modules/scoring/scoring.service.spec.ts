@@ -196,7 +196,7 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 0,
         evidence: [
-          // AI mislabeled a -10 as positive — engine forces it back to negative.
+          // AI mislabeled a -10 as positive - engine forces it back to negative.
           {
             excerpt: "no Go",
             source: "req",
@@ -341,7 +341,7 @@ describe("buildDeterministicCompletenessComponent", () => {
   });
 
   it("treats redaction sentinel values as filled (presence preserved)", () => {
-    // After redactStructured runs, contact fields are "[REDACTED]" — that
+    // After redactStructured runs, contact fields are "[REDACTED]" - that
     // sentinel still counts as presence for the structural completeness check.
     const parsed = buildParsed({
       contact: {
@@ -948,7 +948,7 @@ describe("ScoringService.computeMatchPreviewOnView", () => {
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
 
-    // Role check fails fast — nothing downstream runs.
+    // Role check fails fast - nothing downstream runs.
     expect(resumesRepo.findDefaultByCandidateId).not.toHaveBeenCalled();
     expect(redis.incr).not.toHaveBeenCalled();
     expect(scoreMatch.score).not.toHaveBeenCalled();

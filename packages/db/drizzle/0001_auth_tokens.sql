@@ -1,4 +1,4 @@
--- Auth tokens — backend-owned email verification + password reset
+-- Auth tokens - backend-owned email verification + password reset
 -- Created for Slice: backend email auth (Mailpit dev / Resend prod)
 
 CREATE TABLE IF NOT EXISTS "auth_tokens" (
@@ -21,7 +21,7 @@ CREATE INDEX IF NOT EXISTS "auth_tokens_user_kind_idx" ON "auth_tokens" ("user_i
 CREATE INDEX IF NOT EXISTS "auth_tokens_email_kind_idx" ON "auth_tokens" ("email", "kind");
 CREATE INDEX IF NOT EXISTS "auth_tokens_expires_idx" ON "auth_tokens" ("expires_at");
 
--- RLS — service role only. No application-side access.
+-- RLS - service role only. No application-side access.
 ALTER TABLE "auth_tokens" ENABLE ROW LEVEL SECURITY;
 
 -- Deny everything by default. Service-role connections bypass RLS, so the

@@ -113,7 +113,7 @@ export class NotificationEmailProcessor extends WorkerHost {
 
     await this.email.send({
       to: profile.email,
-      subject: `Your AuraHire daily summary — ${validRows.length} update${
+      subject: `Your AuraHire daily summary - ${validRows.length} update${
         validRows.length === 1 ? "" : "s"
       }`,
       template: element,

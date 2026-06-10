@@ -5,7 +5,7 @@
  * eligibility (default 75) and applications below that floor are
  * blocked at submission.
  *
- * This component is purely informational — the actual block lives on
+ * This component is purely informational - the actual block lives on
  * the Apply button (disabled state), the apply page (renders a
  * dedicated "below threshold" view), and the POST /applications
  * endpoint (rejects sub-threshold submissions with

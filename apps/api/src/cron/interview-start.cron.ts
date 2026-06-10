@@ -28,7 +28,7 @@ const CRON_ENTITY_SENTINEL = "00000000-0000-0000-0000-000000000000";
  *
  * Runs every minute because interview times are minute-precise; a
  * coarser tick (e.g. hourly) would mean a 4:05 PM interview shows as
- * "scheduled" until 5:00 PM. Every-minute scans are cheap — the WHERE
+ * "scheduled" until 5:00 PM. Every-minute scans are cheap - the WHERE
  * clause is bounded to interviews that just became due.
  */
 @Injectable()
@@ -105,7 +105,7 @@ export class InterviewStartCron {
           )
           .returning({ id: interviewsTable.id });
 
-        if (!updated) continue; // race lost — already moved by another path.
+        if (!updated) continue; // race lost - already moved by another path.
 
         await this.audit.log({
           actorId: null,
@@ -126,7 +126,7 @@ export class InterviewStartCron {
           changedAt: new Date().toISOString(),
         });
 
-        // No candidate-facing notification on auto-start — recruiters
+        // No candidate-facing notification on auto-start - recruiters
         // see the realtime status flip in the portal, and the candidate
         // already got the interview-scheduled invite. Spamming them
         // again at the start moment would feel noisy.

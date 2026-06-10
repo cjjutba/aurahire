@@ -1,6 +1,6 @@
-# AuraHire — Production droplet services (Redis + Mailpit)
+# AuraHire - Production droplet services (Redis + Mailpit)
 #
-# Both containers bind to 127.0.0.1 only — never reachable from the public internet.
+# Both containers bind to 127.0.0.1 only - never reachable from the public internet.
 # The NestJS API (PM2-managed, on the same host) connects to them via localhost.
 # Caddy is the only thing listening on 0.0.0.0:80/443.
 #
@@ -43,8 +43,8 @@ services:
     container_name: aurahire-mailpit
     restart: unless-stopped
     ports:
-      - "127.0.0.1:1025:1025" # SMTP — apps/api connects here as SMTP_HOST=127.0.0.1
-      - "127.0.0.1:8025:8025" # Web UI — access via SSH tunnel only (see README)
+      - "127.0.0.1:1025:1025" # SMTP - apps/api connects here as SMTP_HOST=127.0.0.1
+      - "127.0.0.1:8025:8025" # Web UI - access via SSH tunnel only (see README)
     environment:
       MP_MAX_MESSAGES: "5000"
       MP_DATABASE: "/data/mailpit.db"

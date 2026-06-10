@@ -120,7 +120,7 @@ export class ApplicationsRepository {
   }
 
   /**
-   * In-flight applications on a job — used by the cascade auto-reject when
+   * In-flight applications on a job - used by the cascade auto-reject when
    * another candidate is hired. Excludes the just-hired application (passed
    * as `excludeId`) and any already-terminal application.
    */
@@ -181,7 +181,7 @@ export class ApplicationsRepository {
    * Phase 2c: company-scoped application lookup. Returns the application
    * row only if it sits under a job owned by `companyId`. Used everywhere
    * the recruiter-side flow asserts "this application belongs to my
-   * tenant" — replaces the legacy `findApplicationContextForRecruiter`
+   * tenant" - replaces the legacy `findApplicationContextForRecruiter`
    * which keyed on `jobs.recruiter_id` (single-tenant assumption).
    */
   async findApplicationContextForCompany(

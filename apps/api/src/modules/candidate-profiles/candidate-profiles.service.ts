@@ -71,7 +71,7 @@ export class CandidateProfilesService {
     if (!candidateProfile) {
       throw new NotFoundException({
         code: "CANDIDATE_PROFILE_NOT_FOUND",
-        message: "Candidate profile missing — re-register",
+        message: "Candidate profile missing - re-register",
       });
     }
 
@@ -83,7 +83,7 @@ export class CandidateProfilesService {
    * /candidate-profiles/me). Candidates who completed onboarding before
    * the proactive-system rollout have `profile_completed = true` but no
    * `profile_scores` row. When such a candidate hits the portal we
-   * enqueue a single backfill job — transparent self-healing, the
+   * enqueue a single backfill job - transparent self-healing, the
    * candidate sees nothing different except their score eventually
    * appears.
    *
@@ -114,7 +114,7 @@ export class CandidateProfilesService {
         reason: "manual_recompute",
       },
       {
-        // Backfill dedupe is keyed on candidate+resume only — we don't
+        // Backfill dedupe is keyed on candidate+resume only - we don't
         // want a "manual_recompute" reason colliding with a parallel
         // "profile_change" job, but we DO want repeat portal hits to
         // collapse into a single backfill.
@@ -153,7 +153,7 @@ export class CandidateProfilesService {
     });
 
     // Personal fields (headline, summary, location) feed into Profile Score
-    // signals — mark the current score stale + enqueue a recompute. No-op
+    // signals - mark the current score stale + enqueue a recompute. No-op
     // when the candidate has no default resume yet.
     await this.markScoreStaleAndEnqueueRecompute(user.id, "profile_change");
 
@@ -200,7 +200,7 @@ export class CandidateProfilesService {
     });
 
     // Job preferences (desired roles, seniority, salary band, currency, start
-    // date) feed into Profile Score weighting — mark stale + recompute.
+    // date) feed into Profile Score weighting - mark stale + recompute.
     await this.markScoreStaleAndEnqueueRecompute(user.id, "preferences_change");
 
     return this.toResponse(profile, candidateProfile);
@@ -238,7 +238,7 @@ export class CandidateProfilesService {
 
   /**
    * Records an audit row when the candidate manually clicks "Skip to
-   * dashboard" on the analyzing screen. Pure telemetry — no DB writes
+   * dashboard" on the analyzing screen. Pure telemetry - no DB writes
    * besides the audit log, no scoring side effects, no notifications.
    *
    * Returns void. Callers should fire-and-forget; a failing audit write
@@ -268,7 +268,7 @@ export class CandidateProfilesService {
   /**
    * Validates per-step onboarding minimums (personal → review → preferences),
    * then sets `profileCompleted = true` and writes an audit log. Used by the
-   * wizard's Finish button — gives the backend defense-in-depth on top of
+   * wizard's Finish button - gives the backend defense-in-depth on top of
    * frontend validation, plus a dedicated audit marker for "onboarding completed."
    *
    * Experience / education / skill counts are derived from the candidate's
@@ -287,7 +287,7 @@ export class CandidateProfilesService {
    *     (`errors.profileScore = "transient"`) and enqueues a profile-score
    *     recompute job so a fresh score lands on the dashboard once the
    *     worker retries. The candidate is NEVER trapped in onboarding limbo
-   *     by an AI failure — `profile_completed` is flipped before the AI
+   *     by an AI failure - `profile_completed` is flipped before the AI
    *     call, and the AI call's failure is reported in the response body
    *     rather than as an HTTP error.
    */
@@ -310,11 +310,11 @@ export class CandidateProfilesService {
     if (!candidateProfile) {
       throw new NotFoundException({
         code: "CANDIDATE_PROFILE_NOT_FOUND",
-        message: "Candidate profile missing — re-register",
+        message: "Candidate profile missing - re-register",
       });
     }
 
-    // Step 1 — personal: must have a non-empty fullName.
+    // Step 1 - personal: must have a non-empty fullName.
     const personalParsed = personalCompleteSchema.safeParse({
       fullName: profile.fullName ?? "",
     });
@@ -325,7 +325,7 @@ export class CandidateProfilesService {
       });
     }
 
-    // Step 2 — review: derive experience/education/skill counts from the
+    // Step 2 - review: derive experience/education/skill counts from the
     // candidate's default resume's parsed data (resumes are the source of
     // truth for these arrays; there is no separate `candidate_experiences`
     // table). Mirrors the read pattern used in ScoringService.
@@ -352,7 +352,7 @@ export class CandidateProfilesService {
       });
     }
 
-    // Step 3 — preferences: must have at least one desired role. Open-to /
+    // Step 3 - preferences: must have at least one desired role. Open-to /
     // salary / start date stay optional; without a target role there's
     // nothing to score the candidate against.
     const preferencesParsed = preferencesCompleteSchema.safeParse({
@@ -367,7 +367,7 @@ export class CandidateProfilesService {
 
     // Mark profile completed BEFORE the AI call. If the inline Profile
     // Score compute below throws, the candidate must NOT be trapped in
-    // onboarding limbo — the AI failure is surfaced in the response body
+    // onboarding limbo - the AI failure is surfaced in the response body
     // and a recompute job is enqueued for retry.
     const updatedCandidateProfile = await this.repo.updateCandidateProfile(
       user.id,
@@ -398,7 +398,7 @@ export class CandidateProfilesService {
       profileScoreError = "missing_resume";
     } else {
       // Match-preview precompute fires regardless of Profile Score success
-      // — it's a separate AI surface (Recommended-for-you feed) that
+      // - it's a separate AI surface (Recommended-for-you feed) that
       // shouldn't be gated on Profile Score health. Soft-fail to "" when
       // BullMQ declines to assign an id; the response shape stays valid
       // and the worker still has the chance to run if enqueue did succeed.
@@ -444,7 +444,7 @@ export class CandidateProfilesService {
   /**
    * Shared "Profile Score is stale" hook used by both `updatePersonal` and
    * `updatePreferences`. Mirrors the stale + enqueue subset of
-   * `ResumesService.applyDefaultChange` (Task 6/7) — but we don't need the
+   * `ResumesService.applyDefaultChange` (Task 6/7) - but we don't need the
    * default-flag flip or match-preview cascade here, since the resume itself
    * isn't changing.
    *
@@ -475,7 +475,7 @@ export class CandidateProfilesService {
         );
     } catch (err) {
       // Don't let a stale-marker write failure roll back the user's profile
-      // edit — the recompute job below will still produce a fresh row, and
+      // edit - the recompute job below will still produce a fresh row, and
       // the worker treats UPSERT as the source of truth.
       this.logger.warn(
         `Failed to mark profile_scores stale for candidate=${candidateId}: ${(err as Error).message}`,

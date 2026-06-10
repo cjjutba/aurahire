@@ -33,7 +33,7 @@ export const scheduleInterviewSchema = z.object({
   durationMinutes: z.number().int().min(15).max(240).default(60),
   // Format kept for forward-compat; defaults to in-person.
   format: z.enum(INTERVIEW_FORMAT).optional().default("in-person"),
-  // Legacy field — accepted but not displayed.
+  // Legacy field - accepted but not displayed.
   locationOrLink: z.string().min(1).max(500).nullable().optional(),
 
   // Structured venue fields

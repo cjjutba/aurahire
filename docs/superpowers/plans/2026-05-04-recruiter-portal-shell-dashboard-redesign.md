@@ -1,12 +1,12 @@
-# Recruiter Portal — Shell + Dashboard Redesign Implementation Plan
+# Recruiter Portal - Shell + Dashboard Redesign Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Adopt an AutoSend-inspired all-white shell (sidebar dissolves into content, no topbar, no breadcrumb) and rebuild the recruiter Dashboard page as three dense sections — Active Jobs cards with inline metric strips, Pipeline Analytics with date filter, Recent Applications with leading status pills.
+**Goal:** Adopt an AutoSend-inspired all-white shell (sidebar dissolves into content, no topbar, no breadcrumb) and rebuild the recruiter Dashboard page as three dense sections - Active Jobs cards with inline metric strips, Pipeline Analytics with date filter, Recent Applications with leading status pills.
 
 **Architecture:**
 
-- Backend extends two existing endpoints (`GET /api/v1/applications/recruiter-stats` with `?range`, `GET /api/v1/jobs/mine` with `?include=stats`) and adds one new (`GET /api/v1/applications/recent`). Each delivers its data in one query — replaces the dashboard's current N+1 fan-out.
+- Backend extends two existing endpoints (`GET /api/v1/applications/recruiter-stats` with `?range`, `GET /api/v1/jobs/mine` with `?include=stats`) and adds one new (`GET /api/v1/applications/recent`). Each delivers its data in one query - replaces the dashboard's current N+1 fan-out.
 - Frontend replaces `PortalTopbar` + `PortalFooter` + breadcrumb with a self-contained `PortalSidebar` that carries brand wordmark + tenant chip + sectioned nav + sticky-bottom user chip dropdown (which absorbs the sign-out flow). Dashboard `page.tsx` is rewritten in three sections; a small client component handles the Pipeline Analytics date filter.
 
 **Tech Stack:**
@@ -50,7 +50,7 @@ The authoritative spec is `docs/superpowers/specs/2026-05-04-recruiter-portal-sh
 
 ---
 
-## Task 1: Backend — Add `GET /api/v1/applications/recent`
+## Task 1: Backend - Add `GET /api/v1/applications/recent`
 
 Adds the recruiter's most recent applications across all owned jobs in a single query. Replaces the dashboard's current N+1 fan-out (5 sequential `by-job/[id]` calls + manual flatten/sort).
 
@@ -77,7 +77,7 @@ export type RecentApplicationsQuery = z.infer<
 >;
 ```
 
-Make sure `z` is imported (already is). Then export the schema from the package barrel `packages/shared/src/index.ts` — find the line that re-exports the other application schemas and add `recentApplicationsQuerySchema` and `RecentApplicationsQuery` to that block. (Pattern: `export * from "./schemas/applications"` likely already covers it; if not, add a named re-export.)
+Make sure `z` is imported (already is). Then export the schema from the package barrel `packages/shared/src/index.ts` - find the line that re-exports the other application schemas and add `recentApplicationsQuerySchema` and `RecentApplicationsQuery` to that block. (Pattern: `export * from "./schemas/applications"` likely already covers it; if not, add a named re-export.)
 
 - [ ] **Step 2: Create the NestJS DTO class**
 
@@ -135,7 +135,7 @@ In `apps/api/src/modules/applications/applications.repository.ts`, append a new 
   }
 ```
 
-The `profilesTable` import already exists in `jobs.repository.ts` — but **not** in `applications.repository.ts` today. Add it to the existing `import` block from `@aurahire/db`:
+The `profilesTable` import already exists in `jobs.repository.ts` - but **not** in `applications.repository.ts` today. Add it to the existing `import` block from `@aurahire/db`:
 
 ```ts
 import {
@@ -203,7 +203,7 @@ Now add the `toDashboardDto` private helper at the bottom of the class (above th
             id: row.matchScore.id,
             overallScore: row.matchScore.overallScore,
             band: row.matchScore.band,
-            // Dashboard rows do not need the full breakdown — only score + band.
+            // Dashboard rows do not need the full breakdown - only score + band.
             components: [],
             summary: "",
             redFlags: null,
@@ -239,13 +239,13 @@ Now add the `toDashboardDto` private helper at the bottom of the class (above th
   }
 ```
 
-This deliberately returns a _trimmed_ `ApplicationDto` — the dashboard only renders name, email, job title, score, status, and date. The full `MatchScoreDto` shape is preserved in the type signature (so the API client doesn't need parallel types) but irrelevant fields are zero-valued. This is the same trimming the existing `recruiterTopJobsByApplications` does.
+This deliberately returns a _trimmed_ `ApplicationDto` - the dashboard only renders name, email, job title, score, status, and date. The full `MatchScoreDto` shape is preserved in the type signature (so the API client doesn't need parallel types) but irrelevant fields are zero-valued. This is the same trimming the existing `recruiterTopJobsByApplications` does.
 
-The `ApplicationStatus` type already comes in via the existing `import type { ApplicationStatus }` line — verify; if not present add it to the import block.
+The `ApplicationStatus` type already comes in via the existing `import type { ApplicationStatus }` line - verify; if not present add it to the import block.
 
 - [ ] **Step 5: Add the controller route**
 
-In `apps/api/src/modules/applications/applications.controller.ts`, **between** `recruiterAnalytics` and `listForJob` (the existing comment "CRITICAL: declare the literal ... routes BEFORE @Get(":id")" applies here too — `recent` is a literal):
+In `apps/api/src/modules/applications/applications.controller.ts`, **between** `recruiterAnalytics` and `listForJob` (the existing comment "CRITICAL: declare the literal ... routes BEFORE @Get(":id")" applies here too - `recent` is a literal):
 
 ```ts
   @Get("recent")
@@ -272,7 +272,7 @@ import { Query } from "@nestjs/common";
 import { RecentApplicationsQueryDto } from "./dto/recent-applications-query.dto";
 ```
 
-(`Query` may already be imported from `@nestjs/common` via another route — check; if so, just add it to the destructured import. `ApiQuery` likely needs adding to the existing `@nestjs/swagger` import line.)
+(`Query` may already be imported from `@nestjs/common` via another route - check; if so, just add it to the destructured import. `ApiQuery` likely needs adding to the existing `@nestjs/swagger` import line.)
 
 - [ ] **Step 6: Verify build**
 
@@ -298,7 +298,7 @@ applied-at."
 
 ---
 
-## Task 2: Backend — Extend `GET /api/v1/applications/recruiter-stats` with `?range` + 4 new metrics
+## Task 2: Backend - Extend `GET /api/v1/applications/recruiter-stats` with `?range` + 4 new metrics
 
 Adds `?range=7d|30d|90d|all` (default `7d`) and four new metrics: `inInterview`, `offered`, `hired`, `biasFlags`. Existing fields (`activeJobs`, `totalApplications`, `pendingReviews`, `avgMatchScore`) keep their old names for one release as aliases so old callers don't break.
 
@@ -437,7 +437,7 @@ In `apps/api/src/modules/applications/applications.repository.ts`, replace the e
   }
 ```
 
-`biasFlagsTable` needs importing — add to the `@aurahire/db` import block at the top of the file:
+`biasFlagsTable` needs importing - add to the `@aurahire/db` import block at the top of the file:
 
 ```ts
 import {
@@ -452,7 +452,7 @@ import {
 } from "@aurahire/db";
 ```
 
-**Note on `biasFlagsTable.resolved`:** before committing, verify the column name in `packages/db/src/schema/bias.ts` (or wherever it's defined). If the schema uses a different field name (e.g., `resolvedAt IS NOT NULL`), adjust the predicate accordingly. If the table is named differently (e.g., `bias_detection`), adjust the import. **Do not invent column names** — read the schema file first and use what's there.
+**Note on `biasFlagsTable.resolved`:** before committing, verify the column name in `packages/db/src/schema/bias.ts` (or wherever it's defined). If the schema uses a different field name (e.g., `resolvedAt IS NOT NULL`), adjust the predicate accordingly. If the table is named differently (e.g., `bias_detection`), adjust the import. **Do not invent column names** - read the schema file first and use what's there.
 
 - [ ] **Step 4: Update the service**
 
@@ -487,7 +487,7 @@ In `apps/api/src/modules/applications/applications.service.ts`, replace the `rec
   }
 ```
 
-Wait — the repo method already returns `{ ... }`, not `{ data: { ... } }`. Verify by reading the existing return of the repo's `recruiterStats` after Step 3 — it returns a flat object. The service wraps it. Compare with the existing `recruiterStats` method (~line 201): the existing service method returns `this.repo.recruiterStats(user.id)` directly without rewrapping, and the controller wraps in `{ data }`. **Match the existing pattern** — return the flat object from the service:
+Wait - the repo method already returns `{ ... }`, not `{ data: { ... } }`. Verify by reading the existing return of the repo's `recruiterStats` after Step 3 - it returns a flat object. The service wraps it. Compare with the existing `recruiterStats` method (~line 201): the existing service method returns `this.repo.recruiterStats(user.id)` directly without rewrapping, and the controller wraps in `{ data }`. **Match the existing pattern** - return the flat object from the service:
 
 ```ts
   async recruiterStats(
@@ -515,7 +515,7 @@ Wait — the repo method already returns `{ ... }`, not `{ data: { ... } }`. Ver
   }
 ```
 
-The `recruiterAnalytics` method (~line 232) also calls `this.repo.recruiterStats(user.id)`. Update that call to pass a range — use `"all"` to preserve current behavior (analytics is lifetime, not windowed):
+The `recruiterAnalytics` method (~line 232) also calls `this.repo.recruiterStats(user.id)`. Update that call to pass a range - use `"all"` to preserve current behavior (analytics is lifetime, not windowed):
 
 ```ts
 this.repo.recruiterStats(user.id, "all"),
@@ -584,7 +584,7 @@ shorter forms (totalApps, pendingReview)."
 
 ---
 
-## Task 3: Backend — Extend `GET /api/v1/jobs/mine` with `?include=stats`
+## Task 3: Backend - Extend `GET /api/v1/jobs/mine` with `?include=stats`
 
 Adds an opt-in per-job stats payload so the dashboard can render Active Jobs cards with one query instead of five.
 
@@ -616,7 +616,7 @@ export const listJobsQuerySchema = paginationSchema.extend({
 });
 ```
 
-Note the new `"recent-activity"` sort option — used by the dashboard to order by most recent applied-at across each job's apps. Existing `recent`/`best-match`/`salary-high` are unchanged.
+Note the new `"recent-activity"` sort option - used by the dashboard to order by most recent applied-at across each job's apps. Existing `recent`/`best-match`/`salary-high` are unchanged.
 
 - [ ] **Step 2: Add the per-job stats type and repository method**
 
@@ -725,9 +725,9 @@ import {
 } from "@aurahire/db";
 ```
 
-(Some of these may already be imported — adjust to the existing block.)
+(Some of these may already be imported - adjust to the existing block.)
 
-**Note on the `'shortlisted'` status:** before running, verify the application status enum includes `'shortlisted'`. The state machine constants live in `packages/shared/src/enums.ts` under `APPLICATION_STATUS`. If the enum does **not** include `'shortlisted'`, then the spec's `SHORTLISTED` column needs reframing — drop the column and drop the `case when 'shortlisted'` filter. If shortlisting is tracked in a separate `shortlists` table (or via a flag, not a status), the query needs to join that source instead. **Read `packages/shared/src/enums.ts` first; do not assume.**
+**Note on the `'shortlisted'` status:** before running, verify the application status enum includes `'shortlisted'`. The state machine constants live in `packages/shared/src/enums.ts` under `APPLICATION_STATUS`. If the enum does **not** include `'shortlisted'`, then the spec's `SHORTLISTED` column needs reframing - drop the column and drop the `case when 'shortlisted'` filter. If shortlisting is tracked in a separate `shortlists` table (or via a flag, not a status), the query needs to join that source instead. **Read `packages/shared/src/enums.ts` first; do not assume.**
 
 - [ ] **Step 3: Update the service to dispatch on `include`**
 
@@ -819,9 +819,9 @@ In `apps/api/src/modules/jobs/jobs.controller.ts`, modify the `listMine` route's
   }
 ```
 
-`@ApiQuery` is already imported at the top of this file — verify.
+`@ApiQuery` is already imported at the top of this file - verify.
 
-**Note on `JobListResponseDto`:** the response when `include=stats` carries `stats` on each item. The Swagger DTO doesn't need updating in this slice — the dashboard consumes the regenerated React Query hook with whatever shape the `@ApiResponse` declares, and will type the new fields via the regenerated client. Keeping the DTO declaration as-is (without `stats`) is acceptable for sprint scope; the regenerated TS types pick up the runtime shape via OpenAPI's `additionalProperties`. (If strict OpenAPI typing is required later, extend `JobResponseDto` with an optional `stats` block.)
+**Note on `JobListResponseDto`:** the response when `include=stats` carries `stats` on each item. The Swagger DTO doesn't need updating in this slice - the dashboard consumes the regenerated React Query hook with whatever shape the `@ApiResponse` declares, and will type the new fields via the regenerated client. Keeping the DTO declaration as-is (without `stats`) is acceptable for sprint scope; the regenerated TS types pick up the runtime shape via OpenAPI's `additionalProperties`. (If strict OpenAPI typing is required later, extend `JobResponseDto` with an optional `stats` block.)
 
 - [ ] **Step 5: Verify build**
 
@@ -868,7 +868,7 @@ This runs `apps/api/scripts/generate-openapi.ts` which boots Nest in spec-only m
 
 - [ ] **Step 2: Regenerate the frontend client**
 
-The codegen step depends on the project — find the script in `package.json` (likely `pnpm --filter @aurahire/shared codegen` or similar). Run it:
+The codegen step depends on the project - find the script in `package.json` (likely `pnpm --filter @aurahire/shared codegen` or similar). Run it:
 
 ```bash
 pnpm --filter @aurahire/shared codegen
@@ -876,11 +876,11 @@ pnpm --filter @aurahire/shared codegen
 
 If the script name is different, look in `packages/shared/package.json` under `scripts` for a generation step. Common names: `codegen`, `generate-client`, `openapi-codegen`.
 
-If no codegen script exists, the regenerated TypeScript file likely needs manual sync — but inspect the file's header to see whether it's auto-generated. The header on existing `generated.ts` will say so. If the header indicates a tool, run that tool.
+If no codegen script exists, the regenerated TypeScript file likely needs manual sync - but inspect the file's header to see whether it's auto-generated. The header on existing `generated.ts` will say so. If the header indicates a tool, run that tool.
 
 Expected: `packages/shared/src/api-client/generated.ts` updated with new hooks:
 
-- `useApplicationsControllerRecentV1` (or similar — the exact name follows the existing naming pattern)
+- `useApplicationsControllerRecentV1` (or similar - the exact name follows the existing naming pattern)
 - Updated signature for `useApplicationsControllerRecruiterStatsV1` (now accepts `range` query)
 - Updated signature for `useJobsControllerListMineV1` (now accepts `include` query)
 
@@ -892,9 +892,9 @@ pnpm --filter @aurahire/web type-check
 pnpm --filter @aurahire/api type-check
 ```
 
-Expected: exit 0. If `apps/web` type-check fails because existing call sites (e.g., the current dashboard) reference fields whose types changed, **don't fix them yet** — they'll be rewritten in Task 8. Note the error and proceed.
+Expected: exit 0. If `apps/web` type-check fails because existing call sites (e.g., the current dashboard) reference fields whose types changed, **don't fix them yet** - they'll be rewritten in Task 8. Note the error and proceed.
 
-If `apps/web/app/(recruiter)/recruiter/page.tsx`'s current code references `totalApplications` / `pendingReviews` (which now coexist as aliases), it should still compile. If it doesn't, the alias step in Task 2 broke — go back and fix.
+If `apps/web/app/(recruiter)/recruiter/page.tsx`'s current code references `totalApplications` / `pendingReviews` (which now coexist as aliases), it should still compile. If it doesn't, the alias step in Task 2 broke - go back and fix.
 
 - [ ] **Step 4: Commit**
 
@@ -905,9 +905,9 @@ git commit -m "chore(shared): regenerate openapi spec + client for recruiter das
 
 ---
 
-## Task 5: Frontend — Pass `companyName` from profile down through `PortalShell`
+## Task 5: Frontend - Pass `companyName` from profile down through `PortalShell`
 
-`PortalShell` and `PortalSidebar` need `companyName` to render the tenant chip. The data already exists on the recruiter profile under `company.name` — it just isn't being threaded through.
+`PortalShell` and `PortalSidebar` need `companyName` to render the tenant chip. The data already exists on the recruiter profile under `company.name` - it just isn't being threaded through.
 
 **Files:**
 
@@ -963,7 +963,7 @@ export default async function RecruiterLayout({
 
 - [ ] **Step 2: Add `companyName` to `PortalShell` props**
 
-In `apps/web/components/layout/portal-shell.tsx`, extend the props interface and pass through to the sidebar. (Drop `<PortalTopbar>` and `<PortalFooter>` is done in Task 7 — this task only adds the prop.)
+In `apps/web/components/layout/portal-shell.tsx`, extend the props interface and pass through to the sidebar. (Drop `<PortalTopbar>` and `<PortalFooter>` is done in Task 7 - this task only adds the prop.)
 
 For now, just thread the prop through:
 
@@ -1049,9 +1049,9 @@ export function PortalSidebar({
 }
 ```
 
-The mobile drawer in `PortalTopbar` calls `<PortalSidebarContent role={role} onNavClick={...} />` without these props — that's why they're optional. They'll become required when `PortalTopbar` is deleted in Task 7 and the mobile hamburger is relocated.
+The mobile drawer in `PortalTopbar` calls `<PortalSidebarContent role={role} onNavClick={...} />` without these props - that's why they're optional. They'll become required when `PortalTopbar` is deleted in Task 7 and the mobile hamburger is relocated.
 
-The `PortalSidebarContent` body still uses only `role` and `onNavClick` after this task — no rendering changes yet. That's intentional.
+The `PortalSidebarContent` body still uses only `role` and `onNavClick` after this task - no rendering changes yet. That's intentional.
 
 - [ ] **Step 4: Verify type-check**
 
@@ -1065,7 +1065,7 @@ Expected: exit 0. If the candidate or admin layouts also call `<PortalShell>`, t
 
 ```
 
-Run a Grep for `<PortalShell` to find all callers, and add `companyName={null}` to candidate and admin layouts (they don't have a tenant — or do they? Per the spec, candidate gets "AuraHire" / "My Workspace" and admin gets "Admin Console" — but those mappings are slice-2 work; for now, passing `null` is fine and the sidebar will fall back to the AuraHire wordmark only).
+Run a Grep for `<PortalShell` to find all callers, and add `companyName={null}` to candidate and admin layouts (they don't have a tenant - or do they? Per the spec, candidate gets "AuraHire" / "My Workspace" and admin gets "Admin Console" - but those mappings are slice-2 work; for now, passing `null` is fine and the sidebar will fall back to the AuraHire wordmark only).
 
 - [ ] **Step 5: Commit**
 
@@ -1074,14 +1074,14 @@ git add apps/web/app/(recruiter)/layout.tsx apps/web/components/layout/portal-sh
 git commit -m "refactor(web): thread companyName from profile to PortalShell
 
 Extends PortalShell + PortalSidebar prop signatures to accept companyName.
-No behavioral change yet — sidebar restructure in next commit will consume it."
+No behavioral change yet - sidebar restructure in next commit will consume it."
 ```
 
 (If candidate/admin layouts didn't need touching, drop them from the `git add`.)
 
 ---
 
-## Task 6: Frontend — Restructure `PortalSidebar`
+## Task 6: Frontend - Restructure `PortalSidebar`
 
 Major rewrite of the sidebar: brand wordmark + tenant chip + section labels + sectioned nav + sticky-bottom Docs link + user chip dropdown (which absorbs the sign-out flow currently in the topbar).
 
@@ -1430,7 +1430,7 @@ Key things in this rewrite:
 - Background flips from `--color-surface-soft` to `--color-canvas`.
 - `NAV_ITEMS` becomes `NAV_SECTIONS` with `Main` / `Pipeline` / `Account` groupings (Operations / Insights for admin).
 - The brand wordmark + tenant chip live in a 24px-padded top block.
-- Section labels use `text-[11px]` uppercase tracking-wider muted (matching the spec's `caption-strong` rule of 12px / 600 / 0.04em — close enough; Tailwind's `text-[11px]` + `tracking-wider` + `font-semibold` lands there).
+- Section labels use `text-[11px]` uppercase tracking-wider muted (matching the spec's `caption-strong` rule of 12px / 600 / 0.04em - close enough; Tailwind's `text-[11px]` + `tracking-wider` + `font-semibold` lands there).
 - Active nav state preserves the existing `--color-primary-soft` + `--color-primary` color treatment per DESIGN.md.
 - The bottom block has a top border (`border-t border-hairline-soft`) and contains Docs + user chip; the user chip's `DropdownMenu` opens upward (`side="top"` and `align="start"`).
 - Sign-out logic moved here from `PortalTopbar`.
@@ -1442,7 +1442,7 @@ pnpm --filter @aurahire/web type-check
 pnpm --filter @aurahire/web lint
 ```
 
-Expected: exit 0. The mobile drawer (called from `PortalTopbar`) still passes only `role` to `<PortalSidebarContent>` — type-check will fail because the new prop signature requires `fullName` / `email` / `companyName`. **That's expected** — the next task deletes the topbar entirely. **For this commit only, leave the breakage.** It's an intermediate state that gets fixed in Task 7.
+Expected: exit 0. The mobile drawer (called from `PortalTopbar`) still passes only `role` to `<PortalSidebarContent>` - type-check will fail because the new prop signature requires `fullName` / `email` / `companyName`. **That's expected** - the next task deletes the topbar entirely. **For this commit only, leave the breakage.** It's an intermediate state that gets fixed in Task 7.
 
 If type-check breaking commits are not acceptable in this repo (some teams enforce it), an alternative is to make the props optional with defaults inside the function body. That works but is a temporary scaffold. Recommended: leave the breakage and complete Task 7 before pushing.
 
@@ -1462,7 +1462,7 @@ type-broken state. Task 7 deletes the topbar and completes the migration."
 
 ---
 
-## Task 7: Frontend — Drop topbar/footer/breadcrumb, add mobile hamburger
+## Task 7: Frontend - Drop topbar/footer/breadcrumb, add mobile hamburger
 
 Deletes `PortalTopbar`, `PortalFooter`, `breadcrumb.tsx`. Adds a mobile hamburger button to `<main>` so the drawer is still reachable on `< lg` viewports.
 
@@ -1541,9 +1541,9 @@ export function PortalShell({
 }
 ```
 
-The shell is now just sidebar + main. The mobile hamburger is an absolute-positioned 44×44 button top-left of `<main>`, hidden on `lg` (where the sidebar is always visible). Page content adds its own top spacing so the hamburger doesn't overlap H1 — pages get 32px top padding via `py-8` on `<main>` plus their own header structure.
+The shell is now just sidebar + main. The mobile hamburger is an absolute-positioned 44×44 button top-left of `<main>`, hidden on `lg` (where the sidebar is always visible). Page content adds its own top spacing so the hamburger doesn't overlap H1 - pages get 32px top padding via `py-8` on `<main>` plus their own header structure.
 
-The `bg-[var(--color-surface-soft)]` on `<main>` is removed — it's now `bg-[var(--color-canvas)]` from the parent. AutoSend's all-white shell.
+The `bg-[var(--color-surface-soft)]` on `<main>` is removed - it's now `bg-[var(--color-canvas)]` from the parent. AutoSend's all-white shell.
 
 - [ ] **Step 2: Delete the dead files**
 
@@ -1559,7 +1559,7 @@ git rm apps/web/components/layout/breadcrumb.tsx
 
 ```
 
-Run a Grep across `apps/web/` for `PortalTopbar`, `PortalFooter`, and `Breadcrumb` to find any remaining import sites. The candidate and admin layouts should already be using `<PortalShell>` (which no longer references these), so they should not have direct imports — but verify. If anything still imports `breadcrumb.tsx`, remove that usage.
+Run a Grep across `apps/web/` for `PortalTopbar`, `PortalFooter`, and `Breadcrumb` to find any remaining import sites. The candidate and admin layouts should already be using `<PortalShell>` (which no longer references these), so they should not have direct imports - but verify. If anything still imports `breadcrumb.tsx`, remove that usage.
 
 - [ ] **Step 4: Verify**
 
@@ -1586,7 +1586,7 @@ user-chip dropdown after the previous commit."
 
 ---
 
-## Task 8: Frontend — Rewrite the recruiter Dashboard with three sections
+## Task 8: Frontend - Rewrite the recruiter Dashboard with three sections
 
 Replace the four-tile + recent-list dashboard with: Active Jobs cards (using `?include=stats`), Pipeline Analytics card with date filter (using `?range`), Recent Applications rows (using `/applications/recent`).
 
@@ -1715,7 +1715,7 @@ export function PipelineAnalyticsCard({
             label="Pending Review"
             value={data.pendingReview}
             dot={data.pendingReview > 0 ? "amber" : "muted"}
-            tip="Applications still in 'applied' status — not yet screened."
+            tip="Applications still in 'applied' status - not yet screened."
           />
           <MetricCell
             label="In Interview"
@@ -1744,7 +1744,7 @@ export function PipelineAnalyticsCard({
             label="Avg Match Score"
             value={data.avgMatchScore}
             dot={scoreBand(data.avgMatchScore)}
-            tip="Mean of overall match scores across all your applications, 0–100."
+            tip="Mean of overall match scores across all your applications, 0-100."
           />
           <MetricCell
             label="Bias Flags"
@@ -1821,9 +1821,9 @@ function MetricCell({
 
 Notes on this component:
 
-- Uses native `title` attribute for tooltip (keyboard-accessible via focus). If the project has a `<Tooltip>` component, swap it in — but `title` is acceptable for sprint scope.
-- The `fetchForRange` callback is provided by the server parent — keeps the API call in the parent's scope, avoids re-implementing token handling here.
-- `MetricCell` is internal — reused twice for the two-row grid.
+- Uses native `title` attribute for tooltip (keyboard-accessible via focus). If the project has a `<Tooltip>` component, swap it in - but `title` is acceptable for sprint scope.
+- The `fetchForRange` callback is provided by the server parent - keeps the API call in the parent's scope, avoids re-implementing token handling here.
+- `MetricCell` is internal - reused twice for the two-row grid.
 
 - [ ] **Step 2: Rewrite `page.tsx`**
 
@@ -2092,7 +2092,7 @@ function JobCard({ job }: { job: JobWithStats }) {
     job.employmentType,
     job.locationCountry,
     job.salaryMin && job.salaryMax
-      ? `${formatSalary(job.salaryMin)}–${formatSalary(job.salaryMax)} ${job.salaryCurrency ?? "USD"}`
+      ? `${formatSalary(job.salaryMin)}-${formatSalary(job.salaryMax)} ${job.salaryCurrency ?? "USD"}`
       : null,
   ]
     .filter(Boolean)
@@ -2290,7 +2290,7 @@ function getInitials(name: string): string {
 Notes:
 
 - The `fetchStats` function is marked `"use server"` so the client component can invoke it as a Server Action. This keeps the access token server-side and uses the existing session.
-- All scoring colors are confined to score values (`scoreBandColor`). All status pills use `--color-status-*` tokens — no scoring colors leak into lifecycle states.
+- All scoring colors are confined to score values (`scoreBandColor`). All status pills use `--color-status-*` tokens - no scoring colors leak into lifecycle states.
 - Numbers in JetBrains Mono via `font-mono` (the design tokens map this to JetBrains Mono).
 - The 3-dot menu button on each job card has `onClick={(e) => e.preventDefault()}` to swallow the click without navigating; functional menu items are slice-2 work.
 
@@ -2303,7 +2303,7 @@ pnpm --filter @aurahire/web lint
 
 Expected: exit 0.
 
-If the API client types from Task 4 don't yet match what `page.tsx` consumes (e.g., the response shape differs), the inline interfaces (`JobWithStats`, `RecentApp`) carry the burden — they're declared at the top of the file as a type contract with the API. This is intentional: server fetches use raw `fetch()` here, not the React Query client.
+If the API client types from Task 4 don't yet match what `page.tsx` consumes (e.g., the response shape differs), the inline interfaces (`JobWithStats`, `RecentApp`) carry the burden - they're declared at the top of the file as a type contract with the API. This is intentional: server fetches use raw `fetch()` here, not the React Query client.
 
 - [ ] **Step 4: Commit**
 
@@ -2343,14 +2343,14 @@ Score-band colors confined to score values only."
 | Score band only on score values                                 | Task 8 (`scoreBandColor` only used on `Metric` valueClass for AVG SCORE and on RecentAppRow score)           | ✓   |
 | Mobile drawer behavior                                          | Task 7 (relocated hamburger to `<main>` absolute, opens `<Sheet>`)                                           | ✓   |
 | Sign-out from new user chip                                     | Task 6 (`handleSignOut` in sidebar)                                                                          | ✓   |
-| Backend audit/RLS preserved                                     | Tasks 1–3 (existing `@Roles` decorators kept; SQL `WHERE recruiter_id = current_user.id` enforced)           | ✓   |
+| Backend audit/RLS preserved                                     | Tasks 1-3 (existing `@Roles` decorators kept; SQL `WHERE recruiter_id = current_user.id` enforced)           | ✓   |
 
 **Gaps caught during review:**
 
-- The spec's "View applications →" link routes to `/recruiter/applications`. The plan's Task 8 uses that path. If the index page doesn't exist yet it will 404 — acceptable per spec Non-Goals.
-- The spec mentioned `/help` for Docs link. Plan's Task 6 routes there. May 404 — acceptable per spec Open Decisions.
-- Bias flag column name was flagged in Task 2 Step 3 as a "verify before committing" — that's the right pattern (don't invent column names).
-- Shortlisted column on jobs cards depends on whether the application status enum includes `shortlisted` — Task 3 Step 2 flags this as a "verify in `enums.ts` first" check. If the enum lacks it, the implementer needs to drop the SHORTLISTED column from the metric strip and the SQL filter — make this explicit:
+- The spec's "View applications →" link routes to `/recruiter/applications`. The plan's Task 8 uses that path. If the index page doesn't exist yet it will 404 - acceptable per spec Non-Goals.
+- The spec mentioned `/help` for Docs link. Plan's Task 6 routes there. May 404 - acceptable per spec Open Decisions.
+- Bias flag column name was flagged in Task 2 Step 3 as a "verify before committing" - that's the right pattern (don't invent column names).
+- Shortlisted column on jobs cards depends on whether the application status enum includes `shortlisted` - Task 3 Step 2 flags this as a "verify in `enums.ts` first" check. If the enum lacks it, the implementer needs to drop the SHORTLISTED column from the metric strip and the SQL filter - make this explicit:
   - **If `shortlisted` is not in `APPLICATION_STATUS`:** drop `shortlisted` from `JobStats`, drop the `count(*) filter (where status = 'shortlisted')` in the repo query, and drop the `Shortlisted` `<Metric>` from `JobCard` in `page.tsx`. Reduce `grid-cols-7` to `grid-cols-6`.
 
 **Placeholder scan:** no TBD/TODO markers, all code shown explicitly, exact paths everywhere, exact commit messages provided.
@@ -2370,10 +2370,10 @@ After all tasks land:
 
 1. Sign in as the seeded recruiter (`recruiter@gmail.com`).
 2. Confirm sidebar renders with: AuraHire wordmark top, tenant chip showing "TechCorp Inc." (or whatever the seed sets), MAIN/PIPELINE/ACCOUNT sections, Docs link near bottom, user chip at bottom-bottom.
-3. Confirm topbar is gone — no breadcrumb, no avatar dropdown at top of `<main>`, no notification bell.
+3. Confirm topbar is gone - no breadcrumb, no avatar dropdown at top of `<main>`, no notification bell.
 4. Confirm Dashboard renders three sections in order: Active Jobs (cards) → Pipeline Analytics (single card) → Recent Applications (rows).
 5. Confirm each Active Jobs card shows the 7 metrics (or 6 if `shortlisted` was dropped), with Avg Score colored by band.
-6. Switch the Pipeline Analytics date range — values should re-fetch and update.
+6. Switch the Pipeline Analytics date range - values should re-fetch and update.
 7. Click an Active Jobs card → navigates to job detail.
 8. Click a Recent Applications row → navigates to application detail.
 9. Click the user chip → dropdown opens upward → click Sign out → returns to home.

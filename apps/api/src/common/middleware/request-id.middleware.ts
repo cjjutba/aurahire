@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 // NestJS middleware on the Fastify adapter runs through @fastify/middie, which
-// passes Node's raw IncomingMessage/ServerResponse — not FastifyRequest/Reply.
+// passes Node's raw IncomingMessage/ServerResponse - not FastifyRequest/Reply.
 // Use the raw Node API (setHeader) here, not Fastify's reply.header().
 @Injectable()
 export class RequestIdMiddleware implements NestMiddleware {

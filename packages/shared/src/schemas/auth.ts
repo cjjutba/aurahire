@@ -18,7 +18,7 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 // ============================================================================
-// REGISTER — CANDIDATE
+// REGISTER - CANDIDATE
 // ============================================================================
 
 export const registerCandidateSchema = z
@@ -39,7 +39,7 @@ export const registerCandidateSchema = z
 
 export type RegisterCandidateInput = z.infer<typeof registerCandidateSchema>;
 
-// Backend signup payload — frontend forwards the full registration to NestJS,
+// Backend signup payload - frontend forwards the full registration to NestJS,
 // which creates the Supabase auth user, issues a verification token, and emails it.
 export const signupCandidateSchema = z.object({
   fullName: fullNameSchema,
@@ -50,7 +50,7 @@ export const signupCandidateSchema = z.object({
 
 export type SignupCandidateInput = z.infer<typeof signupCandidateSchema>;
 
-// Internal payload used by ProfilesService.initCandidateProfile — the candidate
+// Internal payload used by ProfilesService.initCandidateProfile - the candidate
 // row is created server-side after email verification, not over the wire.
 export const initCandidateProfileSchema = z.object({
   fullName: fullNameSchema,
@@ -62,7 +62,7 @@ export type InitCandidateProfileInput = z.infer<
 >;
 
 // ============================================================================
-// REGISTER — RECRUITER
+// REGISTER - RECRUITER
 // ============================================================================
 
 export const registerRecruiterSchema = z

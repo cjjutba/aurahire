@@ -19,7 +19,7 @@ Do NOT redact:
 - Industry jargon
 - Generic terms (engineer, developer, manager)
 
-Return the array of { id, scrubbed } objects exactly mirroring the input ids — do not drop, reorder, or merge entries.`;
+Return the array of { id, scrubbed } objects exactly mirroring the input ids - do not drop, reorder, or merge entries.`;
 
 export const redactBatchInputItemSchema = z.object({
   id: z.string(),

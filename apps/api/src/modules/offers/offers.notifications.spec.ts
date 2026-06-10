@@ -2,10 +2,10 @@
  * Unit tests for OffersService notification emissions (Plan Task 15).
  *
  * Covers:
- *  1. accept()  — emits 'offer_accepted'  to the recruiter team via emitMany.
- *  2. decline() — emits 'offer_declined'  to the recruiter team via emitMany.
+ *  1. accept()  - emits 'offer_accepted'  to the recruiter team via emitMany.
+ *  2. decline() - emits 'offer_declined'  to the recruiter team via emitMany.
  *
- * No database is hit — all dependencies are mocked.
+ * No database is hit - all dependencies are mocked.
  */
 
 import { Test } from "@nestjs/testing";
@@ -98,7 +98,7 @@ function fakeDb() {
 
 // ── Suite ───────────────────────────────────────────────────────────────────
 
-describe("OffersService — accept/decline notifications", () => {
+describe("OffersService - accept/decline notifications", () => {
   let service: OffersService;
   let repo: jest.Mocked<OffersRepository>;
   let applicationsRepo: jest.Mocked<ApplicationsRepository>;
@@ -180,7 +180,7 @@ describe("OffersService — accept/decline notifications", () => {
     service = moduleRef.get(OffersService);
   });
 
-  // ── Task 15 — accept emits offer_accepted ──────────────────────────────
+  // ── Task 15 - accept emits offer_accepted ──────────────────────────────
 
   it("accept() emits 'offer_accepted' to the recruiter team via emitMany", async () => {
     repo.findById.mockResolvedValue(makeOffer({ status: "pending" }));
@@ -202,7 +202,7 @@ describe("OffersService — accept/decline notifications", () => {
           applicationId: APPLICATION_ID,
           candidateId: CANDIDATE_ID,
           // Required so the template renders "<name> accepted your offer
-          // — <jobTitle>" without using "Candidate"/"your role" fallbacks.
+          // - <jobTitle>" without using "Candidate"/"your role" fallbacks.
           candidateName: "Test Candidate",
           jobId: JOB_ID,
           jobTitle: "Senior Software Engineer",
@@ -212,7 +212,7 @@ describe("OffersService — accept/decline notifications", () => {
     );
   });
 
-  // ── Task 15 — decline emits offer_declined ─────────────────────────────
+  // ── Task 15 - decline emits offer_declined ─────────────────────────────
 
   it("decline() emits 'offer_declined' to the recruiter team via emitMany", async () => {
     repo.findById.mockResolvedValue(makeOffer({ status: "pending" }));

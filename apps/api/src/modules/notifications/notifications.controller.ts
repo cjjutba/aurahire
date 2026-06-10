@@ -62,7 +62,7 @@ export class NotificationsController {
   }
 
   /**
-   * Archive a single notification — popover-aligned vocabulary. The DB
+   * Archive a single notification - popover-aligned vocabulary. The DB
    * column is `dismissed_at`; the realtime event is `notification.archived`.
    * Writes an audit row mirroring the {@link markAllRead} pattern.
    */

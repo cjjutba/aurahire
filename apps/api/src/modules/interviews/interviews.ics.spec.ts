@@ -8,7 +8,7 @@
  *  3. Returns a valid ICS string containing BEGIN:VCALENDAR for an
  *     authorized candidate.
  *
- * No database is hit — all repositories are fully mocked.
+ * No database is hit - all repositories are fully mocked.
  */
 
 import { NotFoundException } from "@nestjs/common";
@@ -191,7 +191,7 @@ function makeService(opts: MockOptions = {}) {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe("InterviewsService — getIcs", () => {
+describe("InterviewsService - getIcs", () => {
   it("throws NotFoundException when the interview does not exist", async () => {
     const { svc } = makeService({ interview: null });
     const user = makeCandidate();

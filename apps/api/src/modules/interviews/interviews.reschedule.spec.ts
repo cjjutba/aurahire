@@ -8,7 +8,7 @@
  *  3. Throws BadRequestException (INVALID_STATUS_TRANSITION) from cancelled, completed, rescheduled.
  *  4. Throws BadRequestException (PAST_DATE) when scheduledAt < now.
  *
- * No database is hit — all dependencies are mocked.
+ * No database is hit - all dependencies are mocked.
  */
 
 import { BadRequestException } from "@nestjs/common";
@@ -181,7 +181,7 @@ describe("InterviewsService.reschedule", () => {
         { provide: InterviewVenuesService, useValue: { create: jest.fn() } },
         {
           // Per thesis panel revision (May 2026): score-based interview
-          // eligibility gate — null score means the gate is a no-op.
+          // eligibility gate - null score means the gate is a no-op.
           provide: ScoringRepository,
           useValue: {
             findMatchScoreByApplicationId: jest.fn().mockResolvedValue(null),
@@ -278,7 +278,7 @@ describe("InterviewsService.reschedule", () => {
     expect(result.status).toBe("scheduled");
   });
 
-  it("from no-show: same successful path — marks rescheduled, inserts new, audits, emits", async () => {
+  it("from no-show: same successful path - marks rescheduled, inserts new, audits, emits", async () => {
     repo.findById.mockResolvedValue(makeInterview("no-show"));
     applicationsRepo.findApplicationContextForCompany.mockResolvedValue({
       id: APPLICATION_ID,
@@ -362,7 +362,7 @@ describe("InterviewsService.reschedule", () => {
       companyId: COMPANY_ID,
     } as any);
 
-    // 2 minutes in the past — well beyond the 60s grace window in the service.
+    // 2 minutes in the past - well beyond the 60s grace window in the service.
     const pastIso = new Date(Date.now() - 120_000).toISOString();
 
     await expect(
@@ -394,7 +394,7 @@ describe("InterviewsService.reschedule", () => {
     // Verifies that reschedule() fires NotificationsService.emit() so that:
     //  (a) an in-app notification row is created for the candidate, and
     //  (b) the instant-mode path enqueues an email job (queue.add is called by emit()
-    //      internally — we assert on the emit call here; the queue path is covered in
+    //      internally - we assert on the emit call here; the queue path is covered in
     //      notifications.service.spec).
     repo.findById.mockResolvedValue(makeInterview("scheduled"));
     applicationsRepo.findApplicationContextForCompany.mockResolvedValue({

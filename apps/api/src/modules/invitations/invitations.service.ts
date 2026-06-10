@@ -203,7 +203,7 @@ export class InvitationsService {
       });
     }
 
-    // Same email-match guard as accept — only the addressee can decline.
+    // Same email-match guard as accept - only the addressee can decline.
     const callerProfile = await this.profilesRepo.findById(user.id);
     if (!callerProfile) {
       throw new NotFoundException({

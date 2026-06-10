@@ -19,7 +19,7 @@ This document is the high-level technical blueprint of AuraHire's split frontend
                                  │ HTTPS
                                  │
         ┌────────────────────────▼─────────────────────────┐
-        │   Frontend — Next.js 16 (Vercel)                 │
+        │   Frontend - Next.js 16 (Vercel)                 │
         │   apps/web                                       │
         │   - Pages, layouts, Server Components            │
         │   - Auth UI (Supabase SDK on client)             │
@@ -31,7 +31,7 @@ This document is the high-level technical blueprint of AuraHire's split frontend
                                  │ Authorization: Bearer <jwt>
                                  │
         ┌────────────────────────▼─────────────────────────┐
-        │   Backend — NestJS (Digital Ocean Droplet, PM2)  │
+        │   Backend - NestJS (Digital Ocean Droplet, PM2)  │
         │   apps/api                                       │
         │   - REST API + Swagger UI at /api/docs           │
         │   - SupabaseAuthGuard (validates JWT)            │
@@ -98,7 +98,7 @@ This document is the high-level technical blueprint of AuraHire's split frontend
 
 | Folder        | Role                                                                                   |
 | ------------- | -------------------------------------------------------------------------------------- |
-| `schemas/`    | Zod schemas (auth, jobs, applications, etc.) — used by both apps                       |
+| `schemas/`    | Zod schemas (auth, jobs, applications, etc.) - used by both apps                       |
 | `enums/`      | Discriminated string union enums (UserRole, ApplicationStatus, etc.)                   |
 | `constants/`  | Numeric thresholds, score-band cutoffs, sizes                                          |
 | `api-client/` | Auto-generated TS client + TanStack Query hooks (built from `apps/api`'s OpenAPI spec) |
@@ -272,9 +272,9 @@ export class JobsController {
 
 ### Three-layer defense
 
-1. **Frontend middleware** — redirect unauthenticated users at the URL level
-2. **Backend guards** — `SupabaseAuthGuard` + `RolesGuard` reject invalid/wrong-role calls
-3. **Postgres RLS** — every table policy enforces `auth.uid()` and role checks
+1. **Frontend middleware** - redirect unauthenticated users at the URL level
+2. **Backend guards** - `SupabaseAuthGuard` + `RolesGuard` reject invalid/wrong-role calls
+3. **Postgres RLS** - every table policy enforces `auth.uid()` and role checks
 
 Even if a bug bypasses 1 and 2, the database refuses unauthorized reads/writes.
 
@@ -397,9 +397,9 @@ Cron jobs run inside the main NestJS process. For sprint scale, sufficient.
 
 ### Crons in sprint scope
 
-1. **`expireOffers`** (hourly) — set `offers.status='expired'` past `expires_at`
-2. **`archivePastDeadlineJobs`** (daily) — auto-archive jobs past `application_deadline`
-3. **`cleanupUnverifiedAccounts`** (weekly) — delete unverified accounts > 7 days old
+1. **`expireOffers`** (hourly) - set `offers.status='expired'` past `expires_at`
+2. **`archivePastDeadlineJobs`** (daily) - auto-archive jobs past `application_deadline`
+3. **`cleanupUnverifiedAccounts`** (weekly) - delete unverified accounts > 7 days old
 
 ---
 
@@ -502,9 +502,9 @@ Frontend downloads → Backend issues signed URL:
 
 ### Buckets
 
-- `resumes` — private; signed-URL-only access
-- `avatars` — public-read for thumbnails
-- `company-logos` — public-read
+- `resumes` - private; signed-URL-only access
+- `avatars` - public-read for thumbnails
+- `company-logos` - public-read
 
 ---
 
@@ -536,7 +536,7 @@ GitHub repo (main branch)
     └──► Supabase Cloud ─────────► Postgres + Auth + Storage (managed)
 ```
 
-Both Redis and Mailpit bind to **`127.0.0.1` only** — never reachable from the public internet. Caddy is the only listener on `0.0.0.0`.
+Both Redis and Mailpit bind to **`127.0.0.1` only** - never reachable from the public internet. Caddy is the only listener on `0.0.0.0`.
 
 For local dev:
 
@@ -560,7 +560,7 @@ Mac (pnpm dev at root)
 - **Traces:** none in sprint
 - **Alerting:** none
 
-The `audit_logs` table itself is a form of observability — every consequential action recorded and queryable via the admin portal.
+The `audit_logs` table itself is a form of observability - every consequential action recorded and queryable via the admin portal.
 
 For Phase 2: Sentry for errors, PostHog for product analytics, OpenTelemetry for traces.
 
@@ -586,7 +586,7 @@ For Phase 2: Sentry for errors, PostHog for product analytics, OpenTelemetry for
 
 - All secrets in `.env.local` (gitignored) for dev
 - Vercel encrypted env vars for the frontend; backend secrets live in `deploy/.env` on the Droplet (`chmod 600`, owned by the deploy user, never committed)
-- `NEXT_PUBLIC_*` vars are bundled into client JS — only safe values (Supabase anon key, app URL, API URL) live there
+- `NEXT_PUBLIC_*` vars are bundled into client JS - only safe values (Supabase anon key, app URL, API URL) live there
 - OpenAI key, Resend key, Supabase service role key, DB password: backend-only, never `NEXT_PUBLIC_*`
 
 ### Rate limiting
@@ -601,16 +601,16 @@ For Phase 2: Sentry for errors, PostHog for product analytics, OpenTelemetry for
 ### A. Candidate Onboarding & Profile Scoring
 
 ```
-Step 1 — Resume Upload + Parse:
+Step 1 - Resume Upload + Parse:
   Frontend → POST /api/v1/resumes/upload (multipart)
   Backend: validate → Supabase Storage → Insert row → AI parse → Update parsed_data
   Returns: { resumeId, parsedData }
   Frontend: prefill steps 2-6
 
-Steps 2-6 — Review & Edit:
+Steps 2-6 - Review & Edit:
   Frontend → PATCH /api/v1/candidate-profiles/:section per step
 
-Step 7 — Compute Profile Score:
+Step 7 - Compute Profile Score:
   Frontend → POST /api/v1/scoring/profile/:candidateId
   Backend: load resume + prefs → PII redact → OpenAI score → Insert profile_scores + evidence_excerpts → Audit
   Returns: full Profile Score DTO with breakdown

@@ -87,7 +87,7 @@ function buildSvc(opts: {
   candidateProfile: CandidateProfile | null;
   defaultResume: Resume | null;
   /**
-   * Optional precompute job id stub — defaults to a deterministic value so
+   * Optional precompute job id stub - defaults to a deterministic value so
    * happy-path tests can assert on it. Pass `null` to simulate enqueue
    * failure (BullMQ swallows the error and returns null).
    */
@@ -101,7 +101,7 @@ function buildSvc(opts: {
   /**
    * Optional ScoringRepository.hasCurrentProfileScore stub for the
    * backfill-guard tests. Defaults to `false` so most tests behave as
-   * if the candidate has no current score row — closer to the
+   * if the candidate has no current score row - closer to the
    * proactive-system happy path.
    */
   hasCurrentProfileScore?: jest.Mock;
@@ -235,7 +235,7 @@ describe("CandidateProfilesService.completeOnboarding", () => {
         title_source: "Software Engineer",
         start_date: null,
         end_date: null,
-        period_source: "2020 — Present",
+        period_source: "2020 - Present",
         is_current: true,
         responsibilities: [],
         responsibilities_source: [],
@@ -339,7 +339,7 @@ describe("CandidateProfilesService.completeOnboarding", () => {
 });
 
 describe("CandidateProfilesService.completeOnboarding (extended response)", () => {
-  // Mirrors the validParsedResume in the parent describe — kept local so the
+  // Mirrors the validParsedResume in the parent describe - kept local so the
   // happy-path / AI-failure / missing-resume tests can stay self-contained.
   const validParsedResume = {
     contact: {},
@@ -353,7 +353,7 @@ describe("CandidateProfilesService.completeOnboarding (extended response)", () =
         title_source: "Software Engineer",
         start_date: null,
         end_date: null,
-        period_source: "2020 — Present",
+        period_source: "2020 - Present",
         is_current: true,
         responsibilities: [],
         responsibilities_source: [],
@@ -443,7 +443,7 @@ describe("CandidateProfilesService.completeOnboarding (extended response)", () =
 
     const result = await svc.completeOnboarding(candidateUser);
 
-    // Profile still flipped — candidate is NOT trapped by an AI failure.
+    // Profile still flipped - candidate is NOT trapped by an AI failure.
     expect(profilesRepo.updateCandidateProfile).toHaveBeenCalledWith(
       candidateUser.id,
       { profileCompleted: true },
@@ -471,7 +471,7 @@ describe("CandidateProfilesService.completeOnboarding (extended response)", () =
     // for the AI-gate stage. In normal flow the review-step gate runs first
     // and rejects with INCOMPLETE_REVIEW because zero parsed counts can't
     // satisfy `experience>=1 || education>=1 || skills>=3`. This test
-    // documents that ordering — a candidate without a default resume hits
+    // documents that ordering - a candidate without a default resume hits
     // the review error first, never reaches the AI step, and never marks
     // `profile_completed`. Frontend validation on the resume-upload step
     // makes this scenario unreachable in practice.
@@ -500,7 +500,7 @@ describe("CandidateProfilesService.completeOnboarding (extended response)", () =
   });
 });
 
-describe("CandidateProfilesService — recompute on edit", () => {
+describe("CandidateProfilesService - recompute on edit", () => {
   const RESUME_ID = "33333333-3333-3333-3333-333333333333";
 
   function buildDefaultResume(): Resume {
@@ -684,7 +684,7 @@ describe("CandidateProfilesService.enqueueProfileScoreIfMissing", () => {
         reason: "manual_recompute",
       }),
       expect.objectContaining({
-        // jobId is the dedupe key — must include the candidate id so
+        // jobId is the dedupe key - must include the candidate id so
         // backfills are scoped per-candidate.
         jobId: expect.stringContaining(candidateUser.id),
       }),
@@ -704,7 +704,7 @@ describe("CandidateProfilesService.enqueueProfileScoreIfMissing", () => {
     expect(scoringRepo.hasCurrentProfileScore).toHaveBeenCalledWith(
       candidateUser.id,
     );
-    // Short-circuited before the resume lookup — no enqueue at all.
+    // Short-circuited before the resume lookup - no enqueue at all.
     expect(resumesRepo.findDefaultByCandidateId).not.toHaveBeenCalled();
     expect(profileScoreQueue.enqueueRecompute).not.toHaveBeenCalled();
   });
@@ -741,7 +741,7 @@ describe("CandidateProfilesService.enqueueProfileScoreIfMissing", () => {
     await svc.enqueueProfileScoreIfMissing(candidateUser.id);
 
     // The service calls enqueueRecompute twice; idempotency lives inside
-    // BullMQ via the jobId — assert both calls passed the SAME jobId so
+    // BullMQ via the jobId - assert both calls passed the SAME jobId so
     // BullMQ can dedupe them.
     expect(profileScoreQueue.enqueueRecompute).toHaveBeenCalledTimes(2);
     const firstJobId = (profileScoreQueue.enqueueRecompute as jest.Mock).mock

@@ -5,9 +5,9 @@ import { CandidateProfileMeDto } from "./candidate-profile-response.dto";
 
 /**
  * Reasons the inline Profile Score compute may have produced no score.
- *  - `transient`       — AI call threw; a recompute job has been enqueued
+ *  - `transient`       - AI call threw; a recompute job has been enqueued
  *                        for retry. UI should show a retry-soon nudge.
- *  - `missing_resume`  — candidate has no default resume. Frontend
+ *  - `missing_resume`  - candidate has no default resume. Frontend
  *                        validation should normally prevent this; a
  *                        defense-in-depth signal so the UI can route the
  *                        candidate back to the upload step.

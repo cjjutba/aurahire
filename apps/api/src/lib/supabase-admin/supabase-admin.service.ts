@@ -6,7 +6,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * Backend-only Supabase admin client. Uses the service-role key to call
  * GoTrue admin endpoints (createUser, updateUserById, listUsers, etc.).
  *
- * Never use this client to read application tables — it bypasses RLS. For
+ * Never use this client to read application tables - it bypasses RLS. For
  * application reads/writes, use the Drizzle client.
  */
 @Injectable()
@@ -122,7 +122,7 @@ export class SupabaseAdminService {
   /**
    * Generate a one-time magic-link token hash for an existing user. Returned
    * to the frontend after email verification so the browser can call
-   * supabase.auth.verifyOtp() and establish a real session — bridging the
+   * supabase.auth.verifyOtp() and establish a real session - bridging the
    * "they just clicked the email link" trust into a logged-in browser
    * session without forcing a manual sign-in step.
    */

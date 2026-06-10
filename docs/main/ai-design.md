@@ -6,7 +6,7 @@
 **Audience:** developers + thesis examiner
 **Depends on:** `prd.md`, `database-schema.md`, `architecture.md`
 
-This document specifies every AI surface in AuraHire: resume parsing, profile scoring, match scoring, bias detection, and aggregate fairness monitoring. It is the **thesis-defensible artifact** of the system — the place where "Explainable and Fair AI-Powered Recruitment" stops being a slogan and starts being prompts, schemas, and evaluation rules.
+This document specifies every AI surface in AuraHire: resume parsing, profile scoring, match scoring, bias detection, and aggregate fairness monitoring. It is the **thesis-defensible artifact** of the system - the place where "Explainable and Fair AI-Powered Recruitment" stops being a slogan and starts being prompts, schemas, and evaluation rules.
 
 ---
 
@@ -26,7 +26,7 @@ Resumes are passed through a redaction step that strips name, photo URL, age, ge
 
 ### 3. Evidence over assertion
 
-Every component score includes excerpt-level evidence — the literal text from the resume that drove the score up or down. The candidate, recruiter, and admin can all click a score and see what made it.
+Every component score includes excerpt-level evidence - the literal text from the resume that drove the score up or down. The candidate, recruiter, and admin can all click a score and see what made it.
 
 **Why:** No black-box scores. This is the single most important explainability lever.
 
@@ -34,7 +34,7 @@ Every component score includes excerpt-level evidence — the literal text from 
 
 Scoring weights live in the `scoring_config` table. Admin can tune them; every change is audited; every score records the weights used at compute time.
 
-**Why:** Demonstrates the system's openness — examiners can see exactly what the algorithm values.
+**Why:** Demonstrates the system's openness - examiners can see exactly what the algorithm values.
 
 ### 5. Bias detection is upstream, not just downstream
 
@@ -177,7 +177,7 @@ Resume text:
 
 ### Caching
 
-Parsed data is stored in `resumes.parsed_data`. Re-parsing only happens when the file changes. Scoring engines reuse cached parsed_data — never re-parse for scoring.
+Parsed data is stored in `resumes.parsed_data`. Re-parsing only happens when the file changes. Scoring engines reuse cached parsed_data - never re-parse for scoring.
 
 ---
 
@@ -242,11 +242,11 @@ Output is the cleaned text. Implementation calls this for each free-text field t
 - Education (institutions, degrees, fields, dates)
 - Certifications
 - Languages
-- Location country (kept for "are you in the same country as the job?" match — never used for ethnicity inference)
+- Location country (kept for "are you in the same country as the job?" match - never used for ethnicity inference)
 
 ### Audit
 
-Every score row records `redacted_fields` (the list of keys that were stripped). Admin can see this in the score audit drilldown — proves to thesis examiner that redaction happened.
+Every score row records `redacted_fields` (the list of keys that were stripped). Admin can see this in the score audit drilldown - proves to thesis examiner that redaction happened.
 
 ```sql
 -- Example admin query: show all profile scores with what was redacted
@@ -261,7 +261,7 @@ ORDER BY created_at DESC LIMIT 50;
 
 ### Goal
 
-Compute a candidate's overall resume strength score (0–100), independent of any specific job. Used as the candidate's "self-evaluation" surface.
+Compute a candidate's overall resume strength score (0-100), independent of any specific job. Used as the candidate's "self-evaluation" surface.
 
 ### Inputs
 
@@ -486,8 +486,8 @@ Finally:
 - Sum component scores for overall_score (0-100)
 - Determine band: strong (70+), partial (40-69), limited (0-39)
 - Write one-paragraph synthesis (`summary`)
-- List up to 3 `red_flags` (significant misalignments) — optional
-- List up to 3 `green_flags` (standout strengths) — optional
+- List up to 3 `red_flags` (significant misalignments) - optional
+- List up to 3 `green_flags` (standout strengths) - optional
 
 IMPORTANT:
 - Do not infer demographics; score only on the redacted content
@@ -501,7 +501,7 @@ Each application has exactly one match_score row (UNIQUE on `application_id`). R
 
 ### Weights snapshot
 
-Every match_score record stores `weights_used` — a snapshot of `scoring_config.match_weights` at compute time. This way, even if admin changes weights later, historical scores remain interpretable.
+Every match_score record stores `weights_used` - a snapshot of `scoring_config.match_weights` at compute time. This way, even if admin changes weights later, historical scores remain interpretable.
 
 ---
 
@@ -561,7 +561,7 @@ Categories to flag:
 For each flagged term:
 - Exact text from the description
 - Category
-- Severity (high/medium/low) — how exclusionary
+- Severity (high/medium/low) - how exclusionary
 - 1-sentence explanation
 - Concrete suggestion for replacement language
 
@@ -586,7 +586,7 @@ CUSTOM TERMS TO ALSO FLAG (admin-added):
 
 1. **On description blur** in the recruiter's job editor (debounced 1s)
 2. **On Save Draft** (background, results shown when ready)
-3. **On Publish click** — blocks publish if any flags unresolved (override required)
+3. **On Publish click** - blocks publish if any flags unresolved (override required)
 
 ### Recruiter override flow
 
@@ -635,7 +635,7 @@ Surface system-level fairness metrics to admin. Spot trends. Demonstrate ongoing
 
 ### Computation
 
-All metrics are SQL aggregations — no AI calls. Computed on demand when admin opens `/admin/bias-monitor`. Cached for 5 minutes via Next.js Data Cache.
+All metrics are SQL aggregations - no AI calls. Computed on demand when admin opens `/admin/bias-monitor`. Cached for 5 minutes via Next.js Data Cache.
 
 ---
 
@@ -834,7 +834,7 @@ Each NestJS controller method:
 3. **PII redaction is rule-based + LLM-assisted.** Not deterministic; an adversarial input could leak PII. Acceptable for demo; stronger for production.
 4. **No demographic data collected.** This is principled (privacy-first) but means we can't run statistical disparate-impact tests. Documented tradeoff.
 5. **No active learning loop.** The model doesn't improve based on recruiter feedback. Phase 2 deliverable.
-6. **Score reliability depends on resume quality.** A sparse resume scores low everywhere — but that may reflect underlying signal, not algorithmic bias.
+6. **Score reliability depends on resume quality.** A sparse resume scores low everywhere - but that may reflect underlying signal, not algorithmic bias.
 
 ---
 
@@ -844,6 +844,6 @@ When changing any prompt or schema:
 
 1. Bump version in `prompts/<name>.ts`
 2. Run smoke test (10 resumes × 5 jobs)
-3. Compare scores with prior version — large unexpected shifts indicate prompt regression
+3. Compare scores with prior version - large unexpected shifts indicate prompt regression
 4. Update this doc's "Output Schema" section
 5. Document the change in audit log via admin config update flow

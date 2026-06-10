@@ -157,7 +157,7 @@ function getInitials(name: string): string {
 }
 
 // Per thesis panel revision (May 2026): `in_progress` slots above
-// scheduled — the live interview is the one the recruiter is most
+// scheduled - the live interview is the one the recruiter is most
 // interested in when scanning the decision panel.
 const STATUS_PRIORITY: Record<string, number> = {
   in_progress: 0,

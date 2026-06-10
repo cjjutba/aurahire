@@ -2,15 +2,15 @@
  * Unit tests for ApplicationsService notification emissions (Plan Tasks 13 & 14).
  *
  * Covers:
- *  1. apply()         — emits 'new_application_received' to the recruiter team
+ *  1. apply()         - emits 'new_application_received' to the recruiter team
  *                       via emitMany.
- *  2. updateStatus()  — emits 'application_status_changed' to the candidate
+ *  2. updateStatus()  - emits 'application_status_changed' to the candidate
  *                       on every transition (the shared post-write path).
- *  3. transitionFromSystem() — emits 'application_status_changed' to the
+ *  3. transitionFromSystem() - emits 'application_status_changed' to the
  *                              candidate when status moves due to a system
  *                              actor (e.g. offer flow).
  *
- * No database is hit — all dependencies are mocked.
+ * No database is hit - all dependencies are mocked.
  */
 
 import { Test } from "@nestjs/testing";
@@ -101,7 +101,7 @@ function makeApplication(overrides: Record<string, unknown> = {}) {
 
 // ── Suite ───────────────────────────────────────────────────────────────────
 
-describe("ApplicationsService — notification emissions", () => {
+describe("ApplicationsService - notification emissions", () => {
   let service: ApplicationsService;
   let repo: jest.Mocked<ApplicationsRepository>;
   let jobsRepo: jest.Mocked<JobsRepository>;
@@ -176,7 +176,7 @@ describe("ApplicationsService — notification emissions", () => {
       // Per thesis panel revision (May 2026): ApplicationsService.apply()
       // calls findRawPreview to gate sub-threshold submissions. Default
       // to null (no preview) so the spec exercises the post-apply path
-      // — individual tests can override when verifying the block.
+      // - individual tests can override when verifying the block.
       findRawPreview: jest.fn().mockResolvedValue(null),
     } as any;
 
@@ -242,7 +242,7 @@ describe("ApplicationsService — notification emissions", () => {
     service = moduleRef.get(ApplicationsService);
   });
 
-  // ── Task 14 — apply() emits new_application_received ────────────────────
+  // ── Task 14 - apply() emits new_application_received ────────────────────
 
   it("apply() emits 'new_application_received' to the recruiter team via emitMany", async () => {
     jobsRepo.findById.mockResolvedValue(makeJob());
@@ -267,7 +267,7 @@ describe("ApplicationsService — notification emissions", () => {
           applicationId: APPLICATION_ID,
           jobId: JOB_ID,
           // Template requires these to render the title/body without
-          // falling back to "your role" / "the company" / "—".
+          // falling back to "your role" / "the company" / "-".
           jobTitle: "Software Engineer",
           companyName: "AcmeCorp",
           candidateId: CANDIDATE_ID,
@@ -282,7 +282,7 @@ describe("ApplicationsService — notification emissions", () => {
     );
   });
 
-  // ── Task 13 — updateStatus() emits application_status_changed ────────────
+  // ── Task 13 - updateStatus() emits application_status_changed ────────────
 
   it("updateStatus() emits 'application_status_changed' to the candidate with metadata", async () => {
     // Per thesis panel revision (May 2026): "screening" stage was removed,
@@ -317,7 +317,7 @@ describe("ApplicationsService — notification emissions", () => {
     );
   });
 
-  // ── Task 13 — transitionFromSystem() also emits ────────────────────────
+  // ── Task 13 - transitionFromSystem() also emits ────────────────────────
 
   it("transitionFromSystem() emits 'application_status_changed' to the candidate (system path)", async () => {
     const appBefore = makeApplication({ status: "interview" });

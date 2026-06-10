@@ -762,7 +762,7 @@
             "bearer": []
           }
         ],
-        "summary": "Leave the active company. Blocked if you are the last owner — transfer first.",
+        "summary": "Leave the active company. Blocked if you are the last owner - transfer first.",
         "tags": [
           "companies"
         ]
@@ -2266,7 +2266,7 @@
             "bearer": []
           }
         ],
-        "summary": "Stateless bias scan — does NOT persist; used by debounced editor preview",
+        "summary": "Stateless bias scan - does NOT persist; used by debounced editor preview",
         "tags": [
           "bias"
         ]
@@ -2409,7 +2409,7 @@
     },
     "/api/v1/scoring/profile/compute": {
       "post": {
-        "description": "Triggers a fresh AI scoring run. Rate-limited at TWO layers: ThrottlerGuard (1/60s per IP) + a per-user manual check on profile_scores.created_at (1/60s per user). Both layers are intentional — defense in depth. Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
+        "description": "Triggers a fresh AI scoring run. Rate-limited at TWO layers: ThrottlerGuard (1/60s per IP) + a per-user manual check on profile_scores.created_at (1/60s per user). Both layers are intentional - defense in depth. Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
         "operationId": "ScoringController_computeProfileScore_v1",
         "parameters": [],
         "responses": {
@@ -2569,7 +2569,7 @@
             "bearer": []
           }
         ],
-        "summary": "List the candidate's match previews ordered by score — drives the Recommended-for-you feed",
+        "summary": "List the candidate's match previews ordered by score - drives the Recommended-for-you feed",
         "tags": [
           "scoring"
         ]
@@ -3182,7 +3182,7 @@
             "bearer": []
           }
         ],
-        "summary": "Onboarding step 3 (final): hiring focus — flips profile_completed=true",
+        "summary": "Onboarding step 3 (final): hiring focus - flips profile_completed=true",
         "tags": [
           "recruiter-profiles"
         ]
@@ -3319,7 +3319,7 @@
     },
     "/api/v1/candidate-profiles/me/complete-onboarding": {
       "patch": {
-        "description": "Validates per-step onboarding minimums (personal name, at least one experience/education/3 skills, desired roles), marks the profile complete, then synchronously runs the Profile Score compute and enqueues the match-preview precompute job. Returns the score + the precompute job id so the analyzing screen can hand off to the dashboard with a populated stat. AI failures are surfaced in `errors.profileScore` rather than as HTTP errors — the candidate is never trapped in onboarding limbo.",
+        "description": "Validates per-step onboarding minimums (personal name, at least one experience/education/3 skills, desired roles), marks the profile complete, then synchronously runs the Profile Score compute and enqueues the match-preview precompute job. Returns the score + the precompute job id so the analyzing screen can hand off to the dashboard with a populated stat. AI failures are surfaced in `errors.profileScore` rather than as HTTP errors - the candidate is never trapped in onboarding limbo.",
         "operationId": "CandidateProfilesController_completeOnboarding_v1",
         "parameters": [],
         "responses": {
@@ -3975,7 +3975,7 @@
             "bearer": []
           }
         ],
-        "summary": "Reschedule an interview (atomic chain — marks original 'rescheduled', creates linked new row)",
+        "summary": "Reschedule an interview (atomic chain - marks original 'rescheduled', creates linked new row)",
         "tags": [
           "interviews"
         ]
@@ -4963,7 +4963,7 @@
             "bearer": []
           }
         ],
-        "summary": "Full admin detail for an application — includes raw AI output, parsed resume + redactedFields list, and the audit trail",
+        "summary": "Full admin detail for an application - includes raw AI output, parsed resume + redactedFields list, and the audit trail",
         "tags": [
           "admin-applications"
         ]
@@ -5484,7 +5484,7 @@
             "bearer": []
           }
         ],
-        "summary": "Aggregate fairness metrics — KPIs, breakdowns, top flagged terms, recent overrides. Cached 5 min.",
+        "summary": "Aggregate fairness metrics - KPIs, breakdowns, top flagged terms, recent overrides. Cached 5 min.",
         "tags": [
           "admin-bias-monitor"
         ]
@@ -6151,7 +6151,7 @@
   },
   "info": {
     "title": "AuraHire API",
-    "description": "Backend API for AuraHire — Explainable + Fair AI-Powered Recruitment",
+    "description": "Backend API for AuraHire - Explainable + Fair AI-Powered Recruitment",
     "version": "0.1.0",
     "contact": {}
   },
@@ -11303,7 +11303,7 @@
           },
           "autoRejectThreshold": {
             "type": "number",
-            "description": "Minimum match score (0–100) for interview eligibility. Below = auto-rejected. Default 75."
+            "description": "Minimum match score (0-100) for interview eligibility. Below = auto-rejected. Default 75."
           },
           "biasCategoriesEnabled": {
             "type": "array",

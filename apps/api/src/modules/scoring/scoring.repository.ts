@@ -175,7 +175,7 @@ export class ScoringRepository {
 
   /**
    * Find the most recent preview for a (candidate, job) pair regardless of
-   * resume — used when the candidate just wants to see the latest preview
+   * resume - used when the candidate just wants to see the latest preview
    * they've computed for this job.
    */
   async findLatestMatchPreviewForJob(
@@ -208,7 +208,7 @@ export class ScoringRepository {
   }
 
   /**
-   * UPSERT — insert or replace a preview for the (candidate, job, resume)
+   * UPSERT - insert or replace a preview for the (candidate, job, resume)
    * tuple. Used when re-computing on demand for the same key.
    */
   async upsertMatchPreview(
@@ -247,7 +247,7 @@ export class ScoringRepository {
    * "Recommended for you" feed.
    *
    * LEFT JOIN applications on (candidate_id, job_id) and exclude rows where
-   * the candidate already applied — recommending a job they applied to is
+   * the candidate already applied - recommending a job they applied to is
    * wasted real estate. Withdrawn / rejected applications still suppress the
    * recommendation (re-applying after rejection is awkward UX).
    */
@@ -277,7 +277,7 @@ export class ScoringRepository {
   }
 
   /**
-   * Delete previews scored against a specific resume — fired when the
+   * Delete previews scored against a specific resume - fired when the
    * candidate replaces their default resume so stale previews don't show
    * in their "Recommended" feed.
    */

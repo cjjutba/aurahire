@@ -7,7 +7,7 @@
 
 This document is the engineering contract. Violating it makes the system harder to maintain, harder to defend, and harder to demo. Read it before writing code.
 
-> **Architecture context:** AuraHire is a Turborepo monorepo with split frontend (Next.js — `apps/web`) and backend (NestJS — `apps/api`). The frontend is a UI layer; the backend owns all business logic, DB, AI, queues, cron, secrets. Read `architecture.md` before applying patterns from this doc.
+> **Architecture context:** AuraHire is a Turborepo monorepo with split frontend (Next.js - `apps/web`) and backend (NestJS - `apps/api`). The frontend is a UI layer; the backend owns all business logic, DB, AI, queues, cron, secrets. Read `architecture.md` before applying patterns from this doc.
 
 ---
 
@@ -25,17 +25,17 @@ The flow is: **Zod schema (`packages/shared`) → NestJS DTO (via nestjs-zod) �
 
 **Frontend (`apps/web`):** Server Components by default. Add `"use client"` only when you need interactivity, browser APIs, or React hooks. If a page can render entirely on the server, it should. Server Components fetch data via the auto-generated API client; mutations use TanStack Query mutation hooks.
 
-**Backend (`apps/api`):** every feature is a NestJS Module — a folder containing `.module.ts`, `.controller.ts`, `.service.ts`, `.repository.ts`, `dto/`. Logic lives in services; controllers are thin (HTTP shape only); repositories own DB access via Drizzle.
+**Backend (`apps/api`):** every feature is a NestJS Module - a folder containing `.module.ts`, `.controller.ts`, `.service.ts`, `.repository.ts`, `dto/`. Logic lives in services; controllers are thin (HTTP shape only); repositories own DB access via Drizzle.
 
 ### 4. Defense in depth
 
 Five layers protect every authenticated request:
 
-- **Layer 1 — Frontend middleware:** redirect unauthenticated users at URL level (`apps/web/middleware.ts`).
-- **Layer 2 — Backend CORS + Helmet:** reject cross-origin or malformed requests.
-- **Layer 3 — `SupabaseAuthGuard`:** validates JWT at every protected controller.
-- **Layer 4 — `RolesGuard` + `OwnershipGuard`:** RBAC + per-resource ownership checks.
-- **Layer 5 — Postgres RLS:** database refuses unauthorized reads/writes even if 1–4 are bypassed.
+- **Layer 1 - Frontend middleware:** redirect unauthenticated users at URL level (`apps/web/middleware.ts`).
+- **Layer 2 - Backend CORS + Helmet:** reject cross-origin or malformed requests.
+- **Layer 3 - `SupabaseAuthGuard`:** validates JWT at every protected controller.
+- **Layer 4 - `RolesGuard` + `OwnershipGuard`:** RBAC + per-resource ownership checks.
+- **Layer 5 - Postgres RLS:** database refuses unauthorized reads/writes even if 1-4 are bypassed.
 
 Never rely on a single layer. Never disable RLS. Never trust the client.
 
@@ -50,7 +50,7 @@ Every AI call has a visible affordance: shimmer with caption, "AI Suggested" bad
 ### Configuration
 
 ```json
-// tsconfig.json — sprint-locked
+// tsconfig.json - sprint-locked
 {
   "compilerOptions": {
     "strict": true,
@@ -98,7 +98,7 @@ Mark a component `"use client"` if it:
 A Server Component can render a Client Component, but a Client Component can only render Server Components passed as `children` props. Use this:
 
 ```tsx
-// page.tsx — Server Component
+// page.tsx - Server Component
 export default async function Page() {
   const data = await getApplications();
   return (
@@ -205,7 +205,7 @@ export class ApplicationsService {
 
 ### Backend rules
 
-- **Controllers are thin.** Handle HTTP shape (decorators, DTOs, response types) — delegate logic to services.
+- **Controllers are thin.** Handle HTTP shape (decorators, DTOs, response types) - delegate logic to services.
 - **Services own logic.** Composable, testable, framework-aware (DI), do NOT touch HTTP request/response objects.
 - **Repositories own DB access.** Use Drizzle queries; return domain objects, not raw rows.
 - **DTOs validate via Zod (nestjs-zod).** Schema lives in `packages/shared/`.
@@ -251,10 +251,10 @@ export function ApplyButton({ jobId, resumeId }: Props) {
 
 ### Frontend rules
 
-- **No imports from `apps/api/`** — ever.
-- **No imports from `packages/db/`** — except types in rare cases (most types come through Zod).
+- **No imports from `apps/api/`** - ever.
+- **No imports from `packages/db/`** - except types in rare cases (most types come through Zod).
 - **No direct OpenAI / Supabase Storage / DB calls.** All data goes through backend REST.
-- **Form schemas come from `packages/shared/`** — never inline.
+- **Form schemas come from `packages/shared/`** - never inline.
 - **Forms use RHF + Zod resolver** with the shared schema.
 - **Every async operation has loading + error states.**
 
@@ -270,7 +270,7 @@ Every form has one Zod schema in `lib/validation/<feature>.ts`. The schema is im
 2. The Server Action (parse input)
 3. (Optionally) the Drizzle insert/select shape via `drizzle-zod`
 
-Don't define a TypeScript type for form data — `z.infer<typeof schema>` gives it to you.
+Don't define a TypeScript type for form data - `z.infer<typeof schema>` gives it to you.
 
 ### Schema discipline
 
@@ -398,15 +398,15 @@ export function RegisterCandidateForm() {
 ### Drizzle discipline
 
 - **All DB access via Drizzle, in backend repositories only.** No raw SQL strings except in audit log raw appends.
-- **Repositories live in `apps/api/src/modules/<feature>/<feature>.repository.ts`.** Don't query inline in services — extract to repository methods.
+- **Repositories live in `apps/api/src/modules/<feature>/<feature>.repository.ts`.** Don't query inline in services - extract to repository methods.
 - **Always include type-safe `where()` clauses.** Drizzle's `eq`, `and`, `or`, `inArray`.
-- **Indexes are not optional** — see `database-schema.md` for required indexes.
+- **Indexes are not optional** - see `database-schema.md` for required indexes.
 - **Use `returning()`** when you need the inserted/updated row back. Don't re-query.
-- **Schema lives in `packages/db/src/schema.ts`** — imported by `apps/api`; types may be imported by `apps/web` rarely.
+- **Schema lives in `packages/db/src/schema.ts`** - imported by `apps/api`; types may be imported by `apps/web` rarely.
 
 ### RLS is not optional
 
-Every table that contains user data has RLS enabled. Policies live in `packages/db/src/rls/*.sql` and are applied via Supabase SQL editor by the human. **Never disable RLS to "speed up debugging"** — fix the policy.
+Every table that contains user data has RLS enabled. Policies live in `packages/db/src/rls/*.sql` and are applied via Supabase SQL editor by the human. **Never disable RLS to "speed up debugging"** - fix the policy.
 
 ---
 
@@ -441,7 +441,7 @@ if (pathname.startsWith("/candidate") && session?.user.role !== "candidate") {
 
 Middleware redirects at the URL level. The backend's guards are the real authoritative check on every API call.
 
-Both layers required — middleware can be bypassed (via direct API hits to backend), guards cannot.
+Both layers required - middleware can be bypassed (via direct API hits to backend), guards cannot.
 
 ---
 
@@ -541,7 +541,7 @@ Only the **WHY**, never the WHAT. A comment is justified for:
 
 - **One concern per file.** Long files = split.
 - **Imports ordered:** external → `@/` → relative.
-- **No barrel `index.ts` re-exports** — direct imports keep tree-shaking honest.
+- **No barrel `index.ts` re-exports** - direct imports keep tree-shaking honest.
 - **Never commit `console.log` statements** in PR-ready code (sprint exception: `console.error` for unexpected errors is OK).
 
 ---
@@ -551,8 +551,8 @@ Only the **WHY**, never the WHAT. A comment is justified for:
 ### Secrets
 
 - All secrets in `.env.local` (gitignored)
-- Never read `process.env` in Client Components — only Server Components, Server Actions, Route Handlers, middleware
-- `NEXT_PUBLIC_*` env vars are baked into the client bundle — only put non-sensitive vars there (Supabase anon key OK; service role key NEVER)
+- Never read `process.env` in Client Components - only Server Components, Server Actions, Route Handlers, middleware
+- `NEXT_PUBLIC_*` env vars are baked into the client bundle - only put non-sensitive vars there (Supabase anon key OK; service role key NEVER)
 
 ### Inputs
 
@@ -626,14 +626,14 @@ Sprint approach:
 - **Default `force-dynamic`** on portal pages (real-time-ish data)
 - **`revalidatePath` after every write**
 - **Public marketing pages cached** (default in Next 16)
-- **No manual fetch caching strategies in sprint scope** — keep it simple
+- **No manual fetch caching strategies in sprint scope** - keep it simple
 
 ---
 
 ## Testing (Sprint Stance)
 
 - No unit tests written in sprint. Type checking + Zod runtime + manual QA cover most regressions.
-- **Manual QA test plan in `sprint-plan.md`** — specific paths to verify before sprint ends.
+- **Manual QA test plan in `sprint-plan.md`** - specific paths to verify before sprint ends.
 - Phase 2: Vitest for unit, Playwright for E2E.
 
 ---
@@ -672,11 +672,11 @@ Before considering a piece of code "done," answer yes to all:
 
 ### "I'll inline this Zod schema in the form"
 
-No — schemas live in `packages/shared/`. The same schema is consumed by the frontend form AND the backend DTO.
+No - schemas live in `packages/shared/`. The same schema is consumed by the frontend form AND the backend DTO.
 
 ### "I'll put this controller in the auth module since it touches users"
 
-No — features are modules. Auth handles login/register/session; user CRUD lives in the users module.
+No - features are modules. Auth handles login/register/session; user CRUD lives in the users module.
 
 ### "I'll add a feature flag for this"
 

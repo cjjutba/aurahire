@@ -1,8 +1,8 @@
-# Notifications System — Implementation Plan
+# Notifications System - Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a cross-portal notifications system with a sidebar bell badge (capped at `99+`), a dedicated `/[role]/notifications` page per role, and a per-event-type Instant/Digest/Off email mode preference UI — wired into the same service-layer call sites that already write `audit_logs`.
+**Goal:** Build a cross-portal notifications system with a sidebar bell badge (capped at `99+`), a dedicated `/[role]/notifications` page per role, and a per-event-type Instant/Digest/Off email mode preference UI - wired into the same service-layer call sites that already write `audit_logs`.
 
 **Architecture:**
 
@@ -27,7 +27,7 @@
 
 ## Spec Reference
 
-`docs/superpowers/specs/2026-05-07-notifications-system-design.md` — locked decisions (curated event taxonomy, polling delivery, per-event Instant/Digest/Off, 99+ badge cap, 90-day retention, admin scope merged, settings UI categories), full schema, full API surface, frontend layout, error-handling posture, testing strategy, migration plan.
+`docs/superpowers/specs/2026-05-07-notifications-system-design.md` - locked decisions (curated event taxonomy, polling delivery, per-event Instant/Digest/Off, 99+ badge cap, 90-day retention, admin scope merged, settings UI categories), full schema, full API surface, frontend layout, error-handling posture, testing strategy, migration plan.
 
 ---
 
@@ -76,7 +76,7 @@
 | `apps/api/src/modules/interviews/interviews.module.ts`                                                 | Import `NotificationsModule`                                                                                                                                                                                                                                                                 | Modify                               |
 | `apps/api/src/modules/offers/offers.service.ts`                                                        | Inject + emit on `create()`, `accept()`, `decline()`                                                                                                                                                                                                                                         | Modify                               |
 | `apps/api/src/modules/offers/offers.module.ts`                                                         | Import `NotificationsModule`                                                                                                                                                                                                                                                                 | Modify                               |
-| `apps/api/src/modules/bias/bias.service.ts` _(gated on module presence)_                               | Inject + emit on flag — both `bias_flag_raised` (recruiter) and `system_bias_flag_raised` (admin)                                                                                                                                                                                            | Modify (or wait)                     |
+| `apps/api/src/modules/bias/bias.service.ts` _(gated on module presence)_                               | Inject + emit on flag - both `bias_flag_raised` (recruiter) and `system_bias_flag_raised` (admin)                                                                                                                                                                                            | Modify (or wait)                     |
 | `apps/api/src/modules/auth/auth.service.ts`                                                            | Inject + emit on `resetPassword()`, `verifyEmail()`                                                                                                                                                                                                                                          | Modify                               |
 | `apps/api/src/modules/invitations/invitations.service.ts`                                              | Inject + emit on `accept()`, `decline()`                                                                                                                                                                                                                                                     | Modify                               |
 | The match-preview-precompute worker (`MatchPreviewQueueService`, exact path resolved during execution) | Catch-block emit `system_ai_scoring_failure` to all admins                                                                                                                                                                                                                                   | Modify                               |
@@ -94,7 +94,7 @@
 | `apps/web/app/(candidate)/candidate/notifications/page.tsx`                                            | Route shell                                                                                                                                                                                                                                                                                  | Create                               |
 | `apps/web/app/(recruiter)/recruiter/notifications/page.tsx`                                            | Route shell                                                                                                                                                                                                                                                                                  | Create                               |
 | `apps/web/app/(admin)/admin/notifications/page.tsx`                                                    | Route shell                                                                                                                                                                                                                                                                                  | Create                               |
-| `apps/web/components/settings/notifications-form.tsx`                                                  | Full rewrite — API-backed, grouped, 3-mode, security-locked, restore-defaults, localStorage migration                                                                                                                                                                                        | Modify                               |
+| `apps/web/components/settings/notifications-form.tsx`                                                  | Full rewrite - API-backed, grouped, 3-mode, security-locked, restore-defaults, localStorage migration                                                                                                                                                                                        | Modify                               |
 | `apps/web/components/notifications/__tests__/notifications-form.spec.tsx`                              | Vitest tests                                                                                                                                                                                                                                                                                 | Create                               |
 | `apps/web/tests/notifications.spec.ts`                                                                 | Playwright e2e (gated on `e2e` script existing)                                                                                                                                                                                                                                              | Create                               |
 
@@ -104,22 +104,22 @@
 
 | Phase                   | Tasks   | Outcome                                             |
 | ----------------------- | ------- | --------------------------------------------------- |
-| 1 — Schema              | T1–T5   | DB tables, enums, relations, RLS migration          |
-| 2 — Shared schemas      | T6      | Zod DTOs available to both apps                     |
-| 3 — Backend foundation  | T7–T11  | event-defaults, repository, services, modules wired |
-| 4 — Email + queue       | T12–T15 | Templates registry, base layout, digest, processor  |
-| 5 — HTTP controllers    | T16–T17 | Endpoints exposed, audited                          |
-| 6 — Crons               | T18–T22 | All 5 crons registered + deduplication-tested       |
-| 7 — Service hookups     | T23–T28 | Every event type's producer wired                   |
-| 8 — API client regen    | T29     | Frontend gets typed hooks                           |
-| 9 — Bell + nav          | T30–T31 | Badge polls, sidebar shows count                    |
-| 10 — Notifications page | T32–T36 | `/[role]/notifications` works end-to-end            |
-| 11 — Settings rewrite   | T37     | localStorage retired, API-backed prefs              |
-| 12 — Verification       | T38     | Manual smoke checklist + final build gate           |
+| 1 - Schema              | T1-T5   | DB tables, enums, relations, RLS migration          |
+| 2 - Shared schemas      | T6      | Zod DTOs available to both apps                     |
+| 3 - Backend foundation  | T7-T11  | event-defaults, repository, services, modules wired |
+| 4 - Email + queue       | T12-T15 | Templates registry, base layout, digest, processor  |
+| 5 - HTTP controllers    | T16-T17 | Endpoints exposed, audited                          |
+| 6 - Crons               | T18-T22 | All 5 crons registered + deduplication-tested       |
+| 7 - Service hookups     | T23-T28 | Every event type's producer wired                   |
+| 8 - API client regen    | T29     | Frontend gets typed hooks                           |
+| 9 - Bell + nav          | T30-T31 | Badge polls, sidebar shows count                    |
+| 10 - Notifications page | T32-T36 | `/[role]/notifications` works end-to-end            |
+| 11 - Settings rewrite   | T37     | localStorage retired, API-backed prefs              |
+| 12 - Verification       | T38     | Manual smoke checklist + final build gate           |
 
 ---
 
-## Phase 1 — Schema
+## Phase 1 - Schema
 
 ### Task 1: Add notification enums
 
@@ -130,7 +130,7 @@
 - [ ] **Step 1: Append the three new enums to the bottom of `packages/db/src/enums.ts`**
 
 ```ts
-// Notification system — used by `notificationsTable` and `notificationPreferencesTable`.
+// Notification system - used by `notificationsTable` and `notificationPreferencesTable`.
 export const NOTIFICATION_EVENT_TYPE = [
   // Candidate (personal scope)
   "application_status_changed",
@@ -366,8 +366,8 @@ git commit -m "feat(db): add cron deduplication flag columns to interviews and o
 
 **Files:**
 
-- Create (via drizzle-kit): `supabase/migrations/<timestamp>_notifications.sql` — the human runs `pnpm drizzle:generate` (or the project's equivalent script) to generate this; if generation is the human's responsibility, provide the SQL directly so the human can paste it into a hand-written migration file.
-- Create: `supabase/migrations/<timestamp>_notifications_rls.sql` — RLS policies.
+- Create (via drizzle-kit): `supabase/migrations/<timestamp>_notifications.sql` - the human runs `pnpm drizzle:generate` (or the project's equivalent script) to generate this; if generation is the human's responsibility, provide the SQL directly so the human can paste it into a hand-written migration file.
+- Create: `supabase/migrations/<timestamp>_notifications_rls.sql` - RLS policies.
 
 - [ ] **Step 1: Write the migration SQL by hand at `supabase/migrations/<timestamp>_notifications.sql`**
 
@@ -444,7 +444,7 @@ CREATE POLICY "notifications_delete_own"
   ON notifications FOR DELETE
   USING (auth.uid() = user_id);
 
--- Backend writes via service role, bypassing RLS — no INSERT policy needed for the user-facing flow.
+-- Backend writes via service role, bypassing RLS - no INSERT policy needed for the user-facing flow.
 
 -- Same shape for preferences.
 CREATE POLICY "notification_prefs_select_own"
@@ -482,7 +482,7 @@ Wait for confirmation before proceeding to Phase 2.
 
 ---
 
-## Phase 2 — Shared schemas
+## Phase 2 - Shared schemas
 
 ### Task 6: Add Zod schemas for notifications and preferences
 
@@ -638,7 +638,7 @@ git commit -m "feat(shared): add notification Zod schemas + types"
 
 ---
 
-## Phase 3 — Backend foundation
+## Phase 3 - Backend foundation
 
 ### Task 7: Create event-defaults registry
 
@@ -861,7 +861,7 @@ export const EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
   interview_cancelled: "A scheduled interview was cancelled.",
   offer_received: "A recruiter sent you a job offer.",
   offer_expiring_soon:
-    "An offer expires within 24 hours. Required for security — cannot be disabled.",
+    "An offer expires within 24 hours. Required for security - cannot be disabled.",
   new_application_received: "A candidate applied to a job you own.",
   candidate_withdrew:
     "A candidate withdrew their application from a job you own.",
@@ -878,11 +878,11 @@ export const EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
     "An AI scoring job failed and needs investigation.",
   system_moderation_queue_item: "A new item entered the moderation queue.",
   account_password_reset:
-    "Your password was changed. Required for security — cannot be disabled.",
+    "Your password was changed. Required for security - cannot be disabled.",
   account_email_verified:
-    "Your email address was verified. Required for security — cannot be disabled.",
+    "Your email address was verified. Required for security - cannot be disabled.",
   account_login_new_device:
-    "A login was detected from a device fingerprint we haven't seen. Required for security — cannot be disabled.",
+    "A login was detected from a device fingerprint we haven't seen. Required for security - cannot be disabled.",
 };
 ```
 
@@ -907,7 +907,7 @@ git commit -m "feat(api): add notification event-defaults registry (categories, 
 - Create: `apps/api/src/modules/notifications/notifications.repository.ts`
 - Create: `apps/api/src/modules/notifications/__tests__/notifications.repository.spec.ts`
 
-This task uses the project's existing test-DB fixture pattern. Inspect any existing `*.repository.spec.ts` (e.g., `applications.repository.spec.ts`) before writing tests to confirm: (a) the test-DB connection helper module path, (b) the seed-row helper pattern, (c) whether tests run against a real Postgres or a stub. Mirror that pattern verbatim — do not invent a new fixture.
+This task uses the project's existing test-DB fixture pattern. Inspect any existing `*.repository.spec.ts` (e.g., `applications.repository.spec.ts`) before writing tests to confirm: (a) the test-DB connection helper module path, (b) the seed-row helper pattern, (c) whether tests run against a real Postgres or a stub. Mirror that pattern verbatim - do not invent a new fixture.
 
 - [ ] **Step 1: Read an existing repository spec to confirm the test-DB helper**
 
@@ -1517,7 +1517,7 @@ export class NotificationsService {
 }
 ```
 
-> **Path note:** The actual `ProfilesRepository` path may differ — confirm by running `find apps/api/src -name "profiles.repository.ts"` during execution and use the canonical import path. Same for the DB injection token used by `NotificationsRepository`.
+> **Path note:** The actual `ProfilesRepository` path may differ - confirm by running `find apps/api/src -name "profiles.repository.ts"` during execution and use the canonical import path. Same for the DB injection token used by `NotificationsRepository`.
 
 - [ ] **Step 4: Stub `templates/index.ts` so the service compiles**
 
@@ -1549,7 +1549,7 @@ export function buildLink(
 }
 ```
 
-This stub will be replaced in Task 12 with the full registry. The stub is intentional — it lets the service tests pass before templates are written.
+This stub will be replaced in Task 12 with the full registry. The stub is intentional - it lets the service tests pass before templates are written.
 
 - [ ] **Step 5: Run the test, expect pass**
 
@@ -2017,7 +2017,7 @@ export class NotificationEmailProcessor extends WorkerHost {
 }
 ```
 
-These are placeholders intentionally — Tasks 15 and 16 replace them with the real implementations.
+These are placeholders intentionally - Tasks 15 and 16 replace them with the real implementations.
 
 - [ ] **Step 4: Create `apps/api/src/modules/notification-preferences/notification-preferences.module.ts`**
 
@@ -2077,7 +2077,7 @@ git commit -m "feat(api): wire notifications and notification-preferences module
 
 ---
 
-## Phase 4 — Email templates and queue processor
+## Phase 4 - Email templates and queue processor
 
 ### Task 12: Create the templates registry and base layout
 
@@ -2278,7 +2278,7 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   application_status_changed: {
     buildTitle: (md) => `Application moved to ${m(md, "newStatus", "next stage")}`,
     buildBody: (md) =>
-      `${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")} — your application is now in ${m(md, "newStatus", "the next stage")}.`,
+      `${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")} - your application is now in ${m(md, "newStatus", "the next stage")}.`,
     buildLink: (_role, md) => `/candidate/applications/${m(md, "applicationId", "")}`,
     emailSubject: (md) => `Application update: ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
@@ -2290,7 +2290,7 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
     iconName: "Briefcase",
   },
   interview_scheduled: {
-    buildTitle: (md) => `Interview scheduled — ${m(md, "jobTitle", "your role")}`,
+    buildTitle: (md) => `Interview scheduled - ${m(md, "jobTitle", "your role")}`,
     buildBody: (md) => `Scheduled for ${m(md, "startTime", "TBD")} (${m(md, "format", "video")}).`,
     buildLink: (role, md) =>
       role === "recruiter"
@@ -2337,7 +2337,7 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   offer_received: {
     buildTitle: () => `Offer received`,
     buildBody: (md) =>
-      `${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")} — review and respond by ${m(md, "expiresAt", "the deadline")}.`,
+      `${m(md, "jobTitle", "your role")} at ${m(md, "companyName", "the company")} - review and respond by ${m(md, "expiresAt", "the deadline")}.`,
     buildLink: (_role, md) => `/candidate/applications/${m(md, "applicationId", "")}`,
     emailSubject: () => `You received an offer`,
     EmailComponent: buildPersonalEmail(
@@ -2366,13 +2366,13 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   new_application_received: {
     buildTitle: (md) => `New application: ${m(md, "candidateName", "a candidate")}`,
     buildBody: (md) =>
-      `Applied to ${m(md, "jobTitle", "your role")} — match score ${m(md, "scoreValue", "—")} (${m(md, "matchBand", "—")}).`,
+      `Applied to ${m(md, "jobTitle", "your role")} - match score ${m(md, "scoreValue", "-")} (${m(md, "matchBand", "-")}).`,
     buildLink: (_role, md) =>
       `/recruiter/jobs/${m(md, "jobId", "")}/applications/${m(md, "applicationId", "")}`,
-    emailSubject: (md) => `New application — ${m(md, "jobTitle", "your role")}`,
+    emailSubject: (md) => `New application - ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
       (md) => `New application from ${m(md, "candidateName", "a candidate")}`,
-      (md) => `Applied to ${m(md, "jobTitle", "your role")}. Match score ${m(md, "scoreValue", "—")}.`,
+      (md) => `Applied to ${m(md, "jobTitle", "your role")}. Match score ${m(md, "scoreValue", "-")}.`,
       () => "Review application",
       (_role, md) =>
         `/recruiter/jobs/${m(md, "jobId", "")}/applications/${m(md, "applicationId", "")}`,
@@ -2384,7 +2384,7 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
     buildBody: (md) => `Withdrew from ${m(md, "jobTitle", "your role")}.`,
     buildLink: (_role, md) =>
       `/recruiter/jobs/${m(md, "jobId", "")}/applications/${m(md, "applicationId", "")}`,
-    emailSubject: (md) => `Candidate withdrew — ${m(md, "jobTitle", "your role")}`,
+    emailSubject: (md) => `Candidate withdrew - ${m(md, "jobTitle", "your role")}`,
     EmailComponent: buildPersonalEmail(
       (md) => `${m(md, "candidateName", "A candidate")} withdrew`,
       (md) => `Withdrew their application for ${m(md, "jobTitle", "your role")}.`,
@@ -2435,9 +2435,9 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   },
   bias_flag_raised: {
     buildTitle: () => `Bias flag on your job description`,
-    buildBody: (md) => `${m(md, "jobTitle", "your JD")} — ${m(md, "flagSummary", "review flagged language")}.`,
+    buildBody: (md) => `${m(md, "jobTitle", "your JD")} - ${m(md, "flagSummary", "review flagged language")}.`,
     buildLink: (_role, md) => `/recruiter/jobs/${m(md, "jobId", "")}/bias`,
-    emailSubject: (md) => `Bias flag — ${m(md, "jobTitle", "your JD")}`,
+    emailSubject: (md) => `Bias flag - ${m(md, "jobTitle", "your JD")}`,
     EmailComponent: buildPersonalEmail(
       () => `Bias flag on your job description`,
       (md) => `${m(md, "jobTitle", "your JD")}: ${m(md, "flagSummary", "review flagged language")}.`,
@@ -2475,13 +2475,13 @@ export const TEMPLATES: Record<NotificationEventType, TemplateDefinition> = {
   system_bias_flag_raised: {
     buildTitle: () => `Bias flag system-wide`,
     buildBody: (md) =>
-      `${m(md, "companyName", "A company")} — ${m(md, "jobTitle", "JD")} — ${m(md, "flagSummary", "language review")}.`,
+      `${m(md, "companyName", "A company")} - ${m(md, "jobTitle", "JD")} - ${m(md, "flagSummary", "language review")}.`,
     buildLink: (_role, md) => `/admin/bias-flags/${m(md, "flagId", "")}`,
     emailSubject: () => `System bias flag`,
     EmailComponent: buildPersonalEmail(
       () => `System bias flag`,
       (md) =>
-        `${m(md, "companyName", "A company")} — ${m(md, "jobTitle", "JD")}: ${m(md, "flagSummary", "language review")}.`,
+        `${m(md, "companyName", "A company")} - ${m(md, "jobTitle", "JD")}: ${m(md, "flagSummary", "language review")}.`,
       () => "Review",
       (_role, md) => `/admin/bias-flags/${m(md, "flagId", "")}`,
     ),
@@ -2651,7 +2651,7 @@ Expected: PASS.
 - [ ] **Step 5: Type-check and lint**
 
 Run: `pnpm --filter api type-check && pnpm --filter api lint`
-Expected: No errors. JSX in `.tsx` files in the api may need a `tsconfig` adjustment — verify by checking if existing email templates compile (look for `apps/api/src/email/templates/` if any). If existing templates use a specific `tsconfig` setup, mirror it.
+Expected: No errors. JSX in `.tsx` files in the api may need a `tsconfig` adjustment - verify by checking if existing email templates compile (look for `apps/api/src/email/templates/` if any). If existing templates use a specific `tsconfig` setup, mirror it.
 
 - [ ] **Step 6: Commit**
 
@@ -2912,7 +2912,7 @@ export class NotificationEmailProcessor extends WorkerHost {
 
     await this.email.send({
       to: profile.email,
-      subject: `Your AuraHire daily summary — ${validRows.length} update${
+      subject: `Your AuraHire daily summary - ${validRows.length} update${
         validRows.length === 1 ? "" : "s"
       }`,
       template: html,
@@ -3046,7 +3046,7 @@ git commit -m "feat(api): notification-email processor (instant + digest paths w
 
 ---
 
-## Phase 5 — HTTP controllers
+## Phase 5 - HTTP controllers
 
 ### Task 15: Notifications controller
 
@@ -3074,7 +3074,7 @@ INTERVIEW_FEEDBACK_DUE_RUN: "cron.interview_feedback_due_run",
 SYSTEM_AI_SCORING_FAILURE_NOTIFIED: "system.ai_scoring_failure_notified",
 ```
 
-Match the existing key/value style — if the file uses a TypeScript `as const` object, add them inside; if it's a string-enum, add them as enum members.
+Match the existing key/value style - if the file uses a TypeScript `as const` object, add them inside; if it's a string-enum, add them as enum members.
 
 - [ ] **Step 2: Create the list DTO**
 
@@ -3516,7 +3516,7 @@ git commit -m "feat(api): notification-preferences HTTP endpoints (list, upsert,
 
 ---
 
-## Phase 6 — Crons
+## Phase 6 - Crons
 
 > All crons live under `apps/api/src/cron/`. Each follows the existing pattern in the project (e.g., `archive-past-deadline-jobs.cron.ts`): `@Injectable()`, a `@Cron(...)` decorated method, audit-log on completion. Confirm the existing pattern by reading one existing cron before starting.
 
@@ -3679,7 +3679,7 @@ Run: `pnpm --filter api test -- digest-email.cron && pnpm --filter api type-chec
 
 ```bash
 git add apps/api/src/cron/digest-email.cron.ts apps/api/src/cron/__tests__/digest-email.cron.spec.ts apps/api/src/cron/cron.module.ts
-git commit -m "feat(api): DigestEmailCron — daily 08:00 Asia/Manila batch"
+git commit -m "feat(api): DigestEmailCron - daily 08:00 Asia/Manila batch"
 ```
 
 ---
@@ -3787,7 +3787,7 @@ Run: `pnpm --filter api test -- notifications-retention && pnpm --filter api typ
 
 ```bash
 git add apps/api/src/cron/notifications-retention.cron.ts apps/api/src/cron/__tests__/notifications-retention.cron.spec.ts apps/api/src/cron/cron.module.ts
-git commit -m "feat(api): NotificationsRetentionCron — daily 03:00 90-day delete"
+git commit -m "feat(api): NotificationsRetentionCron - daily 03:00 90-day delete"
 ```
 
 ---
@@ -3983,7 +3983,7 @@ pnpm --filter api test -- interview-reminder
 pnpm --filter api type-check
 pnpm --filter api lint
 git add apps/api/src/cron/interview-reminder.cron.ts apps/api/src/cron/__tests__/interview-reminder.cron.spec.ts apps/api/src/modules/interviews/interviews.repository.ts apps/api/src/cron/cron.module.ts
-git commit -m "feat(api): InterviewReminderCron — hourly 24h reminder with dedup flag"
+git commit -m "feat(api): InterviewReminderCron - hourly 24h reminder with dedup flag"
 ```
 
 ---
@@ -4185,7 +4185,7 @@ pnpm --filter api test -- offer-expiry-reminder
 pnpm --filter api type-check
 pnpm --filter api lint
 git add apps/api/src/cron/offer-expiry-reminder.cron.ts apps/api/src/cron/__tests__/offer-expiry-reminder.cron.spec.ts apps/api/src/modules/offers/offers.repository.ts apps/api/src/cron/cron.module.ts
-git commit -m "feat(api): OfferExpiryReminderCron — hourly 24h reminder with dedup flag"
+git commit -m "feat(api): OfferExpiryReminderCron - hourly 24h reminder with dedup flag"
 ```
 
 ---
@@ -4383,19 +4383,19 @@ describe("InterviewFeedbackDueCron", () => {
 pnpm --filter api test -- interview-feedback-due
 pnpm --filter api type-check && pnpm --filter api lint
 git add apps/api/src/cron/interview-feedback-due.cron.ts apps/api/src/cron/__tests__/interview-feedback-due.cron.spec.ts apps/api/src/modules/interviews/interviews.repository.ts apps/api/src/cron/cron.module.ts
-git commit -m "feat(api): InterviewFeedbackDueCron — hourly 24h-after-interview prompt"
+git commit -m "feat(api): InterviewFeedbackDueCron - hourly 24h-after-interview prompt"
 ```
 
 ---
 
-## Phase 7 — Service-layer hookups
+## Phase 7 - Service-layer hookups
 
 > **Pattern for every task in this phase:**
 >
 > 1. Import `NotificationsModule` into the affected feature module.
 > 2. Inject `NotificationsService` into the service.
 > 3. After the existing successful DB write (and after the existing `auditService.log()` if any), call `notifications.emit({ ... })` with the matching event type and metadata.
-> 4. The `emit()` call is non-blocking and never throws — it does NOT need to be inside the existing try/catch, but it must be inside the function so a normal control-flow path executes it.
+> 4. The `emit()` call is non-blocking and never throws - it does NOT need to be inside the existing try/catch, but it must be inside the function so a normal control-flow path executes it.
 > 5. Add a unit test asserting the emit call happens with the expected eventType and metadata. Mock `NotificationsService` for the test.
 
 ### Task 22: Wire applications.service
@@ -4653,7 +4653,7 @@ git commit -m "feat(api): emit notifications on offer create/accept/decline"
 
 Run: `ls apps/api/src/modules/bias/ 2>/dev/null && echo present || echo missing`
 
-If the directory is missing, this task is **skipped** — documented in the spec as a phase-2 hookup. Move directly to Task 26 and add a TODO at the bottom of `bias_flag_raised`'s eventually-named producer (note in the commit message that the wiring is deferred).
+If the directory is missing, this task is **skipped** - documented in the spec as a phase-2 hookup. Move directly to Task 26 and add a TODO at the bottom of `bias_flag_raised`'s eventually-named producer (note in the commit message that the wiring is deferred).
 
 - [ ] **Step 2: If present, find the method that records a bias flag**
 
@@ -4812,7 +4812,7 @@ await this.audit.log({
 });
 ```
 
-> Skip the moderation event hookup — `system_moderation_queue_item` waits for the moderation module to ship.
+> Skip the moderation event hookup - `system_moderation_queue_item` waits for the moderation module to ship.
 
 - [ ] **Step 3: Tests + verify + commit**
 
@@ -4825,13 +4825,13 @@ git commit -m "feat(api): emit notifications on invite accept/decline + AI scori
 
 ---
 
-## Phase 8 — API client regeneration
+## Phase 8 - API client regeneration
 
 ### Task 28: Regenerate openapi.json + Orval client
 
 **Files:**
 
-- Regenerate: `apps/api/openapi.json` (or `packages/shared/openapi.json` — check which the project uses)
+- Regenerate: `apps/api/openapi.json` (or `packages/shared/openapi.json` - check which the project uses)
 - Regenerate: `packages/shared/src/api-client/generated.ts`
 
 - [ ] **Step 1: Verify the OpenAPI spec generation script**
@@ -4858,7 +4858,7 @@ Expected: `packages/shared/src/api-client/generated.ts` regenerated with new hoo
 
 Run: `grep -n "useGetNotifications\\|useGetNotificationPreferences\\|usePostNotificationsReadAll\\|usePutNotificationPreferences\\|usePostNotificationPreferencesRestoreDefaults" packages/shared/src/api-client/generated.ts | head -20`
 
-Expected: at least the listed hook names present (exact spelling may vary by Orval naming convention — note the actual names for use in frontend tasks).
+Expected: at least the listed hook names present (exact spelling may vary by Orval naming convention - note the actual names for use in frontend tasks).
 
 - [ ] **Step 6: Type-check the shared package**
 
@@ -4874,7 +4874,7 @@ git commit -m "chore: regenerate openapi.json + Orval client for notifications e
 
 ---
 
-## Phase 9 — Frontend bell + nav
+## Phase 9 - Frontend bell + nav
 
 ### Task 29: Create the nav-item-badge component
 
@@ -4988,7 +4988,7 @@ git commit -m "feat(web): NavItemBadge polling unread notification count (99+ ca
 
 - [ ] **Step 1: Read the current sidebar to confirm the `NavItem` shape**
 
-Open `apps/web/components/layout/portal-sidebar.tsx`. Locate the `NAV_SECTIONS: Record<UserRole, NavSection[]>` definition. Note the `NavItem` interface — it should have at minimum `{ href, label, icon, matchPrefix? }`.
+Open `apps/web/components/layout/portal-sidebar.tsx`. Locate the `NAV_SECTIONS: Record<UserRole, NavSection[]>` definition. Note the `NavItem` interface - it should have at minimum `{ href, label, icon, matchPrefix? }`.
 
 - [ ] **Step 2: Extend the `NavItem` type to support an optional badge slot**
 
@@ -5000,7 +5000,7 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   matchPrefix?: string;
-  badge?: React.FC; // NEW — optional badge component rendered after label
+  badge?: React.FC; // NEW - optional badge component rendered after label
 }
 ```
 
@@ -5050,7 +5050,7 @@ git commit -m "feat(web): add Notifications nav entry with badge to all three ro
 
 ---
 
-## Phase 10 — Notifications page
+## Phase 10 - Notifications page
 
 ### Task 31: Notification icon map
 
@@ -5477,7 +5477,7 @@ export function NotificationsList({ tab }: NotificationsListProps) {
 }
 ```
 
-> **Confirm:** the actual exported function for `getGetNotifications`. Orval may export under different names — `grep -n "getNotifications\\|GetNotifications" packages/shared/src/api-client/generated.ts` to find the right one.
+> **Confirm:** the actual exported function for `getGetNotifications`. Orval may export under different names - `grep -n "getNotifications\\|GetNotifications" packages/shared/src/api-client/generated.ts` to find the right one.
 
 - [ ] **Step 2: Type-check + commit**
 
@@ -5708,7 +5708,7 @@ git commit -m "feat(web): /[role]/notifications route files for all three portal
 
 ---
 
-## Phase 11 — Settings rewrite
+## Phase 11 - Settings rewrite
 
 ### Task 37: Rewrite notifications-form.tsx
 
@@ -6048,7 +6048,7 @@ git commit -m "feat(web): rewrite notifications-form with API backing + 3-mode p
 
 ---
 
-## Phase 12 — Verification
+## Phase 12 - Verification
 
 ### Task 38: Final build + manual smoke checklist
 
@@ -6108,21 +6108,21 @@ Ask the human to:
 
 1. Start the dev stack: `pnpm dev` (and ensure Docker containers for Mailpit + Redis are running).
 2. **As candidate (Christian's account or a seeded candidate):**
-   - Visit `/candidate/notifications` — empty state shows.
+   - Visit `/candidate/notifications` - empty state shows.
    - Apply to a job (any).
-   - As recruiter, change the application status — within 30s the candidate's bell should show `1`, and the page lists "Application moved to ...".
-   - Click the row — navigates to the application detail; bell drops to `0`.
-   - Open Mailpit at `http://localhost:8025` — verify a "Application update" email arrived.
+   - As recruiter, change the application status - within 30s the candidate's bell should show `1`, and the page lists "Application moved to ...".
+   - Click the row - navigates to the application detail; bell drops to `0`.
+   - Open Mailpit at `http://localhost:8025` - verify a "Application update" email arrived.
 3. **As recruiter:**
-   - Visit `/recruiter/settings/notifications` — preferences load from API (no banner about localStorage).
-   - Toggle `new_application_received` to **Off** — apply as another candidate; no row appears in recruiter notifications.
-   - Toggle it to **Digest** — apply again; row appears in-app immediately, no email immediately.
-   - Manually invoke `DigestEmailCron.handleDigestRun()` (or wait for 08:00) — Mailpit shows one digest email containing the row.
-   - Toggle `account_password_reset` — UI prevents the toggle (security-locked).
-   - Click "Restore defaults" under Applications — preference rows for that category are deleted, defaults reapply.
+   - Visit `/recruiter/settings/notifications` - preferences load from API (no banner about localStorage).
+   - Toggle `new_application_received` to **Off** - apply as another candidate; no row appears in recruiter notifications.
+   - Toggle it to **Digest** - apply again; row appears in-app immediately, no email immediately.
+   - Manually invoke `DigestEmailCron.handleDigestRun()` (or wait for 08:00) - Mailpit shows one digest email containing the row.
+   - Toggle `account_password_reset` - UI prevents the toggle (security-locked).
+   - Click "Restore defaults" under Applications - preference rows for that category are deleted, defaults reapply.
 4. **As admin:**
-   - Visit `/admin/notifications` — System tab present.
-   - Cause an AI scoring failure (or simulate by manually pushing a failing job to `match-preview-precompute`) — admin sees `system_ai_scoring_failure` in System tab.
+   - Visit `/admin/notifications` - System tab present.
+   - Cause an AI scoring failure (or simulate by manually pushing a failing job to `match-preview-precompute`) - admin sees `system_ai_scoring_failure` in System tab.
 
 Once all 4 sections are confirmed by the human, the implementation is complete.
 

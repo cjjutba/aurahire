@@ -1,9 +1,9 @@
-# AuraHire — Caddy reverse proxy
+# AuraHire - Caddy reverse proxy
 #
 # NOTE (2026-05-20): aurahire-prod was destroyed and aurahire now co-tenants
 # on the shared iams-backend droplet at 167.71.217.44. The IAMS stack owns
 # ports 80/443 via iams-nginx, so this Caddyfile is no longer active in
-# production — see deploy/nginx.aurahire.conf for the live config (an extra
+# production - see deploy/nginx.aurahire.conf for the live config (an extra
 # server block appended to /opt/iams/deploy/nginx.vps.conf on the droplet).
 #
 # This file is kept as the canonical reference for a future dedicated-droplet
@@ -11,7 +11,7 @@
 #
 # Caddy auto-issues a Let's Encrypt cert for the sslip.io hostname on first
 # request, then renews automatically. Port 80 must be reachable from the public
-# internet (UFW already allows 80/443 — see provision.sh).
+# internet (UFW already allows 80/443 - see provision.sh).
 #
 # Install path on droplet:  /etc/caddy/Caddyfile
 # Validate config:          sudo caddy validate --config /etc/caddy/Caddyfile
@@ -21,7 +21,7 @@
 167-71-217-44.sslip.io {
     encode gzip zstd
 
-    # WebSocket path — long-lived connections, keep-alive heartbeats handled
+    # WebSocket path - long-lived connections, keep-alive heartbeats handled
     # by Socket.io (pingInterval 25s default). Disable read_timeout so an idle
     # WS isn't severed at the proxy layer; the upstream is in charge of the
     # connection lifecycle.

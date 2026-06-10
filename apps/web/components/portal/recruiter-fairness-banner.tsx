@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 interface RecruiterFairnessBannerProps {
   /**
-   * Optional override — pass the same string everywhere to keep tests
+   * Optional override - pass the same string everywhere to keep tests
    * stable across renders.
    */
   className?: string;

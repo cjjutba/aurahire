@@ -17,7 +17,7 @@ import { CacheService, TTL_SECONDS, sha256OfStable } from "../cache";
 
 /**
  * The four match-score components the platform contracts to display.
- * The prompt asks for all four, the schema enums all four names — but
+ * The prompt asks for all four, the schema enums all four names - but
  * `components` is `z.array(...)` with no length floor, so the AI is
  * occasionally returning fewer than four (production: ~80% of recent
  * rows had only `skills`). This list drives the defensive backfill in
@@ -130,7 +130,7 @@ export class ScoreMatchService {
     // Apply the 4-component contract guarantee OUTSIDE the cache
     // boundary. Stale cache entries written before this fix (and any
     // future cached results that happen to be incomplete) all flow
-    // through the same backfill — the cache stores the raw AI output,
+    // through the same backfill - the cache stores the raw AI output,
     // the service contract guarantees the four canonical components in
     // canonical order.
     return {
@@ -145,7 +145,7 @@ export class ScoreMatchService {
  * Defensive backfill: the prompt asks for all four components, but the
  * schema permits a shorter array, so the AI occasionally returns only a
  * subset (production sample showed ~80% rows with only `skills`).
- * Recruiters and candidates then see a broken breakdown — only one bar
+ * Recruiters and candidates then see a broken breakdown - only one bar
  * out of four.
  *
  * This helper guarantees the returned `MatchScore` has exactly the four
@@ -153,10 +153,10 @@ export class ScoreMatchService {
  * the AI response is inserted with:
  *
  *   - score: 0 (the candidate genuinely got 0 from this dimension
- *     because the AI didn't extract a signal — better than fabricating)
+ *     because the AI didn't extract a signal - better than fabricating)
  *   - max / weight: pulled from the active scoring config so the UI
  *     bars are sized correctly
- *   - explanation: one calm sentence acknowledging the unknown — does
+ *   - explanation: one calm sentence acknowledging the unknown - does
  *     not accuse the candidate of failing the dimension
  *   - evidence: one neutral 0-point row that surfaces the same
  *     explanation as an inline citation, so the EvidenceCallout still
@@ -168,7 +168,7 @@ export class ScoreMatchService {
  *
  * Does NOT touch `overall_score`. The strict-sum reconciliation
  * downstream of this call recomputes from contribution_points, so a
- * zeroed component contributes 0 — keeping the headline arithmetic
+ * zeroed component contributes 0 - keeping the headline arithmetic
  * coherent.
  */
 function ensureAllComponents(
@@ -189,7 +189,7 @@ function ensureAllComponents(
   }
 
   logger.warn(
-    `[${reqId}] AI omitted ${missing.length} component(s) from match score: ${missing.join(", ")} — backfilling with zero placeholders`,
+    `[${reqId}] AI omitted ${missing.length} component(s) from match score: ${missing.join(", ")} - backfilling with zero placeholders`,
   );
 
   const padded = REQUIRED_COMPONENT_NAMES.map<MatchComponent>((n) => {
@@ -202,7 +202,7 @@ function ensureAllComponents(
       max,
       weight: max,
       explanation:
-        "Could not be evaluated from the candidate's resume content — the AI did not extract a signal for this component on this run.",
+        "Could not be evaluated from the candidate's resume content - the AI did not extract a signal for this component on this run.",
       evidence: [
         {
           excerpt:

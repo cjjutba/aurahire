@@ -38,7 +38,7 @@ export class AdminCompanyRowDto {
   @ApiProperty() memberCount!: number;
   @ApiProperty() jobCount!: number;
   /**
-   * Suspension flag — currently always 'active'. Schema migration to add
+   * Suspension flag - currently always 'active'. Schema migration to add
    * a `suspended_at` column is deferred to a follow-up; the suspend/restore
    * endpoints are not yet wired and the UI shows the action as a stub.
    */

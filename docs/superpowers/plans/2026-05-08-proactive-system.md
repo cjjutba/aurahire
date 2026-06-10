@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make AuraHire proactive end-to-end — Profile Score auto-computes at the end of onboarding, match scores compute on-view, every lifecycle event fires a notification with realtime delivery, and every portal sidebar gains a Vercel-style bottom rail with profile dropdown + notifications popover.
+**Goal:** Make AuraHire proactive end-to-end - Profile Score auto-computes at the end of onboarding, match scores compute on-view, every lifecycle event fires a notification with realtime delivery, and every portal sidebar gains a Vercel-style bottom rail with profile dropdown + notifications popover.
 
 **Architecture:** One pattern repeated across every change: _event → handler → realtime emit + DB persistence + UI subscriber_. Backend uses NestJS + BullMQ + `@nestjs/schedule`. Realtime uses the existing Socket.IO `EventsService` with the existing `Rooms.user(id)` helper. Frontend uses Next.js 16 App Router, TanStack Query, Radix UI Popover, and a new `useUserNotifications()` hook for realtime subscription.
 
@@ -16,70 +16,70 @@
 
 This plan creates and modifies the following files. Each file has one clear responsibility.
 
-### Backend (`apps/api/`) — created
+### Backend (`apps/api/`) - created
 
-- `src/modules/scoring/handlers/profile-score-recompute.handler.ts` — handles candidate.profile_changed / preferences_changed events; marks stale and enqueues recompute.
-- `src/modules/scoring/processors/profile-score-recompute.processor.ts` — BullMQ processor that runs the actual recompute.
-- `src/modules/notifications/notifications.scheduler.ts` — `@Cron` decorated module hosting all five new crons.
-- `src/modules/notifications/dto/archive-notification.dto.ts` — DTO for the archive-all endpoint (empty body).
-- `src/modules/scoring/dto/match-preview-rate-limit.exception.ts` — custom exception mapping to `429 DAILY_AI_LIMIT`.
+- `src/modules/scoring/handlers/profile-score-recompute.handler.ts` - handles candidate.profile_changed / preferences_changed events; marks stale and enqueues recompute.
+- `src/modules/scoring/processors/profile-score-recompute.processor.ts` - BullMQ processor that runs the actual recompute.
+- `src/modules/notifications/notifications.scheduler.ts` - `@Cron` decorated module hosting all five new crons.
+- `src/modules/notifications/dto/archive-notification.dto.ts` - DTO for the archive-all endpoint (empty body).
+- `src/modules/scoring/dto/match-preview-rate-limit.exception.ts` - custom exception mapping to `429 DAILY_AI_LIMIT`.
 
-### Backend — modified
+### Backend - modified
 
-- `src/modules/candidate-profiles/candidate-profiles.service.ts` — extend `completeOnboarding`, `updatePersonal`, `updatePreferences` to mark stale + enqueue recompute. Server-side guard `enqueueProfileScoreIfMissing`.
-- `src/modules/candidate-profiles/candidate-profiles.controller.ts` — change `complete-onboarding` response to include the score.
-- `src/modules/scoring/scoring.service.ts` — add `computeMatchPreviewOnView`, redis rate limit check, emit realtime events on writes.
-- `src/modules/scoring/scoring.controller.ts` — delegate `POST /scoring/match-preview/:jobId` to `computeMatchPreviewOnView`.
-- `src/modules/applications/applications.service.ts` — add `notifications.emit()` calls on create + every status transition.
-- `src/modules/offers/offers.service.ts` — add emit calls on accept + decline + (cron-driven) expiration.
-- `src/modules/interviews/interviews.service.ts` — plumb email sends for reschedule + share-feedback.
-- `src/modules/resumes/resumes.service.ts` — auto-promote on default delete; 409 on last-resume.
-- `src/modules/notifications/notifications.service.ts` — add `archive`, `archiveAll` methods; emit realtime on every mutation.
-- `src/modules/notifications/notifications.controller.ts` — add archive + archive-all endpoints.
-- `src/modules/notifications/notifications.repository.ts` — add archive methods.
-- `src/realtime/events.service.ts` — add `emitMatchPreviewCreated`, `emitProfileScoreUpdated`, `emitNotificationCreated`, `emitNotificationRead`, `emitNotificationArchived`, `emitNotificationArchiveAll`.
-- `apps/api/scripts/seed-db.ts` — no change required, but verify after migration.
+- `src/modules/candidate-profiles/candidate-profiles.service.ts` - extend `completeOnboarding`, `updatePersonal`, `updatePreferences` to mark stale + enqueue recompute. Server-side guard `enqueueProfileScoreIfMissing`.
+- `src/modules/candidate-profiles/candidate-profiles.controller.ts` - change `complete-onboarding` response to include the score.
+- `src/modules/scoring/scoring.service.ts` - add `computeMatchPreviewOnView`, redis rate limit check, emit realtime events on writes.
+- `src/modules/scoring/scoring.controller.ts` - delegate `POST /scoring/match-preview/:jobId` to `computeMatchPreviewOnView`.
+- `src/modules/applications/applications.service.ts` - add `notifications.emit()` calls on create + every status transition.
+- `src/modules/offers/offers.service.ts` - add emit calls on accept + decline + (cron-driven) expiration.
+- `src/modules/interviews/interviews.service.ts` - plumb email sends for reschedule + share-feedback.
+- `src/modules/resumes/resumes.service.ts` - auto-promote on default delete; 409 on last-resume.
+- `src/modules/notifications/notifications.service.ts` - add `archive`, `archiveAll` methods; emit realtime on every mutation.
+- `src/modules/notifications/notifications.controller.ts` - add archive + archive-all endpoints.
+- `src/modules/notifications/notifications.repository.ts` - add archive methods.
+- `src/realtime/events.service.ts` - add `emitMatchPreviewCreated`, `emitProfileScoreUpdated`, `emitNotificationCreated`, `emitNotificationRead`, `emitNotificationArchived`, `emitNotificationArchiveAll`.
+- `apps/api/scripts/seed-db.ts` - no change required, but verify after migration.
 
-### Database (`packages/db/`) — modified
+### Database (`packages/db/`) - modified
 
-- `schema/scoring.ts` — add `stale_at` to `profile_scores`, extend match_preview_source enum.
-- `schema/notifications.ts` — add `archived_at` if not present.
-- `schema/interviews.ts` — add `feedback_reminder_sent_at`.
-- `schema/jobs.ts` — add `archived_reason`.
+- `schema/scoring.ts` - add `stale_at` to `profile_scores`, extend match_preview_source enum.
+- `schema/notifications.ts` - add `archived_at` if not present.
+- `schema/interviews.ts` - add `feedback_reminder_sent_at`.
+- `schema/jobs.ts` - add `archived_reason`.
 - One new migration SQL file (Drizzle will generate).
 
-### Shared (`packages/shared/`) — modified
+### Shared (`packages/shared/`) - modified
 
-- `src/realtime/events.ts` — add new realtime event names + payloads.
-- `src/realtime/index.ts` — re-export.
-- `src/schemas/scoring.ts` (or equivalent) — Zod schemas for new realtime payloads.
+- `src/realtime/events.ts` - add new realtime event names + payloads.
+- `src/realtime/index.ts` - re-export.
+- `src/schemas/scoring.ts` (or equivalent) - Zod schemas for new realtime payloads.
 
-### Frontend (`apps/web/`) — created
+### Frontend (`apps/web/`) - created
 
-- `app/onboarding/candidate/analyzing/page.tsx` — server component shell.
-- `app/onboarding/candidate/analyzing/_analyzing-client.tsx` — client component with the state machine.
-- `components/portal/sidebar-bottom-rail.tsx` — avatar + name + ⋯ + bell layout.
-- `components/portal/sidebar-profile-popover.tsx` — Radix Popover with profile dropdown content.
-- `components/portal/sidebar-notifications-popover.tsx` — Radix Popover with Inbox/Archive tabs.
-- `lib/realtime/use-user-notifications.ts` — hook subscribing to `user:{id}` for notification events.
-- `lib/realtime/use-candidate-realtime.ts` — hook subscribing to `user:{id}` for scoring events (the spec calls this room `candidate:{id}`; in implementation it's the existing `Rooms.user(candidateId)` since candidateId == userId).
+- `app/onboarding/candidate/analyzing/page.tsx` - server component shell.
+- `app/onboarding/candidate/analyzing/_analyzing-client.tsx` - client component with the state machine.
+- `components/portal/sidebar-bottom-rail.tsx` - avatar + name + ⋯ + bell layout.
+- `components/portal/sidebar-profile-popover.tsx` - Radix Popover with profile dropdown content.
+- `components/portal/sidebar-notifications-popover.tsx` - Radix Popover with Inbox/Archive tabs.
+- `lib/realtime/use-user-notifications.ts` - hook subscribing to `user:{id}` for notification events.
+- `lib/realtime/use-candidate-realtime.ts` - hook subscribing to `user:{id}` for scoring events (the spec calls this room `candidate:{id}`; in implementation it's the existing `Rooms.user(candidateId)` since candidateId == userId).
 
-### Frontend — modified
+### Frontend - modified
 
-- `app/onboarding/candidate/preferences/page.tsx` (and its client) — change redirect target to `/onboarding/candidate/analyzing`.
-- `app/(candidate)/candidate/_components/profile-score-card-client.tsx` — remove "Compute my score" button; render score directly with stale handling.
-- `app/(candidate)/candidate/jobs/[id]/_match-preview-client.tsx` — remove "See my match" button; auto-compute on mount; 429 banner.
-- `app/(candidate)/candidate/_dashboard-client.tsx` — `RecommendedForYouSection` shimmer + realtime subscription.
-- `app/(candidate)/candidate/resume/_resume-client.tsx` — remove confirmation modal on set-default; replace with optimistic + undo toast.
-- Three portal sidebar files (paths verified during implementation in Phase 3) — wire the new bottom rail.
+- `app/onboarding/candidate/preferences/page.tsx` (and its client) - change redirect target to `/onboarding/candidate/analyzing`.
+- `app/(candidate)/candidate/_components/profile-score-card-client.tsx` - remove "Compute my score" button; render score directly with stale handling.
+- `app/(candidate)/candidate/jobs/[id]/_match-preview-client.tsx` - remove "See my match" button; auto-compute on mount; 429 banner.
+- `app/(candidate)/candidate/_dashboard-client.tsx` - `RecommendedForYouSection` shimmer + realtime subscription.
+- `app/(candidate)/candidate/resume/_resume-client.tsx` - remove confirmation modal on set-default; replace with optimistic + undo toast.
+- Three portal sidebar files (paths verified during implementation in Phase 3) - wire the new bottom rail.
 
 ---
 
-## Phase 1 — Backend Foundation (PR 1)
+## Phase 1 - Backend Foundation (PR 1)
 
 This phase produces a backend that auto-computes Profile Score on onboarding completion, has the on-view rate limit, recomputes on input changes, emits notifications on every lifecycle event, and runs the five new crons. Frontend behavior is unchanged at end of Phase 1; users still click manual buttons, but a power-user calling the API would observe the new behavior.
 
-### Task 1: DB migration — schema additions
+### Task 1: DB migration - schema additions
 
 **Files:**
 
@@ -138,7 +138,7 @@ archivedReason: text("archived_reason"),
 
 The user will run the Drizzle migration generator manually. Tell the user:
 
-> "Run from the repo root: `pnpm -F @aurahire/db db:generate`. This produces a new SQL file in `packages/db/drizzle/`. Review the SQL — it should include the enum addition, four ALTER TABLE statements, and the partial index for `profile_scores`. If the partial index is missing, add manually:
+> "Run from the repo root: `pnpm -F @aurahire/db db:generate`. This produces a new SQL file in `packages/db/drizzle/`. Review the SQL - it should include the enum addition, four ALTER TABLE statements, and the partial index for `profile_scores`. If the partial index is missing, add manually:
 >
 > ```sql
 > CREATE INDEX idx_profile_scores_candidate_current
@@ -167,11 +167,11 @@ git commit -m "feat(db): add stale_at, archived_at, feedback_reminder_sent_at, a
 
 ---
 
-### Task 2: scoring_config — new keys
+### Task 2: scoring_config - new keys
 
 **Files:**
 
-- Modify: `apps/api/src/modules/scoring/scoring.service.ts` (or wherever the config defaults live — likely `apps/api/src/ai/config/` — verify)
+- Modify: `apps/api/src/modules/scoring/scoring.service.ts` (or wherever the config defaults live - likely `apps/api/src/ai/config/` - verify)
 
 - [ ] **Step 1: Locate scoring_config defaults**
 
@@ -206,7 +206,7 @@ git commit -m "feat(scoring): add proactive-system config keys"
 
 ---
 
-### Task 3: ScoringService.computeMatchPreviewOnView — failing test
+### Task 3: ScoringService.computeMatchPreviewOnView - failing test
 
 **Files:**
 
@@ -280,7 +280,7 @@ git commit -m "test(scoring): failing test for computeMatchPreviewOnView"
 
 ---
 
-### Task 4: ScoringService.computeMatchPreviewOnView — implementation
+### Task 4: ScoringService.computeMatchPreviewOnView - implementation
 
 **Files:**
 
@@ -303,14 +303,14 @@ export class MatchPreviewRateLimitException extends HttpException {
 
 - [ ] **Step 2: Add the method to ScoringService**
 
-In `apps/api/src/modules/scoring/scoring.service.ts`, inject `Redis` (from `ioredis` — the project already wires it; check imports of any existing service that uses redis) and add the method:
+In `apps/api/src/modules/scoring/scoring.service.ts`, inject `Redis` (from `ioredis` - the project already wires it; check imports of any existing service that uses redis) and add the method:
 
 ```typescript
 async computeMatchPreviewOnView(
   candidateId: string,
   jobId: string,
 ): Promise<MatchPreviewDto> {
-  // 1. Check cache first — never increments the counter
+  // 1. Check cache first - never increments the counter
   const cached = await this.repo.findMatchPreviewByCandidateJob(candidateId, jobId);
   if (cached) return this.mapPreviewToDto(cached);
 
@@ -334,7 +334,7 @@ If `computeMatchPreviewInternal` does not yet exist, refactor the existing manua
 - [ ] **Step 3: Run tests to verify they pass**
 
 Run: `pnpm -F @aurahire/api test -- scoring.service.spec`
-Expected: PASS — three new tests green.
+Expected: PASS - three new tests green.
 
 - [ ] **Step 4: Commit**
 
@@ -374,9 +374,9 @@ it("POST /scoring/match-preview/:jobId returns 429 with code DAILY_AI_LIMIT when
 - [ ] **Step 2: Run to fail**
 
 Run: `pnpm -F @aurahire/api test -- scoring.controller.spec`
-Expected: FAIL — controller still uses old method.
+Expected: FAIL - controller still uses old method.
 
-- [ ] **Step 3: Implementation — delegate**
+- [ ] **Step 3: Implementation - delegate**
 
 In `scoring.controller.ts`, find the `POST /match-preview/:jobId` handler. Change it to call `service.computeMatchPreviewOnView(user.id, jobId)`.
 
@@ -394,7 +394,7 @@ git commit -m "feat(scoring): controller delegates POST match-preview to on-view
 
 ---
 
-### Task 6: Default-resume-change handler — failing test
+### Task 6: Default-resume-change handler - failing test
 
 **Files:**
 
@@ -434,7 +434,7 @@ describe("ResumesService.setAsDefault", () => {
 - [ ] **Step 2: Run to fail**
 
 Run: `pnpm -F @aurahire/api test -- resumes.service.spec`
-Expected: FAIL — current `setAsDefault` doesn't do these things.
+Expected: FAIL - current `setAsDefault` doesn't do these things.
 
 - [ ] **Step 3: Implementation**
 
@@ -504,7 +504,7 @@ git commit -m "feat(resumes): default-change cascades to profile-score and match
 - Modify: `apps/api/src/modules/resumes/resumes.service.ts`
 - Test: `apps/api/src/modules/resumes/resumes.service.spec.ts`
 
-- [ ] **Step 1: Failing test — auto-promote**
+- [ ] **Step 1: Failing test - auto-promote**
 
 ```typescript
 it("delete-default with multiple resumes: promotes most-recently-uploaded remaining resume", async () => {
@@ -628,7 +628,7 @@ private async markScoreStaleAndEnqueueRecompute(
   reason: ProfileScoreReason,
 ): Promise<void> {
   const defaultResume = await this.resumesRepo.findDefault(candidateId);
-  if (!defaultResume) return;  // no resume yet — nothing to recompute
+  if (!defaultResume) return;  // no resume yet - nothing to recompute
 
   await this.db
     .update(profileScoresTable)
@@ -694,7 +694,7 @@ describe("ProfileScoreRecomputeProcessor", () => {
 - [ ] **Step 2: Run to fail**
 
 Run: `pnpm -F @aurahire/api test -- profile-score-recompute.processor.spec`
-Expected: FAIL — processor doesn't exist yet.
+Expected: FAIL - processor doesn't exist yet.
 
 - [ ] **Step 3: Implementation**
 
@@ -761,7 +761,7 @@ git commit -m "feat(scoring): profile-score-recompute processor"
 
 ---
 
-### Task 10: Extend complete-onboarding response — happy path test
+### Task 10: Extend complete-onboarding response - happy path test
 
 **Files:**
 
@@ -810,7 +810,7 @@ describe("PATCH /candidate-profiles/me/complete-onboarding", () => {
 - [ ] **Step 2: Run to fail**
 
 Run: `pnpm -F @aurahire/api test -- candidate-profiles.controller.spec`
-Expected: FAIL — current response doesn't include profileScore or precomputeJobId.
+Expected: FAIL - current response doesn't include profileScore or precomputeJobId.
 
 - [ ] **Step 3: Commit (test only)**
 
@@ -821,7 +821,7 @@ git commit -m "test(candidate-profiles): failing test for extended complete-onbo
 
 ---
 
-### Task 11: Extend complete-onboarding — implementation
+### Task 11: Extend complete-onboarding - implementation
 
 **Files:**
 
@@ -888,7 +888,7 @@ Verify `candidate-profiles.controller.ts` returns the service result directly. I
 - [ ] **Step 3: Run tests**
 
 Run: `pnpm -F @aurahire/api test -- candidate-profiles.controller.spec`
-Expected: PASS — both happy path and AI failure path.
+Expected: PASS - both happy path and AI failure path.
 
 - [ ] **Step 4: Commit**
 
@@ -903,7 +903,7 @@ git commit -m "feat(candidate-profiles): complete-onboarding returns profileScor
 
 **Files:**
 
-- Create: `apps/api/src/modules/candidate-profiles/guards/profile-score-backfill.guard.ts` (or interceptor — verify project pattern)
+- Create: `apps/api/src/modules/candidate-profiles/guards/profile-score-backfill.guard.ts` (or interceptor - verify project pattern)
 - Modify: portal entry route handler (or the candidate dashboard data-fetch path)
 
 - [ ] **Step 1: Identify entry point**
@@ -933,7 +933,7 @@ async enqueueProfileScoreIfMissing(candidateId: string): Promise<void> {
 }
 ```
 
-Call it from the dashboard data-fetch endpoint at the top of the handler. Awaiting is unnecessary — fire and forget.
+Call it from the dashboard data-fetch endpoint at the top of the handler. Awaiting is unnecessary - fire and forget.
 
 - [ ] **Step 3: Test + Commit**
 
@@ -1002,7 +1002,7 @@ await this.notifications.emit({
 });
 ```
 
-If the `application_status_changed` event type isn't already in `NotificationEventType` (likely is — verify via `event-defaults.ts`), add it.
+If the `application_status_changed` event type isn't already in `NotificationEventType` (likely is - verify via `event-defaults.ts`), add it.
 
 - [ ] **Step 4: Run + Commit**
 
@@ -1182,7 +1182,7 @@ git commit -m "feat(interviews): plumb reschedule and share-feedback emails (Tas
 
 ---
 
-### Task 17: Cron — interview reminder 24h before (F9)
+### Task 17: Cron - interview reminder 24h before (F9)
 
 **Files:**
 
@@ -1195,7 +1195,7 @@ git commit -m "feat(interviews): plumb reschedule and share-feedback emails (Tas
 ```typescript
 describe("NotificationsScheduler.interviewReminder", () => {
   it("emits interview_reminder_24h for interviews scheduled 23-24h from now", async () => {
-    // arrange: 3 interviews — one in 23.5h, one in 25h, one in 22h
+    // arrange: 3 interviews - one in 23.5h, one in 25h, one in 22h
     const inWindow = await seedInterview({ scheduledAt: addHours(now, 23.5) });
     const tooEarly = await seedInterview({ scheduledAt: addHours(now, 25) });
     const tooLate = await seedInterview({ scheduledAt: addHours(now, 22) });
@@ -1222,7 +1222,7 @@ describe("NotificationsScheduler.interviewReminder", () => {
 - [ ] **Step 2: Run to fail**
 
 Run: `pnpm -F @aurahire/api test -- notifications.scheduler.spec`
-Expected: FAIL — scheduler doesn't exist.
+Expected: FAIL - scheduler doesn't exist.
 
 - [ ] **Step 3: Implementation**
 
@@ -1280,19 +1280,19 @@ export class NotificationsScheduler {
 }
 ```
 
-In `notifications.module.ts`, register the scheduler in `providers`. Ensure `ScheduleModule.forRoot()` is imported in the AppModule (likely already is — verify).
+In `notifications.module.ts`, register the scheduler in `providers`. Ensure `ScheduleModule.forRoot()` is imported in the AppModule (likely already is - verify).
 
 - [ ] **Step 4: Run + Commit**
 
 ```bash
 pnpm -F @aurahire/api test -- notifications.scheduler.spec
 git add apps/api/src/modules/notifications/notifications.scheduler.ts apps/api/src/modules/notifications/notifications.module.ts
-git commit -m "feat(notifications): cron — interview reminder 24h before (F9)"
+git commit -m "feat(notifications): cron - interview reminder 24h before (F9)"
 ```
 
 ---
 
-### Task 18: Cron — offer expiration (F10)
+### Task 18: Cron - offer expiration (F10)
 
 **Files:**
 
@@ -1359,7 +1359,7 @@ Add to `NotificationsScheduler`:
 @Cron("10 0 * * *", { timeZone: "UTC" })
 async runOfferExpiration(): Promise<void> {
   try {
-    // Pass A — expiring soon
+    // Pass A - expiring soon
     const expiringSoon = await this.db
       .select()
       .from(offersTable)
@@ -1379,7 +1379,7 @@ async runOfferExpiration(): Promise<void> {
       });
     }
 
-    // Pass B — already expired → transition + notify both sides
+    // Pass B - already expired → transition + notify both sides
     const expired = await this.db
       .select()
       .from(offersTable)
@@ -1422,12 +1422,12 @@ Add `offer_expiring_soon` and `offer_expired` to `NotificationEventType` in `eve
 ```bash
 pnpm -F @aurahire/api test -- notifications.scheduler.spec
 git add apps/api/src/modules/notifications/
-git commit -m "feat(notifications): cron — offer expiration warning + auto-transition (F10)"
+git commit -m "feat(notifications): cron - offer expiration warning + auto-transition (F10)"
 ```
 
 ---
 
-### Task 19: Cron — job deadline auto-archive (F11)
+### Task 19: Cron - job deadline auto-archive (F11)
 
 **Files:**
 
@@ -1511,12 +1511,12 @@ Add `job_archived_by_deadline` to `NotificationEventType`.
 ```bash
 pnpm -F @aurahire/api test -- notifications.scheduler.spec
 git add apps/api/src/modules/notifications/
-git commit -m "feat(notifications): cron — auto-archive jobs past application deadline (F11)"
+git commit -m "feat(notifications): cron - auto-archive jobs past application deadline (F11)"
 ```
 
 ---
 
-### Task 20: Cron — interview feedback due reminder (F12)
+### Task 20: Cron - interview feedback due reminder (F12)
 
 **Files:**
 
@@ -1612,12 +1612,12 @@ Add `interview_feedback_due` to `NotificationEventType`.
 ```bash
 pnpm -F @aurahire/api test -- notifications.scheduler.spec
 git add apps/api/src/modules/notifications/
-git commit -m "feat(notifications): cron — feedback-due reminder (F12)"
+git commit -m "feat(notifications): cron - feedback-due reminder (F12)"
 ```
 
 ---
 
-### Task 21: Cron — notification digest (F13)
+### Task 21: Cron - notification digest (F13)
 
 **Files:**
 
@@ -1681,12 +1681,12 @@ The existing `notification-email.processor.ts` already handles `kind: "digest"` 
 ```bash
 pnpm -F @aurahire/api test -- notifications.scheduler.spec
 git add apps/api/src/modules/notifications/
-git commit -m "feat(notifications): cron — daily digest emission (F13)"
+git commit -m "feat(notifications): cron - daily digest emission (F13)"
 ```
 
 ---
 
-### Task 22: Phase 1 checkpoint — type-check, full backend test pass
+### Task 22: Phase 1 checkpoint - type-check, full backend test pass
 
 - [ ] **Step 1: Type-check**
 
@@ -1709,13 +1709,13 @@ Tell the user:
 
 > "Phase 1 complete. The backend now: (a) auto-computes Profile Score on `complete-onboarding`, (b) recomputes on resume/preferences/personal changes, (c) auto-promotes a remaining resume on default delete, (d) emits notifications on application status / new application / offer accept-decline, (e) plumbs interview reschedule + share-feedback emails, (f) has 5 new crons (interview reminder, offer expiration, job deadline auto-archive, feedback-due, digest), (g) the on-view match-preview path is rate-limited.
 >
-> No user-visible UI change yet — Phase 2 wires realtime + the notifications API surface; Phase 3 cuts over the frontend.
+> No user-visible UI change yet - Phase 2 wires realtime + the notifications API surface; Phase 3 cuts over the frontend.
 >
 > Please run the migration locally (`pnpm -F @aurahire/db db:migrate`) and confirm the new columns + indexes are in place. Then we can proceed to Phase 2."
 
 ---
 
-## Phase 2 — Realtime Infrastructure (PR 2)
+## Phase 2 - Realtime Infrastructure (PR 2)
 
 This phase adds realtime emissions for scoring + notification events, and the new notifications API surface (archive, archive-all). Phase 2 alone is invisible to users; it's foundation for Phase 3.
 
@@ -1838,7 +1838,7 @@ git commit -m "feat(shared): realtime event names + Zod payloads for scoring/not
 
 ---
 
-### Task 24: EventsService — new emit methods
+### Task 24: EventsService - new emit methods
 
 **Files:**
 
@@ -1848,7 +1848,7 @@ git commit -m "feat(shared): realtime event names + Zod payloads for scoring/not
 - [ ] **Step 1: Failing tests**
 
 ```typescript
-describe("EventsService — proactive system events", () => {
+describe("EventsService - proactive system events", () => {
   it("emitMatchPreviewCreated broadcasts to user:{candidateId} room", () => {
     const broadcastSpy = jest.spyOn(gateway, "broadcastToRoom");
     service.emitMatchPreviewCreated({
@@ -2103,7 +2103,7 @@ git commit -m "feat(notifications): emit realtime events on emit/read/archive/ar
 
 ---
 
-### Task 27: Notifications controller — archive endpoints + tab parameter
+### Task 27: Notifications controller - archive endpoints + tab parameter
 
 **Files:**
 
@@ -2212,7 +2212,7 @@ Expected: all green.
 
 ---
 
-## Phase 3 — Frontend Cutover (PR 3)
+## Phase 3 - Frontend Cutover (PR 3)
 
 This phase produces all user-visible changes: the analyzing screen, buttonless score surfaces, dashboard shimmer + realtime fill, default-resume undo toast, and the sidebar bottom rail across all three portals.
 
@@ -2253,7 +2253,7 @@ Create `apps/web/lib/realtime/use-candidate-realtime.ts`:
 
 ```typescript
 import { useEffect, useState } from "react";
-import { useSocket } from "./use-socket"; // existing hook — verify path
+import { useSocket } from "./use-socket"; // existing hook - verify path
 import {
   matchPreviewCreatedPayloadSchema,
   profileScoreUpdatedPayloadSchema,
@@ -2452,7 +2452,7 @@ git commit -m "feat(web): useUserNotifications hook with realtime sync"
 
 ---
 
-### Task 31: Analyzing page — server shell + state machine setup
+### Task 31: Analyzing page - server shell + state machine setup
 
 **Files:**
 
@@ -2591,7 +2591,7 @@ export function AnalyzingClient({ candidateId }: { candidateId: string }) {
     return () => clearTimeout(t);
   }, [state]);
 
-  // 4. Degraded path — short pause then redirect
+  // 4. Degraded path - short pause then redirect
   useEffect(() => {
     if (state.kind !== "profileScoreDegraded") return;
     const t = setTimeout(
@@ -2643,7 +2643,7 @@ export function AnalyzingClient({ candidateId }: { candidateId: string }) {
         )}
         {state.kind === "profileScoreDegraded" && (
           <p className="text-body-md text-body">
-            We're still working on your score — taking you to your dashboard
+            We're still working on your score - taking you to your dashboard
             now.
           </p>
         )}
@@ -2683,7 +2683,7 @@ git commit -m "feat(onboarding): analyzing screen state machine"
 
 Find the success handler on the preferences form. Change `router.push("/candidate")` to `router.push("/onboarding/candidate/analyzing")`.
 
-The form should NOT call `complete-onboarding` directly anymore — that's now done by the analyzing page. The preferences form just saves preferences and redirects.
+The form should NOT call `complete-onboarding` directly anymore - that's now done by the analyzing page. The preferences form just saves preferences and redirects.
 
 - [ ] **Step 2: Commit**
 
@@ -2707,7 +2707,7 @@ Replace the conditional render of the "Compute my score" button (lines 84-99) wi
 Concrete diff:
 
 - Remove the existing button + caption block.
-- If `score == null && !staleAt && !isComputing`: render the empty state pointing to "set your default resume" (legacy backfill — guard handles this server-side; UI just waits).
+- If `score == null && !staleAt && !isComputing`: render the empty state pointing to "set your default resume" (legacy backfill - guard handles this server-side; UI just waits).
 - Else: render `<ScoreRing>` with the value. Overlay `<AiShimmer>` if a recompute is in flight.
 - If `staleAt != null` and recompute not in flight: show small "Recompute" button below.
 
@@ -2861,7 +2861,7 @@ git commit -m "feat(candidate): instant set-default with undo toast (remove conf
 
 ---
 
-### Task 37: SidebarBottomRail component — visual layout
+### Task 37: SidebarBottomRail component - visual layout
 
 **Files:**
 
@@ -3070,7 +3070,7 @@ function AiStatusPill() {
   return (
     <div className="flex items-center justify-between text-sm text-muted">
       <span>
-        AI Status — {status === "ok" ? "All systems normal." : "Degraded."}
+        AI Status - {status === "ok" ? "All systems normal." : "Degraded."}
       </span>
       <span
         className={`h-2 w-2 rounded-full ${status === "ok" ? "bg-score-high" : "bg-score-mid"}`}
@@ -3307,7 +3307,7 @@ git commit -m "feat(portal): wire sidebar bottom rail into all 3 portals"
 
 ---
 
-### Task 41: E2E — full onboarding flow
+### Task 41: E2E - full onboarding flow
 
 **Files:**
 
@@ -3351,7 +3351,7 @@ git commit -m "test(e2e): full onboarding -> analyzing -> dashboard flow"
 
 ---
 
-### Task 42: E2E — notification round-trip per role
+### Task 42: E2E - notification round-trip per role
 
 **Files:**
 
@@ -3370,7 +3370,7 @@ test("candidate sees new notification when application status changes", async ({
     .locator("[data-testid=bell-unread-count]")
     .textContent();
 
-  // recruiter session in second context — advances application status
+  // recruiter session in second context - advances application status
   const recruiterCtx = await browser.newContext();
   const rPage = await recruiterCtx.newPage();
   await loginAsRecruiter(rPage);
@@ -3419,8 +3419,8 @@ Tell the user:
 > 1. Sign up a new candidate → onboarding wizard → at the end, you see the analyzing screen with milestones, then land on dashboard with score and recommendations.
 > 2. On a recommended job's detail page, the score renders without a button.
 > 3. On a non-recommended job, the score auto-computes (shimmer → score).
-> 4. Open the sidebar bell — empty inbox shows the empty state.
-> 5. Trigger a notification (advance an application status as a recruiter) — the bell badge updates without refresh.
+> 4. Open the sidebar bell - empty inbox shows the empty state.
+> 5. Trigger a notification (advance an application status as a recruiter) - the bell badge updates without refresh.
 > 6. Profile dropdown opens from name OR ⋯ button. Theme picker switches themes.
 > 7. Settings gear in the dropdown navigates to the role-specific settings page.
 > 8. Set-default-resume action works without a confirmation modal; undo toast appears.
@@ -3447,37 +3447,37 @@ Mapping each spec area to a task or tasks:
 
 | Spec area                         | Tasks                                                                                                                                                                                                                                   |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A — Candidate scoring             | 1 (migration), 3, 4, 5 (rate-limited on-view), 6 (resume-default change handler), 9 (recompute processor), 10, 11 (extended complete-onboarding), 12 (legacy backfill guard), 25 (realtime emit), 31 (analyzing screen), 32, 33, 34, 35 |
-| B — F1 Profile-edit recompute     | 8                                                                                                                                                                                                                                       |
-| C — F2 Resume default UX          | 36                                                                                                                                                                                                                                      |
-| C — F3 Resume delete cascade      | 7                                                                                                                                                                                                                                       |
-| D — F4 Application status emit    | 13                                                                                                                                                                                                                                      |
-| D — F5 Offer accept/decline emit  | 15                                                                                                                                                                                                                                      |
-| D — F6 New application emit       | 14                                                                                                                                                                                                                                      |
-| D — F7 Bell badge realtime        | 26, 27, 30, 37                                                                                                                                                                                                                          |
-| D — F8 Interview email plumbing   | 16                                                                                                                                                                                                                                      |
-| E — F9 Interview reminder cron    | 17                                                                                                                                                                                                                                      |
-| E — F10 Offer expiration cron     | 18                                                                                                                                                                                                                                      |
-| E — F11 Job deadline auto-archive | 19                                                                                                                                                                                                                                      |
-| E — F12 Feedback-due cron         | 20                                                                                                                                                                                                                                      |
-| E — F13 Digest cron               | 21                                                                                                                                                                                                                                      |
-| F — Sidebar bottom rail           | 37, 38, 39, 40                                                                                                                                                                                                                          |
-| G — DB migration                  | 1, 2                                                                                                                                                                                                                                    |
-| H — Realtime contract             | 23, 24                                                                                                                                                                                                                                  |
-| I — Error matrix                  | covered implicitly across all tasks                                                                                                                                                                                                     |
-| J — Testing strategy              | embedded in every task; E2E in 41, 42                                                                                                                                                                                                   |
-| K — Rollout plan                  | Phase boundaries 22, 28, 43                                                                                                                                                                                                             |
+| A - Candidate scoring             | 1 (migration), 3, 4, 5 (rate-limited on-view), 6 (resume-default change handler), 9 (recompute processor), 10, 11 (extended complete-onboarding), 12 (legacy backfill guard), 25 (realtime emit), 31 (analyzing screen), 32, 33, 34, 35 |
+| B - F1 Profile-edit recompute     | 8                                                                                                                                                                                                                                       |
+| C - F2 Resume default UX          | 36                                                                                                                                                                                                                                      |
+| C - F3 Resume delete cascade      | 7                                                                                                                                                                                                                                       |
+| D - F4 Application status emit    | 13                                                                                                                                                                                                                                      |
+| D - F5 Offer accept/decline emit  | 15                                                                                                                                                                                                                                      |
+| D - F6 New application emit       | 14                                                                                                                                                                                                                                      |
+| D - F7 Bell badge realtime        | 26, 27, 30, 37                                                                                                                                                                                                                          |
+| D - F8 Interview email plumbing   | 16                                                                                                                                                                                                                                      |
+| E - F9 Interview reminder cron    | 17                                                                                                                                                                                                                                      |
+| E - F10 Offer expiration cron     | 18                                                                                                                                                                                                                                      |
+| E - F11 Job deadline auto-archive | 19                                                                                                                                                                                                                                      |
+| E - F12 Feedback-due cron         | 20                                                                                                                                                                                                                                      |
+| E - F13 Digest cron               | 21                                                                                                                                                                                                                                      |
+| F - Sidebar bottom rail           | 37, 38, 39, 40                                                                                                                                                                                                                          |
+| G - DB migration                  | 1, 2                                                                                                                                                                                                                                    |
+| H - Realtime contract             | 23, 24                                                                                                                                                                                                                                  |
+| I - Error matrix                  | covered implicitly across all tasks                                                                                                                                                                                                     |
+| J - Testing strategy              | embedded in every task; E2E in 41, 42                                                                                                                                                                                                   |
+| K - Rollout plan                  | Phase boundaries 22, 28, 43                                                                                                                                                                                                             |
 
 No spec area is left without a task.
 
 ### Placeholder scan
 
-Several task steps say "verify exact path during implementation" for sidebar files and a couple of repo paths. These are not "TBD" placeholders — they're explicit verification steps for paths the agent can locate with one Glob. The tasks are otherwise concrete.
+Several task steps say "verify exact path during implementation" for sidebar files and a couple of repo paths. These are not "TBD" placeholders - they're explicit verification steps for paths the agent can locate with one Glob. The tasks are otherwise concrete.
 
 ### Type consistency
 
 - `MatchPreviewSource` enum extension: uniformly `"candidate_view"` across schema, Zod, and code.
-- `ProfileScoreReason`: `"onboarding" | "resume_change" | "preferences_change" | "profile_change" | "manual_recompute"` — matches the spec and Zod schema.
+- `ProfileScoreReason`: `"onboarding" | "resume_change" | "preferences_change" | "profile_change" | "manual_recompute"` - matches the spec and Zod schema.
 - `NotificationEventType` enum: new values (`offer_accepted`, `offer_declined`, `offer_expiring_soon`, `offer_expired`, `interview_reminder_24h`, `interview_feedback_due`, `job_archived_by_deadline`) added consistently in `event-defaults.ts`.
 - Realtime room helper: every task uses `Rooms.user(...)` (not the spec's notational `candidate:{id}`). Confirmed consistent.
 - Rate-limit error code: `DAILY_AI_LIMIT` consistent across exception, controller, frontend banner.
@@ -3486,8 +3486,8 @@ Several task steps say "verify exact path during implementation" for sidebar fil
 
 **Plan complete and saved to `docs/superpowers/plans/2026-05-08-proactive-system.md`. Two execution options:**
 
-**1. Subagent-Driven (recommended)** — I dispatch a fresh subagent per task, review between tasks, fast iteration.
+**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration.
 
-**2. Inline Execution** — Execute tasks in this session using executing-plans, batch execution with checkpoints.
+**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints.
 
 **Which approach?**

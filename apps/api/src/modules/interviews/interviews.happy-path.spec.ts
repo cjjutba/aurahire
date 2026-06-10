@@ -2,25 +2,25 @@
  * Happy-path integration spec for the interview v2 flow.
  *
  * Simulates a complete recruiter ↔ candidate user journey using mocked
- * dependencies — no real database, no network calls.
+ * dependencies - no real database, no network calls.
  *
  * Flow covered:
- *  Step 1  — Recruiter schedules from `applied`:
+ *  Step 1  - Recruiter schedules from `applied`:
  *              status auto-advances to `interview`, interview row created.
- *  Step 2  — Autocomplete cron flips `scheduled → completed` after grace period.
- *  Step 3  — Recruiter sets feedback + recommendation=`proceed`:
+ *  Step 2  - Autocomplete cron flips `scheduled → completed` after grace period.
+ *  Step 3  - Recruiter sets feedback + recommendation=`proceed`:
  *              feedback persisted, FEEDBACK_SUBMITTED + RECOMMENDATION_SET audited,
  *              `application.recommendationSet` realtime event emitted.
- *  Step 4  — Recruiter shares candidate-facing summary:
+ *  Step 4  - Recruiter shares candidate-facing summary:
  *              `candidateSummary` + `sharedWithCandidateAt` persisted,
  *              candidate in-app notification fired, realtime event emitted,
  *              INTERVIEW_FEEDBACK_SHARED audited.
- *  Step 5  — Candidate retrieves the interview via getByIdForCandidate():
+ *  Step 5  - Candidate retrieves the interview via getByIdForCandidate():
  *              `candidateSummary` exposed; `feedback`, `rating`, `recommendation` redacted.
- *  Step 6  — Reschedule branch (parallel path):
+ *  Step 6  - Reschedule branch (parallel path):
  *              original marked `rescheduled`, new row linked, INTERVIEW_RESCHEDULED audited,
  *              realtime `interview.rescheduled` event emitted.
- *  Step 7  — Withdraw branch: candidate withdraws application:
+ *  Step 7  - Withdraw branch: candidate withdraws application:
  *              status → `withdrawn`, APPLICATION_WITHDRAWN_BY_CANDIDATE audited,
  *              `application.withdrawn` realtime event emitted.
  */
@@ -159,7 +159,7 @@ function makeScheduleDto() {
 
 // ── Suite ─────────────────────────────────────────────────────────────────────
 
-describe("Interview v2 — happy-path integration", () => {
+describe("Interview v2 - happy-path integration", () => {
   let interviewsService: InterviewsService;
   let applicationsService: ApplicationsService;
 
@@ -310,7 +310,7 @@ describe("Interview v2 — happy-path integration", () => {
 
   // ── Step 1 ─────────────────────────────────────────────────────────────────
 
-  it("Step 1: schedules interview from 'applied' — status advances to 'interview', interview row created with venue fields", async () => {
+  it("Step 1: schedules interview from 'applied' - status advances to 'interview', interview row created with venue fields", async () => {
     const appliedApp = makeApplication("applied");
 
     applicationsRepo.findApplicationContextForCompany.mockResolvedValue(
@@ -385,7 +385,7 @@ describe("Interview v2 — happy-path integration", () => {
 
   // ── Step 2 ─────────────────────────────────────────────────────────────────
 
-  it("Step 2: recruiter sets feedback + recommendation — FEEDBACK_SUBMITTED + RECOMMENDATION_SET audited, realtime event emitted", async () => {
+  it("Step 2: recruiter sets feedback + recommendation - FEEDBACK_SUBMITTED + RECOMMENDATION_SET audited, realtime event emitted", async () => {
     const scheduledInterview = makeInterview({
       status: "completed",
       recommendation: null,
@@ -449,7 +449,7 @@ describe("Interview v2 — happy-path integration", () => {
 
   // ── Step 3 ─────────────────────────────────────────────────────────────────
 
-  it("Step 3: recruiter shares candidate-facing summary — candidateSummary + sharedWithCandidateAt persisted, notification + realtime + audit fired", async () => {
+  it("Step 3: recruiter shares candidate-facing summary - candidateSummary + sharedWithCandidateAt persisted, notification + realtime + audit fired", async () => {
     const summary =
       "You demonstrated strong technical skills and a collaborative mindset.";
     const completedInterview = makeInterview({
@@ -534,11 +534,11 @@ describe("Interview v2 — happy-path integration", () => {
 
   // ── Step 4 ─────────────────────────────────────────────────────────────────
 
-  it("Step 4: candidate retrieves interview — candidateSummary exposed, internal fields (feedback/rating/recommendation) redacted", async () => {
+  it("Step 4: candidate retrieves interview - candidateSummary exposed, internal fields (feedback/rating/recommendation) redacted", async () => {
     const sharedAt = new Date();
     const sharedInterview = makeInterview({
       status: "completed",
-      feedback: "Strong candidate — DO NOT SHOW.",
+      feedback: "Strong candidate - DO NOT SHOW.",
       rating: 5,
       recommendation: "proceed",
       candidateSummary: "You did great!",
@@ -569,7 +569,7 @@ describe("Interview v2 — happy-path integration", () => {
 
   // ── Step 5 ─────────────────────────────────────────────────────────────────
 
-  it("Step 5: reschedule flow — original marked 'rescheduled', new row linked, INTERVIEW_RESCHEDULED audited, realtime event emitted", async () => {
+  it("Step 5: reschedule flow - original marked 'rescheduled', new row linked, INTERVIEW_RESCHEDULED audited, realtime event emitted", async () => {
     const scheduledInterview = makeInterview({ status: "scheduled" });
 
     interviewsRepo.findById.mockResolvedValue(scheduledInterview);
@@ -655,7 +655,7 @@ describe("Interview v2 — happy-path integration", () => {
 
   // ── Step 6 ─────────────────────────────────────────────────────────────────
 
-  it("Step 6: candidate withdraws application — status 'withdrawn', APPLICATION_WITHDRAWN_BY_CANDIDATE audited, application.withdrawn event emitted", async () => {
+  it("Step 6: candidate withdraws application - status 'withdrawn', APPLICATION_WITHDRAWN_BY_CANDIDATE audited, application.withdrawn event emitted", async () => {
     const interviewApp = makeApplication("interview");
     const withdrawnApp = { ...interviewApp, status: "withdrawn" };
 
@@ -712,7 +712,7 @@ describe("Interview v2 — happy-path integration", () => {
 
   // ── Guard: candidate cannot withdraw another user's application ─────────────
 
-  it("Guard: candidate cannot withdraw another user's application — ForbiddenException thrown", async () => {
+  it("Guard: candidate cannot withdraw another user's application - ForbiddenException thrown", async () => {
     const otherCandidateApp = makeApplication("applied");
     // The application belongs to a different candidate
     applicationsRepo.findById.mockResolvedValue({
@@ -733,7 +733,7 @@ describe("Interview v2 — happy-path integration", () => {
   it("Guard: candidateSummary is null when sharedWithCandidateAt is not set (feedback not yet shared)", async () => {
     const unsharedInterview = makeInterview({
       status: "completed",
-      feedback: "Private recruiter notes — never expose.",
+      feedback: "Private recruiter notes - never expose.",
       rating: 4,
       recommendation: "hold",
       candidateSummary: "Private summary stored but not shared.",
@@ -759,7 +759,7 @@ describe("Interview v2 — happy-path integration", () => {
 
   // ── Guard: non-recruiter cannot share feedback ─────────────────────────────
 
-  it("Guard: non-recruiter cannot shareFeedback — ForbiddenException thrown", async () => {
+  it("Guard: non-recruiter cannot shareFeedback - ForbiddenException thrown", async () => {
     await expect(
       interviewsService.shareFeedback(
         candidateUser,

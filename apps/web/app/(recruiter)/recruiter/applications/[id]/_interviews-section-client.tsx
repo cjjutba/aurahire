@@ -44,7 +44,7 @@ export interface InterviewRow {
 // ---------------------------------------------------------------------------
 
 // Per thesis panel revision (May 2026): `in_progress` slots between
-// scheduled and completed — the interview is happening right now.
+// scheduled and completed - the interview is happening right now.
 const STATUS_PRIORITY: Record<string, number> = {
   in_progress: 0,
   scheduled: 1,
@@ -224,7 +224,7 @@ function InterviewCard({
   /**
    * Mark the interview as completed before the duration ends. Per
    * thesis panel revision (May 2026): recruiters don't have to wait
-   * for the autocomplete cron — they can flip status the moment the
+   * for the autocomplete cron - they can flip status the moment the
    * interview wraps up. The same path is what unlocks candidate
    * identity reveal + resume download on the application.
    */
@@ -560,7 +560,7 @@ export function RecruiterInterviewsSection({
 }
 
 // ---------------------------------------------------------------------------
-// ElapsedBadge — ticking live timer while the interview is in_progress.
+// ElapsedBadge - ticking live timer while the interview is in_progress.
 // ---------------------------------------------------------------------------
 
 /**
@@ -568,7 +568,7 @@ export function RecruiterInterviewsSection({
  * in_progress phase, recruiters see a live "00:23 elapsed of 60:00"
  * readout that ticks every second. The render is cheap (one
  * setInterval, single useState) and the badge gracefully clamps to
- * the duration max — if the cron is late to flip to completed, the
+ * the duration max - if the cron is late to flip to completed, the
  * UI shows "60:00 elapsed (overrun)" rather than counting forever.
  */
 function ElapsedBadge({
@@ -613,7 +613,7 @@ function ElapsedBadge({
       </span>
       {isOverrun && (
         <span className="text-[11px] text-[var(--color-muted)]">
-          past scheduled end — auto-completes any moment
+          past scheduled end - auto-completes any moment
         </span>
       )}
     </div>

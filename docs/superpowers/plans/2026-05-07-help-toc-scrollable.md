@@ -1,4 +1,4 @@
-# Help Page TOC — Bounded Scrollable + Auto-Tracking Implementation Plan
+# Help Page TOC - Bounded Scrollable + Auto-Tracking Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -16,7 +16,7 @@
 
 ### Modified file
 
-- `apps/web/components/help/help-view.tsx` — the only file touched.
+- `apps/web/components/help/help-view.tsx` - the only file touched.
 
 ### Untouched (intentionally)
 
@@ -25,7 +25,7 @@
 - `apps/web/app/(candidate)/candidate/help/page.tsx`
 - `apps/web/app/(recruiter)/recruiter/help/page.tsx`
 - `apps/web/app/(admin)/admin/help/page.tsx`
-- The mobile `<details>` block (lines 192–215). It re-uses `<TocList>`, so it inherits the new active-state styling automatically — that's correct per spec.
+- The mobile `<details>` block (lines 192-215). It re-uses `<TocList>`, so it inherits the new active-state styling automatically - that's correct per spec.
 
 ### No new files
 
@@ -36,7 +36,7 @@ The `prefersReducedMotion()` helper is local to `help-view.tsx` (single consumer
 ## Conventions used in every step
 
 - **Brand tokens only:** `var(--color-primary)`, `var(--color-ink)`, `var(--color-body)`, `var(--color-canvas)`, `var(--color-muted)`, `var(--color-hairline)`, `var(--color-hairline-soft)`, `var(--color-surface-strong)`, `var(--color-primary-soft)`. No raw hex.
-- **Radius tokens:** `var(--radius-sm)` (8 px) for TOC items, `var(--radius-md)` (12 px) for mobile disclosure, `var(--radius-pill)` for buttons. Already in use — no change.
+- **Radius tokens:** `var(--radius-sm)` (8 px) for TOC items, `var(--radius-md)` (12 px) for mobile disclosure, `var(--radius-pill)` for buttons. Already in use - no change.
 - **`cn` utility:** continue using `cn(...)` from `@/lib/utils` for conditional classnames.
 - **No new imports:** all needed icons (`ChevronDown`, `Hash`, `Mail`, etc.) already imported. The implementation doesn't need anything new from `lucide-react`.
 - **Strict TS:** no `any`, no `as` casts beyond what already exists.
@@ -62,7 +62,7 @@ function prefersReducedMotion(): boolean {
 }
 ```
 
-Rationale: simple read, no React state needed (callers invoke it at the moment of an action — click or scroll-spy update — so they always get the current preference). Server-safe via the `typeof window` guard.
+Rationale: simple read, no React state needed (callers invoke it at the moment of an action - click or scroll-spy update - so they always get the current preference). Server-safe via the `typeof window` guard.
 
 - [ ] **Step 2: Type-check the file**
 
@@ -80,13 +80,13 @@ Expected: PASS (no errors). The helper is unused at this point but valid.
 
 **Files:**
 
-- Modify: `apps/web/components/help/help-view.tsx` — the `TocList` component (currently lines 351–419), specifically both `<button>` blocks (the per-group buttons and the `extra` buttons).
+- Modify: `apps/web/components/help/help-view.tsx` - the `TocList` component (currently lines 351-419), specifically both `<button>` blocks (the per-group buttons and the `extra` buttons).
 
 **What:** Replace the filled-pill active treatment with a 2-px left-rail bar in primary blue + ink text. Drop the hover-background fill on inactive items (hover becomes text-color shift only). Add `data-toc-id` so the auto-track effect can find the active button, and `aria-current="location"` for screen readers.
 
 - [ ] **Step 1: Replace the per-group `<button>` markup**
 
-Find this block (around lines 372–386):
+Find this block (around lines 372-386):
 
 ```tsx
 <li key={s.id}>
@@ -131,12 +131,12 @@ Notes:
 
 - `pl-3 pr-2` replaces `px-2` to give the 2-px rail breathing room without overlapping text.
 - `before:` pseudo-element renders the rail. Always present in DOM; color is transparent when inactive so it doesn't shift layout on activation.
-- `inset-y-1` keeps the rail visually shorter than the full button height (1 px gap above/below) — matches Vercel/Linear.
+- `inset-y-1` keeps the rail visually shorter than the full button height (1 px gap above/below) - matches Vercel/Linear.
 - Hover for inactive items: text shifts from `body` to `ink`, no background fill.
 
 - [ ] **Step 2: Replace the `extra` `<button>` markup with the same shape**
 
-Find the `extra` buttons block (around lines 397–410):
+Find the `extra` buttons block (around lines 397-410):
 
 ```tsx
 <li key={item.id}>
@@ -191,11 +191,11 @@ Expected: PASS. (`aria-current` accepts `"location"` per ARIA; the `undefined` b
 
 ---
 
-## Task 3: Restructure the desktop aside — bounded scroll wrapper + edge fade masks
+## Task 3: Restructure the desktop aside - bounded scroll wrapper + edge fade masks
 
 **Files:**
 
-- Modify: `apps/web/components/help/help-view.tsx` — the desktop aside (currently lines 269–286).
+- Modify: `apps/web/components/help/help-view.tsx` - the desktop aside (currently lines 269-286).
 
 **What:** Convert the sticky block into a flex column. The header ("On this page") sits outside the scroll area with `shrink-0`. The list sits inside a `relative` wrapper that contains a `ref`-attached scrollable inner div plus two `pointer-events-none` gradient masks at the top and bottom edges.
 
@@ -215,7 +215,7 @@ const tocScrollRef = useRef<HTMLDivElement | null>(null);
 
 - [ ] **Step 2: Replace the desktop aside markup**
 
-Find this block (lines 269–286):
+Find this block (lines 269-286):
 
 ```tsx
 {
@@ -252,7 +252,7 @@ Replace with:
       On this page
     </div>
     <div className="relative min-h-0 flex-1">
-      {/* top edge fade — hides clipped content above the fold */}
+      {/* top edge fade - hides clipped content above the fold */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-10 h-3 bg-gradient-to-b from-[var(--color-canvas)] to-transparent"
         aria-hidden
@@ -273,7 +273,7 @@ Replace with:
           }
         />
       </div>
-      {/* bottom edge fade — hides clipped content below the fold */}
+      {/* bottom edge fade - hides clipped content below the fold */}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-3 bg-gradient-to-t from-[var(--color-canvas)] to-transparent"
         aria-hidden
@@ -286,10 +286,10 @@ Replace with:
 Notes:
 
 - `max-h-[calc(100vh-4rem)]`: viewport minus 32 px sticky offset minus 32 px breathing room.
-- `flex flex-col` + `shrink-0` on header + `flex-1 min-h-0` on the scroll wrapper is the canonical "fixed header, scrolling body" pattern. `min-h-0` is required — without it, the flex child refuses to shrink below content height and overflow never engages.
+- `flex flex-col` + `shrink-0` on header + `flex-1 min-h-0` on the scroll wrapper is the canonical "fixed header, scrolling body" pattern. `min-h-0` is required - without it, the flex child refuses to shrink below content height and overflow never engages.
 - `pr-2` reserves space for the scrollbar so list-item widths don't shift when scrolling becomes active.
 - `pt-1 pb-3` keeps the active-rail's `inset-y-1` from being clipped by the fade overlays at the top.
-- `[scrollbar-width:thin]` is a Tailwind v4 arbitrary property — narrows the Firefox scrollbar (matches Vercel).
+- `[scrollbar-width:thin]` is a Tailwind v4 arbitrary property - narrows the Firefox scrollbar (matches Vercel).
 - `z-10` on the masks ensures they paint above the scroll content (otherwise the overlay is below and invisible).
 
 - [ ] **Step 3: Type-check**
@@ -300,7 +300,7 @@ Run:
 pnpm --filter web type-check
 ```
 
-Expected: PASS. The new `tocScrollRef` is unused at this point — TypeScript won't complain because `useRef<HTMLDivElement | null>(null)` has a defined type and the `ref={...}` assignment satisfies it.
+Expected: PASS. The new `tocScrollRef` is unused at this point - TypeScript won't complain because `useRef<HTMLDivElement | null>(null)` has a defined type and the `ref={...}` assignment satisfies it.
 
 ---
 
@@ -308,13 +308,13 @@ Expected: PASS. The new `tocScrollRef` is unused at this point — TypeScript wo
 
 **Files:**
 
-- Modify: `apps/web/components/help/help-view.tsx` — add a new `useEffect` after the existing scroll-spy effect.
+- Modify: `apps/web/components/help/help-view.tsx` - add a new `useEffect` after the existing scroll-spy effect.
 
-**What:** When `activeId` changes (driven by the existing `IntersectionObserver`), find the matching button via `data-toc-id` inside `tocScrollRef` and call `scrollIntoView({ block: "nearest" })`. `block: "nearest"` only scrolls when the target is outside the visible region — it's a no-op when the active item is already in view, which prevents fighting with manual TOC scrolling.
+**What:** When `activeId` changes (driven by the existing `IntersectionObserver`), find the matching button via `data-toc-id` inside `tocScrollRef` and call `scrollIntoView({ block: "nearest" })`. `block: "nearest"` only scrolls when the target is outside the visible region - it's a no-op when the active item is already in view, which prevents fighting with manual TOC scrolling.
 
 - [ ] **Step 1: Insert the effect after the existing IntersectionObserver effect**
 
-Locate the existing scroll-spy effect (lines 89–110) — it ends with `}, [allSectionIds]);`.
+Locate the existing scroll-spy effect (lines 89-110) - it ends with `}, [allSectionIds]);`.
 
 Immediately after that closing line, add:
 
@@ -339,9 +339,9 @@ useEffect(() => {
 
 Notes:
 
-- The query lives inside `tocScrollRef.current` (not `document`), so it scopes the lookup to the desktop aside. The mobile `<details>` rendering of `<TocList>` also has `data-toc-id` buttons but lives outside this ref — they're correctly ignored.
+- The query lives inside `tocScrollRef.current` (not `document`), so it scopes the lookup to the desktop aside. The mobile `<details>` rendering of `<TocList>` also has `data-toc-id` buttons but lives outside this ref - they're correctly ignored.
 - `behavior: "auto"` under reduced-motion preference jumps instantly. No animation, no nausea trigger.
-- `useCallback` not needed — the effect runs on `activeId` change only.
+- `useCallback` not needed - the effect runs on `activeId` change only.
 
 - [ ] **Step 2: Type-check**
 
@@ -361,7 +361,7 @@ Run:
 pnpm --filter web lint
 ```
 
-Expected: PASS. (No new ESLint warnings — the effect's dependency array is correct and exhaustive.)
+Expected: PASS. (No new ESLint warnings - the effect's dependency array is correct and exhaustive.)
 
 ---
 
@@ -369,9 +369,9 @@ Expected: PASS. (No new ESLint warnings — the effect's dependency array is cor
 
 **Files:**
 
-- Modify: `apps/web/components/help/help-view.tsx` — `handleTocClick` (currently lines 112–121).
+- Modify: `apps/web/components/help/help-view.tsx` - `handleTocClick` (currently lines 112-121).
 
-**What:** Mirror the new helper into the existing click handler so click-driven scrolls also respect the user's preference. Same applied to the in-section permalink scroll (`SectionView`, lines 314–328) for consistency.
+**What:** Mirror the new helper into the existing click handler so click-driven scrolls also respect the user's preference. Same applied to the in-section permalink scroll (`SectionView`, lines 314-328) for consistency.
 
 - [ ] **Step 1: Update `handleTocClick`**
 
@@ -410,7 +410,7 @@ function handleTocClick(id: string) {
 
 - [ ] **Step 2: Update the permalink scroll inside `SectionView`**
 
-Find this fragment inside `SectionView`'s `<a>` `onClick` (around lines 320–324):
+Find this fragment inside `SectionView`'s `<a>` `onClick` (around lines 320-324):
 
 ```tsx
 document.getElementById(section.id)?.scrollIntoView({
@@ -428,7 +428,7 @@ document.getElementById(section.id)?.scrollIntoView({
 });
 ```
 
-(Optional but consistent — the permalink hash button on each section heading should obey the same preference.)
+(Optional but consistent - the permalink hash button on each section heading should obey the same preference.)
 
 - [ ] **Step 3: Type-check + lint**
 
@@ -468,7 +468,7 @@ pnpm --filter web lint
 
 Expected: PASS, zero new warnings or errors attributable to `help-view.tsx`.
 
-- [ ] **Step 3: Optional — production build sanity check (no dev server)**
+- [ ] **Step 3: Optional - production build sanity check (no dev server)**
 
 This is allowed by CLAUDE.md (`turbo run build` is explicitly permitted).
 
@@ -478,9 +478,9 @@ Run:
 pnpm --filter web build
 ```
 
-Expected: PASS. Build size for the help routes should be effectively unchanged (±1–2 KB at most — all changes are markup/classnames; no new imports).
+Expected: PASS. Build size for the help routes should be effectively unchanged (±1-2 KB at most - all changes are markup/classnames; no new imports).
 
-If build fails for an unrelated reason (e.g., env vars), document it but do not block this task — the lint + type-check gates are authoritative for this scoped change.
+If build fails for an unrelated reason (e.g., env vars), document it but do not block this task - the lint + type-check gates are authoritative for this scoped change.
 
 ---
 
@@ -502,14 +502,14 @@ Then in a browser, navigate through these checks:
 
 | #   | Check                                                                     | Expected                                                                                                                                                  |
 | --- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `/candidate/help` at viewport ~1366×768 (13" laptop)                      | Right-rail TOC is bounded — visible scrollbar inside the aside; "Notifications" and "Report a bias concern" reachable by scrolling the TOC, not the page. |
-| 2   | Same page — scroll the page from top to bottom                            | Active TOC item updates per scroll-spy AND auto-scrolls into the TOC viewport so it's always visible.                                                     |
-| 3   | Same page — viewport ≥ 1440 px tall                                       | TOC fits without internal scroll; fade masks present but visually negligible against full content.                                                        |
+| 1   | `/candidate/help` at viewport ~1366×768 (13" laptop)                      | Right-rail TOC is bounded - visible scrollbar inside the aside; "Notifications" and "Report a bias concern" reachable by scrolling the TOC, not the page. |
+| 2   | Same page - scroll the page from top to bottom                            | Active TOC item updates per scroll-spy AND auto-scrolls into the TOC viewport so it's always visible.                                                     |
+| 3   | Same page - viewport ≥ 1440 px tall                                       | TOC fits without internal scroll; fade masks present but visually negligible against full content.                                                        |
 | 4   | Click a TOC item below the fold (e.g., "How to improve your match score") | Page scrolls smoothly to section; TOC active rail moves to that item; URL hash updates.                                                                   |
 | 5   | Type "bias" in the search box                                             | TOC list filters; bounded behavior intact; auto-track still works on the filtered list.                                                                   |
 | 6   | Resize from 1440 → 1024 → 768 (mobile breakpoint)                         | Desktop bounded aside vanishes at < 1024 px; mobile `<details>` "On this page" disclosure appears with the same active-rail style applied.                |
-| 7   | Repeat checks 1–4 on `/recruiter/help`                                    | Same behavior.                                                                                                                                            |
-| 8   | Repeat checks 1–4 on `/admin/help`                                        | Same behavior.                                                                                                                                            |
+| 7   | Repeat checks 1-4 on `/recruiter/help`                                    | Same behavior.                                                                                                                                            |
+| 8   | Repeat checks 1-4 on `/admin/help`                                        | Same behavior.                                                                                                                                            |
 | 9   | macOS: System Settings → Accessibility → Display → Reduce motion ON       | TOC item clicks and auto-track snap instantly with no smooth-scroll animation.                                                                            |
 | 10  | VoiceOver / NVDA on the desktop TOC                                       | The active button announces "current location" (from `aria-current="location"`).                                                                          |
 
@@ -517,8 +517,8 @@ Then in a browser, navigate through these checks:
 
 Two before/after screenshots requested:
 
-- 13" viewport, candidate page, scrolled into "Privacy & fairness" — confirm "Report a bias concern" is now visible inside the TOC.
-- 13" viewport, recruiter page, scrolled into final section — confirm last item visible.
+- 13" viewport, candidate page, scrolled into "Privacy & fairness" - confirm "Report a bias concern" is now visible inside the TOC.
+- 13" viewport, recruiter page, scrolled into final section - confirm last item visible.
 
 - [ ] **Step 3: Wait for human sign-off before commit**
 
@@ -540,7 +540,7 @@ Run:
 git add apps/web/components/help/help-view.tsx
 ```
 
-Do NOT use `git add -A` or `git add .` — per CLAUDE.md, stage by exact path.
+Do NOT use `git add -A` or `git add .` - per CLAUDE.md, stage by exact path.
 
 - [ ] **Step 2: Verify staged diff**
 
@@ -604,7 +604,7 @@ After all tasks complete, the implementing engineer (or supervising agent) shoul
   - `prefers-reduced-motion` guard → Tasks 1, 4, 5 ✓
   - Mobile disclosure unchanged → not a task; verified via Task 7 #6 ✓
   - Hover-fill removal → Task 2 ✓
-- [ ] **Placeholder scan:** No "TBD", "TODO", "as appropriate", "etc." in any task above. (Verified — none present.)
-- [ ] **Type consistency:** `tocScrollRef` declared `useRef<HTMLDivElement | null>(null)` in Task 3 Step 1, used in Task 3 Step 2 (`ref={tocScrollRef}`) and Task 4 Step 1 (`tocScrollRef.current`) — matching shape throughout. `prefersReducedMotion()` defined in Task 1, called in Tasks 4 and 5 — same name, same return type.
+- [ ] **Placeholder scan:** No "TBD", "TODO", "as appropriate", "etc." in any task above. (Verified - none present.)
+- [ ] **Type consistency:** `tocScrollRef` declared `useRef<HTMLDivElement | null>(null)` in Task 3 Step 1, used in Task 3 Step 2 (`ref={tocScrollRef}`) and Task 4 Step 1 (`tocScrollRef.current`) - matching shape throughout. `prefersReducedMotion()` defined in Task 1, called in Tasks 4 and 5 - same name, same return type.
 - [ ] **No dependency added.** All imports already present.
 - [ ] **No file outside `help-view.tsx` modified.**

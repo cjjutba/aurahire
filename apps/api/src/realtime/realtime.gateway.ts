@@ -76,7 +76,7 @@ export class RealtimeGateway
     // Auth runs as Socket.io middleware so that rejection happens BEFORE the
     // connection completes. Calling next(err) makes Socket.io serialize the
     // error to the client as a transport-level connect_error with err.data
-    // populated — which is what the SocketProvider's connect_error listener
+    // populated - which is what the SocketProvider's connect_error listener
     // observes. Doing the check inside handleConnection (post-connect) would
     // not surface it that way.
     server.use(async (socket, next) => {
@@ -107,7 +107,7 @@ export class RealtimeGateway
     // Auth ran in the middleware above; user is guaranteed to be present.
     const user = client.data.user;
     if (!user) {
-      // Defensive — shouldn't reach here. If it does, force-close.
+      // Defensive - shouldn't reach here. If it does, force-close.
       client.disconnect(true);
       return;
     }

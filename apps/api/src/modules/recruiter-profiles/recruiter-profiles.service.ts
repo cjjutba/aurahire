@@ -24,7 +24,7 @@ export class RecruiterProfilesService {
   async getMe(user: AuthUser): Promise<RecruiterProfileMeDto> {
     this.assertRecruiter(user);
 
-    // Profile + recruiter_profile have no dependency between them — parallel.
+    // Profile + recruiter_profile have no dependency between them - parallel.
     // Company depends on profile.lastActiveCompanyId (Phase 2b: replaces the
     // dropped recruiter_profiles.company_id column), so it follows.
     const [profile, recruiterProfile] = await Promise.all([
@@ -40,7 +40,7 @@ export class RecruiterProfilesService {
     if (!recruiterProfile) {
       throw new NotFoundException({
         code: "RECRUITER_PROFILE_NOT_FOUND",
-        message: "Recruiter profile missing — re-register",
+        message: "Recruiter profile missing - re-register",
       });
     }
 

@@ -48,7 +48,7 @@ export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;
 
 export const deleteCompanySchema = z.object({
   /**
-   * The exact name of the company. Server-side double-confirmation pattern —
+   * The exact name of the company. Server-side double-confirmation pattern -
    * mistyping the name aborts the delete.
    */
   confirmName: z.string().min(1, "Type the company name to confirm"),
@@ -60,7 +60,7 @@ export type DeleteCompanyInput = z.infer<typeof deleteCompanySchema>;
 // MEMBERSHIP
 // ============================================================================
 
-// 'owner' is omitted from the invite role pool — owners are minted only at
+// 'owner' is omitted from the invite role pool - owners are minted only at
 // company creation or via explicit ownership transfer.
 const inviteableRoleSchema = z.enum(["admin", "recruiter"] as const);
 
@@ -79,7 +79,7 @@ export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
 
 export const transferOwnershipSchema = z.object({
   /**
-   * The exact email of the target member. Anti-misclick guard —
+   * The exact email of the target member. Anti-misclick guard -
    * mistyping aborts the transfer.
    */
   confirmEmail: emailSchema,
@@ -106,7 +106,7 @@ export type InvitationPreviewQuery = z.infer<
 >;
 
 // ============================================================================
-// PROFILE — ACTIVE COMPANY SWITCH
+// PROFILE - ACTIVE COMPANY SWITCH
 // ============================================================================
 
 /**

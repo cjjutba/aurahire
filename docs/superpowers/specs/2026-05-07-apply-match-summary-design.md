@@ -1,21 +1,21 @@
-# Apply Page — Surface Existing Match Preview, Stop Misleading "Computing" Shimmer
+# Apply Page - Surface Existing Match Preview, Stop Misleading "Computing" Shimmer
 
 **Date:** 2026-05-07
 **Owner:** Candidate apply flow
-**Status:** approved (option C — surface preview with B-fallback for resume mismatch)
+**Status:** approved (option C - surface preview with B-fallback for resume mismatch)
 
 ## Problem
 
-When a candidate computes a Match Preview on the job detail page (`/candidate/jobs/[id]`) and then clicks **Apply Now**, the apply submit shows an `AiShimmer` captioned _"Computing your match against this job — analyzing skills, experience, education, and cultural fit..."_. The candidate's reasonable read is that the system is paying for a fresh AI call — exactly the redundancy they were promised wouldn't happen ("Apply now to lock this score in — no recompute required" on the preview card).
+When a candidate computes a Match Preview on the job detail page (`/candidate/jobs/[id]`) and then clicks **Apply Now**, the apply submit shows an `AiShimmer` captioned _"Computing your match against this job - analyzing skills, experience, education, and cultural fit..."_. The candidate's reasonable read is that the system is paying for a fresh AI call - exactly the redundancy they were promised wouldn't happen ("Apply now to lock this score in - no recompute required" on the preview card).
 
 The redundancy is **not actually happening**. `apps/api/src/modules/scoring/scoring.service.ts:381-409` runs a **promotion path**: when a `match_score_preview` row exists for the same `(candidate, job, resume)` triple, the service reuses the cached AI result and skips the OpenAI call. The `promotedFromPreviewId` field in the audit log records when this happened.
 
-The redundancy is therefore a **UI-layer lie**: the apply form's submit indicator (`apps/web/app/(candidate)/candidate/jobs/[id]/apply/_apply-form-client.tsx:108-117`) shows AI-computation copy regardless of whether the backend is actually computing. The perceived ~5 s delay during submit is database writes + audit log + email notification + redirect — not AI work.
+The redundancy is therefore a **UI-layer lie**: the apply form's submit indicator (`apps/web/app/(candidate)/candidate/jobs/[id]/apply/_apply-form-client.tsx:108-117`) shows AI-computation copy regardless of whether the backend is actually computing. The perceived ~5 s delay during submit is database writes + audit log + email notification + redirect - not AI work.
 
 Two adjacent honesty gaps make this worse:
 
 1. The apply page never _shows_ the candidate that a preview already exists. They see only the resume picker and cover-letter form, so there's no visual signal that applying will simply lock in an already-computed score.
-2. If the candidate switches to a non-default resume in the picker, a fresh AI call _will_ run on submit (the promotion path requires resume match) — but nothing in the UI warns them.
+2. If the candidate switches to a non-default resume in the picker, a fresh AI call _will_ run on submit (the promotion path requires resume match) - but nothing in the UI warns them.
 
 ## Goal
 
@@ -44,13 +44,13 @@ This is a frontend-only change. The backend already does the right thing.
     - Adjust submit button label: "Lock in match & apply" vs. "Submit application".
 - New component: `apps/web/components/score/apply-match-summary.tsx`
   - Read-only variant of the job-detail Match Preview card. No Recompute button, no fetch, no internal state beyond which component row is expanded.
-  - Reuses `ScoreRing`, `MatchBandChip`, `EvidenceCallout`, and the existing `ComponentRow` markup. Visual parity with the job-detail card is the explicit goal — same component breakdown, same evidence panel, same fairness footnote, just stripped of compute affordances.
+  - Reuses `ScoreRing`, `MatchBandChip`, `EvidenceCallout`, and the existing `ComponentRow` markup. Visual parity with the job-detail card is the explicit goal - same component breakdown, same evidence panel, same fairness footnote, just stripped of compute affordances.
 
 **Out of scope:**
 
 - Backend changes. The promotion path already works.
 - Changes to the job-detail Match Preview (`_match-preview-client.tsx`) itself.
-- Changes to the application detail page (`/candidate/applications/[id]`) — already shows the locked-in score correctly.
+- Changes to the application detail page (`/candidate/applications/[id]`) - already shows the locked-in score correctly.
 - New API endpoints. Reuses existing `GET /api/v1/scoring/match-preview/{jobId}`.
 - Database, schema, RLS, or scoring-config changes.
 
@@ -64,23 +64,23 @@ The preview fetch hits `GET /api/v1/scoring/match-preview/{jobId}`, which calls 
 
 ### Resume picker behavior
 
-The picker still defaults to the candidate's default resume (existing behavior — `resumes.find((r) => r.isDefault)?.id ?? resumes[0]?.id`). Below the picker:
+The picker still defaults to the candidate's default resume (existing behavior - `resumes.find((r) => r.isDefault)?.id ?? resumes[0]?.id`). Below the picker:
 
 | Picker selection                           | Preview state     | Banner copy                                                                                                                                                     |
 | ------------------------------------------ | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Resume matches preview's `resumeId`        | Preview present   | _"Apply to lock in this score — no recompute needed."_ (positive, primary-soft background)                                                                      |
+| Resume matches preview's `resumeId`        | Preview present   | _"Apply to lock in this score - no recompute needed."_ (positive, primary-soft background)                                                                      |
 | Resume does not match preview's `resumeId` | Preview present   | _"You picked a different resume than the one your match was scored against. We'll compute a fresh match when you submit."_ (warning, score-mid-soft background) |
-| Any resume                                 | No preview at all | _"No match preview yet — we'll score your resume against this job when you submit."_ (neutral, surface-soft background)                                         |
+| Any resume                                 | No preview at all | _"No match preview yet - we'll score your resume against this job when you submit."_ (neutral, surface-soft background)                                         |
 
 ### Submit indicator
 
 ```
 if (preview && selectedResumeMatchesPreview) {
-  // Promotion path — backend reuses cached AI result.
+  // Promotion path - backend reuses cached AI result.
   show <Spinner /> + "Submitting application…"
 } else {
-  // Fresh-compute path — backend runs OpenAI.
-  show <AiShimmer caption="Computing your match against this job — analyzing skills, experience, education, and cultural fit..." />
+  // Fresh-compute path - backend runs OpenAI.
+  show <AiShimmer caption="Computing your match against this job - analyzing skills, experience, education, and cultural fit..." />
 }
 ```
 
@@ -92,7 +92,7 @@ Renders only when a preview exists. Content matches the job-detail Match Preview
 
 - Header: `Match summary` label + `Locked-in on apply` badge (primary-soft).
 - Top row: `ScoreRing` (md) + `MatchBandChip` + meta line (`Computed {timestamp} · {latencyMs}ms · {model}`).
-- Component breakdown rows (clickable to expand evidence — local state only).
+- Component breakdown rows (clickable to expand evidence - local state only).
 - Evidence panel for active component (collapsed by default, "Show evidence and explanations" toggle).
 - Fairness footnote (redacted-fields count + "Score reflects skills + experience match only.").
 - **No Recompute button.** The candidate can return to the job detail page to recompute.
@@ -165,21 +165,21 @@ interface ApplyFormClientProps {
 }
 ```
 
-`preview` is fetched server-side and passed down. The client never refetches it — if the candidate wants a fresher score they go back to the job detail page.
+`preview` is fetched server-side and passed down. The client never refetches it - if the candidate wants a fresher score they go back to the job detail page.
 
 ## Edge cases
 
-- **No preview, candidate clicks Apply.** No summary card renders; banner says _"No match preview yet — we'll score your resume against this job when you submit."_; submit shows `AiShimmer`. This is the only path where the existing shimmer copy is honest, so it's preserved.
+- **No preview, candidate clicks Apply.** No summary card renders; banner says _"No match preview yet - we'll score your resume against this job when you submit."_; submit shows `AiShimmer`. This is the only path where the existing shimmer copy is honest, so it's preserved.
 - **Default resume changed since preview was created.** `ScoringService.invalidatePreviewsForResume` (called from the resumes module on default change) deletes stale previews server-side. The apply page's preview fetch returns `null` and the no-preview branch handles it. No client-side staleness logic needed.
 - **Candidate switches resumes mid-form.** Banner copy updates; submit indicator and button copy follow the new `selectedResumeMatchesPreview` value. No fetch.
-- **Preview row exists but was scored against a non-default resume.** Not possible today — `computeMatchPreview` always uses `findDefaultByCandidateId` (`scoring.service.ts:541`). The summary panel still works because it compares `preview.resumeId` to the picker selection regardless of default status.
+- **Preview row exists but was scored against a non-default resume.** Not possible today - `computeMatchPreview` always uses `findDefaultByCandidateId` (`scoring.service.ts:541`). The summary panel still works because it compares `preview.resumeId` to the picker selection regardless of default status.
 - **Server-side preview fetch fails (5xx, network error).** Treat as no-preview. Page still renders. Audit logs on the API side will capture the upstream error.
 - **Preview fetch returns 401 (token expiry on the server fetch).** The server component redirects to `/login` already if `getCurrentSession()` returns null; otherwise pass `null` for preview and let the candidate proceed. The submit step re-authenticates via the browser Supabase client, so this doesn't strand the candidate.
-- **Race: candidate computed a preview seconds ago, server-fetch caught a stale read.** Backend promotion still kicks in at submit time (it queries the DB directly, not the cache). Worst case the UI shows "no preview" while the backend silently promotes — candidate perceives a slower submit, score is still correct. Acceptable.
+- **Race: candidate computed a preview seconds ago, server-fetch caught a stale read.** Backend promotion still kicks in at submit time (it queries the DB directly, not the cache). Worst case the UI shows "no preview" while the backend silently promotes - candidate perceives a slower submit, score is still correct. Acceptable.
 
 ## Visual / motion
 
-- Summary panel uses `var(--radius-xl)`, `var(--color-canvas)`, hairline border — matches the job-detail Match Preview card.
+- Summary panel uses `var(--radius-xl)`, `var(--color-canvas)`, hairline border - matches the job-detail Match Preview card.
 - Banner under the resume picker uses the corresponding token-driven background per state (primary-soft / score-mid-soft / surface-soft) and `var(--radius-md)`, 12 px padding.
 - Submit transition: instant swap from form → spinner / shimmer. No exit animation. This matches every other submit flow in the app.
 - Score Ring fill animation re-uses the existing 800 ms ease-out from `score-ring.tsx`.
@@ -193,7 +193,7 @@ No new audit events. The backend already logs:
 - `score.match.preview.computed` when the preview was created (job-detail page).
 - `score.match.computed` with `details.promotedFromPreviewId` when apply promotes the preview, or that field as `null` when fresh-compute ran.
 
-The frontend change adds nothing — the existing audit trail already distinguishes the two paths and is the authoritative record for the thesis.
+The frontend change adds nothing - the existing audit trail already distinguishes the two paths and is the authoritative record for the thesis.
 
 ## Acceptance
 
@@ -210,4 +210,4 @@ The frontend change adds nothing — the existing audit trail already distinguis
 ## Out of scope but worth noting
 
 - Surfacing the candidate's full match-preview catalog inside `/candidate/applications/[id]` is already handled by the application detail page and out of scope here.
-- A "preview is fresh / preview is stale" timestamp warning (e.g., "computed 3 days ago — recompute?") is _not_ part of this work. Today the backend invalidates on resume change and that's the only freshness signal we have. If we add freshness windows later it lives in a separate spec.
+- A "preview is fresh / preview is stale" timestamp warning (e.g., "computed 3 days ago - recompute?") is _not_ part of this work. Today the backend invalidates on resume change and that's the only freshness signal we have. If we add freshness windows later it lives in a separate spec.

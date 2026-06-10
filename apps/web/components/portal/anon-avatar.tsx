@@ -1,5 +1,5 @@
 /**
- * Anonymized candidate avatar — rendered in recruiter pipeline lists
+ * Anonymized candidate avatar - rendered in recruiter pipeline lists
  * before interview completion. Per thesis panel revision (May 2026)
  * candidate identity is hidden from recruiters until an interview is
  * completed; the avatar must not leak initials of the real name. This

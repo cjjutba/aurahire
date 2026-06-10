@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // ============================================================================
-// PARSED RESUME v2 — output of resume parsing AI call
+// PARSED RESUME v2 - output of resume parsing AI call
 // Adds *_source verbatim strings for every extracted value, enabling client-side
 // highlight positioning over the rendered PDF.
 // ============================================================================

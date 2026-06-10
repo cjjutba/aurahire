@@ -57,7 +57,7 @@ export class ActiveCompanyGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // 1. @Public() bypass — defense in depth (these routes also skip auth).
+    // 1. @Public() bypass - defense in depth (these routes also skip auth).
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -72,7 +72,7 @@ export class ActiveCompanyGuard implements CanActivate {
     }>();
     const user = req.user;
 
-    // 2. No user — defer to SupabaseAuthGuard (which runs before us).
+    // 2. No user - defer to SupabaseAuthGuard (which runs before us).
     // Reaching here without a user means the upstream guard either
     // already returned 401 or this is an unauthenticated request that
     // somehow slipped past; either way, do not throw a misleading error.
@@ -97,7 +97,7 @@ export class ActiveCompanyGuard implements CanActivate {
       return true;
     }
 
-    // 5. @SkipActiveCompany() bypass — for routes needed BEFORE membership
+    // 5. @SkipActiveCompany() bypass - for routes needed BEFORE membership
     // exists (POST /companies, /invitations/accept, /profiles/me, etc.).
     // Checked AFTER admin/candidate role bypasses so that role-based skips
     // win over per-route opt-out (the role bypasses are stricter).
@@ -112,7 +112,7 @@ export class ActiveCompanyGuard implements CanActivate {
     let companyId: string | null = headerCompanyId;
 
     if (!companyId) {
-      // Always pull the live value — SupabaseAuthGuard's AuthUser doesn't
+      // Always pull the live value - SupabaseAuthGuard's AuthUser doesn't
       // include lastActiveCompanyId, and trusting a cached value would
       // race against in-flight company switches.
       companyId = await this.lookupLastActiveCompanyId(user.id);
@@ -122,7 +122,7 @@ export class ActiveCompanyGuard implements CanActivate {
       // Auto-heal: a user with exactly one active membership but no pointer
       // (seed gap, partial onboarding, leftover state) is unambiguously
       // resolvable. Pick that membership and persist the pointer so future
-      // requests skip this branch. With 0 or 2+ memberships we still 403 —
+      // requests skip this branch. With 0 or 2+ memberships we still 403 -
       // the caller has to onboard or explicitly switch.
       const memberships = await this.companyMembersRepo.listActiveForUser(
         user.id,
@@ -147,7 +147,7 @@ export class ActiveCompanyGuard implements CanActivate {
     }
 
     // 7. Membership verification. The repo method already filters
-    // status='active' — invited / suspended / left rows return null here.
+    // status='active' - invited / suspended / left rows return null here.
     // Cached against (companyMembership, userMemberships) tags; existing
     // member-CRUD service paths bust both, so role/status changes propagate
     // immediately. Negative answers (null) are also cached to prevent
@@ -189,7 +189,7 @@ export class ActiveCompanyGuard implements CanActivate {
   /**
    * Read and validate the X-Active-Company-Id header. Throws 400 on a
    * malformed value rather than silently falling through to the profile
-   * fallback — the caller asked for a specific company; respect that.
+   * fallback - the caller asked for a specific company; respect that.
    */
   private readHeader(
     headers: Record<string, string | string[] | undefined>,

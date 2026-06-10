@@ -250,7 +250,7 @@ describe("NotificationsService mark/archive realtime emits", () => {
     expect(result.unreadCount).toBe(2);
   });
 
-  it("dismiss is an alias for archive — same repo path, same event", async () => {
+  it("dismiss is an alias for archive - same repo path, same event", async () => {
     repo.archive.mockResolvedValue({ unreadCount: 1 });
     await service.dismiss("n1", "u1");
     expect(repo.archive).toHaveBeenCalledWith("n1", "u1");

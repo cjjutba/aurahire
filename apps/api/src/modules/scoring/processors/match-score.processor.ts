@@ -110,7 +110,7 @@ export class MatchScoreProcessor extends WorkerHost {
 
     // Score-based auto-rejection (thesis panel revision, May 2026).
     // Async path: evaluate the threshold once the score row has been
-    // written and broadcast. The helper is idempotent — if the
+    // written and broadcast. The helper is idempotent - if the
     // recruiter already moved the application past `applied`, this is
     // a no-op.
     try {
@@ -137,7 +137,7 @@ export class MatchScoreProcessor extends WorkerHost {
     }
 
     this.logger.log(
-      `[score-job ${job.id}] ok in ${Date.now() - startedAt}ms — ${dto.overallScore}/100 ${dto.band}`,
+      `[score-job ${job.id}] ok in ${Date.now() - startedAt}ms - ${dto.overallScore}/100 ${dto.band}`,
     );
   }
 

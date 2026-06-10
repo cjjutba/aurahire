@@ -8,7 +8,7 @@ import Redis from "ioredis";
  * Custom Socket.io adapter that wires the @socket.io/redis-adapter against
  * the existing REDIS_URL. Required for cross-instance broadcast if we ever run
  * more than one API process (e.g. multiple Droplets behind a load balancer, or
- * scaling out via DOKS) — even with a single PM2-managed process on one
+ * scaling out via DOKS) - even with a single PM2-managed process on one
  * Digital Ocean Droplet today, wiring this from day one means scaling out is
  * a redeploy, not a refactor.
  *
@@ -34,7 +34,7 @@ export class RedisIoAdapter extends IoAdapter {
     }
     // Pub/sub adapter needs distinct connections (Redis pub/sub blocks the conn).
     // lazyConnect:true so the awaited connect() actually blocks until the TCP
-    // handshake completes — required because @socket.io/redis-adapter calls
+    // handshake completes - required because @socket.io/redis-adapter calls
     // psubscribe inside its constructor with enableOfflineQueue:false, and
     // that throws "Stream isn't writeable" if the sub isn't ready yet.
     this.pub = new Redis(url, {

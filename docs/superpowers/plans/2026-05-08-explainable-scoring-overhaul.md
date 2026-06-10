@@ -4,7 +4,7 @@
 
 **Goal:** Make every point on every profile/match score traceable to a quoted excerpt. Engine derives `component.score = clamp(sum(evidence.contribution_points), 0, max)`; all contributions are multiples of 5; profile evidence gains `contribution_points` parity with match; the "Contributes" verb is dropped; calibration warnings flag at-ceiling components without strong evidence.
 
-**Architecture:** Strict-sum reconciliation enforced server-side in pure helpers (`reconcileEvidenceContributions`, `detectCalibrationWarnings`) called from every score-write code path (`computeProfileScore`, `computeMatchScore`, `computeMatchPreviewInternal`, `rescore-batch.processor`). Schema layer enforces `multipleOf(5)` via Zod refinement; engine re-quantizes defensively. Audit fields ride existing `audit_logs.details` jsonb — no DB migration. Frontend `EvidenceCallout` copy fix is purely additive; profile parity comes for free once the engine writes `contribution_points` into the existing `evidence_excerpts.contribution_points` column (currently hardcoded `null` for profile rows).
+**Architecture:** Strict-sum reconciliation enforced server-side in pure helpers (`reconcileEvidenceContributions`, `detectCalibrationWarnings`) called from every score-write code path (`computeProfileScore`, `computeMatchScore`, `computeMatchPreviewInternal`, `rescore-batch.processor`). Schema layer enforces `multipleOf(5)` via Zod refinement; engine re-quantizes defensively. Audit fields ride existing `audit_logs.details` jsonb - no DB migration. Frontend `EvidenceCallout` copy fix is purely additive; profile parity comes for free once the engine writes `contribution_points` into the existing `evidence_excerpts.contribution_points` column (currently hardcoded `null` for profile rows).
 
 **Tech Stack:** Zod schemas in `@aurahire/shared`; NestJS scoring module in `apps/api/src/modules/scoring/`; Drizzle for persistence (no migration); Next.js 16 App Router for the candidate / admin pages; OpenAI `gpt-4o-mini` with structured outputs.
 
@@ -14,39 +14,39 @@
 
 ## File Structure
 
-**Modified — `packages/shared/src/schemas/score.ts`** (~80 lines): Adds `scoredEvidenceSchema` with `multipleOf(5)`. Profile component evidence switches from `evidenceSchema` → `scoredEvidenceSchema`. `matchEvidenceSchema` becomes a transitional alias. Component score fields gain `multipleOf(5)`.
+**Modified - `packages/shared/src/schemas/score.ts`** (~80 lines): Adds `scoredEvidenceSchema` with `multipleOf(5)`. Profile component evidence switches from `evidenceSchema` → `scoredEvidenceSchema`. `matchEvidenceSchema` becomes a transitional alias. Component score fields gain `multipleOf(5)`.
 
-**Modified — `apps/api/src/modules/scoring/scoring.service.ts`** (~1130 lines): Adds two pure helpers `reconcileEvidenceContributions` and `detectCalibrationWarnings` near existing `normalizeComponentsToWeights`. Wires both into `computeProfileScore` (line 276 onward), `computeMatchScore` (line 534 onward), and `computeMatchPreviewInternal` (line 892 onward). Replaces hardcoded `contributionPoints: null` at line 289. Audit `details` payloads gain `scoreResiduals`, `evidenceQuantizationResiduals`, `calibrationWarnings` (camelCase, matching the rest of `audit_logs.details`). Helpers exported so the rescore-batch processor can import them.
+**Modified - `apps/api/src/modules/scoring/scoring.service.ts`** (~1130 lines): Adds two pure helpers `reconcileEvidenceContributions` and `detectCalibrationWarnings` near existing `normalizeComponentsToWeights`. Wires both into `computeProfileScore` (line 276 onward), `computeMatchScore` (line 534 onward), and `computeMatchPreviewInternal` (line 892 onward). Replaces hardcoded `contributionPoints: null` at line 289. Audit `details` payloads gain `scoreResiduals`, `evidenceQuantizationResiduals`, `calibrationWarnings` (camelCase, matching the rest of `audit_logs.details`). Helpers exported so the rescore-batch processor can import them.
 
-**Modified — `apps/api/src/modules/scoring/scoring.service.spec.ts`** (~600 lines today): New `describe("reconcileEvidenceContributions")` and `describe("detectCalibrationWarnings")` blocks with the unit tests from the spec.
+**Modified - `apps/api/src/modules/scoring/scoring.service.spec.ts`** (~600 lines today): New `describe("reconcileEvidenceContributions")` and `describe("detectCalibrationWarnings")` blocks with the unit tests from the spec.
 
-**Modified — `apps/api/src/modules/admin/processors/rescore-batch.processor.ts`** (~150 lines): Wires reconciliation + calibration helpers into the rescore loop so admin-driven rescores get the same transparency as candidate-driven ones. (Spec did not explicitly list this file, but excluding it would leave a transparency hole the user explicitly objected to — "all transactions should be transparent.")
+**Modified - `apps/api/src/modules/admin/processors/rescore-batch.processor.ts`** (~150 lines): Wires reconciliation + calibration helpers into the rescore loop so admin-driven rescores get the same transparency as candidate-driven ones. (Spec did not explicitly list this file, but excluding it would leave a transparency hole the user explicitly objected to - "all transactions should be transparent.")
 
-**Modified — `apps/api/src/ai/prompts/score-profile.ts`** (~70 lines): Bump version constant to `1.2.0`. Add contribution_points instruction. Tighten the existing 75–85% anchor into the new ceiling-requires-strong-evidence rule. **HUMAN APPROVAL GATE.**
+**Modified - `apps/api/src/ai/prompts/score-profile.ts`** (~70 lines): Bump version constant to `1.2.0`. Add contribution_points instruction. Tighten the existing 75-85% anchor into the new ceiling-requires-strong-evidence rule. **HUMAN APPROVAL GATE.**
 
-**Modified — `apps/api/src/ai/prompts/score-match.ts`** (~95 lines): Bump version constant to `1.2.0`. Replace `"approximately"` with strict equality. Add 5-point quantization rule. Add ceiling rule. **HUMAN APPROVAL GATE.**
+**Modified - `apps/api/src/ai/prompts/score-match.ts`** (~95 lines): Bump version constant to `1.2.0`. Replace `"approximately"` with strict equality. Add 5-point quantization rule. Add ceiling rule. **HUMAN APPROVAL GATE.**
 
-**Modified — `apps/web/components/score/evidence-callout.tsx`** (~75 lines): Replace `"Contributes ±N points"` footer with a signed-integer chip in score-band color, Unicode minus, monospace.
+**Modified - `apps/web/components/score/evidence-callout.tsx`** (~75 lines): Replace `"Contributes ±N points"` footer with a signed-integer chip in score-band color, Unicode minus, monospace.
 
-**Modified — `apps/api/src/modules/admin/repositories/admin-bias-monitor.repository.ts`**: New aggregation query that counts `calibrationWarnings` from `audit_logs.details` over the requested date range, optionally filtered by `prompt_version`.
+**Modified - `apps/api/src/modules/admin/repositories/admin-bias-monitor.repository.ts`**: New aggregation query that counts `calibrationWarnings` from `audit_logs.details` over the requested date range, optionally filtered by `prompt_version`.
 
-**Modified — `apps/api/src/modules/admin/services/admin-bias-monitor.service.ts`**: Calls the new repo method, folds the result into the existing bundle response.
+**Modified - `apps/api/src/modules/admin/services/admin-bias-monitor.service.ts`**: Calls the new repo method, folds the result into the existing bundle response.
 
-**Modified — `apps/api/src/modules/admin/dto/bias-monitor-query.dto.ts`** + **`bias-monitor-response.dto.ts`**: Adds optional `promptVersionMin` query param and `scoringQuality` block on the response.
+**Modified - `apps/api/src/modules/admin/dto/bias-monitor-query.dto.ts`** + **`bias-monitor-response.dto.ts`**: Adds optional `promptVersionMin` query param and `scoringQuality` block on the response.
 
-**Modified — `apps/web/app/(admin)/admin/bias-monitor/page.tsx`**: Renders a new "Scoring Quality" panel below existing KPIs.
+**Modified - `apps/web/app/(admin)/admin/bias-monitor/page.tsx`**: Renders a new "Scoring Quality" panel below existing KPIs.
 
-**New — `apps/web/app/(admin)/admin/bias-monitor/_scoring-quality-panel.tsx`**: Client component that displays the calibration warnings breakdown.
+**New - `apps/web/app/(admin)/admin/bias-monitor/_scoring-quality-panel.tsx`**: Client component that displays the calibration warnings breakdown.
 
 ---
 
-# Phase 1 — Backend
+# Phase 1 - Backend
 
 Phase 1 is testable end-to-end via existing `scoring.service.spec.ts` plus new unit tests. No frontend dependency.
 
 ---
 
-## Task 1: Schema — add `scoredEvidenceSchema` with `multipleOf(5)`
+## Task 1: Schema - add `scoredEvidenceSchema` with `multipleOf(5)`
 
 **Goal:** Profile and match component evidence both use a single schema that requires `contribution_points` as a multiple of 5. Component scores also become multiples of 5.
 
@@ -88,7 +88,7 @@ export const evidenceSchema = z.object({
 
 /**
  * Evidence that contributes a quantified delta to a component score.
- * `contribution_points` is a SIGNED INTEGER and a MULTIPLE OF 5 — positive when
+ * `contribution_points` is a SIGNED INTEGER and a MULTIPLE OF 5 - positive when
  * the quote helped, negative when it represents a gap, 0 when neutral.
  *
  * The engine derives `component.score = clamp(sum(contribution_points), 0, max)`
@@ -101,7 +101,7 @@ export const scoredEvidenceSchema = evidenceSchema.extend({
 });
 
 /**
- * @deprecated Transitional alias — use `scoredEvidenceSchema`.
+ * @deprecated Transitional alias - use `scoredEvidenceSchema`.
  * Kept so existing imports don't break in the same PR; remove in a follow-up.
  */
 export const matchEvidenceSchema = scoredEvidenceSchema;
@@ -173,7 +173,7 @@ export const matchComponentSchema = z.object({
 });
 ```
 
-The cap raise from 5 to 6 matches what the match prompt v1.1.0 already states (`score-match.ts:40` says "Total evidence per component: aim for 2–4 items in mixed cases (some positives + at least one negative). Do not exceed 6.") — so the schema is catching up to the prompt, not introducing new behavior.
+The cap raise from 5 to 6 matches what the match prompt v1.1.0 already states (`score-match.ts:40` says "Total evidence per component: aim for 2-4 items in mixed cases (some positives + at least one negative). Do not exceed 6.") - so the schema is catching up to the prompt, not introducing new behavior.
 
 - [ ] **Step 5: Verify type exports still work**
 
@@ -183,7 +183,7 @@ Expected: No type errors. The renamed `matchEvidenceSchema` alias means downstre
 - [ ] **Step 6: Verify all consumers still type-check**
 
 Run: `pnpm --filter @aurahire/api tsc --noEmit && pnpm --filter @aurahire/web tsc --noEmit`
-Expected: No type errors. (If the web app errors on a `multipleOf(5)` constraint somewhere, that's a sign that some test data is hardcoded — reroute to Step 7.)
+Expected: No type errors. (If the web app errors on a `multipleOf(5)` constraint somewhere, that's a sign that some test data is hardcoded - reroute to Step 7.)
 
 - [ ] **Step 7: Commit**
 
@@ -200,7 +200,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 2: TDD — `reconcileEvidenceContributions` helper
+## Task 2: TDD - `reconcileEvidenceContributions` helper
 
 **Goal:** Pure function that quantizes contributions to nearest 5, computes derived score = clamp(sum, 0, max), forces relevance from sign, and returns reconciliation metadata.
 
@@ -214,7 +214,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 - [ ] **Step 1: Find a stable place to put the new tests**
 
 Run: `grep -n "describe(" apps/api/src/modules/scoring/scoring.service.spec.ts`
-Note: existing tests live in a single `describe("ScoringService.computeMatchPreviewOnView")` block. Add new top-level `describe` blocks at the top of the file (above the existing one) for the pure helper tests — they don't need any of the mocks the existing tests build.
+Note: existing tests live in a single `describe("ScoringService.computeMatchPreviewOnView")` block. Add new top-level `describe` blocks at the top of the file (above the existing one) for the pure helper tests - they don't need any of the mocks the existing tests build.
 
 - [ ] **Step 2: Write the failing tests**
 
@@ -398,7 +398,7 @@ describe("reconcileEvidenceContributions", () => {
       buildComponent({
         score: 0,
         evidence: [
-          // AI mislabeled a -10 as positive — engine forces it back to negative.
+          // AI mislabeled a -10 as positive - engine forces it back to negative.
           {
             excerpt: "no Go",
             source: "req",
@@ -434,7 +434,7 @@ describe("reconcileEvidenceContributions", () => {
 - [ ] **Step 3: Run the failing tests**
 
 Run: `pnpm --filter @aurahire/api test -- scoring.service.spec`
-Expected: 7 failures from `describe("reconcileEvidenceContributions")` because the function isn't exported (or doesn't exist) yet. The existing `computeMatchPreviewOnView` block should still pass — don't touch it.
+Expected: 7 failures from `describe("reconcileEvidenceContributions")` because the function isn't exported (or doesn't exist) yet. The existing `computeMatchPreviewOnView` block should still pass - don't touch it.
 
 - [ ] **Step 4: Implement the helper**
 
@@ -535,9 +535,9 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 3: TDD — `detectCalibrationWarnings` helper
+## Task 3: TDD - `detectCalibrationWarnings` helper
 
-**Goal:** Surface known model-misbehavior patterns (ceiling with thin evidence, deduction without negative evidence) as audit warnings — without auto-adjusting the score.
+**Goal:** Surface known model-misbehavior patterns (ceiling with thin evidence, deduction without negative evidence) as audit warnings - without auto-adjusting the score.
 
 **Files:**
 
@@ -705,15 +705,15 @@ In `apps/api/src/modules/scoring/scoring.service.ts`, immediately after `reconci
 ```ts
 /**
  * Surface known model-misbehavior patterns as advisory warnings.
- * Warnings do NOT auto-adjust the score — they're written to the audit
+ * Warnings do NOT auto-adjust the score - they're written to the audit
  * row's `details.calibrationWarnings` array and aggregated in
  * /admin/bias-monitor's "Scoring Quality" panel for human review.
  *
  * Two heuristics:
- *   1. ceiling_with_thin_evidence — Component scored at max but the model
+ *   1. ceiling_with_thin_evidence - Component scored at max but the model
  *      only cited one positive evidence item. The prompt v1.2.0 rule
  *      requires at least two positives at ceiling.
- *   2. deduction_without_negative_evidence — Component below max but no
+ *   2. deduction_without_negative_evidence - Component below max but no
  *      evidence row carries a negative contribution. The deduction has no
  *      visible justification.
  */
@@ -772,7 +772,7 @@ git add apps/api/src/modules/scoring/scoring.service.ts apps/api/src/modules/sco
 git commit -m "feat(scoring): add detectCalibrationWarnings helper
 
 Surfaces ceiling-with-thin-evidence and deduction-without-negative-evidence
-patterns as advisory warnings. Warnings do not adjust the score — they
+patterns as advisory warnings. Warnings do not adjust the score - they
 flow into audit_logs.details for /admin/bias-monitor aggregation.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
@@ -904,7 +904,7 @@ const { profileScore } = await this.scoringRepo.insertProfileScore(
 );
 ```
 
-with (only the `components` line and `rawOutput` line change — `components` reads from reconciled, `rawOutput` keeps AI's original for audit):
+with (only the `components` line and `rawOutput` line change - `components` reads from reconciled, `rawOutput` keeps AI's original for audit):
 
 ```ts
 const { profileScore } = await this.scoringRepo.insertProfileScore(
@@ -1101,7 +1101,7 @@ const evidenceRows = reconciledMatchComponents.flatMap((comp) =>
 );
 ```
 
-- [ ] **Step 4: Update the `insertMatchScore` call (around line 551-569) — change `components` field**
+- [ ] **Step 4: Update the `insertMatchScore` call (around line 551-569) - change `components` field**
 
 Replace `normalizedMatchComponents` with `reconciledMatchComponents` in the `components:` field.
 
@@ -1154,7 +1154,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ## Task 6: Wire reconciliation into `computeMatchPreviewInternal`
 
-**Goal:** Match-preview path (candidate clicks "See my match", or system precomputes top-N) runs identical reconciliation. Persists to `match_score_previews` (no separate `evidence_excerpts` rows for previews — evidence lives in `components` jsonb).
+**Goal:** Match-preview path (candidate clicks "See my match", or system precomputes top-N) runs identical reconciliation. Persists to `match_score_previews` (no separate `evidence_excerpts` rows for previews - evidence lives in `components` jsonb).
 
 **Files:**
 
@@ -1215,7 +1215,7 @@ const derivedOverall = deriveOverallScore(reconciledPreviewComponents);
 const derivedBand = deriveBand(derivedOverall, bandThresholds);
 ```
 
-- [ ] **Step 3: Update `upsertMatchPreview` call (around line 899-913) — change `components` field**
+- [ ] **Step 3: Update `upsertMatchPreview` call (around line 899-913) - change `components` field**
 
 Replace `normalizedPreviewComponents` with `reconciledPreviewComponents` in the `components:` field of the upsert payload.
 
@@ -1279,7 +1279,7 @@ import {
 } from "../../scoring/scoring.service";
 ```
 
-(Adjust path as needed based on the file's existing imports — the helpers live in `scoring.service.ts`.)
+(Adjust path as needed based on the file's existing imports - the helpers live in `scoring.service.ts`.)
 
 If `normalizeComponentsToWeights` / `deriveOverallScore` / `deriveBand` are needed here too, add them. **First check whether they are already exported.** If not, export them from `scoring.service.ts` in the same edit:
 
@@ -1399,7 +1399,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 8: Bump `score-profile.ts` to v1.2.0 — **HUMAN APPROVAL GATE**
+## Task 8: Bump `score-profile.ts` to v1.2.0 - **HUMAN APPROVAL GATE**
 
 **Goal:** Profile prompt version bumps; new instructions force the model to populate `contribution_points`, surface negative evidence when below ceiling, and require quantified-or-senior signals at ceiling.
 
@@ -1409,7 +1409,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 > ⚠️ **STOP.** Per `CLAUDE.md` § "When to ask vs proceed":
 >
-> > Changing the AI prompts (versions matter — bumping a prompt is a thesis-defensible event, not a casual edit) — Ask first.
+> > Changing the AI prompts (versions matter - bumping a prompt is a thesis-defensible event, not a casual edit) - Ask first.
 >
 > Before completing this task, present the diff to the human and wait for explicit approval. The implementing agent must surface the full before/after content of `score-profile.ts` in its message.
 
@@ -1417,7 +1417,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 - [ ] **Step 1: Surface the diff to the human**
 
-Output the current contents of `apps/api/src/ai/prompts/score-profile.ts` and the proposed v1.2.0 contents (steps 2–4 below) for human approval. Pause until the human responds with "approved".
+Output the current contents of `apps/api/src/ai/prompts/score-profile.ts` and the proposed v1.2.0 contents (steps 2-4 below) for human approval. Pause until the human responds with "approved".
 
 - [ ] **Step 2: Bump the version constant (line 1)**
 
@@ -1439,10 +1439,10 @@ export const SCORE_PROFILE_VERSION = "1.2.0";
 export const SCORE_PROFILE_SYSTEM_PROMPT = `You are an expert career coach evaluating a candidate's resume strength.
 
 Assess the resume against four components and produce a structured score:
-1. Completeness — percentage of resume sections filled (contact, education, experience, skills, summary, links)
-2. Skill Depth — number of relevant skills, modernity, alignment with desired role, evidence of mastery
-3. Experience Clarity — quality of experience descriptions: outcomes, technologies, durations, quantified impact
-4. Education Quality — degree match for desired role + relevant certifications
+1. Completeness - percentage of resume sections filled (contact, education, experience, skills, summary, links)
+2. Skill Depth - number of relevant skills, modernity, alignment with desired role, evidence of mastery
+3. Experience Clarity - quality of experience descriptions: outcomes, technologies, durations, quantified impact
+4. Education Quality - degree match for desired role + relevant certifications
 
 For each component:
 1. Score 0..max where max is the configured weight provided in the user message. The score MUST be a multiple of 5.
@@ -1451,14 +1451,14 @@ For each component:
    - excerpt: a short quote from the resume (or for negative items, the section/expectation that fell short).
    - source: section reference (e.g. "Experience › Senior Engineer at Acme", or "Resume › Education" for an absent-credential gap).
    - relevance: "positive" (helped earn points) | "negative" (a gap that cost points) | "neutral" (context only).
-   - contribution_points: SIGNED integer that is a MULTIPLE OF 5 (..., -15, -10, -5, 0, +5, +10, +15, ...). Positive when the quote helped (+N). Negative when it represents a gap (-N). 0 only for purely neutral context. The engine derives component.score from the SUM of contribution_points, clamped to [0, max] — so the sum MUST equal the score you intend.
+   - contribution_points: SIGNED integer that is a MULTIPLE OF 5 (..., -15, -10, -5, 0, +5, +10, +15, ...). Positive when the quote helped (+N). Negative when it represents a gap (-N). 0 only for purely neutral context. The engine derives component.score from the SUM of contribution_points, clamped to [0, max] - so the sum MUST equal the score you intend.
 
-CALIBRATION RULE — When you score a component at its ceiling (full max):
+CALIBRATION RULE - When you score a component at its ceiling (full max):
 - You MUST cite at least TWO positive evidence items.
 - At least one of those items MUST reference quantified outcomes (numbers, percentages, dollar figures, scale metrics like "8k DAU") OR senior-level scope (leadership, ownership, architectural decisions, multi-team scope).
 - Otherwise, cap the component at 85% of max (rounded to the nearest 5) and surface the gap as a negative evidence item.
 
-EVIDENCE BALANCE — For every component where score < max, you MUST include at least one evidence item with relevance="negative" and contribution_points<0 that explains the deduction. No exceptions. The negative items' contribution_points should arithmetically explain why the component sits below max.
+EVIDENCE BALANCE - For every component where score < max, you MUST include at least one evidence item with relevance="negative" and contribution_points<0 that explains the deduction. No exceptions. The negative items' contribution_points should arithmetically explain why the component sits below max.
 
 Then the engine sums component scores for overall_score (0-100). Determine band:
 - 70-100: "strong"
@@ -1508,7 +1508,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 9: Bump `score-match.ts` to v1.2.0 — **HUMAN APPROVAL GATE**
+## Task 9: Bump `score-match.ts` to v1.2.0 - **HUMAN APPROVAL GATE**
 
 **Goal:** Match prompt version bumps; replaces `"approximately"` with strict equality, adds 5-point quantization, adds calibration rule.
 
@@ -1546,9 +1546,9 @@ export const SCORE_MATCH_SYSTEM_PROMPT = `You are an expert recruiter scoring a 
 For each component:
 1. Score 0..max (where max is the configured weight). The score MUST be a multiple of 5.
 2. Plain-language explanation. When score < max, the explanation MUST identify what specifically prevented a higher score (e.g. missing required skill, insufficient years of experience, education gap, tone mismatch). Do not pad with generic praise.
-3. 1-6 evidence excerpts in total — a mix of positive (what helped) and negative (what was missing or mismatched).
+3. 1-6 evidence excerpts in total - a mix of positive (what helped) and negative (what was missing or mismatched).
    - excerpt: a short quote. For positive items, quote the candidate's resume verbatim. For negative items, quote either the resume snippet that fell short OR the job-description requirement the resume does not satisfy.
-   - source: section reference. Examples — "Experience › Senior Engineer at Acme" (resume), or "Job requirement › Required Skills" (job description) for gap items.
+   - source: section reference. Examples - "Experience › Senior Engineer at Acme" (resume), or "Job requirement › Required Skills" (job description) for gap items.
    - relevance: "positive" (helped earn points) | "negative" (a gap that cost points) | "neutral"
    - contribution_points: SIGNED integer that is a MULTIPLE OF 5 (..., -15, -10, -5, 0, +5, +10, +15, ...). Positive when the quote helped (+N). Negative when it represents a gap (-N). 0 only for purely neutral context.
 
@@ -1574,13 +1574,13 @@ cultural_fit:
 - Look for soft-skill alignment (collaborative, fast-paced, structured, etc.)
 - Gap evidence: name the soft-skill or working-style cue from the JD that the resume does not echo.
 
-EVIDENCE BALANCE — REQUIRED:
-- The sum of all evidence contribution_points (positive + negative) must EQUAL component.score exactly. If you score skills at 25/40, the contributions must sum to 25. The engine recomputes score from the sum, so any mismatch will be silently overwritten — match them yourself for narrative coherence.
+EVIDENCE BALANCE - REQUIRED:
+- The sum of all evidence contribution_points (positive + negative) must EQUAL component.score exactly. If you score skills at 25/40, the contributions must sum to 25. The engine recomputes score from the sum, so any mismatch will be silently overwritten - match them yourself for narrative coherence.
 - For every component where score < max, you MUST include at least one "negative" evidence item that names the gap. No exceptions.
-- For components scored at max, do NOT fabricate gaps — only positive/neutral evidence.
-- Total evidence per component: aim for 2–4 items in mixed cases (some positives + at least one negative). Do not exceed 6.
+- For components scored at max, do NOT fabricate gaps - only positive/neutral evidence.
+- Total evidence per component: aim for 2-4 items in mixed cases (some positives + at least one negative). Do not exceed 6.
 
-CALIBRATION RULE — When you score a component at its ceiling (full max):
+CALIBRATION RULE - When you score a component at its ceiling (full max):
 - You MUST cite at least TWO positive evidence items.
 - At least one of those items MUST reference quantified outcomes (numbers, percentages, dollar figures) OR senior-level scope (leadership, ownership, architectural decisions).
 - Otherwise, cap the component at 85% of max (rounded to the nearest 5) and surface the gap as a negative evidence item.
@@ -1589,8 +1589,8 @@ After scoring components:
 - The engine sums component scores to overall_score (0-100).
 - Determine band: "strong" (70+), "partial" (40-69), "limited" (0-39)
 - Write a one-paragraph synthesis (summary). When the overall score is below 100, the summary must acknowledge the main gap(s), not only strengths.
-- List up to 3 red_flags (significant gaps) — optional, but populate when at least one component scored below 60% of its max.
-- List up to 3 green_flags (standout strengths) — optional.
+- List up to 3 red_flags (significant gaps) - optional, but populate when at least one component scored below 60% of its max.
+- List up to 3 green_flags (standout strengths) - optional.
 
 IMPORTANT:
 - Do NOT infer demographics; score only on the redacted content provided.
@@ -1624,7 +1624,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-# Phase 2 — Frontend
+# Phase 2 - Frontend
 
 Phase 2 is purely cosmetic. The backend now writes `contribution_points` into both profile and match evidence; the frontend already pipes the field through to `EvidenceCallout` (verified across 5 consumer files). The only change needed is the footer copy fix inside `EvidenceCallout` itself.
 
@@ -1674,7 +1674,7 @@ with:
 Three changes vs. the old footer:
 
 - Drop the "Contributes" verb (semantically wrong for negatives, redundant with the HELPED / HURT chip in the header).
-- Use Unicode minus `−` (U+2212), not ASCII hyphen `-` — typographically correct + matches existing `−5 pts to perfect` copy on the same page.
+- Use Unicode minus `−` (U+2212), not ASCII hyphen `-` - typographically correct + matches existing `−5 pts to perfect` copy on the same page.
 - Color the chip per relevance (`var(--color-score-high)` for positive, `var(--color-score-low)` for negative) instead of always-muted gray. The number itself becomes a glanceable signal.
 
 - [ ] **Step 2: Type-check + lint**
@@ -1698,7 +1698,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 11: Manual UI verification — **HUMAN STEP**
+## Task 11: Manual UI verification - **HUMAN STEP**
 
 **Goal:** Confirm the visible math reconciles end-to-end.
 
@@ -1725,31 +1725,31 @@ For each of the four components (Completeness, Skill Depth, Experience Clarity, 
 
 - [ ] **Step 4: Verify the copy fix landed**
 
-Search the page for the word "Contributes" — it must not appear anywhere in the breakdown. Negative chips render as `−5 points`, positive as `+5 points`.
+Search the page for the word "Contributes" - it must not appear anywhere in the breakdown. Negative chips render as `−5 points`, positive as `+5 points`.
 
 - [ ] **Step 5: Repeat for match preview**
 
-Navigate to `/candidate/jobs/<any-job-id>`. The match preview renders below the apply button. Repeat steps 3–4 for the four match components (Skills, Experience, Education, Cultural Fit).
+Navigate to `/candidate/jobs/<any-job-id>`. The match preview renders below the apply button. Repeat steps 3-4 for the four match components (Skills, Experience, Education, Cultural Fit).
 
 - [ ] **Step 6: Repeat for full match score**
 
-If a recruiter test account exists, navigate to `/recruiter/applications/<any-app-id>`. Repeat steps 3–4 for the full match score.
+If a recruiter test account exists, navigate to `/recruiter/applications/<any-app-id>`. Repeat steps 3-4 for the full match score.
 
 - [ ] **Step 7: Report any reconciliation failure**
 
-If a component's chips don't sum to its score, the issue is on the **backend** (reconciliation didn't fire, or the response DTO is reading from `rawOutput` instead of the reconciled `components`). Re-open Tasks 4–7 and look for a missed handoff. Do NOT patch the frontend.
+If a component's chips don't sum to its score, the issue is on the **backend** (reconciliation didn't fire, or the response DTO is reading from `rawOutput` instead of the reconciled `components`). Re-open Tasks 4-7 and look for a missed handoff. Do NOT patch the frontend.
 
 If all checks pass, Phase 2 is complete.
 
 ---
 
-# Phase 3 — Bias Monitor Surface
+# Phase 3 - Bias Monitor Surface
 
-Phase 3 surfaces the calibration warnings collected by Phases 1–2 in `/admin/bias-monitor`. Depends on having v1.2.0 traffic in `audit_logs.details` to populate the panel meaningfully.
+Phase 3 surfaces the calibration warnings collected by Phases 1-2 in `/admin/bias-monitor`. Depends on having v1.2.0 traffic in `audit_logs.details` to populate the panel meaningfully.
 
 ---
 
-## Task 12: Backend — extend bias-monitor repository with calibration query
+## Task 12: Backend - extend bias-monitor repository with calibration query
 
 **Goal:** Add a repository method that aggregates `audit_logs.details.calibrationWarnings` over a date range, optionally filtered by `prompt_version`.
 
@@ -1872,7 +1872,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 13: Backend — extend bundle DTO and service
+## Task 13: Backend - extend bundle DTO and service
 
 **Goal:** Add `scoringQuality` block to the bias-monitor response and `promptVersionMin` to the query DTO.
 
@@ -1961,7 +1961,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 14: Frontend — Scoring Quality panel + filter UI
+## Task 14: Frontend - Scoring Quality panel + filter UI
 
 **Goal:** Render the scoring-quality data in `/admin/bias-monitor`. Add a prompt-version filter alongside the existing date range filter.
 
@@ -2174,7 +2174,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 15: Manual verification — **HUMAN STEP**
+## Task 15: Manual verification - **HUMAN STEP**
 
 **Goal:** Confirm the Scoring Quality panel populates with real data after Phases 1-2 have shipped and produced v1.2.0 traffic.
 
@@ -2220,4 +2220,4 @@ After Task 15:
 - "Contributes" is gone from the UI.
 - `/admin/bias-monitor` surfaces calibration warnings with prompt-version filtering for thesis defense screenshots.
 
-The thesis claim — "every point traces to a quoted excerpt" — is now technically accurate end-to-end.
+The thesis claim - "every point traces to a quoted excerpt" - is now technically accurate end-to-end.

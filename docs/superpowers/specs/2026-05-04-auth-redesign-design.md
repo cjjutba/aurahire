@@ -1,4 +1,4 @@
-# Auth Redesign — OpenAI Platform–Style, AuraHire-Branded
+# Auth Redesign - OpenAI Platform-Style, AuraHire-Branded
 
 **Date:** 2026-05-04
 **Scope:** All 8 pages under `apps/web/app/(auth)/` + their forms + the shared layout/card components.
@@ -12,7 +12,7 @@
 2. Keep AuraHire's brand voltage exactly where it already lives: the primary CTA pill (`#2563eb`), inline links, focus rings. No new accent colors. No black CTAs.
 3. Adopt OpenAI's **floating-label pill input** as the canonical auth field.
 4. Apply the pattern consistently across all 8 auth pages, including the AuraHire-specific role-select page (no OpenAI analogue).
-5. Preserve current auth flow exactly — no email-first multi-step refactor, no OAuth, no schema changes, no API changes.
+5. Preserve current auth flow exactly - no email-first multi-step refactor, no OAuth, no schema changes, no API changes.
 
 ## Non-Goals
 
@@ -67,7 +67,7 @@
 
 ### Form headline + subtitle
 
-- **Headline:** `text-3xl font-normal tracking-[-0.5px] text-center text-[var(--color-ink)]` (Inter Display 400, 28–30px). One line per page; copy listed in the page table below.
+- **Headline:** `text-3xl font-normal tracking-[-0.5px] text-center text-[var(--color-ink)]` (Inter Display 400, 28-30px). One line per page; copy listed in the page table below.
 - **Subtitle (optional):** `text-sm text-[var(--color-body)] text-center max-w-[320px] mx-auto leading-relaxed`. Only appears when content is non-obvious (e.g., "Find your next role with explainable AI matching." on candidate signup).
 - **Spacing:** Headline `mb-2`. Subtitle `mb-8`. Subtitle-to-form gap stays `mb-8` even when subtitle is absent (so form positioning is consistent across pages).
 
@@ -116,7 +116,7 @@ No change to color: `bg-[var(--color-primary)]`, hover `bg-[var(--color-primary-
 Stacked, full-width pill-shaped rows (not the current rounded-xl boxes). Each card:
 
 - Container: `flex items-center gap-4`, padding `18px 24px`, border 1px `var(--color-hairline)`, radius `var(--radius-pill)`, white background.
-- Hover: border thickens to 2px `var(--color-primary)`, background tints to `var(--color-primary-soft)` at very low opacity (~20%) — call it `bg-[var(--color-primary-soft)]/30`.
+- Hover: border thickens to 2px `var(--color-primary)`, background tints to `var(--color-primary-soft)` at very low opacity (~20%) - call it `bg-[var(--color-primary-soft)]/30`.
 - Leading icon: 32px circle, `bg-[var(--color-surface-strong)]`, centered Lucide icon (`User` for Candidate, `Briefcase` for Recruiter), icon color `var(--color-body)`.
 - Primary label: Inter 600 / 14px, `var(--color-ink)`.
 - Secondary label: Inter 400 / 12px, `var(--color-body)`, `mt-0.5`.
@@ -141,7 +141,7 @@ Removed from inline-with-Password-label position (current). Replaced with a left
 
 - Form max-width: `max-w-[360px]` mobile/sm, `max-w-[400px]` md+ (`sm:max-w-[400px]`).
 - Page vertical padding: header → form: `pt-12` mobile → `pt-20` md+.
-- Field gap: `space-y-3` (12px) — slightly tighter than current `space-y-4` to prevent the long candidate signup from running off-screen.
+- Field gap: `space-y-3` (12px) - slightly tighter than current `space-y-4` to prevent the long candidate signup from running off-screen.
 - All breakpoints respect existing AuraHire responsive scale; no new breakpoints introduced.
 
 ### Accessibility
@@ -218,8 +218,8 @@ Three states based on backend response (current behavior preserved):
 ### `/verify-email/sent`
 
 - H1: **Check your inbox**
-- Subtitle: "Enter the verification code we just sent to **{email}**." — bold the email in `var(--color-ink)`. If `email` query param missing, fall back to "your inbox".
-- Body copy (below subtitle, optional): "Click the link in the email to activate your account. The link expires in 24 hours. Don't see it? Check your spam folder." — `text-sm text-[var(--color-body)] text-center max-w-[320px] mx-auto leading-relaxed`.
+- Subtitle: "Enter the verification code we just sent to **{email}**." - bold the email in `var(--color-ink)`. If `email` query param missing, fall back to "your inbox".
+- Body copy (below subtitle, optional): "Click the link in the email to activate your account. The link expires in 24 hours. Don't see it? Check your spam folder." - `text-sm text-[var(--color-body)] text-center max-w-[320px] mx-auto leading-relaxed`.
 - CTA: "Back to sign in" → `/login` (rendered as primary blue pill, full-width).
 
 ---
@@ -228,26 +228,26 @@ Three states based on backend response (current behavior preserved):
 
 ### New components
 
-- `apps/web/components/auth/auth-shell.tsx` — replaces `(auth)/layout.tsx`'s body wrapper. Provides centered max-width, vertical padding, headline + subtitle slots.
-- `apps/web/components/auth/auth-input.tsx` — floating-label pill input. Drop-in replacement for `<Input>` inside auth forms only.
-- `apps/web/components/auth/auth-footer.tsx` — dark Terms · Privacy footer bar.
-- `apps/web/components/auth/auth-role-tag.tsx` — small uppercase wayfinding chip.
-- `apps/web/components/auth/auth-role-card.tsx` — full-width pill role row (used on `/register`).
+- `apps/web/components/auth/auth-shell.tsx` - replaces `(auth)/layout.tsx`'s body wrapper. Provides centered max-width, vertical padding, headline + subtitle slots.
+- `apps/web/components/auth/auth-input.tsx` - floating-label pill input. Drop-in replacement for `<Input>` inside auth forms only.
+- `apps/web/components/auth/auth-footer.tsx` - dark Terms · Privacy footer bar.
+- `apps/web/components/auth/auth-role-tag.tsx` - small uppercase wayfinding chip.
+- `apps/web/components/auth/auth-role-card.tsx` - full-width pill role row (used on `/register`).
 
 ### Modified components
 
-- `apps/web/app/(auth)/layout.tsx` — header becomes top-left wordmark, drops the soft-grey background, footer swaps for `<AuthFooter />`.
-- `apps/web/components/auth/login-form.tsx`, `register-candidate-form.tsx`, `register-recruiter-form.tsx`, `forgot-password-form.tsx`, `reset-password-form.tsx` — swap shadcn `<Input>` for `<AuthInput>`, drop `<FormLabel>` (label now lives inside `<AuthInput>`), keep all `react-hook-form` / `zodResolver` wiring intact.
-- All page files (`(auth)/.../page.tsx`) — remove `<AuthCard>` wrappers, render `<AuthShell title=... subtitle=...>` directly with the form children.
+- `apps/web/app/(auth)/layout.tsx` - header becomes top-left wordmark, drops the soft-grey background, footer swaps for `<AuthFooter />`.
+- `apps/web/components/auth/login-form.tsx`, `register-candidate-form.tsx`, `register-recruiter-form.tsx`, `forgot-password-form.tsx`, `reset-password-form.tsx` - swap shadcn `<Input>` for `<AuthInput>`, drop `<FormLabel>` (label now lives inside `<AuthInput>`), keep all `react-hook-form` / `zodResolver` wiring intact.
+- All page files (`(auth)/.../page.tsx`) - remove `<AuthCard>` wrappers, render `<AuthShell title=... subtitle=...>` directly with the form children.
 
 ### Removed components
 
-- `apps/web/components/auth/auth-card.tsx` — superseded by `<AuthShell>`. Delete after all consumers migrate.
+- `apps/web/components/auth/auth-card.tsx` - superseded by `<AuthShell>`. Delete after all consumers migrate.
 
 ### CSS / token changes
 
 - No new tokens. Everything composes from the existing `globals.css` `@theme` block.
-- One small addition to `globals.css` for the floating-label peer utility — a single CSS keyframe / transition rule. Will be added inline as utility classes if Tailwind v4 supports it via `peer-focus:` / `peer-[:not(:placeholder-shown)]:` (it does), so no custom keyframe should be required.
+- One small addition to `globals.css` for the floating-label peer utility - a single CSS keyframe / transition rule. Will be added inline as utility classes if Tailwind v4 supports it via `peer-focus:` / `peer-[:not(:placeholder-shown)]:` (it does), so no custom keyframe should be required.
 
 ---
 
@@ -271,7 +271,7 @@ Error display moves from shadcn `<FormMessage>` to inline error text rendered by
 
 ## Migration / Rollout
 
-Single PR, single deploy. No feature flag — auth UI is internal-facing pre-launch and the redesign is presentational.
+Single PR, single deploy. No feature flag - auth UI is internal-facing pre-launch and the redesign is presentational.
 
 Order of file changes (recommended):
 
@@ -291,11 +291,11 @@ Order of file changes (recommended):
 - OAuth providers (Google / Apple / Microsoft)
 - Email-first multi-step flow
 - Password strength meter
-- "Show password" eye toggle (could be a follow-up — not OpenAI's verbatim pattern, they have it on `/create-password` only)
+- "Show password" eye toggle (could be a follow-up - not OpenAI's verbatim pattern, they have it on `/create-password` only)
 - Marketing pages, portal pages, admin pages
 - Design token changes
 - Any backend, schema, or API changes
-- Legal pages (`/legal/terms`, `/legal/privacy`) — links exist in the new footer but those routes are pre-existing gaps, separate concern
+- Legal pages (`/legal/terms`, `/legal/privacy`) - links exist in the new footer but those routes are pre-existing gaps, separate concern
 
 ---
 

@@ -1,11 +1,11 @@
-# AuraHire — Product Requirements Document
+# AuraHire - Product Requirements Document
 
 **Version:** 2.1.0 (Sprint Scope, Split Architecture)
 **Last Updated:** May 1, 2026
 **Status:** Locked
 **Supersedes:** PRD v2.0.0 (May 1) → v1.0.0 (November 16, 2025)
 
-> **Architectural note (v2.1.0 update):** The system is now built as a **Turborepo monorepo with split frontend/backend** — Next.js 16 on Vercel (`apps/web`) + NestJS on a Digital Ocean Droplet (`apps/api`, run under PM2 with Redis + Mailpit as Docker containers on the same host and Caddy reverse-proxying TLS). All AI calls, DB access, queue/cron/cache live in the backend. See `architecture.md` and `tech-stack.md`. Sprint window updated to **May 2–4 active + May 5 polish/smoke buffer**.
+> **Architectural note (v2.1.0 update):** The system is now built as a **Turborepo monorepo with split frontend/backend** - Next.js 16 on Vercel (`apps/web`) + NestJS on a Digital Ocean Droplet (`apps/api`, run under PM2 with Redis + Mailpit as Docker containers on the same host and Caddy reverse-proxying TLS). All AI calls, DB access, queue/cron/cache live in the backend. See `architecture.md` and `tech-stack.md`. Sprint window updated to **May 2-4 active + May 5 polish/smoke buffer**.
 
 ---
 
@@ -15,7 +15,7 @@ AuraHire is an AI-powered recruitment platform built around two principles: **ex
 
 The system covers the recruitment lifecycle: candidate registration with resume parsing, profile scoring, job posting with bias-language detection, candidate-job match scoring, application workflow, recruiter shortlisting, interview and offer tracking, and admin oversight including AI weight configuration and bias monitoring.
 
-This document is the **v2 sprint-scope PRD** — a refined revision of the original 24-week enterprise PRD shaped to fit a thesis-defensible 2-day build. It removes integrations and enterprise features that are not part of the sprint, locks the dual-scoring + bias-mitigation thesis angle, and points to companion docs for design, architecture, schema, and AI specifications.
+This document is the **v2 sprint-scope PRD** - a refined revision of the original 24-week enterprise PRD shaped to fit a thesis-defensible 2-day build. It removes integrations and enterprise features that are not part of the sprint, locks the dual-scoring + bias-mitigation thesis angle, and points to companion docs for design, architecture, schema, and AI specifications.
 
 ---
 
@@ -92,14 +92,14 @@ To create a recruitment platform whose AI is transparent enough to be defended i
 - Computed at end of onboarding and re-computed when resume or preferences change
 - Components (initial weights, admin-configurable): Completeness 25, Skill Depth 30, Experience Clarity 30, Education Quality 15
 - Breakdown with evidence excerpts shown to candidate
-- Improvement suggestions surfaced (2–3 actionable tips)
+- Improvement suggestions surfaced (2-3 actionable tips)
 
 ### 6. AI Match Scoring Engine
 
 - Computed at application time and on demand from candidate job-detail view
 - Components (initial weights, admin-configurable): Skills Match 40, Experience Match 35, Education Match 15, Cultural/Language Fit 10
 - Breakdown with evidence excerpts shown to both candidate and recruiter
-- Match band labels: Strong (70–100), Partial (40–69), Limited (0–39)
+- Match band labels: Strong (70-100), Partial (40-69), Limited (0-39)
 
 ### 7. Bias Detection (Job Descriptions)
 
@@ -131,14 +131,14 @@ To create a recruitment platform whose AI is transparent enough to be defended i
 
 ### 11. Admin Portal (8 features)
 
-1. **Command Center** — system KPIs, AI processing health, bias flag count
-2. **User Management** — full CRUD, suspend, change role, delete with audit
-3. **Job Moderation** — review all jobs, archive, see flag history
-4. **Application Oversight** — system-wide application audit, drill into any AI score
-5. **AI Scoring Configuration** — tune weights for both scoring engines, preview impact
-6. **Audit Log** — immutable log, filterable, exportable
-7. **System Analytics** — user growth, applications over time, score distribution, top skills
-8. **Bias & Fairness Monitor** — aggregate flag stats, override decisions, score distribution audit
+1. **Command Center** - system KPIs, AI processing health, bias flag count
+2. **User Management** - full CRUD, suspend, change role, delete with audit
+3. **Job Moderation** - review all jobs, archive, see flag history
+4. **Application Oversight** - system-wide application audit, drill into any AI score
+5. **AI Scoring Configuration** - tune weights for both scoring engines, preview impact
+6. **Audit Log** - immutable log, filterable, exportable
+7. **System Analytics** - user growth, applications over time, score distribution, top skills
+8. **Bias & Fairness Monitor** - aggregate flag stats, override decisions, score distribution audit
 
 ### 12. Notifications & Email
 
@@ -160,11 +160,11 @@ These features are intentionally deferred. Either replaced with a stub UI or omi
 
 | Feature                                     | Replacement in Sprint                 | Reason                                       |
 | ------------------------------------------- | ------------------------------------- | -------------------------------------------- |
-| OAuth (Google, LinkedIn)                    | Email/password only                   | Out of thesis scope; saves 4–6h              |
-| MFA                                         | None                                  | Saves 3–4h; not required for thesis          |
-| Calendar integration (Google/Outlook)       | Plain meeting-link text field         | Saves 6–8h per provider                      |
-| Video conferencing integration (Zoom/Teams) | Plain meeting-link text field         | Saves 4–6h                                   |
-| E-signature (DocuSign/HelloSign)            | In-portal Accept/Decline buttons      | Saves 6–8h, vendor-specific                  |
+| OAuth (Google, LinkedIn)                    | Email/password only                   | Out of thesis scope; saves 4-6h              |
+| MFA                                         | None                                  | Saves 3-4h; not required for thesis          |
+| Calendar integration (Google/Outlook)       | Plain meeting-link text field         | Saves 6-8h per provider                      |
+| Video conferencing integration (Zoom/Teams) | Plain meeting-link text field         | Saves 4-6h                                   |
+| E-signature (DocuSign/HelloSign)            | In-portal Accept/Decline buttons      | Saves 6-8h, vendor-specific                  |
 | SMS notifications                           | Email only                            | Cost + provider integration                  |
 | Real-time websockets                        | Polling on key surfaces               | Sprint complexity                            |
 | pgvector embeddings                         | Direct LLM evaluation for skill match | Saves ~3h; LLM is sufficient at thesis scope |
@@ -296,7 +296,7 @@ The original PRD's enterprise KPIs (time-to-hire, retention, NPS) are not measur
 **Impact:** Wrong or inconsistent scores undermine thesis claim.
 **Mitigation:**
 
-- OpenAI structured outputs (JSON schema enforcement) — never parse free text
+- OpenAI structured outputs (JSON schema enforcement) - never parse free text
 - Prompt versioning in DB; every score records `prompt_version`
 - Sample-set validation before sprint end (10 known-good resumes vs known-good jobs)
 - Admin can view raw structured score output for any application
@@ -317,7 +317,7 @@ The original PRD's enterprise KPIs (time-to-hire, retention, NPS) are not measur
 **Mitigation:**
 
 - Always allow manual fill-out as fallback
-- Show clear "We couldn't parse — fill out manually" message
+- Show clear "We couldn't parse - fill out manually" message
 - Log parse failures for thesis appendix discussion
 
 ### Risk: Free-Tier Limits
@@ -325,8 +325,8 @@ The original PRD's enterprise KPIs (time-to-hire, retention, NPS) are not measur
 **Impact:** Demo blocked by Supabase quotas.
 **Mitigation:**
 
-- Supabase free tier: 500MB DB, 1GB storage, 50K MAU — sufficient for demo
-- Resend free tier: 100 emails/day, 3000/month — sufficient
+- Supabase free tier: 500MB DB, 1GB storage, 50K MAU - sufficient for demo
+- Resend free tier: 100 emails/day, 3000/month - sufficient
 - Vercel free tier: hobby plan, sufficient
 - Upgrade path documented if presenter expects sustained traffic
 
@@ -337,7 +337,7 @@ The original PRD's enterprise KPIs (time-to-hire, retention, NPS) are not measur
 
 - Curated seed list of flagged terms in DB (extensible by admin)
 - LLM as secondary check, not sole arbiter
-- Override mechanism with reason logging — recruiter override, not silent dismissal
+- Override mechanism with reason logging - recruiter override, not silent dismissal
 
 ---
 
@@ -371,5 +371,5 @@ This PRD is the contract; companion docs are the implementation guide.
 ---
 
 **Document Owner:** CJ Jutba
-**Sprint Window:** May 2 – May 4, 2026 (3 active days) + May 5 polish/smoke
+**Sprint Window:** May 2 - May 4, 2026 (3 active days) + May 5 polish/smoke
 **Status:** Sprint scope locked. Implementation begins after env setup.

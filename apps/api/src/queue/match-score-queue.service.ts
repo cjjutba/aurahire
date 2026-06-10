@@ -14,7 +14,7 @@ export interface MatchScorePayload {
 /**
  * Thin enqueue facade for the match-score worker. Lives in the global
  * QueueModule so feature modules (applications, scoring) can inject it
- * without circular dependencies. Failures never propagate — the application
+ * without circular dependencies. Failures never propagate - the application
  * row already exists in 'computing' state, so an orphaned job will be
  * caught by the future rescore-orphans cron.
  */

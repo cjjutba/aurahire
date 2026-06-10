@@ -8,12 +8,12 @@
  *   pnpm --filter @aurahire/api reset-db -- --yes
  *
  * Without --yes the script refuses to run. After running, registered accounts are gone
- * and all profiles/companies/jobs/etc. are wiped — re-register to populate.
+ * and all profiles/companies/jobs/etc. are wiped - re-register to populate.
  */
 import "reflect-metadata";
 import postgres from "postgres";
 
-// Order matters only for clarity — TRUNCATE ... CASCADE handles FK dependencies.
+// Order matters only for clarity - TRUNCATE ... CASCADE handles FK dependencies.
 const PUBLIC_TABLES = [
   "auth_tokens",
   "audit_logs",
@@ -59,7 +59,7 @@ async function deleteAllAuthUsers(
     if (!listRes.ok) {
       const errBody = await listRes.text();
       throw new Error(
-        `List users failed: ${listRes.status} ${listRes.statusText} — ${errBody}`,
+        `List users failed: ${listRes.status} ${listRes.statusText} - ${errBody}`,
       );
     }
     const body = (await listRes.json()) as { users: AuthUser[] };
@@ -117,7 +117,7 @@ async function main(): Promise<void> {
   const redactedDb = dbUrl.replace(/:[^:@/]+@/, ":****@");
   process.stdout.write(`Target DB:       ${redactedDb}\n`);
   process.stdout.write(`Target Supabase: ${supabaseUrl}\n`);
-  process.stdout.write("\nStarting reset in 3 seconds — Ctrl+C to abort.\n");
+  process.stdout.write("\nStarting reset in 3 seconds - Ctrl+C to abort.\n");
   await new Promise((r) => setTimeout(r, 3000));
 
   process.stdout.write("\n→ Truncating public tables\n");

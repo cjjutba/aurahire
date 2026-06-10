@@ -1,4 +1,4 @@
-// AI/processing limits — sprint defaults.
+// AI/processing limits - sprint defaults.
 
 export const MAX_RESUME_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 export const ACCEPTED_RESUME_MIME_TYPES = [

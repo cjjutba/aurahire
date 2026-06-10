@@ -1,4 +1,4 @@
-# AuraHire — CI pipeline.
+# AuraHire - CI pipeline.
 #
 # Runs on every PR (validation only) and on every push to `main` (so the
 # main-branch run can be a required precondition for the deploy workflow).
@@ -53,15 +53,15 @@ jobs:
       - name: Type-check (all packages)
         run: pnpm type-check
 
-      - name: Lint (best-effort — does not fail the job)
+      - name: Lint (best-effort - does not fail the job)
         # Lint is allowed to fail because eslint v9 config is still being
         # stabilised in the repo. Once the lint surface is clean, drop the
         # `continue-on-error` so the job blocks on lint failures too.
         continue-on-error: true
         run: pnpm lint
 
-      - name: Test — API
+      - name: Test - API
         run: pnpm --filter @aurahire/api test
 
-      - name: Test — Web
+      - name: Test - Web
         run: pnpm --filter @aurahire/web test

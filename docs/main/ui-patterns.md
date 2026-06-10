@@ -11,7 +11,7 @@ This document defines every component in the AuraHire system. All references to 
 
 ## 1. Navigation
 
-### `nav-marketing-top` — Marketing top nav (light)
+### `nav-marketing-top` - Marketing top nav (light)
 
 Default top nav on white pages.
 
@@ -23,14 +23,14 @@ Default top nav on white pages.
 - **Layout:** AuraHire wordmark left, primary horizontal menu (Product / Solutions / About / Browse Jobs) center, "Sign In" text link + "Get Started" `{component.button-primary}` right.
 - **Type:** wordmark in `{typography.title-md}`; menu items in `{typography.nav-link}`.
 
-### `nav-marketing-on-dark` — Marketing top nav (over dark hero)
+### `nav-marketing-on-dark` - Marketing top nav (over dark hero)
 
 Same skeleton as `nav-marketing-top` but transparent until scroll, white text.
 
 - **Background:** transparent → `{colors.surface-dark}` on scroll
 - **Text:** `{colors.on-dark}`
 
-### `nav-portal-sidebar` — Authenticated sidebar
+### `nav-portal-sidebar` - Authenticated sidebar
 
 Persistent left sidebar across all three portals (candidate, recruiter, admin).
 
@@ -48,7 +48,7 @@ Persistent left sidebar across all three portals (candidate, recruiter, admin).
   - Hover: `{colors.surface-strong}` background
 - **Icon:** Lucide 20px, leading
 
-### `nav-portal-topbar` — Authenticated topbar
+### `nav-portal-topbar` - Authenticated topbar
 
 Persistent across portal pages above content.
 
@@ -58,7 +58,7 @@ Persistent across portal pages above content.
 - **Padding:** 0 `{spacing.lg}`
 - **Layout:** breadcrumb left → search pill (when applicable) → notifications bell + avatar dropdown right
 
-### `nav-mobile-drawer` — Mobile sidebar (sheet)
+### `nav-mobile-drawer` - Mobile sidebar (sheet)
 
 The portal sidebar collapses to a slide-out drawer at `< 1024px`. Triggered by hamburger icon in topbar.
 
@@ -66,7 +66,7 @@ The portal sidebar collapses to a slide-out drawer at `< 1024px`. Triggered by h
 - **Animation:** 200ms ease-out slide from left
 - **Backdrop:** `rgba(0,0,0,0.4)` overlay
 
-### `breadcrumb` — Breadcrumb trail
+### `breadcrumb` - Breadcrumb trail
 
 Inside portal topbar.
 
@@ -80,7 +80,7 @@ Inside portal topbar.
 
 All buttons share `{rounded.pill}` (100px) geometry. No exceptions.
 
-### `button-primary` — Signature blue pill
+### `button-primary` - Signature blue pill
 
 - **Background:** `{colors.primary}` → `{colors.primary-active}` on press
 - **Text:** `{colors.on-primary}`, `{typography.button}` (16/600)
@@ -89,7 +89,7 @@ All buttons share `{rounded.pill}` (100px) geometry. No exceptions.
 - **Disabled:** `{colors.primary-disabled}` background, cursor `not-allowed`
 - **Loading:** spinner replaces icon, label dims to 60%, button non-interactive
 
-### `button-primary-large` — Hero CTA
+### `button-primary-large` - Hero CTA
 
 Used on marketing hero "Get Started" and major in-app CTAs ("Apply Now," "Post Job").
 
@@ -98,49 +98,49 @@ Used on marketing hero "Get Started" and major in-app CTAs ("Apply Now," "Post J
 - **Padding:** 16px 32px
 - **Text:** `{typography.button}` at 16/600
 
-### `button-secondary` — Soft gray pill
+### `button-secondary` - Soft gray pill
 
 - **Background:** `{colors.surface-strong}` → darker on press
 - **Text:** `{colors.ink}`, `{typography.button}`
 - Same dimensions as `button-primary`
 
-### `button-secondary-on-dark` — Used on dark hero/band
+### `button-secondary-on-dark` - Used on dark hero/band
 
 - **Background:** `{colors.surface-dark-elevated}`
 - **Text:** `{colors.on-dark}`
 
-### `button-outline-on-dark` — Dark hero secondary CTA
+### `button-outline-on-dark` - Dark hero secondary CTA
 
 - **Background:** transparent
 - **Border:** 1px `{colors.on-dark}`
 - **Text:** `{colors.on-dark}`
 
-### `button-tertiary` — Inline text link button
+### `button-tertiary` - Inline text link button
 
 - **Background:** transparent
 - **Text:** `{colors.primary}`, `{typography.button}`
 - No padding, no border, underline on hover
 
-### `button-destructive` — Reject, delete, suspend
+### `button-destructive` - Reject, delete, suspend
 
 - **Background:** `{colors.status-danger}` → darker on press
 - **Text:** `{colors.on-primary}` (white)
 - Used sparingly: only on confirmed-destructive actions inside modals
 
-### `button-ghost` — Subtle action
+### `button-ghost` - Subtle action
 
 - **Background:** transparent → `{colors.surface-strong}` on hover
 - **Text:** `{colors.body}` → `{colors.ink}` on hover
 - Used for less-prominent actions inside cards (e.g., "View details").
 
-### `button-icon` — Icon-only button
+### `button-icon` - Icon-only button
 
 - **Size:** 36px × 36px (default), 40px × 40px (topbar)
 - **Background:** transparent → `{colors.surface-strong}` on hover
 - **Radius:** `{rounded.full}`
 - **Icon:** Lucide 20px, `{colors.body}`
 
-### `button-sm` — Compact pill
+### `button-sm` - Compact pill
 
 For dense table rows and inline actions.
 
@@ -153,7 +153,7 @@ For dense table rows and inline actions.
 | State          | Treatment                                                         |
 | -------------- | ----------------------------------------------------------------- |
 | Default        | Base palette                                                      |
-| Hover          | Background darkens 4–8%; cursor pointer                           |
+| Hover          | Background darkens 4-8%; cursor pointer                           |
 | Focus-visible  | `{colors.primary}` 2px outer ring, 2px offset                     |
 | Active/Pressed | Press-state palette                                               |
 | Disabled       | `disabled` palette, cursor `not-allowed`, no hover                |
@@ -163,7 +163,7 @@ For dense table rows and inline actions.
 
 ## 3. Form Controls
 
-### `text-input` — Default text input
+### `text-input` - Default text input
 
 - **Background:** `{colors.canvas}`
 - **Border:** 1px `{colors.hairline}` → 2px `{colors.primary}` on focus
@@ -175,37 +175,37 @@ For dense table rows and inline actions.
 - **Error state:** border becomes 2px `{colors.status-danger}`, error text below in `{colors.status-danger}` `{typography.caption}`
 - **Disabled:** background `{colors.surface-strong}`, text `{colors.muted-soft}`, cursor `not-allowed`
 
-### `textarea` — Multi-line input
+### `textarea` - Multi-line input
 
 Same palette as `text-input`. Min height 96px. Resizable vertical only.
 
-### `select` — Dropdown select
+### `select` - Dropdown select
 
 - **Trigger:** identical to `text-input` with chevron-down icon (Lucide, 16px) right
 - **Menu:** `{colors.canvas}` background, 1px `{colors.hairline}` border, `{rounded.md}`, shadow `soft drop`
 - **Item:** 40px height, padding `{spacing.sm}` `{spacing.base}`, hover `{colors.surface-soft}`
 - **Item active:** `{colors.primary-soft}` background, `{colors.primary}` text, leading check icon
 
-### `multi-select` — Tag-style multi-select
+### `multi-select` - Tag-style multi-select
 
 Selected values shown as pill chips inside the input. Each chip has a small "×" close icon. Used for skills, locations, tags.
 
-### `checkbox` — Checkbox
+### `checkbox` - Checkbox
 
 - **Box:** 20px × 20px, `{rounded.xs}` (4px), 2px `{colors.hairline}` border → 2px `{colors.primary}` border + `{colors.primary}` fill when checked
 - **Label:** `{typography.body-md}`, leading 12px from box
 
-### `radio` — Radio button
+### `radio` - Radio button
 
 - **Circle:** 20px × 20px, `{rounded.full}`, 2px `{colors.hairline}` border → 2px `{colors.primary}` border + 8px center dot when selected
 
-### `toggle` — Toggle switch
+### `toggle` - Toggle switch
 
 - **Track:** 44px × 24px, `{rounded.pill}`, `{colors.surface-strong}` → `{colors.primary}` when on
 - **Thumb:** 20px circle, `{rounded.full}`, white, slides 20px on toggle
 - **Transition:** 150ms ease-out
 
-### `file-upload-dropzone` — Resume upload zone
+### `file-upload-dropzone` - Resume upload zone
 
 - **Container:** 200px min height, `{colors.canvas}` background, 2px dashed `{colors.hairline}`, `{rounded.lg}`, padding `{spacing.xl}`
 - **Hover/dragover:** border becomes 2px solid `{colors.primary}`, background `{colors.primary-soft}`
@@ -213,7 +213,7 @@ Selected values shown as pill chips inside the input. Each chip has a small "×"
 - **Uploaded state:** file icon + filename + size + "×" remove icon + "Replace" button
 - **Processing state:** see `ai-shimmer` pattern
 
-### `search-pill` — Search input
+### `search-pill` - Search input
 
 - **Background:** `{colors.surface-strong}`
 - **Border:** none
@@ -222,7 +222,7 @@ Selected values shown as pill chips inside the input. Each chip has a small "×"
 - **Height:** 44px
 - **Leading icon:** Lucide search 20px in `{colors.muted}`
 
-### `date-picker` — Date input
+### `date-picker` - Date input
 
 Trigger looks like `text-input` with calendar icon. Popover calendar uses shadcn Calendar primitive on `{colors.canvas}` background.
 
@@ -251,7 +251,7 @@ Used for onboarding flows.
 - **Body:** current step content, padded `{spacing.xl}`
 - **Footer:** sticky bar with Back (`button-secondary`) left + Next (`button-primary`) right + step counter ("Step 3 of 6") center in `{colors.muted}` `{typography.caption}`
 
-### `wizard-progress` — Step indicator
+### `wizard-progress` - Step indicator
 
 Horizontal indicator above wizard body.
 
@@ -262,20 +262,20 @@ Horizontal indicator above wizard body.
 - **Connector:** 2px line between dots, `{colors.primary}` if both dots completed, else `{colors.hairline}`
 - **Label:** below each dot, `{typography.caption}` `{colors.muted}` (current step bold, primary)
 
-### `wizard-step-resume-upload` — Special: candidate onboarding step 1
+### `wizard-step-resume-upload` - Special: candidate onboarding step 1
 
 This first step of candidate onboarding is the primary AI moment. After upload:
 
 1. File enters `file-upload-dropzone` "uploaded" state
 2. Dropzone replaced with **AI Shimmer** card showing "Parsing your resume..." with skeleton fields representing the data being extracted
 3. On completion, user sees a confirmation card: "We extracted X fields from your resume. Review them in the next steps." with primary continue CTA
-4. On parse failure, fallback message: "We couldn't parse your resume. Don't worry — you can fill out your profile manually."
+4. On parse failure, fallback message: "We couldn't parse your resume. Don't worry - you can fill out your profile manually."
 
 ---
 
 ## 5. Cards
 
-### `card-feature` — Marketing feature card
+### `card-feature` - Marketing feature card
 
 - **Background:** `{colors.canvas}`
 - **Border:** 1px `{colors.hairline}`
@@ -284,7 +284,7 @@ This first step of candidate onboarding is the primary AI moment. After upload:
 - **Layout:** Lucide icon (32px in `{colors.primary}`) + title `{typography.title-md}` + body `{typography.body-md}` `{colors.body}`
 - **Hover:** `soft drop` shadow appears, no border change
 
-### `card-widget` — Portal dashboard widget
+### `card-widget` - Portal dashboard widget
 
 - **Background:** `{colors.canvas}`
 - **Border:** 1px `{colors.hairline}`
@@ -293,7 +293,7 @@ This first step of candidate onboarding is the primary AI moment. After upload:
 - **Header:** title `{typography.title-md}` + optional action button right (e.g., "View all")
 - **Body:** widget content (chart, list, metric tile)
 
-### `card-stat` — Metric tile
+### `card-stat` - Metric tile
 
 For dashboards. A single number with label and optional change indicator.
 
@@ -306,7 +306,7 @@ For dashboards. A single number with label and optional change indicator.
 - **Border:** 1px `{colors.hairline}`
 - **Radius:** `{rounded.lg}`
 
-### `card-list-row` — Asset / candidate / job row
+### `card-list-row` - Asset / candidate / job row
 
 Horizontal row used in lists.
 
@@ -316,7 +316,7 @@ Horizontal row used in lists.
 - **Layout:** leading icon/avatar (40px) + primary text column + meta column + trailing actions (chevron-right or button-icon)
 - **Hover:** `{colors.surface-soft}` background
 
-### `card-product-ui-dark` — Floating product UI mockup (marketing)
+### `card-product-ui-dark` - Floating product UI mockup (marketing)
 
 The signature floating card on dark hero.
 
@@ -327,7 +327,7 @@ The signature floating card on dark hero.
 - **Shadow:** photographic depth (large soft drop, often with secondary card overlapping at slight rotation)
 - **Content:** mockup of Score Ring + Score Breakdown Bar showing a sample candidate-to-job match (the strongest single brand image AuraHire owns)
 
-### `card-product-ui-light` — Light variant of above
+### `card-product-ui-light` - Light variant of above
 
 Used inside white-canvas marketing sections.
 
@@ -339,7 +339,7 @@ Used inside white-canvas marketing sections.
 
 ## 6. Tables
 
-### `table-data` — Standard data table
+### `table-data` - Standard data table
 
 - **Background:** `{colors.canvas}`
 - **Border:** 1px `{colors.hairline}` outer, `{rounded.lg}` corners
@@ -354,14 +354,14 @@ Used inside white-canvas marketing sections.
 
 Below table.
 
-- **Layout:** "Showing 1–25 of 142" `{colors.muted}` left + page number pills (current `{colors.primary-soft}` background) + Previous/Next buttons right
+- **Layout:** "Showing 1-25 of 142" `{colors.muted}` left + page number pills (current `{colors.primary-soft}` background) + Previous/Next buttons right
 - **Page size selector:** `select` "25 / page" with options 10/25/50/100
 
 ---
 
 ## 7. Tags, Chips & Badges
 
-### `chip-status` — Lifecycle status chip
+### `chip-status` - Lifecycle status chip
 
 - **Geometry:** `{rounded.pill}`, padding 4px 12px
 - **Type:** `{typography.caption-strong}` (12/600 with 0.04em tracking, uppercase)
@@ -373,16 +373,16 @@ Below table.
   - `chip-status-hired`: `{colors.score-high-soft}` bg, `{colors.status-success}` text + leading check icon
   - `chip-status-rejected`: `{colors.score-low-soft}` bg, `{colors.status-danger}` text
 
-### `chip-match-band` — Score band label
+### `chip-match-band` - Score band label
 
 The plain-language match label that accompanies every numeric score.
 
-- **Strong Match (70–100):** `{colors.score-high-soft}` bg, `{colors.score-high}` text
-- **Partial Match (40–69):** `{colors.score-mid-soft}` bg, `{colors.score-mid}` text
-- **Limited Match (0–39):** `{colors.score-low-soft}` bg, `{colors.score-low}` text
+- **Strong Match (70-100):** `{colors.score-high-soft}` bg, `{colors.score-high}` text
+- **Partial Match (40-69):** `{colors.score-mid-soft}` bg, `{colors.score-mid}` text
+- **Limited Match (0-39):** `{colors.score-low-soft}` bg, `{colors.score-low}` text
 - Geometry: `{rounded.pill}`, padding 4px 12px, `{typography.caption-strong}` uppercase
 
-### `chip-bias-flag` — Bias warning chip (signature component)
+### `chip-bias-flag` - Bias warning chip (signature component)
 
 Inline chip shown in job description editors and admin bias monitor when AI flags discriminatory language.
 
@@ -393,7 +393,7 @@ Inline chip shown in job description editors and admin bias monitor when AI flag
 - **Behavior:** clicking the chip opens a popover explaining the flag (e.g., "'rockstar' is gendered language often associated with male candidates. Consider 'top performer' or 'highly skilled engineer' instead.")
 - **Override:** popover includes "Override flag" button which logs the override + reason to audit log
 
-### `badge-ai-suggested` — AI prefill indicator
+### `badge-ai-suggested` - AI prefill indicator
 
 Tiny badge next to fields prefilled by resume parsing.
 
@@ -404,7 +404,7 @@ Tiny badge next to fields prefilled by resume parsing.
 - **Label:** "AI SUGGESTED"
 - **Dismiss:** when user edits the field, badge becomes "EDITED" in `{colors.muted}` until form re-saved
 
-### `badge-pill` — Generic uppercase label
+### `badge-pill` - Generic uppercase label
 
 Used for category tags ("REMOTE", "FULL-TIME", "URGENT").
 
@@ -418,18 +418,18 @@ Used for category tags ("REMOTE", "FULL-TIME", "URGENT").
 
 The center-of-gravity component for AuraHire's thesis. Renders a candidate's Profile Score or a candidate's Match Score against a job.
 
-### `score-ring` — Default
+### `score-ring` - Default
 
 - **Container:** square aspect, sizes `sm` 80px, `md` 120px, `lg` 200px
 - **Track:** `{colors.primary-soft}` (light blue background ring), 8px stroke (sm), 12px (md), 16px (lg)
-- **Fill:** color depends on score band — `{colors.score-low}` / `{colors.score-mid}` / `{colors.score-high}`
+- **Fill:** color depends on score band - `{colors.score-low}` / `{colors.score-mid}` / `{colors.score-high}`
 - **Stroke style:** rounded line cap, animated 800ms ease-out on initial render
 - **Center:**
   - Score number `{typography.number-large}` (sm size: number-display 18px; lg size: number-large 36px)
   - Label `{typography.caption}` `{colors.muted}` "of 100" below number
 - **Variants:**
-  - `score-ring-profile` — for candidate profile score (overall resume strength)
-  - `score-ring-match` — for application match score against a specific job
+  - `score-ring-profile` - for candidate profile score (overall resume strength)
+  - `score-ring-match` - for application match score against a specific job
 
 ### Hover behavior
 
@@ -445,8 +445,8 @@ Horizontal stacked bar showing component-level contribution to the overall score
 
 - **Container:** full width of parent card, height 24px (default), 32px (large)
 - **Track:** `{colors.surface-strong}` background, `{rounded.pill}`
-- **Segments:** four segments side-by-side proportional to weight (Skills 40%, Experience 35%, Education 15%, Cultural Fit 10% — default weights configurable by admin)
-  - Each segment fills proportional to its component score (0–100 within its weight)
+- **Segments:** four segments side-by-side proportional to weight (Skills 40%, Experience 35%, Education 15%, Cultural Fit 10% - default weights configurable by admin)
+  - Each segment fills proportional to its component score (0-100 within its weight)
   - Filled portion uses score band color; unfilled uses `{colors.surface-strong}`
   - Segments separated by 2px gap
 - **Labels above bar:**
@@ -454,7 +454,7 @@ Horizontal stacked bar showing component-level contribution to the overall score
   - Component score in mono `{typography.number-small}` (e.g., "28 / 40")
 - **Click any segment:** opens evidence panel showing the resume excerpts that drove that component score (see `evidence-callout`)
 
-### `score-breakdown-bar-compact` — One-line variant
+### `score-breakdown-bar-compact` - One-line variant
 
 For dense table rows.
 
@@ -524,7 +524,7 @@ The AI Shimmer is **always paired with a status caption** so the user knows what
 
 ## 13. Toasts & Inline Alerts
 
-### `toast` — Ephemeral notification
+### `toast` - Ephemeral notification
 
 - **Position:** bottom-right of viewport
 - **Width:** 360px
@@ -536,7 +536,7 @@ The AI Shimmer is **always paired with a status caption** so the user knows what
 - **Layout:** semantic icon (Lucide 20px) + title `{typography.title-sm}` + body `{typography.body-sm}` + close icon
 - **Auto-dismiss:** 4s default, 0 (sticky) for errors
 
-### `alert-inline` — Persistent inline alert
+### `alert-inline` - Persistent inline alert
 
 For form-level errors, page-level info banners.
 
@@ -560,7 +560,7 @@ For form-level errors, page-level info banners.
 - **Body:** content
 - **Footer:** right-aligned action buttons (cancel ghost + primary)
 
-### `sheet-side` — Side-sliding drawer
+### `sheet-side` - Side-sliding drawer
 
 Used for candidate detail panels, application detail, AI breakdown drilldown.
 
@@ -569,7 +569,7 @@ Used for candidate detail panels, application detail, AI breakdown drilldown.
 - **Animation:** 200ms ease-out
 - **Anatomy:** sticky header (title + close) + scrollable body + sticky footer (actions)
 
-### `popover` — Lightweight floating panel
+### `popover` - Lightweight floating panel
 
 Used by `chip-bias-flag`, `badge-ai-suggested` info, score component tooltips.
 
@@ -581,7 +581,7 @@ Used by `chip-bias-flag`, `badge-ai-suggested` info, score component tooltips.
 - **Padding:** `{spacing.base}`
 - **Arrow:** subtle 6px caret pointing to trigger
 
-### `tooltip` — Hover help
+### `tooltip` - Hover help
 
 - **Background:** `{colors.ink}`
 - **Text:** `{colors.on-dark}` `{typography.caption}`
@@ -600,7 +600,7 @@ When a list, table, or dashboard widget has no data.
 - **Layout:** centered vertical
 - **Illustration:** Lucide icon 48px in `{colors.muted-soft}` (e.g., briefcase for empty jobs, file-search for empty applications)
 - **Headline:** `{typography.title-md}` `{colors.ink}`
-- **Body:** `{typography.body-md}` `{colors.body}` (1–2 sentences)
+- **Body:** `{typography.body-md}` `{colors.body}` (1-2 sentences)
 - **Action:** primary CTA below
 
 Examples:
@@ -627,7 +627,7 @@ Distinguish from `ai-shimmer`: skeletons are silent; AI shimmer always has a cap
 
 ## 17. Hero Bands
 
-### `hero-band-light` — White canvas hero
+### `hero-band-light` - White canvas hero
 
 - **Background:** `{colors.canvas}`
 - **Padding:** `{spacing.section}` (96px) vertical
@@ -635,17 +635,17 @@ Distinguish from `ai-shimmer`: skeletons are silent; AI shimmer always has a cap
   - Left 6 cols: badge pill ("AI-POWERED RECRUITMENT") + display headline `{typography.display-mega}` + body subhead `{typography.body-md}` + two CTAs (primary + secondary)
   - Right 6 cols: layered `card-product-ui-light` mockup stack
 
-### `hero-band-dark` — Signature dark editorial hero
+### `hero-band-dark` - Signature dark editorial hero
 
 The strongest brand pattern.
 
 - **Background:** `{colors.surface-dark}`
 - **Padding:** `{spacing.section}` (96px) vertical
 - **Text:** `{colors.on-dark}`
-- **Layout:** mirror of `hero-band-light` but right side carries 2–3 stacked `card-product-ui-dark` mockups at slight rotation, showing Score Ring + Score Breakdown Bar with sample data
+- **Layout:** mirror of `hero-band-light` but right side carries 2-3 stacked `card-product-ui-dark` mockups at slight rotation, showing Score Ring + Score Breakdown Bar with sample data
 - **CTAs:** `button-primary-large` (still blue) + `button-outline-on-dark`
 
-### `cta-band-dark` — Pre-footer dark CTA strip
+### `cta-band-dark` - Pre-footer dark CTA strip
 
 - **Background:** `{colors.surface-dark}`
 - **Padding:** `{spacing.section}` (96px) vertical
@@ -684,7 +684,7 @@ Bottom strip below marketing footer columns. All text `{colors.muted}` `{typogra
 
 ## 19. Tabs & Segmented Controls
 
-### `tabs-line` — Underlined tabs
+### `tabs-line` - Underlined tabs
 
 For switching between views inside a page (e.g., candidate profile: Overview / Applications / Resume).
 
@@ -692,7 +692,7 @@ For switching between views inside a page (e.g., candidate profile: Overview / A
 - **Tab item:** padding 12px 16px, `{typography.body-md}` `{colors.body}` → active `{colors.ink}` with 2px `{colors.primary}` bottom border
 - **Hover:** text → `{colors.ink}`
 
-### `segmented-control` — Pill segmented selector
+### `segmented-control` - Pill segmented selector
 
 For filtering (e.g., "All / Applied / Screening / Hired").
 
@@ -708,23 +708,23 @@ For filtering (e.g., "All / Applied / Screening / Hired").
 | Name    | Width       | Marketing                                                                           | Portal                                                           |
 | ------- | ----------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | Mobile  | < 640px     | Hero h1 80→40px; hero mockup → single card; feature grid 1-up; footer single column | Sidebar → drawer; topbar simplified; tables → vertical card list |
-| Tablet  | 640–1024px  | Hero h1 64px; feature grid 2-up; mockup 2 stacked                                   | Sidebar drawer; topbar full; tables compress                     |
-| Desktop | 1024–1280px | Full editorial hero 80px; feature grid 3-up                                         | Persistent sidebar 256px; full topbar                            |
+| Tablet  | 640-1024px  | Hero h1 64px; feature grid 2-up; mockup 2 stacked                                   | Sidebar drawer; topbar full; tables compress                     |
+| Desktop | 1024-1280px | Full editorial hero 80px; feature grid 3-up                                         | Persistent sidebar 256px; full topbar                            |
 | Wide    | > 1280px    | Content caps at 1200px; hero photography full-bleed                                 | Content max-width 1280px                                         |
 
 ### Touch Targets
 
-- Primary CTA pill at 44px height — WCAG AAA
-- Hero CTA pill at 56px — exceeds AAA
-- Icon buttons at 36px (min hit area expanded to 44px via padding) — meets AA
-- Search pill at 44px — at AAA
-- Sidebar nav item at 44px — at AAA
+- Primary CTA pill at 44px height - WCAG AAA
+- Hero CTA pill at 56px - exceeds AAA
+- Icon buttons at 36px (min hit area expanded to 44px via padding) - meets AA
+- Search pill at 44px - at AAA
+- Sidebar nav item at 44px - at AAA
 
 ### Collapsing Strategy
 
 - Top nav switches to hamburger sheet below 768px. Sign Up CTA remains visible.
 - Hero h1 steps: 80 → 64 → 52 → 44 → 36 on smallest screens.
-- Layered product-UI mockup cards collapse from 2–3 stacked → single card on mobile.
+- Layered product-UI mockup cards collapse from 2-3 stacked → single card on mobile.
 - Pipeline board: horizontal scroll on mobile (each column min-width 280px).
 - Score Ring: lg → md → sm at narrower viewports.
 - Score Breakdown Bar: full layout → compact (no labels above) → tap to reveal popover.
@@ -736,10 +736,10 @@ For filtering (e.g., "All / Applied / Screening / Hired").
 
 1. New CTAs default to `{rounded.pill}` (100px); new icon plates default to `{rounded.full}`. Cards use `{rounded.lg}` (portal) or `{rounded.xl}` (marketing).
 2. All variants live as separate entries, not as multi-color toggles.
-3. Use `{token.refs}` everywhere — never inline hex.
-4. Hover state never documented exhaustively; rule is "background darkens 4–8% or moves up one elevation tier."
+3. Use `{token.refs}` everywhere - never inline hex.
+4. Hover state never documented exhaustively; rule is "background darkens 4-8% or moves up one elevation tier."
 5. Inter at 400 for display, 400/500/600 for body; JetBrains Mono on every number.
-6. AuraHire Blue stays scarce — one or two blue moments per band.
+6. AuraHire Blue stays scarce - one or two blue moments per band.
 7. Score Ring + Score Breakdown Bar + Evidence Callout always travel together when explaining a score. Never show a number alone without click-through to breakdown.
 
 ---
@@ -748,5 +748,5 @@ For filtering (e.g., "All / Applied / Screening / Hired").
 
 - Component dark-mode variants (beyond marketing dark hero) are out of sprint scope.
 - Print stylesheet not specified.
-- Advanced data visualizations (e.g., funnel charts on dashboards) use Recharts defaults adapted to AuraHire color tokens — no custom chart-component spec in this version.
+- Advanced data visualizations (e.g., funnel charts on dashboards) use Recharts defaults adapted to AuraHire color tokens - no custom chart-component spec in this version.
 - Animation timings beyond hover, AI shimmer, Score Ring fill, modal enter are intentionally unspecified.

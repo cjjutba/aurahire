@@ -52,7 +52,7 @@ The current `ParsingProgressCard` runs a four-stage time curve and never resolve
 
 1. New props: `parseStatus: "parsing" | "done"`, `parsed: ParsedResumeV2 | null`, `onAutoAdvance?: () => void`.
 2. When `parseStatus === "done"`: force `activeIdx` to `STAGES.length` (4) so all four stages render as `done`; replace the indeterminate sweep bar with a static fill; render a `Done · ...` summary line; swap the caption above the file row from "Hang tight..." to "Routing to your details..."; fire `onAutoAdvance` after 1500 ms.
-3. The `Hang tight — this usually takes 5–15 seconds.` caption (currently rendered by `ResumeUploadCard` outside the card) moves _into_ `ParsingProgressCard` so it can swap with status.
+3. The `Hang tight - this usually takes 5-15 seconds.` caption (currently rendered by `ResumeUploadCard` outside the card) moves _into_ `ParsingProgressCard` so it can swap with status.
 
 - [ ] **Step 1: Create the test file with the first failing test (parsing state still renders)**
 
@@ -164,7 +164,7 @@ describe("ParsingProgressCard", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test — it should pass against the current implementation**
+- [ ] **Step 2: Run the test - it should pass against the current implementation**
 
 ```bash
 pnpm --filter @aurahire/web test parsing-progress-card
@@ -249,7 +249,7 @@ it("swaps the caption above the file row when in done state", () => {
     <ParsingProgressCard file={FILE} parseStatus="parsing" parsed={null} />,
   );
   expect(screen.getByTestId("parse-caption")).toHaveTextContent(
-    "Hang tight — this usually takes 5–15 seconds.",
+    "Hang tight - this usually takes 5-15 seconds.",
   );
   rerender(
     <ParsingProgressCard
@@ -326,13 +326,13 @@ it("clears the auto-advance timer if unmounted before it fires", () => {
 });
 ```
 
-- [ ] **Step 4: Run tests — the new ones should fail**
+- [ ] **Step 4: Run tests - the new ones should fail**
 
 ```bash
 pnpm --filter @aurahire/web test parsing-progress-card
 ```
 
-Expected: FAIL on every test that touches `parseStatus="done"` — e.g. `getByTestId("parse-done-summary")` returns null. The `parsing` test still passes.
+Expected: FAIL on every test that touches `parseStatus="done"` - e.g. `getByTestId("parse-done-summary")` returns null. The `parsing` test still passes.
 
 - [ ] **Step 5: Update `parsing-progress-card.tsx` to support the `done` state**
 
@@ -477,7 +477,7 @@ export function ParsingProgressCard({
       >
         {isDone
           ? "Routing to your details..."
-          : "Hang tight — this usually takes 5–15 seconds."}
+          : "Hang tight - this usually takes 5-15 seconds."}
       </p>
 
       <div className="rounded-2xl border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
@@ -613,11 +613,11 @@ function StageRow({
 
 Notes for the implementer:
 
-- The `Hang tight — this usually takes 5–15 seconds.` caption now lives **inside** the card component. The next task removes the duplicate from `ResumeUploadCard`.
+- The `Hang tight - this usually takes 5-15 seconds.` caption now lives **inside** the card component. The next task removes the duplicate from `ResumeUploadCard`.
 - `data-testid="parse-caption"` and `data-testid="parse-done-summary"` are required for the tests above.
-- Keep the existing keyframes (`animate-indeterminate-sweep`, `animate-stage-check-pop`, `animate-stage-fade-in`) — they're already defined in `apps/web/app/globals.css` and don't need changes.
+- Keep the existing keyframes (`animate-indeterminate-sweep`, `animate-stage-check-pop`, `animate-stage-fade-in`) - they're already defined in `apps/web/app/globals.css` and don't need changes.
 
-- [ ] **Step 6: Run tests — all should pass**
+- [ ] **Step 6: Run tests - all should pass**
 
 ```bash
 pnpm --filter @aurahire/web test parsing-progress-card
@@ -704,7 +704,7 @@ describe("LowConfidenceBanner", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test — should fail (file does not exist)**
+- [ ] **Step 2: Run the test - should fail (file does not exist)**
 
 ```bash
 pnpm --filter @aurahire/web test low-confidence-banner
@@ -739,7 +739,7 @@ export function LowConfidenceBanner({ confidence }: LowConfidenceBannerProps) {
       />
       <div className="min-w-0">
         <p className="text-sm font-semibold text-[var(--color-ink)]">
-          Heads up — low-confidence parse
+          Heads up - low-confidence parse
         </p>
         <p className="mt-0.5 text-sm text-[var(--color-body)]">
           The AI wasn&apos;t sure about parts of this resume. Double-check every
@@ -751,7 +751,7 @@ export function LowConfidenceBanner({ confidence }: LowConfidenceBannerProps) {
 }
 ```
 
-- [ ] **Step 4: Run the test — should pass**
+- [ ] **Step 4: Run the test - should pass**
 
 ```bash
 pnpm --filter @aurahire/web test low-confidence-banner
@@ -849,7 +849,7 @@ export function ResumeUploadCard({
     type: string;
   } | null>(null);
 
-  // Stale "parsing" recovery state — render the recovery card, unless we're
+  // Stale "parsing" recovery state - render the recovery card, unless we're
   // explicitly in the replace flow (then user wants the dropzone).
   if (
     !forceIdle &&
@@ -1010,7 +1010,7 @@ export function ResumeUploadCard({
         onClick={() => router.push("/onboarding/candidate/personal")}
         className="mt-5 text-sm text-[var(--color-muted)] underline transition-colors hover:text-[var(--color-ink)]"
       >
-        Skip — I&apos;ll fill in manually
+        Skip - I&apos;ll fill in manually
       </button>
     </div>
   );
@@ -1024,7 +1024,7 @@ Key changes from the previous version:
 - `useState<Stage>(...)` initializer is a function that respects `forceIdle`.
 - `resume` initial value is `null` when `forceIdle`, else `latestResume`.
 - The stale-parsing branch also respects `forceIdle` (skip recovery card; user wants dropzone).
-- `if (stage === "uploading")` no longer renders a separate `Hang tight...` `<p>` — that caption now lives inside `ParsingProgressCard`.
+- `if (stage === "uploading")` no longer renders a separate `Hang tight...` `<p>` - that caption now lives inside `ParsingProgressCard`.
 - The `done` branch renders `ParsingProgressCard` with `parseStatus="done"` and `onAutoAdvance` that pushes to Step 2.
 
 - [ ] **Step 2: Delete the obsolete `parse-success-card.tsx`**
@@ -1039,7 +1039,7 @@ rm apps/web/components/onboarding/candidate/parse-success-card.tsx
 pnpm --filter @aurahire/web type-check
 ```
 
-Expected: PASS. If you see "Cannot find module './parse-success-card'" anywhere, search for stale imports and remove them — none should exist outside `resume-upload-card.tsx` (which we already updated).
+Expected: PASS. If you see "Cannot find module './parse-success-card'" anywhere, search for stale imports and remove them - none should exist outside `resume-upload-card.tsx` (which we already updated).
 
 - [ ] **Step 4: Run all web tests**
 
@@ -1084,7 +1084,7 @@ Note: `git add` on the deleted file records the deletion.
 
 - Modify: `apps/web/app/onboarding/candidate/page.tsx`
 
-If a returning candidate already has a parsed resume, the page redirects them straight to Step 2 — unless the URL carries `?replace=1`, in which case we render the dropzone.
+If a returning candidate already has a parsed resume, the page redirects them straight to Step 2 - unless the URL carries `?replace=1`, in which case we render the dropzone.
 
 - [ ] **Step 1: Replace `apps/web/app/onboarding/candidate/page.tsx`**
 
@@ -1099,7 +1099,7 @@ import { fetchCandidateProfileMe, fetchLatestParsedResume } from "./_data";
 import { ONBOARDING_STEPS } from "./_steps";
 import { getCurrentSession } from "@/lib/auth/session";
 
-export const metadata = { title: "Upload Resume — Onboarding" };
+export const metadata = { title: "Upload Resume - Onboarding" };
 
 export default async function Step1Page({
   searchParams,
@@ -1129,7 +1129,7 @@ export default async function Step1Page({
       currentStepId="resume"
       saveStatus="idle"
       title="Upload your resume"
-      subtitle="We'll extract your contact info, experience, education, and skills automatically. The AI takes 5–15 seconds."
+      subtitle="We'll extract your contact info, experience, education, and skills automatically. The AI takes 5-15 seconds."
     >
       <ResumeUploadCard
         latestResume={latestResume}
@@ -1147,7 +1147,7 @@ export default async function Step1Page({
 pnpm --filter @aurahire/web type-check
 ```
 
-Expected: PASS. (Next.js 16's `searchParams` is a Promise — the `await` shape matches the project's existing usage; if any existing pages in the repo use the older sync shape, do not unify them in this PR.)
+Expected: PASS. (Next.js 16's `searchParams` is a Promise - the `await` shape matches the project's existing usage; if any existing pages in the repo use the older sync shape, do not unify them in this PR.)
 
 - [ ] **Step 3: Run lint**
 
@@ -1291,7 +1291,7 @@ Replace the whole block with:
 
 Key changes:
 
-- Removed the outer `(canToggle || hasPdf) && ` gate — header now always renders.
+- Removed the outer `(canToggle || hasPdf) && ` gate - header now always renders.
 - Wrapped the right-side actions in a flex container holding `Replace resume` (always shown) and `Open` (still gated on `hasPdf && signedPdfUrl`).
 - Used `next/link`'s `<Link>` for the replace navigation so client-side routing works.
 
@@ -1466,7 +1466,7 @@ EOF
 
 ## Task 7: Final verification
 
-This task is verification-only — no code changes. The implementer hands the build off to the human for browser-based confirmation since the agent does not run dev servers (per `CLAUDE.md`).
+This task is verification-only - no code changes. The implementer hands the build off to the human for browser-based confirmation since the agent does not run dev servers (per `CLAUDE.md`).
 
 - [ ] **Step 1: Run the full test + type-check + lint suite from the repo root**
 
@@ -1490,7 +1490,7 @@ Expected: build succeeds.
 
 Ask the user to run `pnpm dev` from the repo root and walk through each scenario below, reporting back any deviations:
 
-**Scenario A — happy path (new candidate, high-confidence resume):**
+**Scenario A - happy path (new candidate, high-confidence resume):**
 
 1. Sign up + verify email (existing onboarding flow lands on Step 1).
 2. Drag a known-good PDF onto the dropzone.
@@ -1498,38 +1498,38 @@ Ask the user to run `pnpm dev` from the repo root and walk through each scenario
 4. Verify: when parse completes, all four green dots appear (no card swap), the progress bar becomes solid AuraHire-Blue, the "Done · {N} experiences, {N} schools, {N} skills, {N} certs extracted" line fades in, the caption above changes to "Routing to your details...", and after ~1.5s the URL changes to `/onboarding/candidate/personal` automatically.
 5. On Step 2, verify the AI Suggested badges appear next to prefilled fields and no low-confidence banner appears.
 
-**Scenario B — returning user with parsed resume:**
+**Scenario B - returning user with parsed resume:**
 
 1. Navigate manually to `/onboarding/candidate`.
 2. Verify: URL immediately becomes `/onboarding/candidate/personal` (server-side redirect).
 
-**Scenario C — replace flow:**
+**Scenario C - replace flow:**
 
 1. From Step 2 (or Step 3), look at the resume preview pane on the right.
 2. Verify a `↻ Replace resume` link is visible in the header next to the PDF/Text toggle.
-3. Click it — URL becomes `/onboarding/candidate?replace=1`, the dropzone renders.
+3. Click it - URL becomes `/onboarding/candidate?replace=1`, the dropzone renders.
 4. Upload a different PDF.
 5. Verify the auto-advance flow runs again and the new file's prefilled values appear on Step 2.
 
-**Scenario D — failed parse:**
+**Scenario D - failed parse:**
 
 1. Upload an unparseable file (e.g. an empty PDF, or a PDF with image-only content beyond the heuristic).
 2. Verify: stage flips to `failed` view ("We couldn't parse this resume." + retry/skip buttons). Existing behavior; should not regress.
 
-**Scenario E — low-confidence parse (manual fixture):**
-This requires a resume that the OpenAI prompt scores as `parse_confidence: "low"`. If you don't have one handy, you can temporarily edit `apps/web/app/onboarding/candidate/_data.ts` (or wherever `fetchLatestParsedResume` lives) to override `parse_confidence: "low"` for testing — revert before committing.
+**Scenario E - low-confidence parse (manual fixture):**
+This requires a resume that the OpenAI prompt scores as `parse_confidence: "low"`. If you don't have one handy, you can temporarily edit `apps/web/app/onboarding/candidate/_data.ts` (or wherever `fetchLatestParsedResume` lives) to override `parse_confidence: "low"` for testing - revert before committing.
 
 1. Upload the low-confidence resume.
 2. Verify on the parse-success flash: summary line includes `· Some fields may need review` in amber.
-3. Verify on Step 2: amber banner appears above the form: "Heads up — low-confidence parse · The AI wasn't sure about parts of this resume. Double-check every prefilled field before continuing."
+3. Verify on Step 2: amber banner appears above the form: "Heads up - low-confidence parse · The AI wasn't sure about parts of this resume. Double-check every prefilled field before continuing."
 4. Verify on Step 3: same banner.
 
-**Scenario F — skip "fill manually":**
+**Scenario F - skip "fill manually":**
 
-1. From a clean Step 1 (no parsed resume), click `Skip — I'll fill in manually`.
+1. From a clean Step 1 (no parsed resume), click `Skip - I'll fill in manually`.
 2. Verify: routes to Step 2 with no prefilled values, no AI Suggested badges, no low-confidence banner.
 
-- [ ] **Step 4: If any scenario fails, capture the symptom + console output and reopen the relevant task. If all pass, no further commits required — the implementation is done.**
+- [ ] **Step 4: If any scenario fails, capture the symptom + console output and reopen the relevant task. If all pass, no further commits required - the implementation is done.**
 
 ---
 

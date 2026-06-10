@@ -5,12 +5,12 @@
  * (May 2026), candidates whose preview match score is below the
  * auto-reject threshold cannot proceed to the apply form. This component
  * renders the Apply button or its disabled equivalent based on the same
- * preview query the MatchPreviewClient consumes — so both surfaces stay
+ * preview query the MatchPreviewClient consumes - so both surfaces stay
  * in sync without a prop-drilling refactor.
  *
  * Three render paths:
  *
- *   - `hasApplied`: candidate already applied — render "View your
+ *   - `hasApplied`: candidate already applied - render "View your
  *     application" (passed-through behaviour from the prior server
  *     render).
  *   - Preview loaded AND below threshold: disabled pill with a tooltip
@@ -38,7 +38,7 @@ interface ApplyCtaClientProps {
   hasApplied: boolean;
   applyHref: string;
   viewApplicationHref: string;
-  /** Visual variant — affects sizing, not behaviour. */
+  /** Visual variant - affects sizing, not behaviour. */
   variant: "card" | "sticky";
 }
 
@@ -49,7 +49,7 @@ export function ApplyCtaClient({
   viewApplicationHref,
   variant,
 }: ApplyCtaClientProps) {
-  // Same query key as MatchPreviewClient — TanStack reuses the cached
+  // Same query key as MatchPreviewClient - TanStack reuses the cached
   // result, no duplicate request.
   const previewQuery = useQuery<MatchPreviewEnvelope>({
     queryKey: ["candidate-match-preview", jobId] as const,
@@ -90,7 +90,7 @@ export function ApplyCtaClient({
           type="button"
           disabled
           aria-disabled="true"
-          title={`Match score below ${AUTO_REJECT_THRESHOLD} — apply is blocked for this role`}
+          title={`Match score below ${AUTO_REJECT_THRESHOLD} - apply is blocked for this role`}
           className={
             variant === "card"
               ? "inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--color-primary-disabled)] px-6 text-sm font-semibold text-[var(--color-on-primary)] opacity-90"
@@ -98,7 +98,7 @@ export function ApplyCtaClient({
           }
         >
           <ShieldX className="h-4 w-4" />
-          Below {AUTO_REJECT_THRESHOLD} match — can&apos;t apply
+          Below {AUTO_REJECT_THRESHOLD} match - can&apos;t apply
         </button>
         {variant === "card" && (
           <p className="text-center text-xs text-[var(--color-muted)]">
@@ -111,7 +111,7 @@ export function ApplyCtaClient({
     );
   }
 
-  // Default — preview loading, no preview yet, or score at/above threshold.
+  // Default - preview loading, no preview yet, or score at/above threshold.
   return (
     <Link
       href={applyHref}

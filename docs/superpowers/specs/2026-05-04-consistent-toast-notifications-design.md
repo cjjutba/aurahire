@@ -1,4 +1,4 @@
-# Consistent Toast Notifications — Design
+# Consistent Toast Notifications - Design
 
 **Date:** 2026-05-04
 **Author:** brainstormed with Claude Code
@@ -7,7 +7,7 @@
 
 ## Problem
 
-Toast feedback is patchy across the three portals (candidate, recruiter, admin) and the auth/onboarding flows. Errors are well-covered (~30 sites), but ~10 successful mutations are silent — most notably login, register, logout, verify-email, forgot-password, and every onboarding step. Wording is also inconsistent: some toasts use em-dashes (`"Offer accepted — welcome aboard!"`), some use string interpolation in the title (`"Moved to ${newStatus}"`), some use generic fallbacks (`"Something went wrong"`) instead of API error messages. There is no central error-extraction helper, so each site reaches into the error shape differently.
+Toast feedback is patchy across the three portals (candidate, recruiter, admin) and the auth/onboarding flows. Errors are well-covered (~30 sites), but ~10 successful mutations are silent - most notably login, register, logout, verify-email, forgot-password, and every onboarding step. Wording is also inconsistent: some toasts use em-dashes (`"Offer accepted - welcome aboard!"`), some use string interpolation in the title (`"Moved to ${newStatus}"`), some use generic fallbacks (`"Something went wrong"`) instead of API error messages. There is no central error-extraction helper, so each site reaches into the error shape differently.
 
 The user reported this after noticing no toast on successful login.
 
@@ -23,11 +23,11 @@ The user reported this after noticing no toast on successful login.
 - Real-time / websocket notifications (no server-pushed toasts for events caused by other users or background jobs).
 - Notification center / persistent inbox / push notifications.
 - Per-user notification preferences or muting.
-- i18n — all literals are English.
+- i18n - all literals are English.
 - Toast accessibility tweaks beyond Sonner's defaults (`aria-live="polite"` is already correct).
 - Sonner config changes (position, theme, package version unchanged).
-- Backend changes — the `ApiErrorResponse` shape is already correct.
-- Toast unit tests — manual verification across the three portals is sufficient for this sprint.
+- Backend changes - the `ApiErrorResponse` shape is already correct.
+- Toast unit tests - manual verification across the three portals is sufficient for this sprint.
 
 ## Scope rules (what fires a toast)
 
@@ -39,7 +39,7 @@ A toast fires **only** when:
 A toast does **not** fire for:
 
 - Background jobs (cron, BullMQ workers, scheduled rescores).
-- State changes caused by other users (e.g., a recruiter changing the status of an application the candidate happens to be viewing — no surprise toast).
+- State changes caused by other users (e.g., a recruiter changing the status of an application the candidate happens to be viewing - no surprise toast).
 - Polling-driven server-state updates that the current user did not trigger.
 - Reads (page loads, list fetches, cache refreshes).
 - Intermediate steps in multi-step flows where the page navigation is itself the success signal (see "Onboarding exception" below).
@@ -50,7 +50,7 @@ Intermediate onboarding steps stay silent on success. The user clicking "Continu
 
 Exceptions to the exception:
 
-- **Resume upload** is the first candidate onboarding step but takes 3–8s and produces a discrete result (parsed fields). It fires a success toast (`"Resume processed"`) because the user is waiting on a real action result, not a navigation.
+- **Resume upload** is the first candidate onboarding step but takes 3-8s and produces a discrete result (parsed fields). It fires a success toast (`"Resume processed"`) because the user is waiting on a real action result, not a navigation.
 - Error toasts fire on every step's failure (intermediate or final).
 
 ## Architecture
@@ -105,7 +105,7 @@ Validation toasts go through `toastApiError` with a `null` error and an explicit
 
 - Terse past-tense action + object: `"Job published"`, `"Profile updated"`, `"Application sent"`.
 - No emojis. No exclamation marks. No em/en-dashes.
-- No string interpolation in the title — interpolated values go in the description.
+- No string interpolation in the title - interpolated values go in the description.
 - User-friendly language. Avoid technical jargon ("rescored", "redacted", "PII", "DTO"). Prefer plain English ("Score recalculated", "Resume processed").
 
 ### Description rules
@@ -117,7 +117,7 @@ Validation toasts go through `toastApiError` with a `null` error and an explicit
 
 ### Note on API error messages
 
-The em-dash and wording rules above apply to **our** literals (titles and descriptions written in this codebase). When an API error message surfaces through `toastApiError` as a description, it appears verbatim — we do not rewrite backend-authored error strings. Backend wording is governed by `apps/api`, not this design.
+The em-dash and wording rules above apply to **our** literals (titles and descriptions written in this codebase). When an API error message surfaces through `toastApiError` as a description, it appears verbatim - we do not rewrite backend-authored error strings. Backend wording is governed by `apps/api`, not this design.
 
 ### Error fallback
 
@@ -129,11 +129,11 @@ The em-dash and wording rules above apply to **our** literals (titles and descri
 
 | Action                                    | Title                      | Description                      |
 | ----------------------------------------- | -------------------------- | -------------------------------- |
-| Sign in success                           | `Signed in`                | —                                |
+| Sign in success                           | `Signed in`                | -                                |
 | Sign in error                             | `Sign in failed`           | API msg or fallback              |
 | Register success (candidate or recruiter) | `Account created`          | `Check your email to verify.`    |
 | Register error                            | `Couldn't create account`  | API msg                          |
-| Sign out success                          | `Signed out`               | —                                |
+| Sign out success                          | `Signed out`               | -                                |
 | Sign out error                            | `Sign out failed`          | API msg                          |
 | Verify email success                      | `Email verified`           | `Redirecting to your dashboard.` |
 | Verify email error                        | `Verification failed`      | API msg                          |
@@ -150,31 +150,31 @@ The em-dash and wording rules above apply to **our** literals (titles and descri
 | Resume upload error                                                                    | `Couldn't process resume`                                | API msg                                          |
 | Candidate onboarding complete                                                          | `Onboarding complete`                                    | `Welcome to AuraHire.`                           |
 | Recruiter onboarding complete                                                          | `Onboarding complete`                                    | `Welcome to AuraHire.`                           |
-| Intermediate step saves (personal-info, education, experience, skills, about, company) | **silent on success**                                    | —                                                |
+| Intermediate step saves (personal-info, education, experience, skills, about, company) | **silent on success**                                    | -                                                |
 | Intermediate step errors                                                               | site-specific title (e.g. `Couldn't save personal info`) | API msg                                          |
 
 ### Candidate portal
 
 | Action                  | Title                   | Description                                |
 | ----------------------- | ----------------------- | ------------------------------------------ |
-| Update profile settings | `Profile updated`       | —                                          |
-| Recompute profile score | `Score recalculated`    | —                                          |
+| Update profile settings | `Profile updated`       | -                                          |
+| Recompute profile score | `Score recalculated`    | -                                          |
 | Apply to job            | `Application sent`      | `We'll notify you when there's an update.` |
-| Withdraw application    | `Application withdrawn` | —                                          |
+| Withdraw application    | `Application withdrawn` | -                                          |
 | Accept offer            | `Offer accepted`        | `Welcome aboard.`                          |
-| Decline offer           | `Offer declined`        | —                                          |
+| Decline offer           | `Offer declined`        | -                                          |
 
 ### Recruiter portal
 
 | Action                    | Title                 | Description            |
 | ------------------------- | --------------------- | ---------------------- |
-| Update profile settings   | `Profile updated`     | —                      |
-| Create job                | `Job created`         | —                      |
-| Update job                | `Job updated`         | —                      |
-| Publish job               | `Job published`       | —                      |
-| Archive job               | `Job archived`        | —                      |
+| Update profile settings   | `Profile updated`     | -                      |
+| Create job                | `Job created`         | -                      |
+| Update job                | `Job updated`         | -                      |
+| Publish job               | `Job published`       | -                      |
+| Archive job               | `Job archived`        | -                      |
 | Change application status | `Status updated`      | `Now in ${newStatus}.` |
-| Save application notes    | `Notes saved`         | —                      |
+| Save application notes    | `Notes saved`         | -                      |
 | Schedule interview        | `Interview scheduled` | `Candidate notified.`  |
 | Send offer                | `Offer sent`          | `Candidate notified.`  |
 
@@ -182,18 +182,18 @@ The em-dash and wording rules above apply to **our** literals (titles and descri
 
 | Action                                    | Title                 | Description                                           |
 | ----------------------------------------- | --------------------- | ----------------------------------------------------- |
-| Suspend user                              | `User suspended`      | —                                                     |
-| Reactivate user                           | `User reactivated`    | —                                                     |
+| Suspend user                              | `User suspended`      | -                                                     |
+| Reactivate user                           | `User reactivated`    | -                                                     |
 | Change user role                          | `User role changed`   | `Now ${newRole}.`                                     |
-| Delete user                               | `User deleted`        | —                                                     |
+| Delete user                               | `User deleted`        | -                                                     |
 | Force password reset (temp password mode) | `Reset link sent`     | `Temporary credentials copied to clipboard.`          |
-| Force password reset (email-only mode)    | `Reset link sent`     | —                                                     |
-| Save AI config                            | `Configuration saved` | —                                                     |
+| Force password reset (email-only mode)    | `Reset link sent`     | -                                                     |
+| Save AI config                            | `Configuration saved` | -                                                     |
 | Apply config to existing                  | `Rescore complete`    | `${n} applications updated.` (when polling completes) |
-| Archive job                               | `Job archived`        | —                                                     |
+| Archive job                               | `Job archived`        | -                                                     |
 | Export audit log                          | `Audit log exported`  | `Download started.`                                   |
-| Bias override saved                       | `Override saved`      | —                                                     |
-| Copy to clipboard                         | `Copied to clipboard` | —                                                     |
+| Bias override saved                       | `Override saved`      | -                                                     |
+| Copy to clipboard                         | `Copied to clipboard` | -                                                     |
 
 ### Validation (Zod schema fail before submit)
 
@@ -211,28 +211,28 @@ The em-dash and wording rules above apply to **our** literals (titles and descri
 
 ### Auth (7)
 
-- `apps/web/components/auth/login-form.tsx` — migrate 5 errors; add success toast.
-- `apps/web/components/auth/register-candidate-form.tsx` — migrate; add success toast.
-- `apps/web/components/auth/register-recruiter-form.tsx` — migrate; add success toast.
-- `apps/web/components/auth/forgot-password-form.tsx` — add success + error toasts (currently swallows errors at `.catch(() => {})`; remove that suppression).
-- `apps/web/components/auth/reset-password-form.tsx` — migrate; restandardize wording.
-- `apps/web/app/(auth)/verify-email/verify-email-client.tsx` — add success + error toasts when status resolves.
-- `apps/web/components/layout/portal-topbar.tsx` — migrate logout error; add success toast.
+- `apps/web/components/auth/login-form.tsx` - migrate 5 errors; add success toast.
+- `apps/web/components/auth/register-candidate-form.tsx` - migrate; add success toast.
+- `apps/web/components/auth/register-recruiter-form.tsx` - migrate; add success toast.
+- `apps/web/components/auth/forgot-password-form.tsx` - add success + error toasts (currently swallows errors at `.catch(() => {})`; remove that suppression).
+- `apps/web/components/auth/reset-password-form.tsx` - migrate; restandardize wording.
+- `apps/web/app/(auth)/verify-email/verify-email-client.tsx` - add success + error toasts when status resolves.
+- `apps/web/components/layout/portal-topbar.tsx` - migrate logout error; add success toast.
 
 ### Onboarding (6 confirmed)
 
-- `apps/web/components/onboarding/candidate/resume-upload.tsx` — migrate; restandardize wording.
-- `apps/web/components/onboarding/candidate/personal-info-form.tsx` — migrate error only; intermediate step stays silent on success.
-- `apps/web/components/onboarding/candidate/preferences-form.tsx` — migrate errors; add success toast on `completeOnboarding`.
-- `apps/web/components/onboarding/recruiter/about-form.tsx` — migrate error only.
-- `apps/web/components/onboarding/recruiter/company-form.tsx` — migrate error only.
-- `apps/web/components/onboarding/recruiter/focus-form.tsx` — migrate errors; add success toast on `completeOnboarding`.
+- `apps/web/components/onboarding/candidate/resume-upload.tsx` - migrate; restandardize wording.
+- `apps/web/components/onboarding/candidate/personal-info-form.tsx` - migrate error only; intermediate step stays silent on success.
+- `apps/web/components/onboarding/candidate/preferences-form.tsx` - migrate errors; add success toast on `completeOnboarding`.
+- `apps/web/components/onboarding/recruiter/about-form.tsx` - migrate error only.
+- `apps/web/components/onboarding/recruiter/company-form.tsx` - migrate error only.
+- `apps/web/components/onboarding/recruiter/focus-form.tsx` - migrate errors; add success toast on `completeOnboarding`.
 
-### Onboarding pages — first action of implementation plan: confirm shape
+### Onboarding pages - first action of implementation plan: confirm shape
 
 The implementation plan's first task includes reading `apps/web/app/onboarding/candidate/education/page.tsx`, `experience/page.tsx`, and `skills/page.tsx` (plus any client components they render) to determine whether they contain client-side mutations. Apply this rule per file:
 
-- If the file contains a mutation handler (form submit calling an API): add error-only toast (no success toast — intermediate step).
+- If the file contains a mutation handler (form submit calling an API): add error-only toast (no success toast - intermediate step).
 - If the file is a server component or a thin wrapper with no mutation: do not modify.
   The file count above (32) does not include these three; whether they are touched is data-dependent and resolved during implementation, not now.
 
@@ -240,23 +240,23 @@ The implementation plan's first task includes reading `apps/web/app/onboarding/c
 
 - `apps/web/app/(recruiter)/recruiter/settings/_settings-form-client.tsx`
 - `apps/web/app/(recruiter)/recruiter/jobs/[id]/job-actions.tsx`
-- `apps/web/app/(recruiter)/recruiter/applications/[id]/_actions-client.tsx` — rewrite `"Moved to ${newStatus}"` to use new convention.
+- `apps/web/app/(recruiter)/recruiter/applications/[id]/_actions-client.tsx` - rewrite `"Moved to ${newStatus}"` to use new convention.
 - `apps/web/app/(recruiter)/recruiter/applications/[id]/_schedule-interview-modal-client.tsx`
-- `apps/web/app/(recruiter)/recruiter/offers/new/_offer-form-client.tsx` — remove em-dash from `"Offer sent — candidate notified"`.
-- `apps/web/components/jobs/job-form.tsx` — distinguish `"Job created"` vs `"Job updated"`.
+- `apps/web/app/(recruiter)/recruiter/offers/new/_offer-form-client.tsx` - remove em-dash from `"Offer sent - candidate notified"`.
+- `apps/web/components/jobs/job-form.tsx` - distinguish `"Job created"` vs `"Job updated"`.
 
 ### Candidate portal (6)
 
 - `apps/web/app/(candidate)/candidate/settings/_settings-form-client.tsx`
 - `apps/web/app/(candidate)/candidate/profile/_recompute-button-client.tsx`
 - `apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx`
-- `apps/web/app/(candidate)/candidate/applications/[id]/_offer-actions-client.tsx` — remove em-dash from `"Offer accepted — welcome aboard!"`.
+- `apps/web/app/(candidate)/candidate/applications/[id]/_offer-actions-client.tsx` - remove em-dash from `"Offer accepted - welcome aboard!"`.
 - `apps/web/app/(candidate)/candidate/applications/[id]/_withdraw-button-client.tsx`
 - `apps/web/app/(candidate)/candidate/jobs/[id]/apply/_apply-form-client.tsx`
 
 ### Admin portal (5)
 
-- `apps/web/app/(admin)/admin/users/_action-modals-client.tsx` — rewrite `"Role changed to ${newRole}"` to use new convention.
+- `apps/web/app/(admin)/admin/users/_action-modals-client.tsx` - rewrite `"Role changed to ${newRole}"` to use new convention.
 - `apps/web/app/(admin)/admin/ai-config/_apply-to-existing-client.tsx`
 - `apps/web/app/(admin)/admin/ai-config/_config-editor-client.tsx`
 - `apps/web/app/(admin)/admin/audit/_export-button-client.tsx`
@@ -278,7 +278,7 @@ The implementation plan's first task includes reading `apps/web/app/onboarding/c
 
 1. **Forgot-password security model.** API always returns success regardless of whether the email exists (anti-enumeration). Always show `"Reset link sent"`. Never reveal email existence.
 2. **Email-already-registered during signup.** Surfaces as a form field error (not a toast). Don't double up.
-3. **Throttle (429) responses.** Custom messages from the API (e.g. `"Hold on — we just rescored a moment ago."`) flow through `toastApiError` as descriptions. No special-casing needed.
+3. **Throttle (429) responses.** Custom messages from the API (e.g. `"Hold on - we just rescored a moment ago."`) flow through `toastApiError` as descriptions. No special-casing needed.
 4. **Validation runs before mutation.** Every form: Zod validation toast (`"Check your input"`) fires first with early return, then mutation runs. The two never fire together.
 5. **Verify-email already-verified state.** Treat as success (`"Email verified"`), not warning. Goal achieved either way.
 6. **Network failures.** When `err.message === "Failed to fetch"`, `extractApiErrorMessage` returns null, caller's fallback `"Please try again."` shows.

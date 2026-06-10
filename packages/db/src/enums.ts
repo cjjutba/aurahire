@@ -1,5 +1,5 @@
-// AuraHire canonical enums — used in Drizzle schema definitions.
-// These are TypeScript const tuples (not pgEnum types) — Drizzle's text({ enum: ... }) accepts them.
+// AuraHire canonical enums - used in Drizzle schema definitions.
+// These are TypeScript const tuples (not pgEnum types) - Drizzle's text({ enum: ... }) accepts them.
 // Mirroring `lib/constants/enums.ts` from `docs/main/database-schema.md`.
 
 export const USER_ROLES = ["candidate", "recruiter", "admin"] as const;
@@ -41,7 +41,7 @@ export const OFFER_STATUS = [
   "withdrawn",
 ] as const;
 export const INTERVIEW_FORMAT = ["phone", "video", "in-person"] as const;
-// `in_progress` added May 2026 — the interview lifecycle now models the
+// `in_progress` added May 2026 - the interview lifecycle now models the
 // "happening right now" phase explicitly. Two minute-resolution crons
 // own the auto-transitions (`interview-start` flips scheduled →
 // in_progress when scheduledAt arrives, `interview-autocomplete` flips
@@ -138,7 +138,7 @@ export const COMPANY_MEMBER_STATUS = [
   "left",
 ] as const;
 
-// In-app feedback — user-submitted via the sidebar profile popover.
+// In-app feedback - user-submitted via the sidebar profile popover.
 export const FEEDBACK_TYPE = [
   "bug",
   "suggestion",
@@ -185,7 +185,7 @@ export type FeedbackType = (typeof FEEDBACK_TYPE)[number];
 export type FeedbackSeverity = (typeof FEEDBACK_SEVERITY)[number];
 export type FeedbackStatus = (typeof FEEDBACK_STATUS)[number];
 
-// Notification system — used by `notificationsTable` and `notificationPreferencesTable`.
+// Notification system - used by `notificationsTable` and `notificationPreferencesTable`.
 export const NOTIFICATION_EVENT_TYPE = [
   // Candidate (personal scope)
   "application_status_changed",

@@ -8,22 +8,22 @@
 
 ## Overview
 
-AuraHire reads like an institutional, AI-forward platform that takes hiring seriously. Marketing surfaces are quiet, white-canvas, editorially-spaced. Authenticated portals are dense but calm — content-first, no ornamentation. The single brand voltage is **AuraHire Blue** (`{colors.primary}` — `#2563EB`), used scarcely: every primary CTA pill, the brand wordmark, inline links, and as the score-progress fill.
+AuraHire reads like an institutional, AI-forward platform that takes hiring seriously. Marketing surfaces are quiet, white-canvas, editorially-spaced. Authenticated portals are dense but calm - content-first, no ornamentation. The single brand voltage is **AuraHire Blue** (`{colors.primary}` - `#2563EB`), used scarcely: every primary CTA pill, the brand wordmark, inline links, and as the score-progress fill.
 
-Beyond that one blue, the system is white canvas + ink + soft gray elevation bands + a deep near-black canvas (`{colors.surface-dark}` — `#0A0B0D`) for full-bleed marketing heroes that carry layered product-UI mockup cards.
+Beyond that one blue, the system is white canvas + ink + soft gray elevation bands + a deep near-black canvas (`{colors.surface-dark}` - `#0A0B0D`) for full-bleed marketing heroes that carry layered product-UI mockup cards.
 
-Type pairs **Inter** (display + body, substituting for licensed system fonts) with **JetBrains Mono** for every numerical value — scores, percentages, counts, weights, time-to-hire. Display sits at **weight 400**, never 700+. The choice signals **editorial calm and explainable AI** rather than aggressive automation.
+Type pairs **Inter** (display + body, substituting for licensed system fonts) with **JetBrains Mono** for every numerical value - scores, percentages, counts, weights, time-to-hire. Display sits at **weight 400**, never 700+. The choice signals **editorial calm and explainable AI** rather than aggressive automation.
 
 The page rhythm rotates three modes across marketing surfaces: bright white editorial sections, soft-gray elevation bands, and full-bleed dark editorial heroes carrying floating Score Ring + Breakdown Bar mockups. Inside the portals, the rhythm changes to a sidebar + dense content area (Linear / Vercel-app aesthetic) sharing the same tokens.
 
 ### Key Characteristics
 
-- **Single accent color** — `{colors.primary}` carries every primary CTA, wordmark, and inline brand link. Used scarcely.
-- **Modest display weights** — Inter at weight 400 for all display copy. Never bold.
-- **Pill geometry for actions** — every CTA is `{rounded.pill}` (100px), every chip is pill, every avatar/glyph is `{rounded.full}`, every card is `{rounded.xl}` (24px) or `{rounded.lg}` (16px). Sharp corners absent.
-- **Full-bleed dark heroes with floating UI cards** — `{component.hero-band-dark}` plus inline `{component.product-ui-card-dark}` mockups (Score Ring + Breakdown Bar) is the brand's strongest signature pattern.
-- **Scoring semantics** — `{colors.score-low}` (red), `{colors.score-mid}` (amber), `{colors.score-high}` (green). Used as fill on Score Ring + Breakdown Bar; used as text-only on inline labels and badges. Not used as button backgrounds.
-- **96px section rhythm** on marketing; **24–32px section rhythm** inside portals.
+- **Single accent color** - `{colors.primary}` carries every primary CTA, wordmark, and inline brand link. Used scarcely.
+- **Modest display weights** - Inter at weight 400 for all display copy. Never bold.
+- **Pill geometry for actions** - every CTA is `{rounded.pill}` (100px), every chip is pill, every avatar/glyph is `{rounded.full}`, every card is `{rounded.xl}` (24px) or `{rounded.lg}` (16px). Sharp corners absent.
+- **Full-bleed dark heroes with floating UI cards** - `{component.hero-band-dark}` plus inline `{component.product-ui-card-dark}` mockups (Score Ring + Breakdown Bar) is the brand's strongest signature pattern.
+- **Scoring semantics** - `{colors.score-low}` (red), `{colors.score-mid}` (amber), `{colors.score-high}` (green). Used as fill on Score Ring + Breakdown Bar; used as text-only on inline labels and badges. Not used as button backgrounds.
+- **96px section rhythm** on marketing; **24-32px section rhythm** inside portals.
 
 ---
 
@@ -31,8 +31,8 @@ The page rhythm rotates three modes across marketing surfaces: bright white edit
 
 1. **Restraint over ornament.** Every pixel earns its place. No shadows where a hairline will do. No second action color. No bold display.
 2. **Numbers always in mono.** Every score, percent, count, currency, duration renders in JetBrains Mono. Tabular alignment + visual identity for "this is data."
-3. **AI moments are visible, not hidden.** When the system runs AI — parsing, scoring, bias-checking — the surface explicitly says so (badge, shimmer, "AI suggested" tag). Transparency is the brand.
-4. **Score color signals outcome, not judgment.** Fairness lives in the algorithm (PII redaction, weight transparency, audit logs). Color is value-neutral display of the computed result. We do not equate red with "bad candidate" — we equate red with "low match against this specific job's stated criteria."
+3. **AI moments are visible, not hidden.** When the system runs AI - parsing, scoring, bias-checking - the surface explicitly says so (badge, shimmer, "AI suggested" tag). Transparency is the brand.
+4. **Score color signals outcome, not judgment.** Fairness lives in the algorithm (PII redaction, weight transparency, audit logs). Color is value-neutral display of the computed result. We do not equate red with "bad candidate" - we equate red with "low match against this specific job's stated criteria."
 5. **Two modes, one system.** Marketing surfaces use Coinbase-style editorial pacing. Portal surfaces use Linear/Vercel-style dense calm. Tokens are shared; layouts differ.
 
 ---
@@ -84,14 +84,14 @@ These three colors are AuraHire's signature data colors. Used as **fill** on Sco
 
 | Token                      | Hex       | Score Range | Label                      |
 | -------------------------- | --------- | ----------- | -------------------------- |
-| `{colors.score-low}`       | `#DC2626` | 0–39        | "Limited Match"            |
-| `{colors.score-mid}`       | `#F59E0B` | 40–69       | "Partial Match"            |
-| `{colors.score-high}`      | `#10B981` | 70–100      | "Strong Match"             |
-| `{colors.score-low-soft}`  | `#FEE2E2` | —           | Chip background, soft fill |
-| `{colors.score-mid-soft}`  | `#FEF3C7` | —           | Chip background, soft fill |
-| `{colors.score-high-soft}` | `#D1FAE5` | —           | Chip background, soft fill |
+| `{colors.score-low}`       | `#DC2626` | 0-39        | "Limited Match"            |
+| `{colors.score-mid}`       | `#F59E0B` | 40-69       | "Partial Match"            |
+| `{colors.score-high}`      | `#10B981` | 70-100      | "Strong Match"             |
+| `{colors.score-low-soft}`  | `#FEE2E2` | -           | Chip background, soft fill |
+| `{colors.score-mid-soft}`  | `#FEF3C7` | -           | Chip background, soft fill |
+| `{colors.score-high-soft}` | `#D1FAE5` | -           | Chip background, soft fill |
 
-**Fairness note:** scoring colors communicate the _computed score against the stated job criteria_, not a value judgment of the candidate. The fairness story lives upstream — in PII redaction before scoring, in transparent weight configuration, in audit logs of every score and override. The color layer is honest visualization of the algorithmic result.
+**Fairness note:** scoring colors communicate the _computed score against the stated job criteria_, not a value judgment of the candidate. The fairness story lives upstream - in PII redaction before scoring, in transparent weight configuration, in audit logs of every score and override. The color layer is honest visualization of the algorithmic result.
 
 ### Status Semantics (text-only inline)
 
@@ -133,20 +133,20 @@ CoinbaseDisplay/Mono are licensed; Inter + JetBrains Mono are the documented sub
 | `{typography.body-sm}`        | 14px | 400    | 1.5         | 0        | Helper text, table body, secondary copy             |
 | `{typography.caption}`        | 13px | 400    | 1.5         | 0        | Photo captions, labels                              |
 | `{typography.caption-strong}` | 12px | 600    | 1.5         | 0.04em   | Badge / chip labels (uppercase)                     |
-| `{typography.number-display}` | 18px | 500    | 1.4         | 0        | Score values, percentages, counts — JetBrains Mono  |
-| `{typography.number-large}`   | 36px | 500    | 1.0         | -0.5px   | Score Ring center number — JetBrains Mono           |
-| `{typography.number-small}`   | 14px | 500    | 1.4         | 0        | Inline metrics, table cell numbers — JetBrains Mono |
+| `{typography.number-display}` | 18px | 500    | 1.4         | 0        | Score values, percentages, counts - JetBrains Mono  |
+| `{typography.number-large}`   | 36px | 500    | 1.0         | -0.5px   | Score Ring center number - JetBrains Mono           |
+| `{typography.number-small}`   | 14px | 500    | 1.4         | 0        | Inline metrics, table cell numbers - JetBrains Mono |
 | `{typography.button}`         | 16px | 600    | 1.15        | 0        | Standard CTA pill                                   |
 | `{typography.button-sm}`      | 14px | 600    | 1.15        | 0        | Compact CTA, table action button                    |
 | `{typography.nav-link}`       | 14px | 500    | 1.4         | 0        | Top-nav menu items, sidebar items                   |
 
 ### Principles
 
-- **Display weight stays at 400.** The single most distinctive typographic choice — signals "calm, transparent platform" rather than "automation-first urgency."
+- **Display weight stays at 400.** The single most distinctive typographic choice - signals "calm, transparent platform" rather than "automation-first urgency."
 - **Negative letter-spacing on display only.** Display tracking is -1px to -2px; body and titles stay at 0.
 - **JetBrains Mono on every number.** Score values, percentages, salary ranges, application counts, durations, dates with numerical content (e.g., "2026-05-01"). Tabular alignment + signal that "this is data."
 - **No bold display.** If a marketing headline needs emphasis, use color or size, not weight.
-- **Don't mix display and body inside a single headline.** Headlines are either display or sentence-case title — never blended.
+- **Don't mix display and body inside a single headline.** Headlines are either display or sentence-case title - never blended.
 
 ---
 
@@ -167,8 +167,8 @@ Base unit: **4px**. All spacing tokens are multiples of 4.
 | `{spacing.section}`        | 96px  | Major editorial band on marketing              |
 | `{spacing.portal-section}` | 32px  | Major section gap inside authenticated portals |
 
-**Marketing rhythm:** 96px between bands; cards inside bands sit 24–32px apart.
-**Portal rhythm:** 32px between sections; cards inside sit 16–24px apart.
+**Marketing rhythm:** 96px between bands; cards inside bands sit 24-32px apart.
+**Portal rhythm:** 32px between sections; cards inside sit 16-24px apart.
 
 ---
 
@@ -176,7 +176,7 @@ Base unit: **4px**. All spacing tokens are multiples of 4.
 
 | Token            | Value  | Use                                                       |
 | ---------------- | ------ | --------------------------------------------------------- |
-| `{rounded.none}` | 0      | Reserved (unused — sharp corners absent)                  |
+| `{rounded.none}` | 0      | Reserved (unused - sharp corners absent)                  |
 | `{rounded.xs}`   | 4px    | Inline tags, code chips                                   |
 | `{rounded.sm}`   | 8px    | Compact rows, table cell highlight                        |
 | `{rounded.md}`   | 12px   | Form inputs, dropdown menus, modal corners                |
@@ -201,7 +201,7 @@ The system uses **one shadow tier**. Most surfaces are flat. Depth comes from ha
 | Modal        | `0 16px 48px rgba(0, 0, 0, 0.12)`      | Modal/dialog overlay only               |
 | Photographic | Layered floating UI cards on dark hero | Marketing hero depth                    |
 
-No drop-shadow ramps. No layered shadows. No "elevated" tiers (z1, z2, z3) — flat or hairline by default.
+No drop-shadow ramps. No layered shadows. No "elevated" tiers (z1, z2, z3) - flat or hairline by default.
 
 ---
 
@@ -224,14 +224,14 @@ No drop-shadow ramps. No layered shadows. No "elevated" tiers (z1, z2, z3) — f
 
 ### Whitespace Philosophy
 
-- **Marketing:** generous editorial pacing — closer to Bloomberg or Linear's marketing site than to a SaaS dashboard.
-- **Portal:** dense but breathing — Linear / Vercel app aesthetic. Information-rich without feeling cramped.
+- **Marketing:** generous editorial pacing - closer to Bloomberg or Linear's marketing site than to a SaaS dashboard.
+- **Portal:** dense but breathing - Linear / Vercel app aesthetic. Information-rich without feeling cramped.
 
 ---
 
 ## Iconography
 
-- **Library:** [Lucide React](https://lucide.dev) — pairs naturally with shadcn/ui.
+- **Library:** [Lucide React](https://lucide.dev) - pairs naturally with shadcn/ui.
 - **Default size:** 20px (1.25rem) inline; 16px (1rem) for compact UI; 24px (1.5rem) for prominent actions.
 - **Stroke width:** 2px (Lucide default).
 - **Color:** inherits text color by default. Use `{colors.muted}` for inactive icons; `{colors.primary}` only for active/selected nav state.
@@ -271,14 +271,14 @@ No bouncy easings. No scroll-triggered animations on marketing. Motion serves co
 ### Don't
 
 - Don't introduce a secondary brand color. AuraHire Blue is the only action color.
-- Don't bold display copy — display sits at weight 400; bolding shifts the brand voice.
-- Don't add drop-shadow tiers — system has one shadow tier.
+- Don't bold display copy - display sits at weight 400; bolding shifts the brand voice.
+- Don't add drop-shadow tiers - system has one shadow tier.
 - Don't use `{rounded.none}` (0px) on CTAs or interactive elements.
 - Don't use scoring red/amber/green as a button background. Scoring colors are fill or text only.
 - Don't use scoring colors for application lifecycle states. Use `{colors.status-*}` instead.
 - Don't render scores in Inter. Always JetBrains Mono.
 - Don't display a score without an accompanying explanation route (a click-through to the breakdown). Numbers without explanation violate the thesis.
-- Don't equate score color with candidate worth in copy. Match labels are "Strong Match," "Partial Match," "Limited Match" — never "Excellent Candidate," "Mediocre Candidate," "Poor Candidate."
+- Don't equate score color with candidate worth in copy. Match labels are "Strong Match," "Partial Match," "Limited Match" - never "Excellent Candidate," "Mediocre Candidate," "Poor Candidate."
 
 ---
 

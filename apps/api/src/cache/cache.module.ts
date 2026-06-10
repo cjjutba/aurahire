@@ -6,7 +6,7 @@ import { IORedisProvider } from "./redis.provider";
 
 /**
  * Project-local cache module. Distinct from `@nestjs/cache-manager` (which is
- * also registered globally and used elsewhere) — this one owns its own
+ * also registered globally and used elsewhere) - this one owns its own
  * ioredis client so it can do tag indexing and atomic operations the
  * cache-manager abstraction doesn't expose.
  *

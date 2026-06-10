@@ -45,7 +45,7 @@ export class BiasController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "Stateless bias scan — does NOT persist; used by debounced editor preview",
+      "Stateless bias scan - does NOT persist; used by debounced editor preview",
   })
   @ApiResponse({ status: 200, type: CheckBiasResponseDto })
   @ApiResponse({

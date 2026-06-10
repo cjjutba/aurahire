@@ -163,7 +163,7 @@ export const EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
   interview_cancelled: "A scheduled interview was cancelled.",
   offer_received: "A recruiter sent you a job offer.",
   offer_expiring_soon:
-    "An offer expires within 24 hours. Required for security — cannot be disabled.",
+    "An offer expires within 24 hours. Required for security - cannot be disabled.",
   new_application_received: "A candidate applied to a job you own.",
   candidate_withdrew:
     "A candidate withdrew their application from a job you own.",
@@ -193,9 +193,9 @@ export const EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
     "An AI scoring job failed and needs investigation.",
   system_moderation_queue_item: "A new item entered the moderation queue.",
   account_password_reset:
-    "Your password was changed. Required for security — cannot be disabled.",
+    "Your password was changed. Required for security - cannot be disabled.",
   account_email_verified:
-    "Your email address was verified. Required for security — cannot be disabled.",
+    "Your email address was verified. Required for security - cannot be disabled.",
   account_login_new_device:
-    "A login was detected from a device fingerprint we haven't seen. Required for security — cannot be disabled.",
+    "A login was detected from a device fingerprint we haven't seen. Required for security - cannot be disabled.",
 };

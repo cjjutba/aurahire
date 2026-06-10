@@ -215,7 +215,7 @@ export class OffersService {
           user,
           offer.applicationId,
           "offer_accepted",
-          "Candidate accepted offer — pending recruiter confirmation",
+          "Candidate accepted offer - pending recruiter confirmation",
           requestMeta,
           tx as ApplicationsTx,
         );
@@ -258,7 +258,7 @@ export class OffersService {
       ),
     );
     // Resolve candidate name + canonical job title so the recruiter
-    // notification renders "<name> accepted your offer — <jobTitle>"
+    // notification renders "<name> accepted your offer - <jobTitle>"
     // instead of the template's generic fallbacks. The offer carries
     // its own `title`, but we prefer the live job title to stay
     // consistent if the role has been renamed since offer was sent.

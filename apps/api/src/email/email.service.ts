@@ -29,7 +29,7 @@ export interface SendEmailOptions {
  * - USE_RESEND=false → Nodemailer SMTP → Mailpit (dev default; never reaches real inboxes)
  *
  * Templates are React Email components rendered to HTML at send time.
- * Failures are LOGGED, NEVER THROWN — email send must not break user flows.
+ * Failures are LOGGED, NEVER THROWN - email send must not break user flows.
  */
 @Injectable()
 export class EmailService implements OnModuleInit {
@@ -51,7 +51,7 @@ export class EmailService implements OnModuleInit {
       const apiKey = this.config.get<string>("RESEND_API_KEY");
       if (!apiKey) {
         this.logger.error(
-          "USE_RESEND=true but RESEND_API_KEY missing — email sending disabled",
+          "USE_RESEND=true but RESEND_API_KEY missing - email sending disabled",
         );
         return;
       }

@@ -9,7 +9,7 @@
  *  5. remove fires INTERVIEW_VENUE_DELETED audit.
  *  6. Forbidden when user is not recruiter/admin.
  *
- * No database is hit — all dependencies are mocked.
+ * No database is hit - all dependencies are mocked.
  */
 
 import { ForbiddenException, NotFoundException } from "@nestjs/common";

@@ -17,7 +17,7 @@ export interface CacheGetOrSetOptions {
    * routes that want fresh data but don't want to pollute or evict the cache.
    */
   bypass?: boolean;
-  /** Tag for telemetry log lines — defaults to the first tag or "untagged". */
+  /** Tag for telemetry log lines - defaults to the first tag or "untagged". */
   telemetryName?: string;
 }
 
@@ -68,7 +68,7 @@ export class CacheService {
 
     const loadPromise = (async () => {
       const value = await opts.load();
-      // 3. Store + index tags. Failures here MUST NOT propagate — we have the
+      // 3. Store + index tags. Failures here MUST NOT propagate - we have the
       // value, the cache write is a side benefit.
       await this.safeSet(fullKey, value, opts.ttlSeconds, opts.tags ?? []);
       return value;

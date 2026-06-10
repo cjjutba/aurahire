@@ -1,13 +1,13 @@
-# Real-time WebSockets — Implementation Plan
+# Real-time WebSockets - Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a Socket.io-based real-time event channel between the NestJS backend and the Next.js frontend so that three thesis-defining surfaces (recruiter pipeline, candidate application status, admin audit feed) update without page refreshes — using semantic events emitted by the backend on every consequential mutation.
+**Goal:** Add a Socket.io-based real-time event channel between the NestJS backend and the Next.js frontend so that three thesis-defining surfaces (recruiter pipeline, candidate application status, admin audit feed) update without page refreshes - using semantic events emitted by the backend on every consequential mutation.
 
 **Architecture:**
 
 - **Backend:** New `apps/api/src/realtime/` module (global) exporting an injectable `EventsService`. A `RealtimeGateway` (`@nestjs/websockets` + `@nestjs/platform-socket.io`) terminates connections, validates the Supabase JWT in the handshake using the same `jose` JWKS verifier as `SupabaseAuthGuard` (extracted into a shared util), and manages four room types (`user:{id}`, `recruiter:{id}`, `job:{id}`, `role:admin`). Mutating services (`ApplicationsService`, `InterviewsService`, `OffersService`, `BiasService`, `AuditService`) inject `EventsService` and call `emit*()` after a successful DB write. A `@socket.io/redis-adapter` is wired against the existing `REDIS_URL` so a future second Railway instance does not require re-architecture.
-- **Frontend:** New `apps/web/lib/realtime/` library + `<SocketProvider>` mounted inside `<QueryProvider>` in the root layout. Two hooks — `useRealtimeChannel(event, handler)` for typed event listeners and `useRealtimeRoom('job', id)` for resource-scoped subscriptions. Event handlers call `queryClient.invalidateQueries` on the relevant keys from `apps/web/lib/query/keys.ts` (Pattern A — invalidate everywhere; surgical patches deferred). On JWT refresh the socket disconnects and reconnects with the new token; on reconnect, the handler also invalidates queries to recover from any missed events.
+- **Frontend:** New `apps/web/lib/realtime/` library + `<SocketProvider>` mounted inside `<QueryProvider>` in the root layout. Two hooks - `useRealtimeChannel(event, handler)` for typed event listeners and `useRealtimeRoom('job', id)` for resource-scoped subscriptions. Event handlers call `queryClient.invalidateQueries` on the relevant keys from `apps/web/lib/query/keys.ts` (Pattern A - invalidate everywhere; surgical patches deferred). On JWT refresh the socket disconnects and reconnects with the new token; on reconnect, the handler also invalidates queries to recover from any missed events.
 
 **Tech Stack:**
 
@@ -19,7 +19,7 @@
 **Hard rules from CLAUDE.md that govern this plan:**
 
 - Claude does NOT run dev servers, Docker commands, DB mutations, or deploys. The human runs `pnpm dev` and verifies all real-time behavior.
-- Claude does NOT make billed external calls — N/A here, no AI calls in this plan.
+- Claude does NOT make billed external calls - N/A here, no AI calls in this plan.
 - Claude does NOT run destructive or history-rewriting git commands. Per-task commits use `git add <specific paths>` + `git commit` (never `--amend`, never `--no-verify`).
 - `pnpm tsc --noEmit` and `pnpm lint` are the automated gates Claude runs.
 
@@ -27,7 +27,7 @@
 
 ## Spec Reference
 
-`docs/superpowers/specs/2026-05-07-realtime-websockets-design.md` — chosen mechanism (Socket.io over Supabase Realtime), three tier-1 surfaces, four room types, six events, security/RBAC model, failure modes, and the manual verification plan referenced in Phase 6.
+`docs/superpowers/specs/2026-05-07-realtime-websockets-design.md` - chosen mechanism (Socket.io over Supabase Realtime), three tier-1 surfaces, four room types, six events, security/RBAC model, failure modes, and the manual verification plan referenced in Phase 6.
 
 ---
 
@@ -35,7 +35,7 @@
 
 | Path                                                                                                                                                   | Role                                                                                                                                                     | Touch              |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `apps/api/src/common/auth/verify-supabase-jwt.ts`                                                                                                      | Extracted JWKS verify util — pure function shared by `SupabaseAuthGuard` and the WS gateway                                                              | Create             |
+| `apps/api/src/common/auth/verify-supabase-jwt.ts`                                                                                                      | Extracted JWKS verify util - pure function shared by `SupabaseAuthGuard` and the WS gateway                                                              | Create             |
 | `apps/api/src/common/guards/supabase-auth.guard.ts`                                                                                                    | Replace inline verify with the new util                                                                                                                  | Modify             |
 | `apps/api/src/realtime/realtime.module.ts`                                                                                                             | `@Global()` module exporting `EventsService`                                                                                                             | Create             |
 | `apps/api/src/realtime/realtime.gateway.ts`                                                                                                            | `@WebSocketGateway`; handles connection auth, room joins, `subscribe`/`unsubscribe` messages                                                             | Create             |
@@ -79,7 +79,7 @@
 
 ---
 
-## Phase 0 — Foundation
+## Phase 0 - Foundation
 
 ### Task 1: Install backend + frontend dependencies
 
@@ -169,7 +169,7 @@ import { z } from "zod";
 
 import { APPLICATION_STATUS, BIAS_CATEGORY, INTERVIEW_FORMAT } from "../enums";
 
-// Event names — the single source of truth used by both backend emitters and
+// Event names - the single source of truth used by both backend emitters and
 // frontend listeners. Past-tense, dotted-namespace.
 export const RealtimeEvent = {
   ApplicationCreated: "application.created",
@@ -315,7 +315,7 @@ EOF
 
 ---
 
-## Phase 1 — Backend infrastructure
+## Phase 1 - Backend infrastructure
 
 ### Task 3: Extract Supabase JWT verifier into a shared util
 
@@ -348,7 +348,7 @@ export interface SupabaseJwtVerifier {
 /**
  * Builds a verifier that validates Supabase-issued JWTs against the project's
  * JWKS. Used by both the REST guard (`SupabaseAuthGuard`) and the WebSocket
- * handshake — keeps a single source of truth for issuer/audience/JWKS caching.
+ * handshake - keeps a single source of truth for issuer/audience/JWKS caching.
  */
 export function createSupabaseJwtVerifier(
   options: SupabaseJwtVerifierOptions,
@@ -394,7 +394,7 @@ import {
 } from "../auth/verify-supabase-jwt";
 ```
 
-Replace the field declarations and constructor body (currently lines ~22–41 per the spec — confirm before editing) with:
+Replace the field declarations and constructor body (currently lines ~22-41 per the spec - confirm before editing) with:
 
 ```ts
   private readonly verifier: SupabaseJwtVerifier;
@@ -454,7 +454,7 @@ git add apps/api/src/common/auth/verify-supabase-jwt.ts apps/api/src/common/guar
 git commit -m "$(cat <<'EOF'
 refactor(api): extract Supabase JWT verifier into shared util
 
-Prep for WebSocket gateway reuse — same JWKS, issuer, audience as the REST guard.
+Prep for WebSocket gateway reuse - same JWKS, issuer, audience as the REST guard.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
@@ -463,7 +463,7 @@ EOF
 
 ---
 
-### Task 4: Scaffold the realtime module — constants, JWT util, rate limit
+### Task 4: Scaffold the realtime module - constants, JWT util, rate limit
 
 **Files:**
 
@@ -531,7 +531,7 @@ export class WsJwtUtil {
   /**
    * Verifies the JWT from a Socket.io handshake and returns the AuthUser, or
    * null on any failure (invalid token, missing profile, suspended account).
-   * Logs at warn level for ops visibility but does not throw — the gateway
+   * Logs at warn level for ops visibility but does not throw - the gateway
    * decides what to do with a null (disconnect).
    */
   async authenticate(token: string | undefined): Promise<AuthUser | null> {
@@ -590,7 +590,7 @@ Create `apps/api/src/realtime/realtime-rate-limit.ts`:
 ```ts
 /**
  * Tiny in-memory token-bucket-style limiter, scoped per Socket.io client id.
- * Used only for inbound `subscribe`/`unsubscribe` messages — server-emitted
+ * Used only for inbound `subscribe`/`unsubscribe` messages - server-emitted
  * events are server-trusted and unlimited.
  *
  * Limit: 30 messages per 60s rolling window per socket. Tuning is intentional:
@@ -635,14 +635,14 @@ export * from "./room.constants";
 export { RealtimeModule } from "./realtime.module";
 ```
 
-(`events.service.ts` and `realtime.module.ts` are created in the next two tasks — the barrel will fail to type-check until then; that is expected.)
+(`events.service.ts` and `realtime.module.ts` are created in the next two tasks - the barrel will fail to type-check until then; that is expected.)
 
-- [ ] **Step 5: Commit (partial — barrel intentionally not yet resolvable)**
+- [ ] **Step 5: Commit (partial - barrel intentionally not yet resolvable)**
 
 ```bash
 git add apps/api/src/realtime/room.constants.ts apps/api/src/realtime/ws-jwt.util.ts apps/api/src/realtime/realtime-rate-limit.ts apps/api/src/realtime/index.ts
 git commit -m "$(cat <<'EOF'
-feat(api): scaffold realtime module — constants, JWT util, rate limiter
+feat(api): scaffold realtime module - constants, JWT util, rate limiter
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
@@ -1054,7 +1054,7 @@ import Redis from "ioredis";
 /**
  * Custom Socket.io adapter that wires the @socket.io/redis-adapter against
  * the existing REDIS_URL. Required for cross-instance broadcast when we run
- * more than one Railway instance — even with one instance today, wiring this
+ * more than one Railway instance - even with one instance today, wiring this
  * from day one means scaling out is a redeploy, not a refactor.
  *
  * Falls back to the default in-memory adapter if REDIS_URL is unset (matches
@@ -1079,7 +1079,7 @@ export class RedisIoAdapter extends IoAdapter {
     }
     // Pub/sub adapter needs distinct connections (Redis pub/sub blocks the conn).
     // lazyConnect:true so the awaited connect() actually blocks until the TCP
-    // handshake completes — required because @socket.io/redis-adapter calls
+    // handshake completes - required because @socket.io/redis-adapter calls
     // psubscribe inside its constructor with enableOfflineQueue:false, and
     // that throws "Stream isn't writeable" if the sub isn't ready yet.
     this.pub = new Redis(url, {
@@ -1154,7 +1154,7 @@ import { EventsService } from "./events.service";
 import { WsJwtUtil } from "./ws-jwt.util";
 
 /**
- * Global module — feature modules inject `EventsService` without importing
+ * Global module - feature modules inject `EventsService` without importing
  * this module explicitly. `DRIZZLE_CLIENT` and `ConfigService` come from the
  * already-global `DbModule` and `ConfigModule.forRoot({ isGlobal: true })`.
  */
@@ -1187,7 +1187,7 @@ import { RedisIoAdapter } from "./realtime/redis-adapter.provider";
 After the existing CORS configuration block (around line 54) and before `app.setGlobalPrefix("api")`, add:
 
 ```ts
-// WebSocket adapter — must run before listen(). Connects the Redis
+// WebSocket adapter - must run before listen(). Connects the Redis
 // pub/sub backing for Socket.io rooms across instances.
 const wsAdapter = new RedisIoAdapter(app);
 await wsAdapter.connectToRedis();
@@ -1248,7 +1248,7 @@ EOF
 
 ---
 
-## Phase 2 — Backend event emissions
+## Phase 2 - Backend event emissions
 
 ### Task 9: Emit `application.created` and `application.status_changed`
 
@@ -1282,7 +1282,7 @@ Add the constructor parameter (alongside existing `@Inject(...)` params):
 
 - [ ] **Step 3: Emit after `create()` commits**
 
-Inside `create()`, immediately after the application row is successfully inserted (and the inserted row's id/columns are available to the method), add — right before the method returns:
+Inside `create()`, immediately after the application row is successfully inserted (and the inserted row's id/columns are available to the method), add - right before the method returns:
 
 ```ts
 this.events.emitApplicationCreated({
@@ -1315,7 +1315,7 @@ this.events.emitApplicationStatusChanged({
 });
 ```
 
-(`previousStatus` is whatever local variable holds the status before the update — if the method doesn't capture it, read it from the original row before the update and store in a local.)
+(`previousStatus` is whatever local variable holds the status before the update - if the method doesn't capture it, read it from the original row before the update and store in a local.)
 
 - [ ] **Step 5: Repeat for `withdraw()` if present**
 
@@ -1393,7 +1393,7 @@ If the column names differ (e.g., `interviewerId` instead of `recruiterId`, `sta
 
 - [ ] **Step 2: Inject + emit in `offers.service.ts`**
 
-Read `apps/api/src/modules/offers/offers.service.ts`. Locate the `create()` method (line 46 per earlier grep — this is the "send offer" method per the spec naming). Inject `EventsService`:
+Read `apps/api/src/modules/offers/offers.service.ts`. Locate the `create()` method (line 46 per earlier grep - this is the "send offer" method per the spec naming). Inject `EventsService`:
 
 ```ts
 import { EventsService } from "../../realtime";
@@ -1513,7 +1513,7 @@ import { EventsService } from "../realtime";
   ) {}
 ```
 
-(`summary` is intentionally a simple `action on entityType` line — the audit page renders detail from the row itself when the user clicks through. Richer summaries can come later without breaking the schema.)
+(`summary` is intentionally a simple `action on entityType` line - the audit page renders detail from the row itself when the user clicks through. Richer summaries can come later without breaking the schema.)
 
 - [ ] **Step 2: Read `bias.service.ts` and find the flag-recording method**
 
@@ -1596,7 +1596,7 @@ EOF
 
 ---
 
-## Phase 3 — Frontend infrastructure
+## Phase 3 - Frontend infrastructure
 
 ### Task 12: Create `lib/realtime/*` (client + types + room helpers)
 
@@ -1688,7 +1688,7 @@ export interface SubscribeOptions {
 
 /**
  * Sends a `subscribe` message to the server and returns a function that
- * sends the matching `unsubscribe`. Idempotent on the server — safe to call
+ * sends the matching `unsubscribe`. Idempotent on the server - safe to call
  * after every reconnect.
  */
 export function subscribeToResource(
@@ -2113,9 +2113,9 @@ EOF
 
 ---
 
-## Phase 4 — Frontend surfaces
+## Phase 4 - Frontend surfaces
 
-### Task 16: Surface 1 — recruiter pipeline live updates
+### Task 16: Surface 1 - recruiter pipeline live updates
 
 **Files:**
 
@@ -2130,7 +2130,7 @@ Run:
 ls apps/web/app/\(recruiter\)/recruiter/jobs/\[id\]/
 ```
 
-Identify the client component that renders the Applications tab — likely `_applications-tab-client.tsx` or referenced from `page.tsx`. Read the file to confirm it uses TanStack Query keys from `apps/web/lib/query/keys.ts` (`queryKeys.recruiterApplications.byJob`).
+Identify the client component that renders the Applications tab - likely `_applications-tab-client.tsx` or referenced from `page.tsx`. Read the file to confirm it uses TanStack Query keys from `apps/web/lib/query/keys.ts` (`queryKeys.recruiterApplications.byJob`).
 
 - [ ] **Step 2: Add live updates to the recruiter job-detail page**
 
@@ -2184,7 +2184,7 @@ useRealtimeChannel(RealtimeEvent.ApplicationStatusChanged, invalidateDashboard);
 
 (The `["recruiter-dashboard"]` prefix invalidates `stats`, `analytics`, and `recent` together since all three keys share the prefix.)
 
-**Note:** an earlier draft of this plan also wired `RealtimeEvent.BiasFlagCreated` here. That was incorrect — `EventsService.emitBiasFlagCreated` broadcasts only to `Rooms.roleAdmin()` (see Phase 1 Task 5), so recruiters never receive that event. Subscribing to it on the recruiter dashboard would be dead code. If a future requirement is "recruiter sees their own jobs' bias flags live," the gateway-side change is to add `Rooms.recruiter(<owningRecruiter>)` as an additional target room in `emitBiasFlagCreated`, not to add the listener here.
+**Note:** an earlier draft of this plan also wired `RealtimeEvent.BiasFlagCreated` here. That was incorrect - `EventsService.emitBiasFlagCreated` broadcasts only to `Rooms.roleAdmin()` (see Phase 1 Task 5), so recruiters never receive that event. Subscribing to it on the recruiter dashboard would be dead code. If a future requirement is "recruiter sees their own jobs' bias flags live," the gateway-side change is to add `Rooms.recruiter(<owningRecruiter>)` as an additional target room in `emitBiasFlagCreated`, not to add the listener here.
 
 - [ ] **Step 4: Type-check**
 
@@ -2228,7 +2228,7 @@ EOF
 
 ---
 
-### Task 17: Surface 2 — candidate application status live updates
+### Task 17: Surface 2 - candidate application status live updates
 
 **Files:**
 
@@ -2347,7 +2347,7 @@ EOF
 
 ---
 
-### Task 18: Surface 3 — admin audit + bias monitor live updates
+### Task 18: Surface 3 - admin audit + bias monitor live updates
 
 **Files:**
 
@@ -2444,7 +2444,7 @@ EOF
 
 ---
 
-## Phase 5 — Polish
+## Phase 5 - Polish
 
 ### Task 19: Admin connection-status indicator
 
@@ -2497,7 +2497,7 @@ export function ConnectionStatusIndicator() {
 }
 ```
 
-(Color tokens reference Tailwind utility classes — adjust to match the project's design tokens if `bg-emerald-500` is not in the palette. Per `DESIGN.md`, `colors.score-high` (#10b981) is `emerald-500`-equivalent for "connected" semantics.)
+(Color tokens reference Tailwind utility classes - adjust to match the project's design tokens if `bg-emerald-500` is not in the palette. Per `DESIGN.md`, `colors.score-high` (#10b981) is `emerald-500`-equivalent for "connected" semantics.)
 
 - [ ] **Step 2: Render in `portal-sidebar.tsx` for admins only**
 
@@ -2558,7 +2558,7 @@ EOF
 
 ---
 
-## Phase 6 — Full verification
+## Phase 6 - Full verification
 
 ### Task 20: End-to-end manual smoke + failure-mode rehearsal
 
@@ -2595,19 +2595,19 @@ Expected: all three pass.
 > - [ ] Admin sign-in: same with `role=admin` and 2 joined rooms.
 > - [ ] Sign-out closes the socket cleanly (API logs `WS disconnect`).
 >
-> **Surface 1 — recruiter pipeline:**
+> **Surface 1 - recruiter pipeline:**
 >
 > - [ ] New application (candidate submits) appears in recruiter `/recruiter/jobs/<id>` Applications tab without manual refresh, within ~2s.
 > - [ ] Recruiter dashboard widgets reflect the new event.
 >
-> **Surface 2 — candidate status:**
+> **Surface 2 - candidate status:**
 >
 > - [ ] Status change Applied→Screening propagates from recruiter window to candidate window.
 > - [ ] Screening→Interview, Interview→Offer also propagate.
 > - [ ] Schedule interview from recruiter; new row appears in candidate `/candidate/interviews`.
 > - [ ] Send offer from recruiter; offer surfaces in candidate application detail.
 >
-> **Surface 3 — admin audit + bias:**
+> **Surface 3 - admin audit + bias:**
 >
 > - [ ] Recruiter publishing a job prepends the audit row in admin `/admin/audit` within ~2s.
 > - [ ] Bias-flag override increments admin bias-monitor counts without refresh.
@@ -2642,13 +2642,13 @@ EOF
 )"
 ```
 
-If smoke passes cleanly, no extra commit is needed — the feature is complete.
+If smoke passes cleanly, no extra commit is needed - the feature is complete.
 
 ---
 
 ## Self-Review Notes (already applied)
 
 - **Spec coverage:** All six events from the spec's event taxonomy are emitted (Phase 2) and listened for on at least one surface (Phase 4). All four room types are joined or used. The three tier-1 surfaces each have a dedicated task. The admin connection-status indicator (Phase 5) is the only spec-described "polish" item; non-tier-1 candidate-side score updates are explicitly excluded per the spec.
-- **No placeholders:** every code step contains the actual code; every `pnpm` command shows the exact filter; no "TBD" / "TODO" / "similar to above" anywhere. Where a method or column name is genuinely unverified (e.g., the bias-flag method, the exact recruiter-applications query key inside one client component), the step explicitly tells the executor to read the file first and substitute — those are not placeholders, they are scoped lookups.
+- **No placeholders:** every code step contains the actual code; every `pnpm` command shows the exact filter; no "TBD" / "TODO" / "similar to above" anywhere. Where a method or column name is genuinely unverified (e.g., the bias-flag method, the exact recruiter-applications query key inside one client component), the step explicitly tells the executor to read the file first and substitute - those are not placeholders, they are scoped lookups.
 - **Type consistency:** `EventsService` method names match the same casing used in the spec event taxonomy; `Rooms.user/recruiter/job/roleAdmin` builders are referenced consistently in the gateway and `EventsService`; `RealtimeEvent.*` constants are the only event-name source on both sides; `useRealtimeChannel` / `useRealtimeRoom` signatures match their callers in Phase 4.
 - **Hard-rules compliance:** no step asks the agent to start a dev server, run a Docker command, push to a remote, run a migration, or use destructive git. Every "stop and ask the human" is a human-run command. Constructive git is per-task with `git add <specific paths>` and HEREDOC commit messages.

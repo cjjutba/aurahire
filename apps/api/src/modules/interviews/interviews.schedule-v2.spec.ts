@@ -1,12 +1,12 @@
 /**
- * Unit tests for InterviewsService.schedule() v2 — venue + guidance + interviewer fields.
+ * Unit tests for InterviewsService.schedule() v2 - venue + guidance + interviewer fields.
  *
  * Covers:
  *  1. schedule() persists all structured venue + guidance + interviewer fields via repo.insert.
  *  2. interviewerName defaults to the scheduling recruiter's fullName when not supplied.
  *  3. mapUrl with a non-http(s) scheme (e.g. javascript:) is rejected with "Invalid map URL".
  *
- * No database is hit — all dependencies are mocked.
+ * No database is hit - all dependencies are mocked.
  */
 
 import { BadRequestException } from "@nestjs/common";
@@ -83,7 +83,7 @@ function makeInterviewRow(overrides: Record<string, unknown> = {}) {
 
 // ── Test suite ────────────────────────────────────────────────────────────────
 
-describe("InterviewsService.schedule() — v2 venue/guidance/interviewer fields", () => {
+describe("InterviewsService.schedule() - v2 venue/guidance/interviewer fields", () => {
   let service: InterviewsService;
   let repo: jest.Mocked<InterviewsRepository>;
   let applicationsRepo: jest.Mocked<ApplicationsRepository>;
@@ -170,7 +170,7 @@ describe("InterviewsService.schedule() — v2 venue/guidance/interviewer fields"
         },
         { provide: InterviewVenuesService, useValue: venuesService },
         // Per thesis panel revision (May 2026): score-based interview
-        // eligibility gate — return a null score so the gate is a no-op
+        // eligibility gate - return a null score so the gate is a no-op
         // in tests that don't care about scoring.
         {
           provide: ScoringRepository,
@@ -197,7 +197,7 @@ describe("InterviewsService.schedule() — v2 venue/guidance/interviewer fields"
 
     service = moduleRef.get(InterviewsService);
 
-    // Default insert mock — returns a plausible interview row.
+    // Default insert mock - returns a plausible interview row.
     repo.insert.mockResolvedValue(makeInterviewRow());
   });
 

@@ -146,7 +146,7 @@ export class CompaniesService {
       patch.description = dto.description ?? null;
 
     if (Object.keys(patch).length === 0) {
-      // Nothing to update — return existing.
+      // Nothing to update - return existing.
       return this.getMine(companyId);
     }
 
@@ -199,7 +199,7 @@ export class CompaniesService {
       action: AUDIT_ACTIONS.COMPANY_DELETED,
       entityType: "company",
       entityId: companyId,
-      // companyId is intentionally null — the row that would carry the link
+      // companyId is intentionally null - the row that would carry the link
       // is being deleted; the FK is ON DELETE SET NULL on audit_logs.
       companyId: null,
       details: { name: company.name },
@@ -265,7 +265,7 @@ export class CompaniesService {
 
     let inserted: CompanyMember;
     if (existing && existing.status === "left") {
-      // Re-invite a previously-left member by resurrecting the row — preserves
+      // Re-invite a previously-left member by resurrecting the row - preserves
       // the (company_id, email) UNIQUE constraint and keeps audit history.
       inserted = await this.membersRepo.update(existing.id, {
         userId: null,
@@ -343,7 +343,7 @@ export class CompaniesService {
     }
 
     if (member.role === "owner" && dto.role !== "owner") {
-      // Demoting an owner — block if they're the last one. Use transfer
+      // Demoting an owner - block if they're the last one. Use transfer
       // ownership instead.
       const ownerCount = await this.membersRepo.countActiveOwners(companyId);
       if (ownerCount <= 1) {
@@ -538,7 +538,7 @@ export class CompaniesService {
     }
 
     if (member.status === "invited") {
-      // Hard-delete pending invites. There's no audit history worth keeping —
+      // Hard-delete pending invites. There's no audit history worth keeping -
       // the invite never resulted in a real membership.
       await this.membersRepo.deleteById(memberId);
 
@@ -610,7 +610,7 @@ export class CompaniesService {
         throw new BadRequestException({
           code: "LAST_OWNER",
           message:
-            "Transfer ownership before leaving — you're the last owner of this company.",
+            "Transfer ownership before leaving - you're the last owner of this company.",
         });
       }
     }
@@ -713,7 +713,7 @@ export class CompaniesService {
       email: member.email,
       role: member.role,
       status: member.status,
-      // Token is intentionally surfaced — the inviter UX includes "Copy link"
+      // Token is intentionally surfaced - the inviter UX includes "Copy link"
       // for the case where the email never arrives.
       invitationToken: member.invitationToken,
       invitationExpiresAt: member.invitationExpiresAt

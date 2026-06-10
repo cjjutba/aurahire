@@ -5,12 +5,12 @@ import { HttpException, HttpStatus } from "@nestjs/common";
  * exhausted their per-UTC-day allowance of on-view auto-computes.
  *
  * Body shape (`{ code: "DAILY_AI_LIMIT", cap }`) is consumed by the candidate
- * job-detail page so the UI can render "you've checked a lot of jobs today —
+ * job-detail page so the UI can render "you've checked a lot of jobs today -
  * existing matches still load instantly" without leaking implementation
  * details. The 429 status lets ordinary HTTP retry layers back off on their
  * own.
  *
- * Distinct from `RATE_LIMITED` (per-minute throttle on manual recompute) —
+ * Distinct from `RATE_LIMITED` (per-minute throttle on manual recompute) -
  * this gate exists strictly to bound AI spend on the buttonless on-view path.
  */
 export class MatchPreviewRateLimitException extends HttpException {

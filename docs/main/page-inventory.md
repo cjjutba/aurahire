@@ -22,9 +22,9 @@ This document is the master list of every page in the AuraHire system, grouped b
 
 ## Marketing Surfaces (Public)
 
-Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent.
+Coinbase editorial pacing - full-bleed dark hero, 96px sections, single accent.
 
-### `/` — Landing
+### `/` - Landing
 
 **Purpose:** Primary entry point. Tell the AuraHire story; convert to sign-up.
 
@@ -87,7 +87,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 
 ---
 
-### `/about` — Our Approach
+### `/about` - Our Approach
 
 **Purpose:** Thesis-friendly explanation of explainability + fairness philosophy. Lives in marketing for trust-building.
 
@@ -102,7 +102,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 
 ---
 
-### `/jobs` — Browse Jobs (public)
+### `/jobs` - Browse Jobs (public)
 
 **Purpose:** Public job listings searchable without login.
 
@@ -121,7 +121,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 │                                                                  │
 │   [card-list-row]                                                │
 │   Senior Engineer · Acme Corp · Remote · Full-time              │
-│   $120k–$160k · Posted 2 days ago                                │
+│   $120k-$160k · Posted 2 days ago                                │
 │                                                              ›   │
 │   [card-list-row] ...                                            │
 │   [card-list-row] ...                                            │
@@ -143,7 +143,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 
 ---
 
-### `/jobs/[id]` — Job Detail (public)
+### `/jobs/[id]` - Job Detail (public)
 
 **Purpose:** Show full job description; CTA to apply (requires login).
 
@@ -166,7 +166,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 
 ---
 
-### `/contact` — Contact / Demo
+### `/contact` - Contact / Demo
 
 **Purpose:** Lead form for institutional inquiries.
 
@@ -184,7 +184,7 @@ Coinbase editorial pacing — full-bleed dark hero, 96px sections, single accent
 
 Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark top, footer copyright bottom.
 
-### `/login` — Sign In
+### `/login` - Sign In
 
 **Purpose:** Email + password authentication. Routes to onboarding (if first-time) or to role's portal dashboard.
 
@@ -230,7 +230,7 @@ Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark t
 
 ---
 
-### `/register` — Register Entry (Role Selector)
+### `/register` - Register Entry (Role Selector)
 
 **Purpose:** Pick a role first; then route to role-specific registration.
 
@@ -239,8 +239,8 @@ Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark t
 - Centered card
 - Headline: "Create your account"
 - Two large `card-feature` tiles side-by-side:
-  - "I'm a Candidate" — looking for jobs
-  - "I'm a Recruiter" — hiring talent
+  - "I'm a Candidate" - looking for jobs
+  - "I'm a Recruiter" - hiring talent
 - Each card has Lucide icon, body, button-primary inside
 - Bottom: "Already have an account? Sign in"
 
@@ -248,7 +248,7 @@ Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark t
 
 ---
 
-### `/register/candidate` — Candidate Sign Up
+### `/register/candidate` - Candidate Sign Up
 
 **Purpose:** Create candidate account. Minimal fields per spec.
 
@@ -273,7 +273,7 @@ Centered single-card layout, no portal chrome, no marketing nav. Logo wordmark t
 
 ---
 
-### `/register/recruiter` — Recruiter Sign Up
+### `/register/recruiter` - Recruiter Sign Up
 
 **Purpose:** Create recruiter account.
 
@@ -291,7 +291,7 @@ Same validation, same routing as candidate signup.
 
 ---
 
-### `/forgot-password` — Forgot Password
+### `/forgot-password` - Forgot Password
 
 **Purpose:** Request password reset email.
 
@@ -301,7 +301,7 @@ Same validation, same routing as candidate signup.
 
 ---
 
-### `/reset-password?token=xxx` — Reset Password
+### `/reset-password?token=xxx` - Reset Password
 
 **Purpose:** Set new password via emailed link.
 
@@ -311,7 +311,7 @@ Same validation, same routing as candidate signup.
 
 ---
 
-### `/verify-email?token=xxx` — Verify Email (auto)
+### `/verify-email?token=xxx` - Verify Email (auto)
 
 **Purpose:** Verify email from link. Auto-redirects on success.
 
@@ -323,7 +323,7 @@ Same validation, same routing as candidate signup.
 
 ---
 
-### `/verify-email/sent` — Verification Sent
+### `/verify-email/sent` - Verification Sent
 
 **Purpose:** Confirmation that registration email was sent.
 
@@ -335,7 +335,7 @@ Same validation, same routing as candidate signup.
 
 Multi-step wizard pattern. `wizard-shell` + `wizard-progress`. No portal chrome until onboarding complete.
 
-### `/onboarding/candidate` — Candidate Onboarding
+### `/onboarding/candidate` - Candidate Onboarding
 
 **Wizard steps:**
 
@@ -389,7 +389,7 @@ Repeating block (each block = one entry). Prefilled from resume. Each block has:
 
 - Institution
 - Degree / Field of Study
-- Start Year — End Year (or "Present")
+- Start Year - End Year (or "Present")
 - GPA (optional)
 - "+ Add another education" link
 
@@ -399,7 +399,7 @@ Repeating block. Prefilled.
 
 - Company
 - Title
-- Start — End
+- Start - End
 - Responsibilities (textarea, prefilled with bullet points)
 - Skills used (`multi-select`, prefilled)
 
@@ -412,7 +412,7 @@ Repeating block. Prefilled.
 - Desired Role(s) `multi-select`
 - Desired Seniority `select` (Junior / Mid / Senior / Lead / Manager / Director / VP+)
 - Open To: `checkbox` group (Full-time, Part-time, Contract, Remote, Hybrid, On-site)
-- Desired Salary Range (min — max with currency)
+- Desired Salary Range (min - max with currency)
 - Available Start Date `date-picker`
 
 **Final action: "Generate my Profile Score"**
@@ -425,12 +425,12 @@ Repeating block. Prefilled.
 - Centered `score-ring-lg`
 - `chip-match-band` ("Strong Profile") below
 - `score-breakdown-bar` showing components
-- "Improvement suggestions" card with 2–3 actionable tips (e.g., "Adding cloud certifications could increase your score by ~6 points")
+- "Improvement suggestions" card with 2-3 actionable tips (e.g., "Adding cloud certifications could increase your score by ~6 points")
 - `button-primary-large` "Go to my dashboard" → `/candidate`
 
 ---
 
-### `/onboarding/recruiter` — Recruiter Onboarding
+### `/onboarding/recruiter` - Recruiter Onboarding
 
 **Wizard steps:**
 
@@ -446,7 +446,7 @@ Repeating block. Prefilled.
 
 - Company Name (from signup, editable)
 - Industry `select` (large list)
-- Company Size `select` (1–10, 11–50, 51–200, 201–500, 501–1000, 1000+)
+- Company Size `select` (1-10, 11-50, 51-200, 201-500, 501-1000, 1000+)
 - Company Website
 - Headquarters Location
 - Company Description (textarea)
@@ -456,7 +456,7 @@ Repeating block. Prefilled.
 
 - Roles you typically hire for `multi-select`
 - Hiring volume per quarter `select`
-- "+ Invite teammates later" link (deferred — Phase 2)
+- "+ Invite teammates later" link (deferred - Phase 2)
 
 **Final: "Go to dashboard" → `/recruiter`.**
 
@@ -466,7 +466,7 @@ Repeating block. Prefilled.
 
 Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 
-### `/candidate` — Dashboard
+### `/candidate` - Dashboard
 
 **Purpose:** At-a-glance view of applications, score, recommendations.
 
@@ -501,11 +501,11 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 
 **Components:** `nav-portal-sidebar`, `nav-portal-topbar`, `card-stat`, `card-widget`, `pipeline-card-compact`, `card-list-row`, `chip-match-band`, `empty-state`, `footer-portal`.
 
-**Edge:** New user (no apps yet): `empty-state` instead of widgets — "Browse jobs that match your profile."
+**Edge:** New user (no apps yet): `empty-state` instead of widgets - "Browse jobs that match your profile."
 
 ---
 
-### `/candidate/jobs` — Browse Jobs
+### `/candidate/jobs` - Browse Jobs
 
 **Purpose:** Logged-in job search. Same layout as public `/jobs` but each row shows the candidate's match score chip.
 
@@ -517,7 +517,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 
 ---
 
-### `/candidate/jobs/[id]` — Job Detail (logged-in candidate)
+### `/candidate/jobs/[id]` - Job Detail (logged-in candidate)
 
 **Purpose:** Full job description + match score preview + apply CTA.
 
@@ -529,14 +529,14 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 
 ---
 
-### `/candidate/jobs/[id]/apply` — Apply to Job
+### `/candidate/jobs/[id]/apply` - Apply to Job
 
 **Purpose:** Confirm resume + optional cover letter + submit.
 
 **Layout:**
 
 - Job summary card at top (read-only)
-- "Use my current resume" toggle — defaults on
+- "Use my current resume" toggle - defaults on
   - If on: shows current resume filename + "Replace for this application" link
   - If off: `file-upload-dropzone` for one-off resume
 - Cover Letter (optional textarea)
@@ -547,7 +547,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 
 ---
 
-### `/candidate/applications` — My Applications
+### `/candidate/applications` - My Applications
 
 **Purpose:** All applications with status, filterable.
 
@@ -562,7 +562,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 
 ---
 
-### `/candidate/applications/[id]` — Application Detail
+### `/candidate/applications/[id]` - Application Detail
 
 **Purpose:** Full timeline of this application, including the score breakdown and any interviews scheduled.
 
@@ -595,13 +595,13 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 │        └──────────────────────────────────────────────────────────┘
 ```
 
-**Components:** `tabs-line`, `score-ring-lg`, `score-breakdown-bar`, `evidence-callout`, vertical timeline (custom — list with leading dot + connector).
+**Components:** `tabs-line`, `score-ring-lg`, `score-breakdown-bar`, `evidence-callout`, vertical timeline (custom - list with leading dot + connector).
 
 **Primary actions:** Withdraw application (destructive, modal-confirmed).
 
 ---
 
-### `/candidate/interviews` — Interviews
+### `/candidate/interviews` - Interviews
 
 **Purpose:** All scheduled interviews.
 
@@ -613,7 +613,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 
 ---
 
-### `/candidate/profile` — Profile / AI Score
+### `/candidate/profile` - Profile / AI Score
 
 **Purpose:** Edit candidate profile + view current Profile Score.
 
@@ -625,7 +625,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 
 ---
 
-### `/candidate/resume` — Resume Manager
+### `/candidate/resume` - Resume Manager
 
 **Purpose:** Upload new resume versions, set default.
 
@@ -639,7 +639,7 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 
 ---
 
-### `/candidate/settings` — Settings
+### `/candidate/settings` - Settings
 
 **Purpose:** Account, notifications, privacy.
 
@@ -655,21 +655,21 @@ Auth-required. Sidebar + topbar shell. Shared layout across all 10 pages.
 
 Auth-required, recruiter role.
 
-### `/recruiter` — Dashboard
+### `/recruiter` - Dashboard
 
 **Purpose:** Pipeline overview + recent activity.
 
 **Layout:**
 
 - 4 `card-stat`: Active Jobs, Total Applications (this month), Pending Reviews, Avg Match Score
-- `card-widget: Pipeline Funnel` — horizontal stacked bar showing counts at each stage (Applied → Screening → Interview → Offer → Hired)
-- `card-widget: Top Candidates This Week` — `card-list-row` × 5 with score chips, click-through to candidate
-- `card-widget: Recent Activity` — vertical timeline of recent application events
-- `card-widget: Bias Flags This Week` — count + link to job moderation if any flags pending recruiter review
+- `card-widget: Pipeline Funnel` - horizontal stacked bar showing counts at each stage (Applied → Screening → Interview → Offer → Hired)
+- `card-widget: Top Candidates This Week` - `card-list-row` × 5 with score chips, click-through to candidate
+- `card-widget: Recent Activity` - vertical timeline of recent application events
+- `card-widget: Bias Flags This Week` - count + link to job moderation if any flags pending recruiter review
 
 ---
 
-### `/recruiter/jobs/new` — Post Job
+### `/recruiter/jobs/new` - Post Job
 
 **Purpose:** Create job posting with built-in bias check.
 
@@ -681,7 +681,7 @@ Auth-required, recruiter role.
   - Employment Type `segmented-control` (Full-time / Part-time / Contract)
   - Location + remote/hybrid/on-site `segmented-control`
   - Salary Range (optional)
-  - Description (rich text editor — Tiptap or shadcn-extended)
+  - Description (rich text editor - Tiptap or shadcn-extended)
   - Required Skills `multi-select`
   - Experience Level `select`
   - Education Requirement `select`
@@ -690,7 +690,7 @@ Auth-required, recruiter role.
   - On every blur of description field, AI scans for biased language
   - Flagged terms shown as inline `chip-bias-flag` over the text
   - Below: "Bias Flags Detected: 2" with click-through list and override option
-- Bottom CTAs: "Save Draft" (`button-secondary`) + "Publish" (`button-primary` — disabled if any unresolved bias flags unless explicitly overridden with reason)
+- Bottom CTAs: "Save Draft" (`button-secondary`) + "Publish" (`button-primary` - disabled if any unresolved bias flags unless explicitly overridden with reason)
 
 **On Publish:**
 
@@ -699,7 +699,7 @@ Auth-required, recruiter role.
 
 ---
 
-### `/recruiter/jobs` — Manage Jobs
+### `/recruiter/jobs` - Manage Jobs
 
 **Purpose:** All jobs created by this recruiter.
 
@@ -711,7 +711,7 @@ Auth-required, recruiter role.
 
 ---
 
-### `/recruiter/jobs/[id]` — Job Detail (recruiter view)
+### `/recruiter/jobs/[id]` - Job Detail (recruiter view)
 
 **Purpose:** Job posting + applications list + analytics.
 
@@ -732,19 +732,19 @@ Auth-required, recruiter role.
 
 ---
 
-### `/recruiter/jobs/[id]/edit` — Edit Job
+### `/recruiter/jobs/[id]/edit` - Edit Job
 
 Same layout as Post Job, prefilled. Re-runs bias check on save.
 
 ---
 
-### `/recruiter/jobs/[id]/applications` — Applications for Job
+### `/recruiter/jobs/[id]/applications` - Applications for Job
 
-(Same as Applications tab on job detail — provides direct deep link.)
+(Same as Applications tab on job detail - provides direct deep link.)
 
 ---
 
-### `/recruiter/applications/[id]` — Application Detail (recruiter)
+### `/recruiter/applications/[id]` - Application Detail (recruiter)
 
 **Purpose:** Full candidate review with score, evidence, actions.
 
@@ -791,7 +791,7 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 
 ---
 
-### `/recruiter/candidates/[id]` — Candidate Profile
+### `/recruiter/candidates/[id]` - Candidate Profile
 
 **Purpose:** Full candidate view (across all their applications to this recruiter's jobs).
 
@@ -803,7 +803,7 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 
 ---
 
-### `/recruiter/shortlist` — Shortlisted Candidates
+### `/recruiter/shortlist` - Shortlisted Candidates
 
 **Purpose:** Curated pool across jobs.
 
@@ -815,7 +815,7 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 
 ---
 
-### `/recruiter/interviews` — Interview Management
+### `/recruiter/interviews` - Interview Management
 
 **Purpose:** All interviews recruiter is running.
 
@@ -835,7 +835,7 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 
 ---
 
-### `/recruiter/offers/new?application=xxx` — Send Offer
+### `/recruiter/offers/new?application=xxx` - Send Offer
 
 **Purpose:** Generate and send offer letter.
 
@@ -856,7 +856,7 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 
 ---
 
-### `/recruiter/analytics` — Analytics
+### `/recruiter/analytics` - Analytics
 
 **Purpose:** Aggregate metrics across recruiter's jobs.
 
@@ -873,7 +873,7 @@ Each event shows actor (recruiter name) and timestamp; AI events show "AI" actor
 
 ---
 
-### `/recruiter/settings` — Settings
+### `/recruiter/settings` - Settings
 
 Account profile, company profile (editable), notification preferences, team management (Phase 2 stub).
 
@@ -883,22 +883,22 @@ Account profile, company profile (editable), notification preferences, team mana
 
 Auth-required, admin role. Eight focused screens, each going deep.
 
-### `/admin` — Command Center
+### `/admin` - Command Center
 
 **Purpose:** System-wide health and KPIs at a glance.
 
 **Layout:**
 
 - Top row of `card-stat`: Total Users, Active Jobs, Applications (today / this week), Avg Profile Score, Avg Match Score
-- `card-widget: System Health` — uptime, AI service status (OpenAI), DB latency, recent error count (clickable to logs)
-- `card-widget: Score Distribution` — histogram of all match scores in last 30 days, segmented by score band
-- `card-widget: AI Processing` — avg parse time, avg score time, success rate, queue depth (stub for now since we run sync)
-- `card-widget: Bias Flags This Week` — count + breakdown of flag types (gendered / age-coded / ableist) + click-through to bias monitor
-- `card-widget: Recent Audit Events` — latest 10 audit log entries
+- `card-widget: System Health` - uptime, AI service status (OpenAI), DB latency, recent error count (clickable to logs)
+- `card-widget: Score Distribution` - histogram of all match scores in last 30 days, segmented by score band
+- `card-widget: AI Processing` - avg parse time, avg score time, success rate, queue depth (stub for now since we run sync)
+- `card-widget: Bias Flags This Week` - count + breakdown of flag types (gendered / age-coded / ableist) + click-through to bias monitor
+- `card-widget: Recent Audit Events` - latest 10 audit log entries
 
 ---
 
-### `/admin/users` — User Management
+### `/admin/users` - User Management
 
 **Purpose:** Full CRUD on users.
 
@@ -914,7 +914,7 @@ Auth-required, admin role. Eight focused screens, each going deep.
 
 ---
 
-### `/admin/jobs` — Job Moderation
+### `/admin/jobs` - Job Moderation
 
 **Purpose:** Review all jobs, approve/reject, see bias flag history.
 
@@ -926,21 +926,21 @@ Auth-required, admin role. Eight focused screens, each going deep.
 
 ---
 
-### `/admin/applications` — Application Oversight
+### `/admin/applications` - Application Oversight
 
 **Purpose:** System-wide application audit, drill into any AI score.
 
 **Layout:**
 
-- Filters: job, score range slider (0–100), status, date range
+- Filters: job, score range slider (0-100), status, date range
 - `table-data` columns: Candidate · Job · Match Score (`score-ring-sm`) · Match Band · Applied · Status · Action ("View full breakdown")
 - Click → drawer with **full Score Breakdown** including evidence callouts and the redacted resume snapshot used for scoring (admin-only view of redaction transparency)
 
-This is a key thesis demo surface — admin can audit any AI decision in detail.
+This is a key thesis demo surface - admin can audit any AI decision in detail.
 
 ---
 
-### `/admin/ai-config` — AI Scoring Configuration
+### `/admin/ai-config` - AI Scoring Configuration
 
 **Purpose:** Tune the scoring weights system-wide. Showpiece for thesis.
 
@@ -959,9 +959,9 @@ This is a key thesis demo surface — admin can audit any AI decision in detail.
 │  └────────────────────────────────────────┘                      │
 │                                                                   │
 │  Score Band Thresholds                                            │
-│  Strong Match  [70  ]–100                                         │
-│  Partial Match [40  ]–[69  ]                                      │
-│  Limited Match 0–[39  ]                                           │
+│  Strong Match  [70  ]-100                                         │
+│  Partial Match [40  ]-[69  ]                                      │
+│  Limited Match 0-[39  ]                                           │
 │                                                                   │
 │  Bias Detection                                                   │
 │  [toggle] Enabled (currently ON)                                  │
@@ -976,13 +976,13 @@ This is a key thesis demo surface — admin can audit any AI decision in detail.
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**Preview Impact** runs the new weights against last 100 applications and shows score-distribution delta — proves to admin (and thesis examiner) that the weights are working.
+**Preview Impact** runs the new weights against last 100 applications and shows score-distribution delta - proves to admin (and thesis examiner) that the weights are working.
 
 **Save Configuration** writes new config + audit log entry; future scores use new weights.
 
 ---
 
-### `/admin/audit` — Audit Log
+### `/admin/audit` - Audit Log
 
 **Purpose:** Immutable log of all consequential system actions.
 
@@ -991,11 +991,11 @@ This is a key thesis demo surface — admin can audit any AI decision in detail.
 - Filters: actor (any user) · entity type (User · Job · Application · Score · Config · BiasFlag) · action type · date range
 - `table-data` columns: Timestamp · Actor · Action · Entity · Detail (truncated, click for full JSON diff in drawer)
 - Export: CSV
-- No edit/delete actions on audit entries — rows are append-only
+- No edit/delete actions on audit entries - rows are append-only
 
 ---
 
-### `/admin/analytics` — System Analytics
+### `/admin/analytics` - System Analytics
 
 **Purpose:** Platform-wide statistics.
 
@@ -1015,7 +1015,7 @@ This is a key thesis demo surface — admin can audit any AI decision in detail.
 
 ---
 
-### `/admin/bias-monitor` — Bias & Fairness Monitor
+### `/admin/bias-monitor` - Bias & Fairness Monitor
 
 **Purpose:** Aggregate fairness oversight. Thesis showpiece.
 
@@ -1044,7 +1044,7 @@ This is a key thesis demo surface — admin can audit any AI decision in detail.
 │                                                                   │
 │  [card-widget: Score Distribution Audit]                          │
 │   Histogram of match scores by score band, segmented              │
-│   by job category — useful for spotting disparate impact          │
+│   by job category - useful for spotting disparate impact          │
 │                                                                   │
 │  [card-widget: Recent Override Decisions]                         │
 │   Recruiter overrode "rockstar" flag · reason "internal team..."  │
@@ -1078,7 +1078,7 @@ AI-pending sections always show `ai-shimmer` with caption, never a silent skelet
 
 ### Empty States
 
-Every list, table, or widget defines its empty state — never "this section is blank."
+Every list, table, or widget defines its empty state - never "this section is blank."
 
 ### Mobile Behavior
 
@@ -1109,8 +1109,8 @@ All portal pages collapse:
 ## Known Gaps (Sprint Scope)
 
 - Notifications inbox screen (we use toasts + email; no separate inbox page in sprint)
-- Team management (Phase 2 — recruiter sees stub "Coming soon")
+- Team management (Phase 2 - recruiter sees stub "Coming soon")
 - E-signature offer flow (replaced with simple Accept/Decline buttons)
 - Public landing redesign for non-English locales
 - Advanced calendar view inside `/recruiter/interviews` (we ship list view + simple week grid)
-- Candidate-side messaging (deferred — no in-app chat)
+- Candidate-side messaging (deferred - no in-app chat)

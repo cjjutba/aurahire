@@ -128,14 +128,14 @@ export class NotificationsRepository {
   }
 
   /**
-   * Archive a single notification — sets `dismissed_at = NOW()` and, for
+   * Archive a single notification - sets `dismissed_at = NOW()` and, for
    * unread rows, also sets `read_at = NOW()` so archived items are never
    * left in an "unread but hidden" limbo. The popover's vocabulary calls
    * this "archive"; `dismiss` remains as a thin alias for backward
    * compatibility while existing callers migrate.
    *
    * Per Task 1's discovery the column is `dismissed_at` (not
-   * `archived_at`) — keep the DB column intact.
+   * `archived_at`) - keep the DB column intact.
    */
   async archive(id: string, userId: string): Promise<{ unreadCount: number }> {
     await this.db

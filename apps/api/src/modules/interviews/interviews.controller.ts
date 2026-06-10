@@ -153,7 +153,7 @@ export class InterviewsController {
    * implementation now scopes by company. The frontend already ships
    * against this path and Phase 3 will reconsider the URL semantics.
    * Functionally it returns "every interview for jobs in my active
-   * company" — which is what the current UI expects when it asks for
+   * company" - which is what the current UI expects when it asks for
    * "my interviews."
    */
   @Get("interviews/by-recruiter/me")
@@ -264,7 +264,7 @@ export class InterviewsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "Reschedule an interview (atomic chain — marks original 'rescheduled', creates linked new row)",
+      "Reschedule an interview (atomic chain - marks original 'rescheduled', creates linked new row)",
   })
   @ApiResponse({ status: 200, type: InterviewEnvelopeDto })
   async reschedule(

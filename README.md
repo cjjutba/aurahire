@@ -21,7 +21,7 @@ _A transparent resume-scoring platform with built-in bias mitigation._
 
 </div>
 
-AuraHire is a full-stack, production-grade AI recruitment platform built as a thesis system. Every AI decision shows its work — scores ship with component breakdowns, weighting transparency, and verbatim evidence excerpts from the candidate's resume; job descriptions are scanned for biased language before publish; admins can audit any score and retune the algorithm in real time with a Preview Impact pass. **The system is the artifact: no faked AI, no opaque scoring, no demo theatre.**
+AuraHire is a full-stack, production-grade AI recruitment platform built as a thesis system. Every AI decision shows its work - scores ship with component breakdowns, weighting transparency, and verbatim evidence excerpts from the candidate's resume; job descriptions are scanned for biased language before publish; admins can audit any score and retune the algorithm in real time with a Preview Impact pass. **The system is the artifact: no faked AI, no opaque scoring, no demo theatre.**
 
 > _"Explainable and Fair AI-Powered Recruitment: A Transparent Resume Scoring Platform with Bias Mitigation."_
 
@@ -89,7 +89,7 @@ AuraHire is a full-stack, production-grade AI recruitment platform built as a th
 | **Authentication**                | Supabase Auth (JWT) + JWKs verification on backend                                |
 | **Hosting (frontend)**            | Vercel                                                                            |
 | **Hosting (backend)**             | Digital Ocean Droplet (Ubuntu 24.04) + PM2 + Caddy + Docker (Redis/Mailpit)       |
-| **CI**                            | GitHub Actions — format, type-check, lint, test                                   |
+| **CI**                            | GitHub Actions - format, type-check, lint, test                                   |
 
 ---
 
@@ -97,7 +97,7 @@ AuraHire is a full-stack, production-grade AI recruitment platform built as a th
 
 Most AI recruitment tools score candidates inside a black box. AuraHire was built around two academically-defensible commitments:
 
-1. **Explainable scoring.** Every score has a structured breakdown — components, weights, plain-language explanations, and verbatim evidence excerpts pulled from the candidate's resume. No naked numbers anywhere in the product.
+1. **Explainable scoring.** Every score has a structured breakdown - components, weights, plain-language explanations, and verbatim evidence excerpts pulled from the candidate's resume. No naked numbers anywhere in the product.
 2. **Active bias mitigation.** PII is redacted before any scoring AI sees a resume. Job descriptions are scanned for gendered, age-coded, ableist, and exclusionary language at edit time. Recruiter overrides require a written reason that lands in the audit log.
 
 The thesis claim shapes every product decision in this codebase. If a feature can't be defended in front of an examiner, it isn't in the system.
@@ -105,8 +105,8 @@ The thesis claim shapes every product decision in this codebase. If a feature ca
 ### What makes this implementation different
 
 - **No prompt without a JSON schema.** Every OpenAI call uses structured outputs. Free-text parsing is forbidden.
-- **No score without evidence.** Every numeric component renders alongside 1–3 verbatim resume excerpts and a plain-language explanation.
-- **No mutation without an audit row.** Every consequential action — score, override, status change, suspension, delete — writes to `audit_logs` with actor, entity, IP, user-agent, and JSONB details.
+- **No score without evidence.** Every numeric component renders alongside 1-3 verbatim resume excerpts and a plain-language explanation.
+- **No mutation without an audit row.** Every consequential action - score, override, status change, suspension, delete - writes to `audit_logs` with actor, entity, IP, user-agent, and JSONB details.
 - **No silent AI failure.** Resume parsing falls back to manual entry. Score computation falls back to a graceful "Score temporarily unavailable" surface. Bias detection failure does not block publishing (logged as warning).
 - **No demographic labels stored anywhere.** Demographic data isn't collected; fairness is measured upstream (redaction + bias detection) and reported as aggregate distributions, not disparate-impact statistics.
 
@@ -116,9 +116,9 @@ The thesis claim shapes every product decision in this codebase. If a feature ca
 
 ### Candidate experience
 
-- **6-step resume-first onboarding wizard** — upload → AI parse → review prefilled fields → preferences → Profile Score reveal → confirm
+- **6-step resume-first onboarding wizard** - upload → AI parse → review prefilled fields → preferences → Profile Score reveal → confirm
 - **AI resume parsing** to structured JSON (contact, education, experience, skills, certifications, languages) with `parse_confidence` indicator
-- **Profile Score** with 4-component breakdown (Completeness · Skill Depth · Experience Clarity · Education Quality), 2–3 actionable improvement suggestions, and live evidence callouts
+- **Profile Score** with 4-component breakdown (Completeness · Skill Depth · Experience Clarity · Education Quality), 2-3 actionable improvement suggestions, and live evidence callouts
 - **Public + authenticated job browsing** with per-job match score chips (prefetched via the match-preview queue when resumes change)
 - **One-tap apply** with synchronous Match Score computation and visible AI affordance
 - **Application pipeline tracking** (Applied → Screening → Interview → Offer → Hired/Rejected) with status timeline
@@ -126,12 +126,12 @@ The thesis claim shapes every product decision in this codebase. If a feature ca
 - **In-portal offer Accept / Decline** with surfaced expiry
 - **Multi-version resume manager** with default-resume selection (triggers re-scoring across active applications)
 - **Notification preferences per category** (status changes, interviews, offers, system) and GDPR-aligned data download / account deletion
-- **Real-time notification badge** via WebSocket — appears instantly on offer/interview/status events
+- **Real-time notification badge** via WebSocket - appears instantly on offer/interview/status events
 
 ### Recruiter experience
 
 - **3-step onboarding** (about you · company · hiring focus) with company creation or invite acceptance
-- **Multi-company support** — one recruiter can belong to multiple companies via `company_members`; an active-company context governs every recruiter view
+- **Multi-company support** - one recruiter can belong to multiple companies via `company_members`; an active-company context governs every recruiter view
 - **Rich-text job description editor (Tiptap)** with inline bias-flag chips that highlight problematic terms as you type
 - **Publish-gate**: jobs with unresolved bias flags can only ship after an explicit override with a written reason
 - **Application pipeline per job**, sortable by Best Match with full Score Breakdown + evidence callouts
@@ -139,23 +139,23 @@ The thesis claim shapes every product decision in this codebase. If a feature ca
 - **Interview venues library** for reusable in-person locations
 - **Offer letter generation** with live preview, candidate accept/decline buttons, expiry, and admin auditability
 - **Shortlist** with bulk actions and CSV export
-- **Per-recruiter analytics** — applications over time, funnel, top skills, score distribution, time-to-fill
-- **Team members management** — invite teammates with role (member / admin) per company
+- **Per-recruiter analytics** - applications over time, funnel, top skills, score distribution, time-to-fill
+- **Team members management** - invite teammates with role (member / admin) per company
 - **Settings**: profile, company, interview venues, integrations, scoring (preview only), bias preferences, members, notifications, privacy, security, danger zone
 
 ### Admin experience (11 surfaces)
 
-1. **Command Center** — system KPIs, AI processing health, recent audit events, bias-flag counts, recent feedback summary
-2. **User Management** — full CRUD, suspend with reason, role change, GDPR delete with cascade
-3. **Job Moderation** — review all jobs, archive, see complete bias-flag history per posting
-4. **Application Oversight** — system-wide audit, drill into any AI score, view redacted resume snapshot used for scoring
-5. **AI Scoring Configuration** — tune match + profile weights, set band thresholds, **Preview Impact** against last 100 applications before saving (vs. current production weights)
-6. **Audit Log** — immutable, filterable by actor/action/entity, CSV-exportable
-7. **System Analytics** — user growth, applications by status, score distribution, top skills, funnel conversion
-8. **Bias & Fairness Monitor** — flag counts by category, top flagged terms, override rate, recent override decisions with reasons, time-series trend
-9. **Companies** — admin view of every tenant company + member roster
-10. **Feedback** — read in-app feedback submissions; triage with status (open / acknowledged / resolved)
-11. **Help / How It Works** — built-in admin guides for non-obvious flows (re-score batch, schema migration, weight tuning)
+1. **Command Center** - system KPIs, AI processing health, recent audit events, bias-flag counts, recent feedback summary
+2. **User Management** - full CRUD, suspend with reason, role change, GDPR delete with cascade
+3. **Job Moderation** - review all jobs, archive, see complete bias-flag history per posting
+4. **Application Oversight** - system-wide audit, drill into any AI score, view redacted resume snapshot used for scoring
+5. **AI Scoring Configuration** - tune match + profile weights, set band thresholds, **Preview Impact** against last 100 applications before saving (vs. current production weights)
+6. **Audit Log** - immutable, filterable by actor/action/entity, CSV-exportable
+7. **System Analytics** - user growth, applications by status, score distribution, top skills, funnel conversion
+8. **Bias & Fairness Monitor** - flag counts by category, top flagged terms, override rate, recent override decisions with reasons, time-series trend
+9. **Companies** - admin view of every tenant company + member roster
+10. **Feedback** - read in-app feedback submissions; triage with status (open / acknowledged / resolved)
+11. **Help / How It Works** - built-in admin guides for non-obvious flows (re-score batch, schema migration, weight tuning)
 
 ### AI surfaces (all backend-only, all structured)
 
@@ -167,7 +167,7 @@ The thesis claim shapes every product decision in this codebase. If a feature ca
 | Match Score         | Redacted resume + job posting | 4-component breakdown + evidence + red/green flags         | At application time, on demand          |
 | Match Preview       | Top-N jobs per candidate      | Cached match score chips for the Jobs feed                 | Resume change (BullMQ async)            |
 | Bias detection      | Job description text          | Flagged terms by category with severity + suggestion       | On blur (debounced) + on Save / Publish |
-| Fairness aggregates | DB aggregations               | Counts, distributions, top terms (SQL only — no LLM)       | Admin Bias Monitor                      |
+| Fairness aggregates | DB aggregations               | Counts, distributions, top terms (SQL only - no LLM)       | Admin Bias Monitor                      |
 
 Every score row records `prompt_version`, `model_used`, `latency_ms`, `redacted_fields`, and the full `raw_output` JSON. Thesis examiners can reproduce any decision from the audit trail.
 
@@ -184,7 +184,7 @@ AuraHire is a **Turborepo monorepo** with a deliberately split frontend and back
                     └────────────┬───────────────────────┘
                                  │ HTTPS
         ┌────────────────────────▼─────────────────────────┐
-        │   Frontend — Next.js 16 (Vercel)                 │
+        │   Frontend - Next.js 16 (Vercel)                 │
         │   apps/web                                       │
         │   - App Router, Server Components by default     │
         │   - Supabase Auth (browser + SSR cookies)        │
@@ -196,7 +196,7 @@ AuraHire is a **Turborepo monorepo** with a deliberately split frontend and back
                                  │ HTTPS · Bearer <Supabase JWT>
                                  │ WSS  · Socket.io
         ┌────────────────────────▼─────────────────────────┐
-        │   Backend — NestJS 10 (Digital Ocean Droplet)    │
+        │   Backend - NestJS 10 (Digital Ocean Droplet)    │
         │   apps/api                                       │
         │   - Fastify adapter; Swagger at /api/docs        │
         │   - SupabaseAuthGuard + RolesGuard + ActiveCo.   │
@@ -219,13 +219,13 @@ AuraHire is a **Turborepo monorepo** with a deliberately split frontend and back
 
 ### Defense in depth (five layers)
 
-1. **Frontend middleware** — redirects unauthenticated/wrong-role users at the URL boundary; enforces onboarded vs not-onboarded
-2. **Backend CORS + Helmet** — `ALLOWED_ORIGINS` whitelist, hardened HTTP headers
-3. **`SupabaseAuthGuard`** — validates JWT signature, expiry, and JWKs on every protected request
-4. **`RolesGuard` + `ActiveCompanyGuard` + ownership checks** — RBAC at the controller, active-tenant gating, per-resource ownership in services
-5. **Postgres RLS** — every user-data table enforces `auth.uid()` and role rules; the service-role client only operates on the server side
+1. **Frontend middleware** - redirects unauthenticated/wrong-role users at the URL boundary; enforces onboarded vs not-onboarded
+2. **Backend CORS + Helmet** - `ALLOWED_ORIGINS` whitelist, hardened HTTP headers
+3. **`SupabaseAuthGuard`** - validates JWT signature, expiry, and JWKs on every protected request
+4. **`RolesGuard` + `ActiveCompanyGuard` + ownership checks** - RBAC at the controller, active-tenant gating, per-resource ownership in services
+5. **Postgres RLS** - every user-data table enforces `auth.uid()` and role rules; the service-role client only operates on the server side
 
-Even if layers 1–4 are bypassed (a frontend bug, a misconfigured CORS, a malformed guard), the database itself refuses unauthorized reads and writes.
+Even if layers 1-4 are bypassed (a frontend bug, a misconfigured CORS, a malformed guard), the database itself refuses unauthorized reads and writes.
 
 ### Data flow patterns
 
@@ -326,7 +326,7 @@ Apply button → POST /applications → AuthGuard → ApplicationsService
 
 | Tool                 | Role                                                               |
 | -------------------- | ------------------------------------------------------------------ |
-| Zod                  | Single source of truth for input shapes — validates DTOs and forms |
+| Zod                  | Single source of truth for input shapes - validates DTOs and forms |
 | TanStack React Query | Co-located with generated hooks                                    |
 | Orval                | Generates typed TanStack Query hooks from `openapi.json`           |
 | `zod-to-json-schema` | Generates JSON schemas for OpenAI structured outputs               |
@@ -339,7 +339,7 @@ Apply button → POST /applications → AuthGuard → ApplicationsService
 | **Supabase Auth**                                         | Email/password + JWT issuance + verification flow                                     |
 | **Supabase Storage**                                      | Resumes (private + signed URLs), avatars, company logos                               |
 | **Drizzle schema** (`packages/db/src/schema.ts`)          | 23 tables across Identity / Recruitment / Candidate Data / AI / Audit / Notifications |
-| **Drizzle migrations**                                    | `packages/db/drizzle/` — generated, version-controlled SQL                            |
+| **Drizzle migrations**                                    | `packages/db/drizzle/` - generated, version-controlled SQL                            |
 | **RLS policies** (`packages/db/src/rls/all-policies.sql`) | Hand-written SQL applied via Supabase Dashboard or psql                               |
 
 ### Infrastructure & hosting
@@ -354,7 +354,7 @@ Apply button → POST /applications → AuthGuard → ApplicationsService
 | **UFW** + **fail2ban**                                  | Firewall (22/80/443 only) + SSH brute-force protection             |
 | **GitHub Actions**                                      | CI: format, type-check, lint, test on every PR + push to `main`    |
 
-The deployment is intentionally **explicit and inspectable** — no PaaS magic. Every moving part (Node, PM2, Docker, Caddy, UFW) is editable and visible. Redis and Mailpit bind to `127.0.0.1` only; Caddy is the only thing reachable from the public internet.
+The deployment is intentionally **explicit and inspectable** - no PaaS magic. Every moving part (Node, PM2, Docker, Caddy, UFW) is editable and visible. Redis and Mailpit bind to `127.0.0.1` only; Caddy is the only thing reachable from the public internet.
 
 ---
 
@@ -367,9 +367,9 @@ aurahire/
 │   │   ├── app/
 │   │   │   ├── (public)/          # Homepage, public jobs board, marketing
 │   │   │   ├── (auth)/            # Login, register, forgot/reset password, verify-email
-│   │   │   ├── (candidate)/       # Candidate portal — dashboard, jobs, applications, interviews, profile, resume, settings
-│   │   │   ├── (recruiter)/       # Recruiter portal — jobs, applications, interviews, offers, shortlist, analytics, settings
-│   │   │   ├── (admin)/           # Admin portal — users, jobs, applications, ai-config, audit, analytics, bias-monitor, companies, feedback, help
+│   │   │   ├── (candidate)/       # Candidate portal - dashboard, jobs, applications, interviews, profile, resume, settings
+│   │   │   ├── (recruiter)/       # Recruiter portal - jobs, applications, interviews, offers, shortlist, analytics, settings
+│   │   │   ├── (admin)/           # Admin portal - users, jobs, applications, ai-config, audit, analytics, bias-monitor, companies, feedback, help
 │   │   │   ├── (legal)/           # Terms, privacy
 │   │   │   ├── onboarding/        # 6-step candidate + 3-step recruiter wizards
 │   │   │   ├── invite/[token]     # Team invitation acceptance
@@ -389,7 +389,7 @@ aurahire/
 │       ├── src/
 │       │   ├── main.ts            # Fastify bootstrap, Swagger, global pipes, Helmet
 │       │   ├── app.module.ts
-│       │   ├── modules/           # 18 feature modules — admin, applications, auth, bias,
+│       │   ├── modules/           # 18 feature modules - admin, applications, auth, bias,
 │       │   │                      # candidate-profiles, companies, feedback, interviews,
 │       │   │                      # interview-venues, invitations, jobs, notifications,
 │       │   │                      # notification-preferences, offers, profiles,
@@ -412,7 +412,7 @@ aurahire/
 │       │   └── lib/               # Helpers (date, errors, pagination)
 │       ├── scripts/               # generate-openapi, reset-db, seed-db, run-ai-parse-corpus,
 │       │                          # smoke-test-openai, generate-test-resumes
-│       └── Dockerfile             # (Phase 2 — containerized API option)
+│       └── Dockerfile             # (Phase 2 - containerized API option)
 ├── packages/
 │   ├── shared/                    # Zod schemas, enums, constants, auto-generated API client
 │   │   ├── src/
@@ -446,7 +446,7 @@ aurahire/
 │   ├── provision.sh               # One-shot droplet provisioning (UFW, fail2ban, Docker, Node, PM2, Caddy)
 │   └── env.api.production.example
 ├── docs/
-│   └── main/                      # Living spec — read these before changing code
+│   └── main/                      # Living spec - read these before changing code
 │       ├── prd.md
 │       ├── architecture.md
 │       ├── tech-stack.md
@@ -503,15 +503,15 @@ pnpm dev                                                                # → ht
 ### Prerequisites
 
 - **macOS, Linux, or WSL2 on Windows**
-- **Node.js 20.x LTS** — `node --version` must report 20+
-- **pnpm 9.12+** — `corepack enable && corepack prepare pnpm@9.12.3 --activate` (or `npm install -g pnpm@9`)
-- **Docker Desktop** — must be running (Mailpit + Redis run as containers)
+- **Node.js 20.x LTS** - `node --version` must report 20+
+- **pnpm 9.12+** - `corepack enable && corepack prepare pnpm@9.12.3 --activate` (or `npm install -g pnpm@9`)
+- **Docker Desktop** - must be running (Mailpit + Redis run as containers)
 - **Git**
 - A modern browser (Chrome 120+, Safari 17+, Firefox 121+, Edge 120+)
 - Service accounts (all free tier sufficient for local dev):
-  - **Supabase** — Postgres + Auth + Storage. Create a project at https://supabase.com
-  - **Resend** — production email (Mailpit covers dev). Get an API key at https://resend.com
-  - **OpenAI** — add $10–20 in billing credit for development at https://platform.openai.com
+  - **Supabase** - Postgres + Auth + Storage. Create a project at https://supabase.com
+  - **Resend** - production email (Mailpit covers dev). Get an API key at https://resend.com
+  - **OpenAI** - add $10-20 in billing credit for development at https://platform.openai.com
 
 ### One-time setup
 
@@ -597,7 +597,7 @@ Only `NEXT_PUBLIC_*` vars are bundled into the client. The Supabase anon key is 
 NODE_ENV=development
 PORT=3333
 
-# Database — Supabase pooler, port 6543 for transaction mode
+# Database - Supabase pooler, port 6543 for transaction mode
 DATABASE_URL=postgresql://postgres.PROJECT_REF:PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres
 
 # Supabase (JWT validation + storage)
@@ -611,13 +611,13 @@ REDIS_URL=redis://localhost:6379
 OPENAI_API_KEY=sk-proj-...
 OPENAI_MODEL=gpt-4o-mini
 
-# Email — Mailpit (dev) vs Resend (prod)
+# Email - Mailpit (dev) vs Resend (prod)
 SMTP_HOST=localhost
 SMTP_PORT=1025
 RESEND_API_KEY=re_...
 FROM_EMAIL=onboarding@resend.dev
 
-# Public web URL — used in email links
+# Public web URL - used in email links
 APP_URL=http://localhost:3000
 
 # CORS
@@ -631,7 +631,7 @@ In production, `NODE_ENV=production` flips the email transport to Resend and the
 
 ### Env validation
 
-Backend env vars are validated by a **Zod schema** in `apps/api/src/config/`. The process crashes at boot with a precise message if anything is missing or malformed — no silent fallback. The same schema is used by `deploy/deploy.sh` to gate production deploys: an env that wouldn't boot won't deploy.
+Backend env vars are validated by a **Zod schema** in `apps/api/src/config/`. The process crashes at boot with a precise message if anything is missing or malformed - no silent fallback. The same schema is used by `deploy/deploy.sh` to gate production deploys: an env that wouldn't boot won't deploy.
 
 ---
 
@@ -747,7 +747,7 @@ parsedResumeSchema = z.object({
 });
 ```
 
-If parsing times out or returns `parse_confidence: "low"`, the wizard falls back to manual entry — never a wall. Prompt versions: `parse-resume.ts` (v1), `parse-resume-v2.ts` (current default with stricter date normalization).
+If parsing times out or returns `parse_confidence: "low"`, the wizard falls back to manual entry - never a wall. Prompt versions: `parse-resume.ts` (v1), `parse-resume-v2.ts` (current default with stricter date normalization).
 
 ### 2. PII redaction (hybrid)
 
@@ -762,7 +762,7 @@ A **rule-based** pass nulls out `contact.full_name`, `contact.email`, `contact.p
 | Experience Clarity | 30             | Outcomes, technologies, duration clarity |
 | Education Quality  | 15             | Degree match + certifications            |
 
-Total 100. Every component returns `score`, `max`, `weight`, plain-language `explanation`, and 1–3 evidence excerpts with `relevance` (positive / negative / neutral). The engine also produces up to 3 improvement suggestions with estimated point impact.
+Total 100. Every component returns `score`, `max`, `weight`, plain-language `explanation`, and 1-3 evidence excerpts with `relevance` (positive / negative / neutral). The engine also produces up to 3 improvement suggestions with estimated point impact.
 
 ### 4. Match Score
 
@@ -773,11 +773,11 @@ Total 100. Every component returns `score`, `max`, `weight`, plain-language `exp
 | Education Match         | 15             | Degree level + field relevance            |
 | Cultural / Language Fit | 10             | Tone + soft-skill alignment               |
 
-Output includes the breakdown, a one-paragraph summary, and optional `red_flags` (gaps) and `green_flags` (standout strengths). Bands: **Strong** (≥70), **Partial** (40–69), **Limited** (<40). Each `match_scores` row stores `weights_used` so historical scores stay interpretable even after admins re-tune.
+Output includes the breakdown, a one-paragraph summary, and optional `red_flags` (gaps) and `green_flags` (standout strengths). Bands: **Strong** (≥70), **Partial** (40-69), **Limited** (<40). Each `match_scores` row stores `weights_used` so historical scores stay interpretable even after admins re-tune.
 
 ### 5. Match Preview (background)
 
-When a candidate uploads or changes their default resume, the `MATCH_PREVIEW_PRECOMPUTE_QUEUE` job recomputes Match Score chips for the **top-N most relevant active jobs** (default N = 5). The chips appear instantly when the candidate visits `/candidate/jobs` — no spinner, no synchronous AI cost on read paths.
+When a candidate uploads or changes their default resume, the `MATCH_PREVIEW_PRECOMPUTE_QUEUE` job recomputes Match Score chips for the **top-N most relevant active jobs** (default N = 5). The chips appear instantly when the candidate visits `/candidate/jobs` - no spinner, no synchronous AI cost on read paths.
 
 ### 6. Bias detection
 
@@ -785,7 +785,7 @@ Scans job descriptions for **gendered**, **age-coded**, **ableist**, and **exclu
 
 ### 7. Aggregate fairness monitor
 
-SQL-only — no LLM cost. Surfaces flag counts, top flagged terms, override rate, score distribution, and recent override decisions to admins. Documented thesis tradeoff: we deliberately don't collect demographic labels (it contradicts the redaction philosophy), so we surface aggregate distributions rather than disparate-impact statistical tests.
+SQL-only - no LLM cost. Surfaces flag counts, top flagged terms, override rate, score distribution, and recent override decisions to admins. Documented thesis tradeoff: we deliberately don't collect demographic labels (it contradicts the redaction philosophy), so we surface aggregate distributions rather than disparate-impact statistical tests.
 
 ### Prompt versioning
 
@@ -807,13 +807,13 @@ The script (`apps/api/scripts/run-ai-parse-corpus.ts`) iterates over a folder of
 
 | Call                      | Avg input tokens | Avg output tokens | Avg latency |
 | ------------------------- | ---------------- | ----------------- | ----------- |
-| Parse resume              | ~2,500           | ~1,000            | 3–5 s       |
-| Redact (LLM-assisted)     | ~1,200           | ~600              | 1–2 s       |
-| Profile Score             | ~2,200           | ~1,200            | 3–4 s       |
-| Match Score               | ~2,800           | ~1,400            | 4–6 s       |
-| Bias detect (300-word JD) | ~600             | ~300              | 1–2 s       |
+| Parse resume              | ~2,500           | ~1,000            | 3-5 s       |
+| Redact (LLM-assisted)     | ~1,200           | ~600              | 1-2 s       |
+| Profile Score             | ~2,200           | ~1,200            | 3-4 s       |
+| Match Score               | ~2,800           | ~1,400            | 4-6 s       |
+| Bias detect (300-word JD) | ~600             | ~300              | 1-2 s       |
 
-Throttler caps protect the budget — see [Security Model → Rate limiting](#rate-limiting). A `503` is returned (and the UI degrades to "Score temporarily unavailable") if OpenAI fails three times with backoff.
+Throttler caps protect the budget - see [Security Model → Rate limiting](#rate-limiting). A `503` is returned (and the UI degrades to "Score temporarily unavailable") if OpenAI fails three times with backoff.
 
 ---
 
@@ -832,17 +832,17 @@ Throttler caps protect the budget — see [Security Model → Rate limiting](#ra
 
 ### Key invariants
 
-- `applications` is **unique on `(candidate_id, job_id)`** — one application per pair
-- `match_scores` is **unique on `application_id`** — one score per application
-- `match_score_previews` is **unique on `(candidate_id, job_id)`** — feed-chip caches
-- `audit_logs` is append-only — no UPDATE / DELETE RLS policy from any role
-- `scoring_config` has a **partial unique index on `is_active=true`** — exactly one active row at a time
+- `applications` is **unique on `(candidate_id, job_id)`** - one application per pair
+- `match_scores` is **unique on `application_id`** - one score per application
+- `match_score_previews` is **unique on `(candidate_id, job_id)`** - feed-chip caches
+- `audit_logs` is append-only - no UPDATE / DELETE RLS policy from any role
+- `scoring_config` has a **partial unique index on `is_active=true`** - exactly one active row at a time
 - `bias_flags.status` evolves through `flagged → resolved | overridden`; overrides require `override_reason` (NOT NULL when status='overridden')
-- `company_members` is **unique on `(company_id, user_id)`** — one membership per pair, role per company
+- `company_members` is **unique on `(company_id, user_id)`** - one membership per pair, role per company
 
 ### RLS philosophy
 
-Policies are written by hand in `packages/db/src/rls/all-policies.sql` and applied via the Supabase SQL editor (not migrations, deliberately — so policies stay reviewable independently of schema). Every table that holds user data enforces:
+Policies are written by hand in `packages/db/src/rls/all-policies.sql` and applied via the Supabase SQL editor (not migrations, deliberately - so policies stay reviewable independently of schema). Every table that holds user data enforces:
 
 - **Read:** `auth.uid()` must match `user_id` (or role must be admin / recruiter-with-ownership)
 - **Write:** the same predicate plus column-level checks where needed
@@ -905,7 +905,7 @@ A NestJS Socket.io gateway (`apps/api/src/realtime/`) backed by a **Redis adapte
 - **Authentication**: client sends the Supabase JWT as an `auth.token` field; gateway validates via the same `jose` JWKs check as the REST guards
 - **Rooms**: every authenticated user joins `user:<uuid>`; recruiters also join `company:<uuid>`
 - **Transport**: WebSocket only (no long-polling fallback) under Caddy with `read_timeout 0` on the `/socket.io/*` path
-- **Redis adapter**: ready for horizontal scaling — adding a second API process requires no code change
+- **Redis adapter**: ready for horizontal scaling - adding a second API process requires no code change
 
 The frontend uses `lib/realtime.ts` to manage the socket and `useEffect` cleanup. A toast pops on receipt and a badge increments on the topbar.
 
@@ -915,8 +915,8 @@ The frontend uses `lib/realtime.ts` to manage the socket and `useEffect` cleanup
 
 All emails are JSX components in `apps/api/src/email/templates/` (React Email), rendered to HTML on send. Transport switches by `NODE_ENV`:
 
-- **Development** — Nodemailer → Mailpit at `localhost:1025` (no real sends)
-- **Production** — Resend SDK with verified `FROM_EMAIL` domain
+- **Development** - Nodemailer → Mailpit at `localhost:1025` (no real sends)
+- **Production** - Resend SDK with verified `FROM_EMAIL` domain
 
 ### Templates (16 total)
 
@@ -929,17 +929,17 @@ All emails are JSX components in `apps/api/src/email/templates/` (React Email), 
 | `interview-scheduled`        | Recruiter schedules interview                      |
 | `interview-rescheduled`      | Recruiter or candidate reschedules                 |
 | `interview-cancelled`        | Either party cancels                               |
-| `interview-reminder`         | Cron — 24h before                                  |
+| `interview-reminder`         | Cron - 24h before                                  |
 | `interview-feedback-shared`  | Recruiter records feedback                         |
 | `offer-sent`                 | Recruiter sends offer                              |
 | `offer-decision`             | Candidate accepts/declines                         |
-| `offer-expired`              | Cron — past `expires_at`                           |
+| `offer-expired`              | Cron - past `expires_at`                           |
 | `position-filled`            | Recruiter hires; sends to all remaining applicants |
 | `team-invitation`            | Recruiter invites a teammate                       |
 | `test-email`                 | Admin SMTP smoke test                              |
 | `_brand-header`              | Shared header partial                              |
 
-Every email uses the canonical AuraHire brand header partial (`_brand-header.tsx`) — centered logo, ink color, no em-dash punctuation per the recent copy pass.
+Every email uses the canonical AuraHire brand header partial (`_brand-header.tsx`) - centered logo, ink color, no em-dash punctuation per the recent copy pass.
 
 ---
 
@@ -1044,13 +1044,13 @@ Full per-feature specs in [docs/main/technical-specifications.md](docs/main/tech
 - `ActiveCompanyGuard` ensures recruiter routes have a selected company in scope (skipped on `@SkipActiveCompany()` endpoints)
 - `RequireCompanyRole('admin' | 'member')` for per-tenant role checks (e.g., only company admin can invite)
 - Per-resource ownership is checked in services (e.g., "recruiter owns this job")
-- Postgres RLS is the last word — even a buggy guard cannot reach unauthorized rows
+- Postgres RLS is the last word - even a buggy guard cannot reach unauthorized rows
 
 ### Secrets
 
 | Secret                    | Where it lives                                                    |
 | ------------------------- | ----------------------------------------------------------------- |
-| Supabase anon key         | `apps/web/.env.local` (`NEXT_PUBLIC_*`, bundled to client — safe) |
+| Supabase anon key         | `apps/web/.env.local` (`NEXT_PUBLIC_*`, bundled to client - safe) |
 | Supabase service role key | `apps/api/.env` only (server)                                     |
 | OpenAI key                | `apps/api/.env` only                                              |
 | Resend API key            | `apps/api/.env` only                                              |
@@ -1117,31 +1117,31 @@ This is the seed for a future "Agencies" feature (one recruiter, many client com
 | Capability                                  | Candidate                           | Recruiter          | Admin           |
 | ------------------------------------------- | ----------------------------------- | ------------------ | --------------- |
 | Register + complete onboarding              | ✅ (6 steps)                        | ✅ (3 steps)       | seeded          |
-| Upload resumes, set default                 | ✅                                  | —                  | —               |
-| Compute Profile Score                       | ✅ (rate-limited 1/60 s)            | —                  | —               |
+| Upload resumes, set default                 | ✅                                  | -                  | -               |
+| Compute Profile Score                       | ✅ (rate-limited 1/60 s)            | -                  | -               |
 | Browse public jobs                          | ✅                                  | ✅                 | ✅              |
-| Apply to a job (synchronous Match Score)    | ✅                                  | —                  | —               |
-| Withdraw application                        | ✅                                  | —                  | —               |
+| Apply to a job (synchronous Match Score)    | ✅                                  | -                  | -               |
+| Withdraw application                        | ✅                                  | -                  | -               |
 | Receive real-time notifications             | ✅                                  | ✅                 | ✅              |
-| Post / edit / archive jobs                  | —                                   | ✅ (own jobs)      | ✅ (all)        |
-| Bias check on description                   | —                                   | ✅ (auto + manual) | —               |
-| Override bias flag with reason              | —                                   | ✅                 | —               |
-| View applications to a job                  | —                                   | ✅ (own jobs)      | ✅ (all)        |
+| Post / edit / archive jobs                  | -                                   | ✅ (own jobs)      | ✅ (all)        |
+| Bias check on description                   | -                                   | ✅ (auto + manual) | -               |
+| Override bias flag with reason              | -                                   | ✅                 | -               |
+| View applications to a job                  | -                                   | ✅ (own jobs)      | ✅ (all)        |
 | See full Score Breakdown + evidence         | ✅ (own)                            | ✅ (own jobs)      | ✅ (all)        |
-| Update application status                   | —                                   | ✅ (own jobs)      | ✅              |
-| Schedule interview / record feedback        | —                                   | ✅                 | ✅              |
-| Manage interview venues                     | —                                   | ✅ (per-company)   | —               |
+| Update application status                   | -                                   | ✅ (own jobs)      | ✅              |
+| Schedule interview / record feedback        | -                                   | ✅                 | ✅              |
+| Manage interview venues                     | -                                   | ✅ (per-company)   | -               |
 | Send offer / accept-decline                 | recruiter sends, candidate responds | ✅                 | ✅              |
-| Manage team members per company             | —                                   | ✅ (company admin) | ✅              |
-| Suspend / delete users                      | —                                   | —                  | ✅              |
-| Moderate jobs / archive                     | —                                   | —                  | ✅              |
-| Tune AI scoring weights                     | —                                   | —                  | ✅              |
-| Preview weight impact against last 100 apps | —                                   | —                  | ✅              |
-| Trigger batch re-score                      | —                                   | —                  | ✅ (BullMQ job) |
-| Read audit log                              | —                                   | —                  | ✅              |
-| View Bias & Fairness Monitor                | —                                   | —                  | ✅              |
-| Read system analytics                       | —                                   | —                  | ✅              |
-| Review user feedback submissions            | —                                   | —                  | ✅              |
+| Manage team members per company             | -                                   | ✅ (company admin) | ✅              |
+| Suspend / delete users                      | -                                   | -                  | ✅              |
+| Moderate jobs / archive                     | -                                   | -                  | ✅              |
+| Tune AI scoring weights                     | -                                   | -                  | ✅              |
+| Preview weight impact against last 100 apps | -                                   | -                  | ✅              |
+| Trigger batch re-score                      | -                                   | -                  | ✅ (BullMQ job) |
+| Read audit log                              | -                                   | -                  | ✅              |
+| View Bias & Fairness Monitor                | -                                   | -                  | ✅              |
+| Read system analytics                       | -                                   | -                  | ✅              |
+| Review user feedback submissions            | -                                   | -                  | ✅              |
 
 ---
 
@@ -1165,17 +1165,17 @@ Every page ships with explicit **loading**, **error**, and **empty** states. Mob
 
 ## Design System
 
-The brand voice is **institutional, AI-forward, editorial calm** — single accent color (`#2563eb` AuraHire Blue), display weight at 400 (never 700+), pill-geometry CTAs, full-bleed dark editorial heroes with layered Score Ring + Breakdown Bar mockup cards.
+The brand voice is **institutional, AI-forward, editorial calm** - single accent color (`#2563eb` AuraHire Blue), display weight at 400 (never 700+), pill-geometry CTAs, full-bleed dark editorial heroes with layered Score Ring + Breakdown Bar mockup cards.
 
 Read these before building UI:
 
-- [DESIGN.md](DESIGN.md) — the brand design summary at repo root
-- [docs/main/design-system.md](docs/main/design-system.md) — canonical token definitions
-- [docs/main/ui-patterns.md](docs/main/ui-patterns.md) — every component, variants, signature patterns
+- [DESIGN.md](DESIGN.md) - the brand design summary at repo root
+- [docs/main/design-system.md](docs/main/design-system.md) - canonical token definitions
+- [docs/main/ui-patterns.md](docs/main/ui-patterns.md) - every component, variants, signature patterns
 
 ### Tokens at a glance
 
-- **Color:** AuraHire Blue (`#2563eb`) for primary CTAs, wordmark, score-progress fill, focus rings — _used scarcely_. Surfaces are white / soft gray / surface-strong / surface-dark. Scoring semantics are red (`<40`) / amber (`40–69`) / green (`≥70`), used only inside Score Ring fill, Breakdown Bar segments, and inline match labels.
+- **Color:** AuraHire Blue (`#2563eb`) for primary CTAs, wordmark, score-progress fill, focus rings - _used scarcely_. Surfaces are white / soft gray / surface-strong / surface-dark. Scoring semantics are red (`<40`) / amber (`40-69`) / green (`≥70`), used only inside Score Ring fill, Breakdown Bar segments, and inline match labels.
 - **Typography:** Inter Display (weight 400) for hero headlines, Inter (400 / 500 / 600) for body and UI, JetBrains Mono (weight 500) for every numeric value.
 - **Geometry:** `rounded-pill` (100 px) for every CTA, `rounded-full` for avatars and score glyphs, `rounded-xl` (24 px) for marketing cards, `rounded-lg` (16 px) for portal cards.
 - **Spacing:** 96 px section rhythm for marketing, 32 px for portal surfaces. Base unit 4 px.
@@ -1191,19 +1191,19 @@ A **dark editorial hero** with floating Score Ring + Breakdown Bar mockup cards 
 
 ### Frontend
 
-- **Streaming SSR** — Server Components stream from the edge; client islands hydrate on demand
-- **Per-route bundles** — App Router code-splits automatically per route group
-- **TanStack Query** — stale-while-revalidate semantics; default `staleTime: 60s`, `gcTime: 5min`
-- **Turbopack dev** — fast HMR; Webpack-free `next dev --turbo`
-- **Vercel edge caching** — for static pages (marketing) and ISR where used
+- **Streaming SSR** - Server Components stream from the edge; client islands hydrate on demand
+- **Per-route bundles** - App Router code-splits automatically per route group
+- **TanStack Query** - stale-while-revalidate semantics; default `staleTime: 60s`, `gcTime: 5min`
+- **Turbopack dev** - fast HMR; Webpack-free `next dev --turbo`
+- **Vercel edge caching** - for static pages (marketing) and ISR where used
 
 ### Backend
 
-- **Fastify adapter** — ~2x req/sec over Express on equivalent hardware
-- **Connection pooling** — Postgres pooler on port `6543` (transaction mode); pool size tuned per droplet vCPU count
-- **Redis-backed cache + throttler + queue** — single Redis instance with `maxmemory 256mb` and `allkeys-lru` eviction
-- **Async AI fallback** — if synchronous match scoring exceeds the 30 s ceiling, the request returns a "computing…" state and a BullMQ job finishes the work; the WebSocket pushes the result back to the candidate
-- **Health check** — `GET /api/health` returns `{ status, uptime, version }`, probed every 30 s by Caddy and PM2
+- **Fastify adapter** - ~2x req/sec over Express on equivalent hardware
+- **Connection pooling** - Postgres pooler on port `6543` (transaction mode); pool size tuned per droplet vCPU count
+- **Redis-backed cache + throttler + queue** - single Redis instance with `maxmemory 256mb` and `allkeys-lru` eviction
+- **Async AI fallback** - if synchronous match scoring exceeds the 30 s ceiling, the request returns a "computing…" state and a BullMQ job finishes the work; the WebSocket pushes the result back to the candidate
+- **Health check** - `GET /api/health` returns `{ status, uptime, version }`, probed every 30 s by Caddy and PM2
 
 ### Targets (Sprint 1, single 2 vCPU / 2 GB droplet)
 
@@ -1214,17 +1214,17 @@ A **dark editorial hero** with floating Score Ring + Breakdown Bar mockup cards 
 | **API p95 latency (CRUD)**                     | < 250 ms   |
 | **Resume parse end-to-end**                    | < 8 s p95  |
 | **Match Score end-to-end (sync)**              | < 10 s p95 |
-| **Concurrent users (single droplet)**          | 100–200    |
+| **Concurrent users (single droplet)**          | 100-200    |
 | **Daily active applications (single droplet)** | ~5,000     |
 
 ### Scaling out
 
 The architecture is ready for horizontal scaling without code changes:
 
-- **Frontend** — Vercel auto-scales
-- **API** — Redis adapter on the WebSocket gateway lets you run N backend processes behind a load balancer; PM2 cluster mode is one flag away (`exec_mode: "cluster", instances: "max"` in `ecosystem.config.cjs`)
-- **Database** — Supabase scales the Postgres tier on demand
-- **Workers** — BullMQ workers can run in separate processes / hosts (point them at the same Redis URL)
+- **Frontend** - Vercel auto-scales
+- **API** - Redis adapter on the WebSocket gateway lets you run N backend processes behind a load balancer; PM2 cluster mode is one flag away (`exec_mode: "cluster", instances: "max"` in `ecosystem.config.cjs`)
+- **Database** - Supabase scales the Postgres tier on demand
+- **Workers** - BullMQ workers can run in separate processes / hosts (point them at the same Redis URL)
 
 ---
 
@@ -1233,7 +1233,7 @@ The architecture is ready for horizontal scaling without code changes:
 - **WCAG 2.1 AA target.** Color contrast on every text-on-surface combination meets 4.5:1 (AAA on key surfaces).
 - **Keyboard navigation.** Every interactive element is reachable; focus rings are visible (2px AuraHire Blue).
 - **Screen readers.** Semantic HTML, proper `aria-*` on Radix primitives, evidence callouts announced as quotes.
-- **Touch targets.** Primary CTAs at 44px, hero CTAs at 56px — meets / exceeds WCAG AAA.
+- **Touch targets.** Primary CTAs at 44px, hero CTAs at 56px - meets / exceeds WCAG AAA.
 - **Motion.** Animations respect `prefers-reduced-motion` (Score Ring fill, AI shimmer, modal enter).
 - **Forms.** All inputs labeled; error messages associated via `aria-describedby`.
 
@@ -1256,9 +1256,9 @@ Legacy IE / older Safari are not supported. Service-worker offline mode is a Pha
 
 The current sprint ships **English-only**. The architecture is i18n-ready:
 
-- All user-facing strings live in component code (not hard-coded in JSON yet — this is the explicit choice for thesis defense clarity)
+- All user-facing strings live in component code (not hard-coded in JSON yet - this is the explicit choice for thesis defense clarity)
 - Date / time / number formatting goes through `Intl.*` APIs, not a stringifier
-- All forms / validation messages come from Zod schemas — a single point to swap to `next-intl` in Phase 2
+- All forms / validation messages come from Zod schemas - a single point to swap to `next-intl` in Phase 2
 - The schema `language` field on `candidate_profiles` and `jobs` is captured but not currently used to filter UI
 
 Adding a locale = wrap the root layout in `next-intl`, extract strings into messages catalogs, and swap `Intl.DateTimeFormat()` defaults. No table schema changes required.
@@ -1279,7 +1279,7 @@ Adding a locale = wrap the root layout in `next-intl`, extract strings into mess
 
 ### Backend → Digital Ocean Droplet
 
-The backend deployment is intentionally manual SSH + PM2 + Docker — every step inspectable.
+The backend deployment is intentionally manual SSH + PM2 + Docker - every step inspectable.
 
 #### One-time droplet provisioning
 
@@ -1338,7 +1338,7 @@ bash deploy/deploy.sh
 
 #### Health checks
 
-- `GET /api/health` → `{ status: "ok", uptime, version }` — probed by Caddy and PM2
+- `GET /api/health` → `{ status: "ok", uptime, version }` - probed by Caddy and PM2
 - PM2 auto-restarts on crash; max memory restart at 1 GB
 - Logs at `/home/deploy/.pm2/logs/aurahire-api-out.log` and `aurahire-api-error.log`
 
@@ -1354,7 +1354,7 @@ pnpm --filter @aurahire/api build
 pm2 reload aurahire-api --update-env
 ```
 
-The DB schema is forward-only — schema rollback requires a new migration that explicitly undoes the change.
+The DB schema is forward-only - schema rollback requires a new migration that explicitly undoes the change.
 
 ---
 
@@ -1400,13 +1400,13 @@ Concurrency is set to **cancel-in-progress per PR ref** so a push supersedes any
 
 ### E2E coverage (Playwright)
 
-- `onboarding-happy-pdf.spec.ts` — PDF resume → parse → review → preferences → Profile Score
-- `onboarding-happy-docx.spec.ts` — DOCX resume → same path
-- `onboarding-skip.spec.ts` — Skip parse → manual entry → Profile Score
-- `onboarding-reupload.spec.ts` — Re-upload mid-flow rewires the score
-- `onboarding-mobile.spec.ts` — Mobile viewport flow
-- `proactive-system-notification-roundtrip.spec.ts` — WS notification arrives in real time
-- `proactive-system-onboarding.spec.ts` — System nudge surfaces on home
+- `onboarding-happy-pdf.spec.ts` - PDF resume → parse → review → preferences → Profile Score
+- `onboarding-happy-docx.spec.ts` - DOCX resume → same path
+- `onboarding-skip.spec.ts` - Skip parse → manual entry → Profile Score
+- `onboarding-reupload.spec.ts` - Re-upload mid-flow rewires the score
+- `onboarding-mobile.spec.ts` - Mobile viewport flow
+- `proactive-system-notification-roundtrip.spec.ts` - WS notification arrives in real time
+- `proactive-system-onboarding.spec.ts` - System nudge surfaces on home
 
 ---
 
@@ -1414,10 +1414,10 @@ Concurrency is set to **cancel-in-progress per PR ref** so a push supersedes any
 
 ### Logs
 
-- **Frontend** — Pino-formatted logs ingested by Vercel
-- **Backend** — `nestjs-pino` writes structured JSON to stdout, captured by PM2 into rotating log files (`/home/deploy/.pm2/logs/aurahire-api-*.log`)
-- **Caddy** — JSON access log at `/var/log/caddy/access.log`, 10 MB rotation × 5 keep
-- **Request ID** — every API response carries `meta.requestId`; the same value lands in the audit log row for that request
+- **Frontend** - Pino-formatted logs ingested by Vercel
+- **Backend** - `nestjs-pino` writes structured JSON to stdout, captured by PM2 into rotating log files (`/home/deploy/.pm2/logs/aurahire-api-*.log`)
+- **Caddy** - JSON access log at `/var/log/caddy/access.log`, 10 MB rotation × 5 keep
+- **Request ID** - every API response carries `meta.requestId`; the same value lands in the audit log row for that request
 
 ### Audit trail
 
@@ -1425,7 +1425,7 @@ The `audit_logs` table is the first-class observability surface for the thesis: 
 
 ### Health
 
-- `GET /api/health` — uptime + version
+- `GET /api/health` - uptime + version
 - PM2 status: `pm2 status`, `pm2 logs aurahire-api`, `pm2 monit`
 - Caddy status: `sudo systemctl status caddy`
 
@@ -1434,7 +1434,7 @@ The `audit_logs` table is the first-class observability surface for the thesis: 
 - Sentry for error tracking
 - PostHog for product analytics
 - OpenTelemetry traces with Honeycomb / Tempo backend
-- GitHub Actions deploy workflow gated on `needs: validate` (CI green) — a one-line addition once the deploy is fully automated
+- GitHub Actions deploy workflow gated on `needs: validate` (CI green) - a one-line addition once the deploy is fully automated
 
 ---
 
@@ -1484,7 +1484,7 @@ pnpm --filter @aurahire/shared codegen
 # Run the AI parsing corpus
 pnpm --filter @aurahire/api test:ai-parse
 
-# Reset the dev DB (destructive — only on dev project)
+# Reset the dev DB (destructive - only on dev project)
 pnpm --filter @aurahire/api reset-db
 
 # Re-seed the default admin + scoring config
@@ -1529,9 +1529,9 @@ docker exec aurahire-redis redis-cli -a "$REDIS_PASSWORD" KEYS 'bull:*'
 | Redis connection refused               | Container up? `docker exec aurahire-redis redis-cli ping` → `PONG`                                                       |
 | RLS blocking a query                   | The service role client bypasses RLS for system ops; check the right Supabase client is being used                       |
 | Resume parsing fails                   | OpenAI billing balance? Check `apps/api` logs for the parse attempt; run `pnpm --filter @aurahire/api smoke-test-openai` |
-| Production deploy fails env validation | `deploy/deploy.sh` lists exactly which env key was wrong — fix `apps/api/.env` on the droplet                            |
+| Production deploy fails env validation | `deploy/deploy.sh` lists exactly which env key was wrong - fix `apps/api/.env` on the droplet                            |
 | WebSocket not connecting in production | Verify Caddyfile has the `/socket.io/*` matcher with `read_timeout 0`; verify the frontend URL is in `ALLOWED_ORIGINS`   |
-| Cron job didn't fire                   | Server in UTC? Most crons use `Asia/Manila` timezone — confirm `TZ` env on the droplet                                   |
+| Cron job didn't fire                   | Server in UTC? Most crons use `Asia/Manila` timezone - confirm `TZ` env on the droplet                                   |
 
 ---
 
@@ -1573,7 +1573,7 @@ Tested. The wizard scrolls focused input into view via `scrollIntoView({ block: 
 
 The current sprint scope is locked in `docs/main/sprint-plan.md`. Beyond Sprint 1, the following are explicitly deferred:
 
-### Phase 2 — Polish
+### Phase 2 - Polish
 
 - Sentry error tracking + PostHog product analytics + OpenTelemetry traces
 - GitHub Actions deploy workflow gated on CI green
@@ -1581,11 +1581,11 @@ The current sprint scope is locked in `docs/main/sprint-plan.md`. Beyond Sprint 
 - Service-worker offline mode for the candidate dashboard
 - Real-time recruiter ↔ candidate chat (post-offer stage)
 - Calendar integration (Google + Outlook) for interviews
-- Recruiter scheduling links (BYOL — bring your own link)
+- Recruiter scheduling links (BYOL - bring your own link)
 
-### Phase 3 — Beyond thesis scope
+### Phase 3 - Beyond thesis scope
 
-- Agencies (one recruiter, many client companies — schema is already ready via `company_members`)
+- Agencies (one recruiter, many client companies - schema is already ready via `company_members`)
 - Job board syndication (LinkedIn, Indeed crosspost)
 - Candidate referrals + leaderboards
 - Skills assessments (in-app coding / writing tests)
@@ -1600,8 +1600,8 @@ The current sprint scope is locked in `docs/main/sprint-plan.md`. Beyond Sprint 
 
 This repo is a thesis project, so external contributions are not actively solicited. If you fork or borrow patterns:
 
-1. Respect the architecture — the frontend/backend split is load-bearing for the security model
-2. Keep the discipline — structured AI outputs, PII redaction, audit logs, RLS on every table
+1. Respect the architecture - the frontend/backend split is load-bearing for the security model
+2. Keep the discipline - structured AI outputs, PII redaction, audit logs, RLS on every table
 3. Read the relevant doc in `docs/main/` before changing related code
 4. Run the full validation chain locally before opening a PR: `pnpm format:check && pnpm type-check && pnpm --filter @aurahire/api test && pnpm --filter @aurahire/web test`
 5. CI will gate the merge on `main`
@@ -1620,9 +1620,9 @@ chore(deps): bump next from 16.2.3 to 16.2.4
 
 ### Branch model
 
-- `main` — protected, always deployable; CI required before merge
-- `dev` — integration branch for non-blocking experimentation
-- `feat/*` / `fix/*` / `docs/*` — short-lived feature branches PR'd into `main`
+- `main` - protected, always deployable; CI required before merge
+- `dev` - integration branch for non-blocking experimentation
+- `feat/*` / `fix/*` / `docs/*` - short-lived feature branches PR'd into `main`
 
 ### Pull request expectations
 
@@ -1649,7 +1649,7 @@ The author commits to:
 - Coordinating a fix and disclosure timeline
 - Crediting you in the changelog if you wish
 
-This is a thesis project, not a vendor product — there is no formal bug bounty, but responsible disclosures will be acknowledged in the academic appendix.
+This is a thesis project, not a vendor product - there is no formal bug bounty, but responsible disclosures will be acknowledged in the academic appendix.
 
 ---
 
@@ -1663,19 +1663,19 @@ This is a small, single-author thesis project. The expectation for anyone collab
 
 | Term                    | Definition                                                                                      |
 | ----------------------- | ----------------------------------------------------------------------------------------------- |
-| **Profile Score**       | A candidate's overall resume quality score (0–100), independent of any job                      |
-| **Match Score**         | A score for a specific candidate ↔ job pair (0–100)                                             |
+| **Profile Score**       | A candidate's overall resume quality score (0-100), independent of any job                      |
+| **Match Score**         | A score for a specific candidate ↔ job pair (0-100)                                             |
 | **Match Preview**       | A cached Match Score chip shown on the Jobs feed without recomputation                          |
 | **Component breakdown** | The structured per-component view that backs every score (weight + evidence)                    |
-| **Evidence excerpt**    | A verbatim 1–3 sentence quote from the resume that supports a score component                   |
+| **Evidence excerpt**    | A verbatim 1-3 sentence quote from the resume that supports a score component                   |
 | **Bias flag**           | A piece of job-description text the AI flagged as gendered / age-coded / ableist / exclusionary |
 | **Override reason**     | Free-text explanation a recruiter provides when shipping despite a bias flag                    |
 | **Active company**      | The currently selected tenant for a recruiter; recruiter writes are scoped to it                |
-| **RLS**                 | Row-Level Security — Postgres-level access policies enforced per role                           |
+| **RLS**                 | Row-Level Security - Postgres-level access policies enforced per role                           |
 | **Structured output**   | OpenAI's mode that constrains a model's response to a JSON schema                               |
 | **Vertical slice**      | A change that touches schema → backend → shared types → frontend → docs                         |
 | **Audit log**           | Append-only table capturing every consequential action, with actor + entity                     |
-| **Score band**          | Strong (≥70) / Partial (40–69) / Limited (<40) — the plain-language label                       |
+| **Score band**          | Strong (≥70) / Partial (40-69) / Limited (<40) - the plain-language label                       |
 
 ---
 
@@ -1688,7 +1688,7 @@ The security and observability properties of the system depend on a hard boundar
 Drizzle's query builder is closer to SQL, which matters when you're writing RLS-aware queries and explaining them in a thesis appendix. The schema TypeScript is also a single source of truth for the types consumed by both apps.
 
 **Why is OpenAI the only AI provider?**
-Sprint scope. The structured-output capability is uniformly excellent on `gpt-4o-mini` and the cost is predictable. Adding Anthropic or a local model is one service swap in `apps/api/src/ai/openai.service.ts` — every consumer goes through that facade.
+Sprint scope. The structured-output capability is uniformly excellent on `gpt-4o-mini` and the cost is predictable. Adding Anthropic or a local model is one service swap in `apps/api/src/ai/openai.service.ts` - every consumer goes through that facade.
 
 **Why no Vercel KV / Upstash?**
 A single Redis container on the same droplet keeps the architecture inspectable and the latency to single-digit ms. Managed Redis is a one-line swap if you ever outgrow it.
@@ -1697,10 +1697,10 @@ A single Redis container on the same droplet keeps the architecture inspectable 
 A real inbox-style SMTP catcher with a web UI beats console logs for verifying email content and link previews. Resend in production keeps deliverability simple.
 
 **Why does the Caddyfile have a 60s read timeout?**
-Resume parsing and AI scoring legitimately take 3–8s; AI fallbacks can push toward 15s. 60s is generous without masking a real upstream hang.
+Resume parsing and AI scoring legitimately take 3-8s; AI fallbacks can push toward 15s. 60s is generous without masking a real upstream hang.
 
 **Can I deploy the backend to Vercel / Railway / Render?**
-Yes. The backend is a stateless NestJS app — it runs anywhere Node 20 runs. The DO Droplet choice is a thesis defense decision (every moving part visible). To deploy on Vercel Functions, you'd need to move Redis off-host (Upstash) and the BullMQ workers to a separate runtime.
+Yes. The backend is a stateless NestJS app - it runs anywhere Node 20 runs. The DO Droplet choice is a thesis defense decision (every moving part visible). To deploy on Vercel Functions, you'd need to move Redis off-host (Upstash) and the BullMQ workers to a separate runtime.
 
 **Why a thesis project on GitHub?**
 Transparency. The thesis is about explainable AI; the code should be inspectable too.
@@ -1709,26 +1709,26 @@ Transparency. The thesis is about explainable AI; the code should be inspectable
 
 ## License
 
-Proprietary — © 2026 CJ Jutba. All rights reserved.
+Proprietary - © 2026 CJ Jutba. All rights reserved.
 
 This project is the implementation artifact for the thesis **"Explainable and Fair AI-Powered Recruitment: A Transparent Resume Scoring Platform with Bias Mitigation."** Code, design, schemas, prompts, and documentation are provided here for academic review and demonstration. Reuse without explicit written permission is not authorized.
 
 For academic citation:
 
-> Jutba, C. J. (2026). _AuraHire: Explainable and Fair AI-Powered Recruitment — A Transparent Resume Scoring Platform with Bias Mitigation._ Unpublished thesis source code, repository: https://github.com/cjjutba/aurahire-final.
+> Jutba, C. J. (2026). _AuraHire: Explainable and Fair AI-Powered Recruitment - A Transparent Resume Scoring Platform with Bias Mitigation._ Unpublished thesis source code, repository: https://github.com/cjjutba/aurahire-final.
 
 ---
 
 ## Acknowledgements
 
-- **Supabase** — Postgres, Auth, and Storage on a generous free tier
-- **Vercel** — Next.js hosting with preview URLs that make every PR demoable
-- **Digital Ocean** — a transparent, inspectable Droplet that fits the thesis story
-- **OpenAI** — `gpt-4o-mini` for structured outputs at thesis-scale cost
-- **Resend** — production transactional email
-- **Mailpit** — local SMTP catcher that makes dev email a one-click inbox
-- **The Next.js, NestJS, Drizzle, shadcn/ui, Radix, TanStack, Tiptap, Recharts, Lucide, BullMQ, and Pino teams** — for the open-source primitives this system is built on
-- **Reviewers, classmates, and faculty advisors** — for the early read-throughs that surfaced gaps and sharpened the thesis claim
+- **Supabase** - Postgres, Auth, and Storage on a generous free tier
+- **Vercel** - Next.js hosting with preview URLs that make every PR demoable
+- **Digital Ocean** - a transparent, inspectable Droplet that fits the thesis story
+- **OpenAI** - `gpt-4o-mini` for structured outputs at thesis-scale cost
+- **Resend** - production transactional email
+- **Mailpit** - local SMTP catcher that makes dev email a one-click inbox
+- **The Next.js, NestJS, Drizzle, shadcn/ui, Radix, TanStack, Tiptap, Recharts, Lucide, BullMQ, and Pino teams** - for the open-source primitives this system is built on
+- **Reviewers, classmates, and faculty advisors** - for the early read-throughs that surfaced gaps and sharpened the thesis claim
 
 ---
 
@@ -1739,12 +1739,12 @@ Thesis author, sole developer, system operator
 Email: `cjjutbaofficial@gmail.com`
 GitHub: [@cjjutba](https://github.com/cjjutba)
 
-Built as a thesis defense of explainable, fair AI in hiring. If you read this far — thank you.
+Built as a thesis defense of explainable, fair AI in hiring. If you read this far - thank you.
 
 <div align="center">
 
-—
+-
 
-_AuraHire — Hire fairly. Hire transparently. Hire faster._
+_AuraHire - Hire fairly. Hire transparently. Hire faster._
 
 </div>

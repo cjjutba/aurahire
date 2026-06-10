@@ -41,7 +41,7 @@ export class ScoringController {
     summary:
       "Compute the candidate's Profile Score from default resume + preferences",
     description:
-      "Triggers a fresh AI scoring run. Rate-limited at TWO layers: ThrottlerGuard (1/60s per IP) + a per-user manual check on profile_scores.created_at (1/60s per user). Both layers are intentional — defense in depth. Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
+      "Triggers a fresh AI scoring run. Rate-limited at TWO layers: ThrottlerGuard (1/60s per IP) + a per-user manual check on profile_scores.created_at (1/60s per user). Both layers are intentional - defense in depth. Cost: ~$0.001 per call. Inserts a new row in profile_scores; existing scores are preserved as history.",
   })
   @ApiResponse({
     status: 201,
@@ -85,7 +85,7 @@ export class ScoringController {
   }
 
   // ─────────────────────────────────────────────────────────────────────
-  // MATCH-SCORE PREVIEWS — pre-application "See my match" + recommendations
+  // MATCH-SCORE PREVIEWS - pre-application "See my match" + recommendations
   // ─────────────────────────────────────────────────────────────────────
 
   @Post("match-preview/:jobId")
@@ -134,7 +134,7 @@ export class ScoringController {
   @Roles("candidate")
   @ApiOperation({
     summary:
-      "List the candidate's match previews ordered by score — drives the Recommended-for-you feed",
+      "List the candidate's match previews ordered by score - drives the Recommended-for-you feed",
   })
   @ApiResponse({ status: 200, type: MatchScorePreviewListEnvelopeDto })
   async listMatchPreviews(

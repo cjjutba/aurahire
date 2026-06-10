@@ -37,7 +37,7 @@ export class AdminApplicationsController {
   @Roles("admin")
   @ApiOperation({
     summary:
-      "Full admin detail for an application — includes raw AI output, parsed resume + redactedFields list, and the audit trail",
+      "Full admin detail for an application - includes raw AI output, parsed resume + redactedFields list, and the audit trail",
   })
   @ApiResponse({ status: 200, type: AdminApplicationDetailEnvelopeDto })
   @ApiResponse({ status: 404, description: "Application not found" })

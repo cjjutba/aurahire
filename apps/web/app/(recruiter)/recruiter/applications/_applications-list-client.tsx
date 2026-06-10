@@ -42,7 +42,7 @@ interface AppRow {
   identityRevealed?: boolean;
 }
 
-// Per thesis panel revision (May 2026): "Screening" stage removed —
+// Per thesis panel revision (May 2026): "Screening" stage removed -
 // applications go directly from "applied" to "interview" or are
 // auto-rejected at score < threshold.
 const APP_STATUS: Record<string, { label: string; dot: string; text: string }> =

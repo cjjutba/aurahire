@@ -2,15 +2,15 @@
 
 **Date:** 2026-05-06
 **Owner:** UX polish, candidate onboarding step 1
-**Status:** approved (option A — stepped progress stack)
+**Status:** approved (option A - stepped progress stack)
 
 ## Problem
 
 The current loading state on `/onboarding/candidate` (after a candidate uploads a PDF/DOCX resume) is a single 32-px shimmer bar with sparkles + a caption that cycles every 1.5 s on a fixed timer. It has three visible problems:
 
-1. The header copy "Reading your resume…" duplicates the first cycling caption inside the shimmer card — both render simultaneously.
+1. The header copy "Reading your resume…" duplicates the first cycling caption inside the shimmer card - both render simultaneously.
 2. Captions cycle on a wall-clock interval, completely disconnected from any real stage. A 4-second parse will never display "Almost done…"; a 14-second parse will display each caption ~2× without progressing.
-3. No file context shown — the candidate has no acknowledgement that _their_ file (filename, size, format) is the one being processed.
+3. No file context shown - the candidate has no acknowledgement that _their_ file (filename, size, format) is the one being processed.
 
 The component also under-uses the brand: no JetBrains Mono on the file size, no editorial elevation, no use of the "explainable AI shows its work" thesis angle that the rest of the product leans into.
 
@@ -22,7 +22,7 @@ Replace `ParsingShimmer` with a stepped progress stack that:
 - carries a thin AuraHire-Blue indeterminate progress bar at the top,
 - displays four named stages with a pulsing dot → checkmark transition driven by a time curve,
 - removes the duplicated header caption,
-- feels institutional and calm (matches DESIGN.md tokens — single shadow tier, `{rounded.lg}` card, brand colors only).
+- feels institutional and calm (matches DESIGN.md tokens - single shadow tier, `{rounded.lg}` card, brand colors only).
 
 The redesign is presentation-only: no API, schema, or backend change.
 
@@ -37,9 +37,9 @@ The redesign is presentation-only: no API, schema, or backend change.
 
 **Out of scope:**
 
-- Backend streaming progress (SSE/long-poll). Stages are time-curve estimates client-side. (This is the same fidelity as the current shimmer — the redesign does not regress honesty; if anything it's clearer that the timing is approximate.)
+- Backend streaming progress (SSE/long-poll). Stages are time-curve estimates client-side. (This is the same fidelity as the current shimmer - the redesign does not regress honesty; if anything it's clearer that the timing is approximate.)
 - Animating into the success card (handled separately by `ParseSuccessCard`).
-- Stale-parse recovery card (`ResumeStaleRecoveryCard`) — not in this scope.
+- Stale-parse recovery card (`ResumeStaleRecoveryCard`) - not in this scope.
 - Mobile breakpoint changes beyond what falls out of existing layout.
 
 ## Design
@@ -75,12 +75,12 @@ A single card (`{rounded.lg}` 16 px, `bg-canvas`, 1 px hairline border, padding 
 
 Four stages (constants):
 
-1. `upload` — "Uploading file" — duration: 800 ms.
-2. `extract` — "Extracting text" — duration: 3500 ms.
-3. `identify` — "Identifying experience & skills" — duration: 4500 ms.
-4. `polish` — "Polishing the details" — open-ended (stays "active" until parent unmounts).
+1. `upload` - "Uploading file" - duration: 800 ms.
+2. `extract` - "Extracting text" - duration: 3500 ms.
+3. `identify` - "Identifying experience & skills" - duration: 4500 ms.
+4. `polish` - "Polishing the details" - open-ended (stays "active" until parent unmounts).
 
-State machine: client-side timer advances `currentStageIndex` based on elapsed time. Each stage is one of `pending` | `active` | `done`. When `active` reaches its duration, it flips to `done` and the next stage becomes `active`. The final stage (`polish`) never auto-completes — it stays active until the parent (`ResumeUploadCard`) unmounts the loader on `parseStatus === "parsed" | "failed"`.
+State machine: client-side timer advances `currentStageIndex` based on elapsed time. Each stage is one of `pending` | `active` | `done`. When `active` reaches its duration, it flips to `done` and the next stage becomes `active`. The final stage (`polish`) never auto-completes - it stays active until the parent (`ResumeUploadCard`) unmounts the loader on `parseStatus === "parsed" | "failed"`.
 
 ### Stage row visuals
 
@@ -94,25 +94,25 @@ Three states, from left to right: status glyph (16 px, fixed-width column) → l
 
 Transitions:
 
-- Active → done: 200 ms ease-out — glyph color cross-fades, trailing icon swaps Loader2 → Check with a 150 ms scale 0.8 → 1.0.
-- Pending → active: 200 ms ease-out — same fade.
+- Active → done: 200 ms ease-out - glyph color cross-fades, trailing icon swaps Loader2 → Check with a 150 ms scale 0.8 → 1.0.
+- Pending → active: 200 ms ease-out - same fade.
 
 ### Removed
 
-- The `<p>Reading your resume…</p>` header and its sub-caption ("This usually takes 5–15 seconds.") in `ResumeUploadCard`. The card itself now communicates this via the file chip + active stage label.
+- The `<p>Reading your resume…</p>` header and its sub-caption ("This usually takes 5-15 seconds.") in `ResumeUploadCard`. The card itself now communicates this via the file chip + active stage label.
 
-Replace with a single small caption ABOVE the card: "Hang tight — this usually takes 5–15 seconds." in `{typography.body-sm}` `{colors.muted}`. One line, no header.
+Replace with a single small caption ABOVE the card: "Hang tight - this usually takes 5-15 seconds." in `{typography.body-sm}` `{colors.muted}`. One line, no header.
 
 ## Files affected
 
-1. **`apps/web/components/onboarding/candidate/parsing-shimmer.tsx`** — replaced wholesale by a new component. Rename file to `parsing-progress-card.tsx` and update the export to `ParsingProgressCard`. The old default-export name is unused elsewhere except in `resume-upload-card.tsx`.
+1. **`apps/web/components/onboarding/candidate/parsing-shimmer.tsx`** - replaced wholesale by a new component. Rename file to `parsing-progress-card.tsx` and update the export to `ParsingProgressCard`. The old default-export name is unused elsewhere except in `resume-upload-card.tsx`.
 
-2. **`apps/web/components/onboarding/candidate/resume-upload-card.tsx`** — three changes inside the `if (stage === "uploading")` branch:
-   - Replace the duplicate header pair (`Reading your resume…` + `This usually takes 5–15 seconds.`) with a single caption.
-   - Pass the uploaded `File` object (or `{ name, size, type }`) to the new `ParsingProgressCard`. This requires storing the file on `handleFile` invocation — add `const [activeFile, setActiveFile] = useState<File | null>(null)`.
+2. **`apps/web/components/onboarding/candidate/resume-upload-card.tsx`** - three changes inside the `if (stage === "uploading")` branch:
+   - Replace the duplicate header pair (`Reading your resume…` + `This usually takes 5-15 seconds.`) with a single caption.
+   - Pass the uploaded `File` object (or `{ name, size, type }`) to the new `ParsingProgressCard`. This requires storing the file on `handleFile` invocation - add `const [activeFile, setActiveFile] = useState<File | null>(null)`.
    - Update the import path/name.
 
-3. **`apps/web/app/globals.css`** — add a `@keyframes` block for the indeterminate sweep if Tailwind doesn't already supply one. (Check first; Tailwind v4's default `animate-pulse` won't suffice since we want a left-to-right sweep, not opacity pulse.)
+3. **`apps/web/app/globals.css`** - add a `@keyframes` block for the indeterminate sweep if Tailwind doesn't already supply one. (Check first; Tailwind v4's default `animate-pulse` won't suffice since we want a left-to-right sweep, not opacity pulse.)
 
 ## Component API
 
@@ -125,7 +125,7 @@ interface ParsingProgressCardProps {
 }
 ```
 
-The card owns its own internal timer and state machine. It does not accept `currentStage` from outside — the time curve is the source of truth. (Future: if we add backend streaming, swap to externally-controlled `currentStage` prop.)
+The card owns its own internal timer and state machine. It does not accept `currentStage` from outside - the time curve is the source of truth. (Future: if we add backend streaming, swap to externally-controlled `currentStage` prop.)
 
 ## Testing
 
@@ -136,6 +136,6 @@ The card owns its own internal timer and state machine. It does not accept `curr
 
 ## Non-goals / explicitly rejected
 
-- **Streaming "discoveries"** (`✓ Detected 8 years experience`) — would require backend SSE. Out of scope.
-- **A "% complete" number** — we have no real progress signal from the server. Showing a fake percentage would contradict the thesis. Indeterminate bar is honest.
-- **Sound / haptics** — not part of AuraHire's voice.
+- **Streaming "discoveries"** (`✓ Detected 8 years experience`) - would require backend SSE. Out of scope.
+- **A "% complete" number** - we have no real progress signal from the server. Showing a fake percentage would contradict the thesis. Indeterminate bar is honest.
+- **Sound / haptics** - not part of AuraHire's voice.

@@ -4,7 +4,7 @@
 
 **Goal:** Eliminate the silent profile-score miscalibration: unify profile-weight key names across the codebase (single source of truth), prevent the engine from silently clamping over-100 sums, and enforce the AI-output ↔ configured-weights contract at the service layer.
 
-**Architecture:** The profile-scoring rubric has four canonical keys defined in the AI prompt and the AI's structured-output schema (`completeness`, `skill_depth`, `experience_clarity`, `education_quality`). The admin DTO, Zod validator, seed, admin UI, and DB row currently use a divergent second naming (`resume_quality / skills_breadth / experience_depth / preferences_clarity`), so weights resolve to `undefined` in the prompt and the AI invents its own per-component maxes — producing component sums that exceed 100 and get silently clamped by `deriveOverallScore`. Fix: collapse to the prompt's canonical names everywhere; in the scoring service, override the AI-returned `max` / `weight` with the configured values before persisting; replace `Math.min(100, sum)` clamping with a normalized `(score / max) * 100` so sums above 100 become impossible by construction. Add a Drizzle migration to rewrite the existing `scoring_config` row.
+**Architecture:** The profile-scoring rubric has four canonical keys defined in the AI prompt and the AI's structured-output schema (`completeness`, `skill_depth`, `experience_clarity`, `education_quality`). The admin DTO, Zod validator, seed, admin UI, and DB row currently use a divergent second naming (`resume_quality / skills_breadth / experience_depth / preferences_clarity`), so weights resolve to `undefined` in the prompt and the AI invents its own per-component maxes - producing component sums that exceed 100 and get silently clamped by `deriveOverallScore`. Fix: collapse to the prompt's canonical names everywhere; in the scoring service, override the AI-returned `max` / `weight` with the configured values before persisting; replace `Math.min(100, sum)` clamping with a normalized `(score / max) * 100` so sums above 100 become impossible by construction. Add a Drizzle migration to rewrite the existing `scoring_config` row.
 
 **Tech Stack:** TypeScript / Zod (`packages/shared`), NestJS DTOs (`apps/api`), Drizzle SQL migration (`packages/db/drizzle`), Next.js admin UI (`apps/web`), OpenAI structured outputs.
 
@@ -14,23 +14,23 @@
 
 **Modify:**
 
-- `packages/shared/src/schemas/admin.ts` — `profileWeightsSchema` keys
-- `apps/api/src/modules/admin/dto/scoring-config-response.dto.ts` — `ProfileWeightsDto` keys
-- `apps/api/scripts/seed-db.ts` — `SCORING_CONFIG.profileWeights` keys
-- `apps/web/app/(admin)/admin/ai-config/page.tsx` — `ConfigBody` interface
-- `apps/web/app/(admin)/admin/ai-config/_config-editor-client.tsx` — `InitialConfig`, sum memo, render labels
-- `apps/api/src/modules/scoring/scoring.service.ts` — `deriveOverallScore` + caller normalizes AI components against configured weights
-- `apps/api/src/ai/prompts/score-profile.ts` — bump to `1.1.0`, tighten ceiling language
-- `packages/shared/src/api-client/generated.ts` — regenerate (or hand-patch the four interface members)
-- `packages/shared/openapi.json` — regenerated from NestJS DTO
+- `packages/shared/src/schemas/admin.ts` - `profileWeightsSchema` keys
+- `apps/api/src/modules/admin/dto/scoring-config-response.dto.ts` - `ProfileWeightsDto` keys
+- `apps/api/scripts/seed-db.ts` - `SCORING_CONFIG.profileWeights` keys
+- `apps/web/app/(admin)/admin/ai-config/page.tsx` - `ConfigBody` interface
+- `apps/web/app/(admin)/admin/ai-config/_config-editor-client.tsx` - `InitialConfig`, sum memo, render labels
+- `apps/api/src/modules/scoring/scoring.service.ts` - `deriveOverallScore` + caller normalizes AI components against configured weights
+- `apps/api/src/ai/prompts/score-profile.ts` - bump to `1.1.0`, tighten ceiling language
+- `packages/shared/src/api-client/generated.ts` - regenerate (or hand-patch the four interface members)
+- `packages/shared/openapi.json` - regenerated from NestJS DTO
 
 **Create:**
 
-- `packages/db/drizzle/0011_unify_profile_weight_keys.sql` — JSONB rekey on `scoring_config`
+- `packages/db/drizzle/0011_unify_profile_weight_keys.sql` - JSONB rekey on `scoring_config`
 
 **Tests touched:**
 
-- `apps/api/src/modules/scoring/scoring.service.spec.ts` — already uses correct keys; verify no regression. Add a new test asserting `deriveOverallScore` normalizes (no clamp) and that the service overrides AI-returned `max` with config weights.
+- `apps/api/src/modules/scoring/scoring.service.spec.ts` - already uses correct keys; verify no regression. Add a new test asserting `deriveOverallScore` normalizes (no clamp) and that the service overrides AI-returned `max` with config weights.
 
 ---
 
@@ -120,7 +120,7 @@ Replace lines 75-80 with:
   },
 ```
 
-(Same numeric weights — they already sum to 100. Only the keys change. Values mirror `DEFAULT_PROFILE_WEIGHTS` in `packages/shared/src/constants/score-thresholds.ts:16-21`.)
+(Same numeric weights - they already sum to 100. Only the keys change. Values mirror `DEFAULT_PROFILE_WEIGHTS` in `packages/shared/src/constants/score-thresholds.ts:16-21`.)
 
 - [ ] **Step 2: Type-check api**
 
@@ -262,7 +262,7 @@ git commit -m "fix(admin): use canonical profile-weight keys in AI config editor
 
 ---
 
-### Task 6: Harden the scoring engine — override AI maxes + normalize
+### Task 6: Harden the scoring engine - override AI maxes + normalize
 
 **Files:**
 
@@ -279,7 +279,7 @@ Replace lines 82-92 of `apps/api/src/modules/scoring/scoring.service.ts` with:
  *
  * Returns the weighted sum normalized to 0..100 by component maxes. With
  * configured weights summing to 100 (enforced by the Zod validator), this is
- * just the score sum — but the normalization makes it robust to any AI
+ * just the score sum - but the normalization makes it robust to any AI
  * deviation from the configured maxes and prevents silent clamping when
  * sums overflow.
  */
@@ -363,7 +363,7 @@ return this.toDto(
 
 - [ ] **Step 5: Apply the same normalization to match scoring**
 
-In `computeMatchScore` and `computeMatchPreviewInternal`, the existing `match_weights` keys (`skills`, `experience`, `education`, `cultural_fit`) already align with the prompt — but the same AI-deviation risk applies. Replace each `derivedOverall = deriveOverallScore(aiResult.score.components)` line with the same normalize-then-derive pattern, using `weights` (already in scope) as the override source:
+In `computeMatchScore` and `computeMatchPreviewInternal`, the existing `match_weights` keys (`skills`, `experience`, `education`, `cultural_fit`) already align with the prompt - but the same AI-deviation risk applies. Replace each `derivedOverall = deriveOverallScore(aiResult.score.components)` line with the same normalize-then-derive pattern, using `weights` (already in scope) as the override source:
 
 ```ts
 const normalizedComponents = aiResult.score.components.map((c) => {
@@ -379,7 +379,7 @@ const derivedOverall = deriveOverallScore(normalizedComponents);
 const derivedBand = deriveBand(derivedOverall, bandThresholds);
 ```
 
-Then thread `normalizedComponents` into the `evidenceRows` build, the `insertMatchScore` / `upsertMatchPreview` `components` field, and the DTO mapper — exactly mirroring the profile path.
+Then thread `normalizedComponents` into the `evidenceRows` build, the `insertMatchScore` / `upsertMatchPreview` `components` field, and the DTO mapper - exactly mirroring the profile path.
 
 - [ ] **Step 6: Type-check api**
 
@@ -416,10 +416,10 @@ export const SCORE_PROFILE_VERSION = "1.1.0";
 export const SCORE_PROFILE_SYSTEM_PROMPT = `You are an expert career coach evaluating a candidate's resume strength.
 
 Assess the resume against four components and produce a structured score:
-1. Completeness — percentage of resume sections filled (contact, education, experience, skills, summary, links)
-2. Skill Depth — number of relevant skills, modernity, alignment with desired role, evidence of mastery
-3. Experience Clarity — quality of experience descriptions: outcomes, technologies, durations, quantified impact
-4. Education Quality — degree match for desired role + relevant certifications
+1. Completeness - percentage of resume sections filled (contact, education, experience, skills, summary, links)
+2. Skill Depth - number of relevant skills, modernity, alignment with desired role, evidence of mastery
+3. Experience Clarity - quality of experience descriptions: outcomes, technologies, durations, quantified impact
+4. Education Quality - degree match for desired role + relevant certifications
 
 For each component:
 1. Score 0..max where max is the configured weight provided in the user message
@@ -509,7 +509,7 @@ git add packages/shared/src/api-client/generated.ts packages/shared/openapi.json
 git commit -m "chore(shared): regenerate API client + OpenAPI for unified weight keys"
 ```
 
-(Note: the user should re-export the OpenAPI from a running API and re-run `pnpm --filter=@aurahire/shared codegen` post-merge to confirm parity with the live spec — the hand-patch keeps the build green in the meantime.)
+(Note: the user should re-export the OpenAPI from a running API and re-run `pnpm --filter=@aurahire/shared codegen` post-merge to confirm parity with the live spec - the hand-patch keeps the build green in the meantime.)
 
 ---
 
@@ -523,7 +523,7 @@ Expected: PASS in every workspace.
 - [ ] **Step 2: Full repo lint**
 
 Run: `pnpm -r run lint`
-Expected: PASS or pre-existing warnings only — no new errors introduced.
+Expected: PASS or pre-existing warnings only - no new errors introduced.
 
 - [ ] **Step 3: Build verification**
 
@@ -558,11 +558,11 @@ Manual steps for the user:
 
 **Spec coverage:**
 
-- Bug 1 (key mismatch) — Tasks 1, 2, 3, 4, 5, 8 ✓
-- Bug 2 (silent clamp) — Task 6 ✓
-- Bug 3 (over-generous rubric, 100/100) — Task 7 ✓
-- UI label "Weight 100% of overall score" — falls out of Task 6 once `weight` is overridden with the configured value (25 / 30 / 30 / 15), so the existing copy at `apps/web/components/score/score-dashboard.tsx:261` renders correctly without change ✓
+- Bug 1 (key mismatch) - Tasks 1, 2, 3, 4, 5, 8 ✓
+- Bug 2 (silent clamp) - Task 6 ✓
+- Bug 3 (over-generous rubric, 100/100) - Task 7 ✓
+- UI label "Weight 100% of overall score" - falls out of Task 6 once `weight` is overridden with the configured value (25 / 30 / 30 / 15), so the existing copy at `apps/web/components/score/score-dashboard.tsx:261` renders correctly without change ✓
 
-**Placeholder scan:** No TODOs, no "similar to Task N", no "add appropriate error handling" — every step shows the actual code or command.
+**Placeholder scan:** No TODOs, no "similar to Task N", no "add appropriate error handling" - every step shows the actual code or command.
 
 **Type consistency:** `ProfileWeights` keys (`completeness / skill_depth / experience_clarity / education_quality`) are consistent across Tasks 1, 2, 3, 5, 6, 8. The schema's `profileComponentSchema` at `packages/shared/src/schemas/score.ts:21-33` already uses these exact keys (this is the canonical source we're aligning everything to). `weights[c.name]` in Task 6 Step 2/5 type-checks because both the configured weights and the AI's component `name` enum are now the same four-string union.

@@ -61,7 +61,7 @@ async function main(): Promise<void> {
     );
     if (!apply) {
       console.log(
-        "[migrate-remove-screening] DRY RUN — pass --yes to apply the migration.",
+        "[migrate-remove-screening] DRY RUN - pass --yes to apply the migration.",
       );
       for (const row of rows.slice(0, 10)) {
         console.log(`  - application ${row.id} (candidate ${row.candidate_id})`);
@@ -90,7 +90,7 @@ async function main(): Promise<void> {
           jsonb_build_object(
             'fromStatus', 'screening',
             'toStatus', 'applied',
-            'reason', 'Panel revision May 2026 — screening stage removed.'
+            'reason', 'Panel revision May 2026 - screening stage removed.'
           )
         FROM applications a
         WHERE a.id = ANY(${rows.map((r) => r.id)}::uuid[])
@@ -98,7 +98,7 @@ async function main(): Promise<void> {
     });
 
     console.log(
-      `[migrate-remove-screening] OK — migrated ${rows.length} application(s) and wrote ${rows.length} audit row(s).`,
+      `[migrate-remove-screening] OK - migrated ${rows.length} application(s) and wrote ${rows.length} audit row(s).`,
     );
   } finally {
     await sql.end({ timeout: 5 });

@@ -6,7 +6,7 @@
  *     the realtime event when the recommendation value changes.
  *  2. Does NOT emit or audit RECOMMENDATION_SET when the recommendation value is unchanged.
  *
- * No database is hit — all dependencies are mocked.
+ * No database is hit - all dependencies are mocked.
  */
 
 import { Test } from "@nestjs/testing";
@@ -136,7 +136,7 @@ describe("InterviewsService.updateFeedback", () => {
         { provide: InterviewVenuesService, useValue: { create: jest.fn() } },
         {
           // Per thesis panel revision (May 2026): score-based interview
-          // eligibility gate — null score means the gate is a no-op.
+          // eligibility gate - null score means the gate is a no-op.
           provide: ScoringRepository,
           useValue: {
             findMatchScoreByApplicationId: jest.fn().mockResolvedValue(null),

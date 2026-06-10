@@ -1,4 +1,4 @@
-# Explainable Scoring Overhaul — Strict-Sum Reconciliation, 5-Point Quantization, Honest Copy
+# Explainable Scoring Overhaul - Strict-Sum Reconciliation, 5-Point Quantization, Honest Copy
 
 **Date:** 2026-05-08
 **Owner:** Scoring engines (profile + match), thesis "Explainable AI" pillar
@@ -12,9 +12,9 @@ The thesis angle is _"Explainable and Fair AI-Powered Recruitment: A Transparent
 
 **Profile score breakdown (`/candidate/profile`, score 85/100):**
 
-- `Completeness 25/25`, `Experience Clarity 30/30` — both at ceiling, contradicting the prompt's own anchor at `apps/api/src/ai/prompts/score-profile.ts:18`: _"A complete-but-generic resume should top out around 75–85% of the component weight, NOT the ceiling."_
-- `Skill Depth 25/30` — explanation text says _"lacks evidence of mastery for some skills, could benefit from more modern technologies"_, yet **all three evidence rows are marked HELPED**. The −5 deduction is invisible at the evidence layer.
-- `Education Quality 5/15` — only the education component shows a HURT row. Asymmetric vs. how the other components surface their deductions (i.e. they don't).
+- `Completeness 25/25`, `Experience Clarity 30/30` - both at ceiling, contradicting the prompt's own anchor at `apps/api/src/ai/prompts/score-profile.ts:18`: _"A complete-but-generic resume should top out around 75-85% of the component weight, NOT the ceiling."_
+- `Skill Depth 25/30` - explanation text says _"lacks evidence of mastery for some skills, could benefit from more modern technologies"_, yet **all three evidence rows are marked HELPED**. The −5 deduction is invisible at the evidence layer.
+- `Education Quality 5/15` - only the education component shows a HURT row. Asymmetric vs. how the other components surface their deductions (i.e. they don't).
 - **Profile evidence schema has no `contribution_points` at all.** The candidate sees only a binary HELPED / HURT chip with no quantified justification.
 
 **Match preview breakdown (`/candidate/jobs/<id>`, score 75/100, screenshots dated 2026-05-08 15:30):**
@@ -28,11 +28,11 @@ The match prompt at `apps/api/src/ai/prompts/score-match.ts:38` says contributio
 
 **Copy defect:**
 
-The evidence callout footer reads `"Contributes -10 points"` for negative contributions. _Contributing_ means adding to a total — using it for deductions is semantically wrong. A negative number being introduced by the verb "contributes" reads as a typo or as system confusion to anyone scanning quickly.
+The evidence callout footer reads `"Contributes -10 points"` for negative contributions. _Contributing_ means adding to a total - using it for deductions is semantically wrong. A negative number being introduced by the verb "contributes" reads as a typo or as system confusion to anyone scanning quickly.
 
 ### Why this matters for the thesis
 
-A thesis defended on "explainable scoring" must survive the question: _"Why is this candidate's score 75 and not 80?"_ The current system answers with hand-waving — the components reconcile to the headline (engine-enforced), but the evidence does not reconcile to the components. A reviewer who adds the visible numbers and gets a different total has just disproved the explainability claim.
+A thesis defended on "explainable scoring" must survive the question: _"Why is this candidate's score 75 and not 80?"_ The current system answers with hand-waving - the components reconcile to the headline (engine-enforced), but the evidence does not reconcile to the components. A reviewer who adds the visible numbers and gets a different total has just disproved the explainability claim.
 
 ## Goal
 
@@ -59,14 +59,14 @@ The result: anyone reading a score breakdown can add the visible numbers and arr
 
 **In scope:**
 
-- `packages/shared/src/schemas/score.ts` — schema changes (rename `matchEvidenceSchema` → `scoredEvidenceSchema`, add `multipleOf(5)` refinement, switch profile component evidence to use it).
-- `apps/api/src/ai/prompts/score-profile.ts` — bump to `1.2.0`, add contribution_points instruction block, tighten anchor.
-- `apps/api/src/ai/prompts/score-match.ts` — bump to `1.2.0`, replace "approximately" with strict equality, add quantization rule.
-- `apps/api/src/modules/scoring/scoring.service.ts` — add `reconcileEvidenceContributions` helper, call from `computeProfileScore`, `computeMatchScore`, `computeMatchPreview`. Emit residuals to audit.
-- `apps/web/components/score/evidence-callout.tsx` — replace "Contributes ±N points" footer with a signed-integer chip rendered in score-band color.
+- `packages/shared/src/schemas/score.ts` - schema changes (rename `matchEvidenceSchema` → `scoredEvidenceSchema`, add `multipleOf(5)` refinement, switch profile component evidence to use it).
+- `apps/api/src/ai/prompts/score-profile.ts` - bump to `1.2.0`, add contribution_points instruction block, tighten anchor.
+- `apps/api/src/ai/prompts/score-match.ts` - bump to `1.2.0`, replace "approximately" with strict equality, add quantization rule.
+- `apps/api/src/modules/scoring/scoring.service.ts` - add `reconcileEvidenceContributions` helper, call from `computeProfileScore`, `computeMatchScore`, `computeMatchPreview`. Emit residuals to audit.
+- `apps/web/components/score/evidence-callout.tsx` - replace "Contributes ±N points" footer with a signed-integer chip rendered in score-band color.
 - 5 consumer pages already pipe `contributionPoints` through `EvidenceCallout`; no signature changes required there.
 - One new consumer: profile-score detail page must start passing `contributionPoints` from the new schema field.
-- `apps/api/src/modules/scoring/scoring.repository.ts` — extend `insertProfileScore` / `insertMatchScore` calls so the new audit fields (`evidenceQuantizationResiduals`, `scoreResiduals`, `calibrationWarnings`) flow into the existing `details` jsonb on `audit_logs`.
+- `apps/api/src/modules/scoring/scoring.repository.ts` - extend `insertProfileScore` / `insertMatchScore` calls so the new audit fields (`evidenceQuantizationResiduals`, `scoreResiduals`, `calibrationWarnings`) flow into the existing `details` jsonb on `audit_logs`.
 - Unit tests for `reconcileEvidenceContributions` in `apps/api/src/modules/scoring/scoring.service.spec.ts`.
 
 **Out of scope:**
@@ -106,17 +106,17 @@ scoring.service.ts
   └── audit.log({ details: { ..., score_residuals, evidence_quantization_residuals, calibration_warnings } })
 ```
 
-The AI's `overall_score` field continues to be discarded server-side; the engine recomputes from the (now-reconciled) component scores. New: the AI's per-component `score` field is also discarded — `derived_score` from contributions wins.
+The AI's `overall_score` field continues to be discarded server-side; the engine recomputes from the (now-reconciled) component scores. New: the AI's per-component `score` field is also discarded - `derived_score` from contributions wins.
 
-### Schema changes — `packages/shared/src/schemas/score.ts`
+### Schema changes - `packages/shared/src/schemas/score.ts`
 
 ```ts
 // Before:
-//   evidenceSchema       — used by profile components
-//   matchEvidenceSchema  — extends evidenceSchema with contribution_points
+//   evidenceSchema       - used by profile components
+//   matchEvidenceSchema  - extends evidenceSchema with contribution_points
 // After:
-//   evidenceSchema       — base (unchanged shape; kept for any non-scoring evidence)
-//   scoredEvidenceSchema — extends with contribution_points; used by BOTH profile and match components
+//   evidenceSchema       - base (unchanged shape; kept for any non-scoring evidence)
+//   scoredEvidenceSchema - extends with contribution_points; used by BOTH profile and match components
 
 export const scoredEvidenceSchema = evidenceSchema.extend({
   contribution_points: z.number().int().multipleOf(5), // NEW: enforce 5-point quantization at the schema layer
@@ -144,9 +144,9 @@ export const profileComponentSchema = z.object({
 // matchComponentSchema.score also gets multipleOf(5)
 ```
 
-The `multipleOf(5)` refinement on `score` is defensive — the engine guarantees it via reconciliation, but the schema layer rejects malformed payloads early.
+The `multipleOf(5)` refinement on `score` is defensive - the engine guarantees it via reconciliation, but the schema layer rejects malformed payloads early.
 
-### Engine helper — `reconcileEvidenceContributions`
+### Engine helper - `reconcileEvidenceContributions`
 
 New pure function in `apps/api/src/modules/scoring/scoring.service.ts`, called from `computeProfileScore`, `computeMatchScore`, and `computeMatchPreview` immediately after `normalizeComponentsToWeights`.
 
@@ -206,10 +206,10 @@ Properties:
 - **Pure / deterministic.** No I/O, no side effects. Trivially unit-testable.
 - **Defensive quantization.** Even if the schema layer somehow lets a non-multiple-of-5 through (edge cases on Zod refinements with `int()`), this rounds it.
 - **Authoritative `derived` score.** The AI's `score` is discarded; the engine's sum wins.
-- **Relevance is computed from sign, not trusted from the model.** This kills the "Skill Depth showed all HELPED but actually deducted 5 points" defect in one stroke — if a contribution is negative, the relevance is forced to negative.
+- **Relevance is computed from sign, not trusted from the model.** This kills the "Skill Depth showed all HELPED but actually deducted 5 points" defect in one stroke - if a contribution is negative, the relevance is forced to negative.
 - **Clamps to `[0, max]`.** A model that hallucinates `+50 −80 = −30` for a component max 30 produces `0`, not a negative score.
 
-### Calibration safeguard — `detectCalibrationWarnings`
+### Calibration safeguard - `detectCalibrationWarnings`
 
 New helper, also called from each compute path:
 
@@ -228,7 +228,7 @@ function detectCalibrationWarnings<
 >(component: C): Array<{ componentName: string; reason: string }> {
   const warnings: Array<{ componentName: string; reason: string }> = [];
 
-  // Component at ceiling but no negative evidence — model didn't surface what the candidate would need
+  // Component at ceiling but no negative evidence - model didn't surface what the candidate would need
   // to BEAT this score (the prompt's "complete-but-generic should top at 75-85%" anchor was ignored).
   if (component.score === component.max) {
     const positives = component.evidence.filter(
@@ -242,7 +242,7 @@ function detectCalibrationWarnings<
     }
   }
 
-  // Component below ceiling but no negative evidence — the deduction has no visible justification.
+  // Component below ceiling but no negative evidence - the deduction has no visible justification.
   if (component.score < component.max) {
     const negatives = component.evidence.filter(
       (e) => e.relevance === "negative",
@@ -261,7 +261,7 @@ function detectCalibrationWarnings<
 
 Warnings are advisory. They do **not** auto-adjust the score. They are written to the audit row's `details.calibration_warnings` array and surfaced in `/admin/bias-monitor` as a "scoring quality" lane (separate from the existing JD-bias lane). This gives admins visibility into model misbehavior without retroactively rewriting candidate scores.
 
-### Prompt updates — `score-profile.ts` v1.2.0
+### Prompt updates - `score-profile.ts` v1.2.0
 
 Diff against current v1.1.0:
 
@@ -281,7 +281,7 @@ system prompt CHANGES:
 
 (after the existing "Reserve the FULL weight only..." paragraph, add:)
 
-6. CALIBRATION RULE — If you score a component at its ceiling (full weight),
+6. CALIBRATION RULE - If you score a component at its ceiling (full weight),
    you MUST cite at least TWO positive evidence items, AND at least one of them
    must reference quantified outcomes (numbers, percentages, dollar figures) OR
    senior-level scope (leadership, ownership, architectural decisions).
@@ -290,14 +290,14 @@ system prompt CHANGES:
 
 (replace the existing 75-85% paragraph with the harder rule above.)
 
-7. EVIDENCE BALANCE — For every component where score < max, you MUST include
+7. EVIDENCE BALANCE - For every component where score < max, you MUST include
    at least one evidence item with relevance="negative" and contribution_points<0
    that explains the deduction. No exceptions.
 ```
 
-The user prompt builder is unchanged — weights and the redacted resume still flow through.
+The user prompt builder is unchanged - weights and the redacted resume still flow through.
 
-### Prompt updates — `score-match.ts` v1.2.0
+### Prompt updates - `score-match.ts` v1.2.0
 
 Diff against current v1.1.0:
 
@@ -321,16 +321,16 @@ system prompt CHANGES:
     AFTER:  "The sum of all evidence contribution_points (positive + negative)
              must equal component.score exactly. If you score a component at
              25/40, the contributions must sum to 25. The engine recomputes
-             score from the sum, so any mismatch will be silently overwritten —
+             score from the sum, so any mismatch will be silently overwritten -
              match them yourself for narrative coherence."
 
 - Add the same calibration rule as profile (ceiling requires quantified outcomes
   OR senior-level scope; otherwise cap at 85%).
 ```
 
-### UI copy fix — `evidence-callout.tsx`
+### UI copy fix - `evidence-callout.tsx`
 
-Current footer (lines 65–70):
+Current footer (lines 65-70):
 
 ```tsx
 {
@@ -361,12 +361,12 @@ New footer:
 
 Changes:
 
-- Drop "Contributes" verb — semantically wrong for negatives, redundant with the HELPED / HURT chip in the header.
-- Use Unicode minus (`−`, U+2212), not ASCII hyphen — typographically correct on retina + matches existing `−5 pts to perfect` copy used elsewhere on the page.
+- Drop "Contributes" verb - semantically wrong for negatives, redundant with the HELPED / HURT chip in the header.
+- Use Unicode minus (`−`, U+2212), not ASCII hyphen - typographically correct on retina + matches existing `−5 pts to perfect` copy used elsewhere on the page.
 - Color the chip per relevance (`var(--color-score-high)` for positive, `var(--color-score-low)` for negative) instead of always-muted gray. The number itself becomes a glanceable signal.
-- `font-mono font-semibold` — matches the design system's number-display token (`{typography.number-display}`).
+- `font-mono font-semibold` - matches the design system's number-display token (`{typography.number-display}`).
 
-The `EvidenceCallout` consumers (`_match-preview-client.tsx`, `_application-detail-client.tsx`, `apply-match-summary.tsx`, `score-dashboard.tsx`, `_application-detail-sheet-client.tsx`) all already pass `contributionPoints` through from the AI output. Once profile components carry `contribution_points`, the profile detail page (`apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx` and its detail child page) starts passing it too — no behavioral change in any consumer beyond piping the new field.
+The `EvidenceCallout` consumers (`_match-preview-client.tsx`, `_application-detail-client.tsx`, `apply-match-summary.tsx`, `score-dashboard.tsx`, `_application-detail-sheet-client.tsx`) all already pass `contributionPoints` through from the AI output. Once profile components carry `contribution_points`, the profile detail page (`apps/web/app/(candidate)/candidate/_components/profile-score-card-client.tsx` and its detail child page) starts passing it too - no behavioral change in any consumer beyond piping the new field.
 
 ### Audit / observability
 
@@ -392,8 +392,8 @@ The new fields ride entirely inside existing jsonb columns. Per scoring run, the
 
 ### Backwards compatibility
 
-- **Schema:** `contribution_points` is added to profile evidence as a required field on new payloads (`gpt-4o-mini` will produce it because the prompt requires it). The DB layer is jsonb on both `profile_scores.components` and `match_scores.components` — no migration. Old rows continue to validate against the legacy reader because the frontend already treats `contributionPoints` as optional (`evidence-callout.tsx:9`).
-- **UI:** When an old row is rendered, no `contribution_points` is present, so `evidence-callout.tsx` renders no footer chip — same as today. No regression.
+- **Schema:** `contribution_points` is added to profile evidence as a required field on new payloads (`gpt-4o-mini` will produce it because the prompt requires it). The DB layer is jsonb on both `profile_scores.components` and `match_scores.components` - no migration. Old rows continue to validate against the legacy reader because the frontend already treats `contributionPoints` as optional (`evidence-callout.tsx:9`).
+- **UI:** When an old row is rendered, no `contribution_points` is present, so `evidence-callout.tsx` renders no footer chip - same as today. No regression.
 - **Recompute path:** The `Recompute` button on `/candidate/profile` and the on-view recompute on `/candidate/jobs/[id]` produce v1.2.0 rows. Candidates who hit Recompute see the new chips immediately; candidates who don't, see the legacy view until they recompute.
 - **Bias monitor filter:** Add a `prompt_version` filter to `/admin/bias-monitor` so screenshots for thesis defense pull post-v1.2.0 only.
 
@@ -401,7 +401,7 @@ The new fields ride entirely inside existing jsonb columns. Per scoring run, the
 
 One spec, three ordered phases for the implementation plan:
 
-**Phase 1 — Backend**
+**Phase 1 - Backend**
 
 1. Update `score.ts` schemas (rename, `multipleOf(5)`, profile evidence gets `contribution_points`).
 2. Add `reconcileEvidenceContributions` and `detectCalibrationWarnings` helpers in `scoring.service.ts`.
@@ -412,27 +412,27 @@ One spec, three ordered phases for the implementation plan:
 
 Backend is testable in isolation. Existing scoring service spec file (`scoring.service.spec.ts`) is the home for new tests.
 
-**Phase 2 — Frontend**
+**Phase 2 - Frontend**
 
 1. Update `evidence-callout.tsx` footer (drop verb, color chip, Unicode minus).
 2. Verify the 5 existing consumers still pass `contributionPoints` through correctly (no signature change, but verify no consumer was passing a hardcoded `0` or `null`).
 3. Update profile-score detail page consumer to pipe `contribution_points` from the new schema field.
 4. Manual UI verification: profile breakdown shows ±N chips; match preview breakdown sums to component score visibly.
 
-**Phase 3 — Calibration surface + bias monitor**
+**Phase 3 - Calibration surface + bias monitor**
 
 1. Add the "Scoring quality" panel to `/admin/bias-monitor`.
 2. Add a `prompt_version` filter (defaults to `>=1.2.0`).
 3. Aggregation query reads from `audit_logs.details.calibration_warnings`.
 
-Phase 3 depends on Phases 1–2 having produced enough v1.2.0 rows to populate the panel meaningfully. Order: 1 → 2 → (deploy, recompute a handful of seed candidates) → 3.
+Phase 3 depends on Phases 1-2 having produced enough v1.2.0 rows to populate the panel meaningfully. Order: 1 → 2 → (deploy, recompute a handful of seed candidates) → 3.
 
 ### Prompt-version bump approval gate
 
 Per `CLAUDE.md` § "When to ask vs proceed":
 
-> Anything that touches `scoring_config` defaults — Ask first.
-> Changing the AI prompts (versions matter — bumping a prompt is a thesis-defensible event, not a casual edit) — Ask first.
+> Anything that touches `scoring_config` defaults - Ask first.
+> Changing the AI prompts (versions matter - bumping a prompt is a thesis-defensible event, not a casual edit) - Ask first.
 
 Both prompts bump from `1.1.0` to `1.2.0`. The implementation plan's prompt-edit step requires explicit human approval before the PR moves to merge. Plan tasks for prompt edits ship with diffs in the description so the human can scan them in one read.
 
@@ -480,9 +480,9 @@ After 24 hours of `1.2.0` traffic, the human pulls `/admin/bias-monitor` and con
 | Risk                                                                                                     | Mitigation                                                                                                                                                                                                                                |
 | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `gpt-4o-mini` fails to honor strict-sum after prompt update                                              | Engine reconciles regardless; AI's `score` field is silently overwritten. Audit `score_residuals` surfaces the gap so we can iterate on the prompt without breaking users.                                                                |
-| Model produces fewer or no negative evidence items, causing components below ceiling to look unjustified | Prompt v1.2.0 makes negative evidence required when score < max. `detectCalibrationWarnings` flags violations. Engine does NOT inject synthetic negative items — that would be dishonest; the warning surfaces the case for human review. |
+| Model produces fewer or no negative evidence items, causing components below ceiling to look unjustified | Prompt v1.2.0 makes negative evidence required when score < max. `detectCalibrationWarnings` flags violations. Engine does NOT inject synthetic negative items - that would be dishonest; the warning surfaces the case for human review. |
 | Quantization loses signal for fine-grained scoring                                                       | Acceptable; 5-point granularity matches the user's stated requirement and the band-threshold grid (70 / 40). False precision was the larger problem.                                                                                      |
-| Existing recruiter / admin views render legacy rows differently from new rows                            | Both render correctly because `contributionPoints` was already optional in the props. Visual difference (chips present vs. absent) is desirable — it signals which scores were computed under the new transparent regime.                 |
+| Existing recruiter / admin views render legacy rows differently from new rows                            | Both render correctly because `contributionPoints` was already optional in the props. Visual difference (chips present vs. absent) is desirable - it signals which scores were computed under the new transparent regime.                 |
 | Frontend caching serves stale `evidence-callout` markup                                                  | Vercel deploy invalidates the bundle; no client-side persistence of the component HTML. Non-issue.                                                                                                                                        |
 | Cache (`ai:score-profile:<hash>` / `ai:score-match:<hash>`) returns pre-v1.2.0 outputs after deploy      | The hash includes `promptVersion`. Bumping to `1.2.0` invalidates all old keys naturally. No manual flush needed.                                                                                                                         |
 
@@ -492,8 +492,8 @@ None at design time. All design decisions resolved in the brainstorming session 
 
 ## Glossary
 
-- **Strict sum reconciliation** — Architectural choice where the engine derives `component.score` from `sum(evidence.contribution_points)` rather than trusting the AI's `score` field.
-- **5-point quantization** — Constraint that all `contribution_points` are integer multiples of 5; component scores inherit the property by construction.
-- **Calibration warning** — Advisory audit signal emitted when a component's score / evidence pattern matches a known model misbehavior (ceiling without strong evidence, deduction without negative evidence).
-- **Score residual** — `ai_score − derived_score` for a component. Logged for audit; never user-visible. A nonzero residual means the model's intended score disagreed with its own contribution sums.
-- **Evidence quantization residual** — Per-evidence delta when an AI-returned `contribution_points` was rounded to the nearest 5. Logged for audit.
+- **Strict sum reconciliation** - Architectural choice where the engine derives `component.score` from `sum(evidence.contribution_points)` rather than trusting the AI's `score` field.
+- **5-point quantization** - Constraint that all `contribution_points` are integer multiples of 5; component scores inherit the property by construction.
+- **Calibration warning** - Advisory audit signal emitted when a component's score / evidence pattern matches a known model misbehavior (ceiling without strong evidence, deduction without negative evidence).
+- **Score residual** - `ai_score − derived_score` for a component. Logged for audit; never user-visible. A nonzero residual means the model's intended score disagreed with its own contribution sums.
+- **Evidence quantization residual** - Per-evidence delta when an AI-returned `contribution_points` was rounded to the nearest 5. Logged for audit.

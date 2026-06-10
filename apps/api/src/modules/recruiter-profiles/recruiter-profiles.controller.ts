@@ -86,7 +86,7 @@ export class RecruiterProfilesController {
   @Roles("recruiter")
   @ApiOperation({
     summary:
-      "Onboarding step 3 (final): hiring focus — flips profile_completed=true",
+      "Onboarding step 3 (final): hiring focus - flips profile_completed=true",
   })
   @ApiResponse({ status: 200, type: RecruiterProfileEnvelopeDto })
   async updateFocus(

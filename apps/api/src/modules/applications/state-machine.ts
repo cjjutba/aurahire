@@ -23,7 +23,7 @@ const VALID_TRANSITIONS: Record<
 };
 
 /**
- * Statuses that require a separate semantic check beyond the state machine —
+ * Statuses that require a separate semantic check beyond the state machine -
  * specifically that the application has an accepted offer attached. Today only
  * `hired` qualifies. Used by ApplicationsService.hire() and updateStatus().
  */

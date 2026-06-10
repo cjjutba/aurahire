@@ -94,7 +94,7 @@ export class AdminAnalyticsService {
   }
 
   // -----------------------------------------------------------------
-  // PRIVATE — pivots from "long" SQL output to "wide" chart shape
+  // PRIVATE - pivots from "long" SQL output to "wide" chart shape
   // -----------------------------------------------------------------
 
   private pivotByRole(

@@ -1,17 +1,17 @@
-# Onboarding Resume Preview — Always-on Original / Parsed Text Toggle
+# Onboarding Resume Preview - Always-on Original / Parsed Text Toggle
 
 **Date:** 2026-05-08
 **Owner:** UX polish, candidate onboarding (resume preview pane)
-**Status:** approved (option B — always-on toggle, drop the conditional `canToggle` gate, both views keep highlights)
+**Status:** approved (option B - always-on toggle, drop the conditional `canToggle` gate, both views keep highlights)
 
 ## Problem
 
 `apps/web/components/onboarding/resume-preview/resume-preview-pane.tsx` is the right-pane preview shown on `/onboarding/candidate/personal` and `/onboarding/candidate/review`. It already supports two render modes:
 
-1. **PDF** — PDF.js rasterizes the canonical PDF and overlays field-tied highlight rectangles on the text layer.
-2. **Text** — `LinearizedResumeView` renders the parsed `rawText` with inline `<mark>` highlights.
+1. **PDF** - PDF.js rasterizes the canonical PDF and overlays field-tied highlight rectangles on the text layer.
+2. **Text** - `LinearizedResumeView` renders the parsed `rawText` with inline `<mark>` highlights.
 
-The toggle between them is gated by `canToggle = hasPdf && hasText && pdfStatus !== "failed"` (line 123). When any of those conditions is false, the toggle is hidden and the pane renders whichever mode auto-routing picked. In practice that produces a single visible view with no obvious way to flip — the user reads it as "the only view available," even though the other rendering exists in code and would work if the toggle were exposed.
+The toggle between them is gated by `canToggle = hasPdf && hasText && pdfStatus !== "failed"` (line 123). When any of those conditions is false, the toggle is hidden and the pane renders whichever mode auto-routing picked. In practice that produces a single visible view with no obvious way to flip - the user reads it as "the only view available," even though the other rendering exists in code and would work if the toggle were exposed.
 
 This is in contrast to `/candidate/resume` (post-onboarding) which always shows a 2-tab toggle (`Parsed Fields` / `PDF View`) regardless of state. Users describe the onboarding preview as "stuck" on whichever mode auto-routing chose, while the candidate resume page feels controllable. The asymmetry is the user-visible bug.
 
@@ -23,11 +23,11 @@ Bring the onboarding resume preview to feature parity with the candidate resume 
 
 - The toggle is **always visible** when at least one mode is renderable.
 - Each tab handles its own unavailable state with a graceful empty-state and a one-click jump to the other tab.
-- Tab labels read as **Original** (the rendered document — PDF for both PDF and DOCX uploads, since DOCX uploads expose a canonical PDF derivative) and **Parsed Text** (the linearized text view).
-- Highlight behavior on both tabs is unchanged — same field IDs, same active-category fade, same hover pulse.
+- Tab labels read as **Original** (the rendered document - PDF for both PDF and DOCX uploads, since DOCX uploads expose a canonical PDF derivative) and **Parsed Text** (the linearized text view).
+- Highlight behavior on both tabs is unchanged - same field IDs, same active-category fade, same hover pulse.
 - Default tab on first render uses today's auto-routing (prefer Original when PDF rendered; otherwise Parsed Text). User override sticks.
 
-This is presentation-only — no backend, no data-flow, no schema, no new dependencies. Only the preview pane component changes.
+This is presentation-only - no backend, no data-flow, no schema, no new dependencies. Only the preview pane component changes.
 
 ## Scope
 
@@ -43,11 +43,11 @@ This is presentation-only — no backend, no data-flow, no schema, no new depend
 
 **Out of scope:**
 
-- The `/candidate/resume` page (`_resume-client.tsx`). It stays as-is — its 2-tab Parsed Fields / PDF View pattern is correct for that surface.
+- The `/candidate/resume` page (`_resume-client.tsx`). It stays as-is - its 2-tab Parsed Fields / PDF View pattern is correct for that surface.
 - Any change to `pdf-renderer.tsx`, `highlight-overlay.tsx`, `linearized-resume-view.tsx`, `derive-highlights.ts`, `find-text-spans.ts`, or `highlight-context.tsx`.
-- Any change to `personal/_client.tsx`, `review/_client.tsx`, `personal/_data.ts`, or `review/_data.ts` — the props passed to `ResumePreviewPane` are already correct.
+- Any change to `personal/_client.tsx`, `review/_client.tsx`, `personal/_data.ts`, or `review/_data.ts` - the props passed to `ResumePreviewPane` are already correct.
 - Backend changes (no new fields on `LatestParsedResume`).
-- Mobile sheet (`components/onboarding/mobile/resume-sheet.tsx`) — it forwards children, so it inherits the change for free.
+- Mobile sheet (`components/onboarding/mobile/resume-sheet.tsx`) - it forwards children, so it inherits the change for free.
 - Adding a structured-cards "Parsed Fields" tab to onboarding (rejected as Option A; would not show highlights and duplicates the form).
 
 ## Design
@@ -77,7 +77,7 @@ Two derived booleans drive both the tab disabled-states and the empty-state copy
 | `originalAvailable`   | `hasPdf && pdfStatus !== "failed"`      |
 | `parsedTextAvailable` | `hasText` (i.e. `rawText` is non-empty) |
 
-Both are computed alongside the existing `hasPdf` / `hasText`. `pdfStatus === "image-only"` still counts as `originalAvailable === true` — the document renders, even though highlights can't pin to specific spans on it. The image-only banner explains this.
+Both are computed alongside the existing `hasPdf` / `hasText`. `pdfStatus === "image-only"` still counts as `originalAvailable === true` - the document renders, even though highlights can't pin to specific spans on it. The image-only banner explains this.
 
 ### State matrix
 
@@ -85,9 +85,9 @@ Both are computed alongside the existing `hasPdf` / `hasText`. `pdfStatus === "i
 
 | Condition                             | Render                                                                                                                                                                                |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pdfStatus === "loading"`             | "Loading preview…" — same loading box used today                                                                                                                                      |
+| `pdfStatus === "loading"`             | "Loading preview…" - same loading box used today                                                                                                                                      |
 | `pdfStatus === "rendered"`            | PDF + `HighlightOverlay` (existing)                                                                                                                                                   |
-| `pdfStatus === "image-only"`          | PDF + small banner: _"This PDF appears to be image-only — highlights aren't available on the document. Switch to **Parsed Text** for highlighted content."_ (existing copy, retained) |
+| `pdfStatus === "image-only"`          | PDF + small banner: _"This PDF appears to be image-only - highlights aren't available on the document. Switch to **Parsed Text** for highlighted content."_ (existing copy, retained) |
 | `pdfStatus === "failed"` or `!hasPdf` | Empty state: _"We couldn't render the original document."_ + button "View Parsed Text" (sets `userMode = "text"`). Disabled if Parsed Text also unavailable.                          |
 
 **Parsed Text tab:**
@@ -97,7 +97,7 @@ Both are computed alongside the existing `hasPdf` / `hasText`. `pdfStatus === "i
 | `hasText`  | `LinearizedResumeView` (existing)                                                                                                                        |
 | `!hasText` | Empty state: _"Parsed text isn't available for this resume."_ + button "View Original" (sets `userMode = "pdf"`). Disabled if Original also unavailable. |
 
-**Both unavailable:** existing "No resume preview available." takes precedence — the pane never enters this state with neither source.
+**Both unavailable:** existing "No resume preview available." takes precedence - the pane never enters this state with neither source.
 
 ### Default tab on first render
 
@@ -152,7 +152,7 @@ Visual: same surface tokens as the loading box (`rounded-lg border border-[var(-
 
 The `HighlightOverlay` mounts only when `effectiveMode === "pdf"` and pages are ready (today's behavior). The PDF renderer remains mounted-but-hidden when the user is on Parsed Text (today's `display: none` trick), so flipping back to Original is instant.
 
-`LinearizedResumeView` continues to render `<mark>` spans for each highlight whose `source` substring is found in `rawText`. Click on a highlight calls `focusField(fieldRef)` from `useHighlightContext()` — the form field on the left scrolls into view and focuses, identical to today.
+`LinearizedResumeView` continues to render `<mark>` spans for each highlight whose `source` substring is found in `rawText`. Click on a highlight calls `focusField(fieldRef)` from `useHighlightContext()` - the form field on the left scrolls into view and focuses, identical to today.
 
 ### DOCX uploads
 
@@ -161,7 +161,7 @@ The candidate may upload a `.docx`. Today, `_data.ts` already calls `/api/v1/res
 - The Original tab renders the _canonical PDF_ (not the raw DOCX). PDF.js can read it, highlights work, identical UX to a PDF upload.
 - If the canonical-PDF derivative is missing for any reason, `signedPdfUrl` is null, `originalAvailable` is false, and the user sees the empty state with "View Parsed Text."
 
-No DOCX-specific code path is added — this is the same pipeline the pane uses today. The user's request "highlights on PDF/DOCX original" is satisfied by exposing the always-on toggle: when the underlying canonical PDF renders, highlights appear; when it doesn't, the empty state directs them to Parsed Text.
+No DOCX-specific code path is added - this is the same pipeline the pane uses today. The user's request "highlights on PDF/DOCX original" is satisfied by exposing the always-on toggle: when the underlying canonical PDF renders, highlights appear; when it doesn't, the empty state directs them to Parsed Text.
 
 ## Visual reference
 
@@ -197,14 +197,14 @@ Empty state inside Original tab when PDF failed:
 | Backend returns no `signedPdfUrl`                         | Original tab disabled with tooltip. Parsed Text tab default.                    |
 | Backend returns empty `rawText`                           | Parsed Text tab disabled. Original tab default.                                 |
 | Both empty                                                | Pane shows "No resume preview available." (unchanged)                           |
-| User on Original, then switches to Parsed Text, then back | Instant — PDF.js stays mounted under `display: none`.                           |
+| User on Original, then switches to Parsed Text, then back | Instant - PDF.js stays mounted under `display: none`.                           |
 
 ## Testing
 
 **Existing automated tests stay green:**
 
-- `derive-highlights.test.ts` — highlight derivation logic (untouched).
-- `find-text-spans.test.ts` — text-layer span search (untouched).
+- `derive-highlights.test.ts` - highlight derivation logic (untouched).
+- `find-text-spans.test.ts` - text-layer span search (untouched).
 
 **Manual verification (the human runs):**
 
@@ -220,7 +220,7 @@ Empty state inside Original tab when PDF failed:
 ## Rollout
 
 - Single component edit in a single PR. No feature flag, no migration, no env change.
-- `/candidate/resume` is intentionally untouched — the asymmetry is by design (post-onboarding context vs. onboarding evidence-first context).
+- `/candidate/resume` is intentionally untouched - the asymmetry is by design (post-onboarding context vs. onboarding evidence-first context).
 
 ## Out-of-scope follow-ups
 

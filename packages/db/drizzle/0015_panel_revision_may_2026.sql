@@ -8,7 +8,7 @@
 -- WHAT THIS MIGRATION DOES
 --
 --   1. Adds `evidence_excerpts.excerpt_redacted` (nullable text).
---      A recruiter-safe variant of `excerpt_text` — names, emails, phones,
+--      A recruiter-safe variant of `excerpt_text` - names, emails, phones,
 --      URLs, and company-suffix tokens are scrubbed deterministically at
 --      write time by `apps/api/src/ai/redact-text-deterministic.ts`. The
 --      recruiter view returns this column instead of the verbatim excerpt
@@ -26,7 +26,7 @@
 --   3. (Application-layer only) The "screening" application status is
 --      removed from the TypeScript enum. `applications.status` is plain
 --      text so no DDL is required, but legacy rows must be migrated
---      forward first — see `apps/api/scripts/migrate-remove-screening.ts`
+--      forward first - see `apps/api/scripts/migrate-remove-screening.ts`
 --      which rewrites any `status='screening'` rows to `'applied'`.
 --      That data migration MUST be run before deploying the new API,
 --      otherwise the application-layer validator will reject the legacy

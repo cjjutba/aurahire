@@ -10,7 +10,7 @@ import { ScoringService } from "../scoring.service";
  * Drains the `profile-score-recompute` queue (enqueued by
  * ProfileScoreQueueService when a candidate's resume / preferences /
  * profile change). Each job triggers a fresh AI run via
- * ScoringService.computeProfileScore — which writes a new profile_scores
+ * ScoringService.computeProfileScore - which writes a new profile_scores
  * row, an audit_logs entry tagged with the recompute reason, and busts
  * the candidate's cached score.
  *
@@ -18,7 +18,7 @@ import { ScoringService } from "../scoring.service";
  * drain bursts after a wave of profile edits, conservative enough that
  * we don't burst the OpenAI account when many candidates edit at once.
  *
- * Errors propagate so BullMQ honours the queue's retry config — we never
+ * Errors propagate so BullMQ honours the queue's retry config - we never
  * swallow + log silently here, otherwise a transient OpenAI 5xx would
  * permanently leave a candidate's score stale. The realtime emit on
  * success is added in Phase 2 / Task 25.
@@ -47,7 +47,7 @@ export class ProfileScoreRecomputeProcessor extends WorkerHost {
         },
       );
       this.logger.log(
-        `[recompute ${job.id}] ok in ${Date.now() - startedAt}ms — ${dto.overallScore}/100 ${dto.band}`,
+        `[recompute ${job.id}] ok in ${Date.now() - startedAt}ms - ${dto.overallScore}/100 ${dto.band}`,
       );
     } catch (err) {
       this.logger.error(

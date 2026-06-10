@@ -4,7 +4,7 @@
 
 **Goal:** Ship the end-to-end in-person interview, feedback, and hire-decision flow described in `docs/superpowers/specs/2026-05-07-interview-flow-redesign-design.md`. After this plan: a recruiter can schedule directly from `applied` (skipping Screening), capture structured venue + guidance fields, save reusable venue templates, get conflict warnings; the system auto-completes interviews; the recruiter records private feedback + rating + recommendation, optionally shares a sanitized summary with the candidate; the candidate has a polished interview detail page with calendar download and withdraw control; and stage moves are gated by recommendation, audited, and broadcast in realtime.
 
-**Architecture:** Eight phases. (1) **Foundation** — schema additions, enum extensions, shared Zod schemas, audit constants. (2) **State machine + withdrawal + auto-advance on schedule.** (3) **Interview backend operations** — conflict detection, ICS, reschedule, no-show, share-feedback, recommendation. (4) **Venue templates module.** (5) **Cron + notifications + emails + realtime.** (6) **Recruiter UI** — decision bar, schedule modal, pipeline panel, decision panel, recruiter interview detail page, share modal, reschedule modal, venue settings. (7) **Candidate UI** — upcoming banner, feedback panel, candidate interview detail page, withdraw modal, ICS download. (8) **Notification preferences + final E2E test.**
+**Architecture:** Eight phases. (1) **Foundation** - schema additions, enum extensions, shared Zod schemas, audit constants. (2) **State machine + withdrawal + auto-advance on schedule.** (3) **Interview backend operations** - conflict detection, ICS, reschedule, no-show, share-feedback, recommendation. (4) **Venue templates module.** (5) **Cron + notifications + emails + realtime.** (6) **Recruiter UI** - decision bar, schedule modal, pipeline panel, decision panel, recruiter interview detail page, share modal, reschedule modal, venue settings. (7) **Candidate UI** - upcoming banner, feedback panel, candidate interview detail page, withdraw modal, ICS download. (8) **Notification preferences + final E2E test.**
 
 **Tech Stack:** NestJS 10 (Fastify), Drizzle ORM, Supabase Postgres + Auth, BullMQ, Socket.io 4, Zod 3, Next.js 16 App Router, TanStack Query 5, Tailwind v4, Vitest.
 
@@ -27,7 +27,7 @@
 | `packages/shared/src/realtime/events.ts` | **Modify.** Add 5 events: `interview.completed`, `interview.rescheduled`, `interview.feedbackShared`, `application.recommendationSet`, `application.withdrawn`. |
 | `apps/api/src/audit/audit.types.ts` | **Modify.** Add 10 new action constants (see §Audit). Rename `INTERVIEW_FEEDBACK_UPDATED` → `INTERVIEW_FEEDBACK_SUBMITTED`. |
 
-**Backend — interviews module:**
+**Backend - interviews module:**
 | Path | Change |
 |---|---|
 | `apps/api/src/modules/applications/state-machine.ts` | **Modify.** Add `applied → interview` and `* → withdrawn` from non-terminal stages. |
@@ -48,7 +48,7 @@
 | `apps/api/src/modules/interviews/dto/interview-conflicts.dto.ts` | **Create.** |
 | `apps/api/src/modules/interviews/dto/interview-response.dto.ts` | **Modify.** Add new fields to `InterviewDto`. |
 
-**Backend — venues module (new):**
+**Backend - venues module (new):**
 | Path | Change |
 |---|---|
 | `apps/api/src/modules/interview-venues/interview-venues.module.ts` | **Create.** |
@@ -58,7 +58,7 @@
 | `apps/api/src/modules/interview-venues/dto/*.ts` | **Create.** Input + response DTOs. |
 | `apps/api/src/app.module.ts` | **Modify.** Register `InterviewVenuesModule`. |
 
-**Backend — cron + email + realtime:**
+**Backend - cron + email + realtime:**
 | Path | Change |
 |---|---|
 | `apps/api/src/cron/interview-autocomplete.cron.ts` | **Create.** Hourly, flips overdue scheduled → completed. |
@@ -73,7 +73,7 @@
 | `apps/api/src/realtime/events.service.ts` | **Modify.** Add 5 emitter methods. |
 | `apps/api/src/modules/notifications/event-defaults.ts` | **Modify.** Defaults for new event keys. |
 
-**Frontend — recruiter:**
+**Frontend - recruiter:**
 | Path | Change |
 |---|---|
 | `apps/web/app/(recruiter)/recruiter/applications/[id]/_decision-bar-client.tsx` | **Modify.** Add "Move to Interview" CTA at applied. |
@@ -94,7 +94,7 @@
 | `apps/web/lib/query/keys.ts` | **Modify.** Add interview-venues query key. |
 | `apps/web/lib/query/queries.ts` | **Modify.** Add `interviewVenues` query factories. |
 
-**Frontend — candidate:**
+**Frontend - candidate:**
 | Path | Change |
 |---|---|
 | `apps/web/app/(candidate)/candidate/applications/[id]/_application-detail-client.tsx` | **Modify.** Mount upcoming-interview banner + feedback panel. |
@@ -107,7 +107,7 @@
 | `apps/web/components/interview/withdraw-application-modal.tsx` | **Create.** Shared component. |
 | `apps/web/components/interview/add-to-calendar-button.tsx` | **Create.** ICS download client. |
 
-**Frontend — notification prefs:**
+**Frontend - notification prefs:**
 | Path | Change |
 |---|---|
 | `apps/web/components/notifications/notification-preferences-form.tsx` | **Modify.** Add toggle rows for new event keys. |
@@ -124,7 +124,7 @@
 
 ---
 
-## Phase 1 — Foundation (schema, enums, shared types, audit constants)
+## Phase 1 - Foundation (schema, enums, shared types, audit constants)
 
 ### Task 1: Extend interview enums + add recommendation tuple
 
@@ -180,7 +180,7 @@ git commit -m "feat(enums): extend INTERVIEW_STATUS with rescheduled, add INTERV
 
 ---
 
-### Task 2: Drizzle schema additions — `interviews` columns + `interview_venues` table + indexes
+### Task 2: Drizzle schema additions - `interviews` columns + `interview_venues` table + indexes
 
 **Files:**
 
@@ -437,7 +437,7 @@ Wait for human confirmation before continuing to Task 5.
 
 ```bash
 git add packages/db/drizzle/0009_interview_flow_v2.sql
-git commit -m "feat(db): migration 0009 — interview flow v2"
+git commit -m "feat(db): migration 0009 - interview flow v2"
 ```
 
 ---
@@ -491,7 +491,7 @@ export const scheduleInterviewSchema = z.object({
   durationMinutes: z.number().int().min(15).max(240).default(60),
   // Format kept for forward-compat; defaults to in-person.
   format: z.enum(INTERVIEW_FORMAT).optional().default("in-person"),
-  // Legacy field — accepted but not displayed.
+  // Legacy field - accepted but not displayed.
   locationOrLink: z.string().min(1).max(500).nullable().optional(),
 
   // Structured venue fields
@@ -702,7 +702,7 @@ git commit -m "feat(audit/realtime): add interview-flow v2 actions + events"
 
 ---
 
-## Phase 2 — State machine, withdrawal, auto-advance
+## Phase 2 - State machine, withdrawal, auto-advance
 
 ### Task 7: Update state machine + spec
 
@@ -845,7 +845,7 @@ it("withdraw rejects when actor is not the candidate", async () => {
 - [ ] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aurahire/api test applications.service.spec -t withdraw`
-Expected: FAIL — `service.withdraw is not a function`.
+Expected: FAIL - `service.withdraw is not a function`.
 
 - [ ] **Step 3: Implement `service.withdraw()`**
 
@@ -1005,7 +1005,7 @@ it("schedule from interview leaves status unchanged (multi-round)", async () => 
 - [ ] **Step 2: Run to verify failures**
 
 Run: `pnpm --filter @aurahire/api test interviews.service.spec -t auto-advances`
-Expected: FAIL — current schedule path leaves status as `applied`.
+Expected: FAIL - current schedule path leaves status as `applied`.
 
 - [ ] **Step 3: Modify `interviews.service.ts` `schedule()`**
 
@@ -1069,7 +1069,7 @@ git commit -m "feat(interviews): auto-advance application status on schedule fro
 
 ---
 
-## Phase 3 — Interview backend operations
+## Phase 3 - Interview backend operations
 
 ### Task 10: Map URL sanitizer
 
@@ -1120,7 +1120,7 @@ describe("sanitizeMapUrl", () => {
 - [ ] **Step 2: Run to verify failure**
 
 Run: `pnpm --filter @aurahire/api test sanitize-map-url`
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 3: Implement**
 
@@ -1213,7 +1213,7 @@ it("returns no conflicts when windows do not overlap", async () => {
 - [ ] **Step 2: Run, expect failure**
 
 Run: `pnpm --filter @aurahire/api test conflicts`
-Expected: FAIL — `service.checkConflicts is not a function`.
+Expected: FAIL - `service.checkConflicts is not a function`.
 
 - [ ] **Step 3: Add repository method**
 
@@ -1418,7 +1418,7 @@ describe("buildInterviewIcs", () => {
 - [ ] **Step 2: Run, expect failure**
 
 Run: `pnpm --filter @aurahire/api test build-interview-ics`
-Expected: FAIL — module missing.
+Expected: FAIL - module missing.
 
 - [ ] **Step 3: Implement**
 
@@ -1669,7 +1669,7 @@ it("updateFeedback persists recommendation and audits both events when recommend
 - [ ] **Step 2: Run, expect failure**
 
 Run: `pnpm --filter @aurahire/api test interviews.service.spec -t recommendation`
-Expected: FAIL — recommendation is not persisted.
+Expected: FAIL - recommendation is not persisted.
 
 - [ ] **Step 3: Update DTO**
 
@@ -1795,7 +1795,7 @@ it("share-feedback sets candidateSummary, sharedAt, sends email + in-app", async
 - [ ] **Step 2: Run, expect failure**
 
 Run: `pnpm --filter @aurahire/api test interviews.service.spec -t share-feedback`
-Expected: FAIL — `service.shareFeedback is not a function`.
+Expected: FAIL - `service.shareFeedback is not a function`.
 
 - [ ] **Step 3: Create DTO**
 
@@ -2033,7 +2033,7 @@ it("reschedule rejects from completed | cancelled | rescheduled", async () => {
 - [ ] **Step 2: Run, expect failure**
 
 Run: `pnpm --filter @aurahire/api test interviews.service.spec -t reschedule`
-Expected: FAIL — `service.reschedule is not a function`.
+Expected: FAIL - `service.reschedule is not a function`.
 
 - [ ] **Step 3: DTO**
 
@@ -2208,7 +2208,7 @@ it("schedule persists venue + guidance fields", async () => {
 
 - [ ] **Step 2: Run, expect failure**
 
-Expected: FAIL — fields not persisted.
+Expected: FAIL - fields not persisted.
 
 - [ ] **Step 3: Update `repo.insert`**
 
@@ -2252,7 +2252,7 @@ git commit -m "feat(interviews): schedule persists structured venue + guidance f
 
 ---
 
-## Phase 4 — Venue templates module
+## Phase 4 - Venue templates module
 
 ### Task 19: Scaffold module + repository
 
@@ -2426,7 +2426,7 @@ it("create + list + update + delete + setDefault round-trip", async () => {
 
 - [ ] **Step 2: Run, expect failure**
 
-Expected: FAIL — service methods missing.
+Expected: FAIL - service methods missing.
 
 - [ ] **Step 3: Implement service**
 
@@ -2630,7 +2630,7 @@ git commit -m "feat(interviews): persist venue template when saveAsTemplate is s
 
 ---
 
-## Phase 5 — Cron, realtime emitters, notification defaults, email templates
+## Phase 5 - Cron, realtime emitters, notification defaults, email templates
 
 ### Task 22: Realtime emitter methods
 
@@ -2756,7 +2756,7 @@ it("does not flip recently-ended interviews within grace period", async () => {
   expect(result.completed).toBe(0);
 });
 
-it("is idempotent — second run does not re-process", async () => {
+it("is idempotent - second run does not re-process", async () => {
   await fx.scheduleInterview({
     scheduledAt: hoursAgo(2),
     durationMinutes: 60,
@@ -2772,7 +2772,7 @@ it("is idempotent — second run does not re-process", async () => {
 - [ ] **Step 2: Run, expect failure**
 
 Run: `pnpm --filter @aurahire/api test interview-autocomplete.cron`
-Expected: FAIL — cron not implemented.
+Expected: FAIL - cron not implemented.
 
 - [ ] **Step 3: Implement**
 
@@ -2989,7 +2989,7 @@ Mirror `InterviewScheduledEmail` props + structure. Title: "Interview Reschedule
 
 - [ ] **Step 2: Wire `notifyCandidateRescheduled`**
 
-Use the new template + ICS with the SAME UID as the original interview's chain root (so calendars update the existing event). Implementation: `UID = interview-{rescheduledFromId ?? interview.id}@aurahire.app` — adjust ICS builder to accept an `aliasUid` if rescheduledFromId is set.
+Use the new template + ICS with the SAME UID as the original interview's chain root (so calendars update the existing event). Implementation: `UID = interview-{rescheduledFromId ?? interview.id}@aurahire.app` - adjust ICS builder to accept an `aliasUid` if rescheduledFromId is set.
 
 - [ ] **Step 3: Commit**
 
@@ -3048,9 +3048,9 @@ git commit -m "feat(email): InterviewFeedbackSharedEmail (candidate-facing summa
 
 ---
 
-## Phase 6 — Recruiter UI
+## Phase 6 - Recruiter UI
 
-### Task 29: Decision bar — add "Move to Interview" CTA at applied
+### Task 29: Decision bar - add "Move to Interview" CTA at applied
 
 **Files:**
 
@@ -3096,7 +3096,7 @@ git commit -m "feat(recruiter): Move to Interview CTA at applied stage"
 
 ---
 
-### Task 30: Schedule interview modal — venue + interviewer fields
+### Task 30: Schedule interview modal - venue + interviewer fields
 
 **Files:**
 
@@ -3159,7 +3159,7 @@ git commit -m "feat(recruiter): redesigned schedule modal with venue + interview
 
 ---
 
-### Task 31: Schedule modal — saved-venue dropdown + auto-fill
+### Task 31: Schedule modal - saved-venue dropdown + auto-fill
 
 **Files:**
 
@@ -3207,7 +3207,7 @@ git commit -m "feat(recruiter): saved-venue dropdown autofills schedule modal"
 
 ---
 
-### Task 32: Schedule modal — conflict warning chips
+### Task 32: Schedule modal - conflict warning chips
 
 **Files:**
 
@@ -3496,7 +3496,7 @@ export default async function RecruiterInterviewDetailPage({
 }
 ```
 
-(Backend needs a `GET /api/v1/interviews/:id` for recruiter; if it doesn't exist, add it in `interviews.controller.ts` — single-row fetch with company-ownership check.)
+(Backend needs a `GET /api/v1/interviews/:id` for recruiter; if it doesn't exist, add it in `interviews.controller.ts` - single-row fetch with company-ownership check.)
 
 - [ ] **Step 2: Build client component**
 
@@ -3504,7 +3504,7 @@ Sections: header, schedule card, venue card with optional map embed, candidate i
 
 - [ ] **Step 3: Build feedback panel sub-component**
 
-Tabs: Private | Candidate-facing. Private: feedback textarea, rating, recommendation, save. Candidate-facing: shows shared summary + "Share with candidate" button (opens modal — Task 37).
+Tabs: Private | Candidate-facing. Private: feedback textarea, rating, recommendation, save. Candidate-facing: shows shared summary + "Share with candidate" button (opens modal - Task 37).
 
 - [ ] **Step 4: Build loading.tsx**
 
@@ -3686,7 +3686,7 @@ git commit -m "feat(recruiter): interview venue templates settings page"
 
 ---
 
-## Phase 7 — Candidate UI
+## Phase 7 - Candidate UI
 
 ### Task 40: Upcoming interview banner on application detail
 
@@ -3718,7 +3718,7 @@ export function UpcomingInterviewBannerClient({
           })}
         </strong>
         <br />
-        {interview.venueName} — {interview.addressLine}
+        {interview.venueName} - {interview.addressLine}
         {interview.roomOrFloor && ` (${interview.roomOrFloor})`}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -4005,7 +4005,7 @@ git commit -m "feat(candidate): add-to-calendar ICS download button"
 
 ---
 
-## Phase 8 — Notification preferences UI + final E2E
+## Phase 8 - Notification preferences UI + final E2E
 
 ### Task 45: Notification preferences UI rows for new event keys
 
@@ -4118,7 +4118,7 @@ describe("Interview flow v2 end-to-end", () => {
       .set("Authorization", `Bearer ${recruiterToken}`)
       .set("X-Active-Company-Id", fixtures.companyId)
       .send({
-        candidateSummary: "Great interview — looking forward to next steps.",
+        candidateSummary: "Great interview - looking forward to next steps.",
       });
     expect(res.status).toBe(200);
     expect(res.body.data.sharedWithCandidateAt).toBeTruthy();
@@ -4155,7 +4155,7 @@ git commit -m "test(e2e): full interview-flow v2 happy path"
 
 After completing every task above:
 
-1. **Spec coverage walkthrough.** Open `docs/superpowers/specs/2026-05-07-interview-flow-redesign-design.md` side-by-side with this plan. For each numbered §1–§4 item, confirm it has a task. Fix any gaps inline.
+1. **Spec coverage walkthrough.** Open `docs/superpowers/specs/2026-05-07-interview-flow-redesign-design.md` side-by-side with this plan. For each numbered §1-§4 item, confirm it has a task. Fix any gaps inline.
 
 2. **Placeholder scan.** Search this plan for: `TBD`, `TODO`, `Add appropriate`, `similar to`, `fill in`. Should return zero matches.
 
@@ -4163,11 +4163,11 @@ After completing every task above:
    - `ScheduleInterviewInput` (T5) used in `interviews.service.schedule()` (T9, T18) and `RescheduleInterviewDto` (T17).
    - `InterviewRecommendation` (T1) used in `update-interview-feedback` (T14), DTOs, audit details (T6).
    - `InterviewVenueInput` (T5) used in venues service (T20) and schedule modal `saveAsTemplate` (T21).
-   - Realtime payload Zod schemas (T6) used in emitter methods (T22) — names match `InterviewCompletedPayload`, `InterviewRescheduledPayload`, `InterviewFeedbackSharedPayload`, `ApplicationRecommendationSetPayload`, `ApplicationWithdrawnPayload`.
-   - Audit constant `INTERVIEW_FEEDBACK_SUBMITTED` (T6) used in T14 — matches.
-   - `interview-autocomplete` event keys: cron emits `interview_completed` (to candidate) + `interview_record_feedback` (to recruiter); preferences default in T23 includes both — matches.
-   - Stable ICS UID: `interview-{rescheduledFromId ?? id}` consistency between T12 and T26 — must match.
-   - `sanitizeMapUrl` import path `apps/api/src/modules/interviews/lib/sanitize-map-url` used in T17 and T18 and T20 — matches.
+   - Realtime payload Zod schemas (T6) used in emitter methods (T22) - names match `InterviewCompletedPayload`, `InterviewRescheduledPayload`, `InterviewFeedbackSharedPayload`, `ApplicationRecommendationSetPayload`, `ApplicationWithdrawnPayload`.
+   - Audit constant `INTERVIEW_FEEDBACK_SUBMITTED` (T6) used in T14 - matches.
+   - `interview-autocomplete` event keys: cron emits `interview_completed` (to candidate) + `interview_record_feedback` (to recruiter); preferences default in T23 includes both - matches.
+   - Stable ICS UID: `interview-{rescheduledFromId ?? id}` consistency between T12 and T26 - must match.
+   - `sanitizeMapUrl` import path `apps/api/src/modules/interviews/lib/sanitize-map-url` used in T17 and T18 and T20 - matches.
 
 4. **State-machine semantics.** Verify the test in T7 covers: `applied → screening | interview | rejected | withdrawn`; `screening → interview | rejected | withdrawn`; `interview → offer | rejected | withdrawn`; `offer → hired | rejected | withdrawn`; terminal states. Withdraw authorization (T8) double-checks role.
 
@@ -4180,5 +4180,5 @@ If any inconsistency surfaces during a real run, fix at that task; do not paper 
 ## Migration & Rollout Reminders
 
 - The plan calls one DB migration (Task 4). The human applies it before downstream tasks rely on the new columns. Plan execution will pause at Task 4 Step 2 for human confirmation.
-- The plan does not call for a feature flag at code level — the spec listed `INTERVIEW_FLOW_V2_ENABLED` as a deployment-time toggle, but the per-PR layered nature of these commits already gives a controlled rollout. If the human wants the flag, layer it at the controller route level (NestJS guards) and on the recruiter UI sections; treat as a separate follow-up task.
+- The plan does not call for a feature flag at code level - the spec listed `INTERVIEW_FLOW_V2_ENABLED` as a deployment-time toggle, but the per-PR layered nature of these commits already gives a controlled rollout. If the human wants the flag, layer it at the controller route level (NestJS guards) and on the recruiter UI sections; treat as a separate follow-up task.
 - After Task 46, drop `interviews.location_or_link` in a follow-up migration (`0010_drop_interview_location_or_link.sql`) once two weeks of stable usage have passed and all reads are off the legacy field. Not part of this plan.

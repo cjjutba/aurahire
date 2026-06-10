@@ -2,8 +2,8 @@
 
 Used by `pnpm --filter @aurahire/api test:ai-parse`. Each fixture is a pair:
 
-- `<id>-<slug>.pdf` (or `.docx`) — the binary
-- `<id>-<slug>.expected.json` — hand-annotated canonical extraction
+- `<id>-<slug>.pdf` (or `.docx`) - the binary
+- `<id>-<slug>.expected.json` - hand-annotated canonical extraction
 
 ## Per-fixture thresholds (assertions)
 
@@ -28,8 +28,8 @@ Used by `pnpm --filter @aurahire/api test:ai-parse`. Each fixture is a pair:
 
 ```bash
 # Required env: OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-# (plus anything else the AppModule expects to boot — DATABASE_URL, REDIS_URL, etc.)
-# Note: this makes BILLED OpenAI calls — do not run in CI without budget.
+# (plus anything else the AppModule expects to boot - DATABASE_URL, REDIS_URL, etc.)
+# Note: this makes BILLED OpenAI calls - do not run in CI without budget.
 pnpm --filter @aurahire/api test:ai-parse
 ```
 
@@ -53,7 +53,7 @@ The script:
 2. Author the matching `02-styled-docx.expected.json` by hand:
    - Walk through the resume manually.
    - Record `contact` fields exactly as the parser should extract them (after
-     normalization). Only include the keys you want asserted — the script uses
+     normalization). Only include the keys you want asserted - the script uses
      the keys present in `contact` as the precision/recall denominator.
    - Count experience/education entries.
    - List skills exactly as the canonical names (e.g. "TypeScript" not "ts").
@@ -90,5 +90,5 @@ Aim for 15+ fixtures across:
 | Multilingual   | 1    | EN + Tagalog hybrid (representative of Philippine market)                 |
 | Image-only PDF | 1    | Negative-path: should fall back gracefully (still pass with low coverage) |
 
-The corpus is a thesis-defensible artifact — its size and diversity are a
+The corpus is a thesis-defensible artifact - its size and diversity are a
 quality signal in their own right.

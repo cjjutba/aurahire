@@ -1,4 +1,4 @@
-// AuraHire — PM2 process config for the NestJS API
+// AuraHire - PM2 process config for the NestJS API
 //
 // First start:  pm2 start deploy/ecosystem.config.cjs && pm2 save
 // Reload:       pm2 reload aurahire-api --update-env
