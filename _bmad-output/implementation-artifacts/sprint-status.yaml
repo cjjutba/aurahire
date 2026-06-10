@@ -59,10 +59,10 @@ development_status:
   1-3-back-cache-and-rate-limiting-with-upstash-redis: done
   epic-1-retrospective: optional
 
-  # Epic 2 — Authentication Re-platform (Clerk)
-  epic-2: backlog
-  2-1-clerk-identity-schema-migration-0018: backlog
-  2-2-validate-clerk-jwts-in-the-backend-guard: backlog
+  # Epic 2 — Authentication Re-platform (Clerk)  [IN PROGRESS]
+  epic-2: in-progress
+  2-1-clerk-identity-schema-migration-0018: done
+  2-2-validate-clerk-jwts-in-the-backend-guard: done
   2-3-provision-profiles-from-clerk-webhook: backlog
   2-4-clerk-on-the-frontend-sign-in-token-routing: backlog
   2-5-retire-supabase-auth-and-sync-role-to-clerk: backlog

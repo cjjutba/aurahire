@@ -38,7 +38,7 @@ import { FeedbackModule } from "./modules/feedback/feedback.module";
 import { RealtimeModule } from "./realtime";
 import { QueueModule } from "./queue";
 import { CronModule } from "./cron";
-import { SupabaseAuthGuard } from "./common/guards/supabase-auth.guard";
+import { ClerkAuthGuard } from "./common/guards/clerk-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { ActiveCompanyGuard } from "./common/guards/active-company.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
@@ -152,7 +152,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
     },
     {
       provide: APP_GUARD,
-      useClass: SupabaseAuthGuard,
+      useClass: ClerkAuthGuard,
     },
     {
       provide: APP_GUARD,

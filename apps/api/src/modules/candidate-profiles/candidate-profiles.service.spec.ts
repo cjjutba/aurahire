@@ -24,6 +24,7 @@ const candidateUser: AuthUser = {
 function buildProfile(overrides: Partial<Profile> = {}): Profile {
   return {
     id: candidateUser.id,
+    clerkUserId: null,
     role: "candidate",
     fullName: "Test Candidate",
     email: "candidate@example.com",

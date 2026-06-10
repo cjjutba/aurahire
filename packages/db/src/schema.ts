@@ -55,7 +55,10 @@ import {
 export const profilesTable = pgTable(
   "profiles",
   {
-    id: uuid("id").primaryKey(), // mirrors auth.users.id; FK enforced via Supabase trigger
+    id: uuid("id").primaryKey().defaultRandom(), // backend-generated uuid; identity maps to Clerk via clerk_user_id
+    // Clerk user id ("user_..."), set by the Clerk webhook / lazy guard upsert.
+    // Replaces the old Supabase auth.users mirror. Nullable + unique.
+    clerkUserId: text("clerk_user_id").unique(),
     role: text("role", { enum: USER_ROLES }).notNull(),
     fullName: text("full_name").notNull(),
     email: text("email").notNull().unique(),
