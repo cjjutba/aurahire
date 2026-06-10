@@ -83,6 +83,35 @@ Rules for an in-conversation permission grant:
 
 Document each granted execution with a short note in the response so the conversation log shows what was authorized and what ran.
 
+### 0b. STANDING AUTHORIZATION — Serverless Re-platform (granted 2026-06-10 by Christian Jerald Jutba)
+
+The owner has granted a **durable, project-scoped** lift of the default-deny posture for the AuraHire serverless re-platform (Digital Ocean → Vercel + Neon + Upstash + Clerk + Vercel Blob). This is intentionally broader than a one-time in-conversation grant and **persists across sessions and worktrees** for the duration of the migration.
+
+**Scope:** the migration work on the `dev` branch and its `feat/epic-*` worktree branches.
+
+**Within that scope, Claude/agents MAY now run autonomously, without per-action confirmation:**
+- **Database mutations** (overrides Rule 2): `drizzle-kit migrate`, DDL/DML, seed/backfill/reset scripts — against the Neon connection strings the owner provides.
+- **Dev servers** (overrides Rule 1): `pnpm dev`, `next dev`, `nest start`, test runners, build verification.
+- **Docker dev services** (overrides Rule 1a): the local `docker-compose.dev.yml` stack.
+- **Deploys** (overrides Rule 3): `vercel` preview AND production deploys; `git push` of `dev` and `feat/*` branches.
+- **External paid calls** (overrides Rule 5): OpenAI + Resend calls for implementation and testing.
+
+**Mandatory isolation discipline (prevents parallel worktrees clobbering shared infra):**
+- Each worktree operates on its OWN Neon branch + its OWN Vercel preview deployment; run migrations and deploys against that isolated branch/preview by default.
+- **Production promotion** (migrating the primary Neon branch + deploying the live `aurahire.cjjutba.com` domain) is a deliberate, SERIALIZED step — one operation at a time, never two agents promoting concurrently. Announce the exact production command(s) immediately before running them.
+- Never run a migration or deploy against shared production while another worktree's promotion is in flight.
+
+**SAFETY FLOOR — NOT lifted by this authorization; never auto-run:**
+- No force-push to `main` (refuse). No `git push --force` / `--force-with-lease` anywhere.
+- No `--no-verify` (bypassing hooks) unless the owner asks for it by name in the same message.
+- No destructive/history-rewriting git over uncommitted work (`git stash`, `git reset --hard`, `git clean -fd`, `git checkout -- .`, `git commit --amend`, `git rebase`) — diagnose and ask instead.
+- No touching resources outside the migration scope (unrelated repos, accounts, third-party services).
+- Never commit secrets; credentials live only in env / Vercel encrypted vars.
+
+**Provisioning remains the owner's task** (irreducible): creating the Neon/Clerk/Upstash/Vercel accounts and minting API keys. The owner supplies keys via env; agents do everything downstream.
+
+This section supersedes the default-deny posture of Rules 1, 1a, 2, 3, 5 within the stated scope. **To revoke, delete this section.**
+
 ### 1. Claude does NOT run any dev servers
 
 **Never run any of:**

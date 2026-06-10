@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(tsx:*)",
+      "Bash(drizzle-kit:*)",
+      "Bash(vercel:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git branch:*)",
+      "Bash(git worktree:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Edit",
+      "Write",
+      "MultiEdit"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force-with-lease:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -f:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git clean -fdx:*)",
+      "Bash(git stash:*)",
+      "Bash(git commit --amend:*)",
+      "Bash(git rebase:*)",
+      "Bash(git checkout -- :*)",
+      "Bash(git restore:*)"
+    ]
+  }
+}

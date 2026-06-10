@@ -54,20 +54,20 @@ For each story in the epic, **in order**, in a fresh context window:
 
 `sprint-status.yaml` is the shared tracker — each workspace updates its own story keys.
 
-## Human-in-the-loop gates (NOT autonomous — you run these)
+## Autonomous mode (CLAUDE.md §0b Standing Authorization, granted 2026-06-10)
 
-Per the project hard rules, Claude writes code but never provisions infra, runs migrations, deploys, makes billed calls, or starts servers. Each epic has gates:
+Worktree agents run **hands-off**: they execute migrations, dev servers, tests, and deploys themselves using the keys you provide. The ONLY human task is **provisioning accounts + supplying keys** (agents cannot sign up for services or mint keys). Each agent operates on its OWN Neon branch + Vercel preview to avoid clobbering shared infra.
 
-| Epic | Human gate (before/within the epic) |
-|---|---|
-| 1 | Provision Neon (pooled+unpooled URLs) + Upstash; run `drizzle-kit migrate` (0000–0016) + apply `0017` |
-| 2 | Create Clerk app (keys, JWKS, webhook secret); apply migration `0018`; test sign-in on dev server |
-| 3 | Create Vercel Blob store + `BLOB_READ_WRITE_TOKEN`; test upload/parse on dev server |
-| 4 | (mostly code) test scoring + polling on dev server; verify AI flow (billed) |
-| 5 | Link Vercel project(s); confirm plan supports minute crons; deploy; verify bundle < 250 MB |
-| 6 | Configure `aurahire.cjjutba.com`; production deploy; run the 6-step thesis demo |
+| Epic | You provide once (keys) | Agent then does autonomously |
+|---|---|---|
+| 1 | Neon pooled + unpooled URLs, Upstash `REDIS_URL` | create its Neon branch, run `drizzle-kit migrate` (0000–0016 + 0017), wire Upstash, test |
+| 2 | Clerk secret/publishable/JWKS/webhook keys | apply `0018`, build auth, test sign-in on a preview |
+| 3 | Vercel `BLOB_READ_WRITE_TOKEN` | rewrite storage, test upload/parse/download |
+| 4 | (existing OpenAI key) | inline scoring, remove realtime/queue, test scoring + polling (billed AI ok) |
+| 5 | Vercel project link | deploy the Function, set up cron, verify bundle/plan |
+| 6 | `aurahire.cjjutba.com` on Vercel | domain cutover, production deploy, run the demo path |
 
-**Implication:** a workspace can autonomously write all code + tests for its epic, then **pause at its gate** for you to provision/migrate/deploy/test, then continue. Parallelism is real for the *coding*; the gates serialize on your availability.
+**Production promotion is serialized:** migrating the primary Neon branch + the live-domain deploy happen one-at-a-time (never two worktrees promoting at once); the agent announces the exact prod command before running it. The git **safety floor** (no force-push `main`, no `--no-verify`, no destructive git over uncommitted work) still applies — see `CLAUDE.md` §0b.
 
 ## Merge-back protocol
 
@@ -82,9 +82,10 @@ Per the project hard rules, Claude writes code but never provisions infra, runs 
 `feat/epic-1-neon-upstash` · `feat/epic-2-clerk-auth` · `feat/epic-3-vercel-blob` · `feat/epic-4-remove-always-on` · `feat/epic-5-vercel-compute` · `feat/epic-6-domain-cutover`
 
 ## Start now
-1. **Push `dev` to `origin`** (so worktrees share a base): `git push origin dev` (you run this).
-2. **Provision Neon + Upstash** (Epic 1 gate).
-3. Create the **Epic 1 worktree** in Superset off `dev`; run `[CS]` for Story 1.1 → `[DS]` → `[CR]`.
-4. Once Epic 1 merges to `dev` and you've pushed, **fan out Wave 1**: three Superset workspaces for Epics 2, 3, 4 in parallel.
+1. **Provision Neon + Upstash** and paste the keys into the Epic 1 workspace env.
+2. Create the **Epic 1 worktree** in Superset off `dev`; paste the Epic 1 prompt — the agent runs the full story cycle AND the migrations/tests/deploys itself (per CLAUDE.md §0b).
+3. Once Epic 1 merges to `dev`, **fan out Wave 1**: three Superset workspaces for Epics 2/3/4, each on its own Neon branch + preview.
+
+> **Worktree self-sufficiency:** a fresh git worktree only contains *committed* files. For worktree agents to have the BMad skills + framework + these permissions, `.claude/settings.json`, `.claude/skills/`, and `_bmad/` must be committed to `dev` (the planning artifacts under `_bmad-output/` already are).
 
 > Realistic parallelism: **Wave 1's 3-way fan-out is the payoff** (12 stories concurrently). Waves 0/2/3 are serial by dependency. Total critical path ≈ Epic 1 → (longest of 2/3/4) → Epic 5 → Epic 6.
