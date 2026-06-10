@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { AuthTokenProvider } from "@/components/providers/auth-token-provider";
 import { ConfirmProvider } from "@/components/providers/confirm-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -35,16 +36,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
-        <AuthTokenProvider>
-          <QueryProvider>
-            <SocketProvider>
-              <ConfirmProvider>
-                {children}
-                <Toaster position="top-right" richColors closeButton />
-              </ConfirmProvider>
-            </SocketProvider>
-          </QueryProvider>
-        </AuthTokenProvider>
+        <ClerkProvider>
+          <AuthTokenProvider>
+            <QueryProvider>
+              <SocketProvider>
+                <ConfirmProvider>
+                  {children}
+                  <Toaster position="top-right" richColors closeButton />
+                </ConfirmProvider>
+              </SocketProvider>
+            </QueryProvider>
+          </AuthTokenProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

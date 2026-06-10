@@ -10,6 +10,7 @@
  */
 
 let accessToken: string | null = null;
+let tokenGetter: (() => Promise<string | null>) | null = null;
 let activeCompanyResolver: (() => string | null) | null = null;
 
 export function setAccessToken(token: string | null): void {
@@ -18,6 +19,23 @@ export function setAccessToken(token: string | null): void {
 
 export function getAccessToken(): string | null {
   return accessToken;
+}
+
+/**
+ * Install an async token getter. When set, the fetcher awaits it per request to
+ * obtain a FRESH bearer token — required for Clerk, whose session tokens expire
+ * in ~60s (a cached string would go stale). apps/web wires this to Clerk's
+ * `window.Clerk.session.getToken()` at startup.
+ */
+export function setTokenGetter(
+  getter: (() => Promise<string | null>) | null,
+): void {
+  tokenGetter = getter;
+}
+
+/** Resolve the current bearer token: prefer the async getter, else the stored string. */
+export async function resolveAccessToken(): Promise<string | null> {
+  return tokenGetter ? await tokenGetter() : accessToken;
 }
 
 /**
@@ -59,8 +77,11 @@ export const fetcher = async <T = unknown>(
   ) {
     headers.set("Content-Type", "application/json");
   }
-  if (accessToken && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
+  if (!headers.has("Authorization")) {
+    const token = await resolveAccessToken();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
   }
   if (!headers.has("X-Active-Company-Id") && activeCompanyResolver) {
     const companyId = activeCompanyResolver();

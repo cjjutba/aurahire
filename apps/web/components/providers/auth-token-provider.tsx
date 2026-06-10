@@ -1,44 +1,32 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { setAccessToken, setActiveCompanyResolver } from "@aurahire/shared";
-import { createSupabaseBrowserClient } from "@/lib/auth/client";
+import { useEffect } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { setTokenGetter, setActiveCompanyResolver } from "@aurahire/shared";
 import { getActiveCompanyId } from "@/lib/active-company";
 
+/**
+ * Wires the shared API client to Clerk: installs an async token getter that
+ * returns a FRESH Clerk session token per request (Clerk tokens expire in ~60s,
+ * so a cached string would go stale), plus the active-company resolver.
+ * Must render inside <ClerkProvider> (uses useAuth).
+ */
 export function AuthTokenProvider({ children }: { children: React.ReactNode }) {
-  const initialized = useRef(false);
+  const { getToken } = useAuth();
 
-  // The Supabase browser client is constructed inside the effect (browser
-  // only) rather than via `useMemo` at render time. Next.js 16's static
-  // pre-render still runs this component on the server, and the Supabase
-  // factory throws synchronously when NEXT_PUBLIC_SUPABASE_URL/KEY are
-  // missing - which is the case during the Vercel build where build-time
-  // env strips NEXT_PUBLIC_* for static optimization. Deferring to the
-  // effect keeps the construction client-side, where env vars are real.
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-
-    const supabase = createSupabaseBrowserClient();
-
-    // Phase 3: install the resolver once, before any orval-client call. The
-    // resolver reads the localStorage-backed singleton in lib/active-company.
     setActiveCompanyResolver(() => getActiveCompanyId());
-
-    void supabase.auth.getSession().then(({ data: { session } }) => {
-      setAccessToken(session?.access_token ?? null);
+    setTokenGetter(async () => {
+      try {
+        return await getToken();
+      } catch {
+        return null;
+      }
     });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAccessToken(session?.access_token ?? null);
-    });
-
     return () => {
-      subscription.unsubscribe();
+      setTokenGetter(null);
     };
-  }, []);
+  }, [getToken]);
 
   return <>{children}</>;
 }

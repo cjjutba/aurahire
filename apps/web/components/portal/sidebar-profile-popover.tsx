@@ -1,17 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { BookOpen, HelpCircle, LogOut, Settings, Smile } from "lucide-react";
+import { useClerk } from "@clerk/nextjs";
 import type { UserRole } from "@aurahire/shared";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FeedbackModalClient } from "@/components/portal/feedback-modal-client";
-import { createSupabaseBrowserClient } from "@/lib/auth/client";
-import { setSessionOnlyMarker } from "@/lib/auth/cookie-persistence.client";
 import { setActiveCompanyId } from "@/lib/active-company";
-import { toastApiError, toastSuccess } from "@/lib/toast";
+import { toastSuccess } from "@/lib/toast";
 
 export interface SidebarProfilePopoverUser {
   id: string;
@@ -54,23 +52,15 @@ export function SidebarProfilePopoverBody({
   user,
   onSignedOut,
 }: SidebarProfilePopoverBodyProps) {
-  const router = useRouter();
+  const { signOut } = useClerk();
   const initials = getInitials(user.name);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   async function handleSignOut() {
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toastApiError(error, "Sign out failed");
-      return;
-    }
-    setSessionOnlyMarker(false);
     setActiveCompanyId(null);
-    toastSuccess("Signed out");
     onSignedOut?.();
-    router.push("/");
-    router.refresh();
+    toastSuccess("Signed out");
+    await signOut({ redirectUrl: "/" });
   }
 
   return (

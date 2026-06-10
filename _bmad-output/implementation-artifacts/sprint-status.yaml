@@ -64,7 +64,7 @@ development_status:
   2-1-clerk-identity-schema-migration-0018: done
   2-2-validate-clerk-jwts-in-the-backend-guard: done
   2-3-provision-profiles-from-clerk-webhook: done
-  2-4-clerk-on-the-frontend-sign-in-token-routing: backlog
+  2-4-clerk-on-the-frontend-sign-in-token-routing: review
   2-5-retire-supabase-auth-and-sync-role-to-clerk: backlog
   epic-2-retrospective: optional
 

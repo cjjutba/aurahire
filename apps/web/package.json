@@ -18,6 +18,7 @@
   "dependencies": {
     "@aurahire/shared": "workspace:*",
     "@base-ui/react": "^1.4.1",
+    "@clerk/nextjs": "^7.5.0",
     "@hookform/resolvers": "^5.2.2",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",

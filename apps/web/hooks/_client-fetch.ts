@@ -1,4 +1,4 @@
-import { getAccessToken } from "@aurahire/shared";
+import { resolveAccessToken } from "@aurahire/shared";
 import { getActiveCompanyId } from "@/lib/active-company";
 
 export class ClientApiError extends Error {
@@ -22,7 +22,7 @@ export async function clientApiFetch<T>(
   } = {},
 ): Promise<T> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-  const token = getAccessToken();
+  const token = await resolveAccessToken();
   const activeCompanyId = getActiveCompanyId();
   const url = new URL(path.startsWith("http") ? path : `${apiUrl}${path}`);
   if (init.query) {

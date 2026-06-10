@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getCurrentSession } from "@/lib/auth/session";
+import { auth } from "@clerk/nextjs/server";
 
 /**
  * Error thrown by serverApiFetch on non-2xx responses. Carries the HTTP status
@@ -46,8 +46,9 @@ export async function serverApiFetch<T>(
   init: ServerApiFetchInit = {},
 ): Promise<T> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333";
-  const session = await getCurrentSession();
-  if (!session) throw new ServerApiError(401, null, "No active session");
+  const { getToken } = await auth();
+  const token = await getToken();
+  if (!token) throw new ServerApiError(401, null, "No active session");
 
   const url = new URL(path.startsWith("http") ? path : `${apiUrl}${path}`);
   if (init.query) {
@@ -60,7 +61,7 @@ export async function serverApiFetch<T>(
   const res = await fetch(url, {
     method: init.method ?? "GET",
     headers: {
-      Authorization: `Bearer ${session.access_token}`,
+      Authorization: `Bearer ${token}`,
       ...(init.body !== undefined
         ? { "content-type": "application/json" }
         : {}),
