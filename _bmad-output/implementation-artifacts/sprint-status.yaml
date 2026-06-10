@@ -1,0 +1,97 @@
+# generated: 2026-06-10
+# last_updated: 2026-06-10
+# project: aurahire
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+#
+# MIGRATION DEPENDENCY FLOW (re-platform):
+#   Epic 1 → 2 → 3 → 4 → 5 → 6.  Epics 2 & 3 may run in parallel after Epic 1.
+#   Epic 4 MUST complete before Epic 5 (cannot run socket.io/BullMQ on a Vercel Function).
+# PER-EPIC HUMAN PREREQUISITE (provision managed service + env before the epic's worktree):
+#   E1: Neon project + pooled/unpooled URLs, Upstash Redis URL
+#   E2: Clerk application + keys + JWKS + webhook secret
+#   E3: Vercel Blob store + BLOB_READ_WRITE_TOKEN
+#   E5: Vercel project(s) linked; verify plan supports minute crons
+#   E6: aurahire.cjjutba.com domain on Vercel
+
+generated: 2026-06-10
+last_updated: 2026-06-10
+project: aurahire
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1 — Managed Data & Cache Cutover (Neon + Upstash)
+  epic-1: backlog
+  1-1-run-the-existing-schema-on-neon: backlog
+  1-2-drop-the-auth-uid-based-rls-migration-0017: backlog
+  1-3-back-cache-and-rate-limiting-with-upstash-redis: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2 — Authentication Re-platform (Clerk)
+  epic-2: backlog
+  2-1-clerk-identity-schema-migration-0018: backlog
+  2-2-validate-clerk-jwts-in-the-backend-guard: backlog
+  2-3-provision-profiles-from-clerk-webhook: backlog
+  2-4-clerk-on-the-frontend-sign-in-token-routing: backlog
+  2-5-retire-supabase-auth-and-sync-role-to-clerk: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3 — Storage Re-platform (Vercel Blob + DOCX→PDF)
+  epic-3: backlog
+  3-1-store-and-serve-resumes-from-vercel-blob: backlog
+  3-2-preserve-redacted-recruiter-downloads: backlog
+  3-3-rework-docx-pdf-without-libreoffice: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4 — Remove Always-On Dependencies (realtime → polling, queue → inline scoring)
+  epic-4: backlog
+  4-1-compute-scoring-inline: backlog
+  4-2-remove-bullmq-infrastructure: backlog
+  4-3-remove-socket-io-realtime: backlog
+  4-4-replace-live-updates-with-polling: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5 — Serverless Compute & Scheduling (Vercel Function + Vercel Cron)
+  epic-5: backlog
+  5-1-run-the-nestjs-api-as-a-vercel-function: backlog
+  5-2-schedule-jobs-via-vercel-cron: backlog
+  5-3-retire-the-legacy-deploy-stack: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6 — Domain Cutover & Production Verification
+  epic-6: backlog
+  6-1-cut-over-domain-and-production-environment: backlog
+  6-2-verify-the-thesis-demo-path-end-to-end: backlog
+  epic-6-retrospective: optional
