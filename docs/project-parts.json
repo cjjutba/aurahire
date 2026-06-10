@@ -1,0 +1,60 @@
+{
+  "repository_type": "monorepo",
+  "tooling": { "package_manager": "pnpm@9.12.3", "build": "turbo@2.3.3", "language": "typescript@5.7", "node": ">=20" },
+  "parts": [
+    {
+      "part_id": "web",
+      "project_type_id": "web",
+      "display_name": "Next.js 16 Frontend",
+      "root_path": "apps/web",
+      "tech": ["next@16.2", "react@19.2", "tailwindcss@4", "@tanstack/react-query@5", "react-hook-form", "zod", "socket.io-client"],
+      "entry_point": "app/layout.tsx",
+      "docs": ["architecture-web.md", "component-inventory-web.md"],
+      "notes": "UI only; no DB or AI keys; Supabase SSR auth (re-platform pending)"
+    },
+    {
+      "part_id": "api",
+      "project_type_id": "backend",
+      "display_name": "NestJS Backend (Fastify)",
+      "root_path": "apps/api",
+      "tech": ["@nestjs/core@10.4", "@nestjs/platform-fastify", "drizzle-orm@0.36", "postgres@3.4", "nestjs-zod", "bullmq", "@nestjs/schedule", "socket.io", "openai@6", "resend"],
+      "entry_point": "src/main.ts",
+      "docs": ["architecture-api.md", "api-contracts-api.md"],
+      "notes": "Owns DB/AI/queue/cron/cache/secrets; 18 feature modules; /api/v1; currently on DO droplet (retiring)"
+    },
+    {
+      "part_id": "shared",
+      "project_type_id": "library",
+      "display_name": "Shared Contracts Library",
+      "root_path": "packages/shared",
+      "tech": ["zod", "orval@8.9", "@tanstack/react-query", "zod-to-json-schema"],
+      "entry_point": "src/index.ts",
+      "docs": ["integration-architecture.md"],
+      "notes": "Zod schemas, enums (re-exported from db), orval REST client, realtime contracts; imported by both apps"
+    },
+    {
+      "part_id": "db",
+      "project_type_id": "library",
+      "display_name": "Drizzle Schema Library",
+      "root_path": "packages/db",
+      "tech": ["drizzle-orm@0.36", "drizzle-kit@0.27", "postgres@3.4"],
+      "entry_point": "src/index.ts",
+      "docs": ["data-models-db.md"],
+      "notes": "21 tables, 17 SQL migrations, auth.uid()-based RLS; Postgres host moving Supabase -> Neon"
+    }
+  ],
+  "integration_points": [
+    { "from": "web", "to": "api", "type": "REST/HTTPS", "details": "orval client + serverApiFetch/clientApiFetch; /api/v1; Bearer JWT + X-Active-Company-Id" },
+    { "from": "web", "to": "api", "type": "WebSocket", "details": "socket.io /socket.io; JWT handshake; rooms user/recruiter/admin/job" },
+    { "from": "api", "to": "postgres", "type": "Drizzle/postgres.js", "details": "DATABASE_URL, prepare:false; RLS defense-in-depth" },
+    { "from": "api", "to": "redis", "type": "ioredis/BullMQ", "details": "queues + cache + throttler + socket.io adapter; REDIS_URL" },
+    { "from": "api", "to": "openai", "type": "HTTPS", "details": "gpt-4o-mini structured outputs, PII-redacted, audited" },
+    { "from": "api", "to": "supabase", "type": "JWKS+Storage", "details": "JWT validation (jose) + resume storage; re-platform pending" },
+    { "from": "api", "to": "resend", "type": "HTTPS", "details": "transactional email when USE_RESEND=true" }
+  ],
+  "migration": {
+    "status": "in_progress",
+    "from": { "compute": "DO Droplet/PM2", "db": "Supabase Postgres", "auth": "Supabase Auth", "redis": "self-hosted Docker", "domain": "aurahire.site" },
+    "to": { "compute": "Vercel Fluid Compute", "db": "Neon Postgres (PG18, AWS Singapore)", "auth": "TBD", "redis": "Upstash", "domain": "aurahire.cjjutba.com" }
+  }
+}

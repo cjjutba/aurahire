@@ -1,0 +1,51 @@
+{
+  "workflow_version": "1.2.0",
+  "timestamps": { "started": "2026-06-10T01:37:59Z", "last_updated": "2026-06-10T01:54:27Z", "completed": "2026-06-10T01:54:27Z" },
+  "mode": "initial_scan",
+  "scan_level": "deep",
+  "project_root": "/Users/cjjutba/Projects/aurahire",
+  "project_knowledge": "/Users/cjjutba/Projects/aurahire/docs",
+  "repository_type": "monorepo",
+  "current_step": "completed",
+  "completed_steps": [
+    { "step": "step_0.6", "status": "completed", "timestamp": "2026-06-10T01:37:59Z", "summary": "initial_scan, deep scan level; no existing index.md" },
+    { "step": "step_1", "status": "completed", "timestamp": "2026-06-10T01:37:59Z", "summary": "Classified monorepo, 4 parts (web, api, shared, db)" },
+    { "step": "step_2-7", "status": "completed", "timestamp": "2026-06-10T01:54:27Z", "summary": "Deep scan via 4 parallel agents (api, web, db+shared, ops); existing docs/main specs inventoried" },
+    { "step": "step_8-9", "status": "completed", "timestamp": "2026-06-10T01:54:27Z", "summary": "Per-part architecture + supporting docs written" },
+    { "step": "step_10", "status": "completed", "timestamp": "2026-06-10T01:54:27Z", "summary": "Master index.md generated" },
+    { "step": "step_11-12", "status": "completed", "timestamp": "2026-06-10T01:54:27Z", "summary": "Validated; no (To be generated) markers; workflow complete" }
+  ],
+  "project_types": [
+    { "part_id": "web", "project_type_id": "web", "display_name": "Next.js 16 Frontend" },
+    { "part_id": "api", "project_type_id": "backend", "display_name": "NestJS Backend (Fastify)" },
+    { "part_id": "shared", "project_type_id": "library", "display_name": "Shared Contracts Library" },
+    { "part_id": "db", "project_type_id": "library", "display_name": "Drizzle Schema Library" }
+  ],
+  "findings": {
+    "project_classification": "Turborepo pnpm monorepo; web (Next.js 16) + api (NestJS-on-Fastify) + shared (Zod/orval) + db (Drizzle, 21 tables, 17 migrations)",
+    "api": "18 feature modules + cross-cutting ai/audit/cache/cron/queue/realtime/storage; /api/v1; Supabase JWKS auth; multi-tenant via X-Active-Company-Id",
+    "web": "App Router, 6 route groups, ~111 client islands; SSR-prefetch + TanStack Query; Supabase SSR auth",
+    "db": "21 tables, TS-tuple enums + CHECK constraints (not pgEnum), auth.uid()-based RLS",
+    "ops": "Frontend Vercel (aurahire-thesis); backend currently co-tenant on shared iams droplet (dedicated aurahire-prod destroyed 2026-05-20); migration to serverless underway"
+  },
+  "outputs_generated": [
+    "project-scan-report.json",
+    "project-overview.md",
+    "source-tree-analysis.md",
+    "architecture-web.md",
+    "component-inventory-web.md",
+    "architecture-api.md",
+    "api-contracts-api.md",
+    "data-models-db.md",
+    "integration-architecture.md",
+    "development-guide.md",
+    "deployment-guide.md",
+    "project-parts.json",
+    "index.md"
+  ],
+  "verification": {
+    "tests_run": "none (documentation only)",
+    "open_risks": "Auth re-platform (Supabase lost) and socket.io/cron on serverless are the highest-risk migration items; LibreOffice DOCX->PDF path won't run on Vercel Functions",
+    "next_checks": "Use this index as input to [CA] Create Architecture for the migration"
+  }
+}
